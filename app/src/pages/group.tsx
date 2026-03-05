@@ -23,7 +23,7 @@ export default function GroupPage() {
       setGroup(g);
       setLoading(false);
     });
-  }, [groupId]);
+  }, [groupId, navigate]);
 
   if (loading)
     return <div className="p-4 text-muted-foreground">Loading...</div>;

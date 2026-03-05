@@ -16,7 +16,6 @@ type TimeEntryWithActivity = TimeEntry & { activity?: Activity };
 
 export default function TimeTracker({
   activities,
-  activeTimerId,
   onTimerStart,
   onTimerStop,
 }: TimeTrackerProps) {
@@ -25,26 +24,6 @@ export default function TimeTracker({
   const [recentEntries, setRecentEntries] = useState<TimeEntryWithActivity[]>(
     [],
   );
-
-  useEffect(() => {
-    loadActiveEntry();
-    loadRecentEntries();
-  }, []);
-
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
-    if (activeEntry) {
-      interval = setInterval(() => {
-        const start = new Date(activeEntry.time_start).getTime();
-        setElapsedTime(Math.floor((Date.now() - start) / 1000));
-      }, 1000);
-    } else {
-      setElapsedTime(0);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeEntry]);
 
   const loadActiveEntry = async () => {
     try {
@@ -74,6 +53,27 @@ export default function TimeTracker({
       console.error("Error loading recent entries:", error);
     }
   };
+
+  useEffect(() => {
+    loadActiveEntry();
+    loadRecentEntries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (activeEntry) {
+      interval = setInterval(() => {
+        const start = new Date(activeEntry.time_start).getTime();
+        setElapsedTime(Math.floor((Date.now() - start) / 1000));
+      }, 1000);
+    } else {
+      setElapsedTime(0);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeEntry]);
 
   const startTimer = async (activityId: string) => {
     try {

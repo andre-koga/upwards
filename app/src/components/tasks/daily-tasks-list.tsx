@@ -41,10 +41,9 @@ interface DailyTasksListProps {
 export default function DailyTasksList({
   activities,
   groups,
-  onRefresh,
 }: DailyTasksListProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [dailyEntry, setDailyEntry] = useState<DailyEntry | null>(null);
+  const [, setDailyEntry] = useState<DailyEntry | null>(null);
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [activityPeriods, setActivityPeriods] = useState<ActivityPeriod[]>([]);
@@ -109,6 +108,7 @@ export default function DailyTasksList({
     loadDailyEntry();
     loadActivityPeriods();
     loadOneTimeTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate]);
 
   useEffect(() => {

@@ -73,6 +73,7 @@ export default function ActivityFormFields({
       customUnit = (parts[2] as "days" | "weeks" | "months") || "days";
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData({
       name: initialData.name || "",
       pattern: initialData.pattern || "solid",

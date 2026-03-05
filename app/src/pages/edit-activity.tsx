@@ -31,7 +31,7 @@ export default function EditActivityPage() {
       setActivity(a);
       setLoading(false);
     });
-  }, [groupId, activityId]);
+  }, [groupId, activityId, navigate]);
 
   if (loading)
     return <div className="p-4 text-muted-foreground">Loading...</div>;
