@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "icon-192x192.png", "icon-512x512.png"],
       manifest: {
-        name: "OKHabit",
-        short_name: "OKHabit",
+        name: "Upwards",
+        short_name: "Upwards",
         description: "Local-first habit tracker",
         theme_color: "#000000",
         background_color: "#ffffff",

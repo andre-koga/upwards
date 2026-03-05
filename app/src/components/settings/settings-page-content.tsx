@@ -61,7 +61,7 @@ export default function SettingsPageContent() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `okhabit-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `upwards-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       setExportStatus("success");
@@ -245,7 +245,7 @@ export default function SettingsPageContent() {
       </Card>
 
       <div className="text-center text-xs text-muted-foreground pt-4">
-        <p>OKHabit — local-first habit tracker</p>
+        <p>Upwards — local-first habit tracker</p>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ import type {
     TimeEntry,
 } from "./types";
 
-export class OKHabitDB extends Dexie {
+export class UpwardsDB extends Dexie {
     activityGroups!: Table<ActivityGroup>;
     activities!: Table<Activity>;
     dailyEntries!: Table<DailyEntry>;
@@ -33,7 +33,7 @@ export class OKHabitDB extends Dexie {
     }
 }
 
-export const db = new OKHabitDB();
+export const db = new UpwardsDB();
 
 // Helper: current ISO timestamp
 export const now = () => new Date().toISOString();
