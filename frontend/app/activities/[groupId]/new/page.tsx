@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { Suspense } from "react";
-import NewActivityForm from "@/components/new-activity-form";
+import NewActivityForm from "@/components/activities/new-activity-form";
 
 interface NewActivityPageProps {
   params: Promise<{

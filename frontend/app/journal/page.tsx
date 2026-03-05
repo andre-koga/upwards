@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import JournalList from "@/components/journal-list";
+import JournalList from "@/components/journal/journal-list";
 import { Suspense } from "react";
 
 async function JournalContent() {

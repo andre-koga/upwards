@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Suspense } from "react";
-import JournalForm from "@/components/journal-form";
-import JournalView from "@/components/journal-view";
+import JournalForm from "@/components/journal/journal-form";
+import JournalView from "@/components/journal/journal-view";
 
 interface JournalPageProps {
   params: Promise<{

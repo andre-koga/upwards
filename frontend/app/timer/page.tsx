@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import TimerPageContent from "@/components/timer-page-content";
+import TimerPageContent from "@/components/timer/timer-page-content";
 
 async function TimerContent() {
   const supabase = await createClient();

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { Suspense } from "react";
-import EditGroupForm from "@/components/edit-group-form";
+import EditGroupForm from "@/components/activities/edit-group-form";
 
 interface EditGroupPageProps {
   params: Promise<{

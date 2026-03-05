@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import ActivityNavMenu from "@/components/activity-nav-menu";
+import ActivityNavMenu from "@/components/activities/activity-nav-menu";
 
 export default async function ActivityStatsPage() {
   const supabase = await createClient();

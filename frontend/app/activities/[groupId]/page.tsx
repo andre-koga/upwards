@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { Suspense } from "react";
-import GroupActivitiesContent from "@/components/group-activities-content";
+import GroupActivitiesContent from "@/components/activities/group-activities-content";
 
 interface GroupPageProps {
   params: Promise<{

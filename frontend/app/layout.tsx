@@ -3,7 +3,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import { PwaInit } from "@/components/pwa-init";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL

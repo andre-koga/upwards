@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import NewGroupForm from "@/components/new-group-form";
+import NewGroupForm from "@/components/activities/new-group-form";
 
 async function NewGroupContent() {
   const supabase = await createClient();
