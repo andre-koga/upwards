@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import PixelGrid from "@/components/dashboard/pixel-grid";
+import TasksPageContent from "@/components/tasks/tasks-page-content";
 
-async function DashboardOverview() {
+async function TodayContent() {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getClaims();
@@ -13,7 +13,7 @@ async function DashboardOverview() {
     redirect("/auth/login");
   }
 
-  return <PixelGrid userId={uid} />;
+  return <TasksPageContent userId={uid} />;
 }
 
 export default async function Home() {
@@ -26,7 +26,7 @@ export default async function Home() {
           </div>
         }
       >
-        <DashboardOverview />
+        <TodayContent />
       </Suspense>
     </main>
   );

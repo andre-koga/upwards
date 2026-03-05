@@ -61,13 +61,34 @@ export default function TasksPageContent({ userId }: TasksPageContentProps) {
     );
   }
 
+  const now = new Date();
+  const dayName = now.toLocaleDateString("en-US", { weekday: "long" });
+  const dateLabel = now.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+  });
+
+  const encouragements = [
+    "Every small step counts — make today yours.",
+    "A new day, a fresh chance. Let's do this.",
+    "You showed up. Now let's finish strong.",
+    "Today is yours to shape. One task at a time.",
+    "Progress over perfection — keep going.",
+  ];
+  const encouragement = encouragements[now.getDate() % encouragements.length];
+
   return (
-    <div className="min-h-screen p-4 pb-20">
+    <div className="p-4">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Daily Tasks</h1>
-          <p className="text-muted-foreground">
-            Track your daily activities and habits
+        <div className="mb-8 text-center">
+          <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground mb-1">
+            {dateLabel}
+          </p>
+          <h1 className="text-5xl font-extrabold tracking-tight mb-3">
+            {dayName}
+          </h1>
+          <p className="text-muted-foreground text-base italic">
+            {encouragement}
           </p>
         </div>
         <DailyTasksList

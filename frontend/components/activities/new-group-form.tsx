@@ -92,7 +92,7 @@ export default function NewGroupForm({ userId }: NewGroupFormProps) {
   };
 
   return (
-    <div className="min-h-screen p-4 pb-20">
+    <div className="p-4">
       <div className="max-w-2xl mx-auto">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />

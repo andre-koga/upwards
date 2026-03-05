@@ -18,7 +18,6 @@ import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import {
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Play,
@@ -279,11 +278,6 @@ export default function DailyTasksList({
   };
 
   const handleStartActivity = async (activityId: string) => {
-    if (!dailyEntry) {
-      alert("Please wake up first from the home page.");
-      return;
-    }
-
     if (currentActivityId === activityId) {
       return; // Already on this activity
     }
@@ -291,12 +285,30 @@ export default function DailyTasksList({
     try {
       const now = new Date();
 
+      // Auto-create daily entry if none exists
+      let entry = dailyEntry;
+      if (!entry) {
+        const insertPayload: TablesInsert<"daily_entries"> = {
+          user_id: userId,
+          date: new Date(currentDate).toISOString(),
+          task_counts: {},
+        };
+        const { data: newEntry, error: entryError } = await supabase
+          .from("daily_entries")
+          .insert(insertPayload)
+          .select()
+          .single();
+        if (entryError) throw entryError;
+        setDailyEntry(newEntry);
+        entry = newEntry;
+      }
+
       // Find and close the current activity period
       if (currentActivityId) {
         const { data: currentPeriod } = await supabase
           .from("activity_periods")
           .select("*")
-          .eq("daily_entry_id", dailyEntry.id)
+          .eq("daily_entry_id", entry.id)
           .is("end_time", null)
           .maybeSingle();
 
@@ -311,7 +323,7 @@ export default function DailyTasksList({
       // Create new activity period
       await supabase.from("activity_periods").insert({
         user_id: userId,
-        daily_entry_id: dailyEntry.id,
+        daily_entry_id: entry.id,
         activity_id: activityId,
         start_time: now.toISOString(),
         end_time: null,
@@ -321,7 +333,7 @@ export default function DailyTasksList({
       await supabase
         .from("daily_entries")
         .update({ current_activity_id: activityId })
-        .eq("id", dailyEntry.id);
+        .eq("id", entry.id);
 
       setCurrentActivityId(activityId);
       loadActivityPeriods();
@@ -481,7 +493,7 @@ export default function DailyTasksList({
       : Math.round((completedNonNeverTasksCount / nonNeverTasksCount) * 100);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Date Navigator */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -495,14 +507,12 @@ export default function DailyTasksList({
         <div className="flex items-center gap-1">
           <Popover open={datePopoverOpen} onOpenChange={handleDatePopoverOpen}>
             <PopoverTrigger asChild>
-              <button className="flex items-center gap-1 font-semibold text-sm hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-accent">
+              <button className="font-semibold text-sm hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-accent">
                 {currentDate.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "long",
+                  month: "short",
                   day: "numeric",
                   year: "numeric",
                 })}
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-4 space-y-3" align="center">

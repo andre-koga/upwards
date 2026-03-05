@@ -2,10 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Moon, Sun, User, Clock, Archive } from "lucide-react";
+import { LogOut, Sun, User, Archive } from "lucide-react";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 import { Button } from "@/components/ui/button";
-import { UserPreferencesForm } from "@/components/settings/user-preferences-form";
 import Link from "next/link";
 
 async function SettingsContent() {
@@ -20,27 +19,15 @@ async function SettingsContent() {
 
   const email = data.claims?.email as string;
 
-  // Load user preferences - create user if doesn't exist
-  let userData = null;
+  // Ensure user record exists
   const { data: existingUser, error: userError } = await supabase
     .from("users")
-    .select("typical_wake_time, typical_sleep_time")
+    .select("id")
     .eq("id", uid)
     .maybeSingle();
 
-  if (existingUser) {
-    userData = existingUser;
-  } else if (!existingUser && !userError) {
-    // User doesn't exist in public.users, create them
-    const { data: newUser } = await supabase
-      .from("users")
-      .insert({
-        id: uid,
-        email: email,
-      })
-      .select("typical_wake_time, typical_sleep_time")
-      .single();
-    userData = newUser;
+  if (!existingUser && !userError) {
+    await supabase.from("users").insert({ id: uid, email: email });
   }
 
   return (
@@ -64,22 +51,6 @@ async function SettingsContent() {
             <p className="text-sm text-muted-foreground">Email</p>
             <p className="font-medium">{email}</p>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Daily Schedule
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <UserPreferencesForm
-            userId={uid}
-            initialWakeTime={userData?.typical_wake_time ?? "07:00:00"}
-            initialSleepTime={userData?.typical_sleep_time ?? "23:00:00"}
-          />
         </CardContent>
       </Card>
 
