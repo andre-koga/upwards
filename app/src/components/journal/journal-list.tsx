@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import JournalCalendar from "@/components/journal/journal-calendar";
 
+// ─── constants ────────────────────────────────────────────────────────────────
+
 const QUALITY_COLORS = [
   "bg-red-400",
   "bg-orange-400",
@@ -41,13 +43,417 @@ const QUALITY_OPTIONS = [
 ];
 const PAGE_SIZE = 7;
 
-interface EditDraft {
+// ─── types ────────────────────────────────────────────────────────────────────
+
+export interface EditDraft {
   emoji: string;
   title: string;
   content: string;
   quality: number | null;
   bookmarked: boolean;
 }
+
+// ─── pure helpers (module-level so they never cause remounts) ─────────────────
+
+function getLocalDateString(d: Date = new Date()) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function canEdit(entryDate: string) {
+  const todayStr = getLocalDateString();
+  const today = new Date(todayStr + "T00:00:00");
+  const entry = new Date(entryDate + "T00:00:00");
+  const diffDays = Math.floor(
+    (today.getTime() - entry.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  return diffDays <= 1;
+}
+
+function formatDate(dateString: string) {
+  const date = new Date(dateString + "T00:00:00");
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  today.setHours(0, 0, 0, 0);
+  yesterday.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  if (date.getTime() === today.getTime()) return "Today";
+  if (date.getTime() === yesterday.getTime()) return "Yesterday";
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
+  });
+}
+
+// ─── sub-components (module-level so React never remounts them on re-render) ──
+
+function InlineEntry({
+  entry,
+  onToggleBookmark,
+}: {
+  entry: JournalEntry;
+  onToggleBookmark: (entry: JournalEntry) => void;
+}) {
+  const navigate = useNavigate();
+  const editable = canEdit(entry.entry_date);
+  const quality = entry.day_quality || 3;
+  const qualityColor = QUALITY_COLORS[quality - 1];
+  const qualityLabel = QUALITY_LABELS[quality - 1];
+
+  return (
+    <div className="py-6">
+      {/* Date header + actions */}
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-bold leading-tight">
+            {formatDate(entry.entry_date)}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {new Date(entry.entry_date + "T00:00:00").toLocaleDateString(
+              "en-US",
+              {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              },
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onToggleBookmark(entry)}
+            title={entry.is_bookmarked ? "Remove bookmark" : "Bookmark"}
+            className={`h-8 w-8 p-0 ${
+              entry.is_bookmarked
+                ? "bg-red-500/50 hover:bg-red-500/50 hover:border-red-500/50 border-red-500/50 text-white"
+                : ""
+            }`}
+          >
+            <Bookmark className="h-4 w-4" />
+          </Button>
+          {editable && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                navigate(`/journal/${entry.entry_date}?edit=true`)
+              }
+              title="Edit entry"
+              className="h-8 w-8 p-0"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Emoji + quality */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative">
+          <div className="w-14 h-14 rounded-full border-2 border-border flex items-center justify-center text-3xl bg-background">
+            {entry.day_emoji || "📅"}
+          </div>
+          <div
+            className={`w-4 h-4 rounded-full absolute -right-1 -bottom-1 border-2 border-background ${qualityColor}`}
+          />
+        </div>
+        <span className="text-sm text-muted-foreground">{qualityLabel} day</span>
+      </div>
+
+      {entry.title && (
+        <h3 className="text-lg font-semibold mb-2">{entry.title}</h3>
+      )}
+
+      <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+        {entry.text_content ?? (
+          <span className="text-muted-foreground italic">No notes</span>
+        )}
+      </p>
+
+      <div className="mt-6 border-b border-border" />
+    </div>
+  );
+}
+
+function EditableInlineEntry({
+  dateStr,
+  entry,
+  isActive,
+  draft,
+  onActivate,
+  onToggleBookmark,
+  onSetDraft,
+}: {
+  dateStr: string;
+  entry?: JournalEntry;
+  isActive: boolean;
+  draft: EditDraft | null;
+  onActivate: () => void;
+  onToggleBookmark: (entry: JournalEntry) => void;
+  onSetDraft: (d: EditDraft) => void;
+}) {
+  const quality = isActive ? draft?.quality ?? null : entry?.day_quality ?? null;
+  const qualityColor = quality ? QUALITY_COLORS[quality - 1] : null;
+  const qualityLabel = quality ? QUALITY_LABELS[quality - 1] : null;
+
+  return (
+    <div
+      className={`py-6 transition-colors rounded-lg ${
+        isActive ? "cursor-default" : "cursor-pointer hover:bg-accent/40"
+      }`}
+      onClick={!isActive ? onActivate : undefined}
+    >
+      {/* Date header + bookmark */}
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-bold leading-tight">
+            {formatDate(dateStr)}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+        {(entry || isActive) && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(ev) => {
+              ev.stopPropagation();
+              if (isActive && draft) {
+                onSetDraft({ ...draft, bookmarked: !draft.bookmarked });
+              } else if (entry) {
+                onToggleBookmark(entry);
+              }
+            }}
+            title={
+              (isActive ? draft?.bookmarked : entry?.is_bookmarked)
+                ? "Remove bookmark"
+                : "Bookmark"
+            }
+            className={`h-8 w-8 p-0 shrink-0 ${
+              (isActive ? draft?.bookmarked : entry?.is_bookmarked)
+                ? "bg-red-500/50 hover:bg-red-500/50 hover:border-red-500/50 border-red-500/50 text-white"
+                : ""
+            }`}
+          >
+            <Bookmark className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      {/* Emoji + quality */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative">
+          {isActive ? (
+            <Input
+              type="text"
+              placeholder=""
+              value={draft?.emoji ?? ""}
+              onClick={(ev) => ev.stopPropagation()}
+              onChange={(ev) => {
+                const matches = ev.target.value.match(
+                  /\p{Extended_Pictographic}/gu,
+                );
+                if (draft)
+                  onSetDraft({ ...draft, emoji: matches ? matches[0] : "" });
+              }}
+              className="w-14 h-14 rounded-full text-2xl text-center p-0"
+            />
+          ) : (
+            <>
+              <div className="w-14 h-14 rounded-full border-2 border-border flex items-center justify-center text-3xl bg-background">
+                {entry?.day_emoji || (
+                  <span className="text-muted-foreground text-xs">emoji</span>
+                )}
+              </div>
+              {qualityColor && (
+                <div
+                  className={`w-4 h-4 rounded-full absolute -right-1 -bottom-1 border-2 border-background ${qualityColor}`}
+                />
+              )}
+            </>
+          )}
+        </div>
+        {isActive ? (
+          <div className="flex gap-1.5">
+            {QUALITY_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  if (draft) onSetDraft({ ...draft, quality: opt.value });
+                }}
+                title={opt.label}
+                className={`w-7 h-7 rounded-full transition-transform ${opt.color} ${
+                  draft?.quality === opt.value
+                    ? "ring-2 ring-offset-2 ring-foreground scale-110"
+                    : "opacity-60 hover:opacity-100"
+                }`}
+              />
+            ))}
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            {qualityLabel ? (
+              `${qualityLabel} day`
+            ) : (
+              <span className="italic">Tap to add entry</span>
+            )}
+          </span>
+        )}
+      </div>
+
+      {/* Title */}
+      {isActive ? (
+        <Input
+          placeholder="Give your day a title…"
+          value={draft?.title ?? ""}
+          onClick={(ev) => ev.stopPropagation()}
+          onChange={(ev) => {
+            if (draft)
+              onSetDraft({ ...draft, title: ev.target.value.slice(0, 30) });
+          }}
+          className="mb-3 w-full"
+        />
+      ) : (
+        entry?.title && (
+          <h3 className="text-lg font-semibold mb-2">{entry.title}</h3>
+        )
+      )}
+
+      {/* Content */}
+      {isActive ? (
+        <Textarea
+          placeholder="Write about your day…"
+          value={draft?.content ?? ""}
+          onClick={(ev) => ev.stopPropagation()}
+          onChange={(ev) => {
+            if (draft)
+              onSetDraft({ ...draft, content: ev.target.value.slice(0, 300) });
+          }}
+          className="w-full min-h-[120px] resize-none"
+        />
+      ) : (
+        <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+          {entry?.text_content ?? (
+            <span className="text-muted-foreground italic">No notes</span>
+          )}
+        </p>
+      )}
+
+      <div className="mt-6 border-b border-border" />
+    </div>
+  );
+}
+
+function EntryCard({
+  entry,
+  showEdit,
+  onToggleBookmark,
+}: {
+  entry: JournalEntry;
+  showEdit?: boolean;
+  onToggleBookmark: (entry: JournalEntry) => void;
+}) {
+  const navigate = useNavigate();
+  const editable = canEdit(entry.entry_date);
+  const quality = entry.day_quality || 3;
+  const qualityColor = QUALITY_COLORS[quality - 1];
+  const textExcerpt = entry.text_content
+    ? entry.text_content.length > 150
+      ? entry.text_content.substring(0, 150) + "..."
+      : entry.text_content
+    : "No notes";
+
+  return (
+    <Card
+      className="hover:bg-accent transition-colors cursor-pointer"
+      onClick={() => navigate(`/journal/${entry.entry_date}`)}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex relative">
+                <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
+                  {entry.day_emoji || "📅"}
+                </div>
+                <div
+                  className={`w-4 h-4 rounded-full absolute -right-1 -bottom-1 border-2 border-background ${qualityColor}`}
+                />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-lg">
+                  {formatDate(entry.entry_date)}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {new Date(entry.entry_date + "T00:00:00").toLocaleDateString(
+                    "en-US",
+                    { month: "long", day: "numeric", year: "numeric" },
+                  )}
+                </div>
+              </div>
+            </div>
+            {entry.title && (
+              <p className="font-medium text-base mb-1">{entry.title}</p>
+            )}
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {textExcerpt}
+            </p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(ev) => {
+                ev.stopPropagation();
+                onToggleBookmark(entry);
+              }}
+              title={entry.is_bookmarked ? "Remove bookmark" : "Bookmark"}
+              className={`h-8 w-8 p-0 ${
+                entry.is_bookmarked
+                  ? "bg-red-500/50 hover:bg-red-500/50 hover:border-red-500/50 border-red-500/50 text-white"
+                  : ""
+              }`}
+            >
+              <Bookmark className="h-4 w-4" />
+            </Button>
+            {showEdit && editable && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  navigate(`/journal/${entry.entry_date}?edit=true`);
+                }}
+                title="Edit entry"
+                className="h-8 w-8 p-0 hover:border-white"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── main component ───────────────────────────────────────────────────────────
 
 export default function JournalList() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -60,7 +466,6 @@ export default function JournalList() {
   );
   const [olderVisible, setOlderVisible] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
 
   // Inline editing state for today / yesterday
   const [activeEditDate, setActiveEditDate] = useState<string | null>(null);
@@ -71,7 +476,7 @@ export default function JournalList() {
     loadEntries();
   }, []);
 
-  // Infinite scroll: observe sentinel to load next batch of older entries
+  // Infinite scroll
   const handleObserver = useCallback(
     (observerEntries: IntersectionObserverEntry[]) => {
       if (observerEntries[0].isIntersecting) {
@@ -201,42 +606,7 @@ export default function JournalList() {
     }
   };
 
-  const getLocalDateString = (d: Date = new Date()) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  const canEdit = (entryDate: string) => {
-    const todayStr = getLocalDateString();
-    const today = new Date(todayStr + "T00:00:00");
-    const entry = new Date(entryDate + "T00:00:00");
-    const diffDays = Math.floor(
-      (today.getTime() - entry.getTime()) / (1000 * 60 * 60 * 24),
-    );
-    return diffDays <= 1;
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString + "T00:00:00");
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    today.setHours(0, 0, 0, 0);
-    yesterday.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
-    if (date.getTime() === today.getTime()) return "Today";
-    if (date.getTime() === yesterday.getTime()) return "Yesterday";
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
-    });
-  };
-
-  // Build past 2 days — today and yesterday (the only editable window)
+  // Derived data
   const last2Days: string[] = [];
   for (let i = 0; i < 2; i++) {
     const d = new Date();
@@ -277,372 +647,6 @@ export default function JournalList() {
   };
   const searchResults = entries.filter(applySearch);
 
-  // Full inline entry for the scrollable list view
-  const InlineEntry = ({ entry }: { entry: JournalEntry }) => {
-    const editable = canEdit(entry.entry_date);
-    const quality = entry.day_quality || 3;
-    const qualityColor = QUALITY_COLORS[quality - 1];
-    const qualityLabel = QUALITY_LABELS[quality - 1];
-
-    return (
-      <div className="py-6">
-        {/* Date header + actions */}
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold leading-tight">
-              {formatDate(entry.entry_date)}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {new Date(entry.entry_date + "T00:00:00").toLocaleDateString(
-                "en-US",
-                {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                },
-              )}
-            </p>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => toggleBookmark(entry)}
-              title={entry.is_bookmarked ? "Remove bookmark" : "Bookmark"}
-              className={`h-8 w-8 p-0 ${
-                entry.is_bookmarked
-                  ? "bg-red-500/50 hover:bg-red-500/50 hover:border-red-500/50 border-red-500/50 text-white"
-                  : ""
-              }`}
-            >
-              <Bookmark className="h-4 w-4" />
-            </Button>
-            {editable && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  navigate(`/journal/${entry.entry_date}?edit=true`)
-                }
-                title="Edit entry"
-                className="h-8 w-8 p-0"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Emoji + quality */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative">
-            <div className="w-14 h-14 rounded-full border-2 border-border flex items-center justify-center text-3xl bg-background">
-              {entry.day_emoji || "📅"}
-            </div>
-            <div
-              className={`w-4 h-4 rounded-full absolute -right-1 -bottom-1 border-2 border-background ${qualityColor}`}
-            />
-          </div>
-          <span className="text-sm text-muted-foreground">
-            {qualityLabel} day
-          </span>
-        </div>
-
-        {/* Title */}
-        {entry.title && (
-          <h3 className="text-lg font-semibold mb-2">{entry.title}</h3>
-        )}
-
-        {/* Full content */}
-        <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
-          {entry.text_content ? (
-            entry.text_content
-          ) : (
-            <span className="text-muted-foreground italic">No notes</span>
-          )}
-        </p>
-
-        <div className="mt-6 border-b border-border" />
-      </div>
-    );
-  };
-
-  // Editable inline entry — used for today and yesterday
-  const EditableInlineEntry = ({
-    dateStr,
-    entry,
-  }: {
-    dateStr: string;
-    entry?: JournalEntry;
-  }) => {
-    const isActive = activeEditDate === dateStr;
-    const draft = editDraft;
-
-    const quality = isActive
-      ? (draft?.quality ?? null)
-      : (entry?.day_quality ?? null);
-    const qualityColor = quality ? QUALITY_COLORS[quality - 1] : null;
-    const qualityLabel = quality ? QUALITY_LABELS[quality - 1] : null;
-
-    const handleActivate = () => {
-      if (!isActive) activateEdit(dateStr, entry);
-    };
-
-    return (
-      <div
-        className={`py-6 transition-colors rounded-lg ${isActive ? "cursor-default" : "cursor-pointer hover:bg-accent/40"}`}
-        onClick={!isActive ? handleActivate : undefined}
-      >
-        {/* Date header + bookmark */}
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold leading-tight">
-              {formatDate(dateStr)}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-          </div>
-          {/* Bookmark toggle — always visible, only functional when entry exists or in edit */}
-          {(entry || isActive) && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={(ev) => {
-                ev.stopPropagation();
-                if (isActive && draft) {
-                  setEditDraft({ ...draft, bookmarked: !draft.bookmarked });
-                } else if (entry) {
-                  toggleBookmark(entry);
-                }
-              }}
-              title={
-                (isActive ? draft?.bookmarked : entry?.is_bookmarked)
-                  ? "Remove bookmark"
-                  : "Bookmark"
-              }
-              className={`h-8 w-8 p-0 shrink-0 ${
-                (isActive ? draft?.bookmarked : entry?.is_bookmarked)
-                  ? "bg-red-500/50 hover:bg-red-500/50 hover:border-red-500/50 border-red-500/50 text-white"
-                  : ""
-              }`}
-            >
-              <Bookmark className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-
-        {/* Emoji + quality */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative">
-            {isActive ? (
-              <Input
-                type="text"
-                placeholder=""
-                value={draft?.emoji ?? ""}
-                onClick={(ev) => ev.stopPropagation()}
-                onChange={(ev) => {
-                  const matches = ev.target.value.match(
-                    /\p{Extended_Pictographic}/gu,
-                  );
-                  if (draft)
-                    setEditDraft({
-                      ...draft,
-                      emoji: matches ? matches[0] : "",
-                    });
-                }}
-                className="w-14 h-14 rounded-full text-2xl text-center p-0"
-              />
-            ) : (
-              <>
-                <div className="w-14 h-14 rounded-full border-2 border-border flex items-center justify-center text-3xl bg-background">
-                  {entry?.day_emoji || (
-                    <span className="text-muted-foreground text-xs">emoji</span>
-                  )}
-                </div>
-                {qualityColor && (
-                  <div
-                    className={`w-4 h-4 rounded-full absolute -right-1 -bottom-1 border-2 border-background ${qualityColor}`}
-                  />
-                )}
-              </>
-            )}
-          </div>
-          {isActive ? (
-            /* Quality color picker */
-            <div className="flex gap-1.5">
-              {QUALITY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={(ev) => {
-                    ev.stopPropagation();
-                    if (draft) setEditDraft({ ...draft, quality: opt.value });
-                  }}
-                  title={opt.label}
-                  className={`w-7 h-7 rounded-full transition-transform ${opt.color} ${
-                    draft?.quality === opt.value
-                      ? "ring-2 ring-offset-2 ring-foreground scale-110"
-                      : "opacity-60 hover:opacity-100"
-                  }`}
-                />
-              ))}
-            </div>
-          ) : (
-            <span className="text-sm text-muted-foreground">
-              {qualityLabel ? (
-                `${qualityLabel} day`
-              ) : (
-                <span className="italic">Tap to add entry</span>
-              )}
-            </span>
-          )}
-        </div>
-
-        {/* Title */}
-        {isActive ? (
-          <Input
-            placeholder="Give your day a title…"
-            value={draft?.title ?? ""}
-            onClick={(ev) => ev.stopPropagation()}
-            onChange={(ev) => {
-              if (draft)
-                setEditDraft({ ...draft, title: ev.target.value.slice(0, 30) });
-            }}
-            className="mb-3 w-full"
-          />
-        ) : (
-          entry?.title && (
-            <h3 className="text-lg font-semibold mb-2">{entry.title}</h3>
-          )
-        )}
-
-        {/* Content */}
-        {isActive ? (
-          <Textarea
-            placeholder="Write about your day…"
-            value={draft?.content ?? ""}
-            onClick={(ev) => ev.stopPropagation()}
-            onChange={(ev) => {
-              if (draft)
-                setEditDraft({
-                  ...draft,
-                  content: ev.target.value.slice(0, 300),
-                });
-            }}
-            className="w-full min-h-[120px] resize-none"
-          />
-        ) : (
-          <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
-            {entry?.text_content ?? (
-              <span className="text-muted-foreground italic">No notes</span>
-            )}
-          </p>
-        )}
-
-        <div className="mt-6 border-b border-border" />
-      </div>
-    );
-  };
-  const EntryCard = ({
-    entry,
-    showEdit,
-  }: {
-    entry: JournalEntry;
-    showEdit?: boolean;
-  }) => {
-    const editable = canEdit(entry.entry_date);
-    const quality = entry.day_quality || 3;
-    const qualityColor = QUALITY_COLORS[quality - 1];
-    const textExcerpt = entry.text_content
-      ? entry.text_content.length > 150
-        ? entry.text_content.substring(0, 150) + "..."
-        : entry.text_content
-      : "No notes";
-
-    return (
-      <Card
-        className="hover:bg-accent transition-colors cursor-pointer"
-        onClick={() => navigate(`/journal/${entry.entry_date}`)}
-      >
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex relative">
-                  <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
-                    {entry.day_emoji || "📅"}
-                  </div>
-                  <div
-                    className={`w-4 h-4 rounded-full absolute -right-1 -bottom-1 border-2 border-background ${qualityColor}`}
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-lg">
-                    {formatDate(entry.entry_date)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {new Date(
-                      entry.entry_date + "T00:00:00",
-                    ).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </div>
-                </div>
-              </div>
-              {entry.title && (
-                <p className="font-medium text-base mb-1">{entry.title}</p>
-              )}
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {textExcerpt}
-              </p>
-            </div>
-            <div className="flex items-center gap-1 shrink-0">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  toggleBookmark(entry);
-                }}
-                title={entry.is_bookmarked ? "Remove bookmark" : "Bookmark"}
-                className={`h-8 w-8 p-0 ${
-                  entry.is_bookmarked
-                    ? "bg-red-500/50 hover:bg-red-500/50 hover:border-red-500/50 border-red-500/50 text-white"
-                    : ""
-                }`}
-              >
-                <Bookmark className="h-4 w-4" />
-              </Button>
-              {showEdit && editable && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(ev) => {
-                    ev.stopPropagation();
-                    navigate(`/journal/${entry.entry_date}?edit=true`);
-                  }}
-                  title="Edit entry"
-                  className="h-8 w-8 p-0 hover:border-white"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
   return (
     <>
       <div className="space-y-0">
@@ -667,7 +671,7 @@ export default function JournalList() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All qualities</SelectItem>
-                  <SelectItem value="1">� Bad</SelectItem>
+                  <SelectItem value="1">🔴 Bad</SelectItem>
                   <SelectItem value="2">🟠 Poor</SelectItem>
                   <SelectItem value="3">🟡 Okay</SelectItem>
                   <SelectItem value="4">🟢 Good</SelectItem>
@@ -723,7 +727,13 @@ export default function JournalList() {
             {!loading &&
               filtersActive &&
               searchResults.map((entry) => (
-                <EntryCard key={entry.id} entry={entry} showEdit />
+                <EntryCard
+                  key={entry.id}
+                  entry={entry}
+                  showEdit
+                  onToggleBookmark={toggleBookmark}
+                  onNavigate={navigate}
+                />
               ))}
           </div>
         )}
@@ -731,7 +741,7 @@ export default function JournalList() {
         {/* Calendar view */}
         {view === "calendar" && <JournalCalendar entries={entries} />}
 
-        {/* List view — infinitely scrollable inline entries */}
+        {/* List view */}
         {view === "list" && loading && (
           <div className="text-center py-12 text-muted-foreground">
             Loading your journal entries...
@@ -746,21 +756,30 @@ export default function JournalList() {
               </div>
             )}
 
-            {/* Today + Yesterday: always shown as inline-editable */}
+            {/* Today + Yesterday: inline-editable */}
             {last2Days.map((dateStr) => (
               <EditableInlineEntry
                 key={dateStr}
                 dateStr={dateStr}
                 entry={entryByDate.get(dateStr)}
+                isActive={activeEditDate === dateStr}
+                draft={editDraft}
+                onActivate={() => activateEdit(dateStr, entryByDate.get(dateStr))}
+                onToggleBookmark={toggleBookmark}
+                onSetDraft={setEditDraft}
               />
             ))}
 
             {/* Older entries — batched via infinite scroll */}
             {visibleOlderEntries.map((entry) => (
-              <InlineEntry key={entry.id} entry={entry} />
+              <InlineEntry
+                key={entry.id}
+                entry={entry}
+                onToggleBookmark={toggleBookmark}
+                onNavigate={navigate}
+              />
             ))}
 
-            {/* Sentinel div triggers the next batch when scrolled into view */}
             {hasMoreOlder && (
               <div
                 ref={sentinelRef}
@@ -779,7 +798,7 @@ export default function JournalList() {
         )}
       </div>
 
-      {/* Fixed view toggle — sits above bottom nav (h-16) */}
+      {/* Fixed view toggle */}
       <div className="fixed bottom-16 left-0 right-0 z-40 flex justify-center pb-2 pointer-events-none">
         <div className="flex items-center gap-1 p-1 rounded-full bg-background border border-border shadow-lg pointer-events-auto">
           <button
@@ -818,9 +837,9 @@ export default function JournalList() {
         </div>
       </div>
 
-      {/* Inline edit save / cancel — bottom-right, above bottom nav */}
+      {/* Save / cancel bar — bottom-right, above nav */}
       {activeEditDate && (
-        <div className="fixed bottom-20 right-4 z-50 flex items-center gap-2 pointer-events-auto">
+        <div className="fixed bottom-20 right-4 z-50 flex items-center gap-2">
           <Button
             size="sm"
             variant="outline"
