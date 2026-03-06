@@ -143,7 +143,7 @@ export default function GroupFormFields({
                           emoji: formData.emoji === em ? "" : em,
                         })
                       }
-                      className={`h-9 w-9 rounded-md text-xl flex items-center justify-center transition-all border ${
+                      className={`h-9 w-9 rounded-md text-2xl flex items-center justify-center transition-all border ${
                         formData.emoji === em
                           ? "border-primary bg-primary/10 scale-110"
                           : "border-transparent hover:bg-accent hover:scale-105"

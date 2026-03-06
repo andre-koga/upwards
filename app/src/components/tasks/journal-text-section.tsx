@@ -53,7 +53,7 @@ export default function JournalTextSection({
                 onChange={(e) => onTextChange(e.target.value)}
                 onBlur={onBlur}
                 placeholder="Write your thoughts for the day…"
-                className="w-full resize-none bg-transparent focus:outline-none text-sm leading-relaxed placeholder:text-muted-foreground/50"
+                className="w-full resize-none bg-transparent focus:outline-none text-sm leading-relaxed placeholder:text-muted-foreground/50 text-center"
               />
             </div>
           ) : (
