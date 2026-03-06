@@ -19,6 +19,7 @@ import type {
   DailyEntry,
   ActivityPeriod,
   OneTimeTask,
+  JournalEntry,
 } from "@/lib/db/types";
 import {
   Check,
@@ -32,17 +33,26 @@ import {
   X,
 } from "lucide-react";
 
+import type { JournalFields } from "./tasks-page-content";
+
 interface DailyTasksListProps {
   activities: Activity[];
   groups: ActivityGroup[];
   onRefresh: () => void;
+  currentDate: Date;
+  onDateChange: (date: Date) => void;
+  journalEntry: JournalEntry | null;
+  journalLoading: boolean;
+  canEditJournal: boolean;
+  onJournalSave: (fields: JournalFields) => Promise<void>;
 }
 
 export default function DailyTasksList({
   activities,
   groups,
+  currentDate,
+  onDateChange,
 }: DailyTasksListProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [, setDailyEntry] = useState<DailyEntry | null>(null);
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
@@ -98,7 +108,7 @@ export default function DailyTasksList({
 
   const applyDateSelection = () => {
     const clampedDay = Math.min(popDay, daysInPopMonth);
-    setCurrentDate(new Date(popYear, popMonth, clampedDay));
+    onDateChange(new Date(popYear, popMonth, clampedDay));
     setDatePopoverOpen(false);
   };
 
@@ -332,7 +342,7 @@ export default function DailyTasksList({
   const changeDate = (days: number) => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + days);
-    setCurrentDate(newDate);
+    onDateChange(newDate);
   };
 
   const isToday = dateString === toDateStr(new Date());
@@ -518,7 +528,7 @@ export default function DailyTasksList({
 
           {!isToday && (
             <button
-              onClick={() => setCurrentDate(new Date())}
+              onClick={() => onDateChange(new Date())}
               className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="Go to today"
               title="Go to today"
