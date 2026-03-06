@@ -5,7 +5,6 @@ import type { JournalEntry } from "@/lib/db/types";
 export interface JournalFields {
     title: string | null;
     text_content: string | null;
-    day_quality: number | null;
     day_emoji: string | null;
     is_bookmarked: boolean;
     youtube_url: string | null;
@@ -14,7 +13,6 @@ export interface JournalFields {
 export interface JournalDraft {
     title: string;
     text: string;
-    quality: number | null;
     emoji: string;
     bookmarked: boolean;
     youtubeUrl: string;
@@ -24,7 +22,6 @@ export function useJournalEntry(currentDate: Date) {
     const [journalEntry, setJournalEntry] = useState<JournalEntry | null>(null);
     const [draftTitle, setDraftTitle] = useState("");
     const [draftText, setDraftText] = useState("");
-    const [draftQuality, setDraftQuality] = useState<number | null>(null);
     const [draftEmoji, setDraftEmoji] = useState("");
     const [draftBookmarked, setDraftBookmarked] = useState(false);
     const [draftYoutubeUrl, setDraftYoutubeUrl] = useState("");
@@ -35,7 +32,6 @@ export function useJournalEntry(currentDate: Date) {
     const draftRef = useRef<JournalDraft>({
         title: "",
         text: "",
-        quality: null,
         emoji: "",
         bookmarked: false,
         youtubeUrl: "",
@@ -61,18 +57,16 @@ export function useJournalEntry(currentDate: Date) {
     useEffect(() => {
         const t = journalEntry?.title ?? "";
         const tx = journalEntry?.text_content ?? "";
-        const q = journalEntry?.day_quality ?? null;
         const e = journalEntry?.day_emoji ?? "";
         const b = journalEntry?.is_bookmarked ?? false;
         const y = journalEntry?.youtube_url ?? "";
         setDraftTitle(t);
         setDraftText(tx);
-        setDraftQuality(q);
         setDraftEmoji(e);
         setDraftBookmarked(b);
         setDraftYoutubeUrl(y);
         setEmojiInput(e);
-        draftRef.current = { title: t, text: tx, quality: q, emoji: e, bookmarked: b, youtubeUrl: y };
+        draftRef.current = { title: t, text: tx, emoji: e, bookmarked: b, youtubeUrl: y };
     }, [journalEntry, currentDate]);
     /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -125,7 +119,6 @@ export function useJournalEntry(currentDate: Date) {
         void saveJournalEntry({
             title: r.title || null,
             text_content: r.text || null,
-            day_quality: r.quality,
             day_emoji: r.emoji || null,
             is_bookmarked: r.bookmarked,
             youtube_url: r.youtubeUrl || null,
@@ -136,7 +129,6 @@ export function useJournalEntry(currentDate: Date) {
         // state
         draftTitle, setDraftTitle,
         draftText, setDraftText,
-        draftQuality, setDraftQuality,
         draftEmoji, setDraftEmoji,
         draftBookmarked, setDraftBookmarked,
         draftYoutubeUrl, setDraftYoutubeUrl,

@@ -31,8 +31,12 @@ export default function TasksPageContent() {
     try {
       setLoading(true);
       const [a, g] = await Promise.all([
-        db.activities.filter((a) => !a.is_archived && !a.deleted_at).sortBy("created_at"),
-        db.activityGroups.filter((g) => !g.is_archived && !g.deleted_at).sortBy("created_at"),
+        db.activities
+          .filter((a) => !a.is_archived && !a.deleted_at)
+          .sortBy("created_at"),
+        db.activityGroups
+          .filter((g) => !g.is_archived && !g.deleted_at)
+          .sortBy("created_at"),
       ]);
       setActivities(a);
       setGroups(g);
@@ -81,7 +85,6 @@ export default function TasksPageContent() {
           emojiInput={journal.emojiInput}
           showEmojiInput={journal.showEmojiInput}
           bookmarked={journal.draftBookmarked}
-          quality={journal.draftQuality}
           onEmojiInputChange={journal.setEmojiInput}
           onEmojiCommit={(val) => {
             journal.setDraftEmoji(val);
@@ -93,11 +96,6 @@ export default function TasksPageContent() {
             const next = !journal.draftBookmarked;
             journal.setDraftBookmarked(next);
             journal.draftRef.current.bookmarked = next;
-            journal.saveDraft();
-          }}
-          onQualityChange={(val) => {
-            journal.setDraftQuality(val);
-            journal.draftRef.current.quality = val;
             journal.saveDraft();
           }}
         />

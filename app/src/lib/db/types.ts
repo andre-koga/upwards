@@ -59,7 +59,6 @@ export interface JournalEntry {
     entry_date: string; // YYYY-MM-DD
     title: string | null;
     text_content: string | null;
-    day_quality: number | null;
     day_emoji: string | null;
     is_bookmarked: boolean | null;
     youtube_url: string | null;

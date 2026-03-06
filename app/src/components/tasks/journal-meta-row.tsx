@@ -1,25 +1,15 @@
 import { Bookmark, BookmarkCheck } from "lucide-react";
 
-const QUALITY_OPTIONS = [
-  { value: 1, bg: "bg-red-400", label: "Bad" },
-  { value: 2, bg: "bg-orange-400", label: "Poor" },
-  { value: 3, bg: "bg-yellow-400", label: "Okay" },
-  { value: 4, bg: "bg-green-400", label: "Good" },
-  { value: 5, bg: "bg-blue-400", label: "Great" },
-];
-
 interface JournalMetaRowProps {
   canEdit: boolean;
   emoji: string;
   emojiInput: string;
   showEmojiInput: boolean;
   bookmarked: boolean;
-  quality: number | null;
   onEmojiInputChange: (val: string) => void;
   onEmojiCommit: (val: string) => void;
   onShowEmojiInput: (show: boolean) => void;
   onBookmarkToggle: () => void;
-  onQualityChange: (val: number | null) => void;
 }
 
 export default function JournalMetaRow({
@@ -28,14 +18,12 @@ export default function JournalMetaRow({
   emojiInput,
   showEmojiInput,
   bookmarked,
-  quality,
   onEmojiInputChange,
   onEmojiCommit,
   onShowEmojiInput,
   onBookmarkToggle,
-  onQualityChange,
 }: JournalMetaRowProps) {
-  if (!canEdit && !emoji && !quality) return null;
+  if (!canEdit && !emoji) return null;
 
   return (
     <div className="flex items-center gap-3">
@@ -93,25 +81,6 @@ export default function JournalMetaRow({
           )}
         </button>
       )}
-
-      {/* Quality dots */}
-      <div className="flex items-center gap-1 ml-auto">
-        {QUALITY_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            disabled={!canEdit}
-            onClick={() =>
-              onQualityChange(quality === opt.value ? null : opt.value)
-            }
-            title={opt.label}
-            className={`h-6 w-6 rounded-full transition-all ${opt.bg} ${
-              quality === opt.value
-                ? "ring-2 ring-offset-2 ring-foreground scale-110"
-                : "opacity-40 hover:opacity-100 disabled:hover:opacity-40"
-            }`}
-          />
-        ))}
-      </div>
     </div>
   );
 }
