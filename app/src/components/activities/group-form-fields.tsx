@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { COLOR_PALETTE } from "@/lib/colors";
 
-export const GROUP_EMOJI_OPTIONS = [
+const GROUP_EMOJI_OPTIONS = [
   "💪",
   "🏃",
   "🧘",
