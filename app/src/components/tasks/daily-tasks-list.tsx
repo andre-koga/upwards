@@ -582,18 +582,26 @@ export default function DailyTasksList({
               >
                 {isNeverTask ? (
                   <div
-                    onClick={() => incrementTask(activity.id, target)}
-                    className={`flex items-center justify-center w-4 h-4 rounded border border-destructive cursor-pointer ${
-                      isComplete ? "bg-destructive" : "bg-transparent"
-                    }`}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        incrementTask(activity.id, target);
-                      }
-                    }}
+                    onClick={
+                      isToday
+                        ? () => incrementTask(activity.id, target)
+                        : undefined
+                    }
+                    className={`flex items-center justify-center w-4 h-4 rounded border border-destructive ${
+                      isToday ? "cursor-pointer" : "cursor-default opacity-60"
+                    } ${isComplete ? "bg-destructive" : "bg-transparent"}`}
+                    role={isToday ? "button" : undefined}
+                    tabIndex={isToday ? 0 : undefined}
+                    onKeyDown={
+                      isToday
+                        ? (e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              incrementTask(activity.id, target);
+                            }
+                          }
+                        : undefined
+                    }
                   >
                     {isComplete && (
                       <X className="h-3 w-3 text-destructive-foreground" />
@@ -601,35 +609,59 @@ export default function DailyTasksList({
                   </div>
                 ) : target <= 1 ? (
                   <button
-                    onClick={() => incrementTask(activity.id, target)}
+                    onClick={
+                      isToday
+                        ? () => incrementTask(activity.id, target)
+                        : undefined
+                    }
+                    disabled={!isToday}
                     className={`flex items-center justify-center h-6 w-6 rounded-full border transition-colors ${
                       isComplete
                         ? "bg-primary text-primary-foreground border-primary"
-                        : "border-muted-foreground text-muted-foreground hover:border-foreground"
-                    }`}
-                    title={isComplete ? "Mark incomplete" : "Mark complete"}
+                        : "border-muted-foreground text-muted-foreground"
+                    } disabled:opacity-60 disabled:cursor-default`}
+                    title={
+                      isToday
+                        ? isComplete
+                          ? "Mark incomplete"
+                          : "Mark complete"
+                        : undefined
+                    }
                   >
                     {isComplete && <Check className="h-3 w-3" />}
                   </button>
                 ) : (
                   <button
-                    onClick={() => incrementTask(activity.id, target)}
+                    onClick={
+                      isToday
+                        ? () => incrementTask(activity.id, target)
+                        : undefined
+                    }
+                    disabled={!isToday}
                     className={`flex items-center justify-center min-w-[2.75rem] h-6 rounded-full text-xs font-semibold px-2 border transition-colors ${
                       isComplete
                         ? "bg-primary text-primary-foreground border-primary"
                         : count > 0
                           ? "bg-primary/20 text-primary border-primary/40"
-                          : "border-muted-foreground text-muted-foreground hover:border-foreground"
-                    }`}
-                    title={`${count} / ${target} — click to increment`}
+                          : "border-muted-foreground text-muted-foreground"
+                    } disabled:opacity-60 disabled:cursor-default`}
+                    title={
+                      isToday
+                        ? `${count} / ${target} — click to increment`
+                        : `${count} / ${target}`
+                    }
                   >
                     {count}/{target}
                   </button>
                 )}
                 <label
-                  className="flex items-center gap-2 flex-1 cursor-pointer"
+                  className={`flex items-center gap-2 flex-1 ${
+                    isToday && !isNeverTask
+                      ? "cursor-pointer"
+                      : "cursor-default"
+                  }`}
                   onClick={
-                    !isNeverTask
+                    isToday && !isNeverTask
                       ? () => incrementTask(activity.id, target)
                       : undefined
                   }
@@ -685,38 +717,47 @@ export default function DailyTasksList({
               className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent"
             >
               <button
-                onClick={() => toggleOneTimeTask(task)}
+                onClick={isToday ? () => toggleOneTimeTask(task) : undefined}
+                disabled={!isToday}
                 className={`flex items-center justify-center h-6 w-6 rounded-full border transition-colors ${
                   task.is_completed
                     ? "bg-primary text-primary-foreground border-primary"
-                    : "border-muted-foreground text-muted-foreground hover:border-foreground"
-                }`}
-                title={task.is_completed ? "Mark incomplete" : "Mark complete"}
+                    : "border-muted-foreground text-muted-foreground"
+                } disabled:opacity-60 disabled:cursor-default`}
+                title={
+                  isToday
+                    ? task.is_completed
+                      ? "Mark incomplete"
+                      : "Mark complete"
+                    : undefined
+                }
               >
                 {task.is_completed && <Check className="h-3 w-3" />}
               </button>
               <label
-                onClick={() => toggleOneTimeTask(task)}
-                className={`flex-1 text-sm cursor-pointer ${
+                onClick={isToday ? () => toggleOneTimeTask(task) : undefined}
+                className={`flex-1 text-sm ${
                   task.is_completed ? "line-through text-muted-foreground" : ""
-                }`}
+                } ${isToday ? "cursor-pointer" : "cursor-default"}`}
               >
                 {task.title}
               </label>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                onClick={() => deleteOneTimeTask(task.id)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
+              {isToday && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => deleteOneTimeTask(task.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
           ))}
         </div>
       )}
 
-      {showAddTask && (
+      {isToday && showAddTask && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center pb-20"
           onClick={() => setShowAddTask(false)}
@@ -751,12 +792,18 @@ export default function DailyTasksList({
         </div>
       )}
 
-      <button
-        onClick={() => setShowAddTask((v) => !v)}
-        className="fixed bottom-20 right-4 z-40 h-12 w-12 rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
-      >
-        {showAddTask ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-      </button>
+      {isToday && (
+        <button
+          onClick={() => setShowAddTask((v) => !v)}
+          className="fixed bottom-20 right-4 z-40 h-12 w-12 rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+        >
+          {showAddTask ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Plus className="h-5 w-5" />
+          )}
+        </button>
+      )}
     </div>
   );
 }
