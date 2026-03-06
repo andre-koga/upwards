@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PATTERN_OPTIONS } from "@/lib/colors";
+import RoutineSelector from "@/components/activities/routine-selector";
 import type { Activity } from "@/lib/db/types";
 
 interface ActivityFormFieldsProps {
@@ -86,15 +87,6 @@ export default function ActivityFormFields({
     });
   }, [initialData]);
 
-  const toggleWeekday = (day: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      weeklyDays: prev.weeklyDays.includes(day)
-        ? prev.weeklyDays.filter((d) => d !== day)
-        : [...prev.weeklyDays, day],
-    }));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -131,107 +123,26 @@ export default function ActivityFormFields({
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="routine">Routine</Label>
-        <select
-          id="routine"
-          value={formData.routine}
-          onChange={(e) =>
-            setFormData({ ...formData, routine: e.target.value })
-          }
-          className="w-full px-3 py-2 border rounded-md bg-background"
-        >
-          <option value="anytime">Anytime (no schedule)</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="custom">Custom</option>
-          <option value="never">Never (avoid this)</option>
-        </select>
-
-        {formData.routine === "weekly" && (
-          <div className="mt-3 space-y-2">
-            <Label className="text-sm">Select days:</Label>
-            <div className="flex gap-2">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                (day, index) => (
-                  <Button
-                    key={day}
-                    type="button"
-                    size="sm"
-                    variant={
-                      formData.weeklyDays.includes(index)
-                        ? "default"
-                        : "outline"
-                    }
-                    onClick={() => toggleWeekday(index)}
-                    className="w-12"
-                  >
-                    {day}
-                  </Button>
-                ),
-              )}
-            </div>
-          </div>
-        )}
-
-        {formData.routine === "monthly" && (
-          <div className="mt-3 space-y-2">
-            <Label htmlFor="monthlyDay" className="text-sm">
-              Day of month:
-            </Label>
-            <Input
-              id="monthlyDay"
-              type="number"
-              min="1"
-              max="31"
-              value={formData.monthlyDay}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  monthlyDay: parseInt(e.target.value) || 1,
-                })
-              }
-              className="w-24"
-            />
-          </div>
-        )}
-
-        {formData.routine === "custom" && (
-          <div className="mt-3 space-y-2">
-            <Label className="text-sm">Every:</Label>
-            <div className="flex gap-2 items-center">
-              <Input
-                type="number"
-                min="1"
-                value={formData.customInterval}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    customInterval:
-                      e.target.value === "" ? "" : parseInt(e.target.value),
-                  })
-                }
-                className="w-20"
-              />
-              <select
-                value={formData.customUnit}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    customUnit: e.target.value as "days" | "weeks" | "months",
-                  })
-                }
-                className="px-3 py-2 border rounded-md flex-1 bg-background"
-              >
-                <option value="days">Days</option>
-                <option value="weeks">Weeks</option>
-                <option value="months">Months</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
+      <RoutineSelector
+        routine={formData.routine}
+        weeklyDays={formData.weeklyDays}
+        monthlyDay={formData.monthlyDay}
+        customInterval={formData.customInterval}
+        customUnit={formData.customUnit}
+        onRoutineChange={(val) => setFormData({ ...formData, routine: val })}
+        onWeeklyDaysChange={(days) =>
+          setFormData({ ...formData, weeklyDays: days })
+        }
+        onMonthlyDayChange={(day) =>
+          setFormData({ ...formData, monthlyDay: day })
+        }
+        onCustomIntervalChange={(interval) =>
+          setFormData({ ...formData, customInterval: interval })
+        }
+        onCustomUnitChange={(unit) =>
+          setFormData({ ...formData, customUnit: unit })
+        }
+      />
 
       <div className="space-y-2">
         <Label htmlFor="completion_target">Completion target</Label>

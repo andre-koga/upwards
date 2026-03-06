@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArchiveRestore, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { PATTERN_OPTIONS } from "@/lib/colors";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,10 +12,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { db, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import {
-  stopCurrentActivity,
-  formatRoutineDisplay,
-} from "@/lib/activity-utils";
+import { stopCurrentActivity } from "@/lib/activity-utils";
+import ArchivedGroupsList from "@/components/activities/archived-groups-list";
+import ArchivedActivitiesList from "@/components/activities/archived-activities-list";
 
 export default function ArchivedItems() {
   const [archivedGroups, setArchivedGroups] = useState<ActivityGroup[]>([]);
@@ -116,15 +111,6 @@ export default function ArchivedItems() {
     }
   };
 
-  const getGroupName = (groupId: string) =>
-    allGroups.find((g) => g.id === groupId)?.name || "Unknown";
-
-  const getGroupColor = (groupId: string) =>
-    allGroups.find((g) => g.id === groupId)?.color || "#6b7280";
-
-  const getPatternLabel = (pattern: string | null) =>
-    PATTERN_OPTIONS.find((p) => p.value === pattern)?.name || "Solid";
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -140,52 +126,13 @@ export default function ArchivedItems() {
           <CardTitle>Archived Groups</CardTitle>
         </CardHeader>
         <CardContent>
-          {archivedGroups.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No archived groups.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {archivedGroups.map((group) => (
-                <div
-                  key={group.id}
-                  className="flex items-center justify-between p-3 border rounded-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: group.color || "#6b7280" }}
-                    />
-                    <span className="font-medium">{group.name}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleUnarchiveGroup(group.id)}
-                      title="Unarchive group"
-                    >
-                      <ArchiveRestore className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() =>
-                        setDeleteDialog({
-                          open: true,
-                          type: "group",
-                          id: group.id,
-                        })
-                      }
-                      title="Permanently delete group"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <ArchivedGroupsList
+            groups={archivedGroups}
+            onUnarchive={handleUnarchiveGroup}
+            onDelete={(id) =>
+              setDeleteDialog({ open: true, type: "group", id })
+            }
+          />
         </CardContent>
       </Card>
 
@@ -194,63 +141,14 @@ export default function ArchivedItems() {
           <CardTitle>Archived Activities</CardTitle>
         </CardHeader>
         <CardContent>
-          {archivedActivities.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No archived activities.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {archivedActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-center justify-between p-3 border rounded-md"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{activity.name}</span>
-                      <Badge
-                        variant="outline"
-                        className="text-xs"
-                        style={{
-                          borderColor: getGroupColor(activity.group_id),
-                        }}
-                      >
-                        {getGroupName(activity.group_id)}
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Pattern: {getPatternLabel(activity.pattern)} • Routine:{" "}
-                      {formatRoutineDisplay(activity.routine)}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleUnarchiveActivity(activity.id)}
-                      title="Unarchive activity"
-                    >
-                      <ArchiveRestore className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() =>
-                        setDeleteDialog({
-                          open: true,
-                          type: "activity",
-                          id: activity.id,
-                        })
-                      }
-                      title="Permanently delete activity"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <ArchivedActivitiesList
+            activities={archivedActivities}
+            allGroups={allGroups}
+            onUnarchive={handleUnarchiveActivity}
+            onDelete={(id) =>
+              setDeleteDialog({ open: true, type: "activity", id })
+            }
+          />
         </CardContent>
       </Card>
 

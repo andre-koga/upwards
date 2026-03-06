@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
-import NewActivityForm from "@/components/activities/new-activity-form";
+import ActivityFormPage from "@/components/activities/activity-form-page";
 
 export default function NewActivityPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -29,9 +29,5 @@ export default function NewActivityPage() {
     return <div className="p-4 text-muted-foreground">Loading...</div>;
   if (!group) return null;
 
-  return (
-    <div className="p-4">
-      <NewActivityForm group={group} />
-    </div>
-  );
+  return <ActivityFormPage group={group} />;
 }
