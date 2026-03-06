@@ -9,6 +9,7 @@ import {
   Upload,
   CheckCircle,
   AlertCircle,
+  Home,
 } from "lucide-react";
 import { useDataBackup } from "@/components/settings/use-data-backup";
 
@@ -23,7 +24,7 @@ export default function SettingsPageContent() {
   } = useDataBackup();
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-4 pb-24">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground">Manage your preferences</p>
@@ -144,6 +145,15 @@ export default function SettingsPageContent() {
       <div className="text-center text-xs text-muted-foreground pt-4">
         <p>Upwards — local-first habit tracker</p>
       </div>
+
+      {/* Fixed bottom-left home button */}
+      <Link
+        to="/"
+        className="fixed bottom-6 left-6 z-50 h-8 w-8 flex items-center justify-center rounded-full bg-background border border-border shadow-md text-muted-foreground hover:text-foreground transition-colors"
+        title="Home"
+      >
+        <Home className="h-3.5 w-3.5" />
+      </Link>
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import { Settings } from "lucide-react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -67,7 +69,7 @@ export default function TasksPageContent() {
   const embedUrl = getYoutubeEmbedUrl(journal.draftYoutubeUrl);
 
   return (
-    <div className="pb-28">
+    <div className="pb-20">
       <JournalYoutubeSection
         canEdit={journal.canEditJournal}
         youtubeUrl={journal.draftYoutubeUrl}
@@ -102,11 +104,6 @@ export default function TasksPageContent() {
             }}
           />
 
-          <DateNavigator
-            currentDate={currentDate}
-            onDateChange={setCurrentDate}
-          />
-
           <JournalTextSection
             canEdit={journal.canEditJournal}
             title={journal.draftTitle}
@@ -130,6 +127,24 @@ export default function TasksPageContent() {
             currentDate={currentDate}
           />
         </div>
+      </div>
+
+      {/* Fixed bottom bar */}
+      {/* Settings button — independent fixed anchor */}
+      <Link
+        to="/settings"
+        className="fixed bottom-6 left-6 z-50 h-8 w-8 flex items-center justify-center rounded-full bg-background border border-border shadow-md text-muted-foreground hover:text-foreground transition-colors"
+        title="Settings"
+      >
+        <Settings className="h-3.5 w-3.5" />
+      </Link>
+
+      {/* Date pill — centered */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <DateNavigator
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+        />
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import BottomNav from "@/components/layout/bottom-nav";
 import TodayPage from "@/pages/today";
 import ActivitiesPage from "@/pages/activities";
 import GroupPage from "@/pages/group";
@@ -33,7 +32,6 @@ export default function App() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/archived" element={<ArchivedPage />} />
       </Routes>
-      <BottomNav />
     </BrowserRouter>
   );
 }

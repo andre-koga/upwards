@@ -81,13 +81,13 @@ export default function DateNavigator({
   };
 
   return (
-    <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center gap-1 bg-background border border-border rounded-full shadow-lg px-2 py-1.5">
       <button
         onClick={() => changeDate(-1)}
-        className="h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent transition-colors"
+        className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors"
         aria-label="Previous day"
       >
-        <ChevronLeft className="h-5 w-5" />
+        <ChevronLeft className="h-4 w-4" />
       </button>
 
       <div className="flex items-center gap-1">
@@ -189,10 +189,10 @@ export default function DateNavigator({
       <button
         onClick={() => changeDate(1)}
         disabled={isToday}
-        className="h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent transition-colors disabled:opacity-30"
+        className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors disabled:opacity-30"
         aria-label="Next day"
       >
-        <ChevronRight className="h-5 w-5" />
+        <ChevronRight className="h-4 w-4" />
       </button>
     </div>
   );

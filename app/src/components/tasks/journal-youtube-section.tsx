@@ -62,8 +62,11 @@ export default function JournalYoutubeSection({
         </div>
       )}
 
+      {/* Bottom fade into background */}
+      <div className="absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-b from-transparent to-background pointer-events-none z-10" />
+
       {canEdit && (
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute bottom-2 right-2 z-20">
           <Popover open={open} onOpenChange={handleOpen}>
             <PopoverTrigger asChild>
               <button
