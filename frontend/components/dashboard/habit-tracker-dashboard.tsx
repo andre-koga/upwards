@@ -82,7 +82,7 @@ export default function HabitTrackerDashboard({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">OKHabit Tracker</h1>
+        <h1 className="text-3xl font-bold">Upwards</h1>
         <p className="text-muted-foreground">
           Track your habits, manage your time, and build better routines
         </p>

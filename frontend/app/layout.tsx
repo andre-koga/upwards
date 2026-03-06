@@ -12,7 +12,7 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "OKHabit - Habit Tracker",
+  title: "Upwards - Habit Tracker",
   description: "Track your habits and build better routines",
 };
 

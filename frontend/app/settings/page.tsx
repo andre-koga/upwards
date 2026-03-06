@@ -111,7 +111,7 @@ async function SettingsContent() {
       </Card>
 
       <div className="text-center text-xs text-muted-foreground pt-4">
-        <p>OKHabit v1.0.0</p>
+        <p>Upwards v1.0.0</p>
         <p className="mt-1">Built with Next.js & Supabase</p>
       </div>
     </div>

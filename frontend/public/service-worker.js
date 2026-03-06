@@ -1,4 +1,4 @@
-const CACHE_NAME = "okhabit-v1";
+const CACHE_NAME = "upwards-v1";
 const OFFLINE_URL = "/offline";
 
 const CACHE_ASSETS = [OFFLINE_URL, "/icon-192x192.png", "/icon-512x512.png"];
@@ -8,7 +8,7 @@ self.addEventListener("install", (event) => {
     caches
       .open(CACHE_NAME)
       .then((cache) => cache.addAll(CACHE_ASSETS))
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting()),
   );
 });
 
@@ -22,10 +22,10 @@ self.addEventListener("activate", (event) => {
             if (cache !== CACHE_NAME) {
               return caches.delete(cache);
             }
-          })
+          }),
         );
       })
-      .then(() => self.clients.claim())
+      .then(() => self.clients.claim()),
   );
 });
 
@@ -34,13 +34,13 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(event.request).catch(() => {
         return caches.match(OFFLINE_URL);
-      })
+      }),
     );
   } else {
     event.respondWith(
       caches.match(event.request).then((response) => {
         return response || fetch(event.request);
-      })
+      }),
     );
   }
 });

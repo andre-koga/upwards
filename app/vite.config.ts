@@ -14,7 +14,7 @@ export default defineConfig({
         short_name: "Upwards",
         description: "Local-first habit tracker",
         theme_color: "#000000",
-        background_color: "#ffffff",
+        background_color: "#000000",
         display: "standalone",
         start_url: "/",
         icons: [
