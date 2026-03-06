@@ -41,7 +41,6 @@ export default function TasksPageContent() {
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [journalEntry, setJournalEntry] = useState<JournalEntry | null>(null);
-  const [journalLoading, setJournalLoading] = useState(false);
 
   // Journal draft state
   const [draftTitle, setDraftTitle] = useState("");
@@ -86,7 +85,6 @@ export default function TasksPageContent() {
   const loadJournalEntry = useCallback(async () => {
     const dateStr = toDateStr(currentDate);
     try {
-      setJournalLoading(true);
       setJournalEntry(null); // clear while loading new date
       const entry = await db.journalEntries
         .where("entry_date")
@@ -96,8 +94,6 @@ export default function TasksPageContent() {
       setJournalEntry(entry ?? null);
     } catch (error) {
       console.error("Error loading journal entry:", error);
-    } finally {
-      setJournalLoading(false);
     }
   }, [currentDate]);
 
@@ -412,19 +408,12 @@ export default function TasksPageContent() {
         <div className="border-t border-border pt-2" />
 
         {/* ── Tasks ── */}
-        {journalLoading ? null : (
-          <DailyTasksList
-            activities={activities}
-            groups={groups}
-            onRefresh={loadData}
-            currentDate={currentDate}
-            onDateChange={setCurrentDate}
-            journalEntry={journalEntry}
-            journalLoading={journalLoading}
-            canEditJournal={canEditJournal}
-            onJournalSave={saveJournalEntry}
-          />
-        )}
+        <DailyTasksList
+          activities={activities}
+          groups={groups}
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+        />
       </div>
     </div>
   );

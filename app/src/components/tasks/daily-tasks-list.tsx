@@ -19,7 +19,6 @@ import type {
   DailyEntry,
   ActivityPeriod,
   OneTimeTask,
-  JournalEntry,
 } from "@/lib/db/types";
 import {
   Check,
@@ -33,18 +32,11 @@ import {
   X,
 } from "lucide-react";
 
-import type { JournalFields } from "./tasks-page-content";
-
 interface DailyTasksListProps {
   activities: Activity[];
   groups: ActivityGroup[];
-  onRefresh: () => void;
   currentDate: Date;
   onDateChange: (date: Date) => void;
-  journalEntry: JournalEntry | null;
-  journalLoading: boolean;
-  canEditJournal: boolean;
-  onJournalSave: (fields: JournalFields) => Promise<void>;
 }
 
 export default function DailyTasksList({
