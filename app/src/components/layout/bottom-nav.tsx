@@ -1,9 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { ListTodo, Folder, Settings, BookOpen } from "lucide-react";
+import { ListTodo, Folder, Settings } from "lucide-react";
 
 const navItems = [
   { href: "/", icon: ListTodo, label: "Today" },
-  { href: "/journal", icon: BookOpen, label: "Journal" },
   { href: "/activities", icon: Folder, label: "Activities" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
