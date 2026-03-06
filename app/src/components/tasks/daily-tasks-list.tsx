@@ -5,7 +5,6 @@ import { shouldShowActivity } from "@/lib/activity-utils";
 import { useDailyEntry } from "./hooks/use-daily-entry";
 import { useOneTimeTasks } from "./hooks/use-one-time-tasks";
 import { useActivityTracking } from "./hooks/use-activity-tracking";
-import DateNavigator from "./date-navigator";
 import ActivityTaskItem from "./activity-task-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import AddTaskModal from "./add-task-modal";
@@ -14,14 +13,12 @@ interface DailyTasksListProps {
   activities: Activity[];
   groups: ActivityGroup[];
   currentDate: Date;
-  onDateChange: (date: Date) => void;
 }
 
 export default function DailyTasksList({
   activities,
   groups,
   currentDate,
-  onDateChange,
 }: DailyTasksListProps) {
   const dateString = toDateStr(currentDate);
   const isToday = dateString === toDateStr(new Date());
@@ -82,8 +79,6 @@ export default function DailyTasksList({
 
   return (
     <div className="flex flex-col">
-      <DateNavigator currentDate={currentDate} onDateChange={onDateChange} />
-
       {dailyActivities.length > 0 && (
         <p className="text-xs text-muted-foreground text-right mb-2">
           {completedCount} / {nonNeverCount} ({completionRate}%)
@@ -138,4 +133,3 @@ export default function DailyTasksList({
     </div>
   );
 }
-

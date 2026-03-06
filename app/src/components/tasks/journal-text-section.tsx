@@ -32,14 +32,11 @@ export default function JournalTextSection({
                 onChange={(e) => onTitleChange(e.target.value)}
                 onBlur={onBlur}
                 placeholder="Give this day a title…"
-                className="w-full text-xl font-semibold bg-transparent focus:outline-none placeholder:text-muted-foreground/50 pr-12"
+                className="w-full text-2xl font-bold text-center bg-transparent focus:outline-none placeholder:text-muted-foreground/50"
               />
-              <span className="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                {title.length}/{TITLE_LIMIT}
-              </span>
             </div>
           ) : (
-            <p className="text-xl font-semibold">{title}</p>
+            <p className="text-2xl font-bold text-center">{title}</p>
           )}
         </div>
       )}
@@ -58,9 +55,6 @@ export default function JournalTextSection({
                 placeholder="Write your thoughts for the day…"
                 className="w-full resize-none bg-transparent focus:outline-none text-sm leading-relaxed placeholder:text-muted-foreground/50"
               />
-              <span className="text-xs text-muted-foreground float-right">
-                {text.length}/{TEXT_LIMIT}
-              </span>
             </div>
           ) : (
             <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">

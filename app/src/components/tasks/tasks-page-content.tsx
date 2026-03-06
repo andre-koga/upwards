@@ -6,6 +6,7 @@ import { useJournalEntry } from "@/components/tasks/hooks/use-journal-entry";
 import JournalYoutubeSection from "@/components/tasks/journal-youtube-section";
 import JournalMetaRow from "@/components/tasks/journal-meta-row";
 import JournalTextSection from "@/components/tasks/journal-text-section";
+import DateNavigator from "@/components/tasks/date-navigator";
 
 function getYoutubeEmbedUrl(url: string): string | null {
   if (!url.trim()) return null;
@@ -100,17 +101,10 @@ export default function TasksPageContent() {
           }}
         />
 
-        <div className="text-center pt-2">
-          <h1 className="text-5xl font-extrabold tracking-tight">
-            {currentDate.toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-            })}
-          </h1>
-          <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground mt-1">
-            {currentDate.toLocaleDateString("en-US", { weekday: "long" })}
-          </p>
-        </div>
+        <DateNavigator
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+        />
 
         <JournalTextSection
           canEdit={journal.canEditJournal}
@@ -133,7 +127,6 @@ export default function TasksPageContent() {
           activities={activities}
           groups={groups}
           currentDate={currentDate}
-          onDateChange={setCurrentDate}
         />
       </div>
     </div>
