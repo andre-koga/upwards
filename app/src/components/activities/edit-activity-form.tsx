@@ -71,11 +71,9 @@ export default function EditActivityForm({
           <CardHeader>
             <div className="flex items-center gap-3 mb-2">
               <div
-                className="w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center text-2xl"
+                className="w-12 h-12 rounded-lg flex-shrink-0"
                 style={{ backgroundColor: group.color || "#000" }}
-              >
-                {group.emoji || ""}
-              </div>
+              />
               <div>
                 <p className="text-sm text-muted-foreground">{group.name}</p>
                 <CardTitle>Edit Activity</CardTitle>

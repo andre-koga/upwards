@@ -6,7 +6,6 @@ export interface ActivityGroup {
     id: string;
     name: string;
     color: string | null;
-    emoji: string | null;
     order_index: number | null;
     is_archived: boolean | null;
     created_at: string;

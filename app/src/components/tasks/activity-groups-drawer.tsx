@@ -82,11 +82,9 @@ export default function ActivityGroupsDrawer() {
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border hover:bg-accent transition-colors text-left"
                 >
                   <div
-                    className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center text-base"
+                    className="w-9 h-9 rounded-lg flex-shrink-0"
                     style={{ backgroundColor: group.color || "#888" }}
-                  >
-                    {group.emoji || ""}
-                  </div>
+                  />
                   <span className="font-medium">{group.name}</span>
                 </button>
               ))

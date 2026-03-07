@@ -1,47 +1,58 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
-import { COLOR_PALETTE } from "@/lib/colors";
+import { X } from "lucide-react";
 
-const GROUP_EMOJI_OPTIONS = [
-  "💪",
-  "🏃",
-  "🧘",
-  "📚",
-  "💻",
-  "🎨",
-  "🎵",
-  "🍎",
-  "😴",
-  "🧹",
-  "💰",
-  "🌿",
-  "✍️",
-  "🎯",
-  "🏋️",
-  "🚴",
-  "🤸",
-  "🧗",
-  "🏊",
-  "🚶",
-  "🧠",
-  "❤️",
-  "⭐",
-  "🔥",
-];
+// --- HSL <-> Hex helpers ---
+function hexToHsl(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  let h = 0,
+    s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        break;
+      case g:
+        h = ((b - r) / d + 2) / 6;
+        break;
+      case b:
+        h = ((r - g) / d + 4) / 6;
+        break;
+    }
+  }
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const sl = s / 100,
+    ll = l / 100;
+  const a = sl * Math.min(ll, 1 - ll);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = ll - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+const DEFAULT_COLOR = "#3b82f6"; // blue-500
 
 export interface GroupFormData {
   name: string;
   color: string;
-  emoji: string;
 }
 
 interface GroupFormFieldsProps {
-  initialData?: GroupFormData;
+  initialData?: Partial<GroupFormData>;
   title: string;
   submitLabel: string;
   onSubmit: (data: GroupFormData) => Promise<void>;
@@ -54,11 +65,20 @@ export default function GroupFormFields({
   onSubmit,
 }: GroupFormFieldsProps) {
   const navigate = useNavigate();
+  const initialHex = initialData?.color ?? DEFAULT_COLOR;
+  const [hsl, setHsl] = useState<[number, number, number]>(() =>
+    hexToHsl(initialHex),
+  );
   const [formData, setFormData] = useState<GroupFormData>({
     name: initialData?.name ?? "",
-    color: initialData?.color ?? COLOR_PALETTE[0].value,
-    emoji: initialData?.emoji ?? "",
+    color: initialHex,
   });
+
+  const updateHsl = (h: number, s: number, l: number) => {
+    const hex = hslToHex(h, s, l);
+    setHsl([h, s, l]);
+    setFormData((prev) => ({ ...prev, color: hex }));
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,108 +100,142 @@ export default function GroupFormFields({
   };
 
   return (
-    <div className="p-4">
-      <div className="max-w-2xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
+    <div className="min-h-screen flex flex-col">
+      <form
+        id="group-form"
+        onSubmit={handleSubmit}
+        className="flex flex-col flex-1 px-4 pt-6 pb-28 gap-5"
+      >
+        {/* Preview + Name side by side */}
+        <div
+          className="flex items-center gap-3 border border-border rounded-full overflow-hidden"
+          style={{
+            background: `linear-gradient(to left, ${formData.color} 0%, transparent 25%)`,
+          }}
+        >
+          <input
+            id="name"
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="e.g. Health, Work, Personal…"
+            className="flex-1 bg-transparent text-lg py-1.5 pl-4 focus:outline-none transition-colors placeholder:text-muted-foreground/50"
+            required
+          />
+          <div
+            className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center shadow-sm transition-colors duration-200"
+            style={{ backgroundColor: formData.color }}
+          >
+            <span className="text-white/60 text-lg font-bold">
+              {formData.name.trim().charAt(0).toUpperCase()}
+            </span>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Group Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="e.g., Work, Health, Personal"
-                  required
+        {/* Color */}
+        <div className="space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Color
+          </p>
+          <div className="space-y-3">
+            {/* Hue */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Hue</span>
+                <span>{hsl[0]}°</span>
+              </div>
+              <div className="relative h-3 rounded-full overflow-hidden">
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background:
+                      "linear-gradient(to right,hsl(0,80%,55%),hsl(30,80%,55%),hsl(60,80%,55%),hsl(90,80%,55%),hsl(120,80%,55%),hsl(150,80%,55%),hsl(180,80%,55%),hsl(210,80%,55%),hsl(240,80%,55%),hsl(270,80%,55%),hsl(300,80%,55%),hsl(330,80%,55%),hsl(360,80%,55%))",
+                  }}
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={360}
+                  step={5}
+                  value={hsl[0]}
+                  onChange={(e) => updateHsl(+e.target.value, hsl[1], hsl[2])}
+                  className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label>Color</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {COLOR_PALETTE.map((color) => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() =>
-                        setFormData({ ...formData, color: color.value })
-                      }
-                      className={`h-6 rounded-md border-2 transition-all ${
-                        formData.color === color.value
-                          ? "border-primary scale-110"
-                          : "border-transparent hover:scale-105"
-                      }`}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
-                    >
-                      <span className="sr-only">{color.name}</span>
-                    </button>
-                  ))}
-                </div>
+            </div>
+            {/* Saturation */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Saturation</span>
+                <span>{hsl[1]}%</span>
               </div>
-
-              <div className="space-y-2">
-                <Label>Emoji (optional)</Label>
-                <div className="grid grid-cols-8 gap-1">
-                  {GROUP_EMOJI_OPTIONS.map((em) => (
-                    <button
-                      key={em}
-                      type="button"
-                      onClick={() =>
-                        setFormData({
-                          ...formData,
-                          emoji: formData.emoji === em ? "" : em,
-                        })
-                      }
-                      className={`h-9 w-9 rounded-md text-2xl flex items-center justify-center transition-all border ${
-                        formData.emoji === em
-                          ? "border-primary bg-primary/10 scale-110"
-                          : "border-transparent hover:bg-accent hover:scale-105"
-                      }`}
-                    >
-                      {em}
-                    </button>
-                  ))}
-                </div>
-                {formData.emoji && (
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, emoji: "" })}
-                    className="text-xs text-muted-foreground hover:text-foreground underline"
-                  >
-                    Clear emoji
-                  </button>
-                )}
+              <div className="relative h-3 rounded-full overflow-hidden">
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: `linear-gradient(to right, hsl(${hsl[0]},0%,${hsl[2]}%), hsl(${hsl[0]},100%,${hsl[2]}%))`,
+                  }}
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={hsl[1]}
+                  onChange={(e) => updateHsl(hsl[0], +e.target.value, hsl[2])}
+                  className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                />
               </div>
-
-              {error && <p className="text-sm text-destructive">{error}</p>}
-
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate(-1)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : submitLabel}
-                </Button>
+            </div>
+            {/* Lightness */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Lightness</span>
+                <span>{hsl[2]}%</span>
               </div>
-            </form>
-          </CardContent>
-        </Card>
+              <div className="relative h-3 rounded-full overflow-hidden">
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: `linear-gradient(to right, hsl(${hsl[0]},${hsl[1]}%,0%), hsl(${hsl[0]},${hsl[1]}%,50%), hsl(${hsl[0]},${hsl[1]}%,100%))`,
+                  }}
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={hsl[2]}
+                  onChange={(e) => updateHsl(hsl[0], hsl[1], +e.target.value)}
+                  className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </form>
+
+      {/* Fixed bottom — home button left, submit pill center */}
+      <button
+        type="button"
+        onClick={() => navigate("/")}
+        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
+        title="Home"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <button
+          type="submit"
+          form="group-form"
+          disabled={isSubmitting || !formData.name.trim()}
+          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-2.5 font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? "Saving…" : submitLabel}
+        </button>
       </div>
     </div>
   );

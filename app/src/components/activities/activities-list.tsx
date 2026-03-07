@@ -90,11 +90,9 @@ export default function ActivitiesList() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-base"
+                      className="w-8 h-8 rounded-lg flex-shrink-0"
                       style={{ backgroundColor: group.color || "#000" }}
-                    >
-                      {group.emoji || ""}
-                    </div>
+                    />
                     <span className="font-medium truncate">{group.name}</span>
                     <span className="text-sm text-muted-foreground shrink-0">
                       {getActivitiesCount(group.id)}{" "}

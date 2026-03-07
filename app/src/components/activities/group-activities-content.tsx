@@ -108,11 +108,9 @@ export default function GroupActivitiesContent({
 
         <div className="mb-4 flex items-center gap-4">
           <div
-            className="w-16 h-16 rounded-lg flex-shrink-0 flex items-center justify-center text-4xl"
+            className="w-16 h-16 rounded-lg flex-shrink-0"
             style={{ backgroundColor: group.color || "#000" }}
-          >
-            {group.emoji || ""}
-          </div>
+          />
           <div>
             <h1 className="text-3xl font-bold mb-2">{group.name}</h1>
             <p className="text-muted-foreground">
