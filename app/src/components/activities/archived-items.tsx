@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -15,8 +16,10 @@ import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { stopCurrentActivity } from "@/lib/activity-utils";
 import ArchivedGroupsList from "@/components/activities/archived-groups-list";
 import ArchivedActivitiesList from "@/components/activities/archived-activities-list";
+import { X } from "lucide-react";
 
 export default function ArchivedItems() {
+  const navigate = useNavigate();
   const [archivedGroups, setArchivedGroups] = useState<ActivityGroup[]>([]);
   const [archivedActivities, setArchivedActivities] = useState<Activity[]>([]);
   const [allGroups, setAllGroups] = useState<ActivityGroup[]>([]);
@@ -151,6 +154,15 @@ export default function ArchivedItems() {
           />
         </CardContent>
       </Card>
+
+      {/* Fixed floating back button */}
+      <button
+        onClick={() => navigate("/settings")}
+        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
+        title="Back to settings"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
 
       <AlertDialog
         open={deleteDialog.open}

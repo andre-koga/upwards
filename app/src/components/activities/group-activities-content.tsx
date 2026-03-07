@@ -19,6 +19,7 @@ import {
 } from "@/lib/activity-utils";
 import GroupActivitiesHeader from "@/components/activities/group-activities-header";
 import GroupActivitiesList from "@/components/activities/group-activities-list";
+import GroupActivitiesTimeline from "@/components/activities/group-activities-timeline";
 import { useGroupActivityTracking } from "@/components/activities/hooks/use-group-activity-tracking";
 
 interface GroupActivitiesContentProps {
@@ -147,6 +148,14 @@ export default function GroupActivitiesContent({
               activityName: activity.name,
             })
           }
+        />
+      </div>
+
+      {/* Timeline section */}
+      <div className="mt-8 pt-6">
+        <GroupActivitiesTimeline
+          groupId={group.id}
+          groupColor={group.color || "#888"}
         />
       </div>
 
