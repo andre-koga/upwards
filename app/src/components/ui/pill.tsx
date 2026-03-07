@@ -1,6 +1,8 @@
+import { memo, useMemo } from "react";
 import { Play, Square } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 
+// Memoize expensive color calculation
 function getContrastColor(hex: string): "#000000" | "#ffffff" {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -23,7 +25,7 @@ export interface PillProps {
   className?: string;
 }
 
-export default function Pill({
+function Pill({
   name,
   color = "#3b82f6",
   elapsedMs = 0,
@@ -33,7 +35,7 @@ export default function Pill({
   readOnly = false,
   className = "",
 }: PillProps) {
-  const textColor = getContrastColor(color);
+  const textColor = useMemo(() => getContrastColor(color), [color]);
 
   const inner = (
     <>
@@ -92,3 +94,5 @@ export default function Pill({
     </button>
   );
 }
+
+export default memo(Pill);

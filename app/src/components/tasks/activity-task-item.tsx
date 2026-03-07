@@ -1,3 +1,4 @@
+import { memo, useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import Pill from "@/components/ui/pill";
@@ -14,7 +15,7 @@ interface ActivityTaskItemProps {
   onStopActivity: () => void;
 }
 
-export default function ActivityTaskItem({
+function ActivityTaskItem({
   activity,
   group,
   count,
@@ -25,6 +26,15 @@ export default function ActivityTaskItem({
   onStartActivity,
   onStopActivity,
 }: ActivityTaskItemProps) {
+  const [, setTick] = useState(0);
+
+  // Only update this specific item when it's running
+  useEffect(() => {
+    if (!isCurrentActivity) return;
+    const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isCurrentActivity]);
+
   const target = activity.completion_target ?? 1;
   const isComplete = count >= target;
   const isNeverTask = activity.routine === "never";
@@ -115,3 +125,5 @@ export default function ActivityTaskItem({
     </div>
   );
 }
+
+export default memo(ActivityTaskItem);

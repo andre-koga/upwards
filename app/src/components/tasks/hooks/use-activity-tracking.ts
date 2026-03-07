@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 
@@ -11,14 +11,6 @@ export function useActivityTracking(
     getOrCreateDailyEntry: () => Promise<DailyEntry>,
 ) {
     const [activityPeriods, setActivityPeriods] = useState<ActivityPeriod[]>([]);
-    const [, setTick] = useState(0);
-
-    // Drive per-second re-renders while an activity is running
-    useEffect(() => {
-        if (!currentActivityId) return;
-        const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
-        return () => clearInterval(interval);
-    }, [currentActivityId]);
 
     const loadActivityPeriods = useCallback(async () => {
         try {

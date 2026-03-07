@@ -53,10 +53,24 @@ export function useJournalEntry(currentDate: Date) {
         location: null,
     });
 
+    // Track which date the current draft is for to prevent cross-date saves
+    const draftDateRef = useRef<string>("");
+
     const loadJournalEntry = useCallback(async () => {
         const dateStr = toDateStr(currentDate);
+        draftDateRef.current = dateStr; // Mark which date we're loading
         try {
+            // Immediately clear all draft fields to prevent stale data
             setJournalEntry(null);
+            setDraftTitle("");
+            setDraftText("");
+            setDraftEmoji("");
+            setDraftBookmarked(false);
+            setDraftYoutubeUrl("");
+            setDraftLocation(null);
+            setEmojiInput("");
+            draftRef.current = { title: "", text: "", emoji: "", bookmarked: false, youtubeUrl: "", location: null };
+
             const entry = await db.journalEntries
                 .where("entry_date")
                 .equals(dateStr)
@@ -68,7 +82,7 @@ export function useJournalEntry(currentDate: Date) {
         }
     }, [currentDate]);
 
-    // Sync draft fields whenever the persisted entry or date changes
+    // Sync draft fields whenever the persisted entry changes (NOT on date change to avoid race conditions)
     /* eslint-disable react-hooks/set-state-in-effect */
     useEffect(() => {
         const t = journalEntry?.title ?? "";
@@ -85,7 +99,7 @@ export function useJournalEntry(currentDate: Date) {
         setDraftLocation(l);
         setEmojiInput(e);
         draftRef.current = { title: t, text: tx, emoji: e, bookmarked: b, youtubeUrl: y, location: l };
-    }, [journalEntry, currentDate]);
+    }, [journalEntry]);
     /* eslint-enable react-hooks/set-state-in-effect */
 
     const canEditJournal = (() => {
@@ -110,7 +124,6 @@ export function useJournalEntry(currentDate: Date) {
 
                 if (existing) {
                     await db.journalEntries.update(existing.id, { ...fields, updated_at: n });
-                    setJournalEntry({ ...existing, ...fields, updated_at: n });
                 } else {
                     const entry: JournalEntry = {
                         id: newId(),
@@ -122,7 +135,6 @@ export function useJournalEntry(currentDate: Date) {
                         deleted_at: null,
                     };
                     await db.journalEntries.add(entry);
-                    setJournalEntry(entry);
                 }
             } catch (error) {
                 console.error("Error saving journal entry:", error);
@@ -133,6 +145,11 @@ export function useJournalEntry(currentDate: Date) {
 
     const saveDraft = useCallback(() => {
         if (!canEditJournal) return;
+        // Prevent saving if the date has changed (e.g., blur event fires during navigation)
+        const currentDateStr = toDateStr(currentDate);
+        if (draftDateRef.current !== currentDateStr) {
+            return;
+        }
         const r = draftRef.current;
         void saveJournalEntry({
             title: r.title || null,
@@ -142,11 +159,15 @@ export function useJournalEntry(currentDate: Date) {
             youtube_url: r.youtubeUrl || null,
             location: r.location || null,
         });
-    }, [canEditJournal, saveJournalEntry]);
+    }, [canEditJournal, saveJournalEntry, currentDate]);
 
     // Save only the bookmarked field — works for any day, not just editable ones
     const saveBookmark = useCallback(
         (bookmarked: boolean) => {
+            const currentDateStr = toDateStr(currentDate);
+            if (draftDateRef.current !== currentDateStr) {
+                return;
+            }
             const r = draftRef.current;
             void saveJournalEntry({
                 title: r.title || null,
@@ -157,12 +178,16 @@ export function useJournalEntry(currentDate: Date) {
                 location: r.location || null,
             });
         },
-        [saveJournalEntry],
+        [saveJournalEntry, currentDate],
     );
 
     // Save only the location field — works for any day
     const saveLocation = useCallback(
         (location: LocationData | null) => {
+            const currentDateStr = toDateStr(currentDate);
+            if (draftDateRef.current !== currentDateStr) {
+                return;
+            }
             const r = draftRef.current;
             void saveJournalEntry({
                 title: r.title || null,
@@ -173,7 +198,7 @@ export function useJournalEntry(currentDate: Date) {
                 location: location || null,
             });
         },
-        [saveJournalEntry],
+        [saveJournalEntry, currentDate],
     );
 
     return {

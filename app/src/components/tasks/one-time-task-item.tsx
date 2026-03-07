@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Trash2 } from "lucide-react";
 import type { OneTimeTask } from "@/lib/db/types";
@@ -9,7 +10,7 @@ interface OneTimeTaskItemProps {
   onDelete: (taskId: string) => void;
 }
 
-export default function OneTimeTaskItem({
+function OneTimeTaskItem({
   task,
   isToday,
   onToggle,
@@ -56,3 +57,5 @@ export default function OneTimeTaskItem({
     </div>
   );
 }
+
+export default memo(OneTimeTaskItem);

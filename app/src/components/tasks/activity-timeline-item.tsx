@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 import { Play } from "lucide-react";
 
@@ -11,7 +12,7 @@ interface ActivityTimelineItemProps {
   className?: string;
 }
 
-export default function ActivityTimelineItem({
+function ActivityTimelineItem({
   activityName,
   groupColor,
   intervalMs,
@@ -69,3 +70,5 @@ export default function ActivityTimelineItem({
     </div>
   );
 }
+
+export default memo(ActivityTimelineItem);

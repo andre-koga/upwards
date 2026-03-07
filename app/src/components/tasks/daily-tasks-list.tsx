@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { shouldShowActivity, formatTimerDisplay } from "@/lib/activity-utils";
@@ -67,68 +67,101 @@ export default function DailyTasksList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate]);
 
-  const dailyActivities = activities.filter((a) =>
-    shouldShowActivity(a, currentDate),
+  // Memoize expensive array operations
+  const dailyActivities = useMemo(
+    () => activities.filter((a) => shouldShowActivity(a, currentDate)),
+    [activities, currentDate],
   );
 
-  const isActivityComplete = (activity: Activity) =>
-    activity.routine !== "never" &&
-    (taskCounts[activity.id] || 0) >= (activity.completion_target ?? 1);
-
-  const incompleteActivities = dailyActivities.filter(
-    (a) => !isActivityComplete(a),
-  );
-  const completedActivities = dailyActivities.filter((a) =>
-    isActivityComplete(a),
+  const isActivityComplete = useCallback(
+    (activity: Activity) =>
+      activity.routine !== "never" &&
+      (taskCounts[activity.id] || 0) >= (activity.completion_target ?? 1),
+    [taskCounts],
   );
 
-  const getGroup = (activity: Activity): ActivityGroup | undefined =>
-    groups.find((g) => g.id === activity.group_id);
-
-  const nonNeverCount = dailyActivities.filter(
-    (a) => a.routine !== "never",
-  ).length;
-  const completedCount = dailyActivities.filter(
-    (a) =>
-      a.routine !== "never" &&
-      (taskCounts[a.id] || 0) >= (a.completion_target ?? 1),
-  ).length;
-  const completionRate =
-    nonNeverCount === 0
-      ? 0
-      : Math.round((completedCount / nonNeverCount) * 100);
-
-  const totalTimeSpentMs = dailyActivities.reduce(
-    (total, activity) => total + calculateActivityTime(activity.id),
-    0,
+  const incompleteActivities = useMemo(
+    () => dailyActivities.filter((a) => !isActivityComplete(a)),
+    [dailyActivities, isActivityComplete],
   );
 
-  const timelineSessions = activityPeriods
-    .slice()
-    .filter((period) => !!period.end_time)
-    .sort(
-      (left, right) =>
-        new Date(right.start_time).getTime() -
-        new Date(left.start_time).getTime(),
-    )
-    .map((period) => {
-      const activity = activities.find((a) => a.id === period.activity_id);
-      const group = activity
-        ? groups.find((groupItem) => groupItem.id === activity.group_id)
-        : undefined;
+  const completedActivities = useMemo(
+    () => dailyActivities.filter((a) => isActivityComplete(a)),
+    [dailyActivities, isActivityComplete],
+  );
 
-      const startTime = new Date(period.start_time).getTime();
-      const endTime = new Date(period.end_time!).getTime();
+  const getGroup = useCallback(
+    (activity: Activity): ActivityGroup | undefined =>
+      groups.find((g) => g.id === activity.group_id),
+    [groups],
+  );
 
-      return {
-        id: period.id,
-        activityId: period.activity_id,
-        groupId: activity?.group_id || "",
-        name: activity?.name || "Unknown activity",
-        groupColor: group?.color || "#888",
-        intervalMs: Math.max(0, endTime - startTime),
-      };
-    });
+  const { nonNeverCount, completedCount, completionRate } = useMemo(() => {
+    const nonNever = dailyActivities.filter(
+      (a) => a.routine !== "never",
+    ).length;
+    const completed = dailyActivities.filter(
+      (a) =>
+        a.routine !== "never" &&
+        (taskCounts[a.id] || 0) >= (a.completion_target ?? 1),
+    ).length;
+    const rate = nonNever === 0 ? 0 : Math.round((completed / nonNever) * 100);
+    return {
+      nonNeverCount: nonNever,
+      completedCount: completed,
+      completionRate: rate,
+    };
+  }, [dailyActivities, taskCounts]);
+
+  const totalTimeSpentMs = useMemo(
+    () =>
+      dailyActivities.reduce(
+        (total, activity) => total + calculateActivityTime(activity.id),
+        0,
+      ),
+    [dailyActivities, calculateActivityTime],
+  );
+
+  const timelineSessions = useMemo(
+    () =>
+      activityPeriods
+        .slice()
+        .filter((period) => !!period.end_time)
+        .sort(
+          (left, right) =>
+            new Date(right.start_time).getTime() -
+            new Date(left.start_time).getTime(),
+        )
+        .map((period) => {
+          const activity = activities.find((a) => a.id === period.activity_id);
+          const group = activity
+            ? groups.find((groupItem) => groupItem.id === activity.group_id)
+            : undefined;
+
+          const startTime = new Date(period.start_time).getTime();
+          const endTime = new Date(period.end_time!).getTime();
+
+          return {
+            id: period.id,
+            activityId: period.activity_id,
+            groupId: activity?.group_id || "",
+            name: activity?.name || "Unknown activity",
+            groupColor: group?.color || "#888",
+            intervalMs: Math.max(0, endTime - startTime),
+          };
+        }),
+    [activityPeriods, activities, groups],
+  );
+
+  // Stable callback for timeline navigation
+  const handleTimelineClick = useCallback(
+    (groupId: string, sessionId: string) => {
+      if (groupId) {
+        navigate(`/activities/${groupId}/sessions/${sessionId}`);
+      }
+    },
+    [navigate],
+  );
 
   return (
     <div className="flex flex-col">
@@ -243,10 +276,7 @@ export default function DailyTasksList({
               activityId={session.activityId}
               onClick={
                 session.groupId
-                  ? () =>
-                      navigate(
-                        `/activities/${session.groupId}/sessions/${session.id}`,
-                      )
+                  ? () => handleTimelineClick(session.groupId, session.id)
                   : undefined
               }
               onStartActivity={isToday ? handleStartActivity : undefined}

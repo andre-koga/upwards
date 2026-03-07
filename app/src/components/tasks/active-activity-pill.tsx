@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { Square } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 
+// Memoize expensive color calculations
 function getContrastColor(hex: string): "#000000" | "#ffffff" {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -44,7 +45,7 @@ interface ActiveActivityPillProps {
   onStop: () => void;
 }
 
-export default function ActiveActivityPill({
+function ActiveActivityPill({
   currentActivityId,
   activities,
   groups,
@@ -116,18 +117,24 @@ export default function ActiveActivityPill({
     };
   }, [currentActivityId, activities, groups]);
 
+  // Calculate color values before early returns (Rules of Hooks)
+  const activity = resolvedActivity;
+  const group = resolvedGroup;
+  const color = activity?.color || group?.color || "#3b82f6";
+  const textColor = useMemo(() => getContrastColor(color), [color]);
+  const boxShadow = useMemo(
+    () =>
+      `0 0 16px ${hexToRgba(color, 0.4)}, 0 0 34px ${hexToRgba(color, 0.28)}`,
+    [color],
+  );
+
   if (!currentActivityId) {
     return null;
   }
 
-  const activity = resolvedActivity;
   if (!activity) {
     return null;
   }
-
-  const group = resolvedGroup;
-  const color = activity.color || group?.color || "#3b82f6";
-  const textColor = getContrastColor(color);
 
   return (
     <div
@@ -135,7 +142,7 @@ export default function ActiveActivityPill({
       style={{
         backgroundColor: color,
         color: textColor,
-        boxShadow: `0 0 16px ${hexToRgba(color, 0.4)}, 0 0 34px ${hexToRgba(color, 0.28)}`,
+        boxShadow,
       }}
     >
       <div className="flex items-start justify-between gap-3">
@@ -172,3 +179,5 @@ export default function ActiveActivityPill({
     </div>
   );
 }
+
+export default memo(ActiveActivityPill);
