@@ -32,15 +32,9 @@ export default function Pill({
   className = "",
 }: PillProps) {
   const textColor = getContrastColor(color);
-  const showTimer = elapsedMs > 0 || isRunning;
 
   const inner = (
     <>
-      {showTimer && (
-        <span className="font-mono text-xs text-muted-foreground px-3 flex-shrink-0">
-          {formatTimerDisplay(elapsedMs)}
-        </span>
-      )}
       <span className="flex-1 text-left font-medium truncate px-4 text-sm">
         {name || (
           <span className="text-muted-foreground/50 font-normal">Name…</span>
@@ -54,20 +48,26 @@ export default function Pill({
         }}
       />
       <div
-        className="h-9 w-12 rounded-full flex items-center justify-center flex-shrink-0 mr-0.5 relative"
+        className="h-9 flex items-center justify-center flex-shrink-0 mr-0.5 relative rounded-full px-3 gap-2"
         style={{ backgroundColor: color }}
       >
         {isRunning ? (
           <Square
-            className="h-3.5 w-3.5"
+            className="h-3 w-3 flex-shrink-0"
             style={{ color: textColor, fill: textColor }}
           />
         ) : (
           <Play
-            className="h-3.5 w-3.5 translate-x-px"
+            className="h-3 w-3 translate-x-px flex-shrink-0"
             style={{ color: textColor, fill: textColor }}
           />
         )}
+        <span
+          className="text-xs flex-shrink-0"
+          style={{ color: textColor, fontFamily: "JetBrains Mono, monospace" }}
+        >
+          {formatTimerDisplay(elapsedMs)}
+        </span>
       </div>
     </>
   );
@@ -81,11 +81,7 @@ export default function Pill({
   }
 
   return (
-    <button
-      type="button"
-      onClick={onPlayStop}
-      className={base + " hover:bg-accent transition-colors w-full"}
-    >
+    <button type="button" onClick={onPlayStop} className={base + " w-full"}>
       {inner}
     </button>
   );

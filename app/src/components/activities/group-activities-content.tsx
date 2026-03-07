@@ -32,6 +32,12 @@ export default function GroupActivitiesContent({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [isArchived, setIsArchived] = useState(group.is_archived);
+  const [currentActivityId, setCurrentActivityId] = useState<string | null>(
+    null,
+  );
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [timerTick, setTimerTick] = useState(0);
+  const [, setTick] = useState(0);
   const [archiveDialog, setArchiveDialog] = useState<{
     open: boolean;
     activityId: string | null;
@@ -57,6 +63,58 @@ export default function GroupActivitiesContent({
   useEffect(() => {
     loadActivities();
   }, [loadActivities]);
+
+  // Drive per-second re-renders while an activity is running
+  useEffect(() => {
+    if (!currentActivityId) return;
+    const interval = setInterval(() => setTimerTick((prev) => prev + 1), 1000);
+    return () => clearInterval(interval);
+  }, [currentActivityId]);
+
+  // Calculate elapsed time for the current activity
+  useEffect(() => {
+    if (!currentActivityId) {
+      setElapsedMs(0);
+      return;
+    }
+
+    const calculateTime = async () => {
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const dailyEntry = await db.dailyEntries
+          .where("date")
+          .equals(today)
+          .filter((e) => !e.deleted_at)
+          .first();
+
+        if (!dailyEntry) {
+          setElapsedMs(0);
+          return;
+        }
+
+        const periods = await db.activityPeriods
+          .where("daily_entry_id")
+          .equals(dailyEntry.id)
+          .filter((p) => p.activity_id === currentActivityId && !p.deleted_at)
+          .toArray();
+
+        let totalMs = 0;
+        periods.forEach((period) => {
+          const start = new Date(period.start_time).getTime();
+          const end = period.end_time
+            ? new Date(period.end_time).getTime()
+            : Date.now();
+          totalMs += end - start;
+        });
+
+        setElapsedMs(totalMs);
+      } catch (error) {
+        console.error("Error calculating elapsed time:", error);
+      }
+    };
+
+    calculateTime();
+  }, [currentActivityId, timerTick]);
 
   useEffect(() => {
     setIsArchived(group.is_archived);
@@ -93,6 +151,116 @@ export default function GroupActivitiesContent({
       setIsArchived(!isArchived);
     }
   };
+
+  const handleStartStopActivity = useCallback(
+    async (activityId: string) => {
+      if (currentActivityId === activityId) {
+        // Stop the activity
+        try {
+          const today = new Date().toISOString().split("T")[0];
+          const dailyEntry = await db.dailyEntries
+            .where("date")
+            .equals(today)
+            .filter((e) => !e.deleted_at)
+            .first();
+
+          if (dailyEntry) {
+            const currentPeriod = await db.activityPeriods
+              .where("daily_entry_id")
+              .equals(dailyEntry.id)
+              .filter((p) => !p.end_time && !p.deleted_at)
+              .first();
+
+            if (currentPeriod) {
+              const n = new Date().toISOString();
+              await db.activityPeriods.update(currentPeriod.id, {
+                end_time: n,
+                updated_at: n,
+              });
+            }
+
+            await db.dailyEntries.update(dailyEntry.id, {
+              current_activity_id: null,
+              updated_at: new Date().toISOString(),
+            });
+          }
+
+          setCurrentActivityId(null);
+          setElapsedMs(0);
+        } catch (error) {
+          console.error("Error stopping activity:", error);
+        }
+      } else {
+        // Start the activity
+        try {
+          const today = new Date().toISOString().split("T")[0];
+          const n = new Date().toISOString();
+
+          // Get or create daily entry
+          let dailyEntry = await db.dailyEntries
+            .where("date")
+            .equals(today)
+            .filter((e) => !e.deleted_at)
+            .first();
+
+          if (!dailyEntry) {
+            dailyEntry = {
+              id: Math.random().toString(36).substr(2, 9),
+              date: today,
+              task_counts: null,
+              current_activity_id: null,
+              created_at: n,
+              updated_at: n,
+              synced_at: null,
+              deleted_at: null,
+            };
+            await db.dailyEntries.add(dailyEntry);
+          }
+
+          if (!dailyEntry) return;
+
+          // Stop any currently running activity
+          if (currentActivityId) {
+            const currentPeriod = await db.activityPeriods
+              .where("daily_entry_id")
+              .equals(dailyEntry.id)
+              .filter((p) => !p.end_time && !p.deleted_at)
+              .first();
+            if (currentPeriod) {
+              await db.activityPeriods.update(currentPeriod.id, {
+                end_time: n,
+                updated_at: n,
+              });
+            }
+          }
+
+          // Start new activity
+          const newPeriod = {
+            id: Math.random().toString(36).substr(2, 9),
+            daily_entry_id: dailyEntry.id,
+            activity_id: activityId,
+            start_time: n,
+            end_time: null,
+            created_at: n,
+            updated_at: n,
+            synced_at: null,
+            deleted_at: null,
+          };
+          await db.activityPeriods.add(newPeriod);
+
+          await db.dailyEntries.update(dailyEntry.id, {
+            current_activity_id: activityId,
+            updated_at: n,
+          });
+
+          setCurrentActivityId(activityId);
+        } catch (error) {
+          console.error("Error starting activity:", error);
+        }
+      }
+    },
+    [currentActivityId],
+  );
 
   if (loading) {
     return (
@@ -174,7 +342,11 @@ export default function GroupActivitiesContent({
                   <ActivityPill
                     name={activity.name}
                     color={group.color || "#888"}
-                    readOnly
+                    isRunning={currentActivityId === activity.id}
+                    elapsedMs={
+                      currentActivityId === activity.id ? elapsedMs : undefined
+                    }
+                    onClick={() => handleStartStopActivity(activity.id)}
                   />
                 </div>
                 <div className="flex gap-1 shrink-0">
