@@ -178,7 +178,7 @@ export function shouldShowActivity(activity: Activity, date: Date): boolean {
     }
 
     const routine = activity.routine || "daily";
-    if (routine === "anytime") return true;
+    if (routine === "anytime") return false;
     if (routine === "never") return true;
     if (routine === "daily") return true;
 
