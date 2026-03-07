@@ -6,7 +6,6 @@ import EditGroupPage from "@/pages/edit-group";
 import NewActivityPage from "@/pages/new-activity";
 import EditActivityPage from "@/pages/edit-activity";
 import StatsPage from "@/pages/stats";
-import TimerPage from "@/pages/timer";
 import SettingsPage from "@/pages/settings";
 import ArchivedPage from "@/pages/archived";
 
@@ -26,7 +25,6 @@ export default function App() {
           path="/activities/:groupId/edit/:activityId"
           element={<EditActivityPage />}
         />
-        <Route path="/timer" element={<TimerPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/archived" element={<ArchivedPage />} />
       </Routes>
