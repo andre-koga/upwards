@@ -41,6 +41,9 @@ export default {
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",
             },
+            fontFamily: {
+                crimson: ["Crimson Pro", "serif"],
+            },
             borderRadius: {
                 lg: "var(--radius)",
                 md: "calc(var(--radius) - 2px)",

@@ -60,7 +60,7 @@ export default function JournalTextSection({
                   onBlur();
                 }}
                 placeholder="Give this day a title…"
-                className="w-full text-2xl font-bold text-center bg-transparent focus:outline-none placeholder:text-muted-foreground/50"
+                className="w-full text-3xl font-bold text-center bg-transparent focus:outline-none placeholder:text-muted-foreground/50 font-crimson"
               />
               {titleFocused && (
                 <p className="absolute bottom-0 right-0 text-xs text-muted-foreground">
@@ -69,7 +69,9 @@ export default function JournalTextSection({
               )}
             </div>
           ) : (
-            <p className="text-2xl font-bold text-center">{title}</p>
+            <p className="text-3xl font-bold text-center font-crimson">
+              {title}
+            </p>
           )}
         </div>
       )}
@@ -92,7 +94,7 @@ export default function JournalTextSection({
                   onBlur();
                 }}
                 placeholder="Write your thoughts for the day…"
-                className="w-full resize-none bg-transparent focus:outline-none text-sm leading-relaxed placeholder:text-muted-foreground/50 text-center"
+                className="w-full resize-none bg-transparent focus:outline-none text-base leading-relaxed placeholder:text-muted-foreground/50 text-center font-crimson"
               />
               {textFocused && (
                 <p className="absolute bottom-0 right-0 text-xs text-muted-foreground">
@@ -105,7 +107,7 @@ export default function JournalTextSection({
             <div>
               <p
                 ref={textDisplayRef}
-                className={`text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap text-center ${
+                className={`text-base leading-relaxed text-muted-foreground whitespace-pre-wrap text-center font-crimson ${
                   !textExpanded ? "line-clamp-4" : ""
                 }`}
               >
