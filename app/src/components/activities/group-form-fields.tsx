@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
+import GroupPill from "@/components/activities/group-pill";
 
 // --- HSL <-> Hex helpers ---
 function hexToHsl(hex: string): [number, number, number] {
@@ -53,14 +54,12 @@ export interface GroupFormData {
 
 interface GroupFormFieldsProps {
   initialData?: Partial<GroupFormData>;
-  title: string;
   submitLabel: string;
   onSubmit: (data: GroupFormData) => Promise<void>;
 }
 
 export default function GroupFormFields({
   initialData,
-  title,
   submitLabel,
   onSubmit,
 }: GroupFormFieldsProps) {
@@ -104,37 +103,37 @@ export default function GroupFormFields({
       <form
         id="group-form"
         onSubmit={handleSubmit}
-        className="flex flex-col flex-1 px-4 pt-6 pb-28 gap-5"
+        className="flex flex-col flex-1 px-4 pt-0 pb-28 gap-8"
       >
-        {/* Preview + Name side by side */}
-        <div
-          className="flex items-center gap-3 border border-border rounded-full overflow-hidden"
-          style={{
-            background: `linear-gradient(to left, ${formData.color} 0%, transparent 25%)`,
-          }}
-        >
+        {/* Preview — centered in available top space */}
+        <div className="flex-1 flex flex-col justify-center gap-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+            Preview
+          </p>
+          <GroupPill name={formData.name} color={formData.color} readOnly />
+        </div>
+
+        <hr className="border-border -mx-4 -mb-2" />
+
+        {/* Name input */}
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+            Name
+          </p>
           <input
             id="name"
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="e.g. Health, Work, Personal…"
-            className="flex-1 bg-transparent text-lg py-1.5 pl-4 focus:outline-none transition-colors placeholder:text-muted-foreground/50"
+            className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors placeholder:text-muted-foreground/50"
             required
           />
-          <div
-            className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center shadow-sm transition-colors duration-200"
-            style={{ backgroundColor: formData.color }}
-          >
-            <span className="text-white/60 text-lg font-bold">
-              {formData.name.trim().charAt(0).toUpperCase()}
-            </span>
-          </div>
         </div>
 
         {/* Color */}
         <div className="space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
             Color
           </p>
           <div className="space-y-3">

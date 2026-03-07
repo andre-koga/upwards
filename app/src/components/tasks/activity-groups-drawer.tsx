@@ -3,6 +3,7 @@ import { Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
+import GroupPill from "@/components/activities/group-pill";
 
 export default function ActivityGroupsDrawer() {
   const navigate = useNavigate();
@@ -73,20 +74,15 @@ export default function ActivityGroupsDrawer() {
               </p>
             ) : (
               groups.map((group) => (
-                <button
+                <GroupPill
                   key={group.id}
+                  name={group.name}
+                  color={group.color || "#888"}
                   onClick={() => {
                     setOpen(false);
                     navigate(`/activities/${group.id}`);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border hover:bg-accent transition-colors text-left"
-                >
-                  <div
-                    className="w-9 h-9 rounded-lg flex-shrink-0"
-                    style={{ backgroundColor: group.color || "#888" }}
-                  />
-                  <span className="font-medium">{group.name}</span>
-                </button>
+                />
               ))
             )}
           </div>

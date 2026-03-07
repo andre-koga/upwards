@@ -23,7 +23,6 @@ export default function NewGroupForm() {
 
   return (
     <GroupFormFields
-      title="Create New Activity Group"
       submitLabel="Create Group"
       initialData={{ name: "" }}
       onSubmit={handleSubmit}

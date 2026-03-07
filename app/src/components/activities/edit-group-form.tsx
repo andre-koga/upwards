@@ -21,7 +21,6 @@ export default function EditGroupForm({ group }: EditGroupFormProps) {
 
   return (
     <GroupFormFields
-      title="Edit Activity Group"
       submitLabel="Save Changes"
       initialData={{
         name: group.name || "",

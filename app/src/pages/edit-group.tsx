@@ -29,9 +29,5 @@ export default function EditGroupPage() {
     return <div className="p-4 text-muted-foreground">Loading...</div>;
   if (!group) return null;
 
-  return (
-    <div className="p-4">
-      <EditGroupForm group={group} />
-    </div>
-  );
+  return <EditGroupForm group={group} />;
 }
