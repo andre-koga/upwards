@@ -33,7 +33,7 @@ export default function ActivityTaskItem({
       {isNeverTask ? (
         <div
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
-          className={`flex items-center justify-center h-6 w-6 rounded border border-destructive transition-colors ${
+          className={`flex items-center justify-center h-7 w-[2.75rem] rounded-md border border-destructive transition-colors ${
             isToday ? "cursor-pointer" : "cursor-default opacity-60"
           } ${isComplete ? "bg-destructive" : "bg-transparent"}`}
           role={isToday ? "button" : undefined}
@@ -49,13 +49,13 @@ export default function ActivityTaskItem({
               : undefined
           }
         >
-          {isComplete && <X className="h-3 w-3 text-destructive-foreground" />}
+          {isComplete && <X className="h-4 w-4 text-destructive-foreground" />}
         </div>
       ) : target <= 1 ? (
         <button
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
           disabled={!isToday}
-          className={`flex items-center justify-center h-6 w-6 rounded-full border transition-colors ${
+          className={`flex items-center justify-center h-7 w-[2.75rem] rounded-full border transition-colors ${
             isComplete
               ? "bg-primary text-primary-foreground border-primary"
               : "border-muted-foreground text-muted-foreground"
@@ -68,7 +68,7 @@ export default function ActivityTaskItem({
               : undefined
           }
         >
-          {isComplete && <Check className="h-3 w-3" />}
+          {isComplete && <Check className="h-4 w-4" />}
         </button>
       ) : (
         <button

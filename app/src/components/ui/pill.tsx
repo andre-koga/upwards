@@ -50,7 +50,7 @@ export default function Pill({
       <div
         className="absolute inset-y-0 right-0.5 w-full my-0.5 pointer-events-none rounded-r-full"
         style={{
-          background: `linear-gradient(to left, ${color}, transparent 25%)`,
+          background: `linear-gradient(to left, ${color}, transparent 35%)`,
         }}
       />
       <div

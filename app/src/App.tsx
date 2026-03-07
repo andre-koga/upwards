@@ -8,6 +8,7 @@ import EditActivityPage from "@/pages/edit-activity";
 import StatsPage from "@/pages/stats";
 import SettingsPage from "@/pages/settings";
 import ArchivedPage from "@/pages/archived";
+import TaskOrderPage from "@/pages/task-order";
 
 export const LOCAL_USER_ID = "local";
 
@@ -27,6 +28,7 @@ export default function App() {
         />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/archived" element={<ArchivedPage />} />
+        <Route path="/settings/task-order" element={<TaskOrderPage />} />
       </Routes>
     </BrowserRouter>
   );

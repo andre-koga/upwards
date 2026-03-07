@@ -52,14 +52,33 @@ export default function TasksPageContent() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [a, g] = await Promise.all([
-        db.activities
-          .filter((a) => !a.is_archived && !a.deleted_at)
-          .sortBy("created_at"),
+      const [loadedActivities, g] = await Promise.all([
+        db.activities.filter((a) => !a.is_archived && !a.deleted_at).toArray(),
         db.activityGroups
           .filter((g) => !g.is_archived && !g.deleted_at)
           .sortBy("created_at"),
       ]);
+
+      const a = loadedActivities.sort((left, right) => {
+        const leftOrder =
+          typeof left.order_index === "number"
+            ? left.order_index
+            : Number.POSITIVE_INFINITY;
+        const rightOrder =
+          typeof right.order_index === "number"
+            ? right.order_index
+            : Number.POSITIVE_INFINITY;
+
+        if (leftOrder !== rightOrder) {
+          return leftOrder - rightOrder;
+        }
+
+        return (
+          new Date(left.created_at).getTime() -
+          new Date(right.created_at).getTime()
+        );
+      });
+
       setActivities(a);
       setGroups(g);
     } catch (error) {

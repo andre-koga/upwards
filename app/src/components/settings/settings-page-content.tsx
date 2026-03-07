@@ -5,6 +5,7 @@ import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 import {
   Sun,
   Archive,
+  ArrowUpDown,
   Download,
   Upload,
   CheckCircle,
@@ -63,6 +64,29 @@ export default function SettingsPageContent() {
             >
               <Archive className="h-4 w-4" />
               View Archived Items
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4" />
+            Task Order
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            Choose the display order for scheduled tasks shown on the home page.
+          </p>
+          <Link to="/settings/task-order">
+            <Button
+              variant="outline"
+              className="w-full flex items-center gap-2"
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              Reorder Daily Tasks
             </Button>
           </Link>
         </CardContent>
