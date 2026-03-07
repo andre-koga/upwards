@@ -7,7 +7,7 @@ import { useOneTimeTasks } from "./hooks/use-one-time-tasks";
 import { useActivityTracking } from "./hooks/use-activity-tracking";
 import ActivityTaskItem from "./activity-task-item";
 import OneTimeTaskItem from "./one-time-task-item";
-import AddTaskModal from "./add-task-modal";
+import ActivityGroupsDrawer from "./activity-groups-drawer";
 
 interface DailyTasksListProps {
   activities: Activity[];
@@ -36,7 +36,6 @@ export default function DailyTasksList({
   const {
     oneTimeTasks,
     loadOneTimeTasks,
-    createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
   } = useOneTimeTasks(dateString);
@@ -129,7 +128,7 @@ export default function DailyTasksList({
         </div>
       )}
 
-      {isToday && <AddTaskModal onAdd={createOneTimeTask} />}
+      {isToday && <ActivityGroupsDrawer />}
     </div>
   );
 }
