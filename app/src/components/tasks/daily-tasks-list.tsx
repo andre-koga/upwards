@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { shouldShowActivity } from "@/lib/activity-utils";
+import { shouldShowActivity, formatTimerDisplay } from "@/lib/activity-utils";
 import { useDailyEntry } from "./hooks/use-daily-entry";
 import { useOneTimeTasks } from "./hooks/use-one-time-tasks";
 import { useActivityTracking } from "./hooks/use-activity-tracking";
@@ -83,6 +83,11 @@ export default function DailyTasksList({
       ? 0
       : Math.round((completedCount / nonNeverCount) * 100);
 
+  const totalTimeSpentMs = dailyActivities.reduce(
+    (total, activity) => total + calculateActivityTime(activity.id),
+    0,
+  );
+
   const timelineSessions = activityPeriods
     .slice()
     .filter((period) => !!period.end_time)
@@ -111,9 +116,12 @@ export default function DailyTasksList({
   return (
     <div className="flex flex-col">
       {dailyActivities.length > 0 && (
-        <p className="text-xs text-muted-foreground text-right mb-2">
-          {completedCount} / {nonNeverCount} ({completionRate}%)
-        </p>
+        <div className="flex items-center justify-between ml-1 mr-1.5 text-xs text-muted-foreground mb-2">
+          <span>
+            {completedCount} / {nonNeverCount} ({completionRate}%)
+          </span>
+          <span>{formatTimerDisplay(totalTimeSpentMs)}</span>
+        </div>
       )}
 
       <div className="space-y-2 flex-1">
