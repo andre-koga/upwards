@@ -3,16 +3,21 @@ import { Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
+import { getOrCreateHiddenGroupDefaultActivity } from "@/lib/activity-utils";
 import GroupPill from "@/components/activities/group-pill";
 
 interface ActivityGroupsDrawerProps {
   currentActivityId?: string | null;
   activities?: Activity[];
+  onStartActivity?: (activityId: string) => void | Promise<void>;
+  onStopActivity?: () => void | Promise<void>;
 }
 
 export default function ActivityGroupsDrawer({
   currentActivityId,
   activities = [],
+  onStartActivity,
+  onStopActivity,
 }: ActivityGroupsDrawerProps) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -94,9 +99,19 @@ export default function ActivityGroupsDrawer({
                     name={group.name}
                     color={group.color || "#888"}
                     isRunning={isRunningInGroup}
-                    onClick={() => {
+                    onNameClick={() => {
                       setOpen(false);
                       navigate(`/activities/${group.id}`);
+                    }}
+                    onActionClick={async () => {
+                      if (isRunningInGroup) {
+                        await onStopActivity?.();
+                        return;
+                      }
+
+                      const hiddenActivity =
+                        await getOrCreateHiddenGroupDefaultActivity(group);
+                      await onStartActivity?.(hiddenActivity.id);
                     }}
                   />
                 );

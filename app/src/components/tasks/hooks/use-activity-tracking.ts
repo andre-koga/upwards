@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 
+const MIN_SESSION_DURATION_MS = 5000;
+
 export function useActivityTracking(
     dateString: string,
     currentActivityId: string | null,
@@ -74,12 +76,24 @@ export function useActivityTracking(
 
                 if (openPeriods.length > 0) {
                     await Promise.all(
-                        openPeriods.map((period) =>
-                            db.activityPeriods.update(period.id, {
+                        openPeriods.map((period) => {
+                            const sessionDurationMs =
+                                new Date(n).getTime() -
+                                new Date(period.start_time).getTime();
+
+                            if (sessionDurationMs < MIN_SESSION_DURATION_MS) {
+                                return db.activityPeriods.update(period.id, {
+                                    end_time: n,
+                                    updated_at: n,
+                                    deleted_at: n,
+                                });
+                            }
+
+                            return db.activityPeriods.update(period.id, {
                                 end_time: n,
                                 updated_at: n,
-                            }),
-                        ),
+                            });
+                        }),
                     );
                 }
 
@@ -129,12 +143,24 @@ export function useActivityTracking(
 
                 if (openPeriods.length > 0) {
                     await Promise.all(
-                        openPeriods.map((period) =>
-                            db.activityPeriods.update(period.id, {
+                        openPeriods.map((period) => {
+                            const sessionDurationMs =
+                                new Date(n).getTime() -
+                                new Date(period.start_time).getTime();
+
+                            if (sessionDurationMs < MIN_SESSION_DURATION_MS) {
+                                return db.activityPeriods.update(period.id, {
+                                    end_time: n,
+                                    updated_at: n,
+                                    deleted_at: n,
+                                });
+                            }
+
+                            return db.activityPeriods.update(period.id, {
                                 end_time: n,
                                 updated_at: n,
-                            }),
-                        ),
+                            });
+                        }),
                     );
                 }
 

@@ -13,7 +13,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { stopCurrentActivity } from "@/lib/activity-utils";
+import {
+  isHiddenGroupDefaultActivity,
+  stopCurrentActivity,
+} from "@/lib/activity-utils";
 import GroupActivitiesHeader from "@/components/activities/group-activities-header";
 import GroupActivitiesList from "@/components/activities/group-activities-list";
 import { useGroupActivityTracking } from "@/components/activities/hooks/use-group-activity-tracking";
@@ -42,7 +45,11 @@ export default function GroupActivitiesContent({
       setLoading(true);
       const data = await db.activities
         .filter(
-          (a) => a.group_id === group.id && !a.is_archived && !a.deleted_at,
+          (a) =>
+            a.group_id === group.id &&
+            !a.is_archived &&
+            !a.deleted_at &&
+            !isHiddenGroupDefaultActivity(a),
         )
         .sortBy("created_at");
       setActivities(data);

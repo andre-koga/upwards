@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { Check, Play, Square, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { formatActivityTime } from "@/lib/activity-utils";
+import Pill from "@/components/ui/pill";
 
 interface ActivityTaskItemProps {
   activity: Activity;
@@ -30,7 +29,7 @@ export default function ActivityTaskItem({
   const groupColor = group?.color || "#cccccc";
 
   return (
-    <div className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent">
+    <div className="flex items-center gap-2">
       {isNeverTask ? (
         <div
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
@@ -92,49 +91,16 @@ export default function ActivityTaskItem({
         </button>
       )}
 
-      <label
-        className={`flex items-center gap-2 flex-1 ${
-          isToday && !isNeverTask ? "cursor-pointer" : "cursor-default"
-        }`}
-        onClick={
-          isToday && !isNeverTask
-            ? () => onIncrement(activity.id, target)
-            : undefined
-        }
-      >
-        <div
-          className="w-3 h-3 rounded-full"
-          style={{ backgroundColor: groupColor }}
-        />
-        <span
-          className={isComplete ? "line-through text-muted-foreground" : ""}
-        >
-          {activity.name}
-        </span>
-      </label>
-
-      {timeSpent > 0 && (
-        <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full font-mono">
-          {formatActivityTime(timeSpent)}
-        </span>
-      )}
-
-      {isToday && (
-        <Button
-          size="sm"
-          variant={isCurrentActivity ? "default" : "ghost"}
-          onClick={() => onStartActivity(activity.id)}
-          title={
-            isCurrentActivity ? "Stop this activity" : "Start this activity"
-          }
-        >
-          {isCurrentActivity ? (
-            <Square className="h-3 w-3" />
-          ) : (
-            <Play className="h-3 w-3" />
-          )}
-        </Button>
-      )}
+      <Pill
+        name={activity.name}
+        color={groupColor}
+        elapsedMs={timeSpent}
+        isRunning={isCurrentActivity}
+        onPlayStop={isToday ? () => onStartActivity(activity.id) : undefined}
+        nameClassName={isComplete ? "line-through text-muted-foreground" : ""}
+        readOnly={!isToday}
+        className="flex-1"
+      />
     </div>
   );
 }

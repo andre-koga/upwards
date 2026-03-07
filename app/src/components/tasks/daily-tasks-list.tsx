@@ -6,6 +6,7 @@ import { useDailyEntry } from "./hooks/use-daily-entry";
 import { useOneTimeTasks } from "./hooks/use-one-time-tasks";
 import { useActivityTracking } from "./hooks/use-activity-tracking";
 import ActivityTaskItem from "./activity-task-item";
+import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
@@ -42,6 +43,7 @@ export default function DailyTasksList({
   } = useOneTimeTasks(dateString);
 
   const {
+    activityPeriods,
     loadActivityPeriods,
     calculateActivityTime,
     handleStartActivity,
@@ -81,16 +83,33 @@ export default function DailyTasksList({
       ? 0
       : Math.round((completedCount / nonNeverCount) * 100);
 
+  const timelineSessions = activityPeriods
+    .slice()
+    .filter((period) => !!period.end_time)
+    .sort(
+      (left, right) =>
+        new Date(right.start_time).getTime() -
+        new Date(left.start_time).getTime(),
+    )
+    .map((period) => {
+      const activity = activities.find((a) => a.id === period.activity_id);
+      const group = activity
+        ? groups.find((groupItem) => groupItem.id === activity.group_id)
+        : undefined;
+
+      const startTime = new Date(period.start_time).getTime();
+      const endTime = new Date(period.end_time!).getTime();
+
+      return {
+        id: period.id,
+        name: activity?.name || "Unknown activity",
+        groupColor: group?.color || "#888",
+        intervalMs: Math.max(0, endTime - startTime),
+      };
+    });
+
   return (
     <div className="flex flex-col">
-      <ActiveActivityPill
-        currentActivityId={currentActivityId}
-        activities={activities}
-        groups={groups}
-        calculateActivityTime={calculateActivityTime}
-        onStop={handleStopActivity}
-      />
-
       {dailyActivities.length > 0 && (
         <p className="text-xs text-muted-foreground text-right mb-2">
           {completedCount} / {nonNeverCount} ({completionRate}%)
@@ -124,6 +143,29 @@ export default function DailyTasksList({
           ))}
       </div>
 
+      {(currentActivityId || timelineSessions.length > 0) && (
+        <div className="mt-6 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Timeline
+          </p>
+          <ActiveActivityPill
+            currentActivityId={currentActivityId}
+            activities={activities}
+            groups={groups}
+            calculateActivityTime={calculateActivityTime}
+            onStop={handleStopActivity}
+          />
+          {timelineSessions.map((session) => (
+            <ActivityTimelineItem
+              key={session.id}
+              activityName={session.name}
+              groupColor={session.groupColor}
+              intervalMs={session.intervalMs}
+            />
+          ))}
+        </div>
+      )}
+
       {oneTimeTasks.length > 0 && (
         <div className="space-y-2 mt-6">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -144,6 +186,8 @@ export default function DailyTasksList({
       <ActivityGroupsDrawer
         currentActivityId={currentActivityId}
         activities={activities}
+        onStartActivity={handleStartActivity}
+        onStopActivity={handleStopActivity}
       />
     </div>
   );

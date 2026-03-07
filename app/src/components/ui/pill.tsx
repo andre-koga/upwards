@@ -17,6 +17,7 @@ export interface PillProps {
   elapsedMs?: number;
   isRunning?: boolean;
   onPlayStop?: () => void;
+  nameClassName?: string;
   /** When true, renders as a non-interactive div instead of a button */
   readOnly?: boolean;
   className?: string;
@@ -28,6 +29,7 @@ export default function Pill({
   elapsedMs = 0,
   isRunning = false,
   onPlayStop,
+  nameClassName = "",
   readOnly = false,
   className = "",
 }: PillProps) {
@@ -35,7 +37,11 @@ export default function Pill({
 
   const inner = (
     <>
-      <span className="flex-1 text-left font-medium truncate px-4 text-sm">
+      <span
+        className={
+          "flex-1 text-left font-medium truncate px-4 text-sm " + nameClassName
+        }
+      >
         {name || (
           <span className="text-muted-foreground/50 font-normal">Name…</span>
         )}
