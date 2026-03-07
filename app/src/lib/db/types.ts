@@ -89,14 +89,3 @@ export interface OneTimeTask {
     synced_at: string | null;
     deleted_at: string | null;
 }
-
-export interface TimeEntry {
-    id: string;
-    activity_id: string;
-    time_start: string; // ISO string
-    time_end: string | null; // ISO string
-    created_at: string;
-    updated_at: string;
-    synced_at: string | null;
-    deleted_at: string | null;
-}

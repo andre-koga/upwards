@@ -18,7 +18,6 @@ export function useDataBackup() {
                 activityPeriods,
                 journalEntries,
                 oneTimeTasks,
-                timeEntries,
             ] = await Promise.all([
                 db.activityGroups.toArray(),
                 db.activities.toArray(),
@@ -26,7 +25,6 @@ export function useDataBackup() {
                 db.activityPeriods.toArray(),
                 db.journalEntries.toArray(),
                 db.oneTimeTasks.toArray(),
-                db.timeEntries.toArray(),
             ]);
 
             const backup = {
@@ -38,7 +36,6 @@ export function useDataBackup() {
                 activityPeriods,
                 journalEntries,
                 oneTimeTasks,
-                timeEntries,
             };
 
             const blob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -78,7 +75,6 @@ export function useDataBackup() {
                     db.activityPeriods,
                     db.journalEntries,
                     db.oneTimeTasks,
-                    db.timeEntries,
                 ],
                 async () => {
                     if (data.activityGroups?.length)
@@ -93,8 +89,6 @@ export function useDataBackup() {
                         await db.journalEntries.bulkPut(data.journalEntries);
                     if (data.oneTimeTasks?.length)
                         await db.oneTimeTasks.bulkPut(data.oneTimeTasks);
-                    if (data.timeEntries?.length)
-                        await db.timeEntries.bulkPut(data.timeEntries);
                 },
             );
 
