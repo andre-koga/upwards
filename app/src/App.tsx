@@ -5,6 +5,7 @@ import NewGroupPage from "@/pages/new-group";
 import EditGroupPage from "@/pages/edit-group";
 import NewActivityPage from "@/pages/new-activity";
 import EditActivityPage from "@/pages/edit-activity";
+import SessionDetailsPage from "@/pages/session-details";
 import StatsPage from "@/pages/stats";
 import SettingsPage from "@/pages/settings";
 import ArchivedPage from "@/pages/archived";
@@ -25,6 +26,10 @@ export default function App() {
         <Route
           path="/activities/:groupId/edit/:activityId"
           element={<EditActivityPage />}
+        />
+        <Route
+          path="/activities/:groupId/sessions/:sessionId"
+          element={<SessionDetailsPage />}
         />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/archived" element={<ArchivedPage />} />

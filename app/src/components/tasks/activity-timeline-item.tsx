@@ -7,6 +7,7 @@ interface ActivityTimelineItemProps {
   intervalMs: number;
   activityId: string;
   onStartActivity?: (activityId: string) => void;
+  onClick?: () => void;
   className?: string;
 }
 
@@ -16,11 +17,25 @@ export default function ActivityTimelineItem({
   intervalMs,
   activityId,
   onStartActivity,
+  onClick,
   className = "",
 }: ActivityTimelineItemProps) {
   return (
     <div
-      className={`flex items-center justify-between gap-3 px-1.5 py-1.5 ${className}`}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      className={`flex items-center justify-between gap-3 px-1.5 py-1.5 ${onClick ? "cursor-pointer rounded-md hover:bg-accent/50 transition-colors" : ""} ${className}`}
     >
       <div className="flex items-center gap-2 min-w-0">
         <div
@@ -31,7 +46,10 @@ export default function ActivityTimelineItem({
       </div>
       {onStartActivity ? (
         <button
-          onClick={() => onStartActivity(activityId)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onStartActivity(activityId);
+          }}
           className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 border border-border rounded-full px-2 py-0.5 transition-colors"
           style={{ fontFamily: "JetBrains Mono, monospace" }}
           title="Start this activity"

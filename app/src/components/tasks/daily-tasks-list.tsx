@@ -11,6 +11,7 @@ import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface DailyTasksListProps {
   activities: Activity[];
@@ -23,6 +24,7 @@ export default function DailyTasksList({
   groups,
   currentDate,
 }: DailyTasksListProps) {
+  const navigate = useNavigate();
   const dateString = toDateStr(currentDate);
   const isToday = dateString === toDateStr(new Date());
   const [showCompleted, setShowCompleted] = useState(false);
@@ -121,6 +123,7 @@ export default function DailyTasksList({
       return {
         id: period.id,
         activityId: period.activity_id,
+        groupId: activity?.group_id || "",
         name: activity?.name || "Unknown activity",
         groupColor: group?.color || "#888",
         intervalMs: Math.max(0, endTime - startTime),
@@ -238,6 +241,14 @@ export default function DailyTasksList({
               groupColor={session.groupColor}
               intervalMs={session.intervalMs}
               activityId={session.activityId}
+              onClick={
+                session.groupId
+                  ? () =>
+                      navigate(
+                        `/activities/${session.groupId}/sessions/${session.id}`,
+                      )
+                  : undefined
+              }
               onStartActivity={isToday ? handleStartActivity : undefined}
             />
           ))}
