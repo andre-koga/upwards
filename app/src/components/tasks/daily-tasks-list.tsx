@@ -120,6 +120,7 @@ export default function DailyTasksList({
 
       return {
         id: period.id,
+        activityId: period.activity_id,
         name: activity?.name || "Unknown activity",
         groupColor: group?.color || "#888",
         intervalMs: Math.max(0, endTime - startTime),
@@ -207,9 +208,22 @@ export default function DailyTasksList({
 
       {(currentActivityId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Timeline
-          </p>
+          <div className="flex items-center justify-between ml-1 mr-1.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Timeline
+            </p>
+            <span className="text-xs text-muted-foreground">
+              {formatTimerDisplay(
+                timelineSessions.reduce(
+                  (total, session) => total + session.intervalMs,
+                  0,
+                ) +
+                  (currentActivityId
+                    ? calculateActivityTime(currentActivityId)
+                    : 0),
+              )}
+            </span>
+          </div>
           <ActiveActivityPill
             currentActivityId={currentActivityId}
             activities={activities}
@@ -223,6 +237,8 @@ export default function DailyTasksList({
               activityName={session.name}
               groupColor={session.groupColor}
               intervalMs={session.intervalMs}
+              activityId={session.activityId}
+              onStartActivity={isToday ? handleStartActivity : undefined}
             />
           ))}
         </div>
