@@ -56,12 +56,14 @@ interface GroupFormFieldsProps {
   initialData?: Partial<GroupFormData>;
   submitLabel: string;
   onSubmit: (data: GroupFormData) => Promise<void>;
+  backPath?: string;
 }
 
 export default function GroupFormFields({
   initialData,
   submitLabel,
   onSubmit,
+  backPath = "/",
 }: GroupFormFieldsProps) {
   const navigate = useNavigate();
   const initialHex = initialData?.color ?? DEFAULT_COLOR;
@@ -126,7 +128,7 @@ export default function GroupFormFields({
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="e.g. Health, Work, Personal…"
-            className="w-full bg-muted/40 border border-border rounded-xl px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors placeholder:text-muted-foreground/50"
+            className="w-full bg-muted/40 border border-border rounded-full px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors placeholder:text-muted-foreground/50"
             required
           />
         </div>
@@ -219,9 +221,9 @@ export default function GroupFormFields({
       {/* Fixed bottom — home button left, submit pill center */}
       <button
         type="button"
-        onClick={() => navigate("/")}
+        onClick={() => navigate(backPath)}
         className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Home"
+        title="Back"
       >
         <X className="h-3.5 w-3.5" />
       </button>

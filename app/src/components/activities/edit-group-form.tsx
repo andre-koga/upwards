@@ -27,6 +27,7 @@ export default function EditGroupForm({ group }: EditGroupFormProps) {
         color: group.color || undefined,
       }}
       onSubmit={handleSubmit}
+      backPath={`/activities/${group.id}`}
     />
   );
 }

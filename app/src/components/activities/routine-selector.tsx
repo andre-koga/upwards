@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -38,25 +44,23 @@ export default function RoutineSelector({
   };
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="routine">Routine</Label>
-      <select
-        id="routine"
-        value={routine}
-        onChange={(e) => onRoutineChange(e.target.value)}
-        className="w-full px-3 py-2 border rounded-md bg-background"
-      >
-        <option value="anytime">Anytime (no schedule)</option>
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-        <option value="custom">Custom</option>
-        <option value="never">Never (avoid this)</option>
-      </select>
+    <div className="space-y-0">
+      <Select value={routine} onValueChange={onRoutineChange}>
+        <SelectTrigger className="w-full rounded-full py-2.5 text-base border-border bg-muted/40">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="anytime">Anytime (no schedule)</SelectItem>
+          <SelectItem value="daily">Daily</SelectItem>
+          <SelectItem value="weekly">Weekly</SelectItem>
+          <SelectItem value="monthly">Monthly</SelectItem>
+          <SelectItem value="custom">Custom</SelectItem>
+          <SelectItem value="never">Never (avoid this)</SelectItem>
+        </SelectContent>
+      </Select>
 
       {routine === "weekly" && (
-        <div className="mt-3 space-y-2">
-          <Label className="text-sm">Select days:</Label>
+        <div className="pt-3">
           <div className="flex gap-2">
             {DAYS.map((day, index) => (
               <Button
@@ -65,7 +69,7 @@ export default function RoutineSelector({
                 size="sm"
                 variant={weeklyDays.includes(index) ? "default" : "outline"}
                 onClick={() => toggleWeekday(index)}
-                className="w-12"
+                className="flex-1 rounded-full"
               >
                 {day}
               </Button>
@@ -75,10 +79,8 @@ export default function RoutineSelector({
       )}
 
       {routine === "monthly" && (
-        <div className="mt-3 space-y-2">
-          <Label htmlFor="monthlyDay" className="text-sm">
-            Day of month:
-          </Label>
+        <div className="pt-3 space-y-2">
+          <p className="text-xs font-semibold">Day of month:</p>
           <Input
             id="monthlyDay"
             type="number"
@@ -92,8 +94,8 @@ export default function RoutineSelector({
       )}
 
       {routine === "custom" && (
-        <div className="mt-3 space-y-2">
-          <Label className="text-sm">Every:</Label>
+        <div className="pt-3 space-y-2">
+          <p className="text-xs font-semibold">Every:</p>
           <div className="flex gap-2 items-center">
             <Input
               type="number"
@@ -106,19 +108,16 @@ export default function RoutineSelector({
               }
               className="w-20"
             />
-            <select
-              value={customUnit}
-              onChange={(e) =>
-                onCustomUnitChange(
-                  e.target.value as "days" | "weeks" | "months",
-                )
-              }
-              className="px-3 py-2 border rounded-md flex-1 bg-background"
-            >
-              <option value="days">Days</option>
-              <option value="weeks">Weeks</option>
-              <option value="months">Months</option>
-            </select>
+            <Select value={customUnit} onValueChange={onCustomUnitChange}>
+              <SelectTrigger className="flex-1 rounded-full border-border bg-muted/40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="days">Days</SelectItem>
+                <SelectItem value="weeks">Weeks</SelectItem>
+                <SelectItem value="months">Months</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       )}

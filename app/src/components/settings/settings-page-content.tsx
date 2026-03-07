@@ -9,7 +9,7 @@ import {
   Upload,
   CheckCircle,
   AlertCircle,
-  Home,
+  X,
 } from "lucide-react";
 import { useDataBackup } from "@/components/settings/use-data-backup";
 
@@ -152,7 +152,7 @@ export default function SettingsPageContent() {
         className="fixed bottom-6 left-6 z-50 h-10 w-10 flex items-center justify-center rounded-full bg-background border border-border shadow-md text-muted-foreground hover:text-foreground transition-colors"
         title="Home"
       >
-        <Home className="h-3.5 w-3.5" />
+        <X className="h-3.5 w-3.5" />
       </Link>
     </div>
   );

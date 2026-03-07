@@ -1,8 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
 import ActivityFormFields from "@/components/activities/activity-form-fields";
@@ -12,7 +8,6 @@ interface NewActivityFormProps {
 }
 
 export default function NewActivityForm({ group }: NewActivityFormProps) {
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +50,6 @@ export default function NewActivityForm({ group }: NewActivityFormProps) {
         synced_at: null,
         deleted_at: null,
       });
-      navigate(`/activities/${group.id}`);
     } catch (error) {
       console.error("Error creating activity:", error);
       setError("Failed to create activity. Please try again.");
@@ -65,37 +59,13 @@ export default function NewActivityForm({ group }: NewActivityFormProps) {
   };
 
   return (
-    <div className="p-4">
-      <div className="max-w-2xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div
-                className="w-12 h-12 rounded-lg flex-shrink-0"
-                style={{ backgroundColor: group.color || "#000" }}
-              />
-              <div>
-                <p className="text-sm text-muted-foreground">{group.name}</p>
-                <CardTitle>Create New Activity</CardTitle>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ActivityFormFields
-              onSubmit={handleSubmit}
-              onCancel={() => navigate(-1)}
-              submitLabel="Create Activity"
-              isSubmitting={isSubmitting}
-              error={error}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <ActivityFormFields
+      group={group}
+      onSubmit={handleSubmit}
+      submitLabel="Create Activity"
+      isSubmitting={isSubmitting}
+      error={error}
+      backPath={`/activities/${group.id}`}
+    />
   );
 }

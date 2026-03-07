@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { db, now } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Pencil, Archive } from "lucide-react";
+import { X, Plus, Pencil, Archive, ArchiveRestore } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PATTERN_OPTIONS } from "@/lib/colors";
 import {
@@ -32,6 +31,7 @@ export default function GroupActivitiesContent({
   const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isArchived, setIsArchived] = useState(group.is_archived);
   const [archiveDialog, setArchiveDialog] = useState<{
     open: boolean;
     activityId: string | null;
@@ -58,13 +58,17 @@ export default function GroupActivitiesContent({
     loadActivities();
   }, [loadActivities]);
 
+  useEffect(() => {
+    setIsArchived(group.is_archived);
+  }, [group.is_archived]);
+
   const getPatternDisplay = (pattern: string | null) => {
     if (!pattern) return null;
     const opt = PATTERN_OPTIONS.find((p) => p.value === pattern);
     return opt?.name || pattern;
   };
 
-  const handleArchive = async () => {
+  const handleArchiveActivity = async () => {
     if (!archiveDialog.activityId) return;
     try {
       await stopCurrentActivity({ activityId: archiveDialog.activityId });
@@ -80,6 +84,22 @@ export default function GroupActivitiesContent({
     }
   };
 
+  const handleArchiveGroup = async () => {
+    try {
+      const newArchiveStatus = !isArchived;
+      setIsArchived(newArchiveStatus);
+      const n = now();
+      await db.activityGroups.update(group.id, {
+        is_archived: newArchiveStatus,
+        updated_at: n,
+      });
+    } catch (error) {
+      console.error("Error archiving group:", error);
+      // Revert on error
+      setIsArchived(!isArchived);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -89,46 +109,70 @@ export default function GroupActivitiesContent({
   }
 
   return (
-    <div className="pb-20">
-      {/* Full-bleed gradient banner */}
-      <div
-        className="w-full h-40"
-        style={{
-          background: `linear-gradient(to bottom, ${group.color || "#888"} 0%, transparent 100%)`,
-        }}
-      />
-
-      {/* Group title — overlaps the gradient */}
-      <div className="px-4 -mt-10 mb-6 text-center">
-        <h1 className="text-3xl font-bold">{group.name}</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {activities.length}{" "}
-          {activities.length === 1 ? "activity" : "activities"}
-        </p>
+    <div className="pb-20 overflow-y-scroll">
+      {/* Full-bleed gradient banner with edit button and title */}
+      <div className="relative w-full h-40">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(to bottom, ${group.color || "#888"} 0%, transparent 100%)`,
+          }}
+        />
+        {/* Bottom fade into background */}
+        <div className="absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-b from-transparent to-background pointer-events-none" />
+        {/* Group title — positioned in the fade zone */}
+        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-full px-4 text-center">
+          {isArchived && (
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+              Archived
+            </p>
+          )}
+          <h1 className="text-3xl font-bold">{group.name}</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {activities.length}{" "}
+            {activities.length === 1 ? "activity" : "activities"}
+          </p>
+        </div>
+        {/* Archive button — below edit button */}
+        <div className="absolute -bottom-12 right-3 z-20">
+          <button
+            onClick={handleArchiveGroup}
+            className="h-7 w-7 flex items-center border border-muted justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
+            title={isArchived ? "Unarchive group" : "Archive group"}
+          >
+            {isArchived ? (
+              <ArchiveRestore className="h-3.5 w-3.5 text-muted-foreground" />
+            ) : (
+              <Archive className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
+          </button>
+        </div>
+        {/* Edit button */}
+        <div className="absolute -bottom-4 right-3 z-20">
+          <button
+            onClick={() => navigate(`/activities/${group.id}/edit`)}
+            className="h-7 w-7 flex items-center border border-muted justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
+            title="Edit group"
+          >
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+        </div>
       </div>
 
-      <div className="px-4">
-        <button
-          onClick={() => navigate(`/activities/${group.id}/new`)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm mb-6"
-        >
-          <span>New Activity</span>
-          <Plus className="h-4 w-4 shrink-0" />
-        </button>
+      <div className="mb-6" />
 
-        {activities.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">
-                No activities yet. Create your first activity for this group!
-              </p>
-              <Button onClick={() => navigate(`/activities/${group.id}/new`)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Activity
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
+      <div className="px-4">
+        <div className="flex justify-center mb-6">
+          <button
+            onClick={() => navigate(`/activities/${group.id}/new`)}
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            New Activity
+          </button>
+        </div>
+
+        {activities.length === 0 ? null : (
           <div className="space-y-2">
             {activities.map((activity) => (
               <div
@@ -180,20 +224,13 @@ export default function GroupActivitiesContent({
         )}
       </div>
 
-      {/* Fixed floating nav buttons */}
+      {/* Fixed floating back button */}
       <button
         onClick={() => navigate("/")}
         className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
         title="Back to home"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-      </button>
-      <button
-        onClick={() => navigate(`/activities/${group.id}/edit`)}
-        className="fixed bottom-6 right-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Edit group"
-      >
-        <Pencil className="h-3.5 w-3.5" />
+        <X className="h-3.5 w-3.5" />
       </button>
 
       <AlertDialog
@@ -217,7 +254,7 @@ export default function GroupActivitiesContent({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleArchive}>
+            <AlertDialogAction onClick={handleArchiveActivity}>
               Archive
             </AlertDialogAction>
           </AlertDialogFooter>
