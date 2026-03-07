@@ -1,76 +1,46 @@
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useMemo } from "react";
+import { ChevronLeft, ChevronRight, RotateCcw, Heart } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { toDateStr } from "@/lib/db";
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 interface DateNavigatorProps {
   currentDate: Date;
   onDateChange: (date: Date) => void;
+  entryDates?: Set<string>;
+  bookmarkedDates?: Set<string>;
+  onCalendarOpen?: () => void;
 }
 
 export default function DateNavigator({
   currentDate,
   onDateChange,
+  entryDates = new Set(),
+  bookmarkedDates = new Set(),
+  onCalendarOpen,
 }: DateNavigatorProps) {
   const today = new Date();
   const isToday = toDateStr(currentDate) === toDateStr(today);
 
-  const YEARS = Array.from(
-    { length: today.getFullYear() - 2020 + 1 },
-    (_, i) => 2020 + i,
-  );
-
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
-  const [popMonth, setPopMonth] = useState(currentDate.getMonth());
-  const [popDay, setPopDay] = useState(currentDate.getDate());
-  const [popYear, setPopYear] = useState(currentDate.getFullYear());
-
-  const daysInPopMonth = (() => {
-    const maxDay = new Date(popYear, popMonth + 1, 0).getDate();
-    const isCurrentMonthYear =
-      popYear === today.getFullYear() && popMonth === today.getMonth();
-    return isCurrentMonthYear ? Math.min(maxDay, today.getDate()) : maxDay;
-  })();
+  const [calendarMonth, setCalendarMonth] = useState(currentDate);
 
   const handlePopoverOpen = (open: boolean) => {
     if (open) {
-      setPopMonth(currentDate.getMonth());
-      setPopDay(currentDate.getDate());
-      setPopYear(currentDate.getFullYear());
+      setCalendarMonth(currentDate);
+      onCalendarOpen?.();
     }
     setDatePopoverOpen(open);
   };
 
-  const applyDateSelection = () => {
-    const clampedDay = Math.min(popDay, daysInPopMonth);
-    onDateChange(new Date(popYear, popMonth, clampedDay));
+  const handleDaySelect = (date: Date | undefined) => {
+    if (!date) return;
+    onDateChange(date);
     setDatePopoverOpen(false);
   };
 
@@ -79,6 +49,41 @@ export default function DateNavigator({
     newDate.setDate(newDate.getDate() + days);
     onDateChange(newDate);
   };
+
+  const calendarComponents = useMemo(
+    () => ({
+      DayButton: ({
+        day,
+        modifiers,
+        className,
+        ...props
+      }: React.ComponentProps<typeof CalendarDayButton>) => {
+        const d = day.date;
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const isBookmarked = bookmarkedDates.has(dateStr);
+        const hasEntry = entryDates.has(dateStr);
+        return (
+          <CalendarDayButton
+            day={day}
+            modifiers={modifiers}
+            className={cn("relative", className)}
+            {...props}
+          >
+            {props.children}
+            {isBookmarked ? (
+              <Heart
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 fill-red-500 text-red-500 opacity-90 pointer-events-none"
+                style={{ width: 10, height: 10 }}
+              />
+            ) : hasEntry ? (
+              <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-current opacity-50 pointer-events-none" />
+            ) : null}
+          </CalendarDayButton>
+        );
+      },
+    }),
+    [entryDates, bookmarkedDates],
+  );
 
   return (
     <div className="flex items-center gap-0.5 bg-background border border-border rounded-full shadow-lg px-1 py-1">
@@ -101,76 +106,25 @@ export default function DateNavigator({
               })}
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 p-4 space-y-3" align="center">
-            <Select
-              value={String(popMonth)}
-              onValueChange={(v) => {
-                const m = Number(v);
-                setPopMonth(m);
-                setPopDay((d) =>
-                  Math.min(d, new Date(popYear, m + 1, 0).getDate()),
-                );
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((name, i) => {
-                  const disabled =
-                    popYear === today.getFullYear() && i > today.getMonth();
-                  return (
-                    <SelectItem key={i} value={String(i)} disabled={disabled}>
-                      {name}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={String(popDay)}
-              onValueChange={(v) => setPopDay(Number(v))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: daysInPopMonth }, (_, i) => i + 1).map(
-                  (d) => (
-                    <SelectItem key={d} value={String(d)}>
-                      {d}
-                    </SelectItem>
-                  ),
-                )}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={String(popYear)}
-              onValueChange={(v) => {
-                const y = Number(v);
-                setPopYear(y);
-                setPopDay((d) =>
-                  Math.min(d, new Date(y, popMonth + 1, 0).getDate()),
-                );
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {YEARS.map((y) => (
-                  <SelectItem key={y} value={String(y)}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button className="w-full" onClick={applyDateSelection}>
-              Go
-            </Button>
+          <PopoverContent
+            className="w-[calc(100vw-2rem)] max-w-sm p-2 rounded-2xl overflow-hidden"
+            align="center"
+            sideOffset={16}
+          >
+            <Calendar
+              mode="single"
+              selected={currentDate}
+              onSelect={handleDaySelect}
+              month={calendarMonth}
+              onMonthChange={setCalendarMonth}
+              disabled={{ after: today }}
+              captionLayout="dropdown"
+              startMonth={new Date(2020, 0)}
+              endMonth={today}
+              fixedWeeks
+              className="w-full [--cell-size:3rem]"
+              components={calendarComponents}
+            />
           </PopoverContent>
         </Popover>
 

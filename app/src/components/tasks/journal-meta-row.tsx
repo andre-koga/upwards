@@ -1,4 +1,4 @@
-import { Bookmark, BookmarkCheck } from "lucide-react";
+import { Heart } from "lucide-react";
 
 interface JournalMetaRowProps {
   canEdit: boolean;
@@ -25,11 +25,10 @@ export default function JournalMetaRow({
         }`}
         title={bookmarked ? "Remove bookmark" : "Bookmark this day"}
       >
-        {bookmarked ? (
-          <BookmarkCheck className="h-5 w-5" />
-        ) : (
-          <Bookmark className="h-5 w-5" />
-        )}
+        <Heart
+          className="h-5 w-5"
+          fill={bookmarked ? "currentColor" : "none"}
+        />
       </button>
     </div>
   );

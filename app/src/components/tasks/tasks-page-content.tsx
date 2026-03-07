@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Settings, Bookmark, MapPin, MapPinOff } from "lucide-react";
+import { Settings, Heart, MapPin, MapPinOff } from "lucide-react";
 import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -35,6 +35,10 @@ export default function TasksPageContent() {
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [entryDates, setEntryDates] = useState<Set<string>>(new Set());
+  const [bookmarkedDates, setBookmarkedDates] = useState<Set<string>>(
+    new Set(),
+  );
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [locationInputVal, setLocationInputVal] = useState("");
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -65,9 +69,35 @@ export default function TasksPageContent() {
     }
   }, []);
 
+  const loadJournalMeta = useCallback(async () => {
+    try {
+      const entries = await db.journalEntries
+        .filter((e) => !e.deleted_at)
+        .toArray();
+      setEntryDates(new Set(entries.map((e) => e.entry_date)));
+      setBookmarkedDates(
+        new Set(
+          entries.filter((e) => e.is_bookmarked).map((e) => e.entry_date),
+        ),
+      );
+    } catch (err) {
+      console.error("Error loading journal meta:", err);
+    }
+  }, []);
+
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    loadJournalMeta();
+  }, [loadJournalMeta]);
+
+  // Keep calendar dots fresh when bookmark on current day changes
+  useEffect(() => {
+    void loadJournalMeta();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [journal.draftBookmarked]);
 
   useEffect(() => {
     loadJournalEntry();
@@ -326,7 +356,7 @@ export default function TasksPageContent() {
                         : "Bookmark this day"
                     }
                   >
-                    <Bookmark
+                    <Heart
                       className={`h-3 w-3 ${
                         journal.draftBookmarked ? "text-red-500" : ""
                       }`}
@@ -363,6 +393,9 @@ export default function TasksPageContent() {
         <DateNavigator
           currentDate={currentDate}
           onDateChange={setCurrentDate}
+          entryDates={entryDates}
+          bookmarkedDates={bookmarkedDates}
+          onCalendarOpen={loadJournalMeta}
         />
       </div>
     </div>

@@ -44,8 +44,13 @@ export const newId = () => uuidv4();
 // Helper: today as YYYY-MM-DD
 export const todayStr = () => new Date().toISOString().split("T")[0];
 
-// Helper: date to YYYY-MM-DD string
-export const toDateStr = (d: Date): string => d.toISOString().split("T")[0];
+// Helper: date to YYYY-MM-DD string (local time, not UTC)
+export const toDateStr = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
 
 // Re-export types for convenience
 export type {
