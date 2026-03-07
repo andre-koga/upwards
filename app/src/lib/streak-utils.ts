@@ -3,7 +3,15 @@ import type { Activity, ActivityStreak, DailyEntry } from "@/lib/db/types";
 import { shouldShowActivity } from "@/lib/activity-utils";
 
 function isStreakEligible(activity: Activity): boolean {
-    return activity.routine !== "never" && activity.routine !== "anytime";
+    return activity.routine !== "anytime";
+}
+
+function shouldIncrementStreak(activity: Activity, isCompleted: boolean): boolean {
+    if (activity.routine === "never") {
+        return !isCompleted;
+    }
+
+    return isCompleted;
 }
 
 function startOfDay(date: Date): Date {
@@ -136,7 +144,9 @@ async function ensureStreakForActivityOnDate(
 
         const dateStr = toDateStr(cursorDay);
         const isCompleted = isCompletedOnDate(activity, entriesByDate.get(dateStr));
-        const nextStreak = isCompleted ? previousStreak + 1 : 0;
+        const nextStreak = shouldIncrementStreak(activity, isCompleted)
+            ? previousStreak + 1
+            : 0;
         const existingRow = streakRowByDate.get(dateStr);
 
         await upsertActivityStreak(activity.id, dateStr, nextStreak, existingRow);
