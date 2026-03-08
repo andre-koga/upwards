@@ -1,7 +1,14 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
+import { syncEngine } from "@/lib/sync";
+import {
+  supabase,
+  isAuthenticated,
+  isSupabaseConfigured,
+} from "@/lib/supabase";
 import {
   Sun,
   Archive,
@@ -11,10 +18,20 @@ import {
   CheckCircle,
   AlertCircle,
   X,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 import { useDataBackup } from "@/components/settings/use-data-backup";
 
 export default function SettingsPageContent() {
+  const [isAuthed, setIsAuthed] = useState(isAuthenticated());
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [showAuthForm, setShowAuthForm] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const {
     fileInputRef,
     exportStatus,
@@ -23,6 +40,80 @@ export default function SettingsPageContent() {
     handleExport,
     handleImport,
   } = useDataBackup();
+
+  useEffect(() => {
+    void (async () => {
+      if (!supabase) return;
+      const { data } = await supabase.auth.getSession();
+      setCurrentUserEmail(data.session?.user?.email ?? null);
+    })();
+
+    const subscription = supabase
+      ? supabase.auth.onAuthStateChange((event, session) => {
+          setIsAuthed(Boolean(session));
+          setCurrentUserEmail(session?.user?.email ?? null);
+          if (event === "SIGNED_IN") {
+            setShowAuthForm(false);
+            setEmail("");
+            setPassword("");
+          }
+        }).data.subscription
+      : null;
+
+    return () => subscription?.unsubscribe();
+  }, []);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Sign in failed");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      if (error) throw error;
+      setAuthError("Check your email to confirm your account!");
+      setEmail("");
+      setPassword("");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Sign up failed");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    if (!supabase) return;
+    await syncEngine.pushBeforeSignOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Sign out failed");
+    }
+  };
 
   return (
     <div className="space-y-4 p-4 pb-24">
@@ -45,6 +136,96 @@ export default function SettingsPageContent() {
           </div>
         </CardContent>
       </Card>
+
+      {isSupabaseConfigured && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Sync Account</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {isAuthed ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Signed in as{" "}
+                  <span className="text-foreground font-medium">
+                    {currentUserEmail ?? "Unknown email"}
+                  </span>
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center gap-2"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center gap-2"
+                  onClick={() => {
+                    setShowAuthForm((prev) => !prev);
+                    setAuthError(null);
+                  }}
+                >
+                  <LogIn className="h-4 w-4" />
+                  {showAuthForm ? "Hide Login" : "Sign In / Sign Up"}
+                </Button>
+
+                {showAuthForm && (
+                  <form onSubmit={handleSignIn} className="space-y-3">
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                      required
+                    />
+                    <input
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                      required
+                    />
+
+                    {authError && (
+                      <p
+                        className={`text-xs ${authError.includes("Check your email") ? "text-green-500" : "text-destructive"}`}
+                      >
+                        {authError}
+                      </p>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="submit"
+                        disabled={authLoading}
+                        className="flex-1"
+                      >
+                        {authLoading ? "..." : "Sign In"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={authLoading}
+                        className="flex-1"
+                        onClick={handleSignUp}
+                      >
+                        {authLoading ? "..." : "Sign Up"}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
