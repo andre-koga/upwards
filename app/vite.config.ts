@@ -15,8 +15,7 @@ export default defineConfig({
         description: "Local-first habit tracker",
         theme_color: "#000000",
         background_color: "#000000",
-        display: "fullscreen",
-        display_override: ["fullscreen", "standalone"],
+        display: "standalone",
         start_url: "/",
         icons: [
           { src: "icon-192x192.png", sizes: "192x192", type: "image/png" },
