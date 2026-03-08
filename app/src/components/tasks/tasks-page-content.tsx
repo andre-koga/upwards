@@ -385,7 +385,7 @@ export default function TasksPageContent() {
                       className="w-28 px-2 py-1 rounded-full bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                   ) : (
-                    <div className="flex items-center">
+                    <div className="flex items-center bg-background rounded-full pr-1">
                       <button
                         onClick={() => {
                           setLocationInputVal(
@@ -393,7 +393,7 @@ export default function TasksPageContent() {
                           );
                           setShowLocationInput(true);
                         }}
-                        className="flex items-center gap-1 px-3 py-1 rounded-full bg-background text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex items-center gap-1 pl-3 py-1 rounded-full bg-background text-xs text-muted-foreground hover:text-foreground transition-colors"
                         title="Set location"
                       >
                         {isDetectingLocation || journal.draftLocation ? (
@@ -418,7 +418,7 @@ export default function TasksPageContent() {
                           type="button"
                           onClick={() => detectLocation(true)}
                           disabled={isDetectingLocation}
-                          className="h-6 w-6 inline-flex items-center justify-center rounded-full bg-background text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                          className="h-6 w-6 mb-0.5 inline-flex items-center justify-center rounded-full bg-background text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
                           title="Retry location detection"
                         >
                           <RotateCw

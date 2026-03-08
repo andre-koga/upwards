@@ -10,6 +10,7 @@ import StatsPage from "@/pages/stats";
 import SettingsPage from "@/pages/settings";
 import ArchivedPage from "@/pages/archived";
 import TaskOrderPage from "@/pages/task-order";
+import SyncStatus from "@/components/settings/sync-status";
 
 export const LOCAL_USER_ID = "local";
 
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/settings/archived" element={<ArchivedPage />} />
         <Route path="/settings/task-order" element={<TaskOrderPage />} />
       </Routes>
+      <SyncStatus />
     </BrowserRouter>
   );
 }
