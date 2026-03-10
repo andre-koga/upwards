@@ -1,13 +1,12 @@
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { db, now } from "@/lib/db";
 import { stopCurrentActivity } from "@/lib/activity-utils";
 import { logError } from "@/lib/error-utils";
@@ -44,23 +43,22 @@ export function ArchiveActivityDialog({
   };
 
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(open) => !open && onOpenChange(false)}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Archive Activity</AlertDialogTitle>
-          <AlertDialogDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Archive Activity</DialogTitle>
+          <DialogDescription>
             Are you sure you want to archive "{activityName}"? This will remove
             it from your active activities list.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleArchive}>Archive</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

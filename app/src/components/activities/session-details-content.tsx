@@ -7,11 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -146,13 +142,17 @@ export default function SessionDetailsContent() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                <PopoverTrigger asChild>
-                  <button className="w-36 rounded-md px-2 py-1 transition-colors hover:bg-accent">
-                    {formatDate(selectedDate)}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl p-2 data-[side=bottom]:translate-y-0 data-[side=left]:translate-x-0 data-[side=right]:translate-x-0 data-[side=top]:translate-y-0">
+              <Dialog open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                <button
+                  className="w-36 rounded-md px-2 py-1 transition-colors hover:bg-accent"
+                  onClick={() => setDatePickerOpen(true)}
+                >
+                  {formatDate(selectedDate)}
+                </button>
+                <DialogContent
+                  size="sm"
+                  className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2"
+                >
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -166,8 +166,8 @@ export default function SessionDetailsContent() {
                     fixedWeeks
                     className="w-full [--cell-size:3rem]"
                   />
-                </PopoverContent>
-              </Popover>
+                </DialogContent>
+              </Dialog>
               <Button
                 type="button"
                 variant="ghost"

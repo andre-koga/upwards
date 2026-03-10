@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Pencil, X } from "lucide-react";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface JournalYoutubeSectionProps {
   canEdit: boolean;
@@ -106,17 +107,18 @@ export default function JournalYoutubeSection({
 
       {canEdit && (
         <div className="absolute -bottom-4 right-3 z-20">
-          <Popover open={open} onOpenChange={handleOpen}>
-            <PopoverTrigger asChild>
-              <button
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
-                title="Set video URL"
-              >
-                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-3" align="end">
-              <p className="mb-2 text-sm font-medium">YouTube URL</p>
+          <Dialog open={open} onOpenChange={handleOpen}>
+            <button
+              onClick={() => handleOpen(true)}
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
+              title="Set video URL"
+            >
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+            <DialogContent size="sm" className="w-80 p-4">
+              <DialogHeader>
+                <DialogTitle>YouTube URL</DialogTitle>
+              </DialogHeader>
               <input
                 autoFocus
                 type="url"
@@ -124,12 +126,12 @@ export default function JournalYoutubeSection({
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSave();
-                  if (e.key === "Escape") setOpen(false);
+                  if (e.key === "Escape") handleOpen(false);
                 }}
                 placeholder="https://youtu.be/…"
                 className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
-              <div className="mt-2 flex justify-end gap-2">
+              <div className="flex justify-end gap-2">
                 {youtubeUrl && (
                   <button
                     onClick={handleClear}
@@ -146,8 +148,8 @@ export default function JournalYoutubeSection({
                   Save
                 </button>
               </div>
-            </PopoverContent>
-          </Popover>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>

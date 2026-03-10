@@ -1,10 +1,6 @@
 import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, RotateCcw, Heart } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { toDateStr } from "@/lib/db";
@@ -96,20 +92,20 @@ export default function DateNavigator({
       </button>
 
       <div className="flex items-center gap-1">
-        <Popover open={datePopoverOpen} onOpenChange={handlePopoverOpen}>
-          <PopoverTrigger asChild>
-            <button className="rounded-md px-2 py-1 text-sm font-semibold transition-colors hover:bg-accent hover:text-primary">
-              {currentDate.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
+        <Dialog open={datePopoverOpen} onOpenChange={handlePopoverOpen}>
+          <button
+            className="rounded-md px-2 py-1 text-sm font-semibold transition-colors hover:bg-accent hover:text-primary"
+            onClick={() => handlePopoverOpen(true)}
+          >
+            {currentDate.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </button>
+          <DialogContent
+            size="sm"
             className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2"
-            align="center"
-            sideOffset={16}
           >
             <Calendar
               mode="single"
@@ -125,8 +121,8 @@ export default function DateNavigator({
               className="w-full [--cell-size:3rem]"
               components={calendarComponents}
             />
-          </PopoverContent>
-        </Popover>
+          </DialogContent>
+        </Dialog>
 
         {!isToday && (
           <button

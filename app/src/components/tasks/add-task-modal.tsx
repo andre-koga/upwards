@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -19,7 +25,7 @@ export default function AddTaskModal({
   icon: Icon = Plus,
   disabled = false,
 }: AddTaskModalProps) {
-  const [showModal, setShowModal] = useState(false);
+  const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [adding, setAdding] = useState(false);
 
@@ -29,50 +35,44 @@ export default function AddTaskModal({
     const success = await onAdd(title);
     if (success) {
       setTitle("");
-      setShowModal(false);
+      setOpen(false);
     }
     setAdding(false);
   };
 
   return (
     <>
-      {showModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center pb-32"
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="mx-4 w-full max-w-md rounded-xl border bg-background p-4 shadow-2xl shadow-black"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="mb-3 text-sm font-semibold">New one-time task</p>
-            <div className="flex gap-2">
-              <input
-                autoFocus
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAdd();
-                  if (e.key === "Escape") setShowModal(false);
-                }}
-                placeholder="Task title…"
-                className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <Button
-                size="sm"
-                onClick={handleAdd}
-                disabled={adding || !title.trim()}
-              >
-                Add
-              </Button>
-            </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent size="sm" className="p-4">
+          <DialogHeader>
+            <DialogTitle>New one-time task</DialogTitle>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <input
+              autoFocus
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleAdd();
+                if (e.key === "Escape") setOpen(false);
+              }}
+              placeholder="Task title…"
+              className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <Button
+              size="sm"
+              onClick={handleAdd}
+              disabled={adding || !title.trim()}
+            >
+              Add
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <button
-        onClick={() => setShowModal((v) => !v)}
+        onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         title={triggerTitle}
         className={
@@ -80,7 +80,7 @@ export default function AddTaskModal({
           "fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
         }
       >
-        {showModal ? <X className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+        {open ? <X className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
       </button>
     </>
   );
