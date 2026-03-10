@@ -1,4 +1,4 @@
-import { useGroupActivityPage } from "@/hooks/use-group-activity-page";
+import { useGroupActivityPage } from "@/components/activities/hooks/use-group-activity-page";
 import ActivityFormPage from "@/components/activities/activity-form-page";
 
 export default function EditActivityPage() {

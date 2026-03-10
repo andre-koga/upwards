@@ -1,0 +1,28 @@
+---
+description: Codebase structure and folder conventions
+alwaysApply: true
+---
+
+# Codebase Structure
+
+When making changes, follow the folder conventions in the project root AGENTS.md.
+
+## Hooks Placement
+
+- **`src/hooks/`** — Page-level: route params, page data, redirects. Used by multiple pages.
+- **`components/<feature>/hooks/`** — Feature-specific: colocate with the feature.
+
+Do not add feature-specific hooks to `src/hooks/`. Use the feature's `hooks/` folder.
+
+## Key Folders
+
+| Folder | Purpose |
+|--------|---------|
+| `pages/` | Thin route wrappers. Delegate to content components. |
+| `components/tasks/` | Today page, daily tasks, journal, one-time tasks |
+| `components/activities/` | Groups, activities, timelines, archive |
+| `components/settings/` | Auth, backup, sync, appearance |
+| `components/ui/` | Shared UI primitives (button, card, input, etc.) |
+| `lib/` | DB, sync, utilities. Single source for shared logic. |
+
+Read the folder's `CONTEXT.md` for details when working in that area.
