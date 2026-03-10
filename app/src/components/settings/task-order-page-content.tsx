@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import { db, now } from "@/lib/db";
 import type { Activity } from "@/lib/db/types";
+import { isActiveActivity, isScheduledRoutine } from "@/lib/activity-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
@@ -34,14 +35,11 @@ export default function TaskOrderPageContent() {
     try {
       setLoading(true);
       const all = await db.activities
-        .filter((activity) => !activity.is_archived && !activity.deleted_at)
+        .filter((activity) => isActiveActivity(activity))
         .toArray();
 
       const reorderable = all
-        .filter(
-          (activity) =>
-            activity.routine !== "anytime" && activity.routine !== "never"
-        )
+        .filter((activity) => isScheduledRoutine(activity.routine ?? ""))
         .sort(compareActivities);
 
       setActivities(reorderable);

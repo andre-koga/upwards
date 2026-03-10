@@ -59,6 +59,9 @@ export function shiftDate(date: Date, days: number): Date {
   return nextDate;
 }
 
+/** Alias for shiftDate for semantic clarity. */
+export const addDays = shiftDate;
+
 /**
  * Get start of day (midnight) for a date.
  */

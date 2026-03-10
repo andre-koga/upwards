@@ -1,5 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import { v4 as uuidv4 } from "uuid";
+import { toDateString } from "@/lib/date-utils";
 import type {
   ActivityGroup,
   Activity,
@@ -65,12 +66,7 @@ export const newId = () => uuidv4();
 export const todayStr = () => new Date().toISOString().split("T")[0];
 
 // Helper: date to YYYY-MM-DD string (local time, not UTC)
-export const toDateStr = (d: Date): string => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+export const toDateStr = toDateString;
 
 // Re-export types for convenience
 export type {

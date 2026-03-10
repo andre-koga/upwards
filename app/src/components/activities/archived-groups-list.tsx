@@ -1,5 +1,6 @@
 import { ArchivedItemList } from "@/components/ui/archived-item-list";
 import type { ActivityGroup } from "@/lib/db/types";
+import { DEFAULT_ARCHIVED_COLOR } from "@/lib/color-utils";
 
 interface ArchivedGroupsListProps {
   groups: ActivityGroup[];
@@ -25,7 +26,7 @@ export default function ArchivedGroupsList({
         <div className="flex items-center gap-3">
           <div
             className="h-4 w-4 rounded-full"
-            style={{ backgroundColor: group.color || "#6b7280" }}
+            style={{ backgroundColor: group.color || DEFAULT_ARCHIVED_COLOR }}
           />
           <span className="font-medium">{group.name}</span>
         </div>

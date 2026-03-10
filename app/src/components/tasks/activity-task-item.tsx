@@ -1,7 +1,9 @@
 import { memo, useEffect, useState } from "react";
-import { Check, X, Flame } from "lucide-react";
+import { X, Flame } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
+import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import Pill from "@/components/ui/pill";
+import TaskCheckbox from "@/components/tasks/task-checkbox";
 
 interface ActivityTaskItemProps {
   activity: Activity;
@@ -40,7 +42,7 @@ function ActivityTaskItem({
   const target = activity.completion_target ?? 1;
   const isComplete = count >= target;
   const isNeverTask = activity.routine === "never";
-  const groupColor = group?.color || "#cccccc";
+  const groupColor = group?.color || DEFAULT_GROUP_COLOR;
   const streakColorClass =
     streak === 0
       ? "text-muted-foreground"
@@ -74,24 +76,11 @@ function ActivityTaskItem({
           {isComplete && <X className="h-4 w-4 text-destructive-foreground" />}
         </div>
       ) : target <= 1 ? (
-        <button
-          onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
-          disabled={!isToday}
-          className={`flex h-7 w-[2.75rem] items-center justify-center rounded-full border transition-colors ${
-            isComplete
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-muted-foreground text-muted-foreground"
-          } disabled:cursor-default disabled:opacity-60`}
-          title={
-            isToday
-              ? isComplete
-                ? "Mark incomplete"
-                : "Mark complete"
-              : undefined
-          }
-        >
-          {isComplete && <Check className="h-4 w-4" />}
-        </button>
+        <TaskCheckbox
+          isComplete={isComplete}
+          isToday={isToday}
+          onClick={() => onIncrement(activity.id, target)}
+        />
       ) : (
         <button
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}

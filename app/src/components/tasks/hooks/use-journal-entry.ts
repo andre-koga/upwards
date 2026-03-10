@@ -1,18 +1,13 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { db, toDateStr, now, newId } from "@/lib/db";
 import type { JournalEntry, LocationData } from "@/lib/db/types";
-import { parseLocation, getCompletionMetadata } from "@/lib/journal-utils";
+import {
+  parseLocation,
+  getCompletionMetadata,
+  type JournalFields,
+} from "@/lib/journal-utils";
 
-export type { LocationData };
-
-export interface JournalFields {
-  title: string | null;
-  text_content: string | null;
-  day_emoji: string | null;
-  is_bookmarked: boolean;
-  youtube_url: string | null;
-  location: LocationData | null;
-}
+export type { LocationData, JournalFields };
 
 export interface JournalDraft {
   title: string;

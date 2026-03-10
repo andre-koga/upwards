@@ -18,6 +18,7 @@ import {
   combineDateAndTime,
   startOfDay,
 } from "@/lib/date-utils";
+import { ERROR_MESSAGES } from "@/lib/error-utils";
 
 const NONE_ACTIVITY_VALUE = "__none__";
 
@@ -192,7 +193,7 @@ export function useSessionDetails() {
       navigate(backPath);
     } catch (saveError) {
       console.error("Error saving session:", saveError);
-      setError("Failed to save session. Please try again.");
+      setError(ERROR_MESSAGES.SAVE_SESSION);
     } finally {
       setSaving(false);
     }

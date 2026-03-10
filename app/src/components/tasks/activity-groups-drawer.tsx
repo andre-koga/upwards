@@ -3,7 +3,11 @@ import { Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
-import { getOrCreateHiddenGroupDefaultActivity } from "@/lib/activity-utils";
+import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
+import {
+  getOrCreateHiddenGroupDefaultActivity,
+  isActiveGroup,
+} from "@/lib/activity-utils";
 import GroupPill from "@/components/activities/group-pill";
 
 interface ActivityGroupsDrawerProps {
@@ -27,7 +31,7 @@ export default function ActivityGroupsDrawer({
     if (!open) return;
     let cancelled = false;
     db.activityGroups
-      .filter((g) => !g.is_archived && !g.deleted_at)
+      .filter((g) => isActiveGroup(g))
       .sortBy("created_at")
       .then((g) => {
         if (!cancelled) setGroups(g);
@@ -97,7 +101,7 @@ export default function ActivityGroupsDrawer({
                   <GroupPill
                     key={group.id}
                     name={group.name}
-                    color={group.color || "#888"}
+                    color={group.color || DEFAULT_GROUP_COLOR}
                     isRunning={isRunningInGroup}
                     onNameClick={() => {
                       setOpen(false);

@@ -2,7 +2,13 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { shouldShowActivity, formatTimerDisplay } from "@/lib/activity-utils";
+import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
+import {
+  shouldShowActivity,
+  formatTimerDisplay,
+  getGroup,
+  getGroupColor,
+} from "@/lib/activity-utils";
 import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
@@ -88,9 +94,9 @@ export function useDailyTasks({
     [activities, currentDate]
   );
 
-  const getGroup = useCallback(
+  const getGroupForActivity = useCallback(
     (activity: Activity): ActivityGroup | undefined =>
-      groups.find((g) => g.id === activity.group_id),
+      getGroup(groups, activity.group_id),
     [groups]
   );
 
@@ -132,9 +138,6 @@ export function useDailyTasks({
         )
         .map((period) => {
           const activity = activities.find((a) => a.id === period.activity_id);
-          const group = activity
-            ? groups.find((groupItem) => groupItem.id === activity.group_id)
-            : undefined;
 
           const startTime = new Date(period.start_time).getTime();
           const endTime = new Date(period.end_time!).getTime();
@@ -144,7 +147,9 @@ export function useDailyTasks({
             activityId: period.activity_id,
             groupId: activity?.group_id || "",
             name: activity?.name || "Unknown activity",
-            groupColor: group?.color || "#888",
+            groupColor: activity
+              ? getGroupColor(groups, activity.group_id)
+              : DEFAULT_GROUP_COLOR,
             intervalMs: Math.max(0, endTime - startTime),
           };
         }),
@@ -165,7 +170,7 @@ export function useDailyTasks({
     loading,
     activityStreaks,
     dailyActivities,
-    getGroup,
+    getGroup: getGroupForActivity,
     nonNeverCount,
     completedCount,
     completionRate,

@@ -1,85 +1,71 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Heart, MapPin, MapPinOff, Flame, Hash, RotateCw } from "lucide-react";
 import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
+import {
+  isActiveActivity,
+  isActiveGroup,
+  sortActivitiesByOrder,
+} from "@/lib/activity-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import { useJournalEntry } from "@/components/tasks/hooks/use-journal-entry";
+import { useJournalMeta } from "@/components/tasks/hooks/use-journal-meta";
+import { useLocationDetection } from "@/components/tasks/hooks/use-location-detection";
 import JournalYoutubeSection from "@/components/tasks/journal-youtube-section";
 import JournalTextSection from "@/components/tasks/journal-text-section";
 import DateNavigator from "@/components/tasks/date-navigator";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
-import { getYoutubeEmbedUrl, getFirstEmoji } from "@/lib/utils";
+import type { LocationData } from "@/lib/db/types";
+import { getYoutubeEmbedUrl } from "@/lib/youtube-utils";
+import { getFirstEmoji } from "@/lib/emoji-utils";
+import { logError } from "@/lib/error-utils";
 
 export default function TasksPageContent() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [entryDates, setEntryDates] = useState<Set<string>>(new Set());
-  const [bookmarkedDates, setBookmarkedDates] = useState<Set<string>>(
-    new Set()
-  );
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [locationInputVal, setLocationInputVal] = useState("");
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
-  const hasTriedGeoRef = useRef(false);
 
   const journal = useJournalEntry(currentDate);
   const { loadJournalEntry } = journal;
+  const { entryDates, bookmarkedDates, loadJournalMeta } = useJournalMeta();
 
   const isToday = toDateStr(currentDate) === toDateStr(new Date());
+
+  const handleLocationDetected = useCallback(
+    (location: LocationData) => {
+      journal.setDraftLocation(location);
+      journal.draftRef.current.location = location;
+      journal.saveLocation(location);
+    },
+    [journal]
+  );
+
+  const { detectLocation, isDetectingLocation, resetGeoAttempt } =
+    useLocationDetection({
+      isToday,
+      isJournalLoaded,
+      currentLocation: journal.draftLocation,
+      onLocationDetected: handleLocationDetected,
+    });
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [loadedActivities, g] = await Promise.all([
-        db.activities.filter((a) => !a.is_archived && !a.deleted_at).toArray(),
-        db.activityGroups
-          .filter((g) => !g.is_archived && !g.deleted_at)
-          .sortBy("created_at"),
+        db.activities.filter((a) => isActiveActivity(a)).toArray(),
+        db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
       ]);
 
-      const a = loadedActivities.sort((left, right) => {
-        const leftOrder =
-          typeof left.order_index === "number"
-            ? left.order_index
-            : Number.POSITIVE_INFINITY;
-        const rightOrder =
-          typeof right.order_index === "number"
-            ? right.order_index
-            : Number.POSITIVE_INFINITY;
-
-        if (leftOrder !== rightOrder) {
-          return leftOrder - rightOrder;
-        }
-
-        return (
-          new Date(left.created_at).getTime() -
-          new Date(right.created_at).getTime()
-        );
-      });
-
-      setActivities(a);
+      setActivities(sortActivitiesByOrder(loadedActivities));
       setGroups(g);
     } catch (error) {
-      console.error("Error loading data:", error);
+      logError("Error loading data", error);
     } finally {
       setLoading(false);
-    }
-  }, []);
-
-  const loadJournalMeta = useCallback(async () => {
-    try {
-      const entries = await db.journalEntries
-        .filter((e) => !e.deleted_at)
-        .toArray();
-      setEntryDates(new Set(entries.map((e) => e.entry_date)));
-      setBookmarkedDates(
-        new Set(entries.filter((e) => e.is_bookmarked).map((e) => e.entry_date))
-      );
-    } catch (err) {
-      console.error("Error loading journal meta:", err);
     }
   }, []);
 
@@ -99,80 +85,12 @@ export default function TasksPageContent() {
 
   useEffect(() => {
     setIsJournalLoaded(false);
-    // reset geo attempt when date changes so we re-try on today
-    hasTriedGeoRef.current = false;
+    resetGeoAttempt();
     void loadJournalEntry().finally(() => {
       setIsJournalLoaded(true);
     });
-  }, [loadJournalEntry]);
+  }, [loadJournalEntry, resetGeoAttempt]);
 
-  const detectLocation = useCallback(
-    (force = false) => {
-      if (!isToday) return;
-      if (!navigator.geolocation) return;
-      if (isDetectingLocation) return;
-      if (!force) {
-        if (!isJournalLoaded) return;
-        if (journal.draftLocation) return;
-        if (hasTriedGeoRef.current) return;
-      }
-
-      hasTriedGeoRef.current = true;
-      setIsDetectingLocation(true);
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          try {
-            const { latitude, longitude } = pos.coords;
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-            );
-            const data = (await res.json()) as {
-              address: {
-                city?: string;
-                town?: string;
-                village?: string;
-                county?: string;
-                state?: string;
-                country?: string;
-                country_code?: string;
-              };
-            };
-            const city =
-              data.address.city ||
-              data.address.town ||
-              data.address.village ||
-              data.address.county ||
-              null;
-            if (city) {
-              const locationData = {
-                displayName: city,
-                city,
-                state: data.address.state ?? null,
-                country: data.address.country ?? null,
-                countryCode: data.address.country_code ?? null,
-                lat: latitude,
-                lon: longitude,
-              };
-              journal.setDraftLocation(locationData);
-              journal.draftRef.current.location = locationData;
-              journal.saveLocation(locationData);
-            }
-          } catch (e) {
-            console.error("Reverse geocoding failed", e);
-          } finally {
-            setIsDetectingLocation(false);
-          }
-        },
-        () => {
-          setIsDetectingLocation(false);
-        },
-        { timeout: 10000, maximumAge: 5 * 60 * 1000 }
-      );
-    },
-    [isToday, isDetectingLocation, isJournalLoaded, journal]
-  );
-
-  // Auto-detect location for today if not already set
   useEffect(() => {
     detectLocation();
   }, [detectLocation]);

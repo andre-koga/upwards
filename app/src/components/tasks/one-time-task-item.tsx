@@ -1,6 +1,7 @@
 import { memo } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type { OneTimeTask } from "@/lib/db/types";
+import TaskCheckbox from "@/components/tasks/task-checkbox";
 
 interface OneTimeTaskItemProps {
   task: OneTimeTask;
@@ -17,24 +18,12 @@ function OneTimeTaskItem({
 }: OneTimeTaskItemProps) {
   return (
     <div className="flex items-center gap-2">
-      <button
-        onClick={isToday ? () => onToggle(task) : undefined}
-        disabled={!isToday}
-        className={`flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${
-          task.is_completed
-            ? "border-primary bg-primary text-primary-foreground"
-            : "border-muted-foreground text-muted-foreground"
-        } disabled:cursor-default disabled:opacity-60`}
-        title={
-          isToday
-            ? task.is_completed
-              ? "Mark incomplete"
-              : "Mark complete"
-            : undefined
-        }
-      >
-        {task.is_completed && <Check className="h-4 w-4" />}
-      </button>
+      <TaskCheckbox
+        isComplete={task.is_completed}
+        isToday={isToday}
+        onClick={() => onToggle(task)}
+        size="sm"
+      />
 
       <div className="relative flex h-8 flex-1 items-center overflow-hidden rounded-full border border-border">
         <label

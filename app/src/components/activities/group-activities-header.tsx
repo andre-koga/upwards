@@ -1,4 +1,5 @@
 import type { ActivityGroup } from "@/lib/db/types";
+import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { Pencil, Archive, ArchiveRestore } from "lucide-react";
 
 interface GroupActivitiesHeaderProps {
@@ -21,7 +22,7 @@ export default function GroupActivitiesHeader({
       <div
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(to bottom, ${group.color || "#888"} 0%, transparent 100%)`,
+          background: `linear-gradient(to bottom, ${group.color || DEFAULT_GROUP_COLOR} 0%, transparent 100%)`,
         }}
       />
       <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-b from-transparent to-background" />

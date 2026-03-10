@@ -1,3 +1,22 @@
+/** Default color for active groups/activities when none is set */
+export const DEFAULT_GROUP_COLOR = "#888";
+
+/** Default color for archived items */
+export const DEFAULT_ARCHIVED_COLOR = "#6b7280";
+
+/**
+ * Get black or white for contrast against a hex background (WCAG 2.1).
+ */
+export function getContrastColor(hex: string): "#000000" | "#ffffff" {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const toLinear = (c: number) =>
+    c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  const L = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  return L > 0.179 ? "#000000" : "#ffffff";
+}
+
 /**
  * Convert hex color to HSL [h, s, l] tuple.
  * h: 0-360, s: 0-100, l: 0-100

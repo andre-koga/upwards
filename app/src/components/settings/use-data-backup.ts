@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { db } from "@/lib/db";
+import { getErrorMessage, logError, ERROR_MESSAGES } from "@/lib/error-utils";
 
 type BackupStatus = "idle" | "success" | "error";
 
@@ -95,8 +96,8 @@ export function useDataBackup() {
       setImportMessage("Backup imported successfully!");
       setImportStatus("success");
     } catch (err) {
-      console.error("Import failed:", err);
-      setImportMessage(err instanceof Error ? err.message : "Import failed");
+      logError("Import failed", err);
+      setImportMessage(getErrorMessage(err, ERROR_MESSAGES.IMPORT));
       setImportStatus("error");
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";

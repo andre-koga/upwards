@@ -1,5 +1,5 @@
 ---
-description: Run lint and type-check after code changes
+description: Run lint, type-check, and format after code changes
 alwaysApply: true
 ---
 
@@ -9,10 +9,11 @@ After finishing code changes (edits, refactors, or new files), **always** run th
 
 1. **Lint**: `pnpm run lint` (from the `app/` directory)
 2. **Type-check**: `pnpm run ts` (from the `app/` directory)
+3. **Format**: `pnpm run format` (from the `app/` directory) — run after lint and type-check pass
 
-If either command fails, fix the reported issues and re-run until both pass.
+If lint or type-check fails, fix the reported issues and re-run until both pass. Then run format.
 
 Example:
 ```bash
-cd app && pnpm run lint && pnpm run ts
+cd app && pnpm run lint && pnpm run ts && pnpm run format
 ```

@@ -2,19 +2,8 @@ import { useEffect, useState, memo, useMemo } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { Square } from "lucide-react";
-import { formatTimerDisplay } from "@/lib/activity-utils";
-
-// Memoize expensive color calculations
-function getContrastColor(hex: string): "#000000" | "#ffffff" {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const toLinear = (channel: number) =>
-    channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-  const luminance =
-    0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
-  return luminance > 0.179 ? "#000000" : "#ffffff";
-}
+import { formatTimerDisplay, getGroup } from "@/lib/activity-utils";
+import { getContrastColor } from "@/lib/color-utils";
 
 function hexToRgba(hex: string, alpha: number): string {
   const normalized = hex.replace("#", "");
@@ -86,7 +75,7 @@ function ActiveActivityPill({
     const fromProps = activities.find((a) => a.id === currentActivityId);
     if (fromProps) {
       setResolvedActivity(fromProps);
-      setResolvedGroup(groups.find((g) => g.id === fromProps.group_id) || null);
+      setResolvedGroup(getGroup(groups, fromProps.group_id) ?? null);
       return;
     }
 
@@ -97,7 +86,7 @@ function ActiveActivityPill({
         const activity = await db.activities.get(currentActivityId);
         if (!activity || cancelled) return;
 
-        const groupFromProps = groups.find((g) => g.id === activity.group_id);
+        const groupFromProps = getGroup(groups, activity.group_id);
         const group =
           groupFromProps ||
           (await db.activityGroups.get(activity.group_id)) ||

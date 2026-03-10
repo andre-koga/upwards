@@ -1,5 +1,6 @@
 import { db, toDateStr } from "@/lib/db";
 import type { JournalEntry, LocationData } from "@/lib/db/types";
+import { addDays } from "@/lib/date-utils";
 
 /**
  * Parse stored location — handles legacy plain-string values gracefully.
@@ -34,12 +35,6 @@ export interface JournalCompletionMetadata {
   journal_entry_number: number | null;
   journal_completion_streak: number | null;
   journal_completed_at: string | null;
-}
-
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
 }
 
 function hasRequiredJournalFields(fields: JournalFields): boolean {

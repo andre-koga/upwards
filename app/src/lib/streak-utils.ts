@@ -1,6 +1,7 @@
 import { db, newId, now, toDateStr } from "@/lib/db";
 import type { Activity, ActivityStreak, DailyEntry } from "@/lib/db/types";
 import { shouldShowActivity } from "@/lib/activity-utils";
+import { startOfDay, addDays } from "@/lib/date-utils";
 
 function isStreakEligible(activity: Activity): boolean {
   return activity.routine !== "anytime";
@@ -15,18 +16,6 @@ function shouldIncrementStreak(
   }
 
   return isCompleted;
-}
-
-function startOfDay(date: Date): Date {
-  const next = new Date(date);
-  next.setHours(0, 0, 0, 0);
-  return next;
-}
-
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
 }
 
 function getCreationDay(activity: Activity): Date {

@@ -6,6 +6,8 @@ import {
   validateActivityData,
   type ActivitySubmitData,
 } from "@/lib/activity-validation";
+import { isActiveActivity, isScheduledRoutine } from "@/lib/activity-utils";
+import { ERROR_MESSAGES } from "@/lib/error-utils";
 import ActivityFormFields from "@/components/activities/activity-form-fields";
 
 interface ActivityFormPageProps {
@@ -42,18 +44,15 @@ export default function ActivityFormPage({
       } else {
         const n = now();
         await db.transaction("rw", db.activities, async () => {
-          const shouldAssignOrderIndex =
-            data.routine !== "anytime" && data.routine !== "never";
+          const shouldAssignOrderIndex = isScheduledRoutine(data.routine);
 
           let nextOrderIndex: number | null = null;
           if (shouldAssignOrderIndex) {
             const scheduledActivities = await db.activities
               .filter(
                 (item) =>
-                  !item.is_archived &&
-                  !item.deleted_at &&
-                  item.routine !== "anytime" &&
-                  item.routine !== "never"
+                  isActiveActivity(item) &&
+                  isScheduledRoutine(item.routine ?? "")
               )
               .toArray();
 
@@ -87,7 +86,7 @@ export default function ActivityFormPage({
       navigate(`/activities/${group.id}`);
     } catch (err) {
       console.error("Error saving activity:", err);
-      setError("Failed to save activity. Please try again.");
+      setError(ERROR_MESSAGES.SAVE_ACTIVITY);
     } finally {
       setIsSubmitting(false);
     }

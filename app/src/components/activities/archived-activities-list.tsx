@@ -1,21 +1,18 @@
 import { Badge } from "@/components/ui/badge";
 import { ArchivedItemList } from "@/components/ui/archived-item-list";
-import { formatRoutineDisplay } from "@/lib/activity-utils";
+import {
+  formatRoutineDisplay,
+  getGroupName,
+  getGroupColor,
+} from "@/lib/activity-utils";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
+import { DEFAULT_ARCHIVED_COLOR } from "@/lib/color-utils";
 
 interface ArchivedActivitiesListProps {
   activities: Activity[];
   allGroups: ActivityGroup[];
   onUnarchive: (id: string) => void;
   onDelete: (id: string) => void;
-}
-
-function getGroupName(groups: ActivityGroup[], groupId: string) {
-  return groups.find((g) => g.id === groupId)?.name ?? "Unknown";
-}
-
-function getGroupColor(groups: ActivityGroup[], groupId: string) {
-  return groups.find((g) => g.id === groupId)?.color ?? "#6b7280";
 }
 
 export default function ArchivedActivitiesList({
@@ -41,7 +38,11 @@ export default function ArchivedActivitiesList({
               variant="outline"
               className="text-xs"
               style={{
-                borderColor: getGroupColor(allGroups, activity.group_id),
+                borderColor: getGroupColor(
+                  allGroups,
+                  activity.group_id,
+                  DEFAULT_ARCHIVED_COLOR
+                ),
               }}
             >
               {getGroupName(allGroups, activity.group_id)}
