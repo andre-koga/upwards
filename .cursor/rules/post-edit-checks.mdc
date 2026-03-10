@@ -1,0 +1,18 @@
+---
+description: Run lint and type-check after code changes
+alwaysApply: true
+---
+
+# Post-Edit Verification
+
+After finishing code changes (edits, refactors, or new files), **always** run these checks before considering the task complete:
+
+1. **Lint**: `pnpm run lint` (from the `app/` directory)
+2. **Type-check**: `pnpm run ts` (from the `app/` directory)
+
+If either command fails, fix the reported issues and re-run until both pass.
+
+Example:
+```bash
+cd app && pnpm run lint && pnpm run ts
+```

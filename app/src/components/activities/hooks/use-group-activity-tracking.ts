@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { db, now, newId, todayStr } from "@/lib/db";
-import type { DailyEntry } from "@/lib/db/types";
+import { db, todayStr } from "@/lib/db";
+import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { useActivityTracking } from "@/components/tasks/hooks/use-activity-tracking";
 
 export function useGroupActivityTracking() {
@@ -37,36 +37,16 @@ export function useGroupActivityTracking() {
         }
     }, []);
 
-    const getOrCreateDailyEntry = useCallback(async (): Promise<DailyEntry> => {
-        const existing = await db.dailyEntries
-            .where("date")
-            .equals(dateString)
-            .filter((entry) => !entry.deleted_at)
-            .first();
-
-        if (existing) return existing;
-
-        const timestamp = now();
-        const newEntry: DailyEntry = {
-            id: newId(),
-            date: dateString,
-            task_counts: null,
-            current_activity_id: null,
-            created_at: timestamp,
-            updated_at: timestamp,
-            synced_at: null,
-            deleted_at: null,
-        };
-
-        await db.dailyEntries.add(newEntry);
-        return newEntry;
-    }, [dateString]);
+    const getOrCreateDailyEntryForDate = useCallback(
+        async () => getOrCreateDailyEntry(dateString),
+        [dateString],
+    );
 
     const { handleStartActivity, handleStopActivity, loadActivityPeriods } = useActivityTracking(
         dateString,
         currentActivityId,
         setCurrentActivityId,
-        getOrCreateDailyEntry,
+        getOrCreateDailyEntryForDate,
     );
 
     useEffect(() => {

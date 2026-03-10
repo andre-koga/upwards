@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, ChevronUp, GripVertical, X } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import { db, now } from "@/lib/db";
 import type { Activity } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FloatingBackButton } from "@/components/ui/floating-back-button";
 
 function compareActivities(left: Activity, right: Activity): number {
   const leftOrder =
@@ -183,13 +184,7 @@ export default function TaskOrderPageContent() {
         </CardContent>
       </Card>
 
-      <Link
-        to="/settings"
-        className="fixed bottom-6 left-6 z-50 h-10 w-10 flex items-center justify-center rounded-full bg-background border border-border shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Back to Settings"
-      >
-        <X className="h-3.5 w-3.5" />
-      </Link>
+      <FloatingBackButton to="/settings" title="Back to Settings" />
     </div>
   );
 }

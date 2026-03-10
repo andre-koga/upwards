@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { X } from "lucide-react";
 import RoutineSelector from "@/components/activities/routine-selector";
+import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import ActivityPill from "@/components/activities/activity-pill";
+import { parseRoutine } from "@/lib/activity-utils";
+import { formSectionLabel, formInput, formSubmitButton } from "@/lib/form-styles";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 
 interface ActivityFormFieldsProps {
@@ -52,25 +54,35 @@ export default function ActivityFormFields({
   useEffect(() => {
     if (!initialData) return;
 
-    const routine = initialData.routine || "daily";
-    let baseRoutine = routine;
+    const parsed = parseRoutine(initialData.routine || "daily");
+    let baseRoutine = "daily";
     let weeklyDays: number[] = [];
     let monthlyDay = 1;
     let customInterval = 1;
     let customUnit: "days" | "weeks" | "months" = "days";
 
-    if (routine.startsWith("weekly:")) {
-      baseRoutine = "weekly";
-      const days = routine.split(":")[1];
-      weeklyDays = days ? days.split(",").map(Number) : [];
-    } else if (routine.startsWith("monthly:")) {
-      baseRoutine = "monthly";
-      monthlyDay = parseInt(routine.split(":")[1]) || 1;
-    } else if (routine.startsWith("custom:")) {
-      baseRoutine = "custom";
-      const parts = routine.split(":");
-      customInterval = parseInt(parts[1]) || 1;
-      customUnit = (parts[2] as "days" | "weeks" | "months") || "days";
+    switch (parsed.type) {
+      case "weekly":
+        baseRoutine = "weekly";
+        weeklyDays = parsed.days;
+        break;
+      case "monthly":
+        baseRoutine = "monthly";
+        monthlyDay = parsed.day;
+        break;
+      case "custom":
+        baseRoutine = "custom";
+        customInterval = parsed.interval;
+        customUnit = parsed.unit;
+        break;
+      case "daily":
+      case "anytime":
+      case "never":
+        baseRoutine = parsed.type;
+        break;
+      case "unknown":
+        baseRoutine = parsed.raw;
+        break;
     }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -116,9 +128,7 @@ export default function ActivityFormFields({
       >
         {/* Preview — centered in available top space */}
         <div className="flex-1 flex flex-col justify-center gap-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-            Preview
-          </p>
+          <p className={formSectionLabel}>Preview</p>
           <ActivityPill
             name={formData.name}
             color={group.color || "#888"}
@@ -145,16 +155,14 @@ export default function ActivityFormFields({
               }
             }}
             placeholder="e.g. Morning Exercise, Read Book"
-            className="w-full h-10 bg-muted/40 border border-border rounded-full px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors placeholder:text-muted-foreground/50"
+            className={formInput}
             required
           />
         </div>
 
         {/* Routine selector */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-            Routine
-          </p>
+          <p className={formSectionLabel}>Routine</p>
           <RoutineSelector
             routine={formData.routine}
             weeklyDays={formData.weeklyDays}
@@ -182,9 +190,7 @@ export default function ActivityFormFields({
         {/* Completion target — only show if routine has a schedule */}
         {formData.routine !== "anytime" && formData.routine !== "never" && (
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-              Completion Target
-            </p>
+            <p className={formSectionLabel}>Completion Target</p>
             <p className="text-xs text-muted-foreground text-center">
               How many times you need to do this per day. 1 = simple checkbox.
             </p>
@@ -210,21 +216,14 @@ export default function ActivityFormFields({
       </form>
 
       {/* Fixed bottom — back button left, submit pill center */}
-      <button
-        type="button"
-        onClick={() => navigate(backPath || "/")}
-        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Back"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      <FloatingBackButton onClick={() => navigate(backPath || "/")} title="Back" />
 
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
         <button
           type="submit"
           form="activity-form"
           disabled={isSubmitting || !formData.name.trim()}
-          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-2.5 font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className={formSubmitButton}
         >
           {isSubmitting ? "Saving…" : submitLabel}
         </button>

@@ -1,18 +1,11 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { shouldShowActivity, formatTimerDisplay } from "@/lib/activity-utils";
-import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
-import { useDailyEntry } from "./hooks/use-daily-entry";
-import { useOneTimeTasks } from "./hooks/use-one-time-tasks";
-import { useActivityTracking } from "./hooks/use-activity-tracking";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
-import { useNavigate } from "react-router-dom";
 import AddTaskModal from "./add-task-modal";
+import { useDailyTasks } from "./hooks/use-daily-tasks";
 import { CircleCheckBig } from "lucide-react";
 
 interface DailyTasksListProps {
@@ -26,151 +19,30 @@ export default function DailyTasksList({
   groups,
   currentDate,
 }: DailyTasksListProps) {
-  const navigate = useNavigate();
-  const dateString = toDateStr(currentDate);
-  const isToday = dateString === toDateStr(new Date());
-  const [activityStreaks, setActivityStreaks] = useState<
-    Record<string, number>
-  >({});
-
   const {
-    taskCounts,
+    isToday,
     loading,
+    activityStreaks,
+    dailyActivities,
+    getGroup,
+    nonNeverCount,
+    completedCount,
+    completionRate,
+    totalTimeSpentMs,
+    timelineSessions,
     currentActivityId,
-    setCurrentActivityId,
-    loadDailyEntry,
-    getOrCreateDailyEntry,
-    incrementTask,
-  } = useDailyEntry(dateString);
-
-  const {
+    taskCounts,
     oneTimeTasks,
-    loadOneTimeTasks,
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
-  } = useOneTimeTasks(dateString);
-
-  const {
-    activityPeriods,
-    loadActivityPeriods,
-    calculateActivityTime,
+    incrementTask,
     handleStartActivity,
     handleStopActivity,
-  } = useActivityTracking(
-    dateString,
-    currentActivityId,
-    setCurrentActivityId,
-    getOrCreateDailyEntry,
-  );
-
-  // Reload all data whenever the viewed date changes
-  useEffect(() => {
-    loadDailyEntry();
-    loadActivityPeriods();
-    loadOneTimeTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentDate]);
-
-  // Calculate streaks when activities or task counts change
-  useEffect(() => {
-    let cancelled = false;
-
-    const visibleActivities = activities.filter((activity) =>
-      shouldShowActivity(activity, currentDate),
-    );
-
-    void getOrComputeActivityStreaksForDate(visibleActivities, currentDate, {
-      forceRecomputeTarget: isToday,
-    }).then((streaks) => {
-      if (!cancelled) {
-        setActivityStreaks(streaks);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activities, currentDate, isToday, taskCounts]);
-
-  // Memoize expensive array operations
-  const dailyActivities = useMemo(
-    () => activities.filter((a) => shouldShowActivity(a, currentDate)),
-    [activities, currentDate],
-  );
-
-  const getGroup = useCallback(
-    (activity: Activity): ActivityGroup | undefined =>
-      groups.find((g) => g.id === activity.group_id),
-    [groups],
-  );
-
-  const { nonNeverCount, completedCount, completionRate } = useMemo(() => {
-    const nonNever = dailyActivities.filter(
-      (a) => a.routine !== "never",
-    ).length;
-    const completed = dailyActivities.filter(
-      (a) =>
-        a.routine !== "never" &&
-        (taskCounts[a.id] || 0) >= (a.completion_target ?? 1),
-    ).length;
-    const rate = nonNever === 0 ? 0 : Math.round((completed / nonNever) * 100);
-    return {
-      nonNeverCount: nonNever,
-      completedCount: completed,
-      completionRate: rate,
-    };
-  }, [dailyActivities, taskCounts]);
-
-  const totalTimeSpentMs = useMemo(
-    () =>
-      dailyActivities.reduce(
-        (total, activity) => total + calculateActivityTime(activity.id),
-        0,
-      ),
-    [dailyActivities, calculateActivityTime],
-  );
-
-  const timelineSessions = useMemo(
-    () =>
-      activityPeriods
-        .slice()
-        .filter((period) => !!period.end_time)
-        .sort(
-          (left, right) =>
-            new Date(right.start_time).getTime() -
-            new Date(left.start_time).getTime(),
-        )
-        .map((period) => {
-          const activity = activities.find((a) => a.id === period.activity_id);
-          const group = activity
-            ? groups.find((groupItem) => groupItem.id === activity.group_id)
-            : undefined;
-
-          const startTime = new Date(period.start_time).getTime();
-          const endTime = new Date(period.end_time!).getTime();
-
-          return {
-            id: period.id,
-            activityId: period.activity_id,
-            groupId: activity?.group_id || "",
-            name: activity?.name || "Unknown activity",
-            groupColor: group?.color || "#888",
-            intervalMs: Math.max(0, endTime - startTime),
-          };
-        }),
-    [activityPeriods, activities, groups],
-  );
-
-  // Stable callback for timeline navigation
-  const handleTimelineClick = useCallback(
-    (groupId: string, sessionId: string) => {
-      if (groupId) {
-        navigate(`/activities/${groupId}/sessions/${sessionId}`);
-      }
-    },
-    [navigate],
-  );
+    handleTimelineClick,
+    calculateActivityTime,
+    formatTimerDisplay,
+  } = useDailyTasks({ activities, groups, currentDate });
 
   return (
     <div className="flex flex-col">

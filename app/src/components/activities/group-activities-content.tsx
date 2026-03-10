@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { db, now } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
-import { X, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
@@ -21,6 +21,7 @@ import GroupActivitiesHeader from "@/components/activities/group-activities-head
 import GroupActivitiesList from "@/components/activities/group-activities-list";
 import GroupActivitiesTimeline from "@/components/activities/group-activities-timeline";
 import { useGroupActivityTracking } from "@/components/activities/hooks/use-group-activity-tracking";
+import { FloatingBackButton } from "@/components/ui/floating-back-button";
 
 interface GroupActivitiesContentProps {
   group: ActivityGroup;
@@ -160,13 +161,7 @@ export default function GroupActivitiesContent({
       </div>
 
       {/* Fixed floating back button */}
-      <button
-        onClick={() => navigate("/")}
-        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Back to home"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      <FloatingBackButton onClick={() => navigate("/")} title="Back to home" />
 
       <AlertDialog
         open={archiveDialog.open}

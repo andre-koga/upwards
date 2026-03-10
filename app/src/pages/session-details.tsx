@@ -1,13 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Trash2, X } from "lucide-react";
-import { db, newId, now } from "@/lib/db";
-import type {
-  Activity,
-  ActivityGroup,
-  ActivityPeriod,
-  DailyEntry,
-} from "@/lib/db/types";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -23,257 +15,75 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { useSessionDetails } from "@/hooks/use-session-details";
 import {
-  getOrCreateHiddenGroupDefaultActivity,
-  isHiddenGroupDefaultActivity,
-} from "@/lib/activity-utils";
-
-const NONE_ACTIVITY_VALUE = "__none__";
-
-interface SessionDetails {
-  group: ActivityGroup;
-  activity: Activity | null;
-  period: ActivityPeriod;
-  entry: DailyEntry | undefined;
-}
-
-function fromDateString(date: string): Date {
-  const [year, month, day] = date.split("-").map(Number);
-  return new Date(year, (month || 1) - 1, day || 1);
-}
-
-function toDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTimeInput(isoTime: string | null): string {
-  if (!isoTime) return "";
-  const date = new Date(isoTime);
-  if (Number.isNaN(date.getTime())) return "";
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
-  return `${hours}:${minutes}:${seconds}`;
-}
-
-function combineDateAndTime(date: Date, time: string): string {
-  const [hours, minutes, seconds] = time.split(":").map(Number);
-  const nextDate = new Date(date);
-  nextDate.setHours(hours || 0, minutes || 0, seconds || 0, 0);
-  return nextDate.toISOString();
-}
-
-function shiftDate(date: Date, days: number): Date {
-  const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + days);
-  return nextDate;
-}
-
-function startOfDay(date: Date): Date {
-  const day = new Date(date);
-  day.setHours(0, 0, 0, 0);
-  return day;
-}
-
-function shiftTimeByMinutes(time: string, deltaMinutes: number): string {
-  if (!time) return "";
-  const [hours, minutes, seconds = 0] = time.split(":").map(Number);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return time;
-  const total = (hours * 60 + minutes + deltaMinutes + 24 * 60) % (24 * 60);
-  const nextHours = String(Math.floor(total / 60)).padStart(2, "0");
-  const nextMinutes = String(total % 60).padStart(2, "0");
-  const nextSeconds = String(seconds).padStart(2, "0");
-  return `${nextHours}:${nextMinutes}:${nextSeconds}`;
-}
-
-function timeToSeconds(time: string): number {
-  if (!time) return 0;
-  const [hours, minutes, seconds = 0] = time.split(":").map(Number);
-  return (hours || 0) * 3600 + (minutes || 0) * 60 + (seconds || 0);
-}
+  formatDate,
+  shiftDate,
+  shiftTimeByMinutes,
+  startOfDay,
+  timeToSeconds,
+} from "@/lib/date-utils";
 
 export default function SessionDetailsPage() {
-  const { groupId, sessionId } = useParams<{
-    groupId: string;
-    sessionId: string;
-  }>();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [details, setDetails] = useState<SessionDetails | null>(null);
-  const [groupActivities, setGroupActivities] = useState<Activity[]>([]);
-  const [selectedActivityId, setSelectedActivityId] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      if (!groupId || !sessionId) {
-        navigate("/");
-        return;
-      }
+  const {
+    NONE_ACTIVITY_VALUE,
+    loading,
+    saving,
+    error,
+    details,
+    groupActivities,
+    selectedActivityId,
+    setSelectedActivityId,
+    selectedDate,
+    setSelectedDate,
+    startTime,
+    setStartTime,
+    endTime,
+    setEndTime,
+    backPath,
+    navigate,
+    handleDelete,
+    handleSave,
+    today,
+  } = useSessionDetails();
 
-      const [group, period] = await Promise.all([
-        db.activityGroups.get(groupId),
-        db.activityPeriods.get(sessionId),
-      ]);
-
-      if (!group || group.deleted_at || !period || period.deleted_at) {
-        navigate(`/activities/${groupId}`);
-        return;
-      }
-
-      const activity = await db.activities.get(period.activity_id);
-      if (activity && !activity.deleted_at && activity.group_id !== group.id) {
-        navigate(`/activities/${groupId}`);
-        return;
-      }
-
-      const [entry, activities] = await Promise.all([
-        db.dailyEntries.get(period.daily_entry_id),
-        db.activities
-          .filter((item) => item.group_id === group.id && !item.deleted_at)
-          .sortBy("created_at"),
-      ]);
-
-      const initialDate = entry?.date
-        ? fromDateString(entry.date)
-        : new Date(period.start_time);
-
-      setDetails({
-        group,
-        activity:
-          activity &&
-          !activity.deleted_at &&
-          !isHiddenGroupDefaultActivity(activity)
-            ? activity
-            : null,
-        period,
-        entry,
-      });
-      setGroupActivities(
-        activities.filter((item) => !isHiddenGroupDefaultActivity(item)),
-      );
-      setSelectedActivityId(
-        activity &&
-          !activity.deleted_at &&
-          !isHiddenGroupDefaultActivity(activity)
-          ? activity.id
-          : NONE_ACTIVITY_VALUE,
-      );
-      setSelectedDate(initialDate);
-      setStartTime(formatTimeInput(period.start_time));
-      setEndTime(formatTimeInput(period.end_time));
-      setLoading(false);
-    };
-
-    void load();
-  }, [groupId, sessionId, navigate]);
-
-  const backPath = useMemo(() => {
-    if (!groupId) return "/";
-    return `/activities/${groupId}`;
-  }, [groupId]);
-
-  const today = useMemo(() => startOfDay(new Date()), []);
   const isSelectedDateToday =
-    startOfDay(selectedDate).getTime() === today.getTime();
+    selectedDate && today
+      ? startOfDay(selectedDate).getTime() === today.getTime()
+      : false;
 
-  const handleDelete = async () => {
-    if (!sessionId) return;
-    try {
-      await db.activityPeriods.update(sessionId, {
-        deleted_at: now(),
-        updated_at: now(),
-      });
-      navigate(backPath);
-    } catch (deleteError) {
-      console.error("Error deleting session:", deleteError);
+  const adjustStartTime = (delta: number) => {
+    const newStartTime = shiftTimeByMinutes(startTime, delta);
+    setStartTime(newStartTime);
+    if (endTime && timeToSeconds(endTime) < timeToSeconds(newStartTime)) {
+      setEndTime(newStartTime);
     }
   };
 
-  const handleSave = async () => {
-    if (!sessionId || !details) return;
-
-    if (!startTime) {
-      setError("Please set a start time.");
-      return;
+  const adjustEndTime = (delta: number) => {
+    const newEndTime = shiftTimeByMinutes(endTime, delta);
+    if (startTime && timeToSeconds(newEndTime) < timeToSeconds(startTime)) {
+      setEndTime(startTime);
+    } else {
+      setEndTime(newEndTime);
     }
+  };
 
-    const nextStartIso = combineDateAndTime(selectedDate, startTime);
-    const nextEndIso = endTime
-      ? combineDateAndTime(selectedDate, endTime)
-      : null;
-
-    if (
-      nextEndIso &&
-      new Date(nextEndIso).getTime() < new Date(nextStartIso).getTime()
-    ) {
-      setError("End time cannot be before start time.");
-      return;
+  const handleStartTimeChange = (newStartTime: string) => {
+    setStartTime(newStartTime);
+    if (endTime && timeToSeconds(endTime) < timeToSeconds(newStartTime)) {
+      setEndTime(newStartTime);
     }
+  };
 
-    try {
-      setSaving(true);
-      setError(null);
-
-      const selectedDateString = toDateString(selectedDate);
-      const existingEntry = await db.dailyEntries
-        .where("date")
-        .equals(selectedDateString)
-        .filter((entry) => !entry.deleted_at)
-        .first();
-
-      let dailyEntryId = existingEntry?.id;
-      if (!dailyEntryId) {
-        const timestamp = now();
-        const created: DailyEntry = {
-          id: newId(),
-          date: selectedDateString,
-          task_counts: {},
-          current_activity_id: null,
-          created_at: timestamp,
-          updated_at: timestamp,
-          synced_at: null,
-          deleted_at: null,
-        };
-        await db.dailyEntries.add(created);
-        dailyEntryId = created.id;
-      }
-
-      const nextActivityId =
-        selectedActivityId === NONE_ACTIVITY_VALUE
-          ? (await getOrCreateHiddenGroupDefaultActivity(details.group)).id
-          : selectedActivityId;
-
-      await db.activityPeriods.update(sessionId, {
-        activity_id: nextActivityId,
-        daily_entry_id: dailyEntryId,
-        start_time: nextStartIso,
-        end_time: nextEndIso,
-        updated_at: now(),
-      });
-
-      navigate(backPath);
-    } catch (saveError) {
-      console.error("Error saving session:", saveError);
-      setError("Failed to save session. Please try again.");
-    } finally {
-      setSaving(false);
+  const handleEndTimeChange = (newEndTime: string) => {
+    if (startTime && timeToSeconds(newEndTime) < timeToSeconds(startTime)) {
+      setEndTime(startTime);
+    } else {
+      setEndTime(newEndTime);
     }
   };
 
@@ -380,16 +190,7 @@ export default function SessionDetailsPage() {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => {
-                  const newStartTime = shiftTimeByMinutes(startTime, -5);
-                  setStartTime(newStartTime);
-                  if (
-                    endTime &&
-                    timeToSeconds(endTime) < timeToSeconds(newStartTime)
-                  ) {
-                    setEndTime(newStartTime);
-                  }
-                }}
+                onClick={() => adjustStartTime(-5)}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -397,16 +198,7 @@ export default function SessionDetailsPage() {
                 type="time"
                 step={1}
                 value={startTime}
-                onChange={(event) => {
-                  const newStartTime = event.target.value;
-                  setStartTime(newStartTime);
-                  if (
-                    endTime &&
-                    timeToSeconds(endTime) < timeToSeconds(newStartTime)
-                  ) {
-                    setEndTime(newStartTime);
-                  }
-                }}
+                onChange={(e) => handleStartTimeChange(e.target.value)}
                 className="h-9 border-0 shadow-none w-36 bg-transparent mx-0 px-0 focus-visible:ring-0 focus-visible:outline-none"
               />
               <Button
@@ -414,16 +206,7 @@ export default function SessionDetailsPage() {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => {
-                  const newStartTime = shiftTimeByMinutes(startTime, 5);
-                  setStartTime(newStartTime);
-                  if (
-                    endTime &&
-                    timeToSeconds(endTime) < timeToSeconds(newStartTime)
-                  ) {
-                    setEndTime(newStartTime);
-                  }
-                }}
+                onClick={() => adjustStartTime(5)}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -437,17 +220,7 @@ export default function SessionDetailsPage() {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => {
-                  const newEndTime = shiftTimeByMinutes(endTime, -5);
-                  if (
-                    startTime &&
-                    timeToSeconds(newEndTime) < timeToSeconds(startTime)
-                  ) {
-                    setEndTime(startTime);
-                  } else {
-                    setEndTime(newEndTime);
-                  }
-                }}
+                onClick={() => adjustEndTime(-5)}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -455,17 +228,7 @@ export default function SessionDetailsPage() {
                 type="time"
                 step={1}
                 value={endTime}
-                onChange={(event) => {
-                  const newEndTime = event.target.value;
-                  if (
-                    startTime &&
-                    timeToSeconds(newEndTime) < timeToSeconds(startTime)
-                  ) {
-                    setEndTime(startTime);
-                  } else {
-                    setEndTime(newEndTime);
-                  }
-                }}
+                onChange={(e) => handleEndTimeChange(e.target.value)}
                 className="h-9 border-0 mx-0 px-0 w-36 shadow-none bg-transparent focus-visible:ring-0 focus-visible:outline-none"
               />
               <Button
@@ -473,17 +236,7 @@ export default function SessionDetailsPage() {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => {
-                  const newEndTime = shiftTimeByMinutes(endTime, 5);
-                  if (
-                    startTime &&
-                    timeToSeconds(newEndTime) < timeToSeconds(startTime)
-                  ) {
-                    setEndTime(startTime);
-                  } else {
-                    setEndTime(newEndTime);
-                  }
-                }}
+                onClick={() => adjustEndTime(5)}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -493,13 +246,7 @@ export default function SessionDetailsPage() {
         {error && <p className="text-sm text-destructive mt-3">{error}</p>}
       </div>
 
-      <button
-        onClick={() => navigate(backPath)}
-        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Back"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      <FloatingBackButton onClick={() => navigate(backPath)} title="Back" />
 
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
         <button

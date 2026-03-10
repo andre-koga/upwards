@@ -8,23 +8,25 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { syncEngine } from "@/lib/sync";
-import {
-  supabase,
-  isSupabaseConfigured,
-  isAuthenticated,
-} from "@/lib/supabase";
+import { useAuth } from "@/lib/use-auth";
 
 export default function SyncStatus() {
   const FADE_OUT_DELAY_MS = 2200;
   const [syncState, setSyncState] = useState(syncEngine.getState());
-  const [isAuthed, setIsAuthed] = useState(isAuthenticated());
+  const {
+    isSupabaseConfigured,
+    isAuthed,
+    authLoading,
+    authError,
+    signIn,
+    signUp,
+    signOut,
+  } = useAuth();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isVisible, setIsVisible] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
   const hideTimerRef = useRef<number | null>(null);
   const prevIsSyncingRef = useRef(syncState.isSyncing);
 
@@ -43,24 +45,17 @@ export default function SyncStatus() {
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // Listen to auth changes reactively
-    const subscription = supabase
-      ? supabase.auth.onAuthStateChange((event, session) => {
-          setIsAuthed(Boolean(session));
-          if (event === "SIGNED_IN") {
-            setShowAuth(false);
-          }
-        }).data.subscription
-      : null;
-
     return () => {
       clearHideTimer();
       unsubscribe();
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
-      subscription?.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (isAuthed) setShowAuth(false);
+  }, [isAuthed]);
 
   useEffect(() => {
     const wasSyncing = prevIsSyncingRef.current;
@@ -79,7 +74,6 @@ export default function SyncStatus() {
       clearHideTimer();
       hideTimerRef.current = window.setTimeout(() => {
         setIsVisible(false);
-        setShowAuth(false);
       }, FADE_OUT_DELAY_MS);
     }
 
@@ -97,51 +91,24 @@ export default function SyncStatus() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase) return;
-    setAuthLoading(true);
-    setAuthError(null);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+      await signIn(email, password);
       setEmail("");
       setPassword("");
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Sign in failed");
-    } finally {
-      setAuthLoading(false);
+      setShowAuth(false);
+    } catch {
+      // authError handled by useAuth
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase) return;
-    setAuthLoading(true);
-    setAuthError(null);
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
-      setAuthError("Check your email to confirm your account!");
+      await signUp(email, password);
       setEmail("");
       setPassword("");
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Sign up failed");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    if (!supabase) return;
-    // Push any pending changes before losing the session
-    await syncEngine.pushBeforeSignOut();
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      console.error("Sign out failed:", error);
+    } catch {
+      // authError handled by useAuth
     }
   };
 
@@ -207,7 +174,7 @@ export default function SyncStatus() {
           {/* Auth button */}
           {isAuthed ? (
             <button
-              onClick={handleSignOut}
+              onClick={signOut}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
               title="Sign out"
             >

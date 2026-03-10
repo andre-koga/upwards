@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { db, now, newId } from "@/lib/db";
+import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import type { DailyEntry } from "@/lib/db/types";
 
 export function useDailyEntry(dateString: string) {
@@ -29,76 +30,53 @@ export function useDailyEntry(dateString: string) {
     }, [dateString]);
 
     const getOrCreateDailyEntry = useCallback(async (): Promise<DailyEntry> => {
-        const existing = await db.dailyEntries
-            .where("date")
-            .equals(dateString)
-            .filter((e) => !e.deleted_at)
-            .first();
-        if (existing) return existing;
-
-        const n = now();
-        const newEntry: DailyEntry = {
-            id: newId(),
-            date: dateString,
-            task_counts: {},
-            current_activity_id: null,
-            created_at: n,
-            updated_at: n,
-            synced_at: null,
-            deleted_at: null,
-        };
-        await db.dailyEntries.add(newEntry);
-        setDailyEntry(newEntry);
-        return newEntry;
+        const entry = await getOrCreateDailyEntryDb(dateString);
+        setDailyEntry(entry);
+        return entry;
     }, [dateString]);
 
     const incrementTask = useCallback(
         async (activityId: string, target: number) => {
+            let newCounts: Record<string, number> = {};
+            setTaskCounts((prev) => {
+                const current = prev[activityId] || 0;
+                const next = current >= target ? 0 : current + 1;
+                newCounts = { ...prev };
+                if (next === 0) {
+                    delete newCounts[activityId];
+                } else {
+                    newCounts[activityId] = next;
+                }
+                return newCounts;
+            });
+
             try {
-                setTaskCounts((prev) => {
-                    const current = prev[activityId] || 0;
-                    const next = current >= target ? 0 : current + 1;
-                    const newCounts = { ...prev };
-                    if (next === 0) {
-                        delete newCounts[activityId];
-                    } else {
-                        newCounts[activityId] = next;
-                    }
-                    // Fire-and-forget DB update with the computed counts
-                    void (async () => {
-                        try {
-                            const entry = await db.dailyEntries
-                                .where("date")
-                                .equals(dateString)
-                                .filter((e) => !e.deleted_at)
-                                .first();
-                            if (entry) {
-                                await db.dailyEntries.update(entry.id, {
-                                    task_counts: newCounts,
-                                    updated_at: now(),
-                                });
-                            } else {
-                                const n = now();
-                                const newDbEntry: DailyEntry = {
-                                    id: newId(),
-                                    date: dateString,
-                                    task_counts: newCounts,
-                                    current_activity_id: null,
-                                    created_at: n,
-                                    updated_at: n,
-                                    synced_at: null,
-                                    deleted_at: null,
-                                };
-                                await db.dailyEntries.add(newDbEntry);
-                            }
-                        } catch (err) {
-                            console.error("Error persisting task count:", err);
-                        }
-                    })();
-                    return newCounts;
-                });
-            } catch (error) {
-                console.error("Error updating task count:", error);
+                const entry = await db.dailyEntries
+                    .where("date")
+                    .equals(dateString)
+                    .filter((e) => !e.deleted_at)
+                    .first();
+                if (entry) {
+                    await db.dailyEntries.update(entry.id, {
+                        task_counts: newCounts,
+                        updated_at: now(),
+                    });
+                } else {
+                    const n = now();
+                    const newDbEntry: DailyEntry = {
+                        id: newId(),
+                        date: dateString,
+                        task_counts: newCounts,
+                        current_activity_id: null,
+                        created_at: n,
+                        updated_at: n,
+                        synced_at: null,
+                        deleted_at: null,
+                    };
+                    await db.dailyEntries.add(newDbEntry);
+                }
+            } catch (err) {
+                console.error("Error persisting task count:", err);
                 loadDailyEntry();
             }
         },

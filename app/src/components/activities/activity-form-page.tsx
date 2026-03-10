@@ -2,27 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
+import {
+  validateActivityData,
+  type ActivitySubmitData,
+} from "@/lib/activity-validation";
 import ActivityFormFields from "@/components/activities/activity-form-fields";
-
-interface ActivitySubmitData {
-  name: string;
-  routine: string;
-  completion_target: number;
-}
 
 interface ActivityFormPageProps {
   group: ActivityGroup;
   activity?: Activity; // present → edit mode, absent → create mode
-}
-
-function validateActivityData(data: ActivitySubmitData): string | null {
-  if (!data.name.trim()) return "Activity name is required";
-  if (data.routine.startsWith("weekly:")) {
-    const days = data.routine.split(":")[1];
-    if (!days || days.split(",").length === 0)
-      return "Please select at least one day for weekly routine";
-  }
-  return null;
 }
 
 export default function ActivityFormPage({

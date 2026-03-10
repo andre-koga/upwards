@@ -16,27 +16,8 @@ import { useJournalEntry } from "@/components/tasks/hooks/use-journal-entry";
 import JournalYoutubeSection from "@/components/tasks/journal-youtube-section";
 import JournalTextSection from "@/components/tasks/journal-text-section";
 import DateNavigator from "@/components/tasks/date-navigator";
-
-function getYoutubeEmbedUrl(url: string): string | null {
-  if (!url.trim()) return null;
-  const short = url.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
-  if (short) return `https://www.youtube.com/embed/${short[1]}`;
-  const long = url.match(/[?&]v=([A-Za-z0-9_-]{11})/);
-  if (long) return `https://www.youtube.com/embed/${long[1]}`;
-  const embed = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{11})/);
-  if (embed) return `https://www.youtube.com/embed/${embed[1]}`;
-  return null;
-}
-
-function getFirstEmoji(str: string): string {
-  if (!str) return "";
-  const emojiRegex = /\p{Extended_Pictographic}/u;
-  const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
-  for (const { segment } of segmenter.segment(str)) {
-    if (emojiRegex.test(segment)) return segment;
-  }
-  return "";
-}
+import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { getYoutubeEmbedUrl, getFirstEmoji } from "@/lib/utils";
 
 export default function TasksPageContent() {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -482,13 +463,7 @@ export default function TasksPageContent() {
 
       {/* Fixed bottom bar */}
       {/* Settings button — independent fixed anchor */}
-      <Link
-        to="/settings"
-        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Settings"
-      >
-        <Settings className="h-3.5 w-3.5" />
-      </Link>
+      <FloatingBackButton to="/settings" title="Settings" icon="settings" />
 
       {/* Date pill — centered */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">

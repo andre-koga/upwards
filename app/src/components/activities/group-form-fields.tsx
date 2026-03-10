@@ -1,49 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X } from "lucide-react";
 import GroupPill from "@/components/activities/group-pill";
-
-// --- HSL <-> Hex helpers ---
-function hexToHsl(hex: string): [number, number, number] {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const max = Math.max(r, g, b),
-    min = Math.min(r, g, b);
-  let h = 0,
-    s = 0;
-  const l = (max + min) / 2;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r:
-        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-        break;
-      case g:
-        h = ((b - r) / d + 2) / 6;
-        break;
-      case b:
-        h = ((r - g) / d + 4) / 6;
-        break;
-    }
-  }
-  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
-}
-
-function hslToHex(h: number, s: number, l: number): string {
-  const sl = s / 100,
-    ll = l / 100;
-  const a = sl * Math.min(ll, 1 - ll);
-  const f = (n: number) => {
-    const k = (n + h / 30) % 12;
-    const color = ll - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color)
-      .toString(16)
-      .padStart(2, "0");
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-}
+import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { hexToHsl, hslToHex } from "@/lib/color-utils";
+import { formSectionLabel, formInput, formSubmitButton } from "@/lib/form-styles";
 
 const DEFAULT_COLOR = "#3b82f6"; // blue-500
 
@@ -109,9 +69,7 @@ export default function GroupFormFields({
       >
         {/* Preview — centered in available top space */}
         <div className="flex-1 flex flex-col justify-center gap-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-            Preview
-          </p>
+          <p className={formSectionLabel}>Preview</p>
           <GroupPill name={formData.name} color={formData.color} readOnly />
         </div>
 
@@ -119,9 +77,7 @@ export default function GroupFormFields({
 
         {/* Name input */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-            Name
-          </p>
+          <p className={formSectionLabel}>Name</p>
           <input
             id="name"
             type="text"
@@ -134,16 +90,14 @@ export default function GroupFormFields({
               }
             }}
             placeholder="e.g. Health, Work, Personal…"
-            className="w-full h-10 bg-muted/40 border border-border rounded-full px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors placeholder:text-muted-foreground/50"
+            className={formInput}
             required
           />
         </div>
 
         {/* Color */}
         <div className="space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-            Color
-          </p>
+          <p className={formSectionLabel}>Color</p>
           <div className="space-y-3">
             {/* Hue */}
             <div className="space-y-1">
@@ -225,21 +179,14 @@ export default function GroupFormFields({
       </form>
 
       {/* Fixed bottom — home button left, submit pill center */}
-      <button
-        type="button"
-        onClick={() => navigate(backPath)}
-        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Back"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      <FloatingBackButton onClick={() => navigate(backPath)} title="Back" />
 
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
         <button
           type="submit"
           form="group-form"
           disabled={isSubmitting || !formData.name.trim()}
-          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-2.5 font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className={formSubmitButton}
         >
           {isSubmitting ? "Saving…" : submitLabel}
         </button>

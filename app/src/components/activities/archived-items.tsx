@@ -16,7 +16,7 @@ import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { stopCurrentActivity } from "@/lib/activity-utils";
 import ArchivedGroupsList from "@/components/activities/archived-groups-list";
 import ArchivedActivitiesList from "@/components/activities/archived-activities-list";
-import { X } from "lucide-react";
+import { FloatingBackButton } from "@/components/ui/floating-back-button";
 
 export default function ArchivedItems() {
   const navigate = useNavigate();
@@ -156,13 +156,7 @@ export default function ArchivedItems() {
       </Card>
 
       {/* Fixed floating back button */}
-      <button
-        onClick={() => navigate("/settings")}
-        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Back to settings"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      <FloatingBackButton onClick={() => navigate("/settings")} title="Back to settings" />
 
       <AlertDialog
         open={deleteDialog.open}

@@ -56,60 +56,16 @@ export async function getOrCreateHiddenGroupDefaultActivity(
     return hiddenActivity;
 }
 
-/**
- * Format milliseconds into a human-readable duration string.
- * e.g. 3661000 → "1h 1m 1s"
- */
-export function formatActivityTime(milliseconds: number): string {
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
-    return `${minutes}m ${seconds}s`;
-}
+import { parseRoutine } from "@/lib/activity-formatters";
 
-/**
- * Format milliseconds into a timer display string (MM:SS or HH:MM:SS).
- * Returns "MM:SS" by default, switches to "HH:MM:SS" when elapsed time >= 1 hour.
- * e.g. 65000 → "01:05", 3661000 → "01:01:01"
- */
-export function formatTimerDisplay(elapsedMs: number): string {
-    const totalSeconds = Math.floor(elapsedMs / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    if (hours > 0) {
-        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-    }
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-
-/**
- * Convert a routine string to a human-readable label.
- * e.g. "weekly:1,3,5" → "Weekly: Mon, Wed, Fri"
- */
-export function formatRoutineDisplay(routine: string | null): string {
-    if (!routine || routine === "daily") return "Daily";
-    if (routine === "anytime") return "Anytime";
-    if (routine === "never") return "Never";
-
-    if (routine.startsWith("weekly:")) {
-        const days = routine.split(":")[1].split(",").map(Number);
-        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        return `Weekly: ${days.map((d) => dayNames[d]).join(", ")}`;
-    }
-    if (routine.startsWith("monthly:")) {
-        return `Monthly: Day ${routine.split(":")[1]}`;
-    }
-    if (routine.startsWith("custom:")) {
-        const parts = routine.split(":");
-        return `Every ${parts[1]} ${parts[2]}`;
-    }
-
-    return routine.charAt(0).toUpperCase() + routine.slice(1);
-}
+// Re-export for backward compatibility
+export type { ParsedRoutine } from "@/lib/activity-formatters";
+export { parseRoutine } from "@/lib/activity-formatters";
+export {
+    formatActivityTime,
+    formatTimerDisplay,
+    formatRoutineDisplay,
+} from "@/lib/activity-formatters";
 
 /**
  * Stops the current active tracking period for today if it matches
@@ -177,24 +133,20 @@ export function shouldShowActivity(activity: Activity, date: Date): boolean {
         if (viewDay < creationDay) return false;
     }
 
-    const routine = activity.routine || "daily";
-    if (routine === "anytime") return false;
-    if (routine === "never") return true;
-    if (routine === "daily") return true;
+    const parsed = parseRoutine(activity.routine || "daily");
+    if (parsed.type === "anytime") return false;
+    if (parsed.type === "never") return true;
+    if (parsed.type === "daily") return true;
 
-    if (routine.startsWith("weekly:")) {
-        const days = routine.split(":")[1].split(",").map(Number);
-        return days.includes(date.getDay());
+    if (parsed.type === "weekly") {
+        return parsed.days.includes(date.getDay());
     }
 
-    if (routine.startsWith("monthly:")) {
-        return date.getDate() === parseInt(routine.split(":")[1]);
+    if (parsed.type === "monthly") {
+        return date.getDate() === parsed.day;
     }
 
-    if (routine.startsWith("custom:")) {
-        const parts = routine.split(":");
-        const interval = parseInt(parts[1]);
-        const unit = parts[2];
+    if (parsed.type === "custom") {
         if (!activity.created_at) return false;
 
         const creationDate = new Date(activity.created_at);
@@ -202,26 +154,26 @@ export function shouldShowActivity(activity: Activity, date: Date): boolean {
         const checkDate = new Date(date);
         checkDate.setHours(0, 0, 0, 0);
 
-        if (unit === "days") {
+        if (parsed.unit === "days") {
             const daysDiff = Math.floor(
                 (checkDate.getTime() - creationDate.getTime()) / (1000 * 60 * 60 * 24),
             );
-            return daysDiff >= 0 && daysDiff % interval === 0;
-        } else if (unit === "weeks") {
+            return daysDiff >= 0 && daysDiff % parsed.interval === 0;
+        } else if (parsed.unit === "weeks") {
             const daysDiff = Math.floor(
                 (checkDate.getTime() - creationDate.getTime()) / (1000 * 60 * 60 * 24),
             );
             const weeksDiff = Math.floor(daysDiff / 7);
             return (
-                daysDiff >= 0 && weeksDiff % interval === 0 && daysDiff % 7 === 0
+                daysDiff >= 0 && weeksDiff % parsed.interval === 0 && daysDiff % 7 === 0
             );
-        } else if (unit === "months") {
+        } else if (parsed.unit === "months") {
             const monthsDiff =
                 (checkDate.getFullYear() - creationDate.getFullYear()) * 12 +
                 (checkDate.getMonth() - creationDate.getMonth());
             return (
                 monthsDiff >= 0 &&
-                monthsDiff % interval === 0 &&
+                monthsDiff % parsed.interval === 0 &&
                 checkDate.getDate() === creationDate.getDate()
             );
         }

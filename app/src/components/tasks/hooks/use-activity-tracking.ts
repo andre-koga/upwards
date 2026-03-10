@@ -1,8 +1,7 @@
 import { useState, useCallback } from "react";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
-
-const MIN_SESSION_DURATION_MS = 5000;
+import { closeOpenPeriods } from "@/lib/activity-periods";
 
 export function useActivityTracking(
     dateString: string,
@@ -60,34 +59,7 @@ export function useActivityTracking(
                 const n = now();
                 const entry = await getOrCreateDailyEntry();
 
-                const openPeriods = await db.activityPeriods
-                    .where("daily_entry_id")
-                    .equals(entry.id)
-                    .filter((p) => !p.end_time && !p.deleted_at)
-                    .toArray();
-
-                if (openPeriods.length > 0) {
-                    await Promise.all(
-                        openPeriods.map((period) => {
-                            const sessionDurationMs =
-                                new Date(n).getTime() -
-                                new Date(period.start_time).getTime();
-
-                            if (sessionDurationMs < MIN_SESSION_DURATION_MS) {
-                                return db.activityPeriods.update(period.id, {
-                                    end_time: n,
-                                    updated_at: n,
-                                    deleted_at: n,
-                                });
-                            }
-
-                            return db.activityPeriods.update(period.id, {
-                                end_time: n,
-                                updated_at: n,
-                            });
-                        }),
-                    );
-                }
+                await closeOpenPeriods(entry.id);
 
                 const newPeriod: ActivityPeriod = {
                     id: newId(),
@@ -127,34 +99,7 @@ export function useActivityTracking(
                 const n = now();
                 const entry = await getOrCreateDailyEntry();
 
-                const openPeriods = await db.activityPeriods
-                    .where("daily_entry_id")
-                    .equals(entry.id)
-                    .filter((p) => !p.end_time && !p.deleted_at)
-                    .toArray();
-
-                if (openPeriods.length > 0) {
-                    await Promise.all(
-                        openPeriods.map((period) => {
-                            const sessionDurationMs =
-                                new Date(n).getTime() -
-                                new Date(period.start_time).getTime();
-
-                            if (sessionDurationMs < MIN_SESSION_DURATION_MS) {
-                                return db.activityPeriods.update(period.id, {
-                                    end_time: n,
-                                    updated_at: n,
-                                    deleted_at: n,
-                                });
-                            }
-
-                            return db.activityPeriods.update(period.id, {
-                                end_time: n,
-                                updated_at: n,
-                            });
-                        }),
-                    );
-                }
+                await closeOpenPeriods(entry.id);
 
                 await db.dailyEntries.update(entry.id, {
                     current_activity_id: null,
