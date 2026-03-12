@@ -9,9 +9,12 @@ export interface PillProps {
   elapsedMs?: number;
   isRunning?: boolean;
   onPlayStop?: () => void;
+  /** When provided, name area opens this instead of triggering onPlayStop; only the play button triggers onPlayStop */
+  onNameClick?: () => void;
   nameClassName?: string;
   /** When true, renders as a non-interactive div instead of a button */
   readOnly?: boolean;
+  size?: "default" | "sm";
   className?: string;
 }
 
@@ -21,17 +24,58 @@ function Pill({
   elapsedMs = 0,
   isRunning = false,
   onPlayStop,
+  onNameClick,
   nameClassName = "",
   readOnly = false,
+  size = "default",
   className = "",
 }: PillProps) {
   const textColor = useMemo(() => getContrastColor(color), [color]);
+  const isSm = size === "sm";
 
-  const inner = (
+  const playTimerButton = (
+    <div
+      className={
+        "relative flex h-full flex-shrink-0 items-center justify-center gap-2 rounded-full " +
+        (isSm ? "px-2" : "px-3")
+      }
+      style={{ backgroundColor: color }}
+    >
+      {isRunning ? (
+        <Square
+          className={
+            isSm ? "h-2.5 w-2.5 flex-shrink-0" : "h-3 w-3 flex-shrink-0"
+          }
+          style={{ color: textColor, fill: textColor }}
+        />
+      ) : (
+        <Play
+          className={
+            isSm
+              ? "h-2.5 w-2.5 flex-shrink-0 translate-x-px"
+              : "h-3 w-3 flex-shrink-0 translate-x-px"
+          }
+          style={{ color: textColor, fill: textColor }}
+        />
+      )}
+      <span
+        className={
+          "flex-shrink-0 " + (isSm ? "mt-[1px] text-[10px]" : "mt-0.5 text-xs")
+        }
+        style={{ color: textColor, fontFamily: "JetBrains Mono, monospace" }}
+      >
+        {formatTimerDisplay(elapsedMs)}
+      </span>
+    </div>
+  );
+
+  const nameContent = (
     <>
       <span
         className={
-          "flex-1 truncate px-4 text-left text-sm font-medium " + nameClassName
+          "flex-1 truncate text-left font-medium " +
+          (isSm ? "px-3 text-xs" : "px-4 text-sm") +
+          (nameClassName ? " " + nameClassName : "")
         }
       >
         {name || (
@@ -40,47 +84,57 @@ function Pill({
       </span>
       {/* Gradient fade from button colour to transparent */}
       <div
-        className="pointer-events-none absolute inset-y-0 right-0.5 my-0.5 w-full rounded-r-full"
+        className={
+          "pointer-events-none absolute inset-y-0 right-0.5 w-full rounded-r-full"
+        }
         style={{
-          background: `linear-gradient(to left, ${color}, transparent 35%)`,
+          background: isSm
+            ? `linear-gradient(to left, ${color}, transparent 28%)`
+            : `linear-gradient(to left, ${color}, transparent 35%)`,
         }}
       />
-      <div
-        className="relative mr-0.5 flex h-9 flex-shrink-0 items-center justify-center gap-2 rounded-full px-3"
-        style={{ backgroundColor: color }}
-      >
-        {isRunning ? (
-          <Square
-            className="h-3 w-3 flex-shrink-0"
-            style={{ color: textColor, fill: textColor }}
-          />
-        ) : (
-          <Play
-            className="h-3 w-3 flex-shrink-0 translate-x-px"
-            style={{ color: textColor, fill: textColor }}
-          />
-        )}
-        <span
-          className="flex-shrink-0 text-xs"
-          style={{ color: textColor, fontFamily: "JetBrains Mono, monospace" }}
-        >
-          {formatTimerDisplay(elapsedMs)}
-        </span>
-      </div>
     </>
   );
 
   const base =
-    "relative flex items-center border border-border rounded-full overflow-hidden h-11 " +
+    "relative flex items-center border border-border rounded-full overflow-hidden " +
+    (isSm ? "h-8 " : "h-10 ") +
     className;
 
   if (readOnly) {
-    return <div className={base}>{inner}</div>;
+    return (
+      <div className={base}>
+        {nameContent}
+        {playTimerButton}
+      </div>
+    );
+  }
+
+  if (onNameClick) {
+    return (
+      <div className={base + " w-full"}>
+        <button
+          type="button"
+          onClick={onNameClick}
+          className="flex min-w-0 flex-1 items-center text-left"
+        >
+          {nameContent}
+        </button>
+        <button
+          type="button"
+          onClick={onPlayStop}
+          className="h-full flex-shrink-0"
+        >
+          {playTimerButton}
+        </button>
+      </div>
+    );
   }
 
   return (
     <button type="button" onClick={onPlayStop} className={base + " w-full"}>
-      {inner}
+      {nameContent}
+      {playTimerButton}
     </button>
   );
 }

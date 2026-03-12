@@ -13,6 +13,7 @@ import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
+import { useMemoTracking } from "./use-memo-tracking";
 
 interface UseDailyTasksParams {
   activities: Activity[];
@@ -37,6 +38,8 @@ export function useDailyTasks({
     loading,
     currentActivityId,
     setCurrentActivityId,
+    currentMemoId,
+    setCurrentMemoId,
     loadDailyEntry,
     getOrCreateDailyEntry,
     incrementTask,
@@ -64,11 +67,31 @@ export function useDailyTasks({
     getOrCreateDailyEntry
   );
 
+  const {
+    memoPeriods,
+    loadMemoPeriods,
+    calculateMemoTime,
+    handleStartMemo,
+    handleStopMemo,
+  } = useMemoTracking(
+    dateString,
+    currentMemoId,
+    setCurrentMemoId,
+    getOrCreateDailyEntry
+  );
+
   useEffect(() => {
     loadDailyEntry();
     loadActivityPeriods();
+    loadMemoPeriods();
     loadOneTimeTasks();
-  }, [currentDate, loadDailyEntry, loadActivityPeriods, loadOneTimeTasks]);
+  }, [
+    currentDate,
+    loadDailyEntry,
+    loadActivityPeriods,
+    loadMemoPeriods,
+    loadOneTimeTasks,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,38 +150,54 @@ export function useDailyTasks({
     [dailyActivities, calculateActivityTime]
   );
 
-  const timelineSessions = useMemo(
-    () =>
-      activityPeriods
-        .slice()
-        .filter((period) => !!period.end_time)
-        .sort(
-          (left, right) =>
-            new Date(right.start_time).getTime() -
-            new Date(left.start_time).getTime()
-        )
-        .map((period) => {
-          const activity = activities.find((a) => a.id === period.activity_id);
+  const MEMO_TIMELINE_COLOR = "#6b7280";
 
-          const startTime = new Date(period.start_time).getTime();
-          const endTime = new Date(period.end_time!).getTime();
+  const timelineSessions = useMemo(() => {
+    const activitySessions = activityPeriods
+      .filter((period) => !!period.end_time)
+      .map((period) => {
+        const activity = activities.find((a) => a.id === period.activity_id);
+        const startTime = new Date(period.start_time).getTime();
+        const endTime = new Date(period.end_time!).getTime();
+        return {
+          id: period.id,
+          type: "activity" as const,
+          activityId: period.activity_id,
+          groupId: activity?.group_id || "",
+          name:
+            activity?.name ??
+            getGroup(groups, activity?.group_id ?? "")?.name ??
+            "Unknown activity",
+          groupColor: activity
+            ? getGroupColor(groups, activity.group_id)
+            : DEFAULT_GROUP_COLOR,
+          intervalMs: Math.max(0, endTime - startTime),
+          startTime,
+        };
+      });
 
-          return {
-            id: period.id,
-            activityId: period.activity_id,
-            groupId: activity?.group_id || "",
-            name:
-              activity?.name ??
-              getGroup(groups, activity?.group_id ?? "")?.name ??
-              "Unknown activity",
-            groupColor: activity
-              ? getGroupColor(groups, activity.group_id)
-              : DEFAULT_GROUP_COLOR,
-            intervalMs: Math.max(0, endTime - startTime),
-          };
-        }),
-    [activityPeriods, activities, groups]
-  );
+    const memoSessions = memoPeriods
+      .filter((period) => !!period.end_time)
+      .map((period) => {
+        const memo = oneTimeTasks.find((t) => t.id === period.one_time_task_id);
+        const startTime = new Date(period.start_time).getTime();
+        const endTime = new Date(period.end_time!).getTime();
+        return {
+          id: period.id,
+          type: "memo" as const,
+          activityId: "",
+          groupId: "",
+          name: memo?.title ?? "Memo",
+          groupColor: MEMO_TIMELINE_COLOR,
+          intervalMs: Math.max(0, endTime - startTime),
+          startTime,
+        };
+      });
+
+    return [...activitySessions, ...memoSessions].sort(
+      (a, b) => b.startTime - a.startTime
+    );
+  }, [activityPeriods, memoPeriods, activities, groups, oneTimeTasks]);
 
   const handleTimelineClick = useCallback(
     (groupId: string, sessionId: string) => {
@@ -181,6 +220,7 @@ export function useDailyTasks({
     totalTimeSpentMs,
     timelineSessions,
     currentActivityId,
+    currentMemoId,
     taskCounts,
     oneTimeTasks,
     createOneTimeTask,
@@ -190,9 +230,12 @@ export function useDailyTasks({
     incrementTask,
     handleStartActivity,
     handleStopActivity,
+    handleStartMemo,
+    handleStopMemo,
     handleTimelineClick,
     loadActivityPeriods,
     calculateActivityTime,
+    calculateMemoTime,
     formatTimerDisplay,
   };
 }

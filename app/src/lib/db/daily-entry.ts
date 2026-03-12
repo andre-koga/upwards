@@ -22,6 +22,7 @@ export async function getOrCreateDailyEntry(
     date: dateString,
     task_counts: {},
     current_activity_id: null,
+    current_memo_id: null,
     created_at: n,
     updated_at: n,
     synced_at: null,

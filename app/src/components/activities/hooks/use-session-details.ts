@@ -168,6 +168,7 @@ export function useSessionDetails() {
           date: selectedDateString,
           task_counts: {},
           current_activity_id: null,
+          current_memo_id: null,
           created_at: timestamp,
           updated_at: timestamp,
           synced_at: null,

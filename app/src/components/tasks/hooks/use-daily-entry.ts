@@ -10,6 +10,7 @@ export function useDailyEntry(dateString: string) {
   const [currentActivityId, setCurrentActivityId] = useState<string | null>(
     null
   );
+  const [currentMemoId, setCurrentMemoId] = useState<string | null>(null);
 
   const loadDailyEntry = useCallback(async () => {
     try {
@@ -22,6 +23,7 @@ export function useDailyEntry(dateString: string) {
       setDailyEntry(entry || null);
       setTaskCounts((entry?.task_counts as Record<string, number>) || {});
       setCurrentActivityId(entry?.current_activity_id || null);
+      setCurrentMemoId(entry?.current_memo_id || null);
     } catch (error) {
       console.error("Error loading daily entry:", error);
     } finally {
@@ -68,6 +70,7 @@ export function useDailyEntry(dateString: string) {
             date: dateString,
             task_counts: newCounts,
             current_activity_id: null,
+            current_memo_id: null,
             created_at: n,
             updated_at: n,
             synced_at: null,
@@ -89,6 +92,8 @@ export function useDailyEntry(dateString: string) {
     loading,
     currentActivityId,
     setCurrentActivityId,
+    currentMemoId,
+    setCurrentMemoId,
     loadDailyEntry,
     getOrCreateDailyEntry,
     incrementTask,

@@ -33,6 +33,7 @@ export interface DailyEntry {
   date: string; // YYYY-MM-DD
   task_counts: Record<string, number> | null;
   current_activity_id: string | null;
+  current_memo_id: string | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;
@@ -82,10 +83,24 @@ export interface JournalEntry {
 
 export interface OneTimeTask {
   id: string;
-  date: string | null; // YYYY-MM-DD
+  date: string | null; // YYYY-MM-DD, completion date when done
   title: string;
   is_completed: boolean | null;
   order_index: number | null;
+  is_pinned: boolean | null;
+  due_date: string | null; // YYYY-MM-DD, when memo is due
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
+export interface MemoPeriod {
+  id: string;
+  daily_entry_id: string;
+  one_time_task_id: string;
+  start_time: string; // ISO string
+  end_time: string | null; // ISO string
   created_at: string;
   updated_at: string;
   synced_at: string | null;

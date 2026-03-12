@@ -2,6 +2,18 @@ import { useState, useCallback } from "react";
 import { db, now, newId, todayStr } from "@/lib/db";
 import type { OneTimeTask } from "@/lib/db/types";
 
+function sortMemos(tasks: OneTimeTask[]): OneTimeTask[] {
+  return [...tasks].sort((a, b) => {
+    const aPinned = !!a.is_pinned;
+    const bPinned = !!b.is_pinned;
+    if (aPinned !== bPinned) return aPinned ? -1 : 1;
+    const aDue = a.due_date ?? "9999-12-31";
+    const bDue = b.due_date ?? "9999-12-31";
+    if (aDue !== bDue) return aDue.localeCompare(bDue);
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  });
+}
+
 export function useOneTimeTasks(dateString: string) {
   const [oneTimeTasks, setOneTimeTasks] = useState<OneTimeTask[]>([]);
 
@@ -21,22 +33,17 @@ export function useOneTimeTasks(dateString: string) {
             .toArray(),
         ]);
 
-        const tasks = [...incompleteTasks, ...completedTodayTasks].sort(
-          (left, right) =>
-            new Date(left.created_at).getTime() -
-            new Date(right.created_at).getTime()
-        );
-
+        const tasks = sortMemos([...incompleteTasks, ...completedTodayTasks]);
         setOneTimeTasks(tasks);
         return;
       }
 
-      const tasks = await db.oneTimeTasks
+      const rawTasks = await db.oneTimeTasks
         .where("date")
         .equals(dateString)
         .filter((task) => !task.deleted_at && !!task.is_completed)
-        .sortBy("created_at");
-
+        .toArray();
+      const tasks = sortMemos(rawTasks);
       setOneTimeTasks(tasks);
     } catch (error) {
       console.error("Error loading one-time tasks:", error);
@@ -44,7 +51,10 @@ export function useOneTimeTasks(dateString: string) {
   }, [dateString]);
 
   const createOneTimeTask = useCallback(
-    async (title: string): Promise<boolean> => {
+    async (
+      title: string,
+      options?: { due_date?: string | null; is_pinned?: boolean }
+    ): Promise<boolean> => {
       if (!title.trim()) return false;
       try {
         const n = now();
@@ -54,13 +64,15 @@ export function useOneTimeTasks(dateString: string) {
           title: title.trim(),
           is_completed: false,
           order_index: null,
+          is_pinned: options?.is_pinned ?? false,
+          due_date: options?.due_date ?? null,
           created_at: n,
           updated_at: n,
           synced_at: null,
           deleted_at: null,
         };
         await db.oneTimeTasks.add(task);
-        setOneTimeTasks((prev) => [...prev, task]);
+        setOneTimeTasks((prev) => sortMemos([...prev, task]));
         return true;
       } catch (error) {
         console.error("Error creating one-time task:", error);
@@ -74,10 +86,12 @@ export function useOneTimeTasks(dateString: string) {
     const newVal = !task.is_completed;
     const completedDate = newVal ? todayStr() : null;
     setOneTimeTasks((prev) =>
-      prev.map((t) =>
-        t.id === task.id
-          ? { ...t, is_completed: newVal, date: completedDate }
-          : t
+      sortMemos(
+        prev.map((t) =>
+          t.id === task.id
+            ? { ...t, is_completed: newVal, date: completedDate }
+            : t
+        )
       )
     );
     await db.oneTimeTasks.update(task.id, {
@@ -93,19 +107,26 @@ export function useOneTimeTasks(dateString: string) {
   }, []);
 
   const updateOneTimeTask = useCallback(
-    async (taskId: string, title: string): Promise<boolean> => {
-      if (!title.trim()) return false;
+    async (
+      taskId: string,
+      patch: Partial<Pick<OneTimeTask, "title" | "is_pinned" | "due_date">>
+    ): Promise<boolean> => {
+      if (patch.title !== undefined && !patch.title.trim()) return false;
       try {
-        const trimmed = title.trim();
+        const n = now();
+        const updates: Partial<OneTimeTask> = {
+          ...patch,
+          updated_at: n,
+        };
+        if (patch.title !== undefined) {
+          updates.title = patch.title.trim();
+        }
         setOneTimeTasks((prev) =>
-          prev.map((t) =>
-            t.id === taskId ? { ...t, title: trimmed, updated_at: now() } : t
+          sortMemos(
+            prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t))
           )
         );
-        await db.oneTimeTasks.update(taskId, {
-          title: trimmed,
-          updated_at: now(),
-        });
+        await db.oneTimeTasks.update(taskId, updates);
         return true;
       } catch (error) {
         console.error("Error updating one-time task:", error);

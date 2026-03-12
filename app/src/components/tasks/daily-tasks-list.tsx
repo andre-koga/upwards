@@ -5,6 +5,7 @@ import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
+import ActiveMemoPill from "./active-memo-pill";
 import AddTaskModal from "./add-task-modal";
 import AssignActivityDialog from "./assign-activity-dialog";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
@@ -37,6 +38,7 @@ export default function DailyTasksList({
     totalTimeSpentMs,
     timelineSessions,
     currentActivityId,
+    currentMemoId,
     taskCounts,
     oneTimeTasks,
     createOneTimeTask,
@@ -46,9 +48,12 @@ export default function DailyTasksList({
     incrementTask,
     handleStartActivity,
     handleStopActivity,
+    handleStartMemo,
+    handleStopMemo,
     handleTimelineClick,
     loadActivityPeriods,
     calculateActivityTime,
+    calculateMemoTime,
     formatTimerDisplay,
   } = useDailyTasks({ activities, groups, currentDate });
 
@@ -84,6 +89,10 @@ export default function DailyTasksList({
               onToggle={toggleOneTimeTask}
               onDelete={deleteOneTimeTask}
               onUpdate={updateOneTimeTask}
+              timeSpent={calculateMemoTime(task.id)}
+              isCurrentMemo={currentMemoId === task.id}
+              onStartMemo={handleStartMemo}
+              onStopMemo={handleStopMemo}
             />
           ))}
         </div>
@@ -131,7 +140,7 @@ export default function DailyTasksList({
           ))}
       </div>
 
-      {(currentActivityId || timelineSessions.length > 0) && (
+      {(currentActivityId || currentMemoId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">
           <div className="ml-1 mr-1.5 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -145,7 +154,8 @@ export default function DailyTasksList({
                 ) +
                   (currentActivityId
                     ? calculateActivityTime(currentActivityId)
-                    : 0)
+                    : 0) +
+                  (currentMemoId ? calculateMemoTime(currentMemoId) : 0)
               )}
             </span>
           </div>
@@ -156,8 +166,15 @@ export default function DailyTasksList({
             calculateActivityTime={calculateActivityTime}
             onStop={handleStopActivity}
           />
+          <ActiveMemoPill
+            currentMemoId={currentMemoId}
+            oneTimeTasks={oneTimeTasks}
+            calculateMemoTime={calculateMemoTime}
+            onStop={handleStopMemo}
+          />
           {timelineSessions.map((session) => {
-            const isUnknown = !session.groupId;
+            const isMemo = session.type === "memo";
+            const isUnknown = !isMemo && !session.groupId;
             return (
               <ActivityTimelineItem
                 key={session.id}
@@ -166,12 +183,16 @@ export default function DailyTasksList({
                 intervalMs={session.intervalMs}
                 activityId={session.activityId || ""}
                 onClick={
-                  isUnknown
-                    ? () => openAssignDialog(session.id, session.intervalMs)
-                    : () => handleTimelineClick(session.groupId, session.id)
+                  isMemo
+                    ? undefined
+                    : isUnknown
+                      ? () => openAssignDialog(session.id, session.intervalMs)
+                      : () => handleTimelineClick(session.groupId, session.id)
                 }
                 onStartActivity={
-                  isToday && !isUnknown ? handleStartActivity : undefined
+                  isToday && !isMemo && !isUnknown
+                    ? handleStartActivity
+                    : undefined
                 }
               />
             );

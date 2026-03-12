@@ -28,6 +28,16 @@ export function formatDate(date: Date): string {
 }
 
 /**
+ * Format Date for display (e.g. "Jan 15").
+ */
+export function formatDateShort(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/**
  * Format ISO time string to HH:MM:SS for time input.
  */
 export function formatTimeInput(isoTime: string | null): string {

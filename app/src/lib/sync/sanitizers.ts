@@ -39,6 +39,7 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "date",
     "task_counts",
     "current_activity_id",
+    "current_memo_id",
     "created_at",
     "updated_at",
     "deleted_at",
@@ -79,6 +80,8 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "title",
     "is_completed",
     "order_index",
+    "is_pinned",
+    "due_date",
     "created_at",
     "updated_at",
     "deleted_at",
@@ -89,6 +92,17 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "activity_id",
     "date",
     "streak",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
+  memo_periods: new Set([
+    "id",
+    "user_id",
+    "daily_entry_id",
+    "one_time_task_id",
+    "start_time",
+    "end_time",
     "created_at",
     "updated_at",
     "deleted_at",
@@ -240,6 +254,56 @@ export async function sanitizeForeignKeyRefsBeforeUpsert(
           );
         }
       }
+    }
+  }
+
+  if (table === "memo_periods") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dailyEntryIdsRaw: any[] = await (db.dailyEntries as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((d: any) => !d.deleted_at)
+      .primaryKeys();
+    const validDailyEntryIds = new Set(
+      dailyEntryIdsRaw.map((id) => String(id)).filter((id) => isValidUuid(id))
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const taskIdsRaw: any[] = await (db.oneTimeTasks as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((t: any) => !t.deleted_at)
+      .primaryKeys();
+    const validTaskIds = new Set(
+      taskIdsRaw.map((id) => String(id)).filter((id) => isValidUuid(id))
+    );
+
+    let missingDailyEntryRefCount = 0;
+    let missingTaskRefCount = 0;
+    result = result.map((row) => {
+      let r = { ...row };
+      if (row.daily_entry_id && isValidUuid(row.daily_entry_id)) {
+        if (!validDailyEntryIds.has(row.daily_entry_id)) {
+          missingDailyEntryRefCount += 1;
+          r = { ...r, daily_entry_id: null };
+        }
+      }
+      if (row.one_time_task_id && isValidUuid(row.one_time_task_id)) {
+        if (!validTaskIds.has(row.one_time_task_id)) {
+          missingTaskRefCount += 1;
+          r = { ...r, one_time_task_id: null };
+        }
+      }
+      return r;
+    });
+
+    if (missingDailyEntryRefCount > 0) {
+      console.warn(
+        `[sync] nulled ${missingDailyEntryRefCount} missing daily_entry_id reference(s) on memo_periods`
+      );
+    }
+    if (missingTaskRefCount > 0) {
+      console.warn(
+        `[sync] nulled ${missingTaskRefCount} missing one_time_task_id reference(s) on memo_periods`
+      );
     }
   }
 
