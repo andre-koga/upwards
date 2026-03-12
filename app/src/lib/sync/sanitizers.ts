@@ -3,6 +3,135 @@ import { db, newId } from "@/lib/db";
 import type { SyncTable } from "./sync-transformers";
 import { isValidUuid } from "./sync-transformers";
 
+/**
+ * Allowed columns per Supabase table. Legacy keys not in this set are stripped
+ * before upsert so sync continues to work when local data has old schema fields.
+ * Keep in sync with supabase/migrations/ when adding new columns.
+ */
+const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
+  activity_groups: new Set([
+    "id",
+    "user_id",
+    "name",
+    "emoji",
+    "color",
+    "order_index",
+    "is_archived",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
+  activities: new Set([
+    "id",
+    "user_id",
+    "group_id",
+    "name",
+    "pattern",
+    "routine",
+    "completion_target",
+    "color",
+    "is_archived",
+    "order_index",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
+  daily_entries: new Set([
+    "id",
+    "user_id",
+    "date",
+    "task_counts",
+    "current_activity_id",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
+  activity_periods: new Set([
+    "id",
+    "user_id",
+    "daily_entry_id",
+    "activity_id",
+    "start_time",
+    "end_time",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
+  journal_entries: new Set([
+    "id",
+    "user_id",
+    "entry_date",
+    "title",
+    "text_content",
+    "day_emoji",
+    "is_bookmarked",
+    "youtube_url",
+    "is_journal_complete",
+    "journal_entry_number",
+    "journal_completion_streak",
+    "journal_completed_at",
+    "location",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
+  one_time_tasks: new Set([
+    "id",
+    "user_id",
+    "date",
+    "title",
+    "is_completed",
+    "order_index",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
+  activity_streaks: new Set([
+    "id",
+    "user_id",
+    "activity_id",
+    "date",
+    "streak",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
+};
+
+/**
+ * Strips legacy/unknown columns from rows before upsert. Only columns present in
+ * the Supabase schema are kept. This makes sync resilient to local data with
+ * old schema fields.
+ */
+export function stripUnknownColumns(
+  table: SyncTable,
+  rows: Array<Record<string, unknown>>
+): Array<Record<string, unknown>> {
+  const allowed = ALLOWED_COLUMNS[table];
+  const result: Array<Record<string, unknown>> = [];
+  let strippedCount = 0;
+
+  for (const row of rows) {
+    const stripped: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(row)) {
+      if (allowed.has(key)) {
+        stripped[key] = value;
+      } else {
+        strippedCount += 1;
+      }
+    }
+    result.push(stripped);
+  }
+
+  if (strippedCount > 0) {
+    console.warn(
+      `[sync] stripped ${strippedCount} legacy column(s) from ${table} before upsert`
+    );
+  }
+
+  return result;
+}
+
 export async function sanitizeForeignKeyRefsBeforeUpsert(
   supabaseClient: SupabaseClient | null,
   table: SyncTable,

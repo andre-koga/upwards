@@ -15,6 +15,7 @@ import {
 import {
   sanitizeForeignKeyRefsBeforeUpsert,
   normalizeActivityStreakIdsBeforeUpsert,
+  stripUnknownColumns,
 } from "./sanitizers";
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
@@ -207,7 +208,9 @@ export class SyncEngine {
         );
       }
 
-      if (normalizedRows.length === 0) {
+      const schemaSafeRows = stripUnknownColumns(table, normalizedRows);
+
+      if (schemaSafeRows.length === 0) {
         const now = new Date().toISOString();
         await this.withSuppressedMutationSignals(async () => {
           await Promise.all(
@@ -220,23 +223,34 @@ export class SyncEngine {
         continue;
       }
 
-      const { error } = await supabase.from(table).upsert(normalizedRows, {
-        onConflict: UPSERT_CONFLICT_TARGET[table],
-      });
+      try {
+        const { error } = await supabase.from(table).upsert(schemaSafeRows, {
+          onConflict: UPSERT_CONFLICT_TARGET[table],
+        });
 
-      if (error) {
-        throw new Error(`Push error on ${table}: ${error.message}`);
-      }
+        if (error) {
+          console.warn(
+            `[sync] push failed for ${table}, continuing with other tables:`,
+            error.message
+          );
+          continue;
+        }
 
-      const now = new Date().toISOString();
-      await this.withSuppressedMutationSignals(async () => {
-        await Promise.all(
-          records.map((r) =>
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (db[dexieTable] as any).update(r.id, { synced_at: now })
-          )
+        const now = new Date().toISOString();
+        await this.withSuppressedMutationSignals(async () => {
+          await Promise.all(
+            records.map((r) =>
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (db[dexieTable] as any).update(r.id, { synced_at: now })
+            )
+          );
+        });
+      } catch (err) {
+        console.warn(
+          `[sync] push failed for ${table}, continuing with other tables:`,
+          err
         );
-      });
+      }
     }
   }
 
