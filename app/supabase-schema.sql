@@ -1,6 +1,9 @@
 -- OkHabit Supabase Schema
--- This schema mirrors the local IndexedDB structure for offline-first sync
--- Run this in your Supabase SQL Editor to set up the database
+-- This schema mirrors the local IndexedDB structure for offline-first sync.
+--
+-- NOTE: Prefer migrations in supabase/migrations/ for schema changes.
+-- This file is kept for reference; the source of truth is the migrations.
+-- For local dev: run `supabase start` from project root.
 -- Activity Groups Table
 CREATE TABLE IF NOT EXISTS activity_groups (
     id UUID PRIMARY KEY,

@@ -1,0 +1,21 @@
+---
+description: Supabase migration creation workflow
+globs: supabase/**
+alwaysApply: false
+---
+
+# Supabase Migrations
+
+When creating a new Supabase migration:
+
+1. **Get the current time** via a terminal command first:
+   ```bash
+   date +%Y%m%d%H%M%S
+   ```
+
+2. **Then create the migration** using that timestamp in the filename, or run:
+   ```bash
+   supabase migration new <descriptive_name>
+   ```
+
+The migration filename format is `YYYYMMDDHHMMSS_<name>.sql`. Prefer `supabase migration new` when available; if creating the file manually, use the timestamp from step 1.

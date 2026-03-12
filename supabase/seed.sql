@@ -1,0 +1,6 @@
+-- OkHabit seed data
+-- Runs automatically after migrations during `supabase db reset`.
+-- Add test users or sample data here for local development.
+--
+-- Example: Create a test user via Supabase Auth (do this in the app or Studio)
+-- then insert sample data using that user's ID.

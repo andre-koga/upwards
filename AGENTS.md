@@ -15,6 +15,14 @@ Path alias: `@/` → `app/src/`
 
 ---
 
+## Supabase (Local + Cloud)
+
+- **Local dev:** `supabase/` at project root. Run `pnpm supabase:start` (or `supabase start`).
+- **Migrations:** `supabase/migrations/` — source of truth for schema. Use `supabase migration new <name>` for changes.
+- **Cloud sync:** `supabase link` then `supabase db push` to deploy. See `supabase/README.md`.
+
+---
+
 ## Folder Structure
 
 ```
