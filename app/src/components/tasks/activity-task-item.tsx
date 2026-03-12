@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from "react";
 import { X, Flame } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
+import { getActivityDisplayName } from "@/lib/activity-utils";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import Pill from "@/components/ui/pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
@@ -105,7 +106,7 @@ function ActivityTaskItem({
       )}
 
       <Pill
-        name={activity.name}
+        name={getActivityDisplayName(activity, group)}
         color={groupColor}
         elapsedMs={timeSpent}
         isRunning={isCurrentActivity}

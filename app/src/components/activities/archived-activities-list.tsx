@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArchivedItemList } from "@/components/ui/archived-item-list";
 import {
   formatRoutineDisplay,
+  getActivityDisplayName,
   getGroupName,
   getGroupColor,
 } from "@/lib/activity-utils";
@@ -33,7 +34,12 @@ export default function ArchivedActivitiesList({
       renderItemContent={(activity) => (
         <>
           <div className="flex items-center gap-2">
-            <span className="font-medium">{activity.name}</span>
+            <span className="font-medium">
+              {getActivityDisplayName(
+                activity,
+                allGroups.find((g) => g.id === activity.group_id)
+              )}
+            </span>
             <Badge
               variant="outline"
               className="text-xs"

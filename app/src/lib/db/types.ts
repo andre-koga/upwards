@@ -17,11 +17,9 @@ export interface ActivityGroup {
 export interface Activity {
   id: string;
   group_id: string;
-  name: string;
-  pattern: string | null;
+  name: string | null; // null = group-default (timing the group without a specific activity)
   routine: string | null;
   completion_target: number | null;
-  color: string | null;
   is_archived: boolean | null;
   order_index: number | null;
   created_at: string;

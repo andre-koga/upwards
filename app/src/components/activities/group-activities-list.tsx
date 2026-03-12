@@ -1,10 +1,12 @@
-import type { Activity } from "@/lib/db/types";
+import type { Activity, ActivityGroup } from "@/lib/db/types";
+import { getActivityDisplayName } from "@/lib/activity-utils";
 import { Button } from "@/components/ui/button";
 import { Pencil, Archive } from "lucide-react";
 import ActivityPill from "@/components/activities/activity-pill";
 
 interface GroupActivitiesListProps {
   activities: Activity[];
+  group: ActivityGroup;
   groupColor: string;
   currentActivityId: string | null;
   getElapsedMs: (activityId: string) => number | undefined;
@@ -15,6 +17,7 @@ interface GroupActivitiesListProps {
 
 export default function GroupActivitiesList({
   activities,
+  group,
   groupColor,
   currentActivityId,
   getElapsedMs,
@@ -30,7 +33,7 @@ export default function GroupActivitiesList({
         <div key={activity.id} className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <ActivityPill
-              name={activity.name}
+              name={getActivityDisplayName(activity, group)}
               color={groupColor}
               isRunning={currentActivityId === activity.id}
               elapsedMs={getElapsedMs(activity.id)}

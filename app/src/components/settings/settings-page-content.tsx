@@ -31,7 +31,9 @@ export default function SettingsPageContent() {
 
       <div className="space-y-1 pt-4 text-center text-xs text-muted-foreground">
         <p>Upwards — local-first habit tracker</p>
-        <p className="font-mono">force push · 2025-03-12</p>
+        <p className="scale-75 font-mono opacity-50">
+          group default · 2025-03-12
+        </p>
       </div>
 
       <FloatingBackButton to="/" title="Home" />

@@ -2,7 +2,11 @@ import { useEffect, useState, memo, useMemo } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { Square } from "lucide-react";
-import { formatTimerDisplay, getGroup } from "@/lib/activity-utils";
+import {
+  formatTimerDisplay,
+  getActivityDisplayName,
+  getGroup,
+} from "@/lib/activity-utils";
 import { getContrastColor } from "@/lib/color-utils";
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -111,7 +115,7 @@ function ActiveActivityPill({
   // Calculate color values before early returns (Rules of Hooks)
   const activity = resolvedActivity;
   const group = resolvedGroup;
-  const color = activity?.color || group?.color || "#3b82f6";
+  const color = group?.color || "#3b82f6";
   const textColor = useMemo(() => getContrastColor(color), [color]);
   const boxShadow = useMemo(
     () =>
@@ -144,7 +148,7 @@ function ActiveActivityPill({
             </p>
           )}
           <p className="truncate text-lg font-semibold leading-tight">
-            {activity.name}
+            {getActivityDisplayName(activity, group)}
           </p>
         </div>
         <span

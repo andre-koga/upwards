@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2 } from "lucide-react";
@@ -8,6 +8,11 @@ import { useAuth } from "@/lib/use-auth";
 export function SyncCard() {
   const { isAuthed } = useAuth();
   const [isForcePushing, setIsForcePushing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(syncEngine.getState().isSyncing);
+
+  useEffect(() => {
+    return syncEngine.subscribe((state) => setIsSyncing(state.isSyncing));
+  }, []);
 
   const handleForcePush = async () => {
     if (!isAuthed) return;
@@ -35,7 +40,7 @@ export function SyncCard() {
           variant="outline"
           className="flex w-full items-center gap-2"
           onClick={handleForcePush}
-          disabled={isForcePushing || syncEngine.getState().isSyncing}
+          disabled={isForcePushing || isSyncing}
         >
           {isForcePushing ? (
             <Loader2 className="h-4 w-4 animate-spin" />

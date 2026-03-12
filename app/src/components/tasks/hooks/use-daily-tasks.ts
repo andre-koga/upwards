@@ -146,7 +146,10 @@ export function useDailyTasks({
             id: period.id,
             activityId: period.activity_id,
             groupId: activity?.group_id || "",
-            name: activity?.name || "Unknown activity",
+            name:
+              activity?.name ??
+              getGroup(groups, activity?.group_id ?? "")?.name ??
+              "Unknown activity",
             groupColor: activity
               ? getGroupColor(groups, activity.group_id)
               : DEFAULT_GROUP_COLOR,

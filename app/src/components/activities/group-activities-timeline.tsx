@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 
 interface GroupActivitiesTimelineProps {
   groupId: string;
+  groupName: string;
   groupColor: string;
 }
 
@@ -31,6 +32,7 @@ const INITIAL_DAYS = 14;
 
 export default function GroupActivitiesTimeline({
   groupId,
+  groupName,
   groupColor,
 }: GroupActivitiesTimelineProps) {
   const navigate = useNavigate();
@@ -90,7 +92,7 @@ export default function GroupActivitiesTimeline({
           return {
             id: p.id,
             activityId: p.activity_id,
-            activityName: activity?.name || "Unknown",
+            activityName: activity?.name ?? groupName ?? "Unknown",
             groupColor: groupColor,
             intervalMs,
             groupId,
@@ -123,7 +125,7 @@ export default function GroupActivitiesTimeline({
 
       return days;
     },
-    [groupId, groupColor]
+    [groupId, groupName, groupColor]
   );
 
   const loadInitialData = useCallback(async () => {

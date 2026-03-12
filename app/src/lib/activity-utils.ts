@@ -2,16 +2,19 @@ import { db, now, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import {
-  HIDDEN_GROUP_ACTIVITY_PATTERN,
   isHiddenGroupDefaultActivity,
   getOrCreateHiddenGroupDefaultActivity,
 } from "@/lib/hidden-group-activity";
 
-export {
-  HIDDEN_GROUP_ACTIVITY_PATTERN,
-  isHiddenGroupDefaultActivity,
-  getOrCreateHiddenGroupDefaultActivity,
-};
+export { isHiddenGroupDefaultActivity, getOrCreateHiddenGroupDefaultActivity };
+
+/** Display name for an activity; uses group name when activity.name is null (group-default). */
+export function getActivityDisplayName(
+  activity: Activity | null | undefined,
+  group: ActivityGroup | null | undefined
+): string {
+  return activity?.name ?? group?.name ?? "Unknown";
+}
 
 export function getGroup(
   groups: ActivityGroup[],

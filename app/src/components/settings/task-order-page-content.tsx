@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import { db, now } from "@/lib/db";
 import type { Activity } from "@/lib/db/types";
-import { isActiveActivity, isScheduledRoutine } from "@/lib/activity-utils";
+import {
+  getActivityDisplayName,
+  isActiveActivity,
+  isHiddenGroupDefaultActivity,
+  isScheduledRoutine,
+} from "@/lib/activity-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
@@ -39,7 +44,11 @@ export default function TaskOrderPageContent() {
         .toArray();
 
       const reorderable = all
-        .filter((activity) => isScheduledRoutine(activity.routine ?? ""))
+        .filter(
+          (activity) =>
+            !isHiddenGroupDefaultActivity(activity) &&
+            isScheduledRoutine(activity.routine ?? "")
+        )
         .sort(compareActivities);
 
       setActivities(reorderable);
@@ -139,7 +148,9 @@ export default function TaskOrderPageContent() {
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate text-sm">{activity.name}</span>
+                  <span className="truncate text-sm">
+                    {getActivityDisplayName(activity, undefined)}
+                  </span>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1">

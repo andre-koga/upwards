@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
+import { getActivityDisplayName } from "@/lib/activity-utils";
 import {
   formatDate,
   shiftDate,
@@ -122,7 +123,7 @@ export default function SessionDetailsContent() {
                 <SelectItem value={NONE_ACTIVITY_VALUE}>None</SelectItem>
                 {groupActivities.map((activity) => (
                   <SelectItem key={activity.id} value={activity.id}>
-                    {activity.name}
+                    {getActivityDisplayName(activity, details.group)}
                   </SelectItem>
                 ))}
               </SelectContent>

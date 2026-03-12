@@ -3,6 +3,7 @@ import { db, now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getActivityDisplayName } from "@/lib/activity-utils";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import GroupActivitiesHeader from "@/components/activities/group-activities-header";
 import GroupActivitiesList from "@/components/activities/group-activities-list";
@@ -85,6 +86,7 @@ export default function GroupActivitiesContent({
 
         <GroupActivitiesList
           activities={activities}
+          group={group}
           groupColor={group.color || DEFAULT_GROUP_COLOR}
           currentActivityId={currentActivityId}
           getElapsedMs={getElapsedMs}
@@ -96,7 +98,7 @@ export default function GroupActivitiesContent({
             setArchiveDialog({
               open: true,
               activityId: activity.id,
-              activityName: activity.name,
+              activityName: getActivityDisplayName(activity, group),
             })
           }
         />
@@ -106,6 +108,7 @@ export default function GroupActivitiesContent({
       <div className="mt-8 pt-6">
         <GroupActivitiesTimeline
           groupId={group.id}
+          groupName={group.name}
           groupColor={group.color || DEFAULT_GROUP_COLOR}
         />
       </div>
