@@ -95,9 +95,11 @@ export default function AssignActivityDialog({
     try {
       setSaving(true);
       setError(null);
+      const timestamp = now();
       await db.activityPeriods.update(periodId, {
         activity_id: selectedActivityId,
-        updated_at: now(),
+        updated_at: timestamp,
+        synced_at: null, // Force re-push so assignment persists after sync
       });
       onSuccess();
       onOpenChange(false);

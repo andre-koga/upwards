@@ -163,14 +163,41 @@ export class SyncEngine {
 
   async push(): Promise<void> {
     if (!this.canSync() || !supabase) return;
+    await this.pushInternal(false);
+  }
+
+  /**
+   * Force push: push ALL local Dexie data to Supabase, ignoring synced_at.
+   * Use when local data exists but wasn't pushed (e.g. pre-sync data).
+   * Call from Settings when user wants to force cloud to match local.
+   */
+  async forcePushToCloud(): Promise<void> {
+    if (!this.canSync() || !supabase) return;
+    this.setState({ isSyncing: true, lastError: null });
+    try {
+      await this.pushInternal(true);
+    } catch (err) {
+      const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
+      this.setState({ lastError: msg });
+    } finally {
+      this.setState({ isSyncing: false });
+    }
+  }
+
+  private async pushInternal(forceAll: boolean): Promise<void> {
+    if (!supabase) return;
     const userId = getCachedUserId()!;
+    if (!userId) return;
 
     for (const table of SYNC_TABLES) {
       const dexieTable = TABLE_MAP[table];
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const records: any[] = await (db[dexieTable] as any)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((r: any) => !r.synced_at || r.updated_at > r.synced_at)
+        .filter((r: any) =>
+          forceAll ? true : !r.synced_at || r.updated_at > r.synced_at
+        )
         .toArray();
 
       if (records.length === 0) continue;
@@ -259,9 +286,7 @@ export class SyncEngine {
     const userId = getCachedUserId()!;
     const since = this.state.lastSyncAt ?? EPOCH;
 
-    // Reference tables: always pull all records so child records (activity_periods,
-    // etc.) always find their activity_id, group_id, daily_entry_id. Incremental
-    // pull would miss older groups/activities that weren't updated since lastSyncAt.
+    // Reference tables: always pull all so child records find their refs.
     const FULL_PULL_TABLES: SyncTable[] = [
       "activity_groups",
       "activities",

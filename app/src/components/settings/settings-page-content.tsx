@@ -1,6 +1,7 @@
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppearanceCard } from "./appearance-card";
 import { AuthCard } from "./auth-card";
+import { SyncCard } from "./sync-card";
 import { BackupCard } from "./backup-card";
 import { ArchiveCard, TaskOrderCard } from "./navigation-cards";
 import { useAuth } from "@/lib/use-auth";
@@ -17,14 +18,20 @@ export default function SettingsPageContent() {
 
       <AppearanceCard />
 
-      {isSupabaseConfigured && <AuthCard />}
+      {isSupabaseConfigured && (
+        <>
+          <AuthCard />
+          <SyncCard />
+        </>
+      )}
 
       <ArchiveCard />
       <TaskOrderCard />
       <BackupCard />
 
-      <div className="pt-4 text-center text-xs text-muted-foreground">
+      <div className="space-y-1 pt-4 text-center text-xs text-muted-foreground">
         <p>Upwards — local-first habit tracker</p>
+        <p className="font-mono">force push · 2025-03-12</p>
       </div>
 
       <FloatingBackButton to="/" title="Home" />
