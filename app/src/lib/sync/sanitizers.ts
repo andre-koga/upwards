@@ -13,7 +13,6 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "id",
     "user_id",
     "name",
-    "emoji",
     "color",
     "order_index",
     "is_archived",

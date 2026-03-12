@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
@@ -5,6 +6,7 @@ import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
 import AddTaskModal from "./add-task-modal";
+import AssignActivityDialog from "./assign-activity-dialog";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import { CircleCheckBig } from "lucide-react";
 
@@ -19,6 +21,10 @@ export default function DailyTasksList({
   groups,
   currentDate,
 }: DailyTasksListProps) {
+  const [assignPeriodId, setAssignPeriodId] = useState<string | null>(null);
+  const [assignIntervalMs, setAssignIntervalMs] = useState(0);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+
   const {
     isToday,
     loading,
@@ -40,9 +46,20 @@ export default function DailyTasksList({
     handleStartActivity,
     handleStopActivity,
     handleTimelineClick,
+    loadActivityPeriods,
     calculateActivityTime,
     formatTimerDisplay,
   } = useDailyTasks({ activities, groups, currentDate });
+
+  const openAssignDialog = (periodId: string, intervalMs: number) => {
+    setAssignPeriodId(periodId);
+    setAssignIntervalMs(intervalMs);
+    setAssignDialogOpen(true);
+  };
+
+  const handleAssignSuccess = () => {
+    void loadActivityPeriods();
+  };
 
   return (
     <div className="flex flex-col">
@@ -137,21 +154,26 @@ export default function DailyTasksList({
             calculateActivityTime={calculateActivityTime}
             onStop={handleStopActivity}
           />
-          {timelineSessions.map((session) => (
-            <ActivityTimelineItem
-              key={session.id}
-              activityName={session.name}
-              groupColor={session.groupColor}
-              intervalMs={session.intervalMs}
-              activityId={session.activityId}
-              onClick={
-                session.groupId
-                  ? () => handleTimelineClick(session.groupId, session.id)
-                  : undefined
-              }
-              onStartActivity={isToday ? handleStartActivity : undefined}
-            />
-          ))}
+          {timelineSessions.map((session) => {
+            const isUnknown = !session.groupId;
+            return (
+              <ActivityTimelineItem
+                key={session.id}
+                activityName={session.name}
+                groupColor={session.groupColor}
+                intervalMs={session.intervalMs}
+                activityId={session.activityId || ""}
+                onClick={
+                  isUnknown
+                    ? () => openAssignDialog(session.id, session.intervalMs)
+                    : () => handleTimelineClick(session.groupId, session.id)
+                }
+                onStartActivity={
+                  isToday && !isUnknown ? handleStartActivity : undefined
+                }
+              />
+            );
+          })}
         </div>
       )}
 
@@ -161,6 +183,19 @@ export default function DailyTasksList({
         onStartActivity={handleStartActivity}
         onStopActivity={handleStopActivity}
       />
+
+      {assignPeriodId && (
+        <AssignActivityDialog
+          periodId={assignPeriodId}
+          intervalMs={assignIntervalMs}
+          open={assignDialogOpen}
+          onOpenChange={(open) => {
+            setAssignDialogOpen(open);
+            if (!open) setAssignPeriodId(null);
+          }}
+          onSuccess={handleAssignSuccess}
+        />
+      )}
     </div>
   );
 }

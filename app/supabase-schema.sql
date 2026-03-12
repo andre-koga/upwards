@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS activity_groups (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    emoji TEXT,
     color TEXT,
     order_index INTEGER,
     is_archived BOOLEAN DEFAULT FALSE,
@@ -198,7 +197,6 @@ CREATE POLICY "Users can delete their own activity streaks" ON activity_streaks 
 -- ─────────────────────────────────────────────────────────────────────────────
 --
 -- ALTER TABLE activity_groups   ALTER COLUMN user_id SET NOT NULL;
--- ALTER TABLE activity_groups   ADD COLUMN IF NOT EXISTS emoji TEXT;
 -- ALTER TABLE activities         ALTER COLUMN user_id SET NOT NULL;
 -- ALTER TABLE daily_entries      ALTER COLUMN user_id SET NOT NULL;
 -- ALTER TABLE activity_periods   ALTER COLUMN user_id SET NOT NULL;

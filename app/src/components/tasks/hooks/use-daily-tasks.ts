@@ -186,6 +186,7 @@ export function useDailyTasks({
     handleStartActivity,
     handleStopActivity,
     handleTimelineClick,
+    loadActivityPeriods,
     calculateActivityTime,
     formatTimerDisplay,
   };

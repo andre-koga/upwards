@@ -259,14 +259,24 @@ export class SyncEngine {
     const userId = getCachedUserId()!;
     const since = this.state.lastSyncAt ?? EPOCH;
 
+    // Reference tables: always pull all records so child records (activity_periods,
+    // etc.) always find their activity_id, group_id, daily_entry_id. Incremental
+    // pull would miss older groups/activities that weren't updated since lastSyncAt.
+    const FULL_PULL_TABLES: SyncTable[] = [
+      "activity_groups",
+      "activities",
+      "daily_entries",
+    ];
+
     for (const table of SYNC_TABLES) {
       const dexieTable = TABLE_MAP[table];
+      const shouldFullPull = FULL_PULL_TABLES.includes(table);
 
-      const { data, error } = await supabase
-        .from(table)
-        .select("*")
-        .eq("user_id", userId)
-        .gt("updated_at", since);
+      const query = supabase.from(table).select("*").eq("user_id", userId);
+
+      const { data, error } = await (shouldFullPull
+        ? query
+        : query.gt("updated_at", since));
 
       if (error) {
         throw new Error(`Pull error on ${table}: ${error.message}`);

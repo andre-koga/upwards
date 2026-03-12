@@ -43,7 +43,6 @@ export default function GroupActivitiesTimeline({
 
   const loadDaysData = useCallback(
     async (startDaysAgo: number, endDaysAgo: number) => {
-      // Get activities for this group
       const activities = await db.activities
         .filter((a) => a.group_id === groupId && !a.deleted_at)
         .toArray();
@@ -57,22 +56,17 @@ export default function GroupActivitiesTimeline({
 
       const days: DayData[] = [];
 
-      // Load data for each day in the range
       for (let daysAgo = startDaysAgo; daysAgo < endDaysAgo; daysAgo++) {
         const date = new Date();
         date.setDate(date.getDate() - daysAgo);
         const dateString = toDateStr(date);
 
-        // Find daily entry for this date
         const dailyEntry = await db.dailyEntries
           .filter((e) => e.date === dateString && !e.deleted_at)
           .first();
 
-        if (!dailyEntry) {
-          continue;
-        }
+        if (!dailyEntry) continue;
 
-        // Load activity periods for this day that belong to this group
         const periods = await db.activityPeriods
           .filter(
             (p) =>
@@ -83,11 +77,8 @@ export default function GroupActivitiesTimeline({
           )
           .toArray();
 
-        if (periods.length === 0) {
-          continue;
-        }
+        if (periods.length === 0) continue;
 
-        // Build sessions
         const sessions: DaySession[] = periods.map((p) => {
           const activity = activityMap.get(p.activity_id);
           const startTime = new Date(p.start_time).getTime();
@@ -106,7 +97,6 @@ export default function GroupActivitiesTimeline({
           };
         });
 
-        // Sort sessions by start time (oldest first)
         sessions.sort((a, b) => {
           const periodA = periods.find((p) => p.id === a.id);
           const periodB = periods.find((p) => p.id === b.id);
