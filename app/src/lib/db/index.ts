@@ -62,8 +62,8 @@ export const now = () => new Date().toISOString();
 // Helper: new UUID
 export const newId = () => uuidv4();
 
-// Helper: today as YYYY-MM-DD
-export const todayStr = () => new Date().toISOString().split("T")[0];
+// Helper: today as YYYY-MM-DD (local time, consistent with toDateStr)
+export const todayStr = () => toDateString(new Date());
 
 // Helper: date to YYYY-MM-DD string (local time, not UTC)
 export const toDateStr = toDateString;
