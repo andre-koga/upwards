@@ -22,7 +22,7 @@ export interface PillProps {
 function Pill({
   name,
   color = "#3b82f6",
-  textColor = "#ffffff",
+  textColor,
   elapsedMs = 0,
   isRunning = false,
   onPlayStop,
@@ -32,9 +32,7 @@ function Pill({
   size = "default",
   className = "",
 }: PillProps) {
-  if (!textColor) {
-    textColor = getContrastColor(color);
-  }
+  const resolvedTextColor = textColor ?? getContrastColor(color);
   const isSm = size === "sm";
 
   const playTimerButton = (
@@ -50,7 +48,7 @@ function Pill({
           className={
             isSm ? "h-2.5 w-2.5 flex-shrink-0" : "h-3 w-3 flex-shrink-0"
           }
-          style={{ color: textColor, fill: textColor }}
+          style={{ color: resolvedTextColor, fill: resolvedTextColor }}
         />
       ) : (
         <Play
@@ -59,14 +57,17 @@ function Pill({
               ? "h-2.5 w-2.5 flex-shrink-0 translate-x-px"
               : "h-3 w-3 flex-shrink-0 translate-x-px"
           }
-          style={{ color: textColor, fill: textColor }}
+          style={{ color: resolvedTextColor, fill: resolvedTextColor }}
         />
       )}
       <span
         className={
           "flex-shrink-0 " + (isSm ? "mt-[1px] text-[10px]" : "mt-0.5 text-xs")
         }
-        style={{ color: textColor, fontFamily: "JetBrains Mono, monospace" }}
+        style={{
+          color: resolvedTextColor,
+          fontFamily: "JetBrains Mono, monospace",
+        }}
       >
         {formatTimerDisplay(elapsedMs)}
       </span>
