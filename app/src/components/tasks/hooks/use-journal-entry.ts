@@ -16,6 +16,7 @@ export interface JournalDraft {
   bookmarked: boolean;
   youtubeUrl: string;
   location: LocationData | null;
+  videoThumbnail: string | null;
 }
 
 export function useJournalEntry(currentDate: Date) {
@@ -62,6 +63,7 @@ export function useJournalEntry(currentDate: Date) {
         bookmarked: false,
         youtubeUrl: "",
         location: null,
+        videoThumbnail: null,
       };
 
       const entry = await db.journalEntries
@@ -84,6 +86,7 @@ export function useJournalEntry(currentDate: Date) {
     const b = journalEntry?.is_bookmarked ?? false;
     const y = journalEntry?.youtube_url ?? "";
     const l = parseLocation(journalEntry?.location);
+    const vt = journalEntry?.video_thumbnail ?? null;
     setDraftTitle(t);
     setDraftText(tx);
     setDraftEmoji(e);
@@ -98,6 +101,7 @@ export function useJournalEntry(currentDate: Date) {
       bookmarked: b,
       youtubeUrl: y,
       location: l,
+      videoThumbnail: vt,
     };
   }, [journalEntry]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -181,6 +185,7 @@ export function useJournalEntry(currentDate: Date) {
       is_bookmarked: r.bookmarked,
       youtube_url: r.youtubeUrl || null,
       location: r.location || null,
+      video_thumbnail: r.videoThumbnail || null,
     });
   }, [canEditJournal, saveJournalEntry, currentDate]);
 
@@ -199,6 +204,7 @@ export function useJournalEntry(currentDate: Date) {
         is_bookmarked: bookmarked,
         youtube_url: r.youtubeUrl || null,
         location: r.location || null,
+        video_thumbnail: r.videoThumbnail || null,
       });
     },
     [saveJournalEntry, currentDate]
@@ -219,6 +225,7 @@ export function useJournalEntry(currentDate: Date) {
         is_bookmarked: r.bookmarked,
         youtube_url: r.youtubeUrl || null,
         location: location || null,
+        video_thumbnail: r.videoThumbnail || null,
       });
     },
     [saveJournalEntry, currentDate]
@@ -248,6 +255,7 @@ export function useJournalEntry(currentDate: Date) {
     journalCompletionStreak: journalEntry?.journal_completion_streak ?? null,
     journalEntryNumber: journalEntry?.journal_entry_number ?? null,
     isJournalComplete: !!journalEntry?.is_journal_complete,
+    videoThumbnail: journalEntry?.video_thumbnail ?? null,
     // actions
     loadJournalEntry,
     saveDraft,

@@ -64,6 +64,7 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "day_emoji",
     "is_bookmarked",
     "youtube_url",
+    "video_thumbnail",
     "is_journal_complete",
     "journal_entry_number",
     "journal_completion_streak",

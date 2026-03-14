@@ -11,7 +11,9 @@ import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import { useJournalEntry } from "@/components/tasks/hooks/use-journal-entry";
 import { useJournalMeta } from "@/components/tasks/hooks/use-journal-meta";
 import { useLocationDetection } from "@/components/tasks/hooks/use-location-detection";
-import JournalYoutubeSection from "@/components/tasks/journal-youtube-section";
+import JournalVideoSection, {
+  type JournalThumbnailSource,
+} from "@/components/tasks/journal-video-section";
 import JournalTextSection from "@/components/tasks/journal-text-section";
 import DateNavigator from "@/components/tasks/date-navigator";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
@@ -57,6 +59,7 @@ export default function TasksPageContent() {
   const [locationInputVal, setLocationInputVal] = useState("");
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
   const [quote] = useState(pickRandomQuote);
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
 
@@ -126,6 +129,17 @@ export default function TasksPageContent() {
     detectLocation();
   }, [detectLocation]);
 
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -135,6 +149,8 @@ export default function TasksPageContent() {
   }
 
   const embedUrl = getYoutubeEmbedUrl(journal.draftYoutubeUrl);
+  const youtubeIdFromEmbed =
+    embedUrl?.match(/embed\/([A-Za-z0-9_-]{11})/)?.[1] ?? null;
   const isJournalDraftComplete = Boolean(
     journal.draftEmoji.trim() &&
     journal.draftTitle.trim() &&
@@ -152,15 +168,28 @@ export default function TasksPageContent() {
 
   return (
     <div className="pb-32">
-      <JournalYoutubeSection
+      <JournalVideoSection
         canEdit={journal.canEditJournal}
         youtubeUrl={journal.draftYoutubeUrl}
         embedUrl={embedUrl}
         entryDate={toDateStr(currentDate)}
         canUpload={isSupabaseConfigured && isAuthed}
+        canPlay={isOnline}
+        thumbnail={((): JournalThumbnailSource | null => {
+          if (!journal.draftYoutubeUrl.trim()) return null;
+          return {
+            videoUrl: journal.draftYoutubeUrl,
+            youtubeVideoId: youtubeIdFromEmbed,
+            storedThumbnail: journal.videoThumbnail,
+          };
+        })()}
         onChange={(url) => {
           journal.setDraftYoutubeUrl(url);
           journal.draftRef.current.youtubeUrl = url;
+        }}
+        onThumbnailGenerated={(thumb) => {
+          journal.draftRef.current.videoThumbnail = thumb;
+          journal.saveDraft();
         }}
         onBlur={journal.saveDraft}
       />

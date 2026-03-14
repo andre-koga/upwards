@@ -28,6 +28,7 @@ export interface JournalFields {
   is_bookmarked: boolean;
   youtube_url: string | null;
   location: LocationData | null;
+  video_thumbnail: string | null;
 }
 
 export interface JournalCompletionMetadata {
