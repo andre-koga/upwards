@@ -108,7 +108,7 @@ export default function SyncStatus() {
         />
       )}
 
-      {syncState.lastError && (
+      {isOnline && syncState.lastError && (
         <div className="absolute left-1/2 top-14 w-72 -translate-x-1/2 rounded-lg border border-red-500/50 bg-background p-3 shadow-xl">
           <div className="flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />

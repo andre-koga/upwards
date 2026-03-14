@@ -19,6 +19,7 @@ import type { LocationData } from "@/lib/db/types";
 import { getYoutubeEmbedUrl } from "@/lib/youtube-utils";
 import { getFirstEmoji } from "@/lib/emoji-utils";
 import { logError } from "@/lib/error-utils";
+import { useAuth } from "@/lib/use-auth";
 
 const HABIT_QUOTES = [
   "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
@@ -56,6 +57,8 @@ export default function TasksPageContent() {
   const [locationInputVal, setLocationInputVal] = useState("");
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
   const [quote] = useState(pickRandomQuote);
+
+  const { isSupabaseConfigured, isAuthed } = useAuth();
 
   const journal = useJournalEntry(currentDate);
   const { loadJournalEntry } = journal;
@@ -153,6 +156,8 @@ export default function TasksPageContent() {
         canEdit={journal.canEditJournal}
         youtubeUrl={journal.draftYoutubeUrl}
         embedUrl={embedUrl}
+        entryDate={toDateStr(currentDate)}
+        canUpload={isSupabaseConfigured && isAuthed}
         onChange={(url) => {
           journal.setDraftYoutubeUrl(url);
           journal.draftRef.current.youtubeUrl = url;

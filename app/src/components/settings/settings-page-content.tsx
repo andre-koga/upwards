@@ -1,3 +1,6 @@
+/**
+ * SRP: Renders the settings page content and build footer.
+ */
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppearanceCard } from "./appearance-card";
 import { AuthCard } from "./auth-card";
@@ -9,7 +12,9 @@ import { useAuth } from "@/lib/use-auth";
 export default function SettingsPageContent() {
   const { isSupabaseConfigured } = useAuth();
   const buildLabel =
-    import.meta.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";
+    import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+    import.meta.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+    "dev";
 
   return (
     <div className="space-y-4 p-4 pb-24">
