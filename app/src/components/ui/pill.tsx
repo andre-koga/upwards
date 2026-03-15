@@ -95,7 +95,7 @@ function Pill({
         style={{
           background: isSm
             ? `linear-gradient(to left, ${color}, transparent 28%)`
-            : `linear-gradient(to left, ${color}, transparent 35%)`,
+            : `linear-gradient(to left, ${color}, transparent 40%)`,
         }}
       />
     </>

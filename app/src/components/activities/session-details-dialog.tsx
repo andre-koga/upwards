@@ -54,6 +54,7 @@ export default function SessionDetailsDialog({
     saving,
     error,
     details,
+    isRunningSession,
     groupActivities,
     selectedActivityId,
     setSelectedActivityId,
@@ -155,41 +156,47 @@ export default function SessionDetailsDialog({
 
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <span className="text-sm text-muted-foreground">Date</span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() =>
-                      setSelectedDate((current) => shiftDate(current, -1))
-                    }
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="date"
-                    value={toDateString(selectedDate)}
-                    max={toDateString(today)}
-                    onChange={(event) => {
-                      if (!event.target.value) return;
-                      setSelectedDate(fromDateString(event.target.value));
-                    }}
-                    className="h-9 w-40 border-0 bg-transparent px-0 shadow-none focus-visible:outline-none focus-visible:ring-0"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    disabled={isSelectedDateToday}
-                    onClick={() =>
-                      setSelectedDate((current) => shiftDate(current, 1))
-                    }
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                {isRunningSession ? (
+                  <span className="text-sm font-medium">
+                    {toDateString(selectedDate)}
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() =>
+                        setSelectedDate((current) => shiftDate(current, -1))
+                      }
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      type="date"
+                      value={toDateString(selectedDate)}
+                      max={toDateString(today)}
+                      onChange={(event) => {
+                        if (!event.target.value) return;
+                        setSelectedDate(fromDateString(event.target.value));
+                      }}
+                      className="h-9 w-40 border-0 bg-transparent px-0 shadow-none focus-visible:outline-none focus-visible:ring-0"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      disabled={isSelectedDateToday}
+                      onClick={() =>
+                        setSelectedDate((current) => shiftDate(current, 1))
+                      }
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -229,35 +236,41 @@ export default function SessionDetailsDialog({
 
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-sm text-muted-foreground">End Time</span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => adjustEndTime(-5)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="time"
-                    step={1}
-                    value={endTime}
-                    onChange={(event) =>
-                      handleEndTimeChange(event.target.value)
-                    }
-                    className="mx-0 h-9 w-36 border-0 bg-transparent px-0 shadow-none focus-visible:outline-none focus-visible:ring-0"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => adjustEndTime(5)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                {isRunningSession ? (
+                  <span className="text-sm italic text-muted-foreground">
+                    Still running
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => adjustEndTime(-5)}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      type="time"
+                      step={1}
+                      value={endTime}
+                      onChange={(event) =>
+                        handleEndTimeChange(event.target.value)
+                      }
+                      className="mx-0 h-9 w-36 border-0 bg-transparent px-0 shadow-none focus-visible:outline-none focus-visible:ring-0"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => adjustEndTime(5)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -177,9 +177,12 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     }
 
     const nextStartIso = combineDateAndTime(selectedDate, startTime);
-    const nextEndIso = endTime
-      ? combineDateAndTime(selectedDate, endTime)
-      : null;
+    const isRunning = details.period.end_time === null;
+    const nextEndIso = isRunning
+      ? null
+      : endTime
+        ? combineDateAndTime(selectedDate, endTime)
+        : null;
 
     if (
       nextEndIso &&
@@ -223,13 +226,21 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           ? (await getOrCreateHiddenGroupDefaultActivity(details.group)).id
           : selectedActivityId;
 
+      const n = now();
       await db.activityPeriods.update(sessionId, {
         activity_id: nextActivityId,
         daily_entry_id: dailyEntryId,
         start_time: nextStartIso,
         end_time: nextEndIso,
-        updated_at: now(),
+        updated_at: n,
       });
+
+      if (isRunning) {
+        await db.dailyEntries.update(dailyEntryId, {
+          current_activity_id: nextActivityId,
+          updated_at: n,
+        });
+      }
 
       onUpdatedRef.current?.();
       finish();
@@ -249,12 +260,16 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     finish,
   ]);
 
+  const isRunningSession =
+    details?.period != null && details.period.end_time === null;
+
   return {
     NONE_ACTIVITY_VALUE,
     loading,
     saving,
     error,
     details,
+    isRunningSession,
     groupActivities,
     selectedActivityId,
     setSelectedActivityId,

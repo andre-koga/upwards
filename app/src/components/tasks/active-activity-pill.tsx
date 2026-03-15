@@ -1,7 +1,10 @@
+/**
+ * SRP: Displays the currently running activity with elapsed time and stop/edit actions.
+ */
 import { useEffect, useState, memo, useMemo } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { Square } from "lucide-react";
+import { Pencil, Square } from "lucide-react";
 import {
   formatTimerDisplay,
   getActivityDisplayName,
@@ -36,6 +39,8 @@ interface ActiveActivityPillProps {
   groups: ActivityGroup[];
   calculateActivityTime: (activityId: string) => number;
   onStop: () => void;
+  /** When set, clicking the pill (not Stop) opens the session edit dialog. */
+  onEdit?: () => void;
 }
 
 function ActiveActivityPill({
@@ -44,6 +49,7 @@ function ActiveActivityPill({
   groups,
   calculateActivityTime,
   onStop,
+  onEdit,
 }: ActiveActivityPillProps) {
   const [tick, setTick] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -133,7 +139,7 @@ function ActiveActivityPill({
 
   return (
     <div
-      className="rounded-2xl px-4 py-3 shadow-sm"
+      className="rounded-2xl p-3.5 shadow-sm"
       style={{
         backgroundColor: color,
         color: textColor,
@@ -151,12 +157,9 @@ function ActiveActivityPill({
             {getActivityDisplayName(activity, group)}
           </p>
         </div>
-        <span
-          className="shrink-0 text-sm"
-          style={{ fontFamily: "JetBrains Mono, monospace" }}
-        >
-          {formatTimerDisplay(elapsedMs)}
-        </span>
+        <button className="rounded-full" type="button" onClick={onEdit}>
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
       </div>
 
       <div className="mt-2 flex justify-end">
@@ -168,7 +171,12 @@ function ActiveActivityPill({
           title="Stop this activity"
         >
           <Square className="h-3.5 w-3.5" style={{ fill: textColor }} />
-          <span>Stop</span>
+          <span
+            className="shrink-0 text-sm"
+            style={{ fontFamily: "JetBrains Mono, monospace" }}
+          >
+            {formatTimerDisplay(elapsedMs)}
+          </span>
         </button>
       </div>
     </div>

@@ -233,6 +233,18 @@ export function useDailyTasks({
     );
   }, [activityPeriods, memoPeriods, activities, groups, oneTimeTasks]);
 
+  const runningSession = useMemo(() => {
+    if (!resolvedCurrentActivityId) return null;
+    const openPeriod = activityPeriods.find(
+      (p) => !p.end_time && p.activity_id === resolvedCurrentActivityId
+    );
+    if (!openPeriod) return null;
+    const activity = activities.find((a) => a.id === resolvedCurrentActivityId);
+    const groupId = activity?.group_id ?? null;
+    if (!groupId) return null;
+    return { sessionId: openPeriod.id, groupId };
+  }, [resolvedCurrentActivityId, activityPeriods, activities]);
+
   const handleTimelineClick = useCallback(
     (groupId: string, sessionId: string) => {
       if (groupId) {
@@ -267,6 +279,7 @@ export function useDailyTasks({
     handleStartMemo,
     handleStopMemo,
     handleTimelineClick,
+    runningSession,
     loadActivityPeriods,
     calculateActivityTime,
     calculateMemoTime,

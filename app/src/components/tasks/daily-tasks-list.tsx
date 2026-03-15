@@ -61,6 +61,7 @@ export default function DailyTasksList({
     handleStopActivity,
     handleStartMemo,
     handleStopMemo,
+    runningSession,
     loadActivityPeriods,
     calculateActivityTime,
     calculateMemoTime,
@@ -175,6 +176,15 @@ export default function DailyTasksList({
             groups={groups}
             calculateActivityTime={calculateActivityTime}
             onStop={handleStopActivity}
+            onEdit={
+              runningSession
+                ? () =>
+                    setEditingSession({
+                      groupId: runningSession.groupId,
+                      sessionId: runningSession.sessionId,
+                    })
+                : undefined
+            }
           />
           <ActiveMemoPill
             currentMemoId={currentMemoId}
@@ -217,6 +227,7 @@ export default function DailyTasksList({
       <ActivityGroupsDrawer
         currentActivityId={currentActivityId}
         activities={activities}
+        calculateActivityTime={calculateActivityTime}
         onStartActivity={handleStartActivity}
         onStopActivity={handleStopActivity}
       />
