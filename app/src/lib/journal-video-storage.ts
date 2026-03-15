@@ -189,6 +189,11 @@ interface TranscodeOptions {
   audioBitsPerSecond: number;
 }
 
+interface VideoCaptureStreamElement extends HTMLVideoElement {
+  captureStream?: () => MediaStream;
+  mozCaptureStream?: () => MediaStream;
+}
+
 async function transcodeWithMediaRecorder(
   file: File,
   options: TranscodeOptions
@@ -252,11 +257,13 @@ async function transcodeWithMediaRecorder(
       }
 
       try {
-        const sourceStream = video.captureStream?.();
+        const sourceVideo = video as VideoCaptureStreamElement;
+        const sourceStream =
+          sourceVideo.captureStream?.() ?? sourceVideo.mozCaptureStream?.();
         if (sourceStream) {
           sourceStream
             .getAudioTracks()
-            .forEach((track) => stream?.addTrack(track));
+            .forEach((track: MediaStreamTrack) => stream?.addTrack(track));
         }
       } catch {
         // Audio capture may fail in some browsers; continue with video-only output.

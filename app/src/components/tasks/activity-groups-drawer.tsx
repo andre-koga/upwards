@@ -1,5 +1,5 @@
 /**
- * SRP: Drawer to pick a group (then activities) or start a group; FAB to open.
+ * SRP: Drawer to pick groups/activities and start new groups or activities.
  */
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Plus, X } from "lucide-react";
@@ -221,6 +221,21 @@ export default function ActivityGroupsDrawer({
                   </h2>
                   <div className="w-9" />
                 </div>
+                {selectedGroup && (
+                  <div className="flex shrink-0 justify-center px-4 pb-6">
+                    <button
+                      onClick={() => {
+                        setView("groups");
+                        setOpen(false);
+                        navigate(`/activities/${selectedGroup.id}/new`);
+                      }}
+                      className="flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <Plus className="h-4 w-4" />
+                      New Activity
+                    </button>
+                  </div>
+                )}
                 <div className="space-y-2 px-4 pb-12">
                   {!selectedGroup ? (
                     <p className="py-6 text-center text-sm text-muted-foreground">
