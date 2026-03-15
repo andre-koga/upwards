@@ -300,6 +300,7 @@ export class SyncEngine {
 
   async pull(): Promise<void> {
     if (!this.canSync() || !supabase) return;
+    const client = supabase;
     const userId = getCachedUserId()!;
     const lastSync = this.state.lastSyncAt ?? null;
     const fullSince = EPOCH;
@@ -329,7 +330,7 @@ export class SyncEngine {
               return new Date(sinceMs).toISOString();
             })();
 
-        const query = supabase.from(table).select("*").eq("user_id", userId);
+        const query = client.from(table).select("*").eq("user_id", userId);
 
         const { data, error } = await (shouldFullPull
           ? query
