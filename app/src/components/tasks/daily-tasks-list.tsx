@@ -15,12 +15,15 @@ interface DailyTasksListProps {
   activities: Activity[];
   groups: ActivityGroup[];
   currentDate: Date;
+  /** When this changes, daily data is reloaded (e.g. after sync). */
+  refreshTrigger?: number;
 }
 
 export default function DailyTasksList({
   activities,
   groups,
   currentDate,
+  refreshTrigger = 0,
 }: DailyTasksListProps) {
   const [assignPeriodId, setAssignPeriodId] = useState<string | null>(null);
   const [assignIntervalMs, setAssignIntervalMs] = useState(0);
@@ -55,7 +58,7 @@ export default function DailyTasksList({
     calculateActivityTime,
     calculateMemoTime,
     formatTimerDisplay,
-  } = useDailyTasks({ activities, groups, currentDate });
+  } = useDailyTasks({ activities, groups, currentDate, refreshTrigger });
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
     setAssignPeriodId(periodId);

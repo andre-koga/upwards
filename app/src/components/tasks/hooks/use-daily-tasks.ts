@@ -19,12 +19,15 @@ interface UseDailyTasksParams {
   activities: Activity[];
   groups: ActivityGroup[];
   currentDate: Date;
+  /** When this changes, daily entry / periods / tasks are reloaded (e.g. after sync). */
+  refreshTrigger?: number;
 }
 
 export function useDailyTasks({
   activities,
   groups,
   currentDate,
+  refreshTrigger = 0,
 }: UseDailyTasksParams) {
   const navigate = useNavigate();
   const dateString = toDateStr(currentDate);
@@ -91,6 +94,7 @@ export function useDailyTasks({
     loadActivityPeriods,
     loadMemoPeriods,
     loadOneTimeTasks,
+    refreshTrigger,
   ]);
 
   useEffect(() => {

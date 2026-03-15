@@ -11,6 +11,7 @@ import {
   toRemoteRow,
   dedupeRowsForUpsert,
   UPSERT_CONFLICT_TARGET,
+  parseTimestamp,
 } from "./sync-transformers";
 import {
   sanitizeForeignKeyRefsBeforeUpsert,
@@ -21,6 +22,8 @@ import {
 const EPOCH = "1970-01-01T00:00:00.000Z";
 const DEBOUNCE_SYNC_MS = 5_000;
 const DEFAULT_PERIODIC_SYNC_MS = 60_000;
+/** Buffer for incremental pull to avoid missing rows due to device clock skew. */
+const PULL_BUFFER_MS = 5 * 60 * 1000;
 
 const SYNC_TABLES: SyncTable[] = [
   "activity_groups",
@@ -163,9 +166,9 @@ export class SyncEngine {
     return true;
   }
 
-  async push(): Promise<void> {
-    if (!this.canSync() || !supabase) return;
-    await this.pushInternal(false);
+  async push(): Promise<{ failedTables: string[] }> {
+    if (!this.canSync() || !supabase) return { failedTables: [] };
+    return this.pushInternal(false);
   }
 
   /**
@@ -177,7 +180,12 @@ export class SyncEngine {
     if (!this.canSync() || !supabase) return;
     this.setState({ isSyncing: true, lastError: null });
     try {
-      await this.pushInternal(true);
+      const { failedTables } = await this.pushInternal(true);
+      if (failedTables.length > 0) {
+        this.setState({
+          lastError: `Upload failed for: ${failedTables.join(", ")}. Try again.`,
+        });
+      }
     } catch (err) {
       const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
       this.setState({ lastError: msg });
@@ -186,10 +194,13 @@ export class SyncEngine {
     }
   }
 
-  private async pushInternal(forceAll: boolean): Promise<void> {
-    if (!supabase) return;
+  private async pushInternal(
+    forceAll: boolean
+  ): Promise<{ failedTables: string[] }> {
+    const failedTables: string[] = [];
+    if (!supabase) return { failedTables };
     const userId = getCachedUserId()!;
-    if (!userId) return;
+    if (!userId) return { failedTables };
 
     for (const table of SYNC_TABLES) {
       const dexieTable = TABLE_MAP[table];
@@ -258,6 +269,7 @@ export class SyncEngine {
         });
 
         if (error) {
+          failedTables.push(table);
           console.warn(
             `[sync] push failed for ${table}, continuing with other tables:`,
             error.message
@@ -275,29 +287,45 @@ export class SyncEngine {
           );
         });
       } catch (err) {
+        failedTables.push(table);
         console.warn(
           `[sync] push failed for ${table}, continuing with other tables:`,
           err
         );
       }
     }
+
+    return { failedTables };
   }
 
   async pull(): Promise<void> {
     if (!this.canSync() || !supabase) return;
     const userId = getCachedUserId()!;
-    const since = this.state.lastSyncAt ?? EPOCH;
+    const lastSync = this.state.lastSyncAt ?? null;
+    const fullSince = EPOCH;
 
     // Reference tables: always pull all so child records find their refs.
+    // activity_periods: full pull so timeline never misses the latest period (clock skew).
     const FULL_PULL_TABLES: SyncTable[] = [
       "activity_groups",
       "activities",
       "daily_entries",
+      "activity_periods",
     ];
 
     for (const table of SYNC_TABLES) {
       const dexieTable = TABLE_MAP[table];
       const shouldFullPull = FULL_PULL_TABLES.includes(table);
+      const since = shouldFullPull
+        ? fullSince
+        : (() => {
+            if (!lastSync) return fullSince;
+            const sinceMs = Math.max(
+              0,
+              parseTimestamp(lastSync) - PULL_BUFFER_MS
+            );
+            return new Date(sinceMs).toISOString();
+          })();
 
       const query = supabase.from(table).select("*").eq("user_id", userId);
 
@@ -329,7 +357,12 @@ export class SyncEngine {
     if (this.state.isSyncing) return;
     this.setState({ isSyncing: true, lastError: null });
     try {
-      await this.push();
+      const { failedTables } = await this.push();
+      if (failedTables.length > 0) {
+        this.setState({
+          lastError: `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`,
+        });
+      }
       await this.pull();
     } catch (err) {
       const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Heart, MapPin, MapPinOff, Flame, Hash, RotateCw } from "lucide-react";
 import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -22,6 +22,7 @@ import { getYoutubeEmbedUrl } from "@/lib/youtube-utils";
 import { getFirstEmoji } from "@/lib/emoji-utils";
 import { logError } from "@/lib/error-utils";
 import { useAuth } from "@/lib/use-auth";
+import { syncEngine } from "@/lib/sync";
 
 const HABIT_QUOTES = [
   "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
@@ -60,6 +61,8 @@ export default function TasksPageContent() {
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
   const [quote] = useState(pickRandomQuote);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const prevSyncingRef = useRef(false);
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
 
@@ -106,6 +109,20 @@ export default function TasksPageContent() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    const unsubscribe = syncEngine.subscribe((state) => {
+      const wasSyncing = prevSyncingRef.current;
+      prevSyncingRef.current = state.isSyncing;
+      if (wasSyncing && !state.isSyncing) {
+        loadData();
+        loadJournalEntry();
+        loadJournalMeta();
+        setRefreshTrigger((t) => t + 1);
+      }
+    });
+    return unsubscribe;
+  }, [loadData, loadJournalEntry, loadJournalMeta]);
 
   useEffect(() => {
     loadJournalMeta();
@@ -426,6 +443,7 @@ export default function TasksPageContent() {
             activities={activities}
             groups={groups}
             currentDate={currentDate}
+            refreshTrigger={refreshTrigger}
           />
 
           <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground/60">
