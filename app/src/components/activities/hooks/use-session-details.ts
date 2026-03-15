@@ -1,4 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+/**
+ * SRP: Loads and updates one activity session's editable details.
+ */
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { db, newId, now } from "@/lib/db";
 import type {
@@ -29,12 +32,27 @@ export interface SessionDetailsData {
   entry: DailyEntry | undefined;
 }
 
-export function useSessionDetails() {
-  const { groupId, sessionId } = useParams<{
+interface UseSessionDetailsOptions {
+  groupId?: string;
+  sessionId?: string;
+  onDone?: () => void;
+  onUpdated?: () => void;
+}
+
+export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
+  const {
+    groupId: groupIdOption,
+    sessionId: sessionIdOption,
+    onDone,
+    onUpdated,
+  } = options;
+  const params = useParams<{
     groupId: string;
     sessionId: string;
   }>();
   const navigate = useNavigate();
+  const groupId = groupIdOption ?? params.groupId;
+  const sessionId = sessionIdOption ?? params.sessionId;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,10 +69,31 @@ export function useSessionDetails() {
     return `/activities/${groupId}`;
   }, [groupId]);
 
+  const onDoneRef = useRef(onDone);
+  const onUpdatedRef = useRef(onUpdated);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+  useEffect(() => {
+    onUpdatedRef.current = onUpdated;
+  }, [onUpdated]);
+
+  const finish = useCallback(() => {
+    if (onDoneRef.current) {
+      onDoneRef.current();
+      return;
+    }
+    navigate(backPath);
+  }, [backPath, navigate]);
+
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
+      setError(null);
+      setDetails(null);
+
       if (!groupId || !sessionId) {
-        navigate("/");
+        finish();
         return;
       }
 
@@ -64,13 +103,13 @@ export function useSessionDetails() {
       ]);
 
       if (!group || group.deleted_at || !period || period.deleted_at) {
-        navigate(`/activities/${groupId}`);
+        finish();
         return;
       }
 
       const activity = await db.activities.get(period.activity_id);
       if (activity && !activity.deleted_at && activity.group_id !== group.id) {
-        navigate(`/activities/${groupId}`);
+        finish();
         return;
       }
 
@@ -113,7 +152,7 @@ export function useSessionDetails() {
     };
 
     void load();
-  }, [groupId, sessionId, navigate]);
+  }, [finish, groupId, sessionId]);
 
   const handleDelete = useCallback(async () => {
     if (!sessionId) return;
@@ -122,11 +161,12 @@ export function useSessionDetails() {
         deleted_at: now(),
         updated_at: now(),
       });
-      navigate(backPath);
+      onUpdatedRef.current?.();
+      finish();
     } catch (deleteError) {
       console.error("Error deleting session:", deleteError);
     }
-  }, [sessionId, backPath, navigate]);
+  }, [finish, sessionId]);
 
   const handleSave = useCallback(async () => {
     if (!sessionId || !details) return;
@@ -191,7 +231,8 @@ export function useSessionDetails() {
         updated_at: now(),
       });
 
-      navigate(backPath);
+      onUpdatedRef.current?.();
+      finish();
     } catch (saveError) {
       console.error("Error saving session:", saveError);
       setError(ERROR_MESSAGES.SAVE_SESSION);
@@ -205,8 +246,7 @@ export function useSessionDetails() {
     endTime,
     selectedDate,
     selectedActivityId,
-    backPath,
-    navigate,
+    finish,
   ]);
 
   return {

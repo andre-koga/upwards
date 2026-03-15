@@ -1,3 +1,6 @@
+/**
+ * SRP: Renders today's tasks, timeline, and task-related dialogs.
+ */
 import { useState } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
@@ -10,6 +13,7 @@ import AddTaskModal from "./add-task-modal";
 import AssignActivityDialog from "./assign-activity-dialog";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import { CircleCheckBig } from "lucide-react";
+import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 
 interface DailyTasksListProps {
   activities: Activity[];
@@ -28,6 +32,10 @@ export default function DailyTasksList({
   const [assignPeriodId, setAssignPeriodId] = useState<string | null>(null);
   const [assignIntervalMs, setAssignIntervalMs] = useState(0);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [editingSession, setEditingSession] = useState<{
+    groupId: string;
+    sessionId: string;
+  } | null>(null);
 
   const {
     isToday,
@@ -53,7 +61,6 @@ export default function DailyTasksList({
     handleStopActivity,
     handleStartMemo,
     handleStopMemo,
-    handleTimelineClick,
     loadActivityPeriods,
     calculateActivityTime,
     calculateMemoTime,
@@ -190,7 +197,11 @@ export default function DailyTasksList({
                     ? undefined
                     : isUnknown
                       ? () => openAssignDialog(session.id, session.intervalMs)
-                      : () => handleTimelineClick(session.groupId, session.id)
+                      : () =>
+                          setEditingSession({
+                            groupId: session.groupId,
+                            sessionId: session.id,
+                          })
                 }
                 onStartActivity={
                   isToday && !isMemo && !isUnknown
@@ -220,6 +231,22 @@ export default function DailyTasksList({
             if (!open) setAssignPeriodId(null);
           }}
           onSuccess={handleAssignSuccess}
+        />
+      )}
+
+      {editingSession && (
+        <SessionDetailsDialog
+          groupId={editingSession.groupId}
+          sessionId={editingSession.sessionId}
+          open={editingSession !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingSession(null);
+            }
+          }}
+          onSessionUpdated={() => {
+            void loadActivityPeriods();
+          }}
         />
       )}
     </div>

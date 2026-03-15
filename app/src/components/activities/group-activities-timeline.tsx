@@ -1,9 +1,12 @@
+/**
+ * SRP: Renders grouped activity history and opens session editing.
+ */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { db, toDateStr } from "@/lib/db";
 import ActivityTimelineItem from "@/components/tasks/activity-timeline-item";
 import { formatTimerDisplay } from "@/lib/activity-utils";
-import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 
 interface GroupActivitiesTimelineProps {
   groupId: string;
@@ -35,7 +38,7 @@ export default function GroupActivitiesTimeline({
   groupName,
   groupColor,
 }: GroupActivitiesTimelineProps) {
-  const navigate = useNavigate();
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [dayDataList, setDayDataList] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -192,12 +195,9 @@ export default function GroupActivitiesTimeline({
     };
   }, [loadMoreDays, loadingMore, hasMore]);
 
-  const handleTimelineClick = useCallback(
-    (sessionId: string) => {
-      navigate(`/activities/${groupId}/sessions/${sessionId}`);
-    },
-    [navigate, groupId]
-  );
+  const handleTimelineClick = useCallback((sessionId: string) => {
+    setEditingSessionId(sessionId);
+  }, []);
 
   if (loading) {
     return (
@@ -218,67 +218,85 @@ export default function GroupActivitiesTimeline({
   }
 
   return (
-    <div className="px-4 pb-8">
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Activity History
-          </p>
-        </div>
-
-        <div className="space-y-6">
-          {dayDataList.map((day) => (
-            <div key={day.date} className="space-y-2">
-              {/* Date label */}
-              <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-medium text-muted-foreground">
-                  {day.dateStr}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {formatTimerDisplay(day.totalMs)}
-                </span>
-              </div>
-
-              {/* Sessions for this day */}
-              <div className="space-y-1 pl-3">
-                {day.sessions.map((session) => (
-                  <ActivityTimelineItem
-                    key={session.id}
-                    activityName={session.activityName}
-                    groupColor={session.groupColor}
-                    intervalMs={session.intervalMs}
-                    activityId={session.activityId}
-                    onClick={() => handleTimelineClick(session.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Loading more indicator */}
-        {hasMore && (
-          <div
-            ref={observerTarget}
-            className="flex items-center justify-center py-6"
-          >
-            {loadingMore && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Loading more...</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {!hasMore && dayDataList.length > 0 && (
-          <div className="py-6 text-center">
-            <p className="text-xs text-muted-foreground">
-              No more activity history
+    <>
+      <div className="px-4 pb-8">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Activity History
             </p>
           </div>
-        )}
+
+          <div className="space-y-6">
+            {dayDataList.map((day) => (
+              <div key={day.date} className="space-y-2">
+                {/* Date label */}
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {day.dateStr}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatTimerDisplay(day.totalMs)}
+                  </span>
+                </div>
+
+                {/* Sessions for this day */}
+                <div className="space-y-1 pl-3">
+                  {day.sessions.map((session) => (
+                    <ActivityTimelineItem
+                      key={session.id}
+                      activityName={session.activityName}
+                      groupColor={session.groupColor}
+                      intervalMs={session.intervalMs}
+                      activityId={session.activityId}
+                      onClick={() => handleTimelineClick(session.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Loading more indicator */}
+          {hasMore && (
+            <div
+              ref={observerTarget}
+              className="flex items-center justify-center py-6"
+            >
+              {loadingMore && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Loading more...</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!hasMore && dayDataList.length > 0 && (
+            <div className="py-6 text-center">
+              <p className="text-xs text-muted-foreground">
+                No more activity history
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {editingSessionId && (
+        <SessionDetailsDialog
+          groupId={groupId}
+          sessionId={editingSessionId}
+          open={editingSessionId !== null}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setEditingSessionId(null);
+            }
+          }}
+          onSessionUpdated={() => {
+            void loadInitialData();
+          }}
+        />
+      )}
+    </>
   );
 }
