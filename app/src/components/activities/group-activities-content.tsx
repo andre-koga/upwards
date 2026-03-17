@@ -8,7 +8,9 @@ import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import GroupActivitiesHeader from "@/components/activities/group-activities-header";
 import GroupActivitiesList from "@/components/activities/group-activities-list";
 import GroupActivitiesTimeline from "@/components/activities/group-activities-timeline";
+import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
 import { ArchiveActivityDialog } from "@/components/activities/archive-activity-dialog";
+import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { useGroupActivityTracking } from "@/components/activities/hooks/use-group-activity-tracking";
 import { useGroupActivitiesData } from "@/components/activities/hooks/use-group-activities-data";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
@@ -22,7 +24,9 @@ export default function GroupActivitiesContent({
   group,
 }: GroupActivitiesContentProps) {
   const navigate = useNavigate();
+  const [groupDetails, setGroupDetails] = useState(group);
   const [isArchived, setIsArchived] = useState(group.is_archived);
+  const [editGroupDialogOpen, setEditGroupDialogOpen] = useState(false);
   const { activities, loading, loadActivities } = useGroupActivitiesData(group);
   const { currentActivityId, getElapsedMs, toggleActivity } =
     useGroupActivityTracking();
@@ -31,10 +35,15 @@ export default function GroupActivitiesContent({
     activityId: string | null;
     activityName: string | null;
   }>({ open: false, activityId: null, activityName: null });
+  const [newActivityDialogOpen, setNewActivityDialogOpen] = useState(false);
+  const [editActivityId, setEditActivityId] = useState<string | null>(null);
 
   // Sync local archive state when group prop changes (e.g. after navigation)
   useEffect(() => {
-    /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing with group prop */
+    setGroupDetails(group);
+  }, [group]);
+
+  useEffect(() => {
     setIsArchived(group.is_archived);
   }, [group.is_archived]);
 
@@ -43,7 +52,7 @@ export default function GroupActivitiesContent({
       const newArchiveStatus = !isArchived;
       setIsArchived(newArchiveStatus);
       const n = now();
-      await db.activityGroups.update(group.id, {
+      await db.activityGroups.update(groupDetails.id, {
         is_archived: newArchiveStatus,
         updated_at: n,
       });
@@ -64,10 +73,10 @@ export default function GroupActivitiesContent({
   return (
     <div className="overflow-y-scroll pb-20">
       <GroupActivitiesHeader
-        group={group}
+        group={groupDetails}
         isArchived={isArchived}
         activityCount={activities.length}
-        onEditGroup={() => navigate(`/activities/${group.id}/edit`)}
+        onEditGroup={() => setEditGroupDialogOpen(true)}
         onToggleArchiveGroup={handleArchiveGroup}
       />
 
@@ -76,7 +85,7 @@ export default function GroupActivitiesContent({
       <div className="px-4">
         <div className="mb-6 flex justify-center">
           <button
-            onClick={() => navigate(`/activities/${group.id}/new`)}
+            onClick={() => setNewActivityDialogOpen(true)}
             className="flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <Plus className="h-4 w-4" />
@@ -86,14 +95,12 @@ export default function GroupActivitiesContent({
 
         <GroupActivitiesList
           activities={activities}
-          group={group}
-          groupColor={group.color || DEFAULT_GROUP_COLOR}
+          group={groupDetails}
+          groupColor={groupDetails.color || DEFAULT_GROUP_COLOR}
           currentActivityId={currentActivityId}
           getElapsedMs={getElapsedMs}
           onToggleActivity={toggleActivity}
-          onEditActivity={(activityId) =>
-            navigate(`/activities/${group.id}/edit/${activityId}`)
-          }
+          onEditActivity={(activityId) => setEditActivityId(activityId)}
           onArchiveActivity={(activity) =>
             setArchiveDialog({
               open: true,
@@ -107,9 +114,9 @@ export default function GroupActivitiesContent({
       {/* Timeline section */}
       <div className="mt-8 pt-6">
         <GroupActivitiesTimeline
-          groupId={group.id}
-          groupName={group.name}
-          groupColor={group.color || DEFAULT_GROUP_COLOR}
+          groupId={groupDetails.id}
+          groupName={groupDetails.name}
+          groupColor={groupDetails.color || DEFAULT_GROUP_COLOR}
         />
       </div>
 
@@ -129,6 +136,36 @@ export default function GroupActivitiesContent({
           })
         }
         onArchived={loadActivities}
+      />
+
+      <EditGroupDialog
+        open={editGroupDialogOpen}
+        onOpenChange={setEditGroupDialogOpen}
+        group={groupDetails}
+        onUpdated={(updatedGroup) => {
+          setGroupDetails(updatedGroup);
+        }}
+      />
+
+      <ActivityDialogForm
+        open={newActivityDialogOpen}
+        onOpenChange={setNewActivityDialogOpen}
+        group={groupDetails}
+        onSaved={() => {
+          void loadActivities();
+        }}
+      />
+
+      <ActivityDialogForm
+        open={editActivityId !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setEditActivityId(null);
+        }}
+        group={groupDetails}
+        activity={activities.find((activity) => activity.id === editActivityId)}
+        onSaved={() => {
+          void loadActivities();
+        }}
       />
     </div>
   );

@@ -1,22 +1,32 @@
+/**
+ * SRP: Renders routine selection controls and routine-specific option inputs.
+ */
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  FormField,
+  FormRow,
+  FormSelectField,
+  FormStack,
+  FormToggleButton,
+} from "@/components/forms";
+import { dialogFieldLabelClassName } from "@/components/forms/styles";
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS = [
+  { short: "S", label: "Sunday" },
+  { short: "M", label: "Monday" },
+  { short: "T", label: "Tuesday" },
+  { short: "W", label: "Wednesday" },
+  { short: "T", label: "Thursday" },
+  { short: "F", label: "Friday" },
+  { short: "S", label: "Saturday" },
+];
 
 interface RoutineSelectorProps {
   routine: string;
   weeklyDays: number[];
-  monthlyDay: number;
   customInterval: number | string;
   customUnit: "days" | "weeks" | "months";
   onRoutineChange: (routine: string) => void;
   onWeeklyDaysChange: (days: number[]) => void;
-  onMonthlyDayChange: (day: number) => void;
   onCustomIntervalChange: (interval: number | string) => void;
   onCustomUnitChange: (unit: "days" | "weeks" | "months") => void;
 }
@@ -24,12 +34,10 @@ interface RoutineSelectorProps {
 export default function RoutineSelector({
   routine,
   weeklyDays,
-  monthlyDay, // eslint-disable-line @typescript-eslint/no-unused-vars
   customInterval,
   customUnit,
   onRoutineChange,
   onWeeklyDaysChange,
-  onMonthlyDayChange, // eslint-disable-line @typescript-eslint/no-unused-vars
   onCustomIntervalChange,
   onCustomUnitChange,
 }: RoutineSelectorProps) {
@@ -42,85 +50,80 @@ export default function RoutineSelector({
   };
 
   return (
-    <div className="space-y-0">
-      <Select value={routine} onValueChange={onRoutineChange}>
-        <SelectTrigger className="!h-10 w-full rounded-full border-border bg-muted/40 px-4 text-base">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="anytime">Anytime (no schedule)</SelectItem>
-          <SelectItem value="daily">Daily</SelectItem>
-          <SelectItem value="weekly">Weekly</SelectItem>
-          {/* <SelectItem value="monthly">Monthly</SelectItem> */}
-          <SelectItem value="custom">Custom</SelectItem>
-          <SelectItem value="never">Never (avoid this)</SelectItem>
-        </SelectContent>
-      </Select>
+    <FormStack className="space-y-0">
+      <FormSelectField
+        id="activity-routine"
+        label="Routine type"
+        labelClassName="sr-only"
+        value={routine}
+        onValueChange={onRoutineChange}
+        options={[
+          { value: "anytime", label: "Anytime (no schedule)" },
+          { value: "daily", label: "Daily" },
+          { value: "weekly", label: "Weekly" },
+          { value: "custom", label: "Custom" },
+          { value: "never", label: "Never (avoid this)" },
+        ]}
+        containerClassName="space-y-0"
+      />
 
       {routine === "weekly" && (
         <div className="pt-3">
-          <div className="flex gap-2">
+          <FormRow className="items-stretch gap-1">
             {DAYS.map((day, index) => (
-              <button
-                key={day}
-                type="button"
-                onClick={() => toggleWeekday(index)}
-                className={`flex-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors ${
-                  weeklyDays.includes(index)
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                }`}
+              <FormToggleButton
+                key={`${day.label}-${index}`}
+                toggled={weeklyDays.includes(index)}
+                onToggle={() => toggleWeekday(index)}
+                label={`Toggle ${day.label}`}
+                className="h-9 min-w-0 flex-1 rounded-md px-0 text-xs font-medium"
+                activeClassName="border-primary bg-primary text-primary-foreground"
+                inactiveClassName="border-input bg-background hover:bg-accent hover:text-accent-foreground"
               >
-                {day}
-              </button>
+                {day.short}
+              </FormToggleButton>
             ))}
-          </div>
+          </FormRow>
         </div>
       )}
 
-      {/* {routine === "monthly" && (
-        <div className="pt-3 space-y-2">
-          <p className="text-xs font-semibold">Day of month:</p>
-          <Input
-            id="monthlyDay"
-            type="number"
-            min="1"
-            max="31"
-            value={monthlyDay}
-            onChange={(e) => onMonthlyDayChange(parseInt(e.target.value) || 1)}
-            className="w-24 h-10"
-          />
-        </div>
-      )} */}
-
       {routine === "custom" && (
-        <div className="pt-3">
-          <div className="flex items-center gap-2">
-            <span className="pl-2 text-base">Every</span>
-            <input
+        <div className="space-y-1 pt-3">
+          <p className={dialogFieldLabelClassName}>Every</p>
+          <FormRow>
+            <FormField
+              id="custom-routine-interval"
+              label="Custom interval"
+              labelClassName="sr-only"
               type="number"
               min="1"
               value={customInterval}
-              onChange={(e) =>
+              onChange={(event) =>
                 onCustomIntervalChange(
-                  e.target.value === "" ? "" : parseInt(e.target.value)
+                  event.target.value === "" ? "" : parseInt(event.target.value)
                 )
               }
-              className="h-10 w-20 rounded-full border border-border bg-muted/40 px-4 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40"
+              containerClassName="w-20 space-y-0"
             />
-            <Select value={customUnit} onValueChange={onCustomUnitChange}>
-              <SelectTrigger className="!h-10 flex-1 rounded-full border-border bg-muted/40 px-4">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="days">Days</SelectItem>
-                <SelectItem value="weeks">Weeks</SelectItem>
-                <SelectItem value="months">Months</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <FormSelectField
+              id="custom-routine-unit"
+              label="Custom unit"
+              labelClassName="sr-only"
+              value={customUnit}
+              onValueChange={(value) =>
+                onCustomUnitChange(value as "days" | "weeks" | "months")
+              }
+              options={[
+                { value: "days", label: "Days" },
+                { value: "weeks", label: "Weeks" },
+                { value: "months", label: "Months" },
+              ]}
+              containerClassName="flex-1 space-y-0"
+              triggerClassName="h-10"
+            />
+          </FormRow>
         </div>
       )}
-    </div>
+    </FormStack>
   );
 }

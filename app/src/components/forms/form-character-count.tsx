@@ -15,8 +15,13 @@ export function FormCharacterCount({
   className,
 }: FormCharacterCountProps) {
   return (
-    <p className={cn("text-right text-xs text-muted-foreground", className)}>
+    <span
+      className={cn(
+        "block w-full text-right text-xs text-muted-foreground",
+        className
+      )}
+    >
       {current}/{max}
-    </p>
+    </span>
   );
 }

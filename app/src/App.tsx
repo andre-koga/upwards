@@ -1,7 +1,9 @@
+/**
+ * SRP: Defines the top-level router and global app scaffolding.
+ */
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import GroupPage from "@/pages/group";
-import NewGroupPage from "@/pages/new-group";
 import EditGroupPage from "@/pages/edit-group";
 import NewActivityPage from "@/pages/new-activity";
 import EditActivityPage from "@/pages/edit-activity";
@@ -19,7 +21,6 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<TodayPage />} />
-        <Route path="/activities/new" element={<NewGroupPage />} />
         <Route path="/activities/stats" element={<StatsPage />} />
         <Route path="/activities/:groupId" element={<GroupPage />} />
         <Route path="/activities/:groupId/new" element={<NewActivityPage />} />

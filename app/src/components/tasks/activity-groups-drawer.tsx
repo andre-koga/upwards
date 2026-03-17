@@ -15,6 +15,8 @@ import {
 } from "@/lib/activity-utils";
 import GroupPill from "@/components/activities/group-pill";
 import ActivityPill from "@/components/activities/activity-pill";
+import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
+import { NewGroupDialog } from "@/components/activities/new-group-dialog";
 
 interface ActivityGroupsDrawerProps {
   currentActivityId?: string | null;
@@ -39,6 +41,9 @@ export default function ActivityGroupsDrawer({
     null
   );
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
+  const [newGroupDialogOpen, setNewGroupDialogOpen] = useState(false);
+  const [newActivityDialogGroup, setNewActivityDialogGroup] =
+    useState<ActivityGroup | null>(null);
   const pendingContentRef = useRef<
     { type: "activities"; group: ActivityGroup } | { type: "groups" } | null
   >(null);
@@ -147,9 +152,8 @@ export default function ActivityGroupsDrawer({
                 <div className="flex shrink-0 justify-center px-4 pb-6">
                   <button
                     onClick={() => {
-                      setView("groups");
                       setOpen(false);
-                      navigate("/activities/new");
+                      setNewGroupDialogOpen(true);
                     }}
                     className="flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
@@ -225,9 +229,8 @@ export default function ActivityGroupsDrawer({
                   <div className="flex shrink-0 justify-center px-4 pb-6">
                     <button
                       onClick={() => {
-                        setView("groups");
                         setOpen(false);
-                        navigate(`/activities/${selectedGroup.id}/new`);
+                        setNewActivityDialogGroup(selectedGroup);
                       }}
                       className="flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
@@ -283,6 +286,29 @@ export default function ActivityGroupsDrawer({
       >
         {open ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
       </button>
+
+      <NewGroupDialog
+        open={newGroupDialogOpen}
+        onOpenChange={setNewGroupDialogOpen}
+        onCreated={(group) => {
+          setNewGroupDialogOpen(false);
+          setOpen(false);
+          navigate(`/activities/${group.id}`);
+        }}
+      />
+
+      {newActivityDialogGroup ? (
+        <ActivityDialogForm
+          open={newActivityDialogGroup !== null}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setNewActivityDialogGroup(null);
+          }}
+          group={newActivityDialogGroup}
+          onSaved={() => {
+            navigate(`/activities/${newActivityDialogGroup.id}`);
+          }}
+        />
+      ) : null}
     </>
   );
 }

@@ -23,7 +23,6 @@ export default function GroupPage() {
 ## Routes (from App.tsx)
 
 - `/` — Today
-- `/activities/new` — New group
 - `/activities/:groupId` — Group page
 - `/activities/:groupId/new` — New activity
 - `/activities/:groupId/edit` — Edit group

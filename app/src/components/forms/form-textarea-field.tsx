@@ -5,7 +5,10 @@ import type { ComponentProps, ReactNode } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { dialogTextareaClassName } from "@/components/forms/styles";
+import {
+  dialogFieldLabelClassName,
+  dialogTextareaClassName,
+} from "@/components/forms/styles";
 
 export interface FormTextareaFieldProps extends ComponentProps<
   typeof Textarea
@@ -30,7 +33,10 @@ export function FormTextareaField({
 }: FormTextareaFieldProps) {
   return (
     <div className={cn("space-y-1", containerClassName)}>
-      <Label htmlFor={id} className={cn("text-sm font-medium", labelClassName)}>
+      <Label
+        htmlFor={id}
+        className={cn(dialogFieldLabelClassName, labelClassName)}
+      >
         {label}
       </Label>
       <Textarea

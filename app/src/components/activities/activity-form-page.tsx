@@ -92,7 +92,6 @@ export default function ActivityFormPage({
 
   return (
     <ActivityFormFields
-      group={group}
       initialData={activity}
       onSubmit={handleSubmit}
       submitLabel={isEditing ? "Update Activity" : "Create Activity"}

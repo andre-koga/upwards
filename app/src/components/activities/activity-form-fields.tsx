@@ -1,11 +1,12 @@
+/**
+ * SRP: Renders the page-based activity form fields and routine configuration.
+ */
 import { useState } from "react";
 import RoutineSelector from "@/components/activities/routine-selector";
-import ActivityPill from "@/components/activities/activity-pill";
 import FormPageLayout from "@/components/ui/form-page-layout";
 import { parseRoutine, isScheduledRoutine } from "@/lib/activity-utils";
 import { formSectionLabel, formInput } from "@/lib/form-styles";
-import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
+import type { Activity } from "@/lib/db/types";
 
 const VALID_ROUTINES = ["anytime", "daily", "weekly", "custom", "never"];
 
@@ -66,7 +67,6 @@ function computeFormDataFromInitial(
 }
 
 interface ActivityFormFieldsProps {
-  group: ActivityGroup;
   initialData?: Partial<Activity>;
   onSubmit: (data: {
     name: string;
@@ -90,7 +90,6 @@ interface FormData {
 }
 
 export default function ActivityFormFields({
-  group,
   initialData,
   onSubmit,
   submitLabel,
@@ -134,18 +133,6 @@ export default function ActivityFormFields({
       submitDisabled={!formData.name.trim()}
       error={error}
     >
-      {/* Preview — centered in available top space */}
-      <div className="flex flex-1 flex-col justify-center gap-3">
-        <p className={formSectionLabel}>Preview</p>
-        <ActivityPill
-          name={formData.name}
-          color={group.color || DEFAULT_GROUP_COLOR}
-          readOnly
-        />
-      </div>
-
-      <hr className="-mx-4 -mb-2 border-border" />
-
       {/* Activity name */}
       <div className="space-y-3">
         <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -174,15 +161,11 @@ export default function ActivityFormFields({
         <RoutineSelector
           routine={formData.routine}
           weeklyDays={formData.weeklyDays}
-          monthlyDay={formData.monthlyDay}
           customInterval={formData.customInterval}
           customUnit={formData.customUnit}
           onRoutineChange={(val) => setFormData({ ...formData, routine: val })}
           onWeeklyDaysChange={(days) =>
             setFormData({ ...formData, weeklyDays: days })
-          }
-          onMonthlyDayChange={(day) =>
-            setFormData({ ...formData, monthlyDay: day })
           }
           onCustomIntervalChange={(interval) =>
             setFormData({ ...formData, customInterval: interval })

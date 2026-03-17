@@ -1,23 +1,18 @@
+/**
+ * SRP: Renders the unknown-activity assignment form using shared session-style form components.
+ */
 import { useState, useEffect, useCallback } from "react";
 import { db, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { isActiveGroup, isActiveActivity } from "@/lib/activity-utils";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+  FormDialog,
+  FormDialogActions,
+  FormField,
+  FormSelectField,
+  FormStack,
+} from "@/components/forms";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 
 interface AssignActivityDialogProps {
@@ -112,88 +107,72 @@ export default function AssignActivityDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="default" className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Assign activity</DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            This session has no activity. Choose a group and activity to fix it.
-          </p>
-        </DialogHeader>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Assign activity"
+      description="This session has no activity. Choose a group and activity to fix it."
+      contentClassName="sm:max-w-md"
+    >
+      <FormStack>
+        <FormField
+          id="unknown-session-duration"
+          label="Duration"
+          value={formatTimerDisplay(intervalMs)}
+          readOnly
+          className="tabular-nums"
+          style={{ fontFamily: "JetBrains Mono, monospace" }}
+        />
 
-        <div className="space-y-4 py-2">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-sm text-muted-foreground">Duration</span>
-            <span
-              className="text-sm font-medium tabular-nums"
-              style={{ fontFamily: "JetBrains Mono, monospace" }}
-            >
-              {formatTimerDisplay(intervalMs)}
-            </span>
-          </div>
+        <FormSelectField
+          id="unknown-session-group"
+          label="Group"
+          value={selectedGroupId}
+          onValueChange={handleGroupChange}
+          disabled={groups.length === 0}
+          options={groups.map((group) => ({
+            value: group.id,
+            label: (
+              <span className="inline-flex items-center gap-2">
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{
+                    backgroundColor: group.color || DEFAULT_GROUP_COLOR,
+                  }}
+                />
+                {group.name}
+              </span>
+            ),
+          }))}
+          placeholder="Select group"
+        />
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Group</label>
-            <Select
-              value={selectedGroupId}
-              onValueChange={handleGroupChange}
-              disabled={groups.length === 0}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select group" />
-              </SelectTrigger>
-              <SelectContent>
-                {groups.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>
-                    <span
-                      className="mr-2 inline-block h-2 w-2 rounded-full"
-                      style={{
-                        backgroundColor: g.color || DEFAULT_GROUP_COLOR,
-                      }}
-                    />
-                    {g.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <FormSelectField
+          id="unknown-session-activity"
+          label="Activity"
+          value={selectedActivityId}
+          onValueChange={setSelectedActivityId}
+          disabled={activities.length === 0}
+          options={activities.map((activity) => ({
+            value: activity.id,
+            label: activity.name,
+          }))}
+          placeholder="Select activity"
+        />
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Activity</label>
-            <Select
-              value={selectedActivityId}
-              onValueChange={setSelectedActivityId}
-              disabled={activities.length === 0}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select activity" />
-              </SelectTrigger>
-              <SelectContent>
-                {activities.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
-        </div>
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={saving || !selectedActivityId}>
-            {saving ? "Saving…" : "Assign"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <FormDialogActions
+          onConfirm={handleSave}
+          confirmLabel={saving ? "Saving..." : "Assign"}
+          confirmDisabled={saving || !selectedActivityId}
+          secondaryAction={{
+            label: "Cancel",
+            onClick: () => onOpenChange(false),
+            disabled: saving,
+          }}
+        />
+      </FormStack>
+    </FormDialog>
   );
 }

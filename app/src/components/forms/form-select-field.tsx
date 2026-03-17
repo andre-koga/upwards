@@ -11,7 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { dialogSelectTriggerClassName } from "@/components/forms/styles";
+import {
+  dialogFieldLabelClassName,
+  dialogSelectTriggerClassName,
+} from "@/components/forms/styles";
 
 interface FormSelectOption {
   value: string;
@@ -52,7 +55,10 @@ export function FormSelectField({
 }: FormSelectFieldProps) {
   return (
     <div className={cn("space-y-1", containerClassName)}>
-      <Label htmlFor={id} className={cn("text-sm font-medium", labelClassName)}>
+      <Label
+        htmlFor={id}
+        className={cn(dialogFieldLabelClassName, labelClassName)}
+      >
         {label}
       </Label>
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>

@@ -2,12 +2,15 @@
  * SRP: Renders the shared memo create/edit dialog UI and actions.
  */
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+  FormCharacterCount,
+  FormDateField,
+  FormDialog,
+  FormDialogActions,
+  FormRow,
+  FormStack,
+  FormTextareaField,
+  FormToggleButton,
+} from "@/components/forms";
 import { Pin } from "lucide-react";
 import { MEMO_TITLE_LIMIT } from "@/components/tasks/memo-title";
 
@@ -53,73 +56,60 @@ export function MemoEditDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="sm" className="w-80 p-4">
-        <DialogHeader>
-          <DialogTitle>{dialogTitle}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2">
-          <textarea
-            autoFocus
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Task title…"
-            maxLength={MEMO_TITLE_LIMIT}
-            rows={5}
-            className={cn(
-              "w-full resize-none rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            )}
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={dialogTitle}
+      contentClassName="w-80"
+    >
+      <FormStack className="space-y-2">
+        <FormTextareaField
+          id="memo-title"
+          label="Memo title"
+          labelClassName="sr-only"
+          autoFocus
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Task title…"
+          maxLength={MEMO_TITLE_LIMIT}
+          rows={5}
+          message={
+            <FormCharacterCount current={title.length} max={MEMO_TITLE_LIMIT} />
+          }
+        />
+        <FormRow>
+          <FormDateField
+            id="memo-due-date"
+            label="Due date"
+            labelClassName="sr-only"
+            value={dueDate ?? ""}
+            onChange={(e) => onDueDateChange(e.target.value || null)}
+            containerClassName="flex-1 space-y-0"
           />
-          <p className="text-right text-xs text-muted-foreground">
-            {title.length}/{MEMO_TITLE_LIMIT}
-          </p>
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={dueDate ?? ""}
-              onChange={(e) => onDueDateChange(e.target.value || null)}
-              className={cn(
-                "flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              )}
-            />
-            <button
-              type="button"
-              onClick={() => onPinnedChange(!isPinned)}
-              aria-label={isPinned ? "Unpin memo" : "Pin memo"}
-              className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors",
-                isPinned
-                  ? "border-primary bg-primary/20 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Pin className={cn("h-4 w-4", isPinned && "fill-current")} />
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center justify-center gap-3 pt-2">
-          {onDelete && (
-            <button
-              type="button"
-              onClick={onDelete}
-              className="flex items-center gap-1 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-secondary-foreground shadow-md transition-colors hover:bg-secondary/90 hover:text-destructive"
-            >
-              Delete
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={confirmDisabled}
-            className={cn(
-              "w-full max-w-[12rem] rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-            )}
+          <FormToggleButton
+            toggled={isPinned}
+            onToggle={onPinnedChange}
+            label={isPinned ? "Unpin memo" : "Pin memo"}
           >
-            {confirmLabel}
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <Pin className={isPinned ? "h-4 w-4 fill-current" : "h-4 w-4"} />
+          </FormToggleButton>
+        </FormRow>
+      </FormStack>
+      <FormDialogActions
+        onConfirm={onConfirm}
+        confirmLabel={confirmLabel}
+        confirmDisabled={confirmDisabled}
+        secondaryAction={
+          onDelete
+            ? {
+                label: "Delete",
+                onClick: onDelete,
+                destructive: true,
+              }
+            : undefined
+        }
+      />
+    </FormDialog>
   );
 }

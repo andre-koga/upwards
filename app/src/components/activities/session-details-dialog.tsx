@@ -1,31 +1,16 @@
 /**
  * SRP: Renders the edit-session form inside a reusable dialog.
  */
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  FormDateField,
+  FormDialog,
+  FormDialogActions,
+  FormField,
+  FormSelectField,
+  FormStack,
+} from "@/components/forms";
 import { getActivityDisplayName } from "@/lib/activity-utils";
-import {
-  fromDateString,
-  shiftDate,
-  shiftTimeByMinutes,
-  startOfDay,
-  timeToSeconds,
-  toDateString,
-} from "@/lib/date-utils";
+import { fromDateString, timeToSeconds, toDateString } from "@/lib/date-utils";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
 import { useCallback } from "react";
 
@@ -74,29 +59,7 @@ export default function SessionDetailsDialog({
     onUpdated: onSessionUpdated,
   });
 
-  const isSelectedDateToday =
-    selectedDate && today
-      ? startOfDay(selectedDate).getTime() === today.getTime()
-      : false;
-
   if (!sessionId) return null;
-
-  const adjustStartTime = (delta: number) => {
-    const newStartTime = shiftTimeByMinutes(startTime, delta);
-    setStartTime(newStartTime);
-    if (endTime && timeToSeconds(endTime) < timeToSeconds(newStartTime)) {
-      setEndTime(newStartTime);
-    }
-  };
-
-  const adjustEndTime = (delta: number) => {
-    const newEndTime = shiftTimeByMinutes(endTime, delta);
-    if (startTime && timeToSeconds(newEndTime) < timeToSeconds(startTime)) {
-      setEndTime(startTime);
-      return;
-    }
-    setEndTime(newEndTime);
-  };
 
   const handleStartTimeChange = (newStartTime: string) => {
     setStartTime(newStartTime);
@@ -114,189 +77,89 @@ export default function SessionDetailsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto p-4 sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Session Details</DialogTitle>
-        </DialogHeader>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Session Details"
+      contentClassName="max-h-[90vh] overflow-y-auto sm:max-w-xl"
+    >
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : !details ? (
+        <p className="text-sm text-muted-foreground">Session not found.</p>
+      ) : (
+        <FormStack>
+          <FormSelectField
+            id="session-group"
+            label="Group"
+            value={details.group.id}
+            onValueChange={() => undefined}
+            options={[{ value: details.group.id, label: details.group.name }]}
+            disabled
+          />
+          <FormSelectField
+            id="session-activity"
+            label="Activity"
+            value={selectedActivityId}
+            onValueChange={setSelectedActivityId}
+            options={[
+              { value: NONE_ACTIVITY_VALUE, label: "None" },
+              ...groupActivities.map((activity) => ({
+                value: activity.id,
+                label: getActivityDisplayName(activity, details.group),
+              })),
+            ]}
+          />
+          <FormDateField
+            id="session-date"
+            label="Date"
+            value={toDateString(selectedDate)}
+            max={toDateString(today)}
+            readOnly={isRunningSession}
+            onChange={(event) => {
+              if (isRunningSession || !event.target.value) return;
+              setSelectedDate(fromDateString(event.target.value));
+            }}
+          />
+          <FormField
+            id="session-start-time"
+            label="Start time"
+            type="time"
+            step={1}
+            value={startTime}
+            onChange={(event) => handleStartTimeChange(event.target.value)}
+          />
+          {isRunningSession ? (
+            <FormField
+              id="session-end-time-running"
+              label="End time"
+              value="Still running"
+              readOnly
+            />
+          ) : (
+            <FormField
+              id="session-end-time"
+              label="End time"
+              type="time"
+              step={1}
+              value={endTime}
+              onChange={(event) => handleEndTimeChange(event.target.value)}
+            />
+          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : !details ? (
-          <p className="text-sm text-muted-foreground">Session not found.</p>
-        ) : (
-          <>
-            <div className="overflow-hidden rounded-2xl border border-border bg-background">
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <span className="text-sm text-muted-foreground">Group</span>
-                <span className="text-sm font-medium">
-                  {details.group.name}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <span className="text-sm text-muted-foreground">Activity</span>
-                <Select
-                  value={selectedActivityId}
-                  onValueChange={setSelectedActivityId}
-                >
-                  <SelectTrigger className="w-40 border-none text-base">
-                    <SelectValue placeholder="Select activity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE_ACTIVITY_VALUE}>None</SelectItem>
-                    {groupActivities.map((activity) => (
-                      <SelectItem key={activity.id} value={activity.id}>
-                        {getActivityDisplayName(activity, details.group)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <span className="text-sm text-muted-foreground">Date</span>
-                {isRunningSession ? (
-                  <span className="text-sm font-medium">
-                    {toDateString(selectedDate)}
-                  </span>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() =>
-                        setSelectedDate((current) => shiftDate(current, -1))
-                      }
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Input
-                      type="date"
-                      value={toDateString(selectedDate)}
-                      max={toDateString(today)}
-                      onChange={(event) => {
-                        if (!event.target.value) return;
-                        setSelectedDate(fromDateString(event.target.value));
-                      }}
-                      className="h-9 w-40 border-0 bg-transparent px-0 shadow-none focus-visible:outline-none focus-visible:ring-0"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      disabled={isSelectedDateToday}
-                      onClick={() =>
-                        setSelectedDate((current) => shiftDate(current, 1))
-                      }
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <span className="text-sm text-muted-foreground">
-                  Start Time
-                </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => adjustStartTime(-5)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="time"
-                    step={1}
-                    value={startTime}
-                    onChange={(event) =>
-                      handleStartTimeChange(event.target.value)
-                    }
-                    className="mx-0 h-9 w-36 border-0 bg-transparent px-0 shadow-none focus-visible:outline-none focus-visible:ring-0"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => adjustStartTime(5)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-muted-foreground">End Time</span>
-                {isRunningSession ? (
-                  <span className="text-sm italic text-muted-foreground">
-                    Still running
-                  </span>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => adjustEndTime(-5)}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Input
-                      type="time"
-                      step={1}
-                      value={endTime}
-                      onChange={(event) =>
-                        handleEndTimeChange(event.target.value)
-                      }
-                      className="mx-0 h-9 w-36 border-0 bg-transparent px-0 shadow-none focus-visible:outline-none focus-visible:ring-0"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => adjustEndTime(5)}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <div className="flex items-center justify-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="flex items-center gap-1 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-secondary-foreground shadow-md transition-colors hover:bg-secondary/90 hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full max-w-[12rem] rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+          <FormDialogActions
+            onConfirm={handleSave}
+            confirmLabel={saving ? "Saving..." : "Save"}
+            confirmDisabled={saving}
+            secondaryAction={{
+              label: "Delete",
+              onClick: handleDelete,
+              destructive: true,
+            }}
+          />
+        </FormStack>
+      )}
+    </FormDialog>
   );
 }
