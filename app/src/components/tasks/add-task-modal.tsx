@@ -1,13 +1,10 @@
+/**
+ * SRP: Opens the memo creation flow from a floating trigger button.
+ */
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import { Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 
 interface AddTaskModalProps {
   /** Called with the task title and optional options; return true on success to close the modal. */
@@ -31,12 +28,14 @@ export default function AddTaskModal({
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState<string | null>(null);
+  const [isPinned, setIsPinned] = useState(false);
   const [adding, setAdding] = useState(false);
 
   const handleOpenChange = (next: boolean) => {
     if (!next) {
       setTitle("");
       setDueDate(null);
+      setIsPinned(false);
     }
     setOpen(next);
   };
@@ -46,10 +45,12 @@ export default function AddTaskModal({
     setAdding(true);
     const success = await onAdd(title, {
       due_date: dueDate || null,
+      is_pinned: isPinned,
     });
     if (success) {
       setTitle("");
       setDueDate(null);
+      setIsPinned(false);
       setOpen(false);
     }
     setAdding(false);
@@ -57,52 +58,20 @@ export default function AddTaskModal({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent size="sm" className="w-80 p-4">
-          <DialogHeader>
-            <DialogTitle>New memo</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <input
-              autoFocus
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  void handleAdd();
-                }
-                if (e.key === "Escape") handleOpenChange(false);
-              }}
-              placeholder="Task title…"
-              className={cn(
-                "w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              )}
-            />
-            <input
-              type="date"
-              value={dueDate ?? ""}
-              onChange={(e) => setDueDate(e.target.value || null)}
-              className={cn(
-                "w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              )}
-            />
-          </div>
-          <div className="flex justify-center pt-2">
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={adding || !title.trim()}
-              className={cn(
-                "w-full max-w-[12rem] rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-              )}
-            >
-              Add
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <MemoEditDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        dialogTitle="New memo"
+        title={title}
+        onTitleChange={setTitle}
+        dueDate={dueDate}
+        onDueDateChange={setDueDate}
+        isPinned={isPinned}
+        onPinnedChange={setIsPinned}
+        onConfirm={handleAdd}
+        confirmLabel="Add"
+        confirmDisabled={adding || !title.trim()}
+      />
 
       <button
         onClick={() => setOpen((v) => !v)}

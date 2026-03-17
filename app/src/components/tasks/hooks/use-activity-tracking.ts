@@ -43,13 +43,11 @@ export function useActivityTracking(
   const calculateActivityTime = useCallback(
     (activityId: string): number => {
       const periods = activityPeriods.filter(
-        (p) => p.activity_id === activityId
+        (p) => p.activity_id === activityId && !!p.end_time
       );
       return periods.reduce((total, period) => {
         const start = new Date(period.start_time).getTime();
-        const end = period.end_time
-          ? new Date(period.end_time).getTime()
-          : Date.now();
+        const end = new Date(period.end_time!).getTime();
         return total + (end - start);
       }, 0);
     },

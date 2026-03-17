@@ -1,3 +1,6 @@
+/**
+ * SRP: Tracks group activity toggles and computes completed elapsed time totals.
+ */
 import { useCallback, useEffect, useState } from "react";
 import { db, todayStr } from "@/lib/db";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
@@ -16,8 +19,6 @@ export function useGroupActivityTracking() {
       end_time: string | null;
     }>
   >([]);
-  const [, setTick] = useState(0);
-
   const loadAllPeriods = useCallback(async () => {
     try {
       const periods = await db.activityPeriods
@@ -70,12 +71,6 @@ export function useGroupActivityTracking() {
     loadCurrentActivity();
   }, [dateString, loadActivityPeriods, loadAllPeriods]);
 
-  useEffect(() => {
-    if (!currentActivityId) return;
-    const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, [currentActivityId]);
-
   const toggleActivity = useCallback(
     async (activityId: string) => {
       if (currentActivityId === activityId) {
@@ -93,32 +88,15 @@ export function useGroupActivityTracking() {
   const getElapsedMs = useCallback(
     (activityId: string): number => {
       const periods = allPeriods.filter(
-        (period) => period.activity_id === activityId
+        (period) => period.activity_id === activityId && !!period.end_time
       );
-
-      const activeOpenPeriodId =
-        currentActivityId === activityId
-          ? periods
-              .filter((period) => !period.end_time)
-              .sort(
-                (left, right) =>
-                  new Date(right.start_time).getTime() -
-                  new Date(left.start_time).getTime()
-              )[0]?.id
-          : undefined;
-
       return periods.reduce((total, period) => {
         const start = new Date(period.start_time).getTime();
-        const end = period.end_time
-          ? new Date(period.end_time).getTime()
-          : period.id === activeOpenPeriodId
-            ? Date.now()
-            : start;
-
+        const end = new Date(period.end_time!).getTime();
         return total + (end - start);
       }, 0);
     },
-    [allPeriods, currentActivityId]
+    [allPeriods]
   );
 
   return {

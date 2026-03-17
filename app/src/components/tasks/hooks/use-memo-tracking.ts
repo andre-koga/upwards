@@ -1,3 +1,6 @@
+/**
+ * SRP: Manages daily memo periods (open/close, time calculation) for a given date.
+ */
 import { useState, useCallback } from "react";
 import { db, now, newId } from "@/lib/db";
 import type { MemoPeriod, DailyEntry } from "@/lib/db/types";
@@ -39,12 +42,12 @@ export function useMemoTracking(
 
   const calculateMemoTime = useCallback(
     (memoId: string): number => {
-      const periods = memoPeriods.filter((p) => p.one_time_task_id === memoId);
+      const periods = memoPeriods.filter(
+        (p) => p.one_time_task_id === memoId && !!p.end_time
+      );
       return periods.reduce((total, period) => {
         const start = new Date(period.start_time).getTime();
-        const end = period.end_time
-          ? new Date(period.end_time).getTime()
-          : Date.now();
+        const end = new Date(period.end_time!).getTime();
         return total + (end - start);
       }, 0);
     },

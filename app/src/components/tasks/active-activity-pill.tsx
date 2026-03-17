@@ -37,7 +37,7 @@ interface ActiveActivityPillProps {
   currentActivityId: string | null;
   activities: Activity[];
   groups: ActivityGroup[];
-  calculateActivityTime: (activityId: string) => number;
+  elapsedMs: number;
   onStop: () => void;
   /** When set, clicking the pill (not Stop) opens the session edit dialog. */
   onEdit?: () => void;
@@ -47,32 +47,16 @@ function ActiveActivityPill({
   currentActivityId,
   activities,
   groups,
-  calculateActivityTime,
+  elapsedMs,
   onStop,
   onEdit,
 }: ActiveActivityPillProps) {
-  const [tick, setTick] = useState(0);
-  const [elapsedMs, setElapsedMs] = useState(0);
   const [resolvedActivity, setResolvedActivity] = useState<Activity | null>(
     null
   );
   const [resolvedGroup, setResolvedGroup] = useState<ActivityGroup | null>(
     null
   );
-
-  // Drive per-second re-renders
-  useEffect(() => {
-    if (!currentActivityId) return;
-    const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, [currentActivityId]);
-
-  // Recalculate elapsed time on every tick
-  useEffect(() => {
-    if (!currentActivityId) return;
-    /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing elapsed time with timer tick */
-    setElapsedMs(calculateActivityTime(currentActivityId));
-  }, [currentActivityId, calculateActivityTime, tick]);
 
   useEffect(() => {
     if (!currentActivityId) {

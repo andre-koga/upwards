@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { db, now, newId, todayStr } from "@/lib/db";
 import type { OneTimeTask } from "@/lib/db/types";
+import { normalizeMemoTitle } from "@/components/tasks/memo-title";
 
 function sortMemos(tasks: OneTimeTask[]): OneTimeTask[] {
   return [...tasks].sort((a, b) => {
@@ -55,13 +56,14 @@ export function useOneTimeTasks(dateString: string) {
       title: string,
       options?: { due_date?: string | null; is_pinned?: boolean }
     ): Promise<boolean> => {
-      if (!title.trim()) return false;
+      const normalizedTitle = normalizeMemoTitle(title);
+      if (!normalizedTitle) return false;
       try {
         const n = now();
         const task: OneTimeTask = {
           id: newId(),
           date: null,
-          title: title.trim(),
+          title: normalizedTitle,
           is_completed: false,
           order_index: null,
           is_pinned: options?.is_pinned ?? false,
@@ -111,7 +113,9 @@ export function useOneTimeTasks(dateString: string) {
       taskId: string,
       patch: Partial<Pick<OneTimeTask, "title" | "is_pinned" | "due_date">>
     ): Promise<boolean> => {
-      if (patch.title !== undefined && !patch.title.trim()) return false;
+      if (patch.title !== undefined && !normalizeMemoTitle(patch.title)) {
+        return false;
+      }
       try {
         const n = now();
         const updates: Partial<OneTimeTask> = {
@@ -119,7 +123,7 @@ export function useOneTimeTasks(dateString: string) {
           updated_at: n,
         };
         if (patch.title !== undefined) {
-          updates.title = patch.title.trim();
+          updates.title = normalizeMemoTitle(patch.title);
         }
         setOneTimeTasks((prev) =>
           sortMemos(

@@ -62,6 +62,8 @@ export default function DailyTasksList({
     handleStartMemo,
     handleStopMemo,
     runningSession,
+    currentActivityElapsedMs,
+    currentMemoElapsedMs,
     loadActivityPeriods,
     calculateActivityTime,
     calculateActivityTotalTime,
@@ -163,11 +165,7 @@ export default function DailyTasksList({
                 timelineSessions.reduce(
                   (total, session) => total + session.intervalMs,
                   0
-                ) +
-                  (currentActivityId
-                    ? calculateActivityTime(currentActivityId)
-                    : 0) +
-                  (currentMemoId ? calculateMemoTime(currentMemoId) : 0)
+                )
               )}
             </span>
           </div>
@@ -175,7 +173,7 @@ export default function DailyTasksList({
             currentActivityId={currentActivityId}
             activities={activities}
             groups={groups}
-            calculateActivityTime={calculateActivityTime}
+            elapsedMs={currentActivityElapsedMs}
             onStop={handleStopActivity}
             onEdit={
               runningSession
@@ -190,7 +188,7 @@ export default function DailyTasksList({
           <ActiveMemoPill
             currentMemoId={currentMemoId}
             oneTimeTasks={oneTimeTasks}
-            calculateMemoTime={calculateMemoTime}
+            elapsedMs={currentMemoElapsedMs}
             onStop={handleStopMemo}
           />
           {timelineSessions.map((session) => {

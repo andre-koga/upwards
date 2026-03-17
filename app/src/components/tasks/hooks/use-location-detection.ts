@@ -1,4 +1,7 @@
-import { useCallback, useRef, useState } from "react";
+/**
+ * SRP: Detects and reverse-geocodes the current location for editable journal days.
+ */
+import { useCallback, useEffect, useRef, useState } from "react";
 import { logError } from "@/lib/error-utils";
 import type { LocationData } from "@/lib/db/types";
 
@@ -17,6 +20,12 @@ export function useLocationDetection({
 }: UseLocationDetectionParams) {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const hasTriedGeoRef = useRef(false);
+
+  useEffect(() => {
+    if (!isToday) {
+      setIsDetectingLocation(false);
+    }
+  }, [isToday]);
 
   const detectLocation = useCallback(
     (force = false) => {

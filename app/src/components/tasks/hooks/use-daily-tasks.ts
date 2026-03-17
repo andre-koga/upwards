@@ -222,37 +222,20 @@ export function useDailyTasks({
   }, [activityPeriods]);
 
   useEffect(() => {
-    if (!resolvedCurrentActivityId) return;
+    if (!resolvedCurrentActivityId && !currentMemoId) return;
     const interval = setInterval(() => {
       setNowMs(Date.now());
     }, 1000);
     return () => clearInterval(interval);
-  }, [resolvedCurrentActivityId]);
+  }, [resolvedCurrentActivityId, currentMemoId]);
 
   const activityTotalMsById = useMemo(() => {
     const totals = new Map<string, number>();
-    const activeOpenPeriodId =
-      resolvedCurrentActivityId === null
-        ? null
-        : (allActivityPeriods
-            .filter(
-              (period) =>
-                period.activity_id === resolvedCurrentActivityId &&
-                !period.end_time
-            )
-            .sort(
-              (left, right) =>
-                new Date(right.start_time).getTime() -
-                new Date(left.start_time).getTime()
-            )[0]?.id ?? null);
 
     allActivityPeriods.forEach((period) => {
+      if (!period.end_time) return;
       const start = new Date(period.start_time).getTime();
-      const end = period.end_time
-        ? new Date(period.end_time).getTime()
-        : period.id === activeOpenPeriodId
-          ? nowMs
-          : start;
+      const end = new Date(period.end_time).getTime();
       const intervalMs = Math.max(0, end - start);
       totals.set(
         period.activity_id,
@@ -261,7 +244,7 @@ export function useDailyTasks({
     });
 
     return totals;
-  }, [allActivityPeriods, resolvedCurrentActivityId, nowMs]);
+  }, [allActivityPeriods]);
 
   const calculateActivityTotalTime = useCallback(
     (activityId: string): number => activityTotalMsById.get(activityId) ?? 0,
@@ -340,6 +323,46 @@ export function useDailyTasks({
     return { sessionId: openPeriod.id, groupId };
   }, [resolvedCurrentActivityId, activityPeriods, activities]);
 
+  const currentActivityElapsedMs = useMemo(() => {
+    if (!resolvedCurrentActivityId) return 0;
+
+    const activePeriod = activityPeriods
+      .filter(
+        (period) =>
+          period.activity_id === resolvedCurrentActivityId && !period.end_time
+      )
+      .sort(
+        (left, right) =>
+          new Date(right.start_time).getTime() -
+          new Date(left.start_time).getTime()
+      )[0];
+
+    if (!activePeriod) return 0;
+
+    const startMs = new Date(activePeriod.start_time).getTime();
+    return Math.max(0, nowMs - startMs);
+  }, [resolvedCurrentActivityId, activityPeriods, nowMs]);
+
+  const currentMemoElapsedMs = useMemo(() => {
+    if (!currentMemoId) return 0;
+
+    const activePeriod = memoPeriods
+      .filter(
+        (period) =>
+          period.one_time_task_id === currentMemoId && !period.end_time
+      )
+      .sort(
+        (left, right) =>
+          new Date(right.start_time).getTime() -
+          new Date(left.start_time).getTime()
+      )[0];
+
+    if (!activePeriod) return 0;
+
+    const startMs = new Date(activePeriod.start_time).getTime();
+    return Math.max(0, nowMs - startMs);
+  }, [currentMemoId, memoPeriods, nowMs]);
+
   const handleTimelineClick = useCallback(
     (groupId: string, sessionId: string) => {
       if (groupId) {
@@ -375,6 +398,8 @@ export function useDailyTasks({
     handleStopMemo,
     handleTimelineClick,
     runningSession,
+    currentActivityElapsedMs,
+    currentMemoElapsedMs,
     loadActivityPeriods,
     calculateActivityTime,
     calculateActivityTotalTime,

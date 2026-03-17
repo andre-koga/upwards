@@ -170,8 +170,15 @@ export default function TasksPageContent() {
   }, [loadJournalEntry, resetGeoAttempt]);
 
   useEffect(() => {
+    if (!journal.canEditJournal) return;
     detectLocation();
-  }, [detectLocation]);
+  }, [detectLocation, journal.canEditJournal]);
+
+  useEffect(() => {
+    if (!journal.canEditJournal) {
+      setShowLocationInput(false);
+    }
+  }, [journal.canEditJournal]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -369,19 +376,22 @@ export default function TasksPageContent() {
                     <div className="flex items-center rounded-full bg-background pr-1">
                       <button
                         onClick={() => {
+                          if (!journal.canEditJournal) return;
                           setLocationInputVal(
                             journal.draftLocation?.displayName ?? ""
                           );
                           setShowLocationInput(true);
                         }}
-                        className="flex items-center gap-1 rounded-full bg-background py-1 pl-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                        disabled={!journal.canEditJournal}
+                        className="flex items-center gap-1 rounded-full bg-background py-1 pl-3 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:cursor-default disabled:opacity-70"
                         title="Set location"
                       >
-                        {isDetectingLocation || journal.draftLocation ? (
+                        {(journal.canEditJournal && isDetectingLocation) ||
+                        journal.draftLocation ? (
                           <>
                             <MapPin className="h-3 w-3 shrink-0" />
                             <span className="max-w-[80px] truncate">
-                              {isDetectingLocation
+                              {journal.canEditJournal && isDetectingLocation
                                 ? "Detecting"
                                 : journal.draftLocation?.displayName}
                             </span>

@@ -1,3 +1,6 @@
+/**
+ * SRP: Displays the currently running memo with elapsed time and stop action.
+ */
 import { useEffect, useState, memo, useMemo } from "react";
 import { db } from "@/lib/db";
 import type { OneTimeTask } from "@/lib/db/types";
@@ -31,31 +34,17 @@ function hexToRgba(hex: string, alpha: number): string {
 interface ActiveMemoPillProps {
   currentMemoId: string | null;
   oneTimeTasks: OneTimeTask[];
-  calculateMemoTime: (memoId: string) => number;
+  elapsedMs: number;
   onStop: () => void;
 }
 
 function ActiveMemoPill({
   currentMemoId,
   oneTimeTasks,
-  calculateMemoTime,
+  elapsedMs,
   onStop,
 }: ActiveMemoPillProps) {
-  const [tick, setTick] = useState(0);
-  const [elapsedMs, setElapsedMs] = useState(0);
   const [resolvedMemo, setResolvedMemo] = useState<OneTimeTask | null>(null);
-
-  useEffect(() => {
-    if (!currentMemoId) return;
-    const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, [currentMemoId]);
-
-  useEffect(() => {
-    if (!currentMemoId) return;
-    /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing elapsed time with timer tick */
-    setElapsedMs(calculateMemoTime(currentMemoId));
-  }, [currentMemoId, calculateMemoTime, tick]);
 
   useEffect(() => {
     if (!currentMemoId) {

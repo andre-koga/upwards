@@ -9,6 +9,28 @@ import { formatDateShort, fromDateString } from "@/lib/date-utils";
 const MEMO_PILL_COLOR = "var(--memo-pill-color)";
 const MEMO_PILL_TEXT = "var(--memo-pill-text)";
 
+function getDueDateDisplayLabel(dueDate: string): string {
+  const due = fromDateString(dueDate);
+  const dueMs = due.getTime();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayMs = yesterday.getTime();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowMs = tomorrow.getTime();
+
+  if (dueMs < yesterdayMs) return "Past";
+  if (dueMs === yesterdayMs) return "Yesterday";
+  if (dueMs === todayMs) return "Today";
+  if (dueMs === tomorrowMs) return "Tomorrow";
+  return formatDateShort(due);
+}
+
 interface OneTimeTaskItemProps {
   task: OneTimeTask;
   isToday: boolean;
@@ -74,7 +96,7 @@ function OneTimeTaskItem({
   };
 
   const dueDateDisplay = task.due_date
-    ? formatDateShort(fromDateString(task.due_date))
+    ? getDueDateDisplayLabel(task.due_date)
     : null;
 
   const showTimer = isToday && (onStartMemo || onStopMemo);

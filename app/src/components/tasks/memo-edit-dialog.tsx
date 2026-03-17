@@ -1,3 +1,6 @@
+/**
+ * SRP: Renders the shared memo create/edit dialog UI and actions.
+ */
 import {
   Dialog,
   DialogContent,
@@ -6,10 +9,12 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Pin } from "lucide-react";
+import { MEMO_TITLE_LIMIT } from "@/components/tasks/memo-title";
 
 interface MemoEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  dialogTitle?: string;
   title: string;
   onTitleChange: (value: string) => void;
   dueDate: string | null;
@@ -17,7 +22,7 @@ interface MemoEditDialogProps {
   isPinned: boolean;
   onPinnedChange: (value: boolean) => void;
   onConfirm: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   confirmLabel?: string;
   confirmDisabled?: boolean;
 }
@@ -25,6 +30,7 @@ interface MemoEditDialogProps {
 export function MemoEditDialog({
   open,
   onOpenChange,
+  dialogTitle = "Edit memo",
   title,
   onTitleChange,
   dueDate,
@@ -50,20 +56,24 @@ export function MemoEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm" className="w-80 p-4">
         <DialogHeader>
-          <DialogTitle>Edit memo</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-2">
           <textarea
             autoFocus
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Task title…"
-            rows={3}
+            maxLength={MEMO_TITLE_LIMIT}
+            rows={5}
             className={cn(
               "w-full resize-none rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             )}
           />
+          <p className="text-right text-xs text-muted-foreground">
+            {title.length}/{MEMO_TITLE_LIMIT}
+          </p>
           <div className="flex items-center gap-2">
             <input
               type="date"
@@ -89,13 +99,15 @@ export function MemoEditDialog({
           </div>
         </div>
         <div className="flex items-center justify-center gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onDelete}
-            className="flex items-center gap-1 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-secondary-foreground shadow-md transition-colors hover:bg-secondary/90 hover:text-destructive"
-          >
-            Delete
-          </button>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="flex items-center gap-1 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-secondary-foreground shadow-md transition-colors hover:bg-secondary/90 hover:text-destructive"
+            >
+              Delete
+            </button>
+          )}
           <button
             type="button"
             onClick={onConfirm}
