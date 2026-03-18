@@ -46,7 +46,9 @@ function isCompletedOnDate(
   const pausedTaskIds = Array.isArray(entry.paused_task_ids)
     ? entry.paused_task_ids
     : [];
-  if (pausedTaskIds.includes(activity.id)) return false;
+  if (activity.routine !== "never" && pausedTaskIds.includes(activity.id)) {
+    return false;
+  }
   const target = activity.completion_target ?? 1;
   const taskCounts = (entry.task_counts as Record<string, number>) || {};
   return (taskCounts[activity.id] || 0) >= target;
@@ -59,12 +61,20 @@ function getDailyTaskStreakStatus(
   entry: DailyEntry | undefined
 ): DailyTaskStreakStatus {
   if (!entry) return "reset";
+  const pausedTaskIds = Array.isArray(entry.paused_task_ids)
+    ? entry.paused_task_ids
+    : [];
+  if (activity.routine !== "never" && pausedTaskIds.includes(activity.id)) {
+    return "skip";
+  }
   const isCompleted = isCompletedOnDate(activity, entry);
 
   // Break day behavior:
-  // - incomplete tasks are neutral (skip)
-  // - completed tasks still affect streaks normally
-  if (entry.is_break_day && !isCompleted) return "skip";
+  // - Regular tasks: incomplete is neutral, complete still counts.
+  // - Never tasks: non-completion can still count when explicitly not paused.
+  if (entry.is_break_day && activity.routine !== "never" && !isCompleted) {
+    return "skip";
+  }
 
   return shouldIncrementStreak(activity, isCompleted)
     ? "incrementable"

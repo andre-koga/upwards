@@ -50,10 +50,12 @@ function ActivityTaskItem({
   }, [isCurrentActivity]);
 
   const target = activity.completion_target ?? 1;
-  const isComplete = !isPaused && count >= target;
   const isNeverTask = activity.routine === "never";
+  const isComplete = isNeverTask
+    ? count >= target
+    : !isPaused && count >= target;
   const groupColor = group?.color || DEFAULT_GROUP_COLOR;
-  const canUpdateCount = isToday && !isPaused;
+  const canUpdateCount = isToday && (!isPaused || isNeverTask);
   const streakColorClass =
     streak === 0
       ? "text-muted-foreground"
@@ -73,12 +75,10 @@ function ActivityTaskItem({
           className={`flex h-7 w-[2.75rem] items-center justify-center rounded-md border transition-colors ${
             canUpdateCount ? "cursor-pointer" : "cursor-default opacity-60"
           } ${
-            isBreakDay || isPaused
-              ? isComplete
-                ? "border-amber-500 bg-amber-500 text-amber-950"
-                : "border-amber-500/60 bg-amber-500/10 text-amber-500"
-              : "border-destructive"
-          } ${!(isBreakDay || isPaused) ? (isComplete ? "bg-destructive" : "bg-transparent") : ""}`}
+            isComplete
+              ? "border-destructive bg-destructive text-destructive-foreground"
+              : "border-destructive bg-transparent"
+          }`}
           role={canUpdateCount ? "button" : undefined}
           tabIndex={canUpdateCount ? 0 : undefined}
           onKeyDown={
@@ -92,15 +92,7 @@ function ActivityTaskItem({
               : undefined
           }
         >
-          {isComplete && (
-            <X
-              className={`h-4 w-4 ${
-                isBreakDay || isPaused
-                  ? "text-amber-950"
-                  : "text-destructive-foreground"
-              }`}
-            />
-          )}
+          {isComplete && <X className="h-4 w-4 text-destructive-foreground" />}
         </div>
       ) : target <= 1 ? (
         <TaskCheckbox
@@ -167,15 +159,23 @@ function ActivityTaskItem({
 
       <button
         type="button"
-        onClick={isToday ? () => onTogglePaused(activity.id) : undefined}
-        disabled={!isToday}
+        onClick={
+          !isNeverTask && isToday
+            ? () => onTogglePaused(activity.id)
+            : undefined
+        }
+        disabled={isNeverTask || !isToday}
         className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition-colors ${
           isPaused
             ? "border-amber-500/60 text-amber-500"
             : "border-muted-foreground/40 text-muted-foreground hover:text-foreground"
-        } disabled:cursor-default disabled:opacity-60`}
+        } disabled:cursor-default disabled:opacity-40`}
         title={
-          isPaused ? "Resume task for this day" : "Pause task for this day"
+          isNeverTask
+            ? "Pause is unavailable for never tasks"
+            : isPaused
+              ? "Resume task for this day"
+              : "Pause task for this day"
         }
       >
         {isPaused ? (
