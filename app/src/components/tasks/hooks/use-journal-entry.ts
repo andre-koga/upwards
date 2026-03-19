@@ -264,3 +264,5 @@ export function useJournalEntry(currentDate: Date) {
     saveLocation,
   };
 }
+
+export type UseJournalEntryReturn = ReturnType<typeof useJournalEntry>;

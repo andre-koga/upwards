@@ -1,81 +1,46 @@
 /**
  * SRP: Renders the tasks page shell, journal sections, and date-scoped task content.
  */
-import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  Heart,
-  MapPin,
-  MapPinOff,
-  Flame,
-  Hash,
-  Pencil,
-  RotateCw,
-} from "lucide-react";
-import { db, toDateStr } from "@/lib/db";
-import type { Activity, ActivityGroup } from "@/lib/db/types";
-import {
-  isActiveActivity,
-  isActiveGroup,
-  sortActivitiesByOrder,
-} from "@/lib/activity-utils";
+import { useState, useEffect, useCallback } from "react";
+import { Flame, Hash, Pencil } from "lucide-react";
+import { toDateStr } from "@/lib/db";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import { useJournalEntry } from "@/components/tasks/hooks/use-journal-entry";
 import { useJournalMeta } from "@/components/tasks/hooks/use-journal-meta";
 import { useLocationDetection } from "@/components/tasks/hooks/use-location-detection";
+import { useTasksPageData } from "@/components/tasks/hooks/use-tasks-page-data";
 import JournalVideoSection, {
   type JournalThumbnailSource,
 } from "@/components/tasks/journal-video-section";
 import JournalTextSection from "@/components/tasks/journal-text-section";
 import JournalEditDialog from "@/components/tasks/journal-edit-dialog";
 import DateNavigator from "@/components/tasks/date-navigator";
+import TasksJournalMetaBar from "@/components/tasks/tasks-journal-meta-bar";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import type { LocationData } from "@/lib/db/types";
-import { getYoutubeEmbedUrl } from "@/lib/youtube-utils";
-import { logError } from "@/lib/error-utils";
+import {
+  getYoutubeEmbedUrl,
+  getYoutubeVideoIdFromEmbed,
+} from "@/lib/youtube-utils";
+import { pickRandomHabitQuote } from "@/lib/habit-quotes";
 import { useAuth } from "@/lib/use-auth";
-import { syncEngine } from "@/lib/sync";
 
-const HABIT_QUOTES = [
-  "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
-  "The secret of getting ahead is getting started.",
-  "Small daily improvements over time lead to stunning results.",
-  "Motivation is what gets you started. Habit is what keeps you going.",
-  "Success is the sum of small efforts repeated day in and day out.",
-  "Routine, in an intelligent man, is a sign of ambition.",
-  "The chains of habit are too light to be felt until they are too heavy to be broken.",
-  "First, make your habits. Then, your habits make you.",
-  "Every day is a chance to begin again.",
-  "Habits are the compound interest of self-improvement.",
-  "You are what you do, not what you say you'll do.",
-  "The best time to plant a tree was 20 years ago. The second best time is now.",
-  "Don't let perfect be the enemy of good.",
-  "Discipline is choosing between what you want now and what you want most.",
-  "What you do every day matters more than what you do once in a while.",
-  "Good habits are the key to all success.",
-  "Consistency is the key to transformation.",
-  "The only way to do great work is to love what you do.",
-  "Success is not final, failure is not fatal: it is the courage to continue that counts.",
-  "Your net worth to the world is usually determined by what remains after your bad habits are subtracted from your good ones.",
-];
-
-function pickRandomQuote() {
-  return HABIT_QUOTES[Math.floor(Math.random() * HABIT_QUOTES.length)];
+function journalStreakColorClass(streak: number): string {
+  if (streak === 0) return "text-muted-foreground";
+  if (streak <= 5) return "text-yellow-500";
+  if (streak <= 25) return "text-orange-500";
+  return "text-red-500";
 }
 
 export default function TasksPageContent() {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [groups, setGroups] = useState<ActivityGroup[]>([]);
-  const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [locationInputVal, setLocationInputVal] = useState("");
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
   const [journalEditOpen, setJournalEditOpen] = useState(false);
   const [journalEditSession, setJournalEditSession] = useState(0);
-  const [quote] = useState(pickRandomQuote);
+  const [quote] = useState(pickRandomHabitQuote);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const prevSyncingRef = useRef(false);
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
 
@@ -83,6 +48,11 @@ export default function TasksPageContent() {
   const dateString = toDateStr(currentDate);
   const { loadJournalEntry } = journal;
   const { entryDates, bookmarkedDates, loadJournalMeta } = useJournalMeta();
+
+  const { activities, groups, loading, refreshTrigger } = useTasksPageData({
+    loadJournalEntry,
+    loadJournalMeta,
+  });
 
   const handleLocationDetected = useCallback(
     (location: LocationData) => {
@@ -101,62 +71,10 @@ export default function TasksPageContent() {
       onLocationDetected: handleLocationDetected,
     });
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [loadedActivities, g] = await Promise.all([
-        db.activities.filter((a) => isActiveActivity(a)).toArray(),
-        db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
-      ]);
-
-      setActivities(sortActivitiesByOrder(loadedActivities));
-      setGroups(g);
-    } catch (error) {
-      logError("Error loading data", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /** Updates activities/groups from DB without showing loading (e.g. after sync). */
-  const loadDataInBackground = useCallback(async () => {
-    try {
-      const [loadedActivities, g] = await Promise.all([
-        db.activities.filter((a) => isActiveActivity(a)).toArray(),
-        db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
-      ]);
-      setActivities(sortActivitiesByOrder(loadedActivities));
-      setGroups(g);
-    } catch (error) {
-      logError("Error loading data", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    const unsubscribe = syncEngine.subscribe((state) => {
-      const wasSyncing = prevSyncingRef.current;
-      prevSyncingRef.current = state.isSyncing;
-      if (wasSyncing && !state.isSyncing) {
-        void (async () => {
-          await loadDataInBackground();
-          await loadJournalEntry({ background: true });
-          await loadJournalMeta();
-          setRefreshTrigger((t) => t + 1);
-        })();
-      }
-    });
-    return unsubscribe;
-  }, [loadDataInBackground, loadJournalEntry, loadJournalMeta]);
-
   useEffect(() => {
     loadJournalMeta();
   }, [loadJournalMeta]);
 
-  // Keep calendar dots fresh when bookmark on current day changes
   useEffect(() => {
     void loadJournalMeta();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,22 +120,26 @@ export default function TasksPageContent() {
   }
 
   const embedUrl = getYoutubeEmbedUrl(journal.draftYoutubeUrl);
-  const youtubeIdFromEmbed =
-    embedUrl?.match(/embed\/([A-Za-z0-9_-]{11})/)?.[1] ?? null;
+  const youtubeIdFromEmbed = embedUrl
+    ? getYoutubeVideoIdFromEmbed(embedUrl)
+    : null;
   const isJournalDraftComplete = Boolean(
     journal.draftEmoji.trim() &&
     journal.draftTitle.trim() &&
     journal.draftText.trim() &&
     journal.draftYoutubeUrl.trim()
   );
-  const journalStreakColorClass =
-    (journal.journalCompletionStreak ?? 0) === 0
-      ? "text-muted-foreground"
-      : (journal.journalCompletionStreak ?? 0) <= 5
-        ? "text-yellow-500"
-        : (journal.journalCompletionStreak ?? 0) <= 25
-          ? "text-orange-500"
-          : "text-red-500";
+  const streak = journal.journalCompletionStreak ?? 0;
+  const journalStreakClass = journalStreakColorClass(streak);
+
+  const journalThumbnail: JournalThumbnailSource | null =
+    journal.draftYoutubeUrl.trim().length > 0
+      ? {
+          videoUrl: journal.draftYoutubeUrl,
+          youtubeVideoId: youtubeIdFromEmbed,
+          storedThumbnail: journal.videoThumbnail,
+        }
+      : null;
 
   return (
     <div className="pb-32">
@@ -228,14 +150,7 @@ export default function TasksPageContent() {
         entryDate={dateString}
         canUpload={isSupabaseConfigured && isAuthed}
         canPlay={isOnline}
-        thumbnail={((): JournalThumbnailSource | null => {
-          if (!journal.draftYoutubeUrl.trim()) return null;
-          return {
-            videoUrl: journal.draftYoutubeUrl,
-            youtubeVideoId: youtubeIdFromEmbed,
-            storedThumbnail: journal.videoThumbnail,
-          };
-        })()}
+        thumbnail={journalThumbnail}
         onChange={(url) => {
           journal.setDraftYoutubeUrl(url);
           journal.draftRef.current.youtubeUrl = url;
@@ -247,7 +162,6 @@ export default function TasksPageContent() {
         onBlur={journal.saveDraft}
       />
 
-      {/* Emoji — centered, overlaps the bottom of the video */}
       <div className="pointer-events-none relative z-10 -mt-10 flex justify-center">
         <div className="pointer-events-auto relative">
           {journal.draftEmoji ? (
@@ -259,8 +173,6 @@ export default function TasksPageContent() {
               🙂
             </span>
           )}
-
-          {/* Bookmark badge — top-right of emoji */}
         </div>
       </div>
 
@@ -296,7 +208,7 @@ export default function TasksPageContent() {
             typeof journal.journalEntryNumber === "number" ? (
               <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
                 <span
-                  className={`inline-flex items-center ${journalStreakColorClass}`}
+                  className={`inline-flex items-center ${journalStreakClass}`}
                 >
                   <Flame className="h-3.5 w-3.5" />
                   <span className="pt-0.5 font-medium">
@@ -336,138 +248,17 @@ export default function TasksPageContent() {
             </div>
           )}
 
-          {/* Info bar — sits on the section divider */}
-          <div className="py-3">
-            <div className="relative border-t border-border">
-              <div className="absolute inset-x-0 -top-3.5 grid grid-cols-3 items-center gap-1 px-0">
-                {/* Location — left */}
-                <div className="flex justify-start">
-                  {showLocationInput ? (
-                    <input
-                      autoFocus
-                      value={locationInputVal}
-                      onChange={(e) =>
-                        setLocationInputVal(
-                          e.target.value.replace(/\b\w/g, (c) =>
-                            c.toUpperCase()
-                          )
-                        )
-                      }
-                      onBlur={() => {
-                        const name = locationInputVal.trim();
-                        const locationData = name
-                          ? {
-                              displayName: name,
-                              city: name,
-                              state: null,
-                              country: null,
-                              countryCode: null,
-                              lat: null,
-                              lon: null,
-                            }
-                          : null;
-                        journal.setDraftLocation(locationData);
-                        journal.draftRef.current.location = locationData;
-                        journal.saveLocation(locationData);
-                        setShowLocationInput(false);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === "Escape")
-                          e.currentTarget.blur();
-                      }}
-                      placeholder="City, State"
-                      className="w-28 rounded-full border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  ) : (
-                    <div className="flex items-center rounded-full bg-background pr-1">
-                      <button
-                        onClick={() => {
-                          if (!journal.canEditJournal) return;
-                          setLocationInputVal(
-                            journal.draftLocation?.displayName ?? ""
-                          );
-                          setShowLocationInput(true);
-                        }}
-                        disabled={!journal.canEditJournal}
-                        className="flex items-center gap-1 rounded-full bg-background py-1 pl-3 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:cursor-default disabled:opacity-70"
-                        title="Set location"
-                      >
-                        {(journal.canEditJournal && isDetectingLocation) ||
-                        journal.draftLocation ? (
-                          <>
-                            <MapPin className="h-3 w-3 shrink-0" />
-                            <span className="max-w-[80px] truncate">
-                              {journal.canEditJournal && isDetectingLocation
-                                ? "Detecting"
-                                : journal.draftLocation?.displayName}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <MapPinOff className="h-3 w-3 shrink-0" />
-                            <span>None</span>
-                          </>
-                        )}
-                      </button>
-
-                      {journal.canEditJournal && (
-                        <button
-                          type="button"
-                          onClick={() => detectLocation(true)}
-                          disabled={isDetectingLocation}
-                          className="mb-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-background text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-                          title="Retry location detection"
-                        >
-                          <RotateCw
-                            className={`h-3 w-3 ${isDetectingLocation ? "animate-spin" : ""}`}
-                          />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Date — center */}
-                <div className="flex justify-center">
-                  <span className="bg-background px-2 font-crimson text-xl uppercase tracking-widest text-muted-foreground/70">
-                    {currentDate.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-
-                {/* Bookmark — right */}
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => {
-                      const next = !journal.draftBookmarked;
-                      journal.setDraftBookmarked(next);
-                      journal.draftRef.current.bookmarked = next;
-                      journal.saveBookmark(next);
-                    }}
-                    className={`flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-xs text-muted-foreground transition-colors ${
-                      journal.draftBookmarked ? "" : "hover:text-foreground"
-                    }`}
-                    title={
-                      journal.draftBookmarked
-                        ? "Remove bookmark"
-                        : "Bookmark this day"
-                    }
-                  >
-                    <Heart
-                      className={`h-3 w-3 ${
-                        journal.draftBookmarked ? "text-red-500" : ""
-                      }`}
-                      fill={journal.draftBookmarked ? "currentColor" : "none"}
-                    />
-                    {journal.draftBookmarked ? "Saved!" : "Save"}
-                  </button>
-                </div>
-              </div>
-              <div className="h-4" />
-            </div>
-          </div>
+          <TasksJournalMetaBar
+            currentDate={currentDate}
+            journal={journal}
+            draftRef={journal.draftRef}
+            showLocationInput={showLocationInput}
+            setShowLocationInput={setShowLocationInput}
+            locationInputVal={locationInputVal}
+            setLocationInputVal={setLocationInputVal}
+            detectLocation={detectLocation}
+            isDetectingLocation={isDetectingLocation}
+          />
 
           <DailyTasksList
             activities={activities}
@@ -482,11 +273,8 @@ export default function TasksPageContent() {
         </div>
       </div>
 
-      {/* Fixed bottom bar */}
-      {/* Settings button — independent fixed anchor */}
       <FloatingBackButton to="/settings" title="Settings" icon="settings" />
 
-      {/* Date pill — centered */}
       <div className="fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
         <DateNavigator
           currentDate={currentDate}
