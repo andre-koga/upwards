@@ -1,3 +1,7 @@
+/**
+ * SRP: Coordinates Supabase push/pull, auto-sync scheduling, and safe pull application
+ * (skipping remote rows that changed locally during an in-flight sync).
+ */
 import { db } from "@/lib/db";
 import {
   supabase,
@@ -24,6 +28,8 @@ const DEBOUNCE_SYNC_MS = 5_000;
 const DEFAULT_PERIODIC_SYNC_MS = 60_000;
 /** Buffer for incremental pull to avoid missing rows due to device clock skew. */
 const PULL_BUFFER_MS = 5 * 60 * 1000;
+/** Avoid infinite resync loops if something keeps marking rows dirty unexpectedly. */
+const MAX_CHAINED_SYNCS = 25;
 
 const SYNC_TABLES: SyncTable[] = [
   "activity_groups",
@@ -70,6 +76,16 @@ export class SyncEngine {
   private isAutoSyncEnabled = false;
   private hasMutationHooks = false;
   private suppressMutationSignals = 0;
+  /** True only while applying remote rows from pull (bulkPut). */
+  private applyRemoteFromPull = false;
+  /** True while writing synced_at after a successful push (not user data). */
+  private applyLocalSyncMetadata = false;
+  /** Row ids touched by the user (or app) while a sync was in progress; pull skips these. */
+  private dirtyIdsByTable = new Map<SyncTable, Set<string>>();
+  /** Another sync was requested while one was already running. */
+  private pendingResync = false;
+  /** Counts follow-up syncs scheduled from `sync()`'s finally (dirty / pending); resets when a run finishes with nothing left to do. */
+  private followUpSyncChain = 0;
 
   getState(): SyncState {
     return this.state;
@@ -92,6 +108,41 @@ export class SyncEngine {
     return operation().finally(() => {
       this.suppressMutationSignals -= 1;
     });
+  }
+
+  private withLocalSyncMetadataWrites<T>(
+    operation: () => Promise<T>
+  ): Promise<T> {
+    this.applyLocalSyncMetadata = true;
+    return this.withSuppressedMutationSignals(operation).finally(() => {
+      this.applyLocalSyncMetadata = false;
+    });
+  }
+
+  private markDirtyIfUserMutationDuringSync(
+    table: SyncTable,
+    rowId: string | undefined
+  ): void {
+    if (!rowId) return;
+    if (!this.state.isSyncing) return;
+    if (this.applyRemoteFromPull || this.applyLocalSyncMetadata) return;
+    let set = this.dirtyIdsByTable.get(table);
+    if (!set) {
+      set = new Set<string>();
+      this.dirtyIdsByTable.set(table, set);
+    }
+    set.add(rowId);
+  }
+
+  private hasDirtyIds(): boolean {
+    for (const set of this.dirtyIdsByTable.values()) {
+      if (set.size > 0) return true;
+    }
+    return false;
+  }
+
+  private clearDirtyIds(): void {
+    this.dirtyIdsByTable.clear();
   }
 
   private clearDebounceTimer(): void {
@@ -140,18 +191,38 @@ export class SyncEngine {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const localTable = db[dexieTable] as any;
 
-      localTable.hook("creating", () => {
+      localTable.hook("creating", (primKey: unknown, obj: { id?: string }) => {
+        const id =
+          primKey !== undefined && primKey !== null
+            ? String(primKey)
+            : obj?.id !== undefined
+              ? String(obj.id)
+              : undefined;
+        this.markDirtyIfUserMutationDuringSync(table, id);
         if (this.suppressMutationSignals > 0) return;
         this.scheduleDebouncedSync();
       });
 
-      localTable.hook("updating", () => {
-        if (this.suppressMutationSignals > 0) return;
-        this.scheduleDebouncedSync();
-        return undefined;
-      });
+      localTable.hook(
+        "updating",
+        (_modifications: unknown, primKey: unknown) => {
+          const id =
+            primKey !== undefined && primKey !== null
+              ? String(primKey)
+              : undefined;
+          this.markDirtyIfUserMutationDuringSync(table, id);
+          if (this.suppressMutationSignals > 0) return;
+          this.scheduleDebouncedSync();
+          return undefined;
+        }
+      );
 
-      localTable.hook("deleting", () => {
+      localTable.hook("deleting", (primKey: unknown) => {
+        const id =
+          primKey !== undefined && primKey !== null
+            ? String(primKey)
+            : undefined;
+        this.markDirtyIfUserMutationDuringSync(table, id);
         if (this.suppressMutationSignals > 0) return;
         this.scheduleDebouncedSync();
       });
@@ -178,6 +249,7 @@ export class SyncEngine {
    */
   async forcePushToCloud(): Promise<void> {
     if (!this.canSync() || !supabase) return;
+    this.clearDirtyIds();
     this.setState({ isSyncing: true, lastError: null });
     try {
       const { failedTables } = await this.pushInternal(true);
@@ -191,6 +263,9 @@ export class SyncEngine {
       this.setState({ lastError: msg });
     } finally {
       this.setState({ isSyncing: false });
+      if (this.hasDirtyIds() && this.canSync()) {
+        void this.sync();
+      }
     }
   }
 
@@ -252,7 +327,7 @@ export class SyncEngine {
 
       if (schemaSafeRows.length === 0) {
         const now = new Date().toISOString();
-        await this.withSuppressedMutationSignals(async () => {
+        await this.withLocalSyncMetadataWrites(async () => {
           await Promise.all(
             records.map((r) =>
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -278,7 +353,7 @@ export class SyncEngine {
         }
 
         const now = new Date().toISOString();
-        await this.withSuppressedMutationSignals(async () => {
+        await this.withLocalSyncMetadataWrites(async () => {
           await Promise.all(
             records.map((r) =>
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -342,10 +417,23 @@ export class SyncEngine {
 
         if (!data || data.length === 0) continue;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (db[dexieTable] as any).bulkPut(
-          data.map((r) => ({ ...r, synced_at: r.updated_at }))
-        );
+        const rowsToApply = data.filter((r) => {
+          const id = String((r as { id: string }).id);
+          const dirty = this.dirtyIdsByTable.get(table);
+          return !dirty?.has(id);
+        });
+
+        if (rowsToApply.length === 0) continue;
+
+        this.applyRemoteFromPull = true;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (db[dexieTable] as any).bulkPut(
+            rowsToApply.map((r) => ({ ...r, synced_at: r.updated_at }))
+          );
+        } finally {
+          this.applyRemoteFromPull = false;
+        }
       }
     });
 
@@ -356,7 +444,12 @@ export class SyncEngine {
 
   async sync(): Promise<void> {
     if (!this.canSync()) return;
-    if (this.state.isSyncing) return;
+    if (this.state.isSyncing) {
+      this.pendingResync = true;
+      return;
+    }
+
+    this.clearDirtyIds();
     this.setState({ isSyncing: true, lastError: null });
     try {
       const { failedTables } = await this.push();
@@ -371,6 +464,23 @@ export class SyncEngine {
       this.setState({ lastError: msg });
     } finally {
       this.setState({ isSyncing: false });
+
+      const needsAnother = this.pendingResync || this.hasDirtyIds();
+      this.pendingResync = false;
+
+      if (needsAnother && this.canSync()) {
+        this.followUpSyncChain += 1;
+        if (this.followUpSyncChain > MAX_CHAINED_SYNCS) {
+          console.warn(
+            "[sync] stopped follow-up sync chain: max depth reached"
+          );
+          this.followUpSyncChain = 0;
+        } else {
+          void this.sync();
+        }
+      } else {
+        this.followUpSyncChain = 0;
+      }
     }
   }
 
