@@ -1,8 +1,14 @@
 /**
  * SRP: Renders the tasks page shell, journal sections, and date-scoped task content.
  */
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Flame, Hash } from "lucide-react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type TouchEvent,
+} from "react";
+import { ChevronLeft, ChevronRight, Flame, Hash } from "lucide-react";
 import { Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toDateStr } from "@/lib/db";
@@ -35,6 +41,11 @@ function journalStreakColorClass(streak: number): string {
 }
 
 export default function TasksPageContent() {
+  const SWIPE_MIN_DISTANCE_PX = 70;
+  const SWIPE_DIRECTION_RATIO = 1.35;
+  const SWIPE_FEEDBACK_START_PX = 12;
+  const SWIPE_FEEDBACK_DIRECTION_RATIO = 1.1;
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [locationInputVal, setLocationInputVal] = useState("");
@@ -43,9 +54,19 @@ export default function TasksPageContent() {
   const [journalEditSession, setJournalEditSession] = useState(0);
   const [quote] = useState(pickRandomHabitQuote);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [swipeFeedback, setSwipeFeedback] = useState<{
+    direction: "prev" | "next";
+    progress: number;
+    blocked: boolean;
+  } | null>(null);
   const journalHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  const swipeStartRef = useRef<{
+    x: number;
+    y: number;
+    canSwipe: boolean;
+  } | null>(null);
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
 
@@ -179,8 +200,138 @@ export default function TasksPageContent() {
     clearJournalHoldTimer();
   };
 
+  const isSwipeIgnoredTarget = (target: EventTarget | null) => {
+    if (!(target instanceof Element)) return false;
+    return Boolean(
+      target.closest(
+        "button, a, input, textarea, select, [role='button'], [role='link'], [contenteditable='true'], [data-no-swipe]"
+      )
+    );
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) {
+      swipeStartRef.current = null;
+      setSwipeFeedback(null);
+      return;
+    }
+
+    const touch = event.touches[0];
+    swipeStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      canSwipe: !isSwipeIgnoredTarget(event.target),
+    };
+
+    if (isSwipeIgnoredTarget(event.target)) {
+      setSwipeFeedback(null);
+    }
+  };
+
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    if (!start?.canSwipe || event.touches.length !== 1) {
+      setSwipeFeedback(null);
+      return;
+    }
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    if (absX < SWIPE_FEEDBACK_START_PX) {
+      setSwipeFeedback(null);
+      return;
+    }
+
+    if (absX < absY * SWIPE_FEEDBACK_DIRECTION_RATIO) {
+      setSwipeFeedback(null);
+      return;
+    }
+
+    const direction = deltaX > 0 ? "prev" : "next";
+    const isBlocked =
+      direction === "next" && toDateStr(currentDate) === toDateStr(new Date());
+
+    setSwipeFeedback({
+      direction,
+      progress: Math.min(absX / SWIPE_MIN_DISTANCE_PX, 1),
+      blocked: isBlocked,
+    });
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    setSwipeFeedback(null);
+
+    if (!start?.canSwipe || event.changedTouches.length !== 1) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    if (absX < SWIPE_MIN_DISTANCE_PX) return;
+    if (absX < absY * SWIPE_DIRECTION_RATIO) return;
+
+    if (deltaX > 0) {
+      setCurrentDate((prev) => {
+        const next = new Date(prev);
+        next.setDate(next.getDate() - 1);
+        return next;
+      });
+      return;
+    }
+
+    setCurrentDate((prev) => {
+      const today = new Date();
+      if (toDateStr(prev) === toDateStr(today)) return prev;
+      const next = new Date(prev);
+      next.setDate(next.getDate() + 1);
+      return next;
+    });
+  };
+
   return (
-    <div className="pb-32">
+    <div
+      className="pb-32"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={() => {
+        swipeStartRef.current = null;
+        setSwipeFeedback(null);
+      }}
+    >
+      {swipeFeedback && (
+        <div className="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2">
+          <div
+            className="flex items-center gap-1.5 rounded-full border border-border bg-background/95 px-3 py-1.5 text-xs font-medium shadow-sm backdrop-blur-sm"
+            style={{
+              opacity: 0.4 + swipeFeedback.progress * 0.6,
+              transform: `scale(${0.96 + swipeFeedback.progress * 0.04})`,
+            }}
+          >
+            {swipeFeedback.direction === "prev" ? (
+              <ChevronLeft className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
+            <span>
+              {swipeFeedback.blocked
+                ? "Already on today"
+                : swipeFeedback.direction === "prev"
+                  ? "Previous day"
+                  : "Next day"}
+            </span>
+          </div>
+        </div>
+      )}
+
       <JournalVideoSection
         canEdit={journal.canEditJournal}
         youtubeUrl={journal.draftYoutubeUrl}
