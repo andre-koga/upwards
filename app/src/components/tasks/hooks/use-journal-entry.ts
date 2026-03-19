@@ -7,6 +7,7 @@ import type { JournalEntry, LocationData } from "@/lib/db/types";
 import {
   parseLocation,
   getCompletionMetadata,
+  propagateJournalCompletionStreaksAfterSave,
   type JournalFields,
 } from "@/lib/journal-utils";
 
@@ -154,6 +155,7 @@ export function useJournalEntry(currentDate: Date) {
           });
 
           setJournalEntry(updatedEntry);
+          await propagateJournalCompletionStreaksAfterSave(dateStr);
         } else {
           const entry: JournalEntry = {
             id: newId(),
@@ -167,6 +169,7 @@ export function useJournalEntry(currentDate: Date) {
           };
           await db.journalEntries.add(entry);
           setJournalEntry(entry);
+          await propagateJournalCompletionStreaksAfterSave(dateStr);
         }
       } catch (error) {
         console.error("Error saving journal entry:", error);

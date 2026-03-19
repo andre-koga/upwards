@@ -57,6 +57,7 @@ export function useDailyTasks({
     pausedTaskIds,
     isBreakDay,
     loading,
+    streakDbVersion,
     currentActivityId,
     setCurrentActivityId,
     currentMemoId,
@@ -64,9 +65,15 @@ export function useDailyTasks({
     loadDailyEntry,
     getOrCreateDailyEntry,
     incrementTask,
+    resetNeverTaskCount,
     toggleTaskPaused,
     toggleBreakDay,
   } = useDailyEntry(dateString);
+
+  const incrementNeverSlip = useCallback(
+    (activityId: string) => incrementTask(activityId, 1, { neverSlip: true }),
+    [incrementTask]
+  );
 
   const {
     oneTimeTasks,
@@ -159,16 +166,28 @@ export function useDailyTasks({
       // Recompute target-day streaks for the viewed date so historical days
       // reflect current task counts instead of stale cached streak rows.
       forceRecomputeTarget: true,
-    }).then((streaks) => {
-      if (!cancelled) {
-        setActivityStreaks(streaks);
-      }
-    });
+    })
+      .then((streaks) => {
+        if (!cancelled) {
+          setActivityStreaks(streaks);
+        }
+      })
+      .catch((err) => {
+        console.error("Error computing activity streaks:", err);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [activities, currentDate, isToday, taskCounts, pausedTaskIds, isBreakDay]);
+  }, [
+    activities,
+    currentDate,
+    isToday,
+    taskCounts,
+    pausedTaskIds,
+    isBreakDay,
+    streakDbVersion,
+  ]);
 
   const dailyActivities = useMemo(
     () => activities.filter((a) => shouldShowActivity(a, currentDate)),
@@ -411,6 +430,8 @@ export function useDailyTasks({
     deleteOneTimeTask,
     updateOneTimeTask,
     incrementTask,
+    incrementNeverSlip,
+    resetNeverTaskCount,
     toggleTaskPaused,
     toggleBreakDay,
     handleStartActivity: startActivity,

@@ -1,7 +1,7 @@
 /**
  * SRP: Manages daily-entry state and persistence for counts, paused tasks, and break-day flags.
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { db, now, newId } from "@/lib/db";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import type { DailyEntry } from "@/lib/db/types";
@@ -24,10 +24,20 @@ export function useDailyEntry(dateString: string) {
   const [pausedTaskIds, setPausedTaskIds] = useState<string[]>([]);
   const [isBreakDay, setIsBreakDay] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Bumps whenever we successfully persist task/break-day changes to IndexedDB.
+  // Used to trigger downstream computations that read from the DB (e.g. streaks).
+  const [streakDbVersion, setStreakDbVersion] = useState(0);
   const [currentActivityId, setCurrentActivityId] = useState<string | null>(
     null
   );
   const [currentMemoId, setCurrentMemoId] = useState<string | null>(null);
+
+  // Refs let us compute the exact next persisted values without relying on
+  // React state updater callbacks having run before awaiting persistence.
+  const taskCountsRef = useRef(taskCounts);
+  const pausedTaskIdsRef = useRef(pausedTaskIds);
+  taskCountsRef.current = taskCounts;
+  pausedTaskIdsRef.current = pausedTaskIds;
 
   const loadDailyEntry = useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -63,26 +73,11 @@ export function useDailyEntry(dateString: string) {
     return entry;
   }, [dateString]);
 
-  const incrementTask = useCallback(
-    async (activityId: string, target: number) => {
-      let newCounts: Record<string, number> = {};
-      let newPausedTaskIds: string[] = [];
-      setTaskCounts((prev) => {
-        const current = prev[activityId] || 0;
-        const next = current >= target ? 0 : current + 1;
-        newCounts = { ...prev };
-        if (next === 0) {
-          delete newCounts[activityId];
-        } else {
-          newCounts[activityId] = next;
-        }
-        return newCounts;
-      });
-      setPausedTaskIds((prev) => {
-        newPausedTaskIds = prev.filter((id) => id !== activityId);
-        return newPausedTaskIds;
-      });
-
+  const persistTaskCountsAndPaused = useCallback(
+    async (
+      newCounts: Record<string, number>,
+      newPausedTaskIds: string[]
+    ): Promise<void> => {
       try {
         const entry = await db.dailyEntries
           .where("date")
@@ -101,6 +96,7 @@ export function useDailyEntry(dateString: string) {
             paused_task_ids: newPausedTaskIds,
             updated_at: now(),
           });
+          setStreakDbVersion((v) => v + 1);
         } else {
           const n = now();
           const newDbEntry: DailyEntry = {
@@ -118,6 +114,7 @@ export function useDailyEntry(dateString: string) {
           };
           await db.dailyEntries.add(newDbEntry);
           setDailyEntry(newDbEntry);
+          setStreakDbVersion((v) => v + 1);
         }
       } catch (err) {
         console.error("Error persisting task count:", err);
@@ -127,15 +124,79 @@ export function useDailyEntry(dateString: string) {
     [dateString, loadDailyEntry]
   );
 
+  const incrementTask = useCallback(
+    async (
+      activityId: string,
+      target: number,
+      options?: { neverSlip?: boolean }
+    ) => {
+      const neverSlip = options?.neverSlip ?? false;
+      const prevCounts = taskCountsRef.current;
+      const prevPausedTaskIds = pausedTaskIdsRef.current;
+
+      const current = prevCounts[activityId] || 0;
+      const nextCount = neverSlip
+        ? current + 1
+        : current >= target
+          ? 0
+          : current + 1;
+
+      const nextCounts: Record<string, number> = { ...prevCounts };
+      if (neverSlip) {
+        nextCounts[activityId] = nextCount;
+      } else if (nextCount === 0) {
+        delete nextCounts[activityId];
+      } else {
+        nextCounts[activityId] = nextCount;
+      }
+
+      const nextPausedTaskIds = prevPausedTaskIds.filter(
+        (id) => id !== activityId
+      );
+
+      // Update local UI immediately and keep refs in sync so rapid clicks behave
+      // consistently (and persistence uses the same values).
+      taskCountsRef.current = nextCounts;
+      pausedTaskIdsRef.current = nextPausedTaskIds;
+      setTaskCounts(nextCounts);
+      setPausedTaskIds(nextPausedTaskIds);
+
+      await persistTaskCountsAndPaused(nextCounts, nextPausedTaskIds);
+    },
+    [persistTaskCountsAndPaused]
+  );
+
+  const resetNeverTaskCount = useCallback(
+    async (activityId: string) => {
+      const prevCounts = taskCountsRef.current;
+      const prevPausedTaskIds = pausedTaskIdsRef.current;
+
+      const nextCounts: Record<string, number> = { ...prevCounts };
+      delete nextCounts[activityId];
+
+      const nextPausedTaskIds = prevPausedTaskIds.filter(
+        (id) => id !== activityId
+      );
+
+      taskCountsRef.current = nextCounts;
+      pausedTaskIdsRef.current = nextPausedTaskIds;
+      setTaskCounts(nextCounts);
+      setPausedTaskIds(nextPausedTaskIds);
+
+      await persistTaskCountsAndPaused(nextCounts, nextPausedTaskIds);
+    },
+    [persistTaskCountsAndPaused]
+  );
+
   const toggleTaskPaused = useCallback(
     async (activityId: string) => {
-      let nextPausedTaskIds: string[] = [];
-      setPausedTaskIds((prev) => {
-        nextPausedTaskIds = prev.includes(activityId)
-          ? prev.filter((id) => id !== activityId)
-          : [...prev, activityId];
-        return nextPausedTaskIds;
-      });
+      const prevPausedTaskIds = pausedTaskIdsRef.current;
+      const nextPausedTaskIds = prevPausedTaskIds.includes(activityId)
+        ? prevPausedTaskIds.filter((id) => id !== activityId)
+        : [...prevPausedTaskIds, activityId];
+
+      pausedTaskIdsRef.current = nextPausedTaskIds;
+      setPausedTaskIds(nextPausedTaskIds);
 
       try {
         const entry = await db.dailyEntries
@@ -154,6 +215,7 @@ export function useDailyEntry(dateString: string) {
             paused_task_ids: nextPausedTaskIds,
             updated_at: now(),
           });
+          setStreakDbVersion((v) => v + 1);
           return;
         }
 
@@ -161,7 +223,7 @@ export function useDailyEntry(dateString: string) {
         const newDbEntry: DailyEntry = {
           id: newId(),
           date: dateString,
-          task_counts: {},
+          task_counts: taskCountsRef.current,
           paused_task_ids: nextPausedTaskIds,
           is_break_day: false,
           current_activity_id: null,
@@ -173,6 +235,7 @@ export function useDailyEntry(dateString: string) {
         };
         await db.dailyEntries.add(newDbEntry);
         setDailyEntry(newDbEntry);
+        setStreakDbVersion((v) => v + 1);
       } catch (error) {
         console.error("Error toggling paused task:", error);
         loadDailyEntry();
@@ -202,6 +265,7 @@ export function useDailyEntry(dateString: string) {
           is_break_day: nextIsBreakDay,
           updated_at: now(),
         });
+        setStreakDbVersion((v) => v + 1);
         return;
       }
 
@@ -221,6 +285,7 @@ export function useDailyEntry(dateString: string) {
       };
       await db.dailyEntries.add(newDbEntry);
       setDailyEntry(newDbEntry);
+      setStreakDbVersion((v) => v + 1);
     } catch (error) {
       console.error("Error toggling break day:", error);
       loadDailyEntry();
@@ -237,9 +302,11 @@ export function useDailyEntry(dateString: string) {
     setCurrentActivityId,
     currentMemoId,
     setCurrentMemoId,
+    streakDbVersion,
     loadDailyEntry,
     getOrCreateDailyEntry,
     incrementTask,
+    resetNeverTaskCount,
     toggleTaskPaused,
     toggleBreakDay,
   };

@@ -1,4 +1,7 @@
-import { db, toDateStr } from "@/lib/db";
+/**
+ * SRP: Journal field parsing, completion metadata, and streak propagation for daily entries.
+ */
+import { db, now, toDateStr } from "@/lib/db";
 import type { JournalEntry, LocationData } from "@/lib/db/types";
 import { addDays } from "@/lib/date-utils";
 
@@ -107,4 +110,48 @@ export async function getCompletionMetadata(
     journal_completion_streak: previousStreak + 1,
     journal_completed_at: timestamp,
   };
+}
+
+/**
+ * Recompute `journal_completion_streak` for this date and each following calendar day
+ * that has a complete journal entry. Call after saving a day so that completing or
+ * editing an earlier day updates streaks that were computed when the prior day was
+ * still incomplete (e.g. today completed before yesterday).
+ */
+export async function propagateJournalCompletionStreaksAfterSave(
+  savedDateStr: string
+): Promise<void> {
+  const timestamp = now();
+  let cursor = toDateStr(addDays(new Date(`${savedDateStr}T00:00:00`), 1));
+
+  while (true) {
+    const entry = await db.journalEntries
+      .where("entry_date")
+      .equals(cursor)
+      .filter((e) => !e.deleted_at)
+      .first();
+
+    if (!entry?.is_journal_complete) break;
+
+    const yesterday = toDateStr(addDays(new Date(`${cursor}T00:00:00`), -1));
+    const yesterdayEntry = await db.journalEntries
+      .where("entry_date")
+      .equals(yesterday)
+      .filter((e) => !e.deleted_at)
+      .first();
+
+    const previousStreak = yesterdayEntry?.is_journal_complete
+      ? (yesterdayEntry.journal_completion_streak ?? 0)
+      : 0;
+    const newStreak = previousStreak + 1;
+
+    if (entry.journal_completion_streak !== newStreak) {
+      await db.journalEntries.update(entry.id, {
+        journal_completion_streak: newStreak,
+        updated_at: timestamp,
+      });
+    }
+
+    cursor = toDateStr(addDays(new Date(`${cursor}T00:00:00`), 1));
+  }
 }

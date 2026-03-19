@@ -1,8 +1,8 @@
 /**
  * SRP: Renders one activity row with completion, pause state, timer, and streak controls.
  */
-import { memo, useEffect, useState } from "react";
-import { X, Flame, Pause, Play } from "lucide-react";
+import { memo, useEffect, useRef, useState } from "react";
+import { Flame, Pause, Play } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { getActivityDisplayName } from "@/lib/activity-utils";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
@@ -20,6 +20,9 @@ interface ActivityTaskItemProps {
   isCurrentActivity: boolean;
   isToday: boolean;
   onIncrement: (activityId: string, target: number) => void;
+  /** "Never" tasks: tap increments slip count; hold resets count (see pointer handlers). */
+  onNeverIncrement?: () => void;
+  onNeverReset?: () => void;
   onTogglePaused: (activityId: string) => void;
   onStartActivity: (activityId: string) => void;
   onStopActivity: () => void;
@@ -36,6 +39,8 @@ function ActivityTaskItem({
   isCurrentActivity,
   isToday,
   onIncrement,
+  onNeverIncrement,
+  onNeverReset,
   onTogglePaused,
   onStartActivity,
   onStopActivity,
@@ -65,34 +70,114 @@ function ActivityTaskItem({
           ? "text-orange-500"
           : "text-red-500";
 
+  const NEVER_LONG_PRESS_MS = 500;
+  const neverLongPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const neverLongPressFiredRef = useRef(false);
+  const neverPointerLeftRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (neverLongPressTimerRef.current != null) {
+        clearTimeout(neverLongPressTimerRef.current);
+      }
+    };
+  }, []);
+
+  const clearNeverLongPressTimer = () => {
+    if (neverLongPressTimerRef.current != null) {
+      clearTimeout(neverLongPressTimerRef.current);
+      neverLongPressTimerRef.current = null;
+    }
+  };
+
   return (
     <div className="flex items-center gap-2">
       {isNeverTask ? (
         <div
-          onClick={
-            canUpdateCount ? () => onIncrement(activity.id, target) : undefined
+          onPointerDown={
+            canUpdateCount && onNeverIncrement && onNeverReset
+              ? (e) => {
+                  neverLongPressFiredRef.current = false;
+                  neverPointerLeftRef.current = false;
+                  neverLongPressTimerRef.current = setTimeout(() => {
+                    neverLongPressTimerRef.current = null;
+                    neverLongPressFiredRef.current = true;
+                    onNeverReset();
+                  }, NEVER_LONG_PRESS_MS);
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }
+              : undefined
           }
-          className={`flex h-7 w-[2.75rem] items-center justify-center rounded-md border transition-colors ${
+          onPointerUp={
+            canUpdateCount && onNeverIncrement
+              ? (e) => {
+                  clearNeverLongPressTimer();
+                  try {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  } catch {
+                    /* ignore */
+                  }
+                  if (
+                    neverLongPressFiredRef.current ||
+                    neverPointerLeftRef.current
+                  ) {
+                    return;
+                  }
+                  onNeverIncrement();
+                }
+              : undefined
+          }
+          onPointerLeave={
+            canUpdateCount && onNeverReset
+              ? () => {
+                  neverPointerLeftRef.current = true;
+                  clearNeverLongPressTimer();
+                }
+              : undefined
+          }
+          onPointerCancel={
+            canUpdateCount
+              ? () => {
+                  neverPointerLeftRef.current = true;
+                  clearNeverLongPressTimer();
+                }
+              : undefined
+          }
+          onContextMenu={(e) => e.preventDefault()}
+          className={`flex h-7 min-w-[2.75rem] touch-manipulation select-none items-center justify-center rounded-md border px-1 transition-colors ${
             canUpdateCount ? "cursor-pointer" : "cursor-default opacity-60"
           } ${
             isComplete
               ? "border-destructive bg-destructive text-destructive-foreground"
-              : "border-destructive bg-transparent"
+              : count > 0
+                ? "border-destructive/80 bg-destructive/15 text-destructive"
+                : "border-destructive bg-transparent"
           }`}
           role={canUpdateCount ? "button" : undefined}
           tabIndex={canUpdateCount ? 0 : undefined}
-          onKeyDown={
+          title={
             canUpdateCount
+              ? "Tap to add a slip. First slip fails the day and resets your streak. Hold to reset the slip count."
+              : undefined
+          }
+          onKeyDown={
+            canUpdateCount && onNeverIncrement
               ? (e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    onIncrement(activity.id, target);
+                    onNeverIncrement();
                   }
                 }
               : undefined
           }
         >
-          {isComplete && <X className="h-4 w-4 text-destructive-foreground" />}
+          {count > 0 ? (
+            <span className="mt-0.5 font-mono text-xs font-semibold tabular-nums leading-none">
+              {count}
+            </span>
+          ) : null}
         </div>
       ) : target <= 1 ? (
         <TaskCheckbox

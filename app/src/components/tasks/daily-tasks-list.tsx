@@ -59,6 +59,8 @@ export default function DailyTasksList({
     deleteOneTimeTask,
     updateOneTimeTask,
     incrementTask,
+    incrementNeverSlip,
+    resetNeverTaskCount,
     toggleTaskPaused,
     toggleBreakDay,
     handleStartActivity,
@@ -157,6 +159,8 @@ export default function DailyTasksList({
               isCurrentActivity={currentActivityId === activity.id}
               isToday={isToday}
               onIncrement={incrementTask}
+              onNeverIncrement={() => incrementNeverSlip(activity.id)}
+              onNeverReset={() => resetNeverTaskCount(activity.id)}
               onTogglePaused={toggleTaskPaused}
               onStartActivity={handleStartActivity}
               onStopActivity={handleStopActivity}
