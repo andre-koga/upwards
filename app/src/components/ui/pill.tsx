@@ -1,4 +1,5 @@
 import { memo } from "react";
+import type { MouseEventHandler, PointerEventHandler } from "react";
 import { Play, Square } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 import { getContrastColor } from "@/lib/color-utils";
@@ -12,6 +13,11 @@ export interface PillProps {
   onPlayStop?: () => void;
   /** When provided, name area opens this instead of triggering onPlayStop; only the play button triggers onPlayStop */
   onNameClick?: () => void;
+  onNamePointerDown?: PointerEventHandler<HTMLButtonElement>;
+  onNamePointerUp?: PointerEventHandler<HTMLButtonElement>;
+  onNamePointerLeave?: PointerEventHandler<HTMLButtonElement>;
+  onNamePointerCancel?: PointerEventHandler<HTMLButtonElement>;
+  onNameContextMenu?: MouseEventHandler<HTMLButtonElement>;
   nameClassName?: string;
   /** When true, renders as a non-interactive div instead of a button */
   readOnly?: boolean;
@@ -27,6 +33,11 @@ function Pill({
   isRunning = false,
   onPlayStop,
   onNameClick,
+  onNamePointerDown,
+  onNamePointerUp,
+  onNamePointerLeave,
+  onNamePointerCancel,
+  onNameContextMenu,
   nameClassName = "",
   readOnly = false,
   size = "default",
@@ -106,6 +117,14 @@ function Pill({
     (isSm ? "h-8 " : "h-10 ") +
     className;
 
+  const timerControl = onPlayStop ? (
+    <button type="button" onClick={onPlayStop} className="h-full flex-shrink-0">
+      {playTimerButton}
+    </button>
+  ) : (
+    <div className="h-full flex-shrink-0">{playTimerButton}</div>
+  );
+
   if (readOnly) {
     return (
       <div className={base}>
@@ -121,26 +140,25 @@ function Pill({
         <button
           type="button"
           onClick={onNameClick}
+          onPointerDown={onNamePointerDown}
+          onPointerUp={onNamePointerUp}
+          onPointerLeave={onNamePointerLeave}
+          onPointerCancel={onNamePointerCancel}
+          onContextMenu={onNameContextMenu}
           className="flex min-w-0 flex-1 items-center text-left"
         >
           {nameContent}
         </button>
-        <button
-          type="button"
-          onClick={onPlayStop}
-          className="h-full flex-shrink-0"
-        >
-          {playTimerButton}
-        </button>
+        {timerControl}
       </div>
     );
   }
 
   return (
-    <button type="button" onClick={onPlayStop} className={base + " w-full"}>
-      {nameContent}
-      {playTimerButton}
-    </button>
+    <div className={base + " w-full"}>
+      <div className="flex min-w-0 flex-1 items-center">{nameContent}</div>
+      {timerControl}
+    </div>
   );
 }
 

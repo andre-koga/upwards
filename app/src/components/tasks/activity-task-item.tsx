@@ -2,10 +2,11 @@
  * SRP: Renders one activity row with completion, pause state, timer, and streak controls.
  */
 import { memo, useEffect, useRef, useState } from "react";
-import { Flame, Pause, Play } from "lucide-react";
+import { Flame, Pause, Play, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { getActivityDisplayName } from "@/lib/activity-utils";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import Pill from "@/components/ui/pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 
@@ -70,7 +71,6 @@ function ActivityTaskItem({
           ? "text-orange-500"
           : "text-red-500";
 
-  const NEVER_LONG_PRESS_MS = 500;
   const neverLongPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -105,7 +105,7 @@ function ActivityTaskItem({
                     neverLongPressTimerRef.current = null;
                     neverLongPressFiredRef.current = true;
                     onNeverReset();
-                  }, NEVER_LONG_PRESS_MS);
+                  }, HOLD_ACTION_DELAY_MS);
                   e.currentTarget.setPointerCapture(e.pointerId);
                 }
               : undefined
@@ -173,7 +173,9 @@ function ActivityTaskItem({
               : undefined
           }
         >
-          {count > 0 ? (
+          {count === 1 ? (
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : count > 1 ? (
             <span className="mt-0.5 font-mono text-xs font-semibold tabular-nums leading-none">
               {count}
             </span>

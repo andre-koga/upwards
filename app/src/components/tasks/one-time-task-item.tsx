@@ -1,9 +1,9 @@
-import { memo, useState } from "react";
-import { Pin } from "lucide-react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { OneTimeTask } from "@/lib/db/types";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 import Pill from "@/components/ui/pill";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import { formatDateShort, fromDateString } from "@/lib/date-utils";
 
 const MEMO_PILL_COLOR = "var(--memo-pill-color)";
@@ -95,29 +95,67 @@ function OneTimeTaskItem({
     void onUpdate(task.id, { is_pinned: !task.is_pinned });
   };
 
+  const memoLongPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const memoLongPressFiredRef = useRef(false);
+  const suppressNextMemoClickRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (memoLongPressTimerRef.current != null) {
+        clearTimeout(memoLongPressTimerRef.current);
+      }
+    };
+  }, []);
+
+  const clearMemoLongPressTimer = () => {
+    if (memoLongPressTimerRef.current != null) {
+      clearTimeout(memoLongPressTimerRef.current);
+      memoLongPressTimerRef.current = null;
+    }
+  };
+
+  const handleMemoPointerDown = (
+    _e: React.PointerEvent<HTMLDivElement | HTMLButtonElement>
+  ) => {
+    if (!isToday) return;
+    clearMemoLongPressTimer();
+    memoLongPressFiredRef.current = false;
+    memoLongPressTimerRef.current = setTimeout(() => {
+      memoLongPressTimerRef.current = null;
+      memoLongPressFiredRef.current = true;
+      suppressNextMemoClickRef.current = true;
+      handleTogglePin();
+    }, HOLD_ACTION_DELAY_MS);
+  };
+
+  const handleMemoPointerUp = (
+    _e: React.PointerEvent<HTMLDivElement | HTMLButtonElement>
+  ) => {
+    clearMemoLongPressTimer();
+  };
+
+  const handleMemoPointerCancel = () => {
+    clearMemoLongPressTimer();
+  };
+
+  const handleMemoClick = () => {
+    if (!isToday) return;
+    if (suppressNextMemoClickRef.current || memoLongPressFiredRef.current) {
+      suppressNextMemoClickRef.current = false;
+      memoLongPressFiredRef.current = false;
+      return;
+    }
+    setEditOpen(true);
+  };
+
   const dueDateDisplay = task.due_date
     ? getDueDateDisplayLabel(task.due_date)
     : null;
 
   const showTimer = isToday && (onStartMemo || onStopMemo);
-
-  const pinButton = isToday && (
-    <button
-      type="button"
-      aria-label={task.is_pinned ? "Unpin memo" : "Pin memo"}
-      onClick={(e) => {
-        e.stopPropagation();
-        handleTogglePin();
-      }}
-      className={`flex h-7 w-7 flex-shrink-0 items-center justify-center transition-colors ${
-        task.is_pinned
-          ? "text-primary"
-          : "text-muted-foreground hover:text-foreground"
-      }`}
-    >
-      <Pin className={`h-3.5 w-3.5 ${task.is_pinned ? "fill-current" : ""}`} />
-    </button>
-  );
+  const memoBorderClass = task.is_pinned ? "border-primary" : "border-border";
 
   return (
     <div className="flex items-center gap-2">
@@ -146,21 +184,32 @@ function OneTimeTaskItem({
               onPlayStop={
                 isCurrentMemo ? onStopMemo : () => onStartMemo?.(task.id)
               }
-              onNameClick={isToday ? () => setEditOpen(true) : undefined}
+              onNameClick={isToday ? handleMemoClick : undefined}
+              onNamePointerDown={isToday ? handleMemoPointerDown : undefined}
+              onNamePointerUp={isToday ? handleMemoPointerUp : undefined}
+              onNameContextMenu={
+                isToday ? (e) => e.preventDefault() : undefined
+              }
+              onNamePointerCancel={
+                isToday ? handleMemoPointerCancel : undefined
+              }
               nameClassName={
                 task.is_completed ? "line-through text-muted-foreground" : ""
               }
               size="sm"
               readOnly={!isToday}
-              className="flex-1"
+              className={`flex-1 ${memoBorderClass}`}
             />
-            {pinButton}
           </div>
         </div>
       ) : (
         <div
-          className="relative flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-2xl border border-border"
-          onClick={isToday ? () => setEditOpen(true) : undefined}
+          className={`relative flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-2xl border ${memoBorderClass}`}
+          onClick={isToday ? handleMemoClick : undefined}
+          onPointerDown={isToday ? handleMemoPointerDown : undefined}
+          onPointerUp={isToday ? handleMemoPointerUp : undefined}
+          onPointerLeave={isToday ? handleMemoPointerCancel : undefined}
+          onPointerCancel={isToday ? handleMemoPointerCancel : undefined}
           onKeyDown={
             isToday
               ? (e) => {
@@ -182,7 +231,6 @@ function OneTimeTaskItem({
             >
               {task.title}
             </span>
-            {pinButton}
           </div>
           {dueDateDisplay && (
             <span className="px-4 pb-2 text-xs text-muted-foreground">
