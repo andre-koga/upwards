@@ -187,6 +187,16 @@ export default function TasksPageContent() {
         embedUrl={embedUrl}
         entryDate={dateString}
         canUpload={isSupabaseConfigured && isAuthed}
+        leftControl={
+          <Link
+            to="/settings"
+            title="Settings"
+            aria-label="Open settings"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm transition-colors hover:text-foreground"
+          >
+            <Settings className="h-3.5 w-3.5 opacity-80" />
+          </Link>
+        }
         canPlay={isOnline}
         thumbnail={journalThumbnail}
         onChange={(url) => {
@@ -211,19 +221,6 @@ export default function TasksPageContent() {
               🙂
             </span>
           )}
-        </div>
-      </div>
-
-      <div className="absolute -mt-8 pl-2">
-        <div className="mx-auto flex max-w-2xl justify-start">
-          <Link
-            to="/settings"
-            title="Settings"
-            aria-label="Open settings"
-            className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm transition-colors hover:text-foreground"
-          >
-            <Settings className="h-3.5 w-3.5 opacity-80" />
-          </Link>
         </div>
       </div>
 

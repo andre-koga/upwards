@@ -30,6 +30,7 @@ interface JournalVideoSectionProps {
   embedUrl: string | null;
   entryDate: string;
   canUpload: boolean;
+  leftControl?: React.ReactNode;
   thumbnail: JournalThumbnailSource | null;
   canPlay: boolean;
   onThumbnailGenerated?: (dataUrl: string | null) => void;
@@ -59,6 +60,7 @@ export default function JournalVideoSection({
   embedUrl,
   entryDate,
   canUpload,
+  leftControl,
   thumbnail,
   canPlay,
   onThumbnailGenerated,
@@ -301,6 +303,10 @@ export default function JournalVideoSection({
       )}
 
       <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-1/5 bg-gradient-to-b from-transparent to-background" />
+
+      {leftControl && (
+        <div className="absolute -bottom-4 left-3 z-20">{leftControl}</div>
+      )}
 
       {canEdit && (
         <div className="absolute -bottom-4 right-3 z-20 flex items-center gap-2">
