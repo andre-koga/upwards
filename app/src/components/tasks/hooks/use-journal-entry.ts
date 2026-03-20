@@ -4,6 +4,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { db, toDateStr, now, newId } from "@/lib/db";
 import type { JournalEntry, LocationData } from "@/lib/db/types";
+import { toJournalVideoPath } from "@/lib/journal-video-storage";
 import {
   parseLocation,
   getCompletionMetadata,
@@ -18,7 +19,7 @@ export interface JournalDraft {
   text: string;
   emoji: string;
   bookmarked: boolean;
-  youtubeUrl: string;
+  videoPath: string;
   location: LocationData | null;
   videoThumbnail: string | null;
 }
@@ -29,7 +30,7 @@ export function useJournalEntry(currentDate: Date) {
   const [draftText, setDraftText] = useState("");
   const [draftEmoji, setDraftEmoji] = useState("");
   const [draftBookmarked, setDraftBookmarked] = useState(false);
-  const [draftYoutubeUrl, setDraftYoutubeUrl] = useState("");
+  const [draftVideoPath, setDraftVideoPath] = useState("");
   const [draftLocation, setDraftLocation] = useState<LocationData | null>(null);
 
   // Ref so blur-save handlers always read the latest draft without stale closures
@@ -38,7 +39,7 @@ export function useJournalEntry(currentDate: Date) {
     text: "",
     emoji: "",
     bookmarked: false,
-    youtubeUrl: "",
+    videoPath: "",
     location: null,
     videoThumbnail: null,
   });
@@ -58,14 +59,14 @@ export function useJournalEntry(currentDate: Date) {
           setDraftText("");
           setDraftEmoji("");
           setDraftBookmarked(false);
-          setDraftYoutubeUrl("");
+          setDraftVideoPath("");
           setDraftLocation(null);
           draftRef.current = {
             title: "",
             text: "",
             emoji: "",
             bookmarked: false,
-            youtubeUrl: "",
+            videoPath: "",
             location: null,
             videoThumbnail: null,
           };
@@ -91,21 +92,21 @@ export function useJournalEntry(currentDate: Date) {
     const tx = journalEntry?.text_content ?? "";
     const e = journalEntry?.day_emoji ?? "";
     const b = journalEntry?.is_bookmarked ?? false;
-    const y = journalEntry?.youtube_url ?? "";
+    const p = toJournalVideoPath(journalEntry?.video_path ?? "");
     const l = parseLocation(journalEntry?.location);
     const vt = journalEntry?.video_thumbnail ?? null;
     setDraftTitle(t);
     setDraftText(tx);
     setDraftEmoji(e);
     setDraftBookmarked(b);
-    setDraftYoutubeUrl(y);
+    setDraftVideoPath(p);
     setDraftLocation(l);
     draftRef.current = {
       title: t,
       text: tx,
       emoji: e,
       bookmarked: b,
-      youtubeUrl: y,
+      videoPath: p,
       location: l,
       videoThumbnail: vt,
     };
@@ -117,7 +118,7 @@ export function useJournalEntry(currentDate: Date) {
     const entryMidnight = new Date(toDateStr(currentDate) + "T00:00:00");
     const diffDays = Math.floor(
       (todayMidnight.getTime() - entryMidnight.getTime()) /
-        (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24)
     );
     return diffDays >= 0 && diffDays <= 1;
   })();
@@ -191,7 +192,7 @@ export function useJournalEntry(currentDate: Date) {
       text_content: r.text || null,
       day_emoji: r.emoji || null,
       is_bookmarked: r.bookmarked,
-      youtube_url: r.youtubeUrl || null,
+      video_path: r.videoPath || null,
       location: r.location || null,
       video_thumbnail: r.videoThumbnail || null,
     });
@@ -210,7 +211,7 @@ export function useJournalEntry(currentDate: Date) {
         text_content: r.text || null,
         day_emoji: r.emoji || null,
         is_bookmarked: bookmarked,
-        youtube_url: r.youtubeUrl || null,
+        video_path: r.videoPath || null,
         location: r.location || null,
         video_thumbnail: r.videoThumbnail || null,
       });
@@ -231,7 +232,7 @@ export function useJournalEntry(currentDate: Date) {
         text_content: r.text || null,
         day_emoji: r.emoji || null,
         is_bookmarked: r.bookmarked,
-        youtube_url: r.youtubeUrl || null,
+        video_path: r.videoPath || null,
         location: location || null,
         video_thumbnail: r.videoThumbnail || null,
       });
@@ -249,8 +250,8 @@ export function useJournalEntry(currentDate: Date) {
     setDraftEmoji,
     draftBookmarked,
     setDraftBookmarked,
-    draftYoutubeUrl,
-    setDraftYoutubeUrl,
+    draftVideoPath,
+    setDraftVideoPath,
     draftRef,
     canEditJournal,
     // state

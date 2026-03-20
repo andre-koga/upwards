@@ -71,7 +71,7 @@ export interface JournalEntry {
   text_content: string | null;
   day_emoji: string | null;
   is_bookmarked: boolean | null;
-  youtube_url: string | null;
+  video_path: string | null;
   video_thumbnail: string | null;
   is_journal_complete: boolean | null;
   journal_entry_number: number | null;

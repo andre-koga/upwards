@@ -15,6 +15,25 @@ import type {
   MemoPeriod,
 } from "./types";
 
+const JOURNAL_VIDEO_PREFIX = "/storage/v1/object/public/journal-videos/";
+
+function normalizeLegacyVideoPath(pathOrUrl: unknown): string | null {
+  if (typeof pathOrUrl !== "string") return null;
+  const value = pathOrUrl.trim();
+  if (!value) return null;
+  if (!value.includes("://")) return value;
+
+  try {
+    const parsed = new URL(value);
+    if (!parsed.pathname.startsWith(JOURNAL_VIDEO_PREFIX)) {
+      return null;
+    }
+    return decodeURIComponent(parsed.pathname.slice(JOURNAL_VIDEO_PREFIX.length));
+  } catch {
+    return null;
+  }
+}
+
 export class UpwardsDB extends Dexie {
   activityGroups!: Table<ActivityGroup>;
   activities!: Table<Activity>;
@@ -82,6 +101,34 @@ export class UpwardsDB extends Dexie {
       activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
       memoPeriods: "id, daily_entry_id, one_time_task_id, deleted_at",
     });
+
+    this.version(6)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities: "id, group_id, is_archived, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, deleted_at, created_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
+        memoPeriods: "id, daily_entry_id, one_time_task_id, deleted_at",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("journalEntries")
+          .toCollection()
+          .modify((entry: Record<string, unknown>) => {
+            const legacyPath = normalizeLegacyVideoPath(entry.youtube_url);
+            const currentPath = normalizeLegacyVideoPath(entry.video_path);
+            entry.video_path = currentPath ?? legacyPath;
+            if ("youtube_url" in entry) {
+              delete entry.youtube_url;
+            }
+          });
+      });
   }
 }
 

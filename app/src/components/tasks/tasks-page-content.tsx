@@ -8,9 +8,14 @@ import {
   useRef,
   type TouchEvent,
 } from "react";
-import { ChevronLeft, ChevronRight, Flame, Hash } from "lucide-react";
-import { Settings } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  Hash,
+  MapPin,
+  MapPinOff,
+} from "lucide-react";
 import { toDateStr } from "@/lib/db";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -26,10 +31,7 @@ import JournalEditDialog from "@/components/tasks/journal-edit-dialog";
 import DateNavigator from "@/components/tasks/date-navigator";
 import TasksJournalMetaBar from "@/components/tasks/tasks-journal-meta-bar";
 import type { LocationData } from "@/lib/db/types";
-import {
-  getYoutubeEmbedUrl,
-  getYoutubeVideoIdFromEmbed,
-} from "@/lib/youtube-utils";
+import { getJournalVideoPlaybackUrl } from "@/lib/journal-video-storage";
 import { pickRandomHabitQuote } from "@/lib/habit-quotes";
 import { useAuth } from "@/lib/use-auth";
 
@@ -47,8 +49,6 @@ export default function TasksPageContent() {
   const SWIPE_FEEDBACK_DIRECTION_RATIO = 1.1;
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [showLocationInput, setShowLocationInput] = useState(false);
-  const [locationInputVal, setLocationInputVal] = useState("");
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
   const [journalEditOpen, setJournalEditOpen] = useState(false);
   const [journalEditSession, setJournalEditSession] = useState(0);
@@ -62,6 +62,7 @@ export default function TasksPageContent() {
   const journalHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  const suppressNextCardClickRef = useRef(false);
   const swipeStartRef = useRef<{
     x: number;
     y: number;
@@ -121,12 +122,6 @@ export default function TasksPageContent() {
   }, [detectLocation, journal.canEditJournal]);
 
   useEffect(() => {
-    if (!journal.canEditJournal) {
-      setShowLocationInput(false);
-    }
-  }, [journal.canEditJournal]);
-
-  useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     window.addEventListener("online", handleOnline);
@@ -153,27 +148,16 @@ export default function TasksPageContent() {
     );
   }
 
-  const embedUrl = getYoutubeEmbedUrl(journal.draftYoutubeUrl);
-  const youtubeIdFromEmbed = embedUrl
-    ? getYoutubeVideoIdFromEmbed(embedUrl)
-    : null;
-  const isJournalDraftComplete = Boolean(
-    journal.draftEmoji.trim() &&
-    journal.draftTitle.trim() &&
-    journal.draftText.trim() &&
-    journal.draftYoutubeUrl.trim()
-  );
   const streak = journal.journalCompletionStreak ?? 0;
   const journalStreakClass = journalStreakColorClass(streak);
+  const videoPlaybackSrc = getJournalVideoPlaybackUrl(journal.draftVideoPath);
 
-  const journalThumbnail: JournalThumbnailSource | null =
-    journal.draftYoutubeUrl.trim().length > 0
-      ? {
-          videoUrl: journal.draftYoutubeUrl,
-          youtubeVideoId: youtubeIdFromEmbed,
-          storedThumbnail: journal.videoThumbnail,
-        }
-      : null;
+  const journalThumbnail: JournalThumbnailSource | null = videoPlaybackSrc
+    ? {
+        videoSrc: videoPlaybackSrc,
+        storedThumbnail: journal.videoThumbnail,
+      }
+    : null;
 
   const openJournalEditor = () => {
     setJournalEditSession((session) => session + 1);
@@ -192,6 +176,7 @@ export default function TasksPageContent() {
     clearJournalHoldTimer();
     journalHoldTimerRef.current = setTimeout(() => {
       journalHoldTimerRef.current = null;
+      suppressNextCardClickRef.current = true;
       openJournalEditor();
     }, HOLD_ACTION_DELAY_MS);
   };
@@ -332,81 +317,76 @@ export default function TasksPageContent() {
         </div>
       )}
 
-      <JournalVideoSection
-        canEdit={journal.canEditJournal}
-        youtubeUrl={journal.draftYoutubeUrl}
-        embedUrl={embedUrl}
-        entryDate={dateString}
-        canUpload={isSupabaseConfigured && isAuthed}
-        leftControl={
-          <Link
-            to="/settings"
-            title="Settings"
-            aria-label="Open settings"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm transition-colors hover:text-foreground"
-          >
-            <Settings className="h-3.5 w-3.5 opacity-80" />
-          </Link>
+      <div
+        className="m-2 overflow-hidden rounded-2xl border-b shadow-lg"
+        onPointerDown={
+          journal.canEditJournal ? handleJournalHoldStart : undefined
         }
-        canPlay={isOnline}
-        thumbnail={journalThumbnail}
-        onChange={(url) => {
-          journal.setDraftYoutubeUrl(url);
-          journal.draftRef.current.youtubeUrl = url;
-        }}
-        onThumbnailGenerated={(thumb) => {
-          journal.draftRef.current.videoThumbnail = thumb;
-          journal.saveDraft();
-        }}
-        onBlur={journal.saveDraft}
-      />
+        onPointerUp={journal.canEditJournal ? handleJournalHoldEnd : undefined}
+        onPointerCancel={
+          journal.canEditJournal ? handleJournalHoldEnd : undefined
+        }
+        onContextMenu={
+          journal.canEditJournal ? (event) => event.preventDefault() : undefined
+        }
+        onClickCapture={
+          journal.canEditJournal
+            ? (event) => {
+                if (!suppressNextCardClickRef.current) return;
+                suppressNextCardClickRef.current = false;
+                event.preventDefault();
+                event.stopPropagation();
+              }
+            : undefined
+        }
+      >
+        <JournalVideoSection
+          videoSrc={videoPlaybackSrc ?? ""}
+          canPlay={isOnline}
+          thumbnail={journalThumbnail}
+          onThumbnailGenerated={(thumb) => {
+            journal.draftRef.current.videoThumbnail = thumb;
+            journal.saveDraft();
+          }}
+        />
 
-      <div className="pointer-events-none relative z-10 -mt-10 flex justify-center">
-        <div className="pointer-events-auto relative">
-          {journal.draftEmoji ? (
-            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl shadow-md">
-              {journal.draftEmoji}
-            </span>
-          ) : (
-            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl text-muted-foreground/30 shadow-md">
-              🙂
-            </span>
-          )}
+        <div className="pointer-events-none relative z-10 mx-auto -mt-10 flex w-full max-w-2xl items-end justify-between px-4">
+          <div className="pointer-events-auto relative">
+            {journal.draftEmoji ? (
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl">
+                {journal.draftEmoji}
+              </span>
+            ) : (
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl text-muted-foreground/30">
+                🙂
+              </span>
+            )}
+          </div>
+
+          <div className="mb-2 flex items-end">
+            <div className="flex items-center gap-1 rounded-full bg-background text-xs text-muted-foreground">
+              {(journal.canEditJournal && isDetectingLocation) ||
+              journal.draftLocation ? (
+                <>
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span className="max-w-[80px] truncate">
+                    {journal.canEditJournal && isDetectingLocation
+                      ? "Detecting"
+                      : journal.draftLocation?.displayName}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <MapPinOff className="h-3 w-3 shrink-0" />
+                  <span>None</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="px-4 pt-4">
-        <div className="mx-auto max-w-2xl space-y-3">
-          <div
-            onPointerDown={
-              journal.canEditJournal ? handleJournalHoldStart : undefined
-            }
-            onPointerUp={
-              journal.canEditJournal ? handleJournalHoldEnd : undefined
-            }
-            onPointerCancel={
-              journal.canEditJournal ? handleJournalHoldEnd : undefined
-            }
-            onContextMenu={
-              journal.canEditJournal ? (e) => e.preventDefault() : undefined
-            }
-            onKeyDown={
-              journal.canEditJournal
-                ? (e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      openJournalEditor();
-                    }
-                  }
-                : undefined
-            }
-            role={journal.canEditJournal ? "button" : undefined}
-            tabIndex={journal.canEditJournal ? 0 : undefined}
-            aria-label={
-              journal.canEditJournal ? "Hold to edit journal" : undefined
-            }
-            className={journal.canEditJournal ? "cursor-pointer" : undefined}
-          >
+        <div className="mx-auto max-w-2xl space-y-3 px-4">
+          <div className="px-1">
             <JournalTextSection
               title={journal.draftTitle}
               text={journal.draftText}
@@ -420,80 +400,77 @@ export default function TasksPageContent() {
             initialEmoji={journal.draftEmoji}
             initialTitle={journal.draftTitle}
             initialText={journal.draftText}
+            initialVideoPath={journal.draftVideoPath}
+            entryDate={dateString}
+            canUploadVideo={isSupabaseConfigured && isAuthed}
             onOpenChange={setJournalEditOpen}
-            onSave={({ emoji, title, text }) => {
+            onSave={({ emoji, title, text, videoPath }) => {
               journal.setDraftEmoji(emoji);
               journal.setDraftTitle(title);
               journal.setDraftText(text);
+              journal.setDraftVideoPath(videoPath);
               journal.draftRef.current.emoji = emoji;
               journal.draftRef.current.title = title;
               journal.draftRef.current.text = text;
+              if (journal.draftRef.current.videoPath !== videoPath) {
+                journal.draftRef.current.videoThumbnail = null;
+              }
+              journal.draftRef.current.videoPath = videoPath;
               journal.saveDraft();
             }}
           />
 
           <div className="-mt-1 pb-1">
             {journal.isJournalComplete &&
-            typeof journal.journalCompletionStreak === "number" &&
-            typeof journal.journalEntryNumber === "number" ? (
-              <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-                <span
-                  className={`inline-flex items-center ${journalStreakClass}`}
-                >
-                  <Flame className="h-3.5 w-3.5" />
-                  <span className="pt-0.5 font-medium">
-                    {journal.journalCompletionStreak}
+              typeof journal.journalCompletionStreak === "number" &&
+              typeof journal.journalEntryNumber === "number" && (
+                <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                  <span
+                    className={`inline-flex items-center ${journalStreakClass}`}
+                  >
+                    <Flame className="h-3.5 w-3.5" />
+                    <span className="pt-0.5 font-medium">
+                      {journal.journalCompletionStreak}
+                    </span>
                   </span>
-                </span>
-                <span className="inline-flex items-center">
-                  <Hash className="h-3.5 w-3.5" />
-                  <span className="pt-0.5 font-medium">
-                    {journal.journalEntryNumber}
+                  <span className="inline-flex items-center">
+                    <Hash className="h-3.5 w-3.5" />
+                    <span className="pt-0.5 font-medium">
+                      {journal.journalEntryNumber}
+                    </span>
                   </span>
-                </span>
-              </div>
-            ) : (
-              <p className="text-center text-xs text-muted-foreground/80">
-                {isJournalDraftComplete
-                  ? "Good job!"
-                  : "Keep your journaling streak going!"}
-              </p>
-            )}
+                </div>
+              )}
           </div>
-
-          <TasksJournalMetaBar
-            currentDate={currentDate}
-            journal={journal}
-            draftRef={journal.draftRef}
-            showLocationInput={showLocationInput}
-            setShowLocationInput={setShowLocationInput}
-            locationInputVal={locationInputVal}
-            setLocationInputVal={setLocationInputVal}
-            detectLocation={detectLocation}
-            isDetectingLocation={isDetectingLocation}
-          />
-
-          <DailyTasksList
-            activities={activities}
-            groups={groups}
-            currentDate={currentDate}
-            refreshTrigger={refreshTrigger}
-          />
-
-          <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground/60">
-            {quote}
-          </blockquote>
         </div>
+
+        <TasksJournalMetaBar
+          journal={journal}
+          onEditRequest={openJournalEditor}
+        />
       </div>
 
-      <div className="fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
-        <DateNavigator
+      <div className="p-3">
+        <DailyTasksList
+          activities={activities}
+          groups={groups}
           currentDate={currentDate}
-          onDateChange={setCurrentDate}
-          entryDates={entryDates}
-          bookmarkedDates={bookmarkedDates}
-          onCalendarOpen={loadJournalMeta}
+          refreshTrigger={refreshTrigger}
         />
+
+        <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground/60">
+          {quote}
+        </blockquote>
+
+        <div className="fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
+          <DateNavigator
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            entryDates={entryDates}
+            bookmarkedDates={bookmarkedDates}
+            onCalendarOpen={loadJournalMeta}
+          />
+        </div>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Everything related to the main Today view: daily task list, journal (emoji, YouTube, text, location, bookmark), one-time tasks, streaks, activity tracking.
+Everything related to the main Today view: daily task list, journal (emoji, uploaded video, text, location, bookmark), one-time tasks, streaks, activity tracking.
 
 ## Structure
 

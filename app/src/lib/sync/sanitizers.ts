@@ -68,7 +68,7 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "text_content",
     "day_emoji",
     "is_bookmarked",
-    "youtube_url",
+    "video_path",
     "video_thumbnail",
     "is_journal_complete",
     "journal_entry_number",
@@ -188,9 +188,48 @@ export async function sanitizeForeignKeyRefsBeforeUpsert(
       );
     }
 
-    // Skip remote activity check: we push activities before activity_periods in the
-    // same sync run, so referenced activities should exist. The remote check could
-    // null valid refs due to timing/propagation, causing assigned activities to revert.
+    if (table === "activity_streaks") {
+      const referencedActivityIds = Array.from(
+        new Set(
+          result
+            .map((row) => row.activity_id)
+            .filter((id): id is string => isValidUuid(id))
+        )
+      );
+
+      if (referencedActivityIds.length > 0) {
+        const { data: remoteActivities, error: remoteActivitiesError } =
+          await supabaseClient
+            .from("activities")
+            .select("id")
+            .eq("user_id", userId)
+            .in("id", referencedActivityIds);
+
+        if (!remoteActivitiesError) {
+          const remoteActivityIds = new Set(
+            (remoteActivities ?? []).map((activity) => activity.id)
+          );
+
+          let missingRemoteActivityRefCount = 0;
+          result = result.map((row) => {
+            if (!row.activity_id || !isValidUuid(row.activity_id)) {
+              return row;
+            }
+            if (remoteActivityIds.has(row.activity_id)) {
+              return row;
+            }
+            missingRemoteActivityRefCount += 1;
+            return { ...row, activity_id: null };
+          });
+
+          if (missingRemoteActivityRefCount > 0) {
+            console.warn(
+              `[sync] nulled ${missingRemoteActivityRefCount} non-existent remote activity_id reference(s) on ${table}`
+            );
+          }
+        }
+      }
+    }
   }
 
   if (table === "activity_periods") {

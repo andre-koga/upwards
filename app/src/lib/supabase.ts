@@ -16,14 +16,38 @@ export const supabase = isSupabaseConfigured
 let _cachedSession: Session | null = null;
 
 if (supabase) {
+  const clearInvalidSession = async () => {
+    _cachedSession = null;
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // ignore; clearing local cache is sufficient fallback
+    }
+  };
+
+  const validateSession = async (session: Session | null) => {
+    if (!session) {
+      _cachedSession = null;
+      return;
+    }
+
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user || data.user.id !== session.user.id) {
+      await clearInvalidSession();
+      return;
+    }
+
+    _cachedSession = session;
+  };
+
   // Populate cache immediately from storage (no network round-trip needed)
   supabase.auth.getSession().then(({ data }) => {
-    _cachedSession = data.session ?? null;
+    void validateSession(data.session ?? null);
   });
 
   // Stay up to date reactively
   supabase.auth.onAuthStateChange((_event, session) => {
-    _cachedSession = session;
+    void validateSession(session);
   });
 }
 

@@ -1,5 +1,5 @@
 /**
- * SRP: Uploads and deletes journal videos in Supabase Storage (paths, auth, public URLs).
+ * SRP: Uploads and deletes journal videos in Supabase Storage using bucket object paths.
  */
 import {
   supabase,
@@ -55,25 +55,28 @@ export async function uploadJournalVideo(
     );
   }
 
-  const { data: publicUrl } = supabase.storage
-    .from(JOURNAL_VIDEO_BUCKET)
-    .getPublicUrl(data.path);
-
-  if (!publicUrl?.publicUrl) {
-    throw new JournalVideoUploadError(
-      "Could not generate public URL for uploaded video."
-    );
-  }
-
-  return publicUrl.publicUrl;
+  return data.path;
 }
 
-export async function deleteJournalVideoByUrl(videoUrl: string): Promise<void> {
+export function getJournalVideoPlaybackUrl(videoPath: string): string | null {
+  const normalizedPath = toJournalVideoPath(videoPath);
+  if (!normalizedPath || !isSupabaseConfigured || !supabase) {
+    return null;
+  }
+
+  const { data } = supabase.storage
+    .from(JOURNAL_VIDEO_BUCKET)
+    .getPublicUrl(normalizedPath);
+
+  return data?.publicUrl ?? null;
+}
+
+export async function deleteJournalVideoByPath(videoPath: string): Promise<void> {
   if (!isSupabaseConfigured || !supabase) {
     return;
   }
 
-  const objectPath = getJournalVideoObjectPath(videoUrl);
+  const objectPath = toJournalVideoPath(videoPath);
   if (!objectPath) {
     return;
   }
@@ -101,20 +104,25 @@ export async function deleteJournalVideoByUrl(videoUrl: string): Promise<void> {
   }
 }
 
-function getJournalVideoObjectPath(videoUrl: string): string | null {
-  if (!videoUrl.trim()) return null;
+export function toJournalVideoPath(videoPathOrLegacyUrl: string): string {
+  const raw = videoPathOrLegacyUrl.trim();
+  if (!raw) return "";
+
+  if (!raw.includes("://")) {
+    return raw;
+  }
 
   try {
-    const parsed = new URL(videoUrl);
+    const parsed = new URL(raw);
     const expectedPrefix = `/storage/v1/object/public/${JOURNAL_VIDEO_BUCKET}/`;
     const pathname = parsed.pathname;
     if (!pathname.startsWith(expectedPrefix)) {
-      return null;
+      return "";
     }
 
     const encodedPath = pathname.slice(expectedPrefix.length);
     return decodeURIComponent(encodedPath);
   } catch {
-    return null;
+    return "";
   }
 }

@@ -1,7 +1,8 @@
 /**
- * SRP: Renders the journal edit dialog for emoji, title, and reflection fields.
+ * SRP: Renders the unified journal edit dialog for emoji, title, reflection, and optional video upload.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Loader2, Paperclip } from "lucide-react";
 import {
   FormCharacterCount,
   FormDialog,
@@ -11,6 +12,10 @@ import {
   FormTextareaField,
 } from "@/components/forms";
 import { getFirstEmoji } from "@/lib/emoji-utils";
+import {
+  JournalVideoUploadError,
+  uploadJournalVideo,
+} from "@/lib/journal-video-storage";
 
 const TITLE_LIMIT = 30;
 const TEXT_LIMIT = 300;
@@ -21,8 +26,16 @@ interface JournalEditDialogProps {
   initialEmoji: string;
   initialTitle: string;
   initialText: string;
+  initialVideoPath: string;
+  entryDate: string;
+  canUploadVideo: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (values: { emoji: string; title: string; text: string }) => void;
+  onSave: (values: {
+    emoji: string;
+    title: string;
+    text: string;
+    videoPath: string;
+  }) => void;
 }
 
 export default function JournalEditDialog({
@@ -31,20 +44,54 @@ export default function JournalEditDialog({
   initialEmoji,
   initialTitle,
   initialText,
+  initialVideoPath,
+  entryDate,
+  canUploadVideo,
   onOpenChange,
   onSave,
 }: JournalEditDialogProps) {
   const [emoji, setEmoji] = useState(initialEmoji);
   const [title, setTitle] = useState(initialTitle);
   const [text, setText] = useState(initialText);
+  const [videoPath, setVideoPath] = useState(initialVideoPath);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleSave = () => {
     onSave({
       emoji: getFirstEmoji(emoji),
       title: title.trim(),
       text: text.trim(),
+      videoPath: videoPath.trim(),
     });
     onOpenChange(false);
+  };
+
+  const handleVideoFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadError(null);
+    setUploadingVideo(true);
+    try {
+      const path = await uploadJournalVideo(file, entryDate);
+      setVideoPath(path);
+    } catch (error) {
+      let message = "Failed to upload video.";
+      if (error instanceof JournalVideoUploadError) {
+        message = error.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      setUploadError(message);
+    } finally {
+      setUploadingVideo(false);
+      const input = event.target;
+      if (input) input.value = "";
+    }
   };
 
   if (!canEdit) return null;
@@ -96,6 +143,52 @@ export default function JournalEditDialog({
             <FormCharacterCount current={text.length} max={TEXT_LIMIT} />
           }
         />
+
+        <div className="space-y-2">
+          {uploadError ? (
+            <p className="text-xs text-destructive">{uploadError}</p>
+          ) : null}
+
+          {canUploadVideo && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={handleVideoFileChange}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingVideo}
+                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+                title="Upload video"
+              >
+                {uploadingVideo ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Paperclip className="h-3.5 w-3.5" />
+                )}
+                {videoPath.trim().length > 0 ? "Replace video" : "Attach video"}
+              </button>
+            </>
+          )}
+
+          {videoPath.trim().length > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                setUploadError(null);
+                setVideoPath("");
+              }}
+              className="inline-flex h-8 items-center justify-center rounded-full border border-border bg-background px-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              title="Remove video"
+            >
+              Remove video
+            </button>
+          ) : null}
+        </div>
       </FormStack>
 
       <FormDialogActions

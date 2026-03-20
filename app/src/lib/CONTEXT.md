@@ -37,7 +37,6 @@ lib/
 ├── form-styles.ts
 ├── habit-quotes.ts   # Today page motivational quotes
 ├── utils.ts          # cn()
-├── youtube-utils.ts
 ├── emoji-utils.ts
 └── hidden-group-activity.ts
 ```
