@@ -1,7 +1,7 @@
 /**
  * SRP: Provides a standardized wrapper for floating form dialogs.
  */
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+
+type DialogContentPointerDownOutside = ComponentProps<
+  typeof DialogContent
+>["onPointerDownOutside"];
 
 interface FormDialogProps {
   open: boolean;
@@ -22,6 +26,8 @@ interface FormDialogProps {
   headerClassName?: string;
   titleClassName?: string;
   descriptionClassName?: string;
+  /** Fires when the user presses outside dialog content (e.g. overlay); use to absorb click-through after close. */
+  onContentPointerDownOutside?: DialogContentPointerDownOutside;
 }
 
 export function FormDialog({
@@ -35,10 +41,15 @@ export function FormDialog({
   headerClassName,
   titleClassName,
   descriptionClassName,
+  onContentPointerDownOutside,
 }: FormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size={size} className={cn("p-4", contentClassName)}>
+      <DialogContent
+        size={size}
+        className={cn("p-4", contentClassName)}
+        onPointerDownOutside={onContentPointerDownOutside}
+      >
         <DialogHeader className={headerClassName}>
           <DialogTitle className={titleClassName}>{title}</DialogTitle>
           {description ? (

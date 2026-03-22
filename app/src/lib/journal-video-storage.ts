@@ -71,7 +71,9 @@ export function getJournalVideoPlaybackUrl(videoPath: string): string | null {
   return data?.publicUrl ?? null;
 }
 
-export async function deleteJournalVideoByPath(videoPath: string): Promise<void> {
+export async function deleteJournalVideoByPath(
+  videoPath: string
+): Promise<void> {
   if (!isSupabaseConfigured || !supabase) {
     return;
   }

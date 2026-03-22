@@ -6,6 +6,8 @@ import {
   useEffect,
   useCallback,
   useRef,
+  type MouseEvent,
+  type PointerEvent,
   type TouchEvent,
 } from "react";
 import {
@@ -162,18 +164,41 @@ export default function TasksPageContent() {
     }
   };
 
-  const handleJournalHoldStart = () => {
+  const handleJournalPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!journal.canEditJournal) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
     clearJournalHoldTimer();
     journalHoldTimerRef.current = setTimeout(() => {
       journalHoldTimerRef.current = null;
       suppressNextCardClickRef.current = true;
-      openJournalEditor();
+      const next = !journal.draftBookmarked;
+      journal.setDraftBookmarked(next);
+      journal.saveBookmark(next);
     }, HOLD_ACTION_DELAY_MS);
   };
 
-  const handleJournalHoldEnd = () => {
+  const handleJournalPointerEnd = () => {
     clearJournalHoldTimer();
+  };
+
+  const handleJournalCardClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!journal.canEditJournal) return;
+    if (suppressNextCardClickRef.current) {
+      suppressNextCardClickRef.current = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    const el = event.target;
+    if (!(el instanceof Element)) return;
+    if (
+      el.closest(
+        "button, a, input, textarea, select, [role='button'], [role='link'], [contenteditable='true'], video"
+      )
+    ) {
+      return;
+    }
+    openJournalEditor();
   };
 
   const isSwipeIgnoredTarget = (target: EventTarget | null) => {
@@ -311,25 +336,21 @@ export default function TasksPageContent() {
       <div
         className="m-2 overflow-hidden rounded-2xl border-b shadow-lg"
         onPointerDown={
-          journal.canEditJournal ? handleJournalHoldStart : undefined
+          journal.canEditJournal ? handleJournalPointerDown : undefined
         }
-        onPointerUp={journal.canEditJournal ? handleJournalHoldEnd : undefined}
+        onPointerUp={
+          journal.canEditJournal ? handleJournalPointerEnd : undefined
+        }
+        onPointerLeave={
+          journal.canEditJournal ? handleJournalPointerEnd : undefined
+        }
         onPointerCancel={
-          journal.canEditJournal ? handleJournalHoldEnd : undefined
+          journal.canEditJournal ? handleJournalPointerEnd : undefined
         }
         onContextMenu={
           journal.canEditJournal ? (event) => event.preventDefault() : undefined
         }
-        onClickCapture={
-          journal.canEditJournal
-            ? (event) => {
-                if (!suppressNextCardClickRef.current) return;
-                suppressNextCardClickRef.current = false;
-                event.preventDefault();
-                event.stopPropagation();
-              }
-            : undefined
-        }
+        onClick={journal.canEditJournal ? handleJournalCardClick : undefined}
       >
         <JournalVideoSection
           videoSrc={videoPlaybackSrc ?? ""}
@@ -409,6 +430,9 @@ export default function TasksPageContent() {
             entryDate={dateString}
             canUploadVideo={isSupabaseConfigured && isAuthed}
             onOpenChange={setJournalEditOpen}
+            onDismissPointerDownOutside={() => {
+              suppressNextCardClickRef.current = true;
+            }}
             onSave={({ emoji, title, text, videoPath }) => {
               journal.setDraftEmoji(emoji);
               journal.setDraftTitle(title);

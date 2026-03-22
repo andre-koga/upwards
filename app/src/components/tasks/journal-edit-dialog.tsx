@@ -2,9 +2,10 @@
  * SRP: Renders the unified journal edit dialog for emoji, title, reflection, and optional video upload.
  */
 import { useRef, useState } from "react";
-import { Loader2, Paperclip } from "lucide-react";
+import { Loader2, Paperclip, Trash2 } from "lucide-react";
 import {
   FormCharacterCount,
+  FormControlButton,
   FormDialog,
   FormDialogActions,
   FormField,
@@ -30,6 +31,8 @@ interface JournalEditDialogProps {
   entryDate: string;
   canUploadVideo: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called when the user presses outside the dialog (overlay); parent can suppress the following click-through. */
+  onDismissPointerDownOutside?: () => void;
   onSave: (values: {
     emoji: string;
     title: string;
@@ -48,6 +51,7 @@ export default function JournalEditDialog({
   entryDate,
   canUploadVideo,
   onOpenChange,
+  onDismissPointerDownOutside,
   onSave,
 }: JournalEditDialogProps) {
   const [emoji, setEmoji] = useState(initialEmoji);
@@ -102,6 +106,9 @@ export default function JournalEditDialog({
       onOpenChange={onOpenChange}
       title="Edit journal"
       contentClassName="w-[22rem]"
+      onContentPointerDownOutside={() => {
+        onDismissPointerDownOutside?.();
+      }}
     >
       <FormStack>
         <div className="flex items-center justify-center">
@@ -158,36 +165,42 @@ export default function JournalEditDialog({
                 className="hidden"
                 onChange={handleVideoFileChange}
               />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingVideo}
-                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
-                title="Upload video"
-              >
-                {uploadingVideo ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Paperclip className="h-3.5 w-3.5" />
-                )}
-                {videoPath.trim().length > 0 ? "Replace video" : "Attach video"}
-              </button>
+              <div className="flex gap-2">
+                <FormControlButton
+                  className="min-w-0 flex-1"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingVideo}
+                  title={
+                    videoPath.trim().length > 0
+                      ? "Replace video"
+                      : "Attach video"
+                  }
+                >
+                  {uploadingVideo ? (
+                    <Loader2 className="animate-spin" aria-hidden />
+                  ) : (
+                    <Paperclip aria-hidden />
+                  )}
+                  {videoPath.trim().length > 0
+                    ? "Replace video"
+                    : "Attach video"}
+                </FormControlButton>
+                {videoPath.trim().length > 0 ? (
+                  <FormControlButton
+                    className="w-10 shrink-0 justify-center px-0 text-destructive hover:text-destructive"
+                    onClick={() => {
+                      setUploadError(null);
+                      setVideoPath("");
+                    }}
+                    title="Remove video"
+                    aria-label="Remove video"
+                  >
+                    <Trash2 aria-hidden />
+                  </FormControlButton>
+                ) : null}
+              </div>
             </>
           )}
-
-          {videoPath.trim().length > 0 ? (
-            <button
-              type="button"
-              onClick={() => {
-                setUploadError(null);
-                setVideoPath("");
-              }}
-              className="inline-flex h-8 items-center justify-center rounded-full border border-border bg-background px-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              title="Remove video"
-            >
-              Remove video
-            </button>
-          ) : null}
         </div>
       </FormStack>
 

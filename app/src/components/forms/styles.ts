@@ -22,3 +22,7 @@ export const dialogSecondaryActionClassName =
 export const dialogSecondaryDestructiveClassName = "hover:text-destructive";
 
 export const dialogFieldLabelClassName = "text-xs";
+
+/** Action control in a dialog form: same chrome as {@link dialogFieldClassName} / select triggers (rounded-md, border, h-10). */
+export const dialogFormControlButtonClassName =
+  "flex h-10 w-full items-center justify-start gap-2 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";

@@ -195,7 +195,7 @@ function ActivityTaskItem({
         >
           {!isComplete ? (
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-inherit" />
+              <Flame className="h-3 w-3 fill-foreground" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           ) : count === 1 ? (
@@ -214,7 +214,7 @@ function ActivityTaskItem({
           title={isPaused ? "Task paused for this day" : undefined}
           completeContent={
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-inherit" />
+              <Flame className="h-3 w-3 fill-background" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           }
@@ -253,7 +253,7 @@ function ActivityTaskItem({
         >
           {isComplete ? (
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-inherit" />
+              <Flame className="h-3 w-3 fill-background" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           ) : (

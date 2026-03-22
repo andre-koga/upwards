@@ -28,7 +28,9 @@ function normalizeLegacyVideoPath(pathOrUrl: unknown): string | null {
     if (!parsed.pathname.startsWith(JOURNAL_VIDEO_PREFIX)) {
       return null;
     }
-    return decodeURIComponent(parsed.pathname.slice(JOURNAL_VIDEO_PREFIX.length));
+    return decodeURIComponent(
+      parsed.pathname.slice(JOURNAL_VIDEO_PREFIX.length)
+    );
   } catch {
     return null;
   }

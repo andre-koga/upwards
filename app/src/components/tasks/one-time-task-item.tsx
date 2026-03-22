@@ -116,9 +116,7 @@ function OneTimeTaskItem({
     }
   };
 
-  const handleMemoPointerDown = (
-    _e: React.PointerEvent<HTMLDivElement | HTMLButtonElement>
-  ) => {
+  const handleMemoPointerDown = () => {
     if (!isToday) return;
     clearMemoLongPressTimer();
     memoLongPressFiredRef.current = false;
@@ -130,9 +128,7 @@ function OneTimeTaskItem({
     }, HOLD_ACTION_DELAY_MS);
   };
 
-  const handleMemoPointerUp = (
-    _e: React.PointerEvent<HTMLDivElement | HTMLButtonElement>
-  ) => {
+  const handleMemoPointerUp = () => {
     clearMemoLongPressTimer();
   };
 
