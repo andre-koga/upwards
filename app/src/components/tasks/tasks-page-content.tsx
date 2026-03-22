@@ -1,5 +1,5 @@
 /**
- * SRP: Renders the tasks page shell, journal sections, and date-scoped task content.
+ * SRP: Renders the tasks page shell, journal sections, date-scoped task content, and swipe/touch date navigation.
  */
 import {
   useState,

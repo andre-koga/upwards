@@ -1,3 +1,6 @@
+/**
+ * SRP: Renders one memo/one-time task row with checkbox, timer pill, hold-to-pin, and memo edit dialog.
+ */
 import { memo, useEffect, useRef, useState } from "react";
 import type { OneTimeTask } from "@/lib/db/types";
 import TaskCheckbox from "@/components/tasks/task-checkbox";

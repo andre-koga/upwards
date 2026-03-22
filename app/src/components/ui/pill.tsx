@@ -1,3 +1,6 @@
+/**
+ * SRP: Renders an activity/memo pill with optional elapsed timer, play/stop, and separate name press/hold handlers.
+ */
 import { memo } from "react";
 import type { MouseEventHandler, PointerEventHandler } from "react";
 import { Play, Square } from "lucide-react";

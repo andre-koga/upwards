@@ -1,3 +1,6 @@
+/**
+ * SRP: Floating sync status pill with manual sync, auth entry, error surface, and timed visibility when Supabase is configured.
+ */
 import { useState, useEffect, useRef } from "react";
 import { AlertCircle } from "lucide-react";
 import { syncEngine } from "@/lib/sync";

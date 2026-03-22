@@ -1,5 +1,5 @@
 /**
- * SRP: Renders the unified journal edit dialog for emoji, title, reflection, and optional video upload.
+ * SRP: Renders the unified journal edit dialog (emoji, title, reflection, optional video) with optional parent hook for overlay pointer-dismiss after close.
  */
 import { useRef, useState } from "react";
 import { Loader2, Paperclip, Trash2 } from "lucide-react";

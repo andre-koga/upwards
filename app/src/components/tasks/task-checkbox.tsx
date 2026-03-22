@@ -1,3 +1,6 @@
+/**
+ * SRP: Renders a tappable task completion control with optional custom complete/incomplete content.
+ */
 import { memo } from "react";
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";

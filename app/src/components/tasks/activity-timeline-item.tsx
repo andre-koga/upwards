@@ -1,3 +1,6 @@
+/**
+ * SRP: Renders one activity row in a timeline with group color, interval display, and optional start or row click.
+ */
 import { memo } from "react";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 import { Play } from "lucide-react";

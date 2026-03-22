@@ -1,5 +1,5 @@
 /**
- * SRP: Today page divider bar — detected location display and quick edit action.
+ * SRP: Today page journal toolbar — bookmark toggle and controls to open journal editing.
  */
 import { Heart, PaintRoller, Pencil } from "lucide-react";
 import type { UseJournalEntryReturn } from "@/components/tasks/hooks/use-journal-entry";
