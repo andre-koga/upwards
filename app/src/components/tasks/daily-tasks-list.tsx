@@ -1,5 +1,5 @@
 /**
- * SRP: Renders today's tasks, timeline, and task-related dialogs.
+ * SRP: Renders today's tasks, timeline, and task-related dialogs using daily task state from the parent.
  */
 import { useState } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -15,19 +15,18 @@ import { useDailyTasks } from "./hooks/use-daily-tasks";
 import { CircleCheckBig, Palmtree } from "lucide-react";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 
+export type DailyTasksState = ReturnType<typeof useDailyTasks>;
+
 interface DailyTasksListProps {
   activities: Activity[];
   groups: ActivityGroup[];
-  currentDate: Date;
-  /** When this changes, daily data is reloaded (e.g. after sync). */
-  refreshTrigger?: number;
+  daily: DailyTasksState;
 }
 
 export default function DailyTasksList({
   activities,
   groups,
-  currentDate,
-  refreshTrigger = 0,
+  daily,
 }: DailyTasksListProps) {
   const [assignPeriodId, setAssignPeriodId] = useState<string | null>(null);
   const [assignIntervalMs, setAssignIntervalMs] = useState(0);
@@ -43,10 +42,6 @@ export default function DailyTasksList({
     activityStreaks,
     dailyActivities,
     getGroup,
-    nonNeverCount,
-    completedCount,
-    completionRate,
-    totalTimeSpentMs,
     timelineSessions,
     currentActivityId,
     currentMemoId,
@@ -75,7 +70,7 @@ export default function DailyTasksList({
     calculateActivityTotalTime,
     calculateMemoTime,
     formatTimerDisplay,
-  } = useDailyTasks({ activities, groups, currentDate, refreshTrigger });
+  } = daily;
   const pausedTaskIdSet = new Set(pausedTaskIds);
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
@@ -94,7 +89,7 @@ export default function DailyTasksList({
         onAdd={createOneTimeTask}
         icon={CircleCheckBig}
         triggerTitle="Add quick task"
-        triggerClassName="fixed bottom-16 right-4 z-[60] h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-md flex items-center justify-center hover:bg-primary/90 transition-colors"
+        triggerClassName="fixed bottom-2 right-2 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
       />
 
       {oneTimeTasks.length > 0 && (
@@ -122,17 +117,6 @@ export default function DailyTasksList({
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         For Today
       </p>
-
-      {dailyActivities.length > 0 && (
-        <div className="mb-2 ml-1 mr-1.5 flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            {isBreakDay
-              ? "Break day"
-              : `${completedCount} / ${nonNeverCount} (${completionRate}%)`}
-          </span>
-          <span>{formatTimerDisplay(totalTimeSpentMs)}</span>
-        </div>
-      )}
 
       <div className="flex-1 space-y-2">
         {loading && (

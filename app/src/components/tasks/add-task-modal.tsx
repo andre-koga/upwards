@@ -1,5 +1,5 @@
 /**
- * SRP: Opens the memo creation flow from a floating trigger button.
+ * SRP: Opens the memo creation flow from a floating trigger (default: small bottom-right FAB).
  */
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
@@ -14,6 +14,8 @@ interface AddTaskModalProps {
   ) => Promise<boolean>;
   triggerClassName?: string;
   triggerTitle?: string;
+  /** Shown next to the icon inside the trigger (wider layouts). */
+  triggerLabel?: string;
   icon?: LucideIcon;
   disabled?: boolean;
 }
@@ -22,6 +24,7 @@ export default function AddTaskModal({
   onAdd,
   triggerClassName,
   triggerTitle = "Add one-time task",
+  triggerLabel,
   icon: Icon = Plus,
   disabled = false,
 }: AddTaskModalProps) {
@@ -74,15 +77,32 @@ export default function AddTaskModal({
       />
 
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         title={triggerTitle}
+        aria-label={triggerTitle}
         className={
           triggerClassName ||
-          "fixed bottom-3 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
+          "fixed bottom-2 right-2 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
         }
       >
-        {open ? <X className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+        {triggerLabel ? (
+          <span className="flex items-center justify-center gap-2">
+            {open ? (
+              <X className="h-5 w-5 shrink-0" aria-hidden />
+            ) : (
+              <Icon className="h-5 w-5 shrink-0" aria-hidden />
+            )}
+            <span className="text-sm font-semibold">
+              {open ? "Close" : triggerLabel}
+            </span>
+          </span>
+        ) : open ? (
+          <X className="h-5 w-5" aria-hidden />
+        ) : (
+          <Icon className="h-5 w-5" aria-hidden />
+        )}
       </button>
     </>
   );

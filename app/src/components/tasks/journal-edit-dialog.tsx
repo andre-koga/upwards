@@ -1,7 +1,7 @@
 /**
- * SRP: Renders the unified journal edit dialog (emoji, title, reflection, optional video) with optional parent hook for overlay pointer-dismiss after close.
+ * SRP: Renders the unified journal edit dialog (emoji, title, reflection, optional video) via FormDialog.
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Paperclip, Trash2 } from "lucide-react";
 import {
   FormCharacterCount,
@@ -31,8 +31,6 @@ interface JournalEditDialogProps {
   entryDate: string;
   canUploadVideo: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Called when the user presses outside the dialog (overlay); parent can suppress the following click-through. */
-  onDismissPointerDownOutside?: () => void;
   onSave: (values: {
     emoji: string;
     title: string;
@@ -51,7 +49,6 @@ export default function JournalEditDialog({
   entryDate,
   canUploadVideo,
   onOpenChange,
-  onDismissPointerDownOutside,
   onSave,
 }: JournalEditDialogProps) {
   const [emoji, setEmoji] = useState(initialEmoji);
@@ -61,6 +58,15 @@ export default function JournalEditDialog({
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setEmoji(initialEmoji);
+    setTitle(initialTitle);
+    setText(initialText);
+    setVideoPath(initialVideoPath);
+    setUploadError(null);
+  }, [open, initialEmoji, initialTitle, initialText, initialVideoPath]);
 
   const handleSave = () => {
     onSave({
@@ -106,9 +112,6 @@ export default function JournalEditDialog({
       onOpenChange={onOpenChange}
       title="Edit journal"
       contentClassName="w-[22rem]"
-      onContentPointerDownOutside={() => {
-        onDismissPointerDownOutside?.();
-      }}
     >
       <FormStack>
         <div className="flex items-center justify-center">

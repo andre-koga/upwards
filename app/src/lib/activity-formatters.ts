@@ -65,6 +65,33 @@ export function formatTimerDisplay(elapsedMs: number): string {
 }
 
 /**
+ * Format milliseconds as natural language, e.g. "5 hours and 20 minutes".
+ * Omits zero parts; returns "No time tracked" when duration is zero.
+ */
+export function formatDurationProse(elapsedMs: number): string {
+  const totalSeconds = Math.floor(elapsedMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  if (hours === 0 && minutes === 0) {
+    if (totalSeconds <= 0) {
+      return "No time tracked";
+    }
+    return "Less than a minute";
+  }
+
+  const hourPart =
+    hours === 0 ? null : hours === 1 ? "1 hour" : `${hours} hours`;
+  const minutePart =
+    minutes === 0 ? null : minutes === 1 ? "1 minute" : `${minutes} minutes`;
+
+  if (hourPart && minutePart) {
+    return `${hourPart} and ${minutePart}`;
+  }
+  return hourPart ?? minutePart ?? "No time tracked";
+}
+
+/**
  * Convert a routine string to a human-readable label.
  * e.g. "weekly:1,3,5" → "Weekly: Mon, Wed, Fri"
  */

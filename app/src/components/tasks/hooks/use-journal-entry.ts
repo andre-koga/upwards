@@ -261,6 +261,8 @@ export function useJournalEntry(currentDate: Date) {
     journalEntryNumber: journalEntry?.journal_entry_number ?? null,
     isJournalComplete: !!journalEntry?.is_journal_complete,
     videoThumbnail: journalEntry?.video_thumbnail ?? null,
+    /** Parsed `journalEntries.location`; updates with `journalEntry` (not one effect behind `draftLocation`). */
+    persistedLocation: parseLocation(journalEntry?.location),
     // actions
     loadJournalEntry,
     saveDraft,

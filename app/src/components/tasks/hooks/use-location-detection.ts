@@ -8,7 +8,10 @@ import type { LocationData } from "@/lib/db/types";
 interface UseLocationDetectionParams {
   isToday: boolean;
   isJournalLoaded: boolean;
+  /** In-memory draft; may lag one effect after load. */
   currentLocation: LocationData | null;
+  /** Location already saved for this day; use so we do not start GPS before draft sync runs. */
+  persistedLocation: LocationData | null;
   onLocationDetected: (location: LocationData) => void;
 }
 
@@ -16,6 +19,7 @@ export function useLocationDetection({
   isToday,
   isJournalLoaded,
   currentLocation,
+  persistedLocation,
   onLocationDetected,
 }: UseLocationDetectionParams) {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -34,7 +38,7 @@ export function useLocationDetection({
       if (isDetectingLocation) return;
       if (!force) {
         if (!isJournalLoaded) return;
-        if (currentLocation) return;
+        if (currentLocation || persistedLocation) return;
         if (hasTriedGeoRef.current) return;
       }
 
@@ -92,6 +96,7 @@ export function useLocationDetection({
       isToday,
       isJournalLoaded,
       currentLocation,
+      persistedLocation,
       isDetectingLocation,
       onLocationDetected,
     ]

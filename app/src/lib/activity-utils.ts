@@ -82,6 +82,7 @@ export type { ParsedRoutine } from "@/lib/activity-formatters";
 export { parseRoutine } from "@/lib/activity-formatters";
 export {
   formatActivityTime,
+  formatDurationProse,
   formatTimerDisplay,
   formatRoutineDisplay,
 } from "@/lib/activity-formatters";

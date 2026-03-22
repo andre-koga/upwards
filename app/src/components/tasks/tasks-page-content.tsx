@@ -1,5 +1,5 @@
 /**
- * SRP: Renders the tasks page shell, journal sections, date-scoped task content, and swipe/touch date navigation.
+ * SRP: Renders the tasks page shell, journal date header, journal sections, date-scoped tasks, and swipe/touch date navigation (calendar via header card).
  */
 import {
   useState,
@@ -10,32 +10,28 @@ import {
   type PointerEvent,
   type TouchEvent,
 } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Flame,
-  Hash,
-  MapPin,
-  MapPinOff,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Flame, Hash } from "lucide-react";
 import { toDateStr } from "@/lib/db";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import { useJournalEntry } from "@/components/tasks/hooks/use-journal-entry";
 import { useJournalMeta } from "@/components/tasks/hooks/use-journal-meta";
+import { useJournalDayWeather } from "@/components/tasks/hooks/use-journal-day-weather";
 import { useLocationDetection } from "@/components/tasks/hooks/use-location-detection";
 import { useTasksPageData } from "@/components/tasks/hooks/use-tasks-page-data";
+import { useDailyTasks } from "@/components/tasks/hooks/use-daily-tasks";
 import JournalVideoSection, {
   type JournalThumbnailSource,
 } from "@/components/tasks/journal-video-section";
 import JournalTextSection from "@/components/tasks/journal-text-section";
 import JournalEditDialog from "@/components/tasks/journal-edit-dialog";
-import DateNavigator from "@/components/tasks/date-navigator";
+import JournalDateHeaderCard from "@/components/tasks/journal-date-header-card";
 import TasksJournalMetaBar from "@/components/tasks/tasks-journal-meta-bar";
 import type { LocationData } from "@/lib/db/types";
 import { getJournalVideoPlaybackUrl } from "@/lib/journal-video-storage";
 import { pickRandomHabitQuote } from "@/lib/habit-quotes";
 import { useAuth } from "@/lib/use-auth";
+import { cn } from "@/lib/utils";
 
 export default function TasksPageContent() {
   const SWIPE_MIN_DISTANCE_PX = 70;
@@ -46,7 +42,9 @@ export default function TasksPageContent() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
   const [journalEditOpen, setJournalEditOpen] = useState(false);
-  const [journalEditSession, setJournalEditSession] = useState(0);
+  /** Briefly ignore pointer on the journal “open editor” hit area after close (overlay dismiss ghost click). */
+  const [suppressJournalOpenHitArea, setSuppressJournalOpenHitArea] =
+    useState(false);
   const [quote] = useState(pickRandomHabitQuote);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [swipeFeedback, setSwipeFeedback] = useState<{
@@ -76,6 +74,13 @@ export default function TasksPageContent() {
     loadJournalMeta,
   });
 
+  const dailyTasks = useDailyTasks({
+    activities,
+    groups,
+    currentDate,
+    refreshTrigger,
+  });
+
   const handleLocationDetected = useCallback(
     (location: LocationData) => {
       journal.setDraftLocation(location);
@@ -85,11 +90,17 @@ export default function TasksPageContent() {
     [journal]
   );
 
+  const journalDayWeather = useJournalDayWeather(
+    currentDate,
+    journal.draftLocation ?? journal.persistedLocation
+  );
+
   const { detectLocation, isDetectingLocation, resetGeoAttempt } =
     useLocationDetection({
       isToday: journal.canEditJournal,
       isJournalLoaded,
       currentLocation: journal.draftLocation,
+      persistedLocation: journal.persistedLocation,
       onLocationDetected: handleLocationDetected,
     });
 
@@ -152,9 +163,21 @@ export default function TasksPageContent() {
       }
     : null;
 
+  const handleJournalEditOpenChange = (open: boolean) => {
+    setJournalEditOpen((prev) => {
+      if (prev && !open) {
+        setSuppressJournalOpenHitArea(true);
+        window.setTimeout(() => setSuppressJournalOpenHitArea(false), 0);
+      }
+      return open;
+    });
+    if (open) {
+      setSuppressJournalOpenHitArea(false);
+    }
+  };
+
   const openJournalEditor = () => {
-    setJournalEditSession((session) => session + 1);
-    setJournalEditOpen(true);
+    handleJournalEditOpenChange(true);
   };
 
   const clearJournalHoldTimer = () => {
@@ -333,94 +356,103 @@ export default function TasksPageContent() {
         </div>
       )}
 
-      <div
-        className="m-2 overflow-hidden rounded-2xl border-b shadow-lg"
-        onPointerDown={
-          journal.canEditJournal ? handleJournalPointerDown : undefined
-        }
-        onPointerUp={
-          journal.canEditJournal ? handleJournalPointerEnd : undefined
-        }
-        onPointerLeave={
-          journal.canEditJournal ? handleJournalPointerEnd : undefined
-        }
-        onPointerCancel={
-          journal.canEditJournal ? handleJournalPointerEnd : undefined
-        }
-        onContextMenu={
-          journal.canEditJournal ? (event) => event.preventDefault() : undefined
-        }
-        onClick={journal.canEditJournal ? handleJournalCardClick : undefined}
-      >
-        <JournalVideoSection
-          videoSrc={videoPlaybackSrc ?? ""}
-          canPlay={isOnline}
-          thumbnail={journalThumbnail}
-          onThumbnailGenerated={(thumb) => {
-            journal.draftRef.current.videoThumbnail = thumb;
-            journal.saveDraft();
-          }}
+      <div className="m-2 flex flex-col gap-2">
+        <JournalDateHeaderCard
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+          entryDates={entryDates}
+          bookmarkedDates={bookmarkedDates}
+          onCalendarOpen={loadJournalMeta}
+          canEditJournal={journal.canEditJournal}
+          isDetectingLocation={isDetectingLocation}
+          draftLocation={journal.draftLocation}
+          loading={dailyTasks.loading}
+          dailyActivitiesCount={dailyTasks.dailyActivities.length}
+          isBreakDay={dailyTasks.isBreakDay}
+          completedCount={dailyTasks.completedCount}
+          nonNeverCount={dailyTasks.nonNeverCount}
+          totalTimeSpentMs={dailyTasks.totalTimeSpentMs}
+          dayWeather={journalDayWeather}
         />
 
-        <div className="pointer-events-none relative z-10 mx-auto -mt-10 flex w-full max-w-2xl items-end justify-between px-4">
-          <div className="pointer-events-auto relative">
-            {journal.draftEmoji ? (
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl">
-                {journal.draftEmoji}
-              </span>
-            ) : (
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl text-muted-foreground/30">
-                🙂
-              </span>
+        <div
+          className="overflow-hidden rounded-2xl border border-border shadow-lg"
+          onPointerDown={
+            journal.canEditJournal ? handleJournalPointerDown : undefined
+          }
+          onPointerUp={
+            journal.canEditJournal ? handleJournalPointerEnd : undefined
+          }
+          onPointerLeave={
+            journal.canEditJournal ? handleJournalPointerEnd : undefined
+          }
+          onPointerCancel={
+            journal.canEditJournal ? handleJournalPointerEnd : undefined
+          }
+          onContextMenu={
+            journal.canEditJournal
+              ? (event) => event.preventDefault()
+              : undefined
+          }
+        >
+          <div
+            className={cn(
+              suppressJournalOpenHitArea && "[&_*]:!pointer-events-none"
             )}
-          </div>
-
-          <div className="mb-2 flex items-end gap-4">
-            <div className="flex items-center px-2 text-xs text-muted-foreground">
-              {(journal.canEditJournal && isDetectingLocation) ||
-              journal.draftLocation ? (
-                <>
-                  <MapPin className="h-3 w-3" />
-                  <span className="max-w-[80px] truncate">
-                    {journal.canEditJournal && isDetectingLocation
-                      ? "Detecting"
-                      : journal.draftLocation?.displayName}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <MapPinOff className="h-3 w-3" />
-                  <span>None</span>
-                </>
-              )}
-            </div>
-            {journal.isJournalComplete &&
-              typeof journal.journalCompletionStreak === "number" &&
-              typeof journal.journalEntryNumber === "number" && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center">
-                    <Hash className="h-3 w-3" />
-                    {journal.journalEntryNumber}
-                  </span>
-                  <span className={`inline-flex items-center`}>
-                    <Flame className="h-3 w-3" />
-                    {journal.journalCompletionStreak}
-                  </span>
-                </div>
-              )}
-          </div>
-        </div>
-
-        <div className="mx-auto max-w-2xl space-y-3 px-4">
-          <div className="px-1">
-            <JournalTextSection
-              title={journal.draftTitle}
-              text={journal.draftText}
+            onClick={
+              journal.canEditJournal ? handleJournalCardClick : undefined
+            }
+          >
+            <JournalVideoSection
+              videoSrc={videoPlaybackSrc ?? ""}
+              canPlay={isOnline}
+              thumbnail={journalThumbnail}
+              onThumbnailGenerated={(thumb) => {
+                journal.draftRef.current.videoThumbnail = thumb;
+                journal.saveDraft();
+              }}
             />
+
+            <div className="pointer-events-none relative z-10 mx-auto -mt-10 flex w-full max-w-2xl items-end justify-between px-4">
+              <div className="pointer-events-auto relative">
+                {journal.draftEmoji ? (
+                  <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl">
+                    {journal.draftEmoji}
+                  </span>
+                ) : (
+                  <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl text-muted-foreground/30">
+                    🙂
+                  </span>
+                )}
+              </div>
+
+              {journal.isJournalComplete &&
+                typeof journal.journalCompletionStreak === "number" &&
+                typeof journal.journalEntryNumber === "number" && (
+                  <div className="pointer-events-auto mb-2 flex items-end gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center">
+                      <Hash className="h-3 w-3" />
+                      {journal.journalEntryNumber}
+                    </span>
+                    <span className="inline-flex items-center">
+                      <Flame className="h-3 w-3" />
+                      {journal.journalCompletionStreak}
+                    </span>
+                  </div>
+                )}
+            </div>
+
+            <div className="mx-auto max-w-2xl space-y-3 px-4">
+              <div className="px-1">
+                <JournalTextSection
+                  title={journal.draftTitle}
+                  text={journal.draftText}
+                />
+              </div>
+            </div>
           </div>
 
           <JournalEditDialog
-            key={journalEditSession}
             open={journalEditOpen}
             canEdit={journal.canEditJournal}
             initialEmoji={journal.draftEmoji}
@@ -429,10 +461,7 @@ export default function TasksPageContent() {
             initialVideoPath={journal.draftVideoPath}
             entryDate={dateString}
             canUploadVideo={isSupabaseConfigured && isAuthed}
-            onOpenChange={setJournalEditOpen}
-            onDismissPointerDownOutside={() => {
-              suppressNextCardClickRef.current = true;
-            }}
+            onOpenChange={handleJournalEditOpenChange}
             onSave={({ emoji, title, text, videoPath }) => {
               journal.setDraftEmoji(emoji);
               journal.setDraftTitle(title);
@@ -448,35 +477,24 @@ export default function TasksPageContent() {
               journal.saveDraft();
             }}
           />
-        </div>
 
-        <TasksJournalMetaBar
-          journal={journal}
-          onEditRequest={openJournalEditor}
-        />
+          <TasksJournalMetaBar
+            journal={journal}
+            onEditRequest={openJournalEditor}
+          />
+        </div>
       </div>
 
       <div className="p-3">
         <DailyTasksList
           activities={activities}
           groups={groups}
-          currentDate={currentDate}
-          refreshTrigger={refreshTrigger}
+          daily={dailyTasks}
         />
 
         <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground/60">
           {quote}
         </blockquote>
-
-        <div className="fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
-          <DateNavigator
-            currentDate={currentDate}
-            onDateChange={setCurrentDate}
-            entryDates={entryDates}
-            bookmarkedDates={bookmarkedDates}
-            onCalendarOpen={loadJournalMeta}
-          />
-        </div>
       </div>
     </div>
   );

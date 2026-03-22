@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, RotateCcw, Heart } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+/**
+ * SRP: Compact prev/next day controls with a control that opens the journal date calendar dialog.
+ */
+import { useState } from "react";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { toDateStr } from "@/lib/db";
+import { JournalDateCalendarDialog } from "@/components/tasks/journal-date-calendar-dialog";
 
 interface DateNavigatorProps {
   currentDate: Date;
@@ -35,62 +36,12 @@ export default function DateNavigator({
       });
 
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(currentDate);
-
-  const handlePopoverOpen = (open: boolean) => {
-    if (open) {
-      setCalendarMonth(currentDate);
-      onCalendarOpen?.();
-    }
-    setDatePopoverOpen(open);
-  };
-
-  const handleDaySelect = (date: Date | undefined) => {
-    if (!date) return;
-    onDateChange(date);
-    setDatePopoverOpen(false);
-  };
 
   const changeDate = (days: number) => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + days);
     onDateChange(newDate);
   };
-
-  const calendarComponents = useMemo(
-    () => ({
-      DayButton: ({
-        day,
-        modifiers,
-        className,
-        ...props
-      }: React.ComponentProps<typeof CalendarDayButton>) => {
-        const d = day.date;
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        const isBookmarked = bookmarkedDates.has(dateStr);
-        const hasEntry = entryDates.has(dateStr);
-        return (
-          <CalendarDayButton
-            day={day}
-            modifiers={modifiers}
-            className={cn("relative", className)}
-            {...props}
-          >
-            {props.children}
-            {isBookmarked ? (
-              <Heart
-                className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 fill-red-500 text-red-500 opacity-90"
-                style={{ width: 10, height: 10 }}
-              />
-            ) : hasEntry ? (
-              <span className="pointer-events-none absolute bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-current opacity-50" />
-            ) : null}
-          </CalendarDayButton>
-        );
-      },
-    }),
-    [entryDates, bookmarkedDates]
-  );
 
   return (
     <div className="flex h-12 items-center gap-1 rounded-full border border-border bg-background px-1 py-1 shadow-lg">
@@ -103,33 +54,22 @@ export default function DateNavigator({
       </button>
 
       <div className="flex items-center gap-1.5">
-        <Dialog open={datePopoverOpen} onOpenChange={handlePopoverOpen}>
-          <button
-            className="whitespace-nowrap rounded-md px-3 py-1.5 text-base font-semibold transition-colors hover:bg-accent hover:text-primary"
-            onClick={() => handlePopoverOpen(true)}
-          >
-            {dateLabel}
-          </button>
-          <DialogContent
-            size="sm"
-            className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2"
-          >
-            <Calendar
-              mode="single"
-              selected={currentDate}
-              onSelect={handleDaySelect}
-              month={calendarMonth}
-              onMonthChange={setCalendarMonth}
-              disabled={{ after: today }}
-              captionLayout="dropdown"
-              startMonth={new Date(2020, 0)}
-              endMonth={today}
-              fixedWeeks
-              className="w-full [--cell-size:3rem]"
-              components={calendarComponents}
-            />
-          </DialogContent>
-        </Dialog>
+        <button
+          className="whitespace-nowrap rounded-md px-3 py-1.5 text-base font-semibold transition-colors hover:bg-accent hover:text-primary"
+          onClick={() => setDatePopoverOpen(true)}
+        >
+          {dateLabel}
+        </button>
+
+        <JournalDateCalendarDialog
+          open={datePopoverOpen}
+          onOpenChange={setDatePopoverOpen}
+          currentDate={currentDate}
+          onSelectDate={onDateChange}
+          entryDates={entryDates}
+          bookmarkedDates={bookmarkedDates}
+          onCalendarOpen={onCalendarOpen}
+        />
 
         {!isToday && (
           <button
