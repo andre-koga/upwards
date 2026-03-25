@@ -3,6 +3,8 @@
  */
 import { Heart, PaintRoller, Pencil } from "lucide-react";
 import type { UseJournalEntryReturn } from "@/components/tasks/hooks/use-journal-entry";
+import { Button } from "../ui/button";
+import { cn } from "@/lib/utils";
 
 type Journal = UseJournalEntryReturn;
 
@@ -16,44 +18,47 @@ export default function TasksJournalMetaBar({
   onEditRequest,
 }: TasksJournalMetaBarProps) {
   return (
-    <div className="relative flex justify-end gap-3 p-4">
-      <button
-        type="button"
+    <div className="relative flex justify-end gap-2 p-4">
+      <Button
+        variant="ghost"
+        size="smIcon"
         onClick={() => {
           const next = !journal.draftBookmarked;
           journal.setDraftBookmarked(next);
           journal.saveBookmark(next);
         }}
-        className={`pointer-events-auto flex items-center gap-1.5 text-muted-foreground transition-colors ${
-          journal.draftBookmarked ? "" : "hover:text-foreground"
-        }`}
+        className="text-muted-foreground"
         title={
           journal.draftBookmarked ? "Remove bookmark" : "Bookmark this day"
         }
       >
         <Heart
-          className={`h-4 w-4 ${journal.draftBookmarked ? "text-red-500" : ""}`}
-          fill={journal.draftBookmarked ? "currentColor" : "none"}
+          className={cn(
+            "transition-colors",
+            journal.draftBookmarked && "fill-red-500 text-red-500"
+          )}
         />
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="ghost"
+        size="smIcon"
         // onClick={onEditRequest}
         // disabled={!journal.canEditJournal}
-        className="text-muted-foreground disabled:cursor-default disabled:opacity-70"
+        className="text-muted-foreground"
         title="Edit journal"
       >
-        <PaintRoller className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
+        <PaintRoller />
+      </Button>
+      <Button
+        variant="ghost"
+        size="smIcon"
         onClick={onEditRequest}
         disabled={!journal.canEditJournal}
-        className="text-muted-foreground disabled:cursor-default disabled:opacity-70"
+        className="text-muted-foreground"
         title="Edit journal"
       >
         <Pencil className="h-4 w-4" />
-      </button>
+      </Button>
     </div>
   );
 }

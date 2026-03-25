@@ -357,25 +357,15 @@ export default function TasksPageContent() {
       )}
 
       <div className="flex flex-col">
-        {/* <div className="bg-muted/50">
+        <div className="bg-muted/50">
           <JournalDateHeaderCard
             currentDate={currentDate}
             onDateChange={setCurrentDate}
             entryDates={entryDates}
             bookmarkedDates={bookmarkedDates}
             onCalendarOpen={loadJournalMeta}
-            canEditJournal={journal.canEditJournal}
-            isDetectingLocation={isDetectingLocation}
-            draftLocation={journal.draftLocation}
-            loading={dailyTasks.loading}
-            dailyActivitiesCount={dailyTasks.dailyActivities.length}
-            isBreakDay={dailyTasks.isBreakDay}
-            completedCount={dailyTasks.completedCount}
-            nonNeverCount={dailyTasks.nonNeverCount}
-            totalTimeSpentMs={dailyTasks.totalTimeSpentMs}
-            dayWeather={journalDayWeather}
           />
-        </div> */}
+        </div>
 
         <div
           className="mb-2 overflow-hidden"
@@ -485,6 +475,8 @@ export default function TasksPageContent() {
             onEditRequest={openJournalEditor}
           />
         </div>
+
+        <p className="text-center">...</p>
       </div>
 
       <div className="p-3">
