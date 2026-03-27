@@ -311,6 +311,7 @@ export function useDailyTasks({
           id: period.id,
           type: "activity" as const,
           activityId: period.activity_id,
+          memoId: "",
           groupId: activity?.group_id || "",
           name:
             activity?.name ??
@@ -334,6 +335,7 @@ export function useDailyTasks({
           id: period.id,
           type: "memo" as const,
           activityId: "",
+          memoId: period.one_time_task_id,
           groupId: "",
           name: memo?.title ?? "Memo",
           groupColor: MEMO_TIMELINE_COLOR,
@@ -358,6 +360,15 @@ export function useDailyTasks({
     if (!groupId) return null;
     return { sessionId: openPeriod.id, groupId };
   }, [resolvedCurrentActivityId, activityPeriods, activities]);
+
+  const runningMemoSession = useMemo(() => {
+    if (!currentMemoId) return null;
+    const openPeriod = memoPeriods.find(
+      (p) => !p.end_time && p.one_time_task_id === currentMemoId
+    );
+    if (!openPeriod) return null;
+    return { sessionId: openPeriod.id };
+  }, [currentMemoId, memoPeriods]);
 
   const currentActivityElapsedMs = useMemo(() => {
     if (!resolvedCurrentActivityId) return 0;
@@ -440,9 +451,11 @@ export function useDailyTasks({
     handleStopMemo,
     handleTimelineClick,
     runningSession,
+    runningMemoSession,
     currentActivityElapsedMs,
     currentMemoElapsedMs,
     loadActivityPeriods,
+    loadMemoPeriods,
     calculateActivityTime,
     calculateActivityTotalTime,
     calculateMemoTime,

@@ -1,10 +1,11 @@
 /**
- * SRP: Displays the currently running memo with elapsed time and stop action.
+ * SRP: Displays the currently running memo with elapsed time, stop action, and hold-to-edit gesture.
  */
-import { useEffect, useState, memo, useMemo } from "react";
+import { useEffect, useRef, useState, memo, useMemo } from "react";
 import { db } from "@/lib/db";
 import type { OneTimeTask } from "@/lib/db/types";
 import { Square } from "lucide-react";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 import { getContrastColor } from "@/lib/color-utils";
 
@@ -36,6 +37,8 @@ interface ActiveMemoPillProps {
   oneTimeTasks: OneTimeTask[];
   elapsedMs: number;
   onStop: () => void;
+  /** When set, holding the pill opens the memo edit dialog. */
+  onEdit?: () => void;
 }
 
 function ActiveMemoPill({
@@ -43,8 +46,11 @@ function ActiveMemoPill({
   oneTimeTasks,
   elapsedMs,
   onStop,
+  onEdit,
 }: ActiveMemoPillProps) {
   const [resolvedMemo, setResolvedMemo] = useState<OneTimeTask | null>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressNextStopClickRef = useRef(false);
 
   useEffect(() => {
     if (!currentMemoId) {
@@ -78,6 +84,35 @@ function ActiveMemoPill({
     };
   }, [currentMemoId, oneTimeTasks]);
 
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current != null) {
+        clearTimeout(holdTimerRef.current);
+      }
+    };
+  }, []);
+
+  const clearHoldTimer = () => {
+    if (holdTimerRef.current != null) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  };
+
+  const handleHoldStart = () => {
+    if (!onEdit) return;
+    clearHoldTimer();
+    holdTimerRef.current = setTimeout(() => {
+      holdTimerRef.current = null;
+      suppressNextStopClickRef.current = true;
+      onEdit();
+    }, HOLD_ACTION_DELAY_MS);
+  };
+
+  const handleHoldEnd = () => {
+    clearHoldTimer();
+  };
+
   const color = MEMO_PILL_COLOR;
   const textColor = useMemo(() => getContrastColor(color), [color]);
   const boxShadow = useMemo(
@@ -102,6 +137,23 @@ function ActiveMemoPill({
         color: textColor,
         boxShadow,
       }}
+      onPointerDown={onEdit ? handleHoldStart : undefined}
+      onPointerUp={onEdit ? handleHoldEnd : undefined}
+      onPointerCancel={onEdit ? handleHoldEnd : undefined}
+      onContextMenu={onEdit ? (e) => e.preventDefault() : undefined}
+      onKeyDown={
+        onEdit
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onEdit();
+              }
+            }
+          : undefined
+      }
+      role={onEdit ? "button" : undefined}
+      tabIndex={onEdit ? 0 : undefined}
+      aria-label={onEdit ? "Hold to edit running memo" : undefined}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -120,7 +172,13 @@ function ActiveMemoPill({
       <div className="mt-2 flex justify-end">
         <button
           type="button"
-          onClick={onStop}
+          onClick={() => {
+            if (suppressNextStopClickRef.current) {
+              suppressNextStopClickRef.current = false;
+              return;
+            }
+            onStop();
+          }}
           className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide"
           style={{ color: textColor }}
           title="Stop this memo"

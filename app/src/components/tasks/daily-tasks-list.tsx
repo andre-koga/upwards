@@ -11,6 +11,7 @@ import ActiveActivityPill from "./active-activity-pill";
 import ActiveMemoPill from "./active-memo-pill";
 import AddTaskModal from "./add-task-modal";
 import AssignActivityDialog from "./assign-activity-dialog";
+import MemoSessionDetailsDialog from "./memo-session-details-dialog";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import { CircleCheckBig, Palmtree } from "lucide-react";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
@@ -35,6 +36,9 @@ export default function DailyTasksList({
     groupId: string;
     sessionId: string;
   } | null>(null);
+  const [editingMemoSessionId, setEditingMemoSessionId] = useState<
+    string | null
+  >(null);
 
   const {
     isToday,
@@ -63,9 +67,11 @@ export default function DailyTasksList({
     handleStartMemo,
     handleStopMemo,
     runningSession,
+    runningMemoSession,
     currentActivityElapsedMs,
     currentMemoElapsedMs,
     loadActivityPeriods,
+    loadMemoPeriods,
     calculateActivityTime,
     calculateActivityTotalTime,
     calculateMemoTime,
@@ -212,6 +218,11 @@ export default function DailyTasksList({
             oneTimeTasks={oneTimeTasks}
             elapsedMs={currentMemoElapsedMs}
             onStop={handleStopMemo}
+            onEdit={
+              runningMemoSession
+                ? () => setEditingMemoSessionId(runningMemoSession.sessionId)
+                : undefined
+            }
           />
           {timelineSessions.map((session) => {
             const isMemo = session.type === "memo";
@@ -225,7 +236,7 @@ export default function DailyTasksList({
                 activityId={session.activityId || ""}
                 onClick={
                   isMemo
-                    ? undefined
+                    ? () => setEditingMemoSessionId(session.id)
                     : isUnknown
                       ? () => openAssignDialog(session.id, session.intervalMs)
                       : () =>
@@ -237,6 +248,11 @@ export default function DailyTasksList({
                 onStartActivity={
                   isToday && !isMemo && !isUnknown
                     ? handleStartActivity
+                    : undefined
+                }
+                onStartMemo={
+                  isToday && isMemo && session.memoId
+                    ? () => handleStartMemo(session.memoId)
                     : undefined
                 }
               />
@@ -281,6 +297,17 @@ export default function DailyTasksList({
           }}
         />
       )}
+
+      <MemoSessionDetailsDialog
+        sessionId={editingMemoSessionId}
+        open={editingMemoSessionId !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingMemoSessionId(null);
+        }}
+        onSessionUpdated={() => {
+          void loadMemoPeriods();
+        }}
+      />
     </div>
   );
 }

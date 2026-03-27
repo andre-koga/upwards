@@ -11,6 +11,7 @@ interface ActivityTimelineItemProps {
   intervalMs: number;
   activityId: string;
   onStartActivity?: (activityId: string) => void;
+  onStartMemo?: () => void;
   onClick?: () => void;
   className?: string;
 }
@@ -21,9 +22,12 @@ function ActivityTimelineItem({
   intervalMs,
   activityId,
   onStartActivity,
+  onStartMemo,
   onClick,
   className = "",
 }: ActivityTimelineItemProps) {
+  const hasPlayAction = !!(onStartActivity || onStartMemo);
+
   return (
     <div
       role={onClick ? "button" : undefined}
@@ -48,14 +52,18 @@ function ActivityTimelineItem({
         />
         <span className="truncate text-sm">{activityName}</span>
       </div>
-      {onStartActivity ? (
+      {hasPlayAction ? (
         <button
           onClick={(event) => {
             event.stopPropagation();
-            onStartActivity(activityId);
+            if (onStartMemo) {
+              onStartMemo();
+            } else if (onStartActivity) {
+              onStartActivity(activityId);
+            }
           }}
           className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-xs text-muted-foreground transition-colors"
-          title="Start this activity"
+          title={onStartMemo ? "Start this memo" : "Start this activity"}
         >
           <Play className="h-2.5 w-2.5" />
           {formatTimerDisplay(intervalMs)}
