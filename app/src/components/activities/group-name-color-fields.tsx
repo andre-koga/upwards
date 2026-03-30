@@ -1,6 +1,3 @@
-/**
- * SRP: Renders shared group name and HSL color controls for group forms.
- */
 import { useEffect, useState } from "react";
 import GroupPill from "@/components/activities/group-pill";
 import { getContrastColor, hexToHsl, hslToHex } from "@/lib/color-utils";

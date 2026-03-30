@@ -1,6 +1,3 @@
-/**
- * SRP: Loads and updates one activity session's editable details.
- */
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { db, newId, now } from "@/lib/db";

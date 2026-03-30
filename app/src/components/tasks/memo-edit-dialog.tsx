@@ -1,6 +1,3 @@
-/**
- * SRP: Renders the shared memo create/edit dialog UI and actions.
- */
 import {
   FormCharacterCount,
   FormDateField,

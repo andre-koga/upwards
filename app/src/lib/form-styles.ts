@@ -1,7 +1,3 @@
-/**
- * Shared form style class strings for consistency across activity/group forms.
- */
-
 export const formSectionLabel =
   "text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center";
 

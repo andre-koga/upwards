@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a labeled select field with dialog-first default styling.
- */
 import type { ReactNode } from "react";
 import { Label } from "@/components/ui/label";
 import {

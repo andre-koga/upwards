@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a reusable dialog form for creating or editing an activity.
- */
 import { useEffect, useState } from "react";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";

@@ -1,6 +1,3 @@
-/**
- * SRP: Pushes local Dexie rows to Supabase (incremental or force-all upserts).
- */
 import { db } from "@/lib/db";
 import { supabase, getCachedUserId } from "@/lib/supabase";
 import {

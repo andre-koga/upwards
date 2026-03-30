@@ -1,6 +1,3 @@
-/**
- * SRP: Computes and persists activity streak rows only when streak values change.
- */
 import { db, newId, now, toDateStr } from "@/lib/db";
 import type { Activity, ActivityStreak, DailyEntry } from "@/lib/db/types";
 import { shouldShowActivity } from "@/lib/activity-utils";

@@ -1,6 +1,3 @@
-/**
- * SRP: Renders the page-based group form wrapper and submit handling.
- */
 import { useState } from "react";
 import FormPageLayout from "@/components/ui/form-page-layout";
 import { formSectionLabel, formInput } from "@/lib/form-styles";

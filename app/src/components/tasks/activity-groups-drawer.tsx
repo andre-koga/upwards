@@ -1,6 +1,3 @@
-/**
- * SRP: Drawer to pick groups/activities and start new groups or activities.
- */
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";

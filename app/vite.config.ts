@@ -1,6 +1,3 @@
-/**
- * SRP: Configures Vite build behavior and exposes client build timestamp metadata.
- */
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";

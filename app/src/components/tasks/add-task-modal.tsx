@@ -1,6 +1,3 @@
-/**
- * SRP: Opens the memo creation flow from a floating trigger (default: small bottom-right FAB).
- */
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";

@@ -1,6 +1,3 @@
-/**
- * SRP: Pulls remote Supabase rows into Dexie, respecting dirty local rows and pull mode per table.
- */
 import { db } from "@/lib/db";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { saveLastSyncAt } from "./sync-storage";

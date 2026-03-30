@@ -1,7 +1,3 @@
-/**
- * SRP: Defines local-first database entity types shared by storage, sync, and UI layers.
- */
-
 export interface ActivityGroup {
   id: string;
   name: string;

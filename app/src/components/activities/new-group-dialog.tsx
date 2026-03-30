@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a dialog form for creating a new activity group.
- */
 import { db, newId, now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
 import { GroupDialogForm } from "@/components/activities/group-dialog-form";

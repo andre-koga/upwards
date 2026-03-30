@@ -1,6 +1,3 @@
-/**
- * SRP: Compact prev/next day controls with a control that opens the journal date calendar dialog.
- */
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { toDateStr } from "@/lib/db";

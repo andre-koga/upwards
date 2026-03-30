@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a dialog-form action button styled like FormField inputs (border, radius, height, focus ring).
- */
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

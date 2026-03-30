@@ -1,7 +1,3 @@
-/**
- * SRP: Coordinates Supabase push/pull, auto-sync scheduling, and safe pull application
- * (skipping remote rows that changed locally during an in-flight sync).
- */
 import { db } from "@/lib/db";
 import {
   supabase,

@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a labeled text-like input with dialog-first default styling.
- */
 import type { ComponentProps, ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

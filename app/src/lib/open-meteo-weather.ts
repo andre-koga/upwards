@@ -1,7 +1,3 @@
-/**
- * SRP: Open-Meteo forecast/archive requests and WMO weather-code helpers for day-scoped weather.
- */
-
 import { logError } from "@/lib/error-utils";
 
 const FORECAST_BASE = "https://api.open-meteo.com/v1/forecast";

@@ -1,6 +1,3 @@
-/**
- * SRP: Self-contained journal card with date navigation, video, text, emoji, bookmark, edit dialog, and hold-to-bookmark.
- */
 import {
   useCallback,
   useEffect,
@@ -14,17 +11,17 @@ import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import { getJournalVideoPlaybackUrl } from "@/lib/journal-video-storage";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
-import type { UseJournalEntryReturn } from "../tasks/hooks/use-journal-entry";
-import { useJournalMeta } from "../tasks/hooks/use-journal-meta";
-import { useJournalDayWeather } from "../tasks/hooks/use-journal-day-weather";
-import { useLocationDetection } from "../tasks/hooks/use-location-detection";
-import JournalDateHeaderCard from "../tasks/journal-date-header-card";
+import type { UseJournalEntryReturn } from "@/components/tasks/hooks/use-journal-entry";
+import { useJournalMeta } from "@/components/tasks/hooks/use-journal-meta";
+import { useJournalDayWeather } from "@/components/tasks/hooks/use-journal-day-weather";
+import { useLocationDetection } from "@/components/tasks/hooks/use-location-detection";
+import JournalDateHeaderCard from "@/components/tasks/journal-date-header-card";
 import JournalVideoSection, {
   type JournalThumbnailSource,
-} from "../tasks/journal-video-section";
-import JournalTextSection from "../tasks/journal-text-section";
-import JournalEditDialog from "../tasks/journal-edit-dialog";
-import TasksJournalMetaBar from "../tasks/tasks-journal-meta-bar";
+} from "@/components/tasks/journal-video-section";
+import JournalTextSection from "@/components/tasks/journal-text-section";
+import JournalEditDialog from "@/components/tasks/journal-edit-dialog";
+import TasksJournalMetaBar from "@/components/tasks/tasks-journal-meta-bar";
 import type { LocationData } from "@/lib/db/types";
 
 interface JournalCardProps {

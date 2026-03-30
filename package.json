@@ -2,6 +2,7 @@
   "name": "okhabit",
   "private": true,
   "scripts": {
+    "strip-scaffolding": "node scripts/strip-context-and-srp.mjs",
     "supabase": "supabase",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",

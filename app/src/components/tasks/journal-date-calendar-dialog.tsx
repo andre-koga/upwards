@@ -1,6 +1,3 @@
-/**
- * SRP: Modal calendar for picking a journal date with entry and bookmark markers.
- */
 import {
   useEffect,
   useMemo,

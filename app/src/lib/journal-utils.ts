@@ -1,6 +1,3 @@
-/**
- * SRP: Journal field parsing, completion metadata, and streak propagation for daily entries.
- */
 import { db, now, toDateStr } from "@/lib/db";
 import type { JournalEntry, LocationData } from "@/lib/db/types";
 import { addDays } from "@/lib/date-utils";

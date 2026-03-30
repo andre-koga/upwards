@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a labeled textarea field with dialog-first default styling.
- */
 import type { ComponentProps, ReactNode } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";

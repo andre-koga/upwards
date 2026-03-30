@@ -1,6 +1,3 @@
-/**
- * SRP: Shared sync configuration — table lists, Dexie table mapping, and timing constants.
- */
 import { db } from "@/lib/db";
 import type { SyncTable } from "./sync-transformers";
 

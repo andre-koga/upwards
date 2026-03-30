@@ -1,6 +1,3 @@
-/**
- * SRP: Defines the Dexie database schema versions and exports shared DB helpers.
- */
 import Dexie, { type Table } from "dexie";
 import { v4 as uuidv4 } from "uuid";
 import { toDateString } from "@/lib/date-utils";

@@ -1,6 +1,3 @@
-/**
- * SRP: Renders journal location and streak above the title, then title and reflection text.
- */
 import { Flame, MapPin } from "lucide-react";
 import type { LocationData } from "@/lib/db/types";
 

@@ -1,6 +1,3 @@
-/**
- * SRP: Uploads and deletes journal videos in Supabase Storage.
- */
 import {
   supabase,
   isSupabaseConfigured,

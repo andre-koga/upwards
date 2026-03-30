@@ -1,6 +1,3 @@
-/**
- * SRP: Full-page form shell with back control, scrollable fields, and fixed submit bar.
- */
 import { useNavigate } from "react-router-dom";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { Button } from "@/components/ui/button";

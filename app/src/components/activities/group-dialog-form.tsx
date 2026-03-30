@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a reusable dialog form for creating or editing a group.
- */
 import { useEffect, useState } from "react";
 import { FormDialog, FormDialogActions, FormStack } from "@/components/forms";
 import {

@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a reusable boolean toggle button for form controls.
- */
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

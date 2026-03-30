@@ -1,6 +1,3 @@
-/**
- * SRP: Prominent selected-date display above the journal: opens calendar from the card or icon or settings
- */
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
 import { Settings } from "lucide-react";
 import { toDateStr } from "@/lib/db";

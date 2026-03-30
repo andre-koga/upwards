@@ -1,6 +1,3 @@
-/**
- * SRP: Optional journal header row with bookmark toggle for editable entries.
- */
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

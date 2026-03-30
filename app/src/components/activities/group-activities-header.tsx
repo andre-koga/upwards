@@ -1,6 +1,3 @@
-/**
- * SRP: Hero header for group activities — gradient title area with edit and archive controls.
- */
 import type { ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { Pencil, Archive, ArchiveRestore } from "lucide-react";

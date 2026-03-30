@@ -1,6 +1,3 @@
-/**
- * SRP: Provides consistent horizontal layout for grouped form controls.
- */
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 

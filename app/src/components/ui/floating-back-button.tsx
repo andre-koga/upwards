@@ -1,6 +1,3 @@
-/**
- * SRP: Fixed circular back or settings control; supports router Link or button callback.
- */
 import { Link } from "react-router-dom";
 import { X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";

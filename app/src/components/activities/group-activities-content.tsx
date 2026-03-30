@@ -1,6 +1,3 @@
-/**
- * SRP: Group activities page body — list, timeline, dialogs, and archive flows.
- */
 import { useState, useEffect } from "react";
 import { db, now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";

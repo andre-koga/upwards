@@ -1,6 +1,3 @@
-/**
- * SRP: Renders the page-based activity form fields and routine configuration.
- */
 import { useState } from "react";
 import RoutineSelector from "@/components/activities/routine-selector";
 import FormPageLayout from "@/components/ui/form-page-layout";

@@ -1,6 +1,3 @@
-/**
- * SRP: Renders one activity row with completion, pause, timer, streak controls, and hold-to-act behavior for applicable task types.
- */
 import { memo, useEffect, useRef, useState } from "react";
 import { Flame, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";

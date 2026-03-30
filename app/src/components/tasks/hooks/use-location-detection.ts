@@ -1,6 +1,3 @@
-/**
- * SRP: Detects and reverse-geocodes the current location for editable journal days.
- */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logError } from "@/lib/error-utils";
 import type { LocationData } from "@/lib/db/types";

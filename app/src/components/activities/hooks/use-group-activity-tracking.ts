@@ -1,6 +1,3 @@
-/**
- * SRP: Tracks group activity toggles and computes completed elapsed time totals.
- */
 import { useCallback, useEffect, useState } from "react";
 import { db, todayStr } from "@/lib/db";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";

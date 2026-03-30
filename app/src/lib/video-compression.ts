@@ -1,6 +1,3 @@
-/**
- * SRP: Client-side video compression (clip to 10s, resize to 1080p, preset bitrate).
- */
 const MAX_DIMENSION = 1920;
 const VIDEO_BITRATE = 2_000_000;
 const AUDIO_BITRATE = 128_000;

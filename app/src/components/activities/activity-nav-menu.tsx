@@ -1,6 +1,3 @@
-/**
- * SRP: Floating activities sub-nav chip (e.g. stats entry).
- */
 import { useNavigate, useLocation } from "react-router-dom";
 import { BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,3 @@
-/**
- * SRP: Creates or retrieves date-scoped daily entries with safe default fields.
- */
 import { db, now, newId } from "@/lib/db";
 import type { DailyEntry } from "@/lib/db/types";
 

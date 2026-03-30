@@ -1,6 +1,3 @@
-/**
- * SRP: Modal sign-in / sign-up form for Supabase sync authentication.
- */
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
 import {

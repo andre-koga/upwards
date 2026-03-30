@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a reusable single-input confirmation dialog with optional secondary action.
- */
 import {
   Dialog,
   DialogContent,

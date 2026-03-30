@@ -1,6 +1,3 @@
-/**
- * SRP: Generates a thumbnail from a direct-uploaded video URL via canvas frame capture.
- */
 import { useEffect, useState } from "react";
 
 const SEEK_FRACTIONS = [0.08, 0.18, 0.3, 0.45];

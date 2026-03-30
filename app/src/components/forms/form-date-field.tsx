@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a labeled date input field with dialog-first default styling.
- */
 import type { ComponentProps } from "react";
 import { FormField } from "@/components/forms/form-field";
 

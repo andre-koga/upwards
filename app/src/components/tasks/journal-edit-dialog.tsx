@@ -1,6 +1,3 @@
-/**
- * SRP: Renders the unified journal edit dialog (emoji, title, reflection, optional video) via FormDialog.
- */
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Paperclip, Trash2 } from "lucide-react";
 import {

@@ -1,6 +1,3 @@
-/**
- * SRP: Compact sync + auth affordances for the status bar pill.
- */
 import { Cloud, CloudOff, RefreshCw, LogIn, AlertCircle } from "lucide-react";
 import { syncEngine } from "@/lib/sync";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,3 @@
-/**
- * SRP: Sanitizes sync payloads so only schema-valid rows and references are upserted.
- */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { db, newId } from "@/lib/db";
 import type { SyncTable } from "./sync-transformers";

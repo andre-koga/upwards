@@ -1,6 +1,3 @@
-/**
- * SRP: Renders grouped activity history and opens session editing.
- */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { db, toDateStr } from "@/lib/db";
 import ActivityTimelineItem from "@/components/tasks/activity-timeline-item";

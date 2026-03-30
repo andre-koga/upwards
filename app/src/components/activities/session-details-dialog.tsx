@@ -1,6 +1,3 @@
-/**
- * SRP: Renders the edit-session form inside a reusable dialog.
- */
 import {
   FormDateField,
   FormDialog,

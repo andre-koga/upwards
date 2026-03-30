@@ -1,6 +1,3 @@
-/**
- * SRP: Renders the unknown-activity assignment form using shared session-style form components.
- */
 import { useState, useEffect, useCallback } from "react";
 import { db, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";

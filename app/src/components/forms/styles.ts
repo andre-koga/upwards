@@ -1,7 +1,3 @@
-/**
- * SRP: Defines shared dialog-form style tokens for form composition components.
- */
-
 export const dialogFieldClassName =
   "w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary read-only:cursor-default read-only:border-border read-only:border-dashed disabled:cursor-not-allowed disabled:opacity-50 read-only:bg-muted/30";
 

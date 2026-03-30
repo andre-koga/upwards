@@ -1,6 +1,3 @@
-/**
- * SRP: Displays the currently running activity with elapsed time and stop/edit actions.
- */
 import { useEffect, useState, memo, useMemo } from "react";
 import { useRef } from "react";
 import { db } from "@/lib/db";

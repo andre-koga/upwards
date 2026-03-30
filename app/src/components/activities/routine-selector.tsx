@@ -1,6 +1,3 @@
-/**
- * SRP: Renders routine selection controls and routine-specific option inputs.
- */
 import {
   FormField,
   FormRow,

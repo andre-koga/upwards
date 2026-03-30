@@ -1,6 +1,3 @@
-/**
- * SRP: Manages daily activity periods (open/close, time calculation) for a given date.
- */
 import { useState, useCallback } from "react";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";

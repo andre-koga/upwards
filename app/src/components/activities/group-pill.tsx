@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a group as a pill with optional settings (cog), name, and start/stop action.
- */
 import { Settings, Play, Square } from "lucide-react";
 import { getContrastColor } from "@/lib/color-utils";
 import { Button } from "@/components/ui/button";

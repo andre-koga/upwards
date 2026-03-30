@@ -1,6 +1,3 @@
-/**
- * SRP: Displays a standardized character count for form fields.
- */
 import { cn } from "@/lib/utils";
 
 interface FormCharacterCountProps {

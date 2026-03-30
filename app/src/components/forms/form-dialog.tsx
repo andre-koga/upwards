@@ -1,6 +1,3 @@
-/**
- * SRP: Provides a standardized wrapper for floating form dialogs, including optional content outside-pointer handling.
- */
 import type { ComponentProps, ReactNode } from "react";
 import {
   Dialog,

@@ -1,6 +1,3 @@
-/**
- * SRP: Renders today's tasks, timeline, and task-related dialogs using daily task state from the parent.
- */
 import { useState } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";

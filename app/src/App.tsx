@@ -1,6 +1,3 @@
-/**
- * SRP: Defines the top-level router and global app scaffolding.
- */
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import GroupPage from "@/pages/group";

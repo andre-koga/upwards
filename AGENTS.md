@@ -1,6 +1,6 @@
 # OkHabit — Agent Guide
 
-Context for AI agents working on this codebase. See also per-folder `CONTEXT.md` files and `.cursor/rules/`.
+Context for AI agents working on this codebase. Cursor rules: `.cursor/rules/supabase-migrations.mdc` (migration filenames).
 
 ---
 
@@ -27,14 +27,15 @@ Path alias: `@/` → `app/src/`
 
 ```
 app/src/
-├── pages/           # Route components (thin wrappers)
-├── hooks/           # Page-level hooks (route params, page data)
+├── pages/           # Route screens (composition, page-specific wiring)
+│   └── hooks/      # Route-only orchestrators (e.g. one screen’s data graph)
+├── hooks/           # Cross-page hooks (route params, shared page data)
 ├── components/
-│   ├── tasks/      # Today page, daily tasks, journal
+│   ├── tasks/      # Today widgets: daily tasks, journal UI, dialogs
 │   │   └── hooks/  # Task/journal-specific hooks
-│   ├── activities/ # Groups, activities, timelines
+│   ├── activities/ # Groups, activities, timelines, archive
 │   │   └── hooks/  # Activity/group-specific hooks
-│   ├── settings/   # Auth, backup, sync, appearance
+│   ├── settings/   # Settings cards, auth, backup, sync UI
 │   ├── layout/     # Shared layout (nav, theme)
 │   └── ui/         # Shared UI primitives
 └── lib/            # DB, sync, utilities
@@ -48,13 +49,14 @@ We use **multiple hooks folders** on purpose:
 
 | Location | Purpose | When to add here |
 |----------|---------|------------------|
-| `src/hooks/` | **Page-level** — route params, page data loading, redirects | Hooks used by multiple pages or tied to routing |
-| `components/tasks/hooks/` | **Task/journal** — daily entry, journal, streaks, location | Hooks for the Today page and task list |
+| `pages/hooks/` | **Route orchestration** — composes feature hooks for a single route | Only used by one page under `pages/` (e.g. `useTodayPage`) |
+| `src/hooks/` | **Cross-page** — route params, page data loading, redirects | Hooks used by multiple pages or shared routing logic |
+| `components/tasks/hooks/` | **Task/journal** — daily entry, journal, streaks, location | Hooks for the Today task list and journal widgets |
 | `components/activities/hooks/` | **Activity/group** — group activities, archive, tracking | Hooks for group/activity pages |
 | `lib/use-auth.ts` | **Global** — auth state | Shared across settings, sync, etc. |
 | `components/settings/use-data-backup.ts` | **Feature** — backup logic | Colocated with the feature that uses it |
 
-**Rule:** Put hooks in the folder of the feature they serve. Only use `src/hooks/` for cross-page or routing concerns.
+**Rule:** Prefer `components/<feature>/hooks/` for feature logic. Use `pages/hooks/` when a **single route** needs a thin orchestration layer over those hooks. Use `src/hooks/` only for hooks shared across **multiple routes**.
 
 ---
 
@@ -66,9 +68,10 @@ We use **multiple hooks folders** on purpose:
 - **Types:** `lib/db/types.ts` defines core types. Re-export from there when needed.
 - **Date strings:** Use `toDateStr` from `@/lib/db` or `toDateString` from `@/lib/date-utils` for `YYYY-MM-DD`.
 
-### Components
+### Pages and components
 
-- Pages are thin; they delegate to content components in `components/`.
+- **`pages/`** owns each **route screen**: layout, data wiring, and UI that is specific to that URL. It is normal for a page file to contain substantial JSX.
+- **`components/`** holds reusable pieces: shared primitives (`ui/`), cross-route widgets, and **extracted** chunks when a page would become too large or a widget is reused.
 - Use `cn()` from `@/lib/utils` for class merging.
 - Shared form layout: `FormPageLayout` from `@/components/ui/form-page-layout`.
 
@@ -87,8 +90,3 @@ After code changes, run from `app/`:
 pnpm run lint && pnpm run ts && pnpm run format
 ```
 
----
-
-## Per-Folder Context
-
-Each major folder has a `CONTEXT.md` describing its role and conventions. Read them when working in that area.

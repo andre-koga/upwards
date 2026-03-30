@@ -1,6 +1,3 @@
-/**
- * SRP: Manages daily-entry state and persistence for counts, paused tasks, and break-day flags.
- */
 import { useState, useCallback, useRef } from "react";
 import { db, now, newId } from "@/lib/db";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";

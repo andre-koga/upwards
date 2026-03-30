@@ -1,6 +1,3 @@
-/**
- * SRP: Renders the journal video section preview and delegates editing to the unified journal dialog.
- */
 import { useState } from "react";
 import { CloudOff } from "lucide-react";
 import { useDirectVideoThumbnail } from "./hooks/use-direct-video-thumbnail";

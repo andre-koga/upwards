@@ -1,6 +1,3 @@
-/**
- * SRP: Loads and derives daily task state, streaks, and timeline actions for a selected date.
- */
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";

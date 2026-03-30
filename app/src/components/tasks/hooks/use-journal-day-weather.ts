@@ -1,6 +1,3 @@
-/**
- * SRP: Loads Open-Meteo weather for the selected journal day using coordinates or geocoded place name.
- */
 import { useEffect, useState } from "react";
 import { toDateStr } from "@/lib/db";
 import type { LocationData } from "@/lib/db/types";
