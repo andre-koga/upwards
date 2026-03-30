@@ -1,19 +1,19 @@
 import { Heart, PaintRoller, Pencil } from "lucide-react";
-import type { UseJournalEntryReturn } from "@/components/tasks/hooks/use-journal-entry";
-import { Button } from "../ui/button";
+import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type Journal = UseJournalEntryReturn;
 
-interface TasksJournalMetaBarProps {
+interface JournalMetaBarProps {
   journal: Journal;
   onEditRequest: () => void;
 }
 
-export default function TasksJournalMetaBar({
+export default function JournalMetaBar({
   journal,
   onEditRequest,
-}: TasksJournalMetaBarProps) {
+}: JournalMetaBarProps) {
   return (
     <div className="relative flex justify-end gap-2 p-4">
       <Button

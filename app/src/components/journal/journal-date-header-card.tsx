@@ -1,9 +1,9 @@
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
 import { Settings } from "lucide-react";
 import { formatDateShort, toDateString } from "@/lib/time-utils";
-import { JournalDateCalendarDialog } from "@/components/tasks/journal-date-calendar-dialog";
+import { JournalDateCalendarDialog } from "@/components/journal/journal-date-calendar-dialog";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 
 interface JournalDateHeaderCardProps {
   currentDate: Date;
@@ -58,7 +58,7 @@ export default function JournalDateHeaderCard({
             {shortDate}
           </p>
           {isSelectedToday && (
-            <span className="rounded-full border border-border bg-muted/40 px-2.5 text-xs">
+            <span className="rounded-full border border-border bg-muted/40 px-2.5 pt-0.5 text-xs">
               Today
             </span>
           )}

@@ -2,7 +2,7 @@ import { useState, useRef, type TouchEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toDateString } from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
-import JournalCard from "@/components/tasks/journal-card";
+import JournalCard from "@/components/journal/journal-card";
 import { pickRandomHabitQuote } from "@/lib/habit-quotes";
 import { useTodayPage } from "@/hooks/use-today-page";
 
@@ -25,8 +25,16 @@ export default function TodayPage() {
     canSwipe: boolean;
   } | null>(null);
 
-  const { journal, loadJournalMeta, activities, groups, loading, dailyTasks } =
-    useTodayPage(currentDate);
+  const {
+    journal,
+    entryDates,
+    bookmarkedDates,
+    loadJournalMeta,
+    activities,
+    groups,
+    loading,
+    dailyTasks,
+  } = useTodayPage(currentDate);
 
   if (loading) {
     return (
@@ -173,6 +181,8 @@ export default function TodayPage() {
         currentDate={currentDate}
         onDateChange={setCurrentDate}
         journal={journal}
+        entryDates={entryDates}
+        bookmarkedDates={bookmarkedDates}
         loadJournalMeta={loadJournalMeta}
       />
 

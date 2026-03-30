@@ -11,17 +11,16 @@ import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import { getJournalVideoPlaybackUrl } from "@/lib/journal";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
-import type { UseJournalEntryReturn } from "@/components/tasks/hooks/use-journal-entry";
-import { useJournalMeta } from "@/components/tasks/hooks/use-journal-meta";
-import { useJournalDayWeather } from "@/components/tasks/hooks/use-journal-day-weather";
-import { useLocationDetection } from "@/components/tasks/hooks/use-location-detection";
-import JournalDateHeaderCard from "@/components/tasks/journal-date-header-card";
+import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
+import { useJournalDayWeather } from "@/components/journal/hooks/use-journal-day-weather";
+import { useLocationDetection } from "@/components/journal/hooks/use-location-detection";
+import JournalDateHeaderCard from "@/components/journal/journal-date-header-card";
 import JournalVideoSection, {
   type JournalThumbnailSource,
-} from "@/components/tasks/journal-video-section";
-import JournalTextSection from "@/components/tasks/journal-text-section";
-import JournalEditDialog from "@/components/tasks/journal-edit-dialog";
-import TasksJournalMetaBar from "@/components/tasks/tasks-journal-meta-bar";
+} from "@/components/journal/journal-video-section";
+import JournalTextSection from "@/components/journal/journal-text-section";
+import JournalEditDialog from "@/components/journal/journal-edit-dialog";
+import JournalMetaBar from "@/components/journal/journal-meta-bar";
 import type { LocationData } from "@/lib/db/types";
 
 interface JournalCardProps {
@@ -29,13 +28,18 @@ interface JournalCardProps {
   onDateChange: (date: Date) => void;
   /** Single hook instance from the page — must not duplicate useJournalEntry inside this card. */
   journal: UseJournalEntryReturn;
-  loadJournalMeta: ReturnType<typeof useJournalMeta>["loadJournalMeta"];
+  /** From the same `useJournalMeta` as `loadJournalMeta` (page-level) — do not call `useJournalMeta` here. */
+  entryDates: Set<string>;
+  bookmarkedDates: Set<string>;
+  loadJournalMeta: () => Promise<void>;
 }
 
 export default function JournalCard({
   currentDate,
   onDateChange,
   journal,
+  entryDates,
+  bookmarkedDates,
   loadJournalMeta,
 }: JournalCardProps) {
   const [journalEditOpen, setJournalEditOpen] = useState(false);
@@ -49,7 +53,6 @@ export default function JournalCard({
   );
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
-  const { entryDates, bookmarkedDates } = useJournalMeta();
   const dateString = toDateString(currentDate);
 
   const videoPlaybackSrc = getJournalVideoPlaybackUrl(journal.draftVideoPath);
@@ -292,7 +295,7 @@ export default function JournalCard({
           }}
         />
 
-        <TasksJournalMetaBar
+        <JournalMetaBar
           journal={journal}
           onEditRequest={openJournalEditor}
         />
