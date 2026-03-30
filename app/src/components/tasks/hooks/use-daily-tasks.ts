@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { db, toDateStr } from "@/lib/db";
+import { db } from "@/lib/db";
+import { toDateString } from "@/lib/time-utils";
 import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import {
@@ -27,9 +28,9 @@ export function useDailyTasks({
   currentDate,
   refreshTrigger = 0,
 }: UseDailyTasksParams) {
-  const dateString = toDateStr(currentDate);
+  const dateString = toDateString(currentDate);
   const isToday = (() => {
-    const todayMidnight = new Date(toDateStr(new Date()) + "T00:00:00");
+    const todayMidnight = new Date(toDateString(new Date()) + "T00:00:00");
     const entryMidnight = new Date(dateString + "T00:00:00");
     const diffDays = Math.floor(
       (todayMidnight.getTime() - entryMidnight.getTime()) /

@@ -1,6 +1,6 @@
-import { db, now, toDateStr } from "@/lib/db";
+import { db, now } from "@/lib/db";
 import type { JournalEntry, LocationData } from "@/lib/db/types";
-import { addDays } from "@/lib/date-utils";
+import { shiftDate, toDateString } from "@/lib/time-utils";
 
 /**
  * Parse stored location — handles legacy plain-string values gracefully.
@@ -76,7 +76,7 @@ export async function getCompletionMetadata(
     };
   }
 
-  const yesterday = toDateStr(addDays(new Date(`${dateStr}T00:00:00`), -1));
+  const yesterday = toDateString(shiftDate(new Date(`${dateStr}T00:00:00`), -1));
   const yesterdayEntry = await db.journalEntries
     .where("entry_date")
     .equals(yesterday)
@@ -119,7 +119,7 @@ export async function propagateJournalCompletionStreaksAfterSave(
   savedDateStr: string
 ): Promise<void> {
   const timestamp = now();
-  let cursor = toDateStr(addDays(new Date(`${savedDateStr}T00:00:00`), 1));
+  let cursor = toDateString(shiftDate(new Date(`${savedDateStr}T00:00:00`), 1));
 
   while (true) {
     const entry = await db.journalEntries
@@ -130,7 +130,7 @@ export async function propagateJournalCompletionStreaksAfterSave(
 
     if (!entry?.is_journal_complete) break;
 
-    const yesterday = toDateStr(addDays(new Date(`${cursor}T00:00:00`), -1));
+    const yesterday = toDateString(shiftDate(new Date(`${cursor}T00:00:00`), -1));
     const yesterdayEntry = await db.journalEntries
       .where("entry_date")
       .equals(yesterday)
@@ -149,6 +149,6 @@ export async function propagateJournalCompletionStreaksAfterSave(
       });
     }
 
-    cursor = toDateStr(addDays(new Date(`${cursor}T00:00:00`), 1));
+    cursor = toDateString(shiftDate(new Date(`${cursor}T00:00:00`), 1));
   }
 }

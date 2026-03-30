@@ -1,6 +1,6 @@
 import { useState, useRef, type TouchEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { toDateStr } from "@/lib/db";
+import { toDateString } from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/tasks/journal-card";
 import { pickRandomHabitQuote } from "@/lib/habit-quotes";
@@ -89,7 +89,8 @@ export default function TodayPage() {
 
     const direction = deltaX > 0 ? "prev" : "next";
     const isBlocked =
-      direction === "next" && toDateStr(currentDate) === toDateStr(new Date());
+      direction === "next" &&
+      toDateString(currentDate) === toDateString(new Date());
 
     setSwipeFeedback({
       direction,
@@ -125,7 +126,7 @@ export default function TodayPage() {
 
     setCurrentDate((prev) => {
       const today = new Date();
-      if (toDateStr(prev) === toDateStr(today)) return prev;
+      if (toDateString(prev) === toDateString(today)) return prev;
       const next = new Date(prev);
       next.setDate(next.getDate() + 1);
       return next;

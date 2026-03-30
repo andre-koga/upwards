@@ -1,6 +1,6 @@
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
 import { Settings } from "lucide-react";
-import { toDateStr } from "@/lib/db";
+import { formatDateShort, toDateString } from "@/lib/time-utils";
 import { JournalDateCalendarDialog } from "@/components/tasks/journal-date-calendar-dialog";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -23,12 +23,8 @@ export default function JournalDateHeaderCard({
   const navigate = useNavigate();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const today = new Date();
-  const isSelectedToday = toDateStr(currentDate) === toDateStr(today);
-
-  const month = currentDate.toLocaleDateString("en-US", {
-    month: "short",
-  });
-  const dayNum = currentDate.getDate();
+  const isSelectedToday = toDateString(currentDate) === toDateString(today);
+  const shortDate = formatDateShort(currentDate);
 
   const openCalendar = () => setCalendarOpen(true);
   const openSettings = () => navigate("/settings");
@@ -59,7 +55,7 @@ export default function JournalDateHeaderCard({
           className="flex flex-grow items-center gap-2"
         >
           <p className="font-crimson font-semibold text-foreground">
-            {month} {dayNum}
+            {shortDate}
           </p>
           {isSelectedToday && (
             <span className="rounded-full border border-border bg-muted/40 px-2.5 text-xs">

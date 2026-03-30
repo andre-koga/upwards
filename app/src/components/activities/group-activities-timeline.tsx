@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { db, toDateStr } from "@/lib/db";
+import { db } from "@/lib/db";
 import ActivityTimelineItem from "@/components/tasks/activity-timeline-item";
 import { formatTimerDisplay } from "@/lib/activity";
+import { formatWeekdayShortDate, toDateString } from "@/lib/time-utils";
 import { Loader2 } from "lucide-react";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 
@@ -61,7 +62,7 @@ export default function GroupActivitiesTimeline({
       for (let daysAgo = startDaysAgo; daysAgo < endDaysAgo; daysAgo++) {
         const date = new Date();
         date.setDate(date.getDate() - daysAgo);
-        const dateString = toDateStr(date);
+        const dateString = toDateString(date);
 
         const dailyEntry = await db.dailyEntries
           .filter((e) => e.date === dateString && !e.deleted_at)
@@ -113,11 +114,7 @@ export default function GroupActivitiesTimeline({
 
         days.push({
           date: dateString,
-          dateStr: date.toLocaleDateString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-          }),
+          dateStr: formatWeekdayShortDate(date),
           sessions,
           totalMs,
         });

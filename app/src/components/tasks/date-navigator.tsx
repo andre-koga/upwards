@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
-import { toDateStr } from "@/lib/db";
+import { formatDateWithOptionalYear, toDateString } from "@/lib/time-utils";
 import { Button } from "@/components/ui/button";
 import { JournalDateCalendarDialog } from "@/components/tasks/journal-date-calendar-dialog";
 
@@ -20,18 +20,8 @@ export default function DateNavigator({
   onCalendarOpen,
 }: DateNavigatorProps) {
   const today = new Date();
-  const isToday = toDateStr(currentDate) === toDateStr(today);
-  const isCurrentYear = currentDate.getFullYear() === today.getFullYear();
-  const dateLabel = isCurrentYear
-    ? currentDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })
-    : currentDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
+  const isToday = toDateString(currentDate) === toDateString(today);
+  const dateLabel = formatDateWithOptionalYear(currentDate, today);
 
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 

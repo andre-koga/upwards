@@ -7,7 +7,7 @@ import {
   FormStack,
 } from "@/components/forms";
 import { getActivityDisplayName } from "@/lib/activity";
-import { fromDateString, timeToSeconds, toDateString } from "@/lib/date-utils";
+import { fromDateString, timeToSeconds, toDateString } from "@/lib/time-utils";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
 import { useCallback } from "react";
 

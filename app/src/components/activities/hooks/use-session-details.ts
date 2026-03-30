@@ -17,7 +17,7 @@ import {
   formatTimeInput,
   combineDateAndTime,
   startOfDay,
-} from "@/lib/date-utils";
+} from "@/lib/time-utils";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 
 const NONE_ACTIVITY_VALUE = "__none__";

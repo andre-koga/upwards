@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { toDateStr } from "@/lib/db";
+import { toDateString } from "@/lib/time-utils";
 import type { LocationData } from "@/lib/db/types";
 import {
   fetchDayWeatherOpenMeteo,
@@ -46,8 +46,8 @@ export function useJournalDayWeather(
   );
 
   useEffect(() => {
-    const dateStr = toDateStr(currentDate);
-    const todayStr = toDateStr(new Date());
+    const dateStr = toDateString(currentDate);
+    const todayStr = toDateString(new Date());
     const ac = new AbortController();
 
     async function run() {

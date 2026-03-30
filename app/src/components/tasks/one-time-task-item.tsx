@@ -3,7 +3,7 @@ import type { OneTimeTask } from "@/lib/db/types";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
-import { formatDateShort, fromDateString } from "@/lib/date-utils";
+import { formatDateShort, fromDateString } from "@/lib/time-utils";
 
 function getDueDateDisplayLabel(dueDate: string): string {
   const due = fromDateString(dueDate);

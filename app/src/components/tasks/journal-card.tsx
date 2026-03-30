@@ -6,7 +6,7 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import { toDateStr } from "@/lib/db";
+import { toDateString } from "@/lib/time-utils";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import { getJournalVideoPlaybackUrl } from "@/lib/journal";
 import { useAuth } from "@/lib/use-auth";
@@ -50,7 +50,7 @@ export default function JournalCard({
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
   const { entryDates, bookmarkedDates } = useJournalMeta();
-  const dateString = toDateStr(currentDate);
+  const dateString = toDateString(currentDate);
 
   const videoPlaybackSrc = getJournalVideoPlaybackUrl(journal.draftVideoPath);
 

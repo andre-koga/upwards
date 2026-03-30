@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
-import { db, now, newId, todayStr } from "@/lib/db";
+import { db, now, newId } from "@/lib/db";
+import { todayDateString } from "@/lib/time-utils";
 import type { OneTimeTask } from "@/lib/db/types";
 import { normalizeMemoTitle } from "@/components/tasks/memo-title";
 
@@ -20,7 +21,7 @@ export function useOneTimeTasks(dateString: string) {
 
   const loadOneTimeTasks = useCallback(async () => {
     try {
-      const today = todayStr();
+      const today = todayDateString();
 
       if (dateString === today) {
         const [incompleteTasks, completedTodayTasks] = await Promise.all([
@@ -86,7 +87,7 @@ export function useOneTimeTasks(dateString: string) {
 
   const toggleOneTimeTask = useCallback(async (task: OneTimeTask) => {
     const newVal = !task.is_completed;
-    const completedDate = newVal ? todayStr() : null;
+    const completedDate = newVal ? todayDateString() : null;
     setOneTimeTasks((prev) =>
       sortMemos(
         prev.map((t) =>

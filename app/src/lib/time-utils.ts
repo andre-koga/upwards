@@ -38,6 +38,32 @@ export function formatDateShort(date: Date): string {
 }
 
 /**
+ * Format Date for display, adding year only when different from reference year.
+ */
+export function formatDateWithOptionalYear(
+  date: Date,
+  referenceDate: Date = new Date()
+): string {
+  const includeYear = date.getFullYear() !== referenceDate.getFullYear();
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(includeYear ? { year: "numeric" } : {}),
+  });
+}
+
+/**
+ * Format Date as weekday + short month/day (e.g. "Mon, Jan 15").
+ */
+export function formatWeekdayShortDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/**
  * Format ISO time string to HH:MM:SS for time input.
  */
 export function formatTimeInput(isoTime: string | null): string {
@@ -48,6 +74,16 @@ export function formatTimeInput(isoTime: string | null): string {
   const minutes = String(date.getMinutes()).padStart(2, "0");
   const seconds = String(date.getSeconds()).padStart(2, "0");
   return `${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Format sync timestamp for compact UI surfaces.
+ */
+export function formatSyncTime(isoTime: string | null, fallback = "Never"): string {
+  if (!isoTime) return fallback;
+  const date = new Date(isoTime);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleTimeString();
 }
 
 /**
@@ -68,9 +104,6 @@ export function shiftDate(date: Date, days: number): Date {
   nextDate.setDate(nextDate.getDate() + days);
   return nextDate;
 }
-
-/** Alias for shiftDate for semantic clarity. */
-export const addDays = shiftDate;
 
 /**
  * Get start of day (midnight) for a date.
@@ -102,4 +135,11 @@ export function timeToSeconds(time: string): number {
   if (!time) return 0;
   const [hours, minutes, seconds = 0] = time.split(":").map(Number);
   return (hours || 0) * 3600 + (minutes || 0) * 60 + (seconds || 0);
+}
+
+/**
+ * Helper: today as YYYY-MM-DD (local time).
+ */
+export function todayDateString(): string {
+  return toDateString(new Date());
 }

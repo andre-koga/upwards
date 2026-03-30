@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { db, toDateStr, now, newId } from "@/lib/db";
+import { db, now, newId } from "@/lib/db";
+import { toDateString } from "@/lib/time-utils";
 import type { JournalEntry, LocationData } from "@/lib/db/types";
 import { toJournalVideoPath } from "@/lib/journal";
 import {
@@ -46,7 +47,7 @@ export function useJournalEntry(currentDate: Date) {
 
   const loadJournalEntry = useCallback(
     async (opts?: { background?: boolean }) => {
-      const dateStr = toDateStr(currentDate);
+      const dateStr = toDateString(currentDate);
       draftDateRef.current = dateStr;
       const background = opts?.background ?? false;
       try {
@@ -111,8 +112,8 @@ export function useJournalEntry(currentDate: Date) {
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const canEditJournal = (() => {
-    const todayMidnight = new Date(toDateStr(new Date()) + "T00:00:00");
-    const entryMidnight = new Date(toDateStr(currentDate) + "T00:00:00");
+    const todayMidnight = new Date(toDateString(new Date()) + "T00:00:00");
+    const entryMidnight = new Date(toDateString(currentDate) + "T00:00:00");
     const diffDays = Math.floor(
       (todayMidnight.getTime() - entryMidnight.getTime()) /
         (1000 * 60 * 60 * 24)
@@ -122,7 +123,7 @@ export function useJournalEntry(currentDate: Date) {
 
   const saveJournalEntry = useCallback(
     async (fields: JournalFields) => {
-      const dateStr = toDateStr(currentDate);
+      const dateStr = toDateString(currentDate);
       const n = now();
       try {
         const existing = await db.journalEntries
@@ -179,7 +180,7 @@ export function useJournalEntry(currentDate: Date) {
   const saveDraft = useCallback(() => {
     if (!canEditJournal) return;
     // Prevent saving if the date has changed (e.g., blur event fires during navigation)
-    const currentDateStr = toDateStr(currentDate);
+    const currentDateStr = toDateString(currentDate);
     if (draftDateRef.current !== currentDateStr) {
       return;
     }
@@ -198,7 +199,7 @@ export function useJournalEntry(currentDate: Date) {
   // Save only the bookmarked field — works for any day, not just editable ones
   const saveBookmark = useCallback(
     (bookmarked: boolean) => {
-      const currentDateStr = toDateStr(currentDate);
+      const currentDateStr = toDateString(currentDate);
       if (draftDateRef.current !== currentDateStr) {
         return;
       }
@@ -219,7 +220,7 @@ export function useJournalEntry(currentDate: Date) {
   // Save only the location field — works for any day
   const saveLocation = useCallback(
     (location: LocationData | null) => {
-      const currentDateStr = toDateStr(currentDate);
+      const currentDateStr = toDateString(currentDate);
       if (draftDateRef.current !== currentDateStr) {
         return;
       }

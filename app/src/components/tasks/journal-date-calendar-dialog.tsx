@@ -9,7 +9,7 @@ import { Heart } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { toDateStr } from "@/lib/db";
+import { toDateString } from "@/lib/time-utils";
 
 export interface JournalDateCalendarDialogProps {
   open: boolean;
@@ -58,7 +58,7 @@ export function JournalDateCalendarDialog({
         ...props
       }: ComponentProps<typeof CalendarDayButton>) => {
         const d = day.date;
-        const dateStr = toDateStr(d);
+        const dateStr = toDateString(d);
         const isBookmarked = bookmarkedDates.has(dateStr);
         const hasEntry = entryDates.has(dateStr);
         return (

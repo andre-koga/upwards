@@ -20,7 +20,7 @@ import {
   shiftTimeByMinutes,
   startOfDay,
   timeToSeconds,
-} from "@/lib/date-utils";
+} from "@/lib/time-utils";
 
 export default function SessionDetailsPage() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);

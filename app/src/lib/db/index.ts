@@ -1,6 +1,5 @@
 import Dexie, { type Table } from "dexie";
 import { v4 as uuidv4 } from "uuid";
-import { toDateString } from "@/lib/date-utils";
 import type {
   ActivityGroup,
   Activity,
@@ -159,12 +158,6 @@ export const now = () => new Date().toISOString();
 
 // Helper: new UUID
 export const newId = () => uuidv4();
-
-// Helper: today as YYYY-MM-DD (local time, consistent with toDateStr)
-export const todayStr = () => toDateString(new Date());
-
-// Helper: date to YYYY-MM-DD string (local time, not UTC)
-export const toDateStr = toDateString;
 
 // Re-export types for convenience
 export type {
