@@ -1,7 +1,7 @@
 import { memo } from "react";
 import type { MouseEventHandler, PointerEventHandler } from "react";
 import { Play, Square } from "lucide-react";
-import { formatTimerDisplay } from "@/lib/activity-utils";
+import { formatTimerDisplay } from "@/lib/activity";
 import { getContrastColor } from "@/lib/color-utils";
 import { Button } from "@/components/ui/button";
 

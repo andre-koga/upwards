@@ -1,9 +1,9 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { Flame, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { getActivityDisplayName } from "@/lib/activity-utils";
+import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Pill from "@/components/ui/pill";

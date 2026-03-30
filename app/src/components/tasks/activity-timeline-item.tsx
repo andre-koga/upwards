@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { formatTimerDisplay } from "@/lib/activity-utils";
+import { formatTimerDisplay } from "@/lib/activity";
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

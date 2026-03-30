@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
-import { getActivityDisplayName } from "@/lib/activity-utils";
+import { getActivityDisplayName } from "@/lib/activity";
 import {
   formatDate,
   shiftDate,

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import RoutineSelector from "@/components/activities/routine-selector";
 import FormPageLayout from "@/components/ui/form-page-layout";
-import { parseRoutine, isScheduledRoutine } from "@/lib/activity-utils";
+import { parseRoutine, isScheduledRoutine } from "@/lib/activity";
 import { formSectionLabel, formInput } from "@/lib/form-styles";
 import type { Activity } from "@/lib/db/types";
 

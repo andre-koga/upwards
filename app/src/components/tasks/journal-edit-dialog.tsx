@@ -10,10 +10,7 @@ import {
   FormTextareaField,
 } from "@/components/forms";
 import { getFirstEmoji } from "@/lib/emoji-utils";
-import {
-  JournalVideoUploadError,
-  uploadJournalVideo,
-} from "@/lib/journal-video-storage";
+import { JournalVideoUploadError, uploadJournalVideo } from "@/lib/journal";
 
 const TITLE_LIMIT = 30;
 const TEXT_LIMIT = 300;

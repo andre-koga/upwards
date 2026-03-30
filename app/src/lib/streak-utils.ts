@@ -1,6 +1,6 @@
 import { db, newId, now, toDateStr } from "@/lib/db";
 import type { Activity, ActivityStreak, DailyEntry } from "@/lib/db/types";
-import { shouldShowActivity } from "@/lib/activity-utils";
+import { shouldShowActivity } from "@/lib/activity";
 import { startOfDay, addDays } from "@/lib/date-utils";
 
 function isStreakEligible(activity: Activity): boolean {

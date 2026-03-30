@@ -1,5 +1,5 @@
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { getActivityDisplayName } from "@/lib/activity-utils";
+import { getActivityDisplayName } from "@/lib/activity";
 import { Button } from "@/components/ui/button";
 import { Pencil, Archive } from "lucide-react";
 import ActivityPill from "@/components/activities/activity-pill";

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { db, now } from "@/lib/db";
-import { stopCurrentActivity } from "@/lib/activity-utils";
+import { stopCurrentActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 
 interface ArchiveActivityDialogProps {

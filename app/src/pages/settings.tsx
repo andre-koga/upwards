@@ -14,11 +14,13 @@ export default function SettingsPage() {
   const buildLabel = import.meta.env.VITE_APP_BUILD_TIMESTAMP ?? "dev";
   const randomPhrase = import.meta.env.VITE_APP_RANDOM_PHRASE ?? "hey there!";
   return (
-    <div className="space-y-4 p-4 pb-24">
-      <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your preferences</p>
-      </div>
+    <div className="space-y-3 p-4 pb-24">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage your preferences
+        </p>
+      </header>
 
       <AppearanceCard />
 

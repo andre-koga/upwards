@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import ArchivedGroupsList from "@/components/activities/archived-groups-list";
 import ArchivedActivitiesList from "@/components/activities/archived-activities-list";
 import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dialog";
 import { useArchivedItems } from "@/components/activities/hooks/use-archived-items";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { SettingsSection } from "@/components/ui/settings-section";
 
 export default function ArchivedItems() {
   const navigate = useNavigate();
@@ -34,39 +35,26 @@ export default function ArchivedItems() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Archived Groups</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ArchivedGroupsList
-            groups={archivedGroups}
-            onUnarchive={handleUnarchiveGroup}
-            onDelete={(id) =>
-              setDeleteDialog({ open: true, type: "group", id })
-            }
-          />
-        </CardContent>
-      </Card>
+    <div className="space-y-3">
+      <SettingsSection title="Archived groups">
+        <ArchivedGroupsList
+          groups={archivedGroups}
+          onUnarchive={handleUnarchiveGroup}
+          onDelete={(id) => setDeleteDialog({ open: true, type: "group", id })}
+        />
+      </SettingsSection>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Archived Activities</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ArchivedActivitiesList
-            activities={archivedActivities}
-            allGroups={allGroups}
-            onUnarchive={handleUnarchiveActivity}
-            onDelete={(id) =>
-              setDeleteDialog({ open: true, type: "activity", id })
-            }
-          />
-        </CardContent>
-      </Card>
+      <SettingsSection title="Archived activities">
+        <ArchivedActivitiesList
+          activities={archivedActivities}
+          allGroups={allGroups}
+          onUnarchive={handleUnarchiveActivity}
+          onDelete={(id) =>
+            setDeleteDialog({ open: true, type: "activity", id })
+          }
+        />
+      </SettingsSection>
 
-      {/* Fixed floating back button */}
       <FloatingBackButton
         onClick={() => navigate("/settings")}
         title="Back to settings"

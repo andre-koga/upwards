@@ -4,9 +4,25 @@ import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import {
   isHiddenGroupDefaultActivity,
   getOrCreateHiddenGroupDefaultActivity,
-} from "@/lib/hidden-group-activity";
+} from "./hidden-default";
+import {
+  parseRoutine,
+  formatActivityTime,
+  formatDurationProse,
+  formatTimerDisplay,
+  formatRoutineDisplay,
+} from "./formatters";
 
 export { isHiddenGroupDefaultActivity, getOrCreateHiddenGroupDefaultActivity };
+
+export type { ParsedRoutine } from "./formatters";
+export {
+  parseRoutine,
+  formatActivityTime,
+  formatDurationProse,
+  formatTimerDisplay,
+  formatRoutineDisplay,
+};
 
 /** Display name for an activity; uses group name when activity.name is null (group-default). */
 export function getActivityDisplayName(
@@ -74,18 +90,6 @@ export function sortActivitiesByOrder(activities: Activity[]): Activity[] {
     );
   });
 }
-
-import { parseRoutine } from "@/lib/activity-formatters";
-
-// Re-export for backward compatibility
-export type { ParsedRoutine } from "@/lib/activity-formatters";
-export { parseRoutine } from "@/lib/activity-formatters";
-export {
-  formatActivityTime,
-  formatDurationProse,
-  formatTimerDisplay,
-  formatRoutineDisplay,
-} from "@/lib/activity-formatters";
 
 /**
  * Stops the current active tracking period for today if it matches

@@ -4,7 +4,7 @@ import { toDateStr } from "@/lib/db";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/tasks/journal-card";
 import { pickRandomHabitQuote } from "@/lib/habit-quotes";
-import { useTodayPage } from "@/pages/hooks/use-today-page";
+import { useTodayPage } from "@/hooks/use-today-page";
 
 export default function TodayPage() {
   const SWIPE_MIN_DISTANCE_PX = 70;

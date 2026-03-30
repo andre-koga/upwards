@@ -7,7 +7,7 @@ import {
   formatTimerDisplay,
   getGroup,
   getGroupColor,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";

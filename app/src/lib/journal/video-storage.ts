@@ -3,7 +3,7 @@ import {
   isSupabaseConfigured,
   getCachedUserId,
 } from "@/lib/supabase";
-import { compressVideo, VideoCompressionError } from "@/lib/video-compression";
+import { compressVideo, VideoCompressionError } from "./video-compression";
 
 export class JournalVideoUploadError extends Error {}
 

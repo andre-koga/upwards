@@ -5,7 +5,7 @@ import {
   getActivityDisplayName,
   getGroupName,
   getGroupColor,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_ARCHIVED_COLOR } from "@/lib/color-utils";
 

@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
-import { closeOpenPeriods } from "@/lib/activity-periods";
+import { closeOpenPeriods } from "@/lib/activity";
 
 export function useActivityTracking(
   dateString: string,

@@ -3,7 +3,7 @@ import { db, now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getActivityDisplayName } from "@/lib/activity-utils";
+import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import GroupActivitiesHeader from "@/components/activities/group-activities-header";
 import GroupActivitiesList from "@/components/activities/group-activities-list";

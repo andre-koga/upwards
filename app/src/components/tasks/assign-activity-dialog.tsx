@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { db, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import { isActiveGroup, isActiveActivity } from "@/lib/activity-utils";
+import {
+  isActiveGroup,
+  isActiveActivity,
+  formatTimerDisplay,
+} from "@/lib/activity";
 import {
   FormDialog,
   FormDialogActions,
@@ -10,7 +14,6 @@ import {
   FormSelectField,
   FormStack,
 } from "@/components/forms";
-import { formatTimerDisplay } from "@/lib/activity-utils";
 
 interface AssignActivityDialogProps {
   periodId: string;

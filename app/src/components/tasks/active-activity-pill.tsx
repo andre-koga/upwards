@@ -4,12 +4,12 @@ import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import {
   formatTimerDisplay,
   getActivityDisplayName,
   getGroup,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import { getContrastColor } from "@/lib/color-utils";
 
 function hexToRgba(hex: string, alpha: number): string {

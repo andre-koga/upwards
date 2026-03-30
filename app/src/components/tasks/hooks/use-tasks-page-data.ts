@@ -5,7 +5,7 @@ import {
   isActiveActivity,
   isActiveGroup,
   sortActivitiesByOrder,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 import { syncEngine } from "@/lib/sync";
 

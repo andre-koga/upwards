@@ -5,7 +5,7 @@ import {
   fetchDayWeatherOpenMeteo,
   geocodePlaceName,
   type DayWeatherSnapshot,
-} from "@/lib/open-meteo-weather";
+} from "@/lib/journal";
 
 export type JournalDayWeatherState =
   | { status: "loading" }

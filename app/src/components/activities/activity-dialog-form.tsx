@@ -5,8 +5,8 @@ import {
   isActiveActivity,
   isScheduledRoutine,
   parseRoutine,
-} from "@/lib/activity-utils";
-import { validateActivityData } from "@/lib/activity-validation";
+  validateActivityData,
+} from "@/lib/activity";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import RoutineSelector from "@/components/activities/routine-selector";
 import {

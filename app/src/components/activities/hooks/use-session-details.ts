@@ -10,7 +10,7 @@ import type {
 import {
   getOrCreateHiddenGroupDefaultActivity,
   isHiddenGroupDefaultActivity,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import {
   fromDateString,
   toDateString,

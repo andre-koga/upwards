@@ -1,4 +1,4 @@
-import { parseRoutine } from "@/lib/activity-utils";
+import { parseRoutine } from "./formatters";
 
 export interface ActivitySubmitData {
   name: string;

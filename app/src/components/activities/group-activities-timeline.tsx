@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { db, toDateStr } from "@/lib/db";
 import ActivityTimelineItem from "@/components/tasks/activity-timeline-item";
-import { formatTimerDisplay } from "@/lib/activity-utils";
+import { formatTimerDisplay } from "@/lib/activity";
 import { Loader2 } from "lucide-react";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 

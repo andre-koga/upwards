@@ -7,10 +7,10 @@ import {
   isActiveActivity,
   isHiddenGroupDefaultActivity,
   isScheduledRoutine,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { SettingsSection } from "@/components/ui/settings-section";
 
 function compareActivities(left: Activity, right: Activity): number {
   const leftOrder =
@@ -113,21 +113,16 @@ export default function TaskOrderPage() {
   );
 
   return (
-    <div className="space-y-4 p-4 pb-24">
-      <div>
-        <h1 className="text-2xl font-bold">Task Order</h1>
-        <p className="text-muted-foreground">
+    <div className="space-y-3 p-4 pb-24">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Task order</h1>
+        <p className="text-sm text-muted-foreground">
           Reorder scheduled tasks shown on the home page.
         </p>
-      </div>
+      </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">
-            Daily Task Sorting
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <SettingsSection title="Daily task sorting">
+        <div className="space-y-2">
           {loading && (
             <p className="text-sm text-muted-foreground">
               Loading activities...
@@ -183,8 +178,8 @@ export default function TaskOrderPage() {
           {saving && (
             <p className="text-xs text-muted-foreground">Saving order...</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsSection>
 
       <FloatingBackButton to="/settings" title="Back to Settings" />
     </div>

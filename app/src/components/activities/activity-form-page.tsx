@@ -5,8 +5,9 @@ import type { ActivityGroup, Activity } from "@/lib/db/types";
 import {
   validateActivityData,
   type ActivitySubmitData,
-} from "@/lib/activity-validation";
-import { isActiveActivity, isScheduledRoutine } from "@/lib/activity-utils";
+  isActiveActivity,
+  isScheduledRoutine,
+} from "@/lib/activity";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import ActivityFormFields from "@/components/activities/activity-form-fields";
 

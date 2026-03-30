@@ -9,7 +9,7 @@ import {
   getActivityDisplayName,
   isActiveGroup,
   isHiddenGroupDefaultActivity,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import GroupPill from "@/components/activities/group-pill";
 import ActivityPill from "@/components/activities/activity-pill";
 import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";

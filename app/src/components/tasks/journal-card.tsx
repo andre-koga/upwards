@@ -7,8 +7,8 @@ import {
   type PointerEvent,
 } from "react";
 import { toDateStr } from "@/lib/db";
-import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
-import { getJournalVideoPlaybackUrl } from "@/lib/journal-video-storage";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
+import { getJournalVideoPlaybackUrl } from "@/lib/journal";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
 import type { UseJournalEntryReturn } from "@/components/tasks/hooks/use-journal-entry";

@@ -1,13 +1,13 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { db, toDateStr, now, newId } from "@/lib/db";
 import type { JournalEntry, LocationData } from "@/lib/db/types";
-import { toJournalVideoPath } from "@/lib/journal-video-storage";
+import { toJournalVideoPath } from "@/lib/journal";
 import {
   parseLocation,
   getCompletionMetadata,
   propagateJournalCompletionStreaksAfterSave,
   type JournalFields,
-} from "@/lib/journal-utils";
+} from "@/lib/journal";
 
 export type { LocationData, JournalFields };
 
