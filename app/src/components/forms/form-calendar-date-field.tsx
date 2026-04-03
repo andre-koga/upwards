@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -56,12 +56,6 @@ export function FormCalendarDateField({
     selectedDate ?? new Date()
   );
 
-  useEffect(() => {
-    if (open) {
-      setCalendarMonth(selectedDate ?? new Date());
-    }
-  }, [open, selectedDate]);
-
   const minDate = useMemo(() => (min ? fromDateString(min) : undefined), [min]);
   const maxDate = useMemo(() => (max ? fromDateString(max) : undefined), [max]);
 
@@ -97,6 +91,7 @@ export function FormCalendarDateField({
         aria-readonly={readOnly}
         onClick={() => {
           if (readOnly) return;
+          setCalendarMonth(selectedDate ?? new Date());
           setOpen(true);
         }}
         className={cn(
@@ -115,6 +110,9 @@ export function FormCalendarDateField({
           if (readOnly || disabled) {
             setOpen(false);
             return;
+          }
+          if (nextOpen) {
+            setCalendarMonth(selectedDate ?? new Date());
           }
           setOpen(nextOpen);
         }}
