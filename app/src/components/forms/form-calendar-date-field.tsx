@@ -60,11 +60,16 @@ export function FormCalendarDateField({
   const maxDate = useMemo(() => (max ? fromDateString(max) : undefined), [max]);
 
   const disabledMatcher = useMemo(() => {
-    if (!minDate && !maxDate) return undefined;
-    return {
-      before: minDate,
-      after: maxDate,
-    };
+    if (minDate && maxDate) {
+      return [{ before: minDate }, { after: maxDate }];
+    }
+    if (minDate) {
+      return { before: minDate };
+    }
+    if (maxDate) {
+      return { after: maxDate };
+    }
+    return undefined;
   }, [minDate, maxDate]);
 
   const handleSelectDate = (date: Date | undefined) => {
