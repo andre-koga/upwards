@@ -1,10 +1,11 @@
 import {
-  FormDateField,
+  FormCalendarDateField,
   FormDialog,
   FormDialogActions,
   FormField,
   FormSelectField,
   FormStack,
+  FormTimeField,
 } from "@/components/forms";
 import { getActivityDisplayName } from "@/lib/activity";
 import { fromDateString, timeToSeconds, toDateString } from "@/lib/time-utils";
@@ -26,35 +27,6 @@ export default function SessionDetailsDialog({
   onOpenChange,
   onSessionUpdated,
 }: SessionDetailsDialogProps) {
-  const getWholeSecond = (time: string): number => {
-    const secondSegment = time.split(":")[2];
-    if (!secondSegment) return 0;
-    const second = Number.parseFloat(secondSegment);
-    return Number.isFinite(second) ? Math.floor(second) : 0;
-  };
-
-  const normalizeTimeWithPreservedSeconds = (
-    nextTime: string,
-    previousTime: string
-  ) => {
-    // Mobile native pickers can emit a transient empty value while opening.
-    // Treat it as "no change" so we don't lose previously stored seconds.
-    if (!nextTime) return previousTime;
-    const nextParts = nextTime.split(":");
-    const previousSecondValue = getWholeSecond(previousTime);
-    const previousSeconds = String(previousSecondValue).padStart(2, "0");
-
-    if (nextParts.length >= 3) {
-      // Some mobile time pickers reopen with seconds snapped to 00.
-      // Keep the previously stored seconds to avoid silent precision loss.
-      if (getWholeSecond(nextTime) === 0 && previousSecondValue !== 0) {
-        return `${nextParts[0]}:${nextParts[1]}:${previousSeconds}`;
-      }
-      return nextTime;
-    }
-    return `${nextTime}:${previousSeconds}`;
-  };
-
   const handleDone = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);
@@ -88,32 +60,18 @@ export default function SessionDetailsDialog({
   if (!sessionId) return null;
 
   const handleStartTimeChange = (newStartTime: string) => {
-    const normalizedStartTime = normalizeTimeWithPreservedSeconds(
-      newStartTime,
-      startTime
-    );
-    setStartTime(normalizedStartTime);
-    if (
-      endTime &&
-      timeToSeconds(endTime) < timeToSeconds(normalizedStartTime)
-    ) {
-      setEndTime(normalizedStartTime);
+    setStartTime(newStartTime);
+    if (endTime && timeToSeconds(endTime) < timeToSeconds(newStartTime)) {
+      setEndTime(newStartTime);
     }
   };
 
   const handleEndTimeChange = (newEndTime: string) => {
-    const normalizedEndTime = normalizeTimeWithPreservedSeconds(
-      newEndTime,
-      endTime
-    );
-    if (
-      startTime &&
-      timeToSeconds(normalizedEndTime) < timeToSeconds(startTime)
-    ) {
+    if (startTime && timeToSeconds(newEndTime) < timeToSeconds(startTime)) {
       setEndTime(startTime);
       return;
     }
-    setEndTime(normalizedEndTime);
+    setEndTime(newEndTime);
   };
 
   return (
@@ -150,24 +108,22 @@ export default function SessionDetailsDialog({
               })),
             ]}
           />
-          <FormDateField
+          <FormCalendarDateField
             id="session-date"
             label="Date"
             value={toDateString(selectedDate)}
             max={toDateString(today)}
             readOnly={isRunningSession}
-            onChange={(event) => {
-              if (isRunningSession || !event.target.value) return;
-              setSelectedDate(fromDateString(event.target.value));
+            onValueChange={(value) => {
+              if (isRunningSession || !value) return;
+              setSelectedDate(fromDateString(value));
             }}
           />
-          <FormField
+          <FormTimeField
             id="session-start-time"
             label="Start time"
-            type="time"
-            step={1}
             value={startTime}
-            onChange={(event) => handleStartTimeChange(event.target.value)}
+            onValueChange={handleStartTimeChange}
           />
           {isRunningSession ? (
             <FormField
@@ -177,13 +133,11 @@ export default function SessionDetailsDialog({
               readOnly
             />
           ) : (
-            <FormField
+            <FormTimeField
               id="session-end-time"
               label="End time"
-              type="time"
-              step={1}
               value={endTime}
-              onChange={(event) => handleEndTimeChange(event.target.value)}
+              onValueChange={handleEndTimeChange}
             />
           )}
           {error && <p className="text-sm text-destructive">{error}</p>}

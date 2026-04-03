@@ -45,7 +45,7 @@ export default function JournalDateHeaderCard({
 
   return (
     <>
-      <div className="absolute z-10 flex w-full justify-between overflow-hidden bg-gradient-to-b from-black/50 to-transparent px-3 pb-4 pt-2">
+      <div className="absolute z-10 flex w-full justify-between overflow-hidden bg-gradient-to-b from-black/80 to-transparent px-3 pb-4 pt-2">
         <div
           role="button"
           tabIndex={0}
