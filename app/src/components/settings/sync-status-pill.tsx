@@ -22,14 +22,14 @@ export function SyncStatusPill({
   const lastSyncTime = formatSyncTime(syncState.lastSyncAt);
 
   return (
-    <div className="rounded-full border border-border bg-background shadow-lg">
-      <div className="flex items-center gap-2 px-4 py-2">
+    <div className="rounded-full border border-border bg-background/95 shadow-sm backdrop-blur-sm">
+      <div className="flex h-8 items-center gap-1.5 px-3">
         <Button
           type="button"
           variant="ghost"
           onClick={onManualSync}
           disabled={syncState.isSyncing || !canSync}
-          className="h-auto gap-2 px-1 py-0 text-xs text-muted-foreground shadow-none hover:text-foreground"
+          className="h-auto gap-1.5 px-1 py-0 text-xs text-muted-foreground shadow-none hover:text-foreground"
           title={
             !isOnline
               ? "Offline"
@@ -70,7 +70,7 @@ export function SyncStatusPill({
             type="button"
             variant="ghost"
             onClick={onToggleAuth}
-            className="h-auto gap-1.5 px-1 py-0 text-xs text-muted-foreground shadow-none hover:text-foreground"
+            className="h-auto gap-1 px-1 py-0 text-xs text-muted-foreground shadow-none hover:text-foreground"
             title="Sign in to sync"
           >
             <LogIn className="h-3 w-3" />

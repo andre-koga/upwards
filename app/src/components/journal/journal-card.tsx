@@ -13,7 +13,6 @@ import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
 import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
 import { useLocationDetection } from "@/components/journal/hooks/use-location-detection";
-import JournalDateHeaderCard from "@/components/journal/journal-date-header-card";
 import JournalVideoSection, {
   type JournalThumbnailSource,
 } from "@/components/journal/journal-video-section";
@@ -24,21 +23,14 @@ import type { LocationData } from "@/lib/db/types";
 
 interface JournalCardProps {
   currentDate: Date;
-  onDateChange: (date: Date) => void;
   /** Single hook instance from the page — must not duplicate useJournalEntry inside this card. */
   journal: UseJournalEntryReturn;
-  /** From the same `useJournalMeta` as `loadJournalMeta` (page-level) — do not call `useJournalMeta` here. */
-  entryDates: Set<string>;
-  bookmarkedDates: Set<string>;
   loadJournalMeta: () => Promise<void>;
 }
 
 export default function JournalCard({
   currentDate,
-  onDateChange,
   journal,
-  entryDates,
-  bookmarkedDates,
   loadJournalMeta,
 }: JournalCardProps) {
   const [journalEditOpen, setJournalEditOpen] = useState(false);
@@ -189,14 +181,6 @@ export default function JournalCard({
 
   return (
     <>
-      <JournalDateHeaderCard
-        currentDate={currentDate}
-        onDateChange={onDateChange}
-        entryDates={entryDates}
-        bookmarkedDates={bookmarkedDates}
-        onCalendarOpen={loadJournalMeta}
-      />
-
       <div
         className="mb-2 overflow-hidden"
         onPointerDown={

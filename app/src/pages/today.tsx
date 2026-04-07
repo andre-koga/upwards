@@ -143,7 +143,7 @@ export default function TodayPage() {
 
   return (
     <div
-      className="pb-28"
+      className="pb-36"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -153,9 +153,9 @@ export default function TodayPage() {
       }}
     >
       {swipeFeedback && (
-        <div className="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2">
+        <div className="pointer-events-none fixed right-3 top-3 z-50">
           <div
-            className="flex items-center gap-1.5 rounded-full border border-border bg-background/95 px-3 py-1.5 text-xs font-medium shadow-sm backdrop-blur-sm"
+            className="flex h-8 items-center gap-1.5 rounded-full border border-border bg-background/95 px-3 text-xs font-medium shadow-sm backdrop-blur-sm"
             style={{
               opacity: 0.4 + swipeFeedback.progress * 0.6,
               transform: `scale(${0.96 + swipeFeedback.progress * 0.04})`,
@@ -179,10 +179,7 @@ export default function TodayPage() {
 
       <JournalCard
         currentDate={currentDate}
-        onDateChange={setCurrentDate}
         journal={journal}
-        entryDates={entryDates}
-        bookmarkedDates={bookmarkedDates}
         loadJournalMeta={loadJournalMeta}
       />
 
@@ -191,6 +188,11 @@ export default function TodayPage() {
           activities={activities}
           groups={groups}
           daily={dailyTasks}
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+          entryDates={entryDates}
+          bookmarkedDates={bookmarkedDates}
+          loadJournalMeta={loadJournalMeta}
         />
 
         <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground/60">

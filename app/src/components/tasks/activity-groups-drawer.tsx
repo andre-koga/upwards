@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Plus, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
+import { cn } from "@/lib/utils";
 import {
   getOrCreateHiddenGroupDefaultActivity,
   getActivityDisplayName,
@@ -23,6 +25,11 @@ interface ActivityGroupsDrawerProps {
   calculateActivityTime?: (activityId: string) => number;
   onStartActivity?: (activityId: string) => void | Promise<void>;
   onStopActivity?: () => void | Promise<void>;
+  triggerClassName?: string;
+  triggerTitle?: string;
+  triggerLabel?: string;
+  triggerIcon?: LucideIcon;
+  floating?: boolean;
 }
 
 export default function ActivityGroupsDrawer({
@@ -31,6 +38,11 @@ export default function ActivityGroupsDrawer({
   calculateActivityTime = () => 0,
   onStartActivity,
   onStopActivity,
+  triggerClassName,
+  triggerTitle = "Pick group or activity",
+  triggerLabel,
+  triggerIcon: TriggerIcon = Plus,
+  floating = true,
 }: ActivityGroupsDrawerProps) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -116,12 +128,14 @@ export default function ActivityGroupsDrawer({
   return (
     <>
       {/* Backdrop */}
-      {open && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
-          onClick={handleBackdropClick}
-        />
-      )}
+      <div
+        className={cn(
+          "fixed inset-0 z-[60] transition-all duration-300 ease-out",
+          open && "pointer-events-auto bg-black/40 backdrop-blur-sm",
+          !open && "pointer-events-none bg-black/0 backdrop-blur-[0px]"
+        )}
+        onClick={handleBackdropClick}
+      />
 
       {/* Drawer */}
       <div
@@ -287,16 +301,35 @@ export default function ActivityGroupsDrawer({
       <Button
         type="button"
         variant="default"
-        size="floatingNav"
+        size={triggerLabel ? "default" : "floatingNav"}
         onClick={() => setOpen((v) => !v)}
-        title={open ? "Close activity picker" : "Pick group or activity"}
-        aria-label={open ? "Close activity picker" : "Pick group or activity"}
-        className="fixed bottom-2 right-2 z-[60] gap-0 px-0 text-primary-foreground hover:bg-primary/90"
+        title={open ? "Close activity picker" : triggerTitle}
+        aria-label={open ? "Close activity picker" : triggerTitle}
+        className={[
+          !triggerLabel &&
+            floating &&
+            "fixed bottom-2 right-2 z-[60] gap-0 px-0 text-primary-foreground hover:bg-primary/90",
+          triggerLabel && "rounded-full shadow-md",
+          triggerClassName,
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
-        {open ? (
-          <X className="h-5 w-5 shrink-0" aria-hidden />
+        {triggerLabel ? (
+          <span className="flex items-center justify-center gap-2">
+            {open ? (
+              <X className="h-5 w-5 shrink-0" aria-hidden />
+            ) : (
+              <TriggerIcon className="h-5 w-5 shrink-0" aria-hidden />
+            )}
+            <span className="text-sm font-semibold">
+              {open ? "Close" : triggerLabel}
+            </span>
+          </span>
+        ) : open ? (
+          <X className="h-5 w-5" aria-hidden />
         ) : (
-          <Plus className="h-5 w-5 shrink-0" aria-hidden />
+          <TriggerIcon className="h-5 w-5" aria-hidden />
         )}
       </Button>
 

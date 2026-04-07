@@ -17,6 +17,7 @@ interface AddTaskModalProps {
   triggerLabel?: string;
   icon?: LucideIcon;
   disabled?: boolean;
+  floating?: boolean;
 }
 
 export default function AddTaskModal({
@@ -26,6 +27,7 @@ export default function AddTaskModal({
   triggerLabel,
   icon: Icon = Plus,
   disabled = false,
+  floating = true,
 }: AddTaskModalProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -85,6 +87,7 @@ export default function AddTaskModal({
         aria-label={triggerTitle}
         className={cn(
           !triggerLabel &&
+            floating &&
             "fixed bottom-2 right-2 z-[60] gap-0 px-0 text-primary-foreground shadow-md hover:bg-primary/90",
           triggerLabel && "rounded-full shadow-md",
           triggerClassName

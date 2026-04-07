@@ -3,12 +3,11 @@ import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
-import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
-import AddTaskModal from "./add-task-modal";
 import AssignActivityDialog from "./assign-activity-dialog";
+import FooterActionsBar from "./footer-actions-bar";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
-import { CircleCheckBig, Palmtree } from "lucide-react";
+import { Palmtree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
@@ -19,12 +18,22 @@ interface DailyTasksListProps {
   activities: Activity[];
   groups: ActivityGroup[];
   daily: DailyTasksState;
+  currentDate: Date;
+  onDateChange: (date: Date) => void;
+  entryDates: Set<string>;
+  bookmarkedDates: Set<string>;
+  loadJournalMeta: () => Promise<void>;
 }
 
 export default function DailyTasksList({
   activities,
   groups,
   daily,
+  currentDate,
+  onDateChange,
+  entryDates,
+  bookmarkedDates,
+  loadJournalMeta,
 }: DailyTasksListProps) {
   const [assignPeriodId, setAssignPeriodId] = useState<string | null>(null);
   const [assignIntervalMs, setAssignIntervalMs] = useState(0);
@@ -78,13 +87,6 @@ export default function DailyTasksList({
 
   return (
     <div className="flex flex-col">
-      <AddTaskModal
-        onAdd={createOneTimeTask}
-        icon={CircleCheckBig}
-        triggerTitle="Add quick task"
-        triggerClassName="fixed bottom-16 right-2 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
-      />
-
       {oneTimeTasks.length > 0 && (
         <div className="mb-4 space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -225,12 +227,18 @@ export default function DailyTasksList({
         </div>
       )}
 
-      <ActivityGroupsDrawer
+      <FooterActionsBar
+        currentDate={currentDate}
+        onDateChange={onDateChange}
+        entryDates={entryDates}
+        bookmarkedDates={bookmarkedDates}
+        loadJournalMeta={loadJournalMeta}
         currentActivityId={currentActivityId}
         activities={activities}
-        calculateActivityTime={calculateActivityTotalTime}
+        calculateActivityTotalTime={calculateActivityTotalTime}
         onStartActivity={handleStartActivity}
         onStopActivity={handleStopActivity}
+        onAddQuickMemo={createOneTimeTask}
       />
 
       {assignPeriodId && (
