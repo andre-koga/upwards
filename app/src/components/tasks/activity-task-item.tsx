@@ -1,12 +1,12 @@
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Flame, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import Pill from "@/components/ui/pill";
+import ActivityPill from "@/components/activities/activity-pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 
 interface ActivityTaskItemProps {
@@ -20,12 +20,11 @@ interface ActivityTaskItemProps {
   isCurrentActivity: boolean;
   isToday: boolean;
   onIncrement: (activityId: string, target: number) => void;
-  /** "Never" tasks: tap increments slip count; hold resets count (see pointer handlers). */
+  /** "Never" tasks: tap increments slip count. */
   onNeverIncrement?: () => void;
-  onNeverReset?: () => void;
-  onTogglePaused: (activityId: string) => void;
   onStartActivity: (activityId: string) => void;
   onStopActivity: () => void;
+  onManualEntry?: (activityId: string) => void;
 }
 
 function ActivityTaskItem({
@@ -40,11 +39,11 @@ function ActivityTaskItem({
   isToday,
   onIncrement,
   onNeverIncrement,
-  onNeverReset,
-  onTogglePaused,
   onStartActivity,
   onStopActivity,
+  onManualEntry,
 }: ActivityTaskItemProps) {
+  const navigate = useNavigate();
   const [, setTick] = useState(0);
 
   // Only update this specific item when it's running
@@ -62,109 +61,12 @@ function ActivityTaskItem({
   const groupColor = group?.color || DEFAULT_GROUP_COLOR;
   const canUpdateCount = isToday && (!isPaused || isNeverTask);
 
-  const neverLongPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const neverLongPressFiredRef = useRef(false);
-  const neverPointerLeftRef = useRef(false);
-  const pauseLongPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const suppressNextPlayStopClickRef = useRef(false);
-
-  useEffect(() => {
-    return () => {
-      if (neverLongPressTimerRef.current != null) {
-        clearTimeout(neverLongPressTimerRef.current);
-      }
-      if (pauseLongPressTimerRef.current != null) {
-        clearTimeout(pauseLongPressTimerRef.current);
-      }
-    };
-  }, []);
-
-  const clearNeverLongPressTimer = () => {
-    if (neverLongPressTimerRef.current != null) {
-      clearTimeout(neverLongPressTimerRef.current);
-      neverLongPressTimerRef.current = null;
-    }
-  };
-
-  const clearPauseLongPressTimer = () => {
-    if (pauseLongPressTimerRef.current != null) {
-      clearTimeout(pauseLongPressTimerRef.current);
-      pauseLongPressTimerRef.current = null;
-    }
-  };
-
-  const handlePauseHoldStart = () => {
-    if (!isToday || isNeverTask) return;
-    clearPauseLongPressTimer();
-    pauseLongPressTimerRef.current = setTimeout(() => {
-      pauseLongPressTimerRef.current = null;
-      suppressNextPlayStopClickRef.current = true;
-      onTogglePaused(activity.id);
-    }, HOLD_ACTION_DELAY_MS);
-  };
-
-  const handlePauseHoldEnd = () => {
-    clearPauseLongPressTimer();
-  };
-
   return (
     <div className="flex items-center gap-2">
       {isNeverTask ? (
-        <div
-          onPointerDown={
-            canUpdateCount && onNeverIncrement && onNeverReset
-              ? (e) => {
-                  neverLongPressFiredRef.current = false;
-                  neverPointerLeftRef.current = false;
-                  neverLongPressTimerRef.current = setTimeout(() => {
-                    neverLongPressTimerRef.current = null;
-                    neverLongPressFiredRef.current = true;
-                    onNeverReset();
-                  }, HOLD_ACTION_DELAY_MS);
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                }
-              : undefined
-          }
-          onPointerUp={
-            canUpdateCount && onNeverIncrement
-              ? (e) => {
-                  clearNeverLongPressTimer();
-                  try {
-                    e.currentTarget.releasePointerCapture(e.pointerId);
-                  } catch {
-                    /* ignore */
-                  }
-                  if (
-                    neverLongPressFiredRef.current ||
-                    neverPointerLeftRef.current
-                  ) {
-                    return;
-                  }
-                  onNeverIncrement();
-                }
-              : undefined
-          }
-          onPointerLeave={
-            canUpdateCount && onNeverReset
-              ? () => {
-                  neverPointerLeftRef.current = true;
-                  clearNeverLongPressTimer();
-                }
-              : undefined
-          }
-          onPointerCancel={
-            canUpdateCount
-              ? () => {
-                  neverPointerLeftRef.current = true;
-                  clearNeverLongPressTimer();
-                }
-              : undefined
-          }
-          onContextMenu={(e) => e.preventDefault()}
+        <button
+          type="button"
+          onClick={canUpdateCount && onNeverIncrement ? onNeverIncrement : undefined}
           className={`flex h-7 min-w-[2.75rem] touch-manipulation select-none items-center justify-center rounded-md border px-1 transition-colors ${
             canUpdateCount ? "cursor-pointer" : "cursor-default opacity-60"
           } ${
@@ -174,23 +76,12 @@ function ActivityTaskItem({
                 ? "border-destructive/80 bg-destructive/15 text-destructive"
                 : "border-destructive bg-transparent"
           }`}
-          role={canUpdateCount ? "button" : undefined}
-          tabIndex={canUpdateCount ? 0 : undefined}
           title={
             canUpdateCount
-              ? "Tap to add a slip. First slip fails the day and resets your streak. Hold to reset the slip count."
+              ? "Tap to add a slip. First slip fails the day and resets your streak."
               : undefined
           }
-          onKeyDown={
-            canUpdateCount && onNeverIncrement
-              ? (e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onNeverIncrement();
-                  }
-                }
-              : undefined
-          }
+          disabled={!canUpdateCount}
         >
           {!isComplete ? (
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
@@ -204,7 +95,7 @@ function ActivityTaskItem({
               {count}
             </span>
           ) : null}
-        </div>
+        </button>
       ) : target <= 1 ? (
         <TaskCheckbox
           isComplete={isComplete}
@@ -266,38 +157,15 @@ function ActivityTaskItem({
         </Button>
       )}
 
-      <div
-        className="flex-1"
-        onPointerDown={
-          isToday && !isNeverTask ? handlePauseHoldStart : undefined
-        }
-        onPointerUp={isToday && !isNeverTask ? handlePauseHoldEnd : undefined}
-        onPointerCancel={
-          isToday && !isNeverTask ? handlePauseHoldEnd : undefined
-        }
-        onContextMenu={
-          isToday && !isNeverTask ? (e) => e.preventDefault() : undefined
-        }
-        title={
-          isToday && !isNeverTask
-            ? isPaused
-              ? "Hold to resume task for this day"
-              : "Hold to pause task for this day"
-            : undefined
-        }
-      >
-        <Pill
+      <div className="flex-1">
+        <ActivityPill
           name={getActivityDisplayName(activity, group)}
           color={groupColor}
           elapsedMs={timeSpent}
           isRunning={isCurrentActivity}
-          onPlayStop={
+          onClick={
             isToday && !isPaused
               ? () => {
-                  if (suppressNextPlayStopClickRef.current) {
-                    suppressNextPlayStopClickRef.current = false;
-                    return;
-                  }
                   if (isCurrentActivity) {
                     onStopActivity();
                     return;
@@ -306,6 +174,14 @@ function ActivityTaskItem({
                 }
               : undefined
           }
+          onManualEntry={
+            isToday && !isPaused && onManualEntry
+              ? () => onManualEntry(activity.id)
+              : undefined
+          }
+          onNameClick={() => {
+            navigate(`/activities/stats/${activity.id}`);
+          }}
           nameClassName={isComplete ? "line-through text-muted-foreground" : ""}
           readOnly={!isToday}
         />

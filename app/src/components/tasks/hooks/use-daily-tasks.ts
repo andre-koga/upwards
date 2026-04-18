@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { db } from "@/lib/db";
+import { db, newId, now } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
@@ -10,6 +10,7 @@ import {
   getGroupColor,
 } from "@/lib/activity";
 import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
+import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
@@ -34,7 +35,7 @@ export function useDailyTasks({
     const entryMidnight = new Date(dateString + "T00:00:00");
     const diffDays = Math.floor(
       (todayMidnight.getTime() - entryMidnight.getTime()) /
-        (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24)
     );
     // Treat yesterday as fully editable, same as today.
     return diffDays >= 0 && diffDays <= 1;
@@ -274,6 +275,38 @@ export function useDailyTasks({
     await loadAllActivityPeriods();
   }, [handleStopActivity, loadAllActivityPeriods]);
 
+  const addManualActivityPeriod = useCallback(
+    async (params: {
+      activityId: string;
+      dateString: string;
+      startIso: string;
+      endIso: string;
+    }) => {
+      const { activityId, dateString: periodDateString, startIso, endIso } =
+        params;
+
+      const createdAt = now();
+      const dailyEntry = await getOrCreateDailyEntryDb(periodDateString);
+
+      const period: ActivityPeriod = {
+        id: newId(),
+        daily_entry_id: dailyEntry.id,
+        activity_id: activityId,
+        start_time: startIso,
+        end_time: endIso,
+        created_at: createdAt,
+        updated_at: createdAt,
+        synced_at: null,
+        deleted_at: null,
+      };
+
+      await db.activityPeriods.add(period);
+      await loadActivityPeriods();
+      await loadAllActivityPeriods();
+    },
+    [loadActivityPeriods, loadAllActivityPeriods]
+  );
+
   const timelineSessions = useMemo(() => {
     const activitySessions = activityPeriods
       .filter((period) => !!period.end_time)
@@ -364,6 +397,7 @@ export function useDailyTasks({
     loadActivityPeriods,
     calculateActivityTime,
     calculateActivityTotalTime,
+    addManualActivityPeriod,
     formatTimerDisplay,
   };
 }

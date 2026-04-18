@@ -32,10 +32,15 @@ export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
 /**
  * Reference tables: always pull all so child records find their refs.
  * activity_periods: full pull so timeline never misses the latest period (clock skew).
+ * journal_entries/one_time_tasks: full pull so devices that sync later still
+ * receive rows whose `updated_at` is older than this device's last sync
+ * (incremental pull would skip them).
  */
 export const FULL_PULL_TABLES: SyncTable[] = [
   "activity_groups",
   "activities",
   "daily_entries",
   "activity_periods",
+  "journal_entries",
+  "one_time_tasks",
 ];

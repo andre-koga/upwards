@@ -1,10 +1,8 @@
 import { useEffect, useState, memo, useMemo } from "react";
-import { useRef } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import {
   formatTimerDisplay,
   getActivityDisplayName,
@@ -39,7 +37,7 @@ interface ActiveActivityPillProps {
   groups: ActivityGroup[];
   elapsedMs: number;
   onStop: () => void;
-  /** When set, holding the pill opens the session edit dialog. */
+  /** When set, clicking the pill opens the session edit dialog. */
   onEdit?: () => void;
 }
 
@@ -57,8 +55,6 @@ function ActiveActivityPill({
   const [resolvedGroup, setResolvedGroup] = useState<ActivityGroup | null>(
     null
   );
-  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const suppressNextStopClickRef = useRef(false);
 
   useEffect(() => {
     if (!currentActivityId) {
@@ -104,35 +100,6 @@ function ActiveActivityPill({
     };
   }, [currentActivityId, activities, groups]);
 
-  useEffect(() => {
-    return () => {
-      if (holdTimerRef.current != null) {
-        clearTimeout(holdTimerRef.current);
-      }
-    };
-  }, []);
-
-  const clearHoldTimer = () => {
-    if (holdTimerRef.current != null) {
-      clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
-  };
-
-  const handleHoldStart = () => {
-    if (!onEdit) return;
-    clearHoldTimer();
-    holdTimerRef.current = setTimeout(() => {
-      holdTimerRef.current = null;
-      suppressNextStopClickRef.current = true;
-      onEdit();
-    }, HOLD_ACTION_DELAY_MS);
-  };
-
-  const handleHoldEnd = () => {
-    clearHoldTimer();
-  };
-
   // Calculate color values before early returns (Rules of Hooks)
   const activity = resolvedActivity;
   const group = resolvedGroup;
@@ -160,10 +127,7 @@ function ActiveActivityPill({
         color: textColor,
         boxShadow,
       }}
-      onPointerDown={onEdit ? handleHoldStart : undefined}
-      onPointerUp={onEdit ? handleHoldEnd : undefined}
-      onPointerCancel={onEdit ? handleHoldEnd : undefined}
-      onContextMenu={onEdit ? (e) => e.preventDefault() : undefined}
+      onClick={onEdit}
       onKeyDown={
         onEdit
           ? (e) => {
@@ -176,7 +140,7 @@ function ActiveActivityPill({
       }
       role={onEdit ? "button" : undefined}
       tabIndex={onEdit ? 0 : undefined}
-      aria-label={onEdit ? "Hold to edit running activity" : undefined}
+      aria-label={onEdit ? "Edit running activity" : undefined}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -198,11 +162,8 @@ function ActiveActivityPill({
         <Button
           type="button"
           variant="ghost"
-          onClick={() => {
-            if (suppressNextStopClickRef.current) {
-              suppressNextStopClickRef.current = false;
-              return;
-            }
+          onClick={(event) => {
+            event.stopPropagation();
             onStop();
           }}
           className="h-auto gap-2 p-0 text-sm font-semibold uppercase tracking-wide shadow-none hover:bg-transparent"

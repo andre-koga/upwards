@@ -7,6 +7,7 @@ import ActiveActivityPill from "./active-activity-pill";
 import AssignActivityDialog from "./assign-activity-dialog";
 import FooterActionsBar from "./footer-actions-bar";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
+import ManualTimeEntryDialog from "./manual-time-entry-dialog";
 import { Palmtree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,9 @@ export default function DailyTasksList({
     groupId: string;
     sessionId: string;
   } | null>(null);
+  const [manualEntryActivityId, setManualEntryActivityId] = useState<
+    string | null
+  >(null);
 
   const {
     isToday,
@@ -61,8 +65,6 @@ export default function DailyTasksList({
     updateOneTimeTask,
     incrementTask,
     incrementNeverSlip,
-    resetNeverTaskCount,
-    toggleTaskPaused,
     toggleBreakDay,
     handleStartActivity,
     handleStopActivity,
@@ -71,9 +73,16 @@ export default function DailyTasksList({
     loadActivityPeriods,
     calculateActivityTime,
     calculateActivityTotalTime,
+    addManualActivityPeriod,
     formatTimerDisplay,
   } = daily;
   const pausedTaskIdSet = new Set(pausedTaskIds);
+  const manualEntryActivity = manualEntryActivityId
+    ? (activities.find((item) => item.id === manualEntryActivityId) ?? null)
+    : null;
+  const manualEntryGroup = manualEntryActivity
+    ? getGroup(manualEntryActivity)
+    : undefined;
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
     setAssignPeriodId(periodId);
@@ -135,10 +144,9 @@ export default function DailyTasksList({
               isToday={isToday}
               onIncrement={incrementTask}
               onNeverIncrement={() => incrementNeverSlip(activity.id)}
-              onNeverReset={() => resetNeverTaskCount(activity.id)}
-              onTogglePaused={toggleTaskPaused}
               onStartActivity={handleStartActivity}
               onStopActivity={handleStopActivity}
+              onManualEntry={setManualEntryActivityId}
             />
           ))}
       </div>
@@ -238,6 +246,7 @@ export default function DailyTasksList({
         calculateActivityTotalTime={calculateActivityTotalTime}
         onStartActivity={handleStartActivity}
         onStopActivity={handleStopActivity}
+        onAddManualActivityPeriod={addManualActivityPeriod}
         onAddQuickMemo={createOneTimeTask}
       />
 
@@ -269,6 +278,19 @@ export default function DailyTasksList({
           }}
         />
       )}
+
+      <ManualTimeEntryDialog
+        open={manualEntryActivityId !== null}
+        activity={manualEntryActivity}
+        group={manualEntryGroup}
+        initialDate={currentDate}
+        onOpenChange={(open) => {
+          if (!open) {
+            setManualEntryActivityId(null);
+          }
+        }}
+        onSave={addManualActivityPeriod}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { MouseEventHandler, PointerEventHandler } from "react";
-import { Play, Square } from "lucide-react";
+import { Play, Plus, Square } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity";
 import { getContrastColor } from "@/lib/color-utils";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ export interface PillProps {
   elapsedMs?: number;
   isRunning?: boolean;
   onPlayStop?: () => void;
+  onManualEntry?: () => void;
   /** When provided, name area opens this instead of triggering onPlayStop; only the play button triggers onPlayStop */
   onNameClick?: () => void;
   onNamePointerDown?: PointerEventHandler<HTMLButtonElement>;
@@ -33,6 +34,7 @@ function Pill({
   elapsedMs = 0,
   isRunning = false,
   onPlayStop,
+  onManualEntry,
   onNameClick,
   onNamePointerDown,
   onNamePointerUp,
@@ -104,7 +106,7 @@ function Pill({
   );
 
   const base =
-    "relative flex items-center border border-border rounded-full overflow-hidden " +
+    "relative flex items-center overflow-hidden " +
     (isSm ? "h-8 " : "h-10 ") +
     className;
 
@@ -120,6 +122,19 @@ function Pill({
   ) : (
     <div className="h-full flex-shrink-0">{playTimerButton}</div>
   );
+
+  const manualEntryControl = onManualEntry ? (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={onManualEntry}
+      className="-mr-1 h-full w-10 shrink-0 p-0 shadow-none hover:bg-muted/30 focus-visible:ring-offset-0"
+      title="Add manual time entry"
+      aria-label="Add manual time entry"
+    >
+      <Plus className="h-3.5 w-3.5" />
+    </Button>
+  ) : null;
 
   if (readOnly) {
     return (
@@ -139,21 +154,24 @@ function Pill({
       {onNameClick ? (
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           onClick={onNameClick}
           onPointerDown={onNamePointerDown}
           onPointerUp={onNamePointerUp}
           onPointerLeave={onNamePointerLeave}
           onPointerCancel={onNamePointerCancel}
           onContextMenu={onNameContextMenu}
-          className="h-full min-w-0 flex-1 justify-start rounded-none p-0 text-left shadow-none hover:bg-transparent focus-visible:ring-offset-0"
+          className="h-full min-w-0 flex-1 justify-start border border-border p-0 text-left shadow-none hover:bg-transparent focus-visible:ring-offset-0"
         >
           {nameContent}
         </Button>
       ) : (
         <div className="flex min-w-0 flex-1 items-center">{nameContent}</div>
       )}
-      {timerControl}
+      <div className="flex h-full rounded-full border border-border">
+        {manualEntryControl}
+        {timerControl}
+      </div>
     </div>
   );
 }

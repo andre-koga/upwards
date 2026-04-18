@@ -16,6 +16,7 @@ import ActivityPill from "@/components/activities/activity-pill";
 import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
 import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
+import ManualTimeEntryDialog from "@/components/tasks/manual-time-entry-dialog";
 import { Button } from "@/components/ui/button";
 
 interface ActivityGroupsDrawerProps {
@@ -25,6 +26,13 @@ interface ActivityGroupsDrawerProps {
   calculateActivityTime?: (activityId: string) => number;
   onStartActivity?: (activityId: string) => void | Promise<void>;
   onStopActivity?: () => void | Promise<void>;
+  initialDate?: Date;
+  onAddManualEntry?: (payload: {
+    activityId: string;
+    dateString: string;
+    startIso: string;
+    endIso: string;
+  }) => Promise<void>;
   triggerClassName?: string;
   triggerTitle?: string;
   triggerLabel?: string;
@@ -38,6 +46,8 @@ export default function ActivityGroupsDrawer({
   calculateActivityTime = () => 0,
   onStartActivity,
   onStopActivity,
+  initialDate = new Date(),
+  onAddManualEntry,
   triggerClassName,
   triggerTitle = "Pick group or activity",
   triggerLabel,
@@ -56,6 +66,9 @@ export default function ActivityGroupsDrawer({
     useState<ActivityGroup | null>(null);
   const [editingGroup, setEditingGroup] = useState<ActivityGroup | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [manualEntryActivityId, setManualEntryActivityId] = useState<
+    string | null
+  >(null);
   const pendingContentRef = useRef<
     { type: "activities"; group: ActivityGroup } | { type: "groups" } | null
   >(null);
@@ -126,6 +139,14 @@ export default function ActivityGroupsDrawer({
           a.group_id === selectedGroup.id && !isHiddenGroupDefaultActivity(a)
       )
     : [];
+  const manualEntryActivity = manualEntryActivityId
+    ? (activities.find((item) => item.id === manualEntryActivityId) ?? null)
+    : null;
+  const manualEntryGroup = manualEntryActivity
+    ? selectedGroup && selectedGroup.id === manualEntryActivity.group_id
+      ? selectedGroup
+      : groups.find((group) => group.id === manualEntryActivity.group_id)
+    : undefined;
 
   return (
     <>
@@ -298,6 +319,11 @@ export default function ActivityGroupsDrawer({
                               }
                               closeDrawer();
                             }}
+                            onManualEntry={
+                              onAddManualEntry
+                                ? () => setManualEntryActivityId(activity.id)
+                                : undefined
+                            }
                             className="flex-1"
                           />
                         </div>
@@ -404,6 +430,22 @@ export default function ActivityGroupsDrawer({
           }}
         />
       ) : null}
+
+      <ManualTimeEntryDialog
+        open={manualEntryActivityId !== null}
+        activity={manualEntryActivity}
+        group={manualEntryGroup}
+        initialDate={initialDate}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setManualEntryActivityId(null);
+          }
+        }}
+        onSave={async (payload) => {
+          if (!onAddManualEntry) return;
+          await onAddManualEntry(payload);
+        }}
+      />
     </>
   );
 }

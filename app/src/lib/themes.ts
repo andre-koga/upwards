@@ -25,13 +25,13 @@ export const THEME_MODE_OPTIONS: ThemeModeOption[] = [
 
 export const PALETTE_OPTIONS: PaletteOption[] = [
     { value: "default", label: "Classic", icon: Sun },
-    { value: "ocean", label: "Ocean", icon: Waves },
-    { value: "sunset", label: "Sunset", icon: Sunset },
-    { value: "forest", label: "Forest", icon: Trees },
-    { value: "mocha", label: "Mocha", icon: Coffee },
+    { value: "ocean", label: "Ocean Breeze", icon: Waves },
+    { value: "sunset", label: "Warm Sunset", icon: Sunset },
+    { value: "forest", label: "Deep Forest", icon: Trees },
+    { value: "mocha", label: "Hot Mocha", icon: Coffee },
     { value: "cyberpunk", label: "Cyberpunk", icon: Sparkles },
     { value: "pastel dreams", label: "Pastel Dreams", icon: Rainbow },
-    { value: "graphite", label: "Graphite", icon: Stone },
+    { value: "graphite", label: "Pure Graphite", icon: Stone },
     { value: "jellyfish", label: "Jellyfish", icon: Zap },
 ];
 

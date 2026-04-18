@@ -27,6 +27,12 @@ interface FooterActionsBarProps {
   calculateActivityTotalTime: (activityId: string) => number;
   onStartActivity: (activityId: string) => void | Promise<void>;
   onStopActivity: () => void | Promise<void>;
+  onAddManualActivityPeriod: (payload: {
+    activityId: string;
+    dateString: string;
+    startIso: string;
+    endIso: string;
+  }) => Promise<void>;
   onAddQuickMemo: (
     title: string,
     options?: { due_date?: string | null; is_pinned?: boolean }
@@ -44,6 +50,7 @@ export default function FooterActionsBar({
   calculateActivityTotalTime,
   onStartActivity,
   onStopActivity,
+  onAddManualActivityPeriod,
   onAddQuickMemo,
 }: FooterActionsBarProps) {
   const navigate = useNavigate();
@@ -141,6 +148,8 @@ export default function FooterActionsBar({
           calculateActivityTime={calculateActivityTotalTime}
           onStartActivity={onStartActivity}
           onStopActivity={onStopActivity}
+          initialDate={currentDate}
+          onAddManualEntry={onAddManualActivityPeriod}
           floating={false}
           triggerLabel="Projects"
           triggerTitle="Open projects"
