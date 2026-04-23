@@ -1,4 +1,4 @@
-import { Heart, PaintRoller, Pencil } from "lucide-react";
+import { Heart, Pencil } from "lucide-react";
 import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,16 +35,6 @@ export default function JournalMetaBar({
             journal.draftBookmarked && "fill-red-500 text-red-500"
           )}
         />
-      </Button>
-      <Button
-        variant="ghost"
-        size="smIcon"
-        // onClick={onEditRequest}
-        // disabled={!journal.canEditJournal}
-        className="text-muted-foreground"
-        title="Edit journal"
-      >
-        <PaintRoller />
       </Button>
       <Button
         variant="ghost"

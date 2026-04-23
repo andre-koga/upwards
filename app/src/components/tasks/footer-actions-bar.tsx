@@ -111,7 +111,7 @@ export default function FooterActionsBar({
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-[30] h-12 w-screen border-t border-border bg-background"></div>
+      <div className="fixed bottom-0 left-0 right-0 z-[30] h-12 border-t border-border bg-background"></div>
       <div className="fixed inset-x-2 bottom-4 z-[40] flex items-center gap-2 pb-2">
         <Button
           type="button"

@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { Flame, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -22,6 +22,8 @@ interface ActivityTaskItemProps {
   onIncrement: (activityId: string, target: number) => void;
   /** "Never" tasks: tap increments slip count. */
   onNeverIncrement?: () => void;
+  /** "Never" tasks: hold to clear slip count. */
+  onNeverReset?: () => void;
   onStartActivity: (activityId: string) => void;
   onStopActivity: () => void;
   onManualEntry?: (activityId: string) => void;
@@ -39,12 +41,15 @@ function ActivityTaskItem({
   isToday,
   onIncrement,
   onNeverIncrement,
+  onNeverReset,
   onStartActivity,
   onStopActivity,
   onManualEntry,
 }: ActivityTaskItemProps) {
   const navigate = useNavigate();
   const [, setTick] = useState(0);
+  const neverPressTimeoutRef = useRef<number | null>(null);
+  const longPressHandledRef = useRef(false);
 
   // Only update this specific item when it's running
   useEffect(() => {
@@ -61,12 +66,51 @@ function ActivityTaskItem({
   const groupColor = group?.color || DEFAULT_GROUP_COLOR;
   const canUpdateCount = isToday && (!isPaused || isNeverTask);
 
+  const clearNeverPressTimeout = () => {
+    if (neverPressTimeoutRef.current === null) return;
+    window.clearTimeout(neverPressTimeoutRef.current);
+    neverPressTimeoutRef.current = null;
+  };
+
+  useEffect(
+    () => () => {
+      clearNeverPressTimeout();
+    },
+    []
+  );
+
   return (
     <div className="flex items-center gap-2">
       {isNeverTask ? (
         <button
           type="button"
-          onClick={canUpdateCount && onNeverIncrement ? onNeverIncrement : undefined}
+          onClick={
+            canUpdateCount && onNeverIncrement
+              ? () => {
+                  if (longPressHandledRef.current) {
+                    longPressHandledRef.current = false;
+                    return;
+                  }
+                  onNeverIncrement();
+                }
+              : undefined
+          }
+          onPointerDown={
+            canUpdateCount && onNeverReset && count > 0
+              ? () => {
+                  longPressHandledRef.current = false;
+                  clearNeverPressTimeout();
+                  neverPressTimeoutRef.current = window.setTimeout(() => {
+                    longPressHandledRef.current = true;
+                    onNeverReset();
+                    neverPressTimeoutRef.current = null;
+                  }, 500);
+                }
+              : undefined
+          }
+          onPointerUp={clearNeverPressTimeout}
+          onPointerLeave={clearNeverPressTimeout}
+          onPointerCancel={clearNeverPressTimeout}
           className={`flex h-7 min-w-[2.75rem] touch-manipulation select-none items-center justify-center rounded-md border px-1 transition-colors ${
             canUpdateCount ? "cursor-pointer" : "cursor-default opacity-60"
           } ${
@@ -78,7 +122,7 @@ function ActivityTaskItem({
           }`}
           title={
             canUpdateCount
-              ? "Tap to add a slip. First slip fails the day and resets your streak."
+              ? "Tap to add a slip. Hold to clear slips."
               : undefined
           }
           disabled={!canUpdateCount}
