@@ -49,23 +49,51 @@ export default function ActivityPill({
 
   if (readOnly) {
     return (
-      <div className={base}>
-        <span className="flex flex-1 items-center gap-2 truncate px-4 text-left text-sm font-medium">
+      <div className={base + " w-full"}>
+        <div className="pointer-events-none flex h-full min-w-0 flex-1 items-center justify-start gap-2 truncate rounded-full border border-input bg-background px-4 text-left text-sm font-medium text-foreground shadow-sm">
           <span
             className="h-2.5 w-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: color }}
           />
-          {name || (
-            <span className="font-normal text-muted-foreground/50">
-              Name...
+          {name ? (
+            <span className={cn("min-w-0 truncate", nameClassName)}>
+              {name}
+            </span>
+          ) : (
+            <span className="min-w-0 font-normal text-muted-foreground/50">
+              Name…
             </span>
           )}
-        </span>
-        <div
-          className="relative mr-0.5 flex h-9 flex-shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-xs font-semibold"
-          style={{ backgroundColor: color, color: textColor }}
-        >
-          {actionContent}
+        </div>
+        <div className="flex h-full min-h-0 items-stretch">
+          <div
+            className={cn(
+              "relative flex h-full shrink-0 items-center justify-center gap-1.5 rounded-full border bg-background px-4 text-xs font-semibold",
+              isRunning ? "border-2" : "border-border text-muted-foreground"
+            )}
+            style={
+              isRunning ? { borderColor: color, color: textColor } : undefined
+            }
+          >
+            {isRunning ? (
+              <>
+                <Square
+                  className="h-3.5 w-3.5 shrink-0"
+                  style={{ fill: textColor }}
+                />
+                <span className="font-mono text-xs opacity-80">
+                  {timerLabel}
+                </span>
+              </>
+            ) : (
+              <>
+                <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-muted-foreground" />
+                <span className="font-mono text-xs opacity-80">
+                  {timerLabel}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );

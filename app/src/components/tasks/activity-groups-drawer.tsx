@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { ChevronLeft, Pencil, Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -72,6 +73,7 @@ export default function ActivityGroupsDrawer({
   const pendingContentRef = useRef<
     { type: "activities"; group: ActivityGroup } | { type: "groups" } | null
   >(null);
+  const { bottomInset } = useVisualViewportLayout();
 
   useEffect(() => {
     if (!open) return;
@@ -162,9 +164,10 @@ export default function ActivityGroupsDrawer({
 
       {/* Drawer */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-[70] transition-transform duration-300 ease-out ${
+        className={`fixed inset-x-0 z-[70] transition-transform duration-300 ease-out ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
+        style={{ bottom: bottomInset }}
         onTransitionEnd={(e) => {
           if (e.propertyName === "transform" && !open) {
             handleDrawerTransitionEnd();
@@ -343,8 +346,10 @@ export default function ActivityGroupsDrawer({
         variant="default"
         size={triggerLabel ? "default" : "floatingNav"}
         onClick={() => setOpen((v) => !v)}
-        title={open ? "Close activity picker" : triggerTitle}
-        aria-label={open ? "Close activity picker" : triggerTitle}
+        title={triggerLabel || !open ? triggerTitle : "Close activity picker"}
+        aria-label={
+          triggerLabel || !open ? triggerTitle : "Close activity picker"
+        }
         className={[
           !triggerLabel &&
             floating &&
@@ -357,14 +362,8 @@ export default function ActivityGroupsDrawer({
       >
         {triggerLabel ? (
           <span className="flex items-center justify-center gap-2">
-            {open ? (
-              <X className="h-5 w-5 shrink-0" aria-hidden />
-            ) : (
-              <TriggerIcon className="h-5 w-5 shrink-0" aria-hidden />
-            )}
-            <span className="text-sm font-semibold">
-              {open ? "Close" : triggerLabel}
-            </span>
+            <TriggerIcon className="h-5 w-5 shrink-0" aria-hidden />
+            <span className="text-sm font-semibold">{triggerLabel}</span>
           </span>
         ) : open ? (
           <X className="h-5 w-5" aria-hidden />

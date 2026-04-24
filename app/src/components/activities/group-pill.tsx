@@ -1,5 +1,4 @@
 import { ChevronRight, Pencil } from "lucide-react";
-import { getContrastColor } from "@/lib/color-utils";
 import { Button } from "@/components/ui/button";
 
 export interface GroupPillProps {
@@ -24,7 +23,6 @@ export default function GroupPill({
   readOnly = false,
   className = "",
 }: GroupPillProps) {
-  const textColor = getContrastColor(color);
   const actionLabel = "Start";
 
   const base =
@@ -35,22 +33,29 @@ export default function GroupPill({
     return (
       <div className={base}>
         {onSettingsClick && (
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center text-muted-foreground" />
-        )}
-        <span className="flex flex-1 items-center gap-2 truncate px-4 text-left text-sm font-medium">
-          <span
-            className="h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: color }}
+          <div
+            className="h-10 w-10 shrink-0 rounded-full border border-transparent"
+            aria-hidden
           />
-          {name || (
-            <span className="font-normal text-muted-foreground/50">Name…</span>
-          )}
-        </span>
-        <div
-          className="relative mr-0.5 flex h-9 flex-shrink-0 items-center justify-center rounded-full px-4 text-xs font-semibold"
-          style={{ backgroundColor: color, color: textColor }}
-        >
-          Start
+        )}
+        <div className="flex w-full min-w-0 gap-2">
+          <div
+            className="pointer-events-none flex h-full min-w-0 flex-1 items-center justify-start gap-2 truncate rounded-full border border-input bg-background px-4 text-left text-sm font-medium text-foreground shadow-sm"
+          >
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            {name || (
+              <span className="min-w-0 font-normal text-muted-foreground/50">
+                Name…
+              </span>
+            )}
+          </div>
+          <div className="pointer-events-none flex h-full shrink-0 items-center justify-center gap-1.5 rounded-full bg-secondary px-4 text-xs font-semibold text-secondary-foreground shadow-sm">
+            <span>{actionLabel}</span>
+            <ChevronRight className="h-4 w-4 flex-shrink-0 translate-x-px" />
+          </div>
         </div>
       </div>
     );

@@ -1,8 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import { FormControlButton } from "@/components/forms/form-control-button";
 import { cn } from "@/lib/utils";
 import {
@@ -27,6 +28,8 @@ export interface FormCalendarDateFieldProps {
   buttonClassName?: string;
   message?: ReactNode;
   messageClassName?: string;
+  clearable?: boolean;
+  clearLabel?: string;
 }
 
 export function FormCalendarDateField({
@@ -44,6 +47,8 @@ export function FormCalendarDateField({
   buttonClassName,
   message,
   messageClassName,
+  clearable = false,
+  clearLabel = "Clear date",
 }: FormCalendarDateFieldProps) {
   const [open, setOpen] = useState(false);
 
@@ -90,24 +95,39 @@ export function FormCalendarDateField({
       >
         {label}
       </Label>
-      <FormControlButton
-        id={id}
-        disabled={disabled}
-        aria-readonly={readOnly}
-        onClick={() => {
-          if (readOnly) return;
-          setCalendarMonth(selectedDate ?? new Date());
-          setOpen(true);
-        }}
-        className={cn(
-          "h-9 min-h-9 justify-between bg-muted/30 px-3 py-0 text-sm hover:bg-muted/40",
-          readOnly && "cursor-default border-dashed bg-muted/30",
-          buttonClassName
-        )}
-      >
-        <span className="truncate">{labelText}</span>
-        <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
-      </FormControlButton>
+      <div className="flex items-center gap-2">
+        <FormControlButton
+          id={id}
+          disabled={disabled}
+          aria-readonly={readOnly}
+          onClick={() => {
+            if (readOnly) return;
+            setCalendarMonth(selectedDate ?? new Date());
+            setOpen(true);
+          }}
+          className={cn(
+            "h-9 min-h-9 flex-1 justify-between bg-muted/30 px-3 py-0 text-sm hover:bg-muted/40",
+            readOnly && "cursor-default border-dashed bg-muted/30",
+            buttonClassName
+          )}
+        >
+          <span className="truncate">{labelText}</span>
+          <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
+        </FormControlButton>
+        {clearable && selectedDate && !readOnly && !disabled ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+            onClick={() => onValueChange("")}
+            title={clearLabel}
+            aria-label={clearLabel}
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </Button>
+        ) : null}
+      </div>
 
       <Dialog
         open={open}

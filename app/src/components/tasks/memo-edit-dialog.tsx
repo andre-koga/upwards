@@ -1,6 +1,6 @@
 import {
   FormCharacterCount,
-  FormDateField,
+  FormCalendarDateField,
   FormDialog,
   FormDialogActions,
   FormRow,
@@ -76,13 +76,15 @@ export function MemoEditDialog({
           }
         />
         <FormRow>
-          <FormDateField
+          <FormCalendarDateField
             id="memo-due-date"
             label="Due date"
             labelClassName="sr-only"
             value={dueDate ?? ""}
-            onChange={(e) => onDueDateChange(e.target.value || null)}
+            onValueChange={(value) => onDueDateChange(value || null)}
             containerClassName="flex-1 space-y-0"
+            placeholder="Due date"
+            clearable
           />
           <FormToggleButton
             toggled={isPinned}

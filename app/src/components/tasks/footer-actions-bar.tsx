@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import {
   Calendar,
   CircleCheckBig,
@@ -56,6 +57,7 @@ export default function FooterActionsBar({
   const navigate = useNavigate();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pathsDrawerOpen, setPathsDrawerOpen] = useState(false);
+  const { bottomInset } = useVisualViewportLayout();
   const isSelectedToday =
     toDateString(currentDate) === toDateString(new Date());
   const shortDate = formatDateShort(currentDate);
@@ -73,9 +75,10 @@ export default function FooterActionsBar({
       />
 
       <div
-        className={`fixed inset-x-0 bottom-0 z-[70] transition-transform duration-300 ease-out ${
+        className={`fixed inset-x-0 z-[70] transition-transform duration-300 ease-out ${
           pathsDrawerOpen ? "translate-y-0" : "translate-y-full"
         }`}
+        style={{ bottom: bottomInset }}
       >
         <div className="rounded-t-2xl border-t border-border/50 bg-background px-4 pb-8 pt-3 shadow-xl">
           <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/30" />

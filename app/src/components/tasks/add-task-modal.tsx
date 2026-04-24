@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { Button } from "@/components/ui/button";
@@ -95,17 +95,9 @@ export default function AddTaskModal({
       >
         {triggerLabel ? (
           <span className="flex items-center justify-center gap-2">
-            {open ? (
-              <X className="h-5 w-5 shrink-0" aria-hidden />
-            ) : (
-              <Icon className="h-5 w-5 shrink-0" aria-hidden />
-            )}
-            <span className="text-sm font-semibold">
-              {open ? "Close" : triggerLabel}
-            </span>
+            <Icon className="h-5 w-5 shrink-0" aria-hidden />
+            <span className="text-sm font-semibold">{triggerLabel}</span>
           </span>
-        ) : open ? (
-          <X className="h-5 w-5" aria-hidden />
         ) : (
           <Icon className="h-5 w-5" aria-hidden />
         )}
