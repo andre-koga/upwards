@@ -297,7 +297,7 @@ export default function JournalCard({
           open={journalLocationsOpen}
           onOpenChange={handleLocationsOpenChange}
           route={knownLocationRoute}
-          canEdit
+          canEdit={journal.canEditJournal}
           onSave={(route) => {
             journal.setDraftLocationRoute(route);
             journal.draftRef.current.locationRoute = route;

@@ -71,6 +71,18 @@ export default function SessionDetailsDialog({
 
   if (!sessionId) return null;
 
+  const sessionDateString = details?.entry?.date ?? toDateString(selectedDate);
+  const isLockedHistoricalSession = (() => {
+    if (!details) return false;
+    const todayMidnight = new Date(toDateString(new Date()) + "T00:00:00");
+    const sessionMidnight = new Date(sessionDateString + "T00:00:00");
+    const diffDays = Math.floor(
+      (todayMidnight.getTime() - sessionMidnight.getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    return diffDays >= 2;
+  })();
+
   const handleStartTimeChange = (newStartTime: string) => {
     setStartTime(newStartTime);
     if (endTime && timeToSeconds(endTime) <= timeToSeconds(newStartTime)) {
@@ -119,15 +131,16 @@ export default function SessionDetailsDialog({
                 label: getActivityDisplayName(activity, details.group),
               })),
             ]}
+            disabled={isLockedHistoricalSession}
           />
           <FormCalendarDateField
             id="session-date"
             label="Date"
             value={toDateString(selectedDate)}
             max={toDateString(today)}
-            readOnly={isRunningSession}
+            readOnly={isRunningSession || isLockedHistoricalSession}
             onValueChange={(value) => {
-              if (isRunningSession || !value) return;
+              if (isRunningSession || isLockedHistoricalSession || !value) return;
               setSelectedDate(fromDateString(value));
             }}
           />
@@ -136,6 +149,7 @@ export default function SessionDetailsDialog({
             label="Start time"
             value={startTime}
             onValueChange={handleStartTimeChange}
+            disabled={isLockedHistoricalSession}
           />
           {isRunningSession ? (
             <FormField
@@ -150,17 +164,24 @@ export default function SessionDetailsDialog({
               label="End time"
               value={endTime}
               onValueChange={handleEndTimeChange}
+              disabled={isLockedHistoricalSession}
             />
           )}
           {error && <p className="text-sm text-destructive">{error}</p>}
+          {isLockedHistoricalSession ? (
+            <p className="text-sm text-muted-foreground">
+              Sessions from 2+ days ago are read-only.
+            </p>
+          ) : null}
 
           <FormDialogActions
-            onConfirm={handleSave}
+            onConfirm={isLockedHistoricalSession ? () => undefined : handleSave}
             confirmLabel={saving ? "Saving..." : "Save"}
-            confirmDisabled={saving}
+            confirmDisabled={saving || isLockedHistoricalSession}
             secondaryAction={{
               label: "Delete",
-              onClick: handleDelete,
+              onClick: isLockedHistoricalSession ? () => undefined : handleDelete,
+              disabled: isLockedHistoricalSession,
               destructive: true,
             }}
           />

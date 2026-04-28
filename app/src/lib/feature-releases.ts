@@ -22,6 +22,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
       "Removed location transition timers to simplify journaling and keep focus on ordered places visited.",
       "Cleaned up location dialog spacing and action placement for a more consistent layout.",
       "Time edit dialog now has a more consistent layout and spacing, and automatically transitions to the next field when the current field is filled.",
+      "Activity tracking from 2+ days ago isn't editable anymore.",
     ],
   },
   {

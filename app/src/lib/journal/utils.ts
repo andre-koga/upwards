@@ -83,15 +83,30 @@ export function mergeJournalLocationRoute(
 }
 
 function rawToLocationData(raw: unknown): LocationData | null {
+  if (typeof raw === "string") {
+    const displayName = raw.trim();
+    if (!displayName) return null;
+    return {
+      displayName,
+      city: null,
+      state: null,
+      country: null,
+      countryCode: null,
+      lat: null,
+      lon: null,
+    };
+  }
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
   const fromDisplay =
     typeof o.displayName === "string" ? o.displayName.trim() : "";
+  const fromName = typeof o.name === "string" ? o.name.trim() : "";
+  const fromLabel = typeof o.label === "string" ? o.label.trim() : "";
   const fromCity = typeof o.city === "string" ? o.city.trim() : "";
   const fromState = typeof o.state === "string" ? o.state.trim() : "";
   const fromCountry = typeof o.country === "string" ? o.country.trim() : "";
   const displayName =
-    fromDisplay || fromCity || fromState || fromCountry || null;
+    fromDisplay || fromName || fromLabel || fromCity || fromState || fromCountry || null;
   if (!displayName) return null;
   return {
     displayName,
@@ -104,21 +119,41 @@ function rawToLocationData(raw: unknown): LocationData | null {
   };
 }
 
-/** Parse stored `journal_entries.location`; expected shape is `{ locations }`. */
+/**
+ * Parse stored `journal_entries.location`.
+ * Supports current `{ locations }` plus legacy single-object/string/array formats.
+ */
 export function parseJournalLocationRoute(raw: unknown): JournalLocationRoute {
-  if (!raw || typeof raw !== "object") {
-    return { locations: [] };
+  if (!raw) return { locations: [] };
+
+  if (typeof raw === "string") {
+    const parsed = rawToLocationData(raw);
+    return { locations: parsed ? [parsed] : [] };
   }
+
+  if (Array.isArray(raw)) {
+    return normalizeJournalLocationRoute({
+      locations: raw
+        .map(rawToLocationData)
+        .filter((loc): loc is LocationData => Boolean(loc)),
+    });
+  }
+
+  if (typeof raw !== "object") return { locations: [] };
+
   const o = raw as Record<string, unknown>;
-  if (!Array.isArray(o.locations)) {
-    return { locations: [] };
+  if (Array.isArray(o.locations)) {
+    const locations = o.locations
+      .map(rawToLocationData)
+      .filter((loc): loc is LocationData => Boolean(loc));
+    return normalizeJournalLocationRoute({
+      locations,
+    });
   }
-  const locations = o.locations
-    .map(rawToLocationData)
-    .filter((loc): loc is LocationData => Boolean(loc));
-  return normalizeJournalLocationRoute({
-    locations,
-  });
+
+  // Legacy object shape: treat the object itself as a single location payload.
+  const legacySingle = rawToLocationData(o);
+  return { locations: legacySingle ? [legacySingle] : [] };
 }
 
 /** Serialize for IndexedDB / sync (omit empty). */
