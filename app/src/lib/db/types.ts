@@ -59,6 +59,10 @@ export interface LocationData {
   lon: number | null;
 }
 
+export interface JournalLocationRoute {
+  locations: LocationData[];
+}
+
 export interface JournalEntry {
   id: string;
   entry_date: string; // YYYY-MM-DD
@@ -72,7 +76,8 @@ export interface JournalEntry {
   journal_entry_number: number | null;
   journal_completion_streak: number | null;
   journal_completed_at: string | null;
-  location: LocationData | null;
+  /** Ordered places visited that day. */
+  location: JournalLocationRoute | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;

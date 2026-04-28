@@ -4,7 +4,9 @@ import type { LocationData } from "@/lib/db/types";
 interface JournalTextSectionProps {
   title: string;
   text: string;
-  location?: LocationData;
+  /** Ordered places visited that day (shown as A → B → C). */
+  locations?: LocationData[];
+  onLocationsClick?: () => void;
   /** Shown next to location when the day’s journal is complete. */
   journalCompletionStreak?: number | null;
 }
@@ -12,25 +14,37 @@ interface JournalTextSectionProps {
 export default function JournalTextSection({
   title,
   text,
-  location,
+  locations,
+  onLocationsClick,
   journalCompletionStreak,
 }: JournalTextSectionProps) {
   const showStreak = typeof journalCompletionStreak === "number";
+  const hasLocations = Boolean(locations?.length);
+  const canOpenLocations = typeof onLocationsClick === "function";
 
-  const showMetaRow = Boolean(location) || showStreak;
+  const showMetaRow = canOpenLocations || showStreak;
+
+  const locationLabel = locations?.length
+    ? locations.map((l) => l.displayName).join(" → ")
+    : "";
 
   return (
     <>
       {showMetaRow && (
         <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-muted-foreground">
-          {location ? (
-            <span className="inline-flex min-w-0 items-center gap-1">
+          {canOpenLocations ? (
+            <button
+              type="button"
+              onClick={onLocationsClick}
+              className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border border-border px-2 py-px text-left transition-colors hover:bg-accent/40"
+              title={hasLocations ? locationLabel : "Add locations visited"}
+            >
               <MapPin className="h-3 w-3 shrink-0" />
-              <span className="truncate">{location.displayName}</span>
-            </span>
-          ) : (
-            <span />
-          )}
+              <span className="min-w-0 break-words">
+                {hasLocations ? locationLabel : "Add locations"}
+              </span>
+            </button>
+          ) : null}
           {showStreak && (
             <span
               className="inline-flex shrink-0 items-center gap-0.5 tabular-nums"

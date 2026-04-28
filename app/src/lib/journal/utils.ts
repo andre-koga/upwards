@@ -1,24 +1,132 @@
 import { db, now } from "@/lib/db";
-import type { JournalEntry, LocationData } from "@/lib/db/types";
+import type {
+  JournalEntry,
+  JournalLocationRoute,
+  LocationData,
+} from "@/lib/db/types";
 import { shiftDate, toDateString } from "@/lib/time-utils";
 
+/** Max great-circle distance (km) to treat two readings as the same place when city data is missing. */
+const SAME_PLACE_DISTANCE_KM = 50;
+
+function haversineKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function norm(s: string | null | undefined): string {
+  return (s ?? "").trim().toLowerCase();
+}
+
 /**
- * Parse stored location — handles legacy plain-string values gracefully.
+ * Whether two readings are the same place (consecutive duplicates are dropped).
  */
-export function parseLocation(raw: unknown): LocationData | null {
-  if (!raw) return null;
-  if (typeof raw === "string") {
-    return {
-      displayName: raw,
-      city: raw,
-      state: null,
-      country: null,
-      countryCode: null,
-      lat: null,
-      lon: null,
-    };
+export function isSameJournalPlace(a: LocationData, b: LocationData): boolean {
+  const cityA = norm(a.city);
+  const cityB = norm(b.city);
+  const ccA = norm(a.countryCode);
+  const ccB = norm(b.countryCode);
+  const countryA = norm(a.country);
+  const countryB = norm(b.country);
+
+  if (cityA && cityB) {
+    if (cityA !== cityB) return false;
+    if (ccA && ccB) return ccA === ccB;
+    if (countryA && countryB) return countryA === countryB;
+    return true;
   }
-  return raw as LocationData;
+
+  if (a.lat != null && a.lon != null && b.lat != null && b.lon != null) {
+    return haversineKm(a.lat, a.lon, b.lat, b.lon) <= SAME_PLACE_DISTANCE_KM;
+  }
+
+  return (
+    norm(a.displayName) === norm(b.displayName) && norm(a.displayName) !== ""
+  );
+}
+
+export function normalizeJournalLocationRoute(
+  route: JournalLocationRoute
+): JournalLocationRoute {
+  return {
+    locations: route.locations.filter((loc) => loc.displayName.trim().length > 0),
+  };
+}
+
+/**
+ * Append a new reading only if it differs from the last stop (A -> B -> C).
+ */
+export function mergeJournalLocationRoute(
+  existing: JournalLocationRoute,
+  next: LocationData
+): JournalLocationRoute {
+  const normalized = normalizeJournalLocationRoute(existing);
+  const last = normalized.locations[normalized.locations.length - 1];
+  if (last && isSameJournalPlace(last, next)) return normalized;
+  return normalizeJournalLocationRoute({
+    locations: [...normalized.locations, next],
+  });
+}
+
+function rawToLocationData(raw: unknown): LocationData | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const fromDisplay =
+    typeof o.displayName === "string" ? o.displayName.trim() : "";
+  const fromCity = typeof o.city === "string" ? o.city.trim() : "";
+  const fromState = typeof o.state === "string" ? o.state.trim() : "";
+  const fromCountry = typeof o.country === "string" ? o.country.trim() : "";
+  const displayName =
+    fromDisplay || fromCity || fromState || fromCountry || null;
+  if (!displayName) return null;
+  return {
+    displayName,
+    city: typeof o.city === "string" ? o.city : null,
+    state: typeof o.state === "string" ? o.state : null,
+    country: typeof o.country === "string" ? o.country : null,
+    countryCode: typeof o.countryCode === "string" ? o.countryCode : null,
+    lat: typeof o.lat === "number" ? o.lat : null,
+    lon: typeof o.lon === "number" ? o.lon : null,
+  };
+}
+
+/** Parse stored `journal_entries.location`; expected shape is `{ locations }`. */
+export function parseJournalLocationRoute(raw: unknown): JournalLocationRoute {
+  if (!raw || typeof raw !== "object") {
+    return { locations: [] };
+  }
+  const o = raw as Record<string, unknown>;
+  if (!Array.isArray(o.locations)) {
+    return { locations: [] };
+  }
+  const locations = o.locations
+    .map(rawToLocationData)
+    .filter((loc): loc is LocationData => Boolean(loc));
+  return normalizeJournalLocationRoute({
+    locations,
+  });
+}
+
+/** Serialize for IndexedDB / sync (omit empty). */
+export function serializeJournalLocationRoute(
+  route: JournalLocationRoute | null
+): JournalLocationRoute | null {
+  if (!route?.locations.length) return null;
+  return normalizeJournalLocationRoute(route);
 }
 
 export interface JournalFields {
@@ -27,7 +135,7 @@ export interface JournalFields {
   day_emoji: string | null;
   is_bookmarked: boolean;
   video_path: string | null;
-  location: LocationData | null;
+  location: JournalLocationRoute | null;
   video_thumbnail: string | null;
 }
 

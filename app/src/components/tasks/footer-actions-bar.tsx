@@ -88,9 +88,6 @@ export default function FooterActionsBar({
       >
         <div className="rounded-t-2xl border-t border-border/50 bg-background px-4 pb-8 pt-3 shadow-xl">
           <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/30" />
-          <p className="mb-3 text-center text-sm font-semibold text-muted-foreground">
-            More
-          </p>
           <div className="space-y-2">
             <Button
               type="button"

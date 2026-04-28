@@ -8,7 +8,10 @@ import {
 } from "react";
 import { toDateString } from "@/lib/time-utils";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
-import { getJournalVideoPlaybackUrl } from "@/lib/journal";
+import {
+  getJournalVideoPlaybackUrl,
+  mergeJournalLocationRoute,
+} from "@/lib/journal";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
 import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
@@ -18,6 +21,7 @@ import JournalVideoSection, {
 } from "@/components/journal/journal-video-section";
 import JournalTextSection from "@/components/journal/journal-text-section";
 import JournalEditDialog from "@/components/journal/journal-edit-dialog";
+import JournalLocationsDialog from "@/components/journal/journal-locations-dialog";
 import JournalMetaBar from "@/components/journal/journal-meta-bar";
 import type { LocationData } from "@/lib/db/types";
 
@@ -34,6 +38,7 @@ export default function JournalCard({
   loadJournalMeta,
 }: JournalCardProps) {
   const [journalEditOpen, setJournalEditOpen] = useState(false);
+  const [journalLocationsOpen, setJournalLocationsOpen] = useState(false);
   const [suppressJournalOpenHitArea, setSuppressJournalOpenHitArea] =
     useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
@@ -55,13 +60,25 @@ export default function JournalCard({
       }
     : null;
 
-  const location = journal.draftLocation ?? journal.persistedLocation;
+  const knownLocationRoute =
+    journal.draftLocations.length > 0
+      ? journal.draftLocationRoute
+      : journal.persistedLocationRoute;
+  const knownLocations = knownLocationRoute.locations;
+
+  const displayLocations = knownLocations;
 
   const handleLocationDetected = useCallback(
-    (location: LocationData) => {
-      journal.setDraftLocation(location);
-      journal.draftRef.current.location = location;
-      journal.saveLocation(location);
+    (loc: LocationData) => {
+      const base =
+        journal.draftRef.current.locationRoute.locations.length > 0
+          ? journal.draftRef.current.locationRoute
+          : journal.persistedLocationRoute;
+      const merged = mergeJournalLocationRoute(base, loc);
+      if (merged.locations.length === base.locations.length) return;
+      journal.setDraftLocationRoute(merged);
+      journal.draftRef.current.locationRoute = merged;
+      journal.saveLocationRoute(merged);
     },
     [journal]
   );
@@ -69,8 +86,7 @@ export default function JournalCard({
   const { detectLocation, resetGeoAttempt } = useLocationDetection({
     isToday: journal.canEditJournal,
     isJournalLoaded,
-    currentLocation: journal.draftLocation,
-    persistedLocation: journal.persistedLocation,
+    knownLocations,
     onLocationDetected: handleLocationDetected,
   });
 
@@ -140,6 +156,11 @@ export default function JournalCard({
 
   const openJournalEditor = () => {
     handleJournalEditOpenChange(true);
+  };
+
+  const handleLocationsOpenChange = (open: boolean) => {
+    setJournalLocationsOpen(open);
+    if (open) setSuppressJournalOpenHitArea(false);
   };
 
   const handleJournalPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -233,7 +254,10 @@ export default function JournalCard({
             <JournalTextSection
               title={journal.draftTitle}
               text={journal.draftText}
-              location={location ?? undefined}
+              locations={
+                displayLocations.length > 0 ? displayLocations : undefined
+              }
+              onLocationsClick={() => handleLocationsOpenChange(true)}
               journalCompletionStreak={
                 journal.isJournalComplete &&
                 typeof journal.journalCompletionStreak === "number"
@@ -267,6 +291,17 @@ export default function JournalCard({
             }
             journal.draftRef.current.videoPath = videoPath;
             journal.saveDraft();
+          }}
+        />
+        <JournalLocationsDialog
+          open={journalLocationsOpen}
+          onOpenChange={handleLocationsOpenChange}
+          route={knownLocationRoute}
+          canEdit
+          onSave={(route) => {
+            journal.setDraftLocationRoute(route);
+            journal.draftRef.current.locationRoute = route;
+            journal.saveLocationRoute(route);
           }}
         />
 

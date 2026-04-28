@@ -1,16 +1,22 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { db, now, newId } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
-import type { JournalEntry, LocationData } from "@/lib/db/types";
+import type {
+  JournalEntry,
+  JournalLocationRoute,
+  LocationData,
+} from "@/lib/db/types";
 import { toJournalVideoPath } from "@/lib/journal";
 import {
-  parseLocation,
+  parseJournalLocationRoute,
+  serializeJournalLocationRoute,
   getCompletionMetadata,
+  normalizeJournalLocationRoute,
   propagateJournalCompletionStreaksAfterSave,
   type JournalFields,
 } from "@/lib/journal";
 
-export type { LocationData, JournalFields };
+export type { JournalLocationRoute, LocationData, JournalFields };
 
 export interface JournalDraft {
   title: string;
@@ -18,9 +24,13 @@ export interface JournalDraft {
   emoji: string;
   bookmarked: boolean;
   videoPath: string;
-  location: LocationData | null;
+  locationRoute: JournalLocationRoute;
   videoThumbnail: string | null;
 }
+
+const EMPTY_LOCATION_ROUTE: JournalLocationRoute = {
+  locations: [],
+};
 
 export function useJournalEntry(currentDate: Date) {
   const [journalEntry, setJournalEntry] = useState<JournalEntry | null>(null);
@@ -29,7 +39,8 @@ export function useJournalEntry(currentDate: Date) {
   const [draftEmoji, setDraftEmoji] = useState("");
   const [draftBookmarked, setDraftBookmarked] = useState(false);
   const [draftVideoPath, setDraftVideoPath] = useState("");
-  const [draftLocation, setDraftLocation] = useState<LocationData | null>(null);
+  const [draftLocationRoute, setDraftLocationRoute] =
+    useState<JournalLocationRoute>(EMPTY_LOCATION_ROUTE);
 
   // Ref so blur-save handlers always read the latest draft without stale closures
   const draftRef = useRef<JournalDraft>({
@@ -38,7 +49,7 @@ export function useJournalEntry(currentDate: Date) {
     emoji: "",
     bookmarked: false,
     videoPath: "",
-    location: null,
+    locationRoute: EMPTY_LOCATION_ROUTE,
     videoThumbnail: null,
   });
 
@@ -58,14 +69,14 @@ export function useJournalEntry(currentDate: Date) {
           setDraftEmoji("");
           setDraftBookmarked(false);
           setDraftVideoPath("");
-          setDraftLocation(null);
+          setDraftLocationRoute(EMPTY_LOCATION_ROUTE);
           draftRef.current = {
             title: "",
             text: "",
             emoji: "",
             bookmarked: false,
             videoPath: "",
-            location: null,
+            locationRoute: EMPTY_LOCATION_ROUTE,
             videoThumbnail: null,
           };
         }
@@ -91,21 +102,21 @@ export function useJournalEntry(currentDate: Date) {
     const e = journalEntry?.day_emoji ?? "";
     const b = journalEntry?.is_bookmarked ?? false;
     const p = toJournalVideoPath(journalEntry?.video_path ?? "");
-    const l = parseLocation(journalEntry?.location);
+    const locationRoute = parseJournalLocationRoute(journalEntry?.location);
     const vt = journalEntry?.video_thumbnail ?? null;
     setDraftTitle(t);
     setDraftText(tx);
     setDraftEmoji(e);
     setDraftBookmarked(b);
     setDraftVideoPath(p);
-    setDraftLocation(l);
+    setDraftLocationRoute(locationRoute);
     draftRef.current = {
       title: t,
       text: tx,
       emoji: e,
       bookmarked: b,
       videoPath: p,
-      location: l,
+      locationRoute,
       videoThumbnail: vt,
     };
   }, [journalEntry]);
@@ -191,7 +202,7 @@ export function useJournalEntry(currentDate: Date) {
       day_emoji: r.emoji || null,
       is_bookmarked: r.bookmarked,
       video_path: r.videoPath || null,
-      location: r.location || null,
+      location: serializeJournalLocationRoute(r.locationRoute),
       video_thumbnail: r.videoThumbnail || null,
     });
   }, [canEditJournal, saveJournalEntry, currentDate]);
@@ -210,7 +221,7 @@ export function useJournalEntry(currentDate: Date) {
         day_emoji: r.emoji || null,
         is_bookmarked: bookmarked,
         video_path: r.videoPath || null,
-        location: r.location || null,
+        location: serializeJournalLocationRoute(r.locationRoute),
         video_thumbnail: r.videoThumbnail || null,
       });
     },
@@ -218,8 +229,8 @@ export function useJournalEntry(currentDate: Date) {
   );
 
   // Save only the location field — works for any day
-  const saveLocation = useCallback(
-    (location: LocationData | null) => {
+  const saveLocationRoute = useCallback(
+    (route: JournalLocationRoute | null) => {
       const currentDateStr = toDateString(currentDate);
       if (draftDateRef.current !== currentDateStr) {
         return;
@@ -231,12 +242,20 @@ export function useJournalEntry(currentDate: Date) {
         day_emoji: r.emoji || null,
         is_bookmarked: r.bookmarked,
         video_path: r.videoPath || null,
-        location: location || null,
+        location: serializeJournalLocationRoute(route),
         video_thumbnail: r.videoThumbnail || null,
       });
     },
     [saveJournalEntry, currentDate]
   );
+
+  const persistedLocationRoute = parseJournalLocationRoute(
+    journalEntry?.location
+  );
+  const draftLocations = draftLocationRoute.locations;
+  const setNormalizedDraftLocationRoute = (route: JournalLocationRoute) => {
+    setDraftLocationRoute(normalizeJournalLocationRoute(route));
+  };
 
   return {
     // state
@@ -253,19 +272,21 @@ export function useJournalEntry(currentDate: Date) {
     draftRef,
     canEditJournal,
     // state
-    draftLocation,
-    setDraftLocation,
+    draftLocationRoute,
+    draftLocations,
+    setDraftLocationRoute: setNormalizedDraftLocationRoute,
     journalCompletionStreak: journalEntry?.journal_completion_streak ?? null,
     journalEntryNumber: journalEntry?.journal_entry_number ?? null,
     isJournalComplete: !!journalEntry?.is_journal_complete,
     videoThumbnail: journalEntry?.video_thumbnail ?? null,
-    /** Parsed `journalEntries.location`; updates with `journalEntry` (not one effect behind `draftLocation`). */
-    persistedLocation: parseLocation(journalEntry?.location),
+    /** Parsed `journalEntries.location`; updates with `journalEntry` (not one effect behind draft state). */
+    persistedLocationRoute,
+    persistedLocations: persistedLocationRoute.locations,
     // actions
     loadJournalEntry,
     saveDraft,
     saveBookmark,
-    saveLocation,
+    saveLocationRoute,
   };
 }
 

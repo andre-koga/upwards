@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { FormDialogActions } from "@/components/forms/form-dialog-actions";
 import { cn } from "@/lib/utils";
 import {
   dialogFieldLabelClassName,
@@ -176,6 +177,14 @@ export function FormTimeField({
     setOpen(false);
   };
 
+  const advanceToNextUnit = () => {
+    setActiveUnit((current) => {
+      if (current === "hour") return "minute";
+      if (current === "minute") return "second";
+      return "second";
+    });
+  };
+
   const updateFromPointer = (clientX: number, clientY: number) => {
     const dial = dialRef.current;
     if (!dial) return;
@@ -252,9 +261,10 @@ export function FormTimeField({
         }}
       >
         <DialogContent
+          size="sm"
           data-no-swipe
           overlayClassName="z-[85] bg-black/35 backdrop-blur-0"
-          className="z-[90] max-w-[22rem] rounded-2xl p-4 sm:max-w-sm"
+          className="z-[90] rounded-2xl p-4"
           onTouchStart={(event) => event.stopPropagation()}
           onTouchMove={(event) => event.stopPropagation()}
           onTouchEnd={(event) => event.stopPropagation()}
@@ -269,8 +279,8 @@ export function FormTimeField({
               Drag the dial or tap values to edit time.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="mx-auto w-full max-w-[17.5rem] rounded-full bg-muted/35 p-2">
+          <div className="space-y-2">
+            <div className="mx-auto w-full rounded-full bg-muted/35">
               <svg
                 ref={dialRef}
                 viewBox="0 0 240 240"
@@ -287,6 +297,7 @@ export function FormTimeField({
                 }}
                 onPointerUp={(event) => {
                   setDragging(false);
+                  advanceToNextUnit();
                   try {
                     event.currentTarget.releasePointerCapture(event.pointerId);
                   } catch {
@@ -297,15 +308,23 @@ export function FormTimeField({
                   setDragging(false);
                 }}
               >
-                <circle cx={center} cy={center} r={radius + 8} fill="hsl(var(--card))" />
+                <circle
+                  cx={center}
+                  cy={center}
+                  r={radius + 8}
+                  fill="hsl(var(--card))"
+                />
                 {(activeUnit === "hour"
                   ? Array.from({ length: 12 }, (_, index) => index)
                   : Array.from({ length: 60 }, (_, index) => index)
                 ).map((index) => {
-                  const angle =
-                    activeUnit === "hour" ? index * 30 : index * 6;
+                  const angle = activeUnit === "hour" ? index * 30 : index * 6;
                   const longTick = activeUnit === "hour" || index % 5 === 0;
-                  const inner = polarPoint(center, longTick ? radius - 14 : radius - 10, angle);
+                  const inner = polarPoint(
+                    center,
+                    longTick ? radius - 14 : radius - 10,
+                    angle
+                  );
                   const outer = polarPoint(center, radius, angle);
                   return (
                     <line
@@ -324,7 +343,8 @@ export function FormTimeField({
                   ? Array.from({ length: 12 }, (_, index) => index)
                   : Array.from({ length: 12 }, (_, index) => index * 5)
                 ).map((valueLabel) => {
-                  const angle = activeUnit === "hour" ? valueLabel * 30 : valueLabel * 6;
+                  const angle =
+                    activeUnit === "hour" ? valueLabel * 30 : valueLabel * 6;
                   const point = polarPoint(center, radius - 28, angle);
                   const label =
                     activeUnit === "hour"
@@ -351,12 +371,22 @@ export function FormTimeField({
                   strokeWidth={3}
                   strokeLinecap="round"
                 />
-                <circle cx={handTip.x} cy={handTip.y} r={7} fill="hsl(var(--primary))" />
-                <circle cx={center} cy={center} r={5} fill="hsl(var(--primary))" />
+                <circle
+                  cx={handTip.x}
+                  cy={handTip.y}
+                  r={7}
+                  fill="hsl(var(--primary))"
+                />
+                <circle
+                  cx={center}
+                  cy={center}
+                  r={5}
+                  fill="hsl(var(--primary))"
+                />
               </svg>
             </div>
 
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5 pt-2">
               <Button
                 type="button"
                 variant={activeUnit === "hour" ? "default" : "outline"}
@@ -383,36 +413,25 @@ export function FormTimeField({
               </Button>
               <Button
                 type="button"
-                variant={draft.meridiem === "AM" ? "default" : "outline"}
+                variant="outline"
                 className="font-semibold"
-                onClick={() => updateFromDraft({ meridiem: "AM" })}
+                onClick={() =>
+                  updateFromDraft({
+                    meridiem: draft.meridiem === "AM" ? "PM" : "AM",
+                  })
+                }
               >
-                AM
-              </Button>
-              <Button
-                type="button"
-                variant={draft.meridiem === "PM" ? "default" : "outline"}
-                className="font-semibold"
-                onClick={() => updateFromDraft({ meridiem: "PM" })}
-              >
-                PM
+                {draft.meridiem}
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setOpen(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button type="button" onClick={commitDraft}>
-                Save
-              </Button>
-            </div>
+            <FormDialogActions
+              onConfirm={commitDraft}
+              secondaryAction={{
+                label: "Cancel",
+                onClick: () => setOpen(false),
+              }}
+            />
           </div>
         </DialogContent>
       </Dialog>
