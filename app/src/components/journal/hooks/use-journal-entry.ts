@@ -129,7 +129,7 @@ export function useJournalEntry(currentDate: Date) {
       (todayMidnight.getTime() - entryMidnight.getTime()) /
         (1000 * 60 * 60 * 24)
     );
-    return diffDays >= 0 && diffDays <= 1;
+    return diffDays >= 0 && diffDays <= 7;
   })();
 
   const saveJournalEntry = useCallback(
