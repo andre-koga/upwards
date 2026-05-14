@@ -16,7 +16,7 @@ interface DeleteConfirmDialogProps {
   type: "activity" | "group" | null;
   id: string | null;
   onOpenChange: (open: boolean) => void;
-  onDeleted: () => void;
+  onDeleted: (detail: { type: "activity" | "group"; id: string }) => void;
 }
 
 export function DeleteConfirmDialog({
@@ -41,7 +41,7 @@ export function DeleteConfirmDialog({
         await db.activities.delete(id);
       }
       onOpenChange(false);
-      onDeleted();
+      onDeleted({ type, id });
     } catch (error) {
       logError("Error deleting", error);
     }

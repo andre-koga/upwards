@@ -8,6 +8,9 @@ export interface GroupPillProps {
   onNameClick?: () => void;
   /** When set, shows an edit button on the left that calls this. */
   onSettingsClick?: () => void;
+  /** Accessibility and tooltip for the settings control (e.g. archived groups). */
+  settingsAriaLabel?: string;
+  settingsTitle?: string;
   className?: string;
 }
 
@@ -17,6 +20,8 @@ export default function GroupPill({
   onActionClick,
   onNameClick,
   onSettingsClick,
+  settingsAriaLabel = "Edit group",
+  settingsTitle = "Edit group",
   className = "",
 }: GroupPillProps) {
   const actionLabel = "Start";
@@ -32,8 +37,9 @@ export default function GroupPill({
           type="button"
           variant="outline"
           onClick={onSettingsClick}
+          title={settingsTitle}
           className="h-10 w-10 shrink-0 rounded-full border-border p-0"
-          aria-label="Edit group"
+          aria-label={settingsAriaLabel}
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -43,7 +49,7 @@ export default function GroupPill({
           type="button"
           variant="outline"
           onClick={onNameClick}
-          className="h-full flex-1 justify-start gap-2.5 truncate rounded-full px-0 pl-3 pr-2 text-left text-sm font-medium shadow-none"
+          className="h-full flex-1 justify-start gap-2.5 truncate rounded-full px-4 text-left text-sm font-medium shadow-none"
         >
           <span
             className="h-2.5 w-2.5 shrink-0 rounded-full"

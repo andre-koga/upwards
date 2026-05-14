@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
-import { ChevronLeft, Pencil, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, Pencil, Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/db";
@@ -11,14 +11,33 @@ import {
   getActivityDisplayName,
   isActiveGroup,
   isHiddenGroupDefaultActivity,
+  sortActivitiesByOrder,
 } from "@/lib/activity";
 import GroupPill from "@/components/activities/group-pill";
 import ActivityPill from "@/components/activities/activity-pill";
 import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
+import {
+  ArchivedItemActionsDialog,
+  type ArchivedItemActionsTarget,
+} from "@/components/activities/archived-item-actions-dialog";
+import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dialog";
 import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
 import ManualTimeEntryDialog from "@/components/tasks/manual-time-entry-dialog";
 import { Button } from "@/components/ui/button";
+
+async function loadActivityGroupLists(): Promise<{
+  active: ActivityGroup[];
+  archived: ActivityGroup[];
+}> {
+  const [active, archived] = await Promise.all([
+    db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
+    db.activityGroups
+      .filter((g) => !!g.is_archived && !g.deleted_at)
+      .sortBy("created_at"),
+  ]);
+  return { active, archived };
+}
 
 interface ActivityGroupsDrawerProps {
   currentActivityId?: string | null;
@@ -64,6 +83,19 @@ export default function ActivityGroupsDrawer({
     null
   );
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
+  const [archivedGroups, setArchivedGroups] = useState<ActivityGroup[]>([]);
+  const [showArchivedGroups, setShowArchivedGroups] = useState(false);
+  const [archivedGroupActivities, setArchivedGroupActivities] = useState<
+    Activity[]
+  >([]);
+  const [showArchivedActivities, setShowArchivedActivities] = useState(false);
+  const [archivedActivitiesTick, setArchivedActivitiesTick] = useState(0);
+  const [archivedActionsTarget, setArchivedActionsTarget] =
+    useState<ArchivedItemActionsTarget | null>(null);
+  const [deleteArchivedTarget, setDeleteArchivedTarget] = useState<{
+    type: "group" | "activity";
+    id: string;
+  } | null>(null);
   const [newGroupDialogOpen, setNewGroupDialogOpen] = useState(false);
   const [newActivityDialogGroup, setNewActivityDialogGroup] =
     useState<ActivityGroup | null>(null);
@@ -80,17 +112,52 @@ export default function ActivityGroupsDrawer({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    db.activityGroups
-      .filter((g) => isActiveGroup(g))
-      .sortBy("created_at")
-      .then((g) => {
-        if (!cancelled) setGroups(g);
+    loadActivityGroupLists()
+      .then(({ active, archived }) => {
+        if (!cancelled) {
+          setGroups(active);
+          setArchivedGroups(archived);
+        }
       })
       .catch(console.error);
     return () => {
       cancelled = true;
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      setShowArchivedGroups(false);
+      setShowArchivedActivities(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    setShowArchivedActivities(false);
+  }, [selectedGroup?.id]);
+
+  useEffect(() => {
+    if (!open || view !== "activities" || !selectedGroup) return;
+    let cancelled = false;
+    db.activities
+      .filter(
+        (a) =>
+          a.group_id === selectedGroup.id &&
+          !!a.is_archived &&
+          !a.deleted_at &&
+          !isHiddenGroupDefaultActivity(a)
+      )
+      .toArray()
+      .then((list) => {
+        if (!cancelled) {
+          setArchivedGroupActivities(sortActivitiesByOrder(list));
+        }
+      })
+      .catch(console.error);
+    return () => {
+      cancelled = true;
+    };
+  }, [open, view, selectedGroup, archivedActivitiesTick]);
 
   const closeDrawer = () => {
     setView("groups");
@@ -137,10 +204,13 @@ export default function ActivityGroupsDrawer({
     }
   };
 
-  const groupActivities = selectedGroup
-    ? activities.filter(
-        (a) =>
-          a.group_id === selectedGroup.id && !isHiddenGroupDefaultActivity(a)
+  const activeGroupActivities = selectedGroup
+    ? sortActivitiesByOrder(
+        activities.filter(
+          (a) =>
+            a.group_id === selectedGroup.id &&
+            !isHiddenGroupDefaultActivity(a)
+        )
       )
     : [];
   const manualEntryActivity = manualEntryActivityId
@@ -204,29 +274,89 @@ export default function ActivityGroupsDrawer({
                   </Button>
                 </div>
                 <div className="space-y-2 px-4 pb-12">
-                  {groups.length === 0 ? (
+                  {groups.length === 0 && archivedGroups.length === 0 ? (
                     <p className="py-6 text-center text-sm text-muted-foreground">
                       No groups yet.
                     </p>
                   ) : (
-                    groups.map((group) => {
-                      return (
-                        <GroupPill
-                          key={group.id}
-                          name={group.name}
-                          color={group.color || DEFAULT_GROUP_COLOR}
-                          onNameClick={() => {
-                            setView("groups");
-                            setOpen(false);
-                            navigate(`/activities/${group.id}`);
-                          }}
-                          onSettingsClick={() => {
-                            setEditingGroup(group);
-                          }}
-                          onActionClick={() => handleOpenGroup(group)}
-                        />
-                      );
-                    })
+                    <>
+                      {groups.length === 0 ? (
+                        <p className="py-2 text-center text-sm text-muted-foreground">
+                          No active groups.
+                        </p>
+                      ) : (
+                        groups.map((group) => {
+                          return (
+                            <GroupPill
+                              key={group.id}
+                              name={group.name}
+                              color={group.color || DEFAULT_GROUP_COLOR}
+                              onNameClick={() => {
+                                setView("groups");
+                                setOpen(false);
+                                navigate(`/activities/${group.id}`);
+                              }}
+                              onSettingsClick={() => {
+                                setEditingGroup(group);
+                              }}
+                              onActionClick={() => handleOpenGroup(group)}
+                            />
+                          );
+                        })
+                      )}
+                      {archivedGroups.length > 0 ? (
+                        <div className="flex flex-col items-center pt-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="iconRoundMd"
+                            className="text-muted-foreground"
+                            aria-expanded={showArchivedGroups}
+                            aria-label={
+                              showArchivedGroups
+                                ? "Hide archived groups"
+                                : "Show archived groups"
+                            }
+                            onClick={() =>
+                              setShowArchivedGroups((v) => !v)
+                            }
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "h-5 w-5 transition-transform duration-200",
+                                showArchivedGroups && "rotate-180"
+                              )}
+                              aria-hidden
+                            />
+                          </Button>
+                          {showArchivedGroups ? (
+                            <div className="mt-2 w-full space-y-2">
+                              {archivedGroups.map((group) => (
+                                <GroupPill
+                                  key={group.id}
+                                  name={group.name}
+                                  color={group.color || DEFAULT_GROUP_COLOR}
+                                  settingsTitle="Restore or delete archived group"
+                                  settingsAriaLabel="Restore or delete archived group"
+                                  onNameClick={() => {
+                                    setView("groups");
+                                    setOpen(false);
+                                    navigate(`/activities/${group.id}`);
+                                  }}
+                                  onSettingsClick={() =>
+                                    setArchivedActionsTarget({
+                                      type: "group",
+                                      group,
+                                    })
+                                  }
+                                  onActionClick={() => handleOpenGroup(group)}
+                                />
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </>
                   )}
                 </div>
               </>
@@ -269,63 +399,170 @@ export default function ActivityGroupsDrawer({
                     <p className="py-6 text-center text-sm text-muted-foreground">
                       No group selected.
                     </p>
-                  ) : groupActivities.length === 0 ? (
+                  ) : activeGroupActivities.length === 0 &&
+                    archivedGroupActivities.length === 0 ? (
                     <p className="py-6 text-center text-sm text-muted-foreground">
                       No activities in this group.
                     </p>
                   ) : (
-                    groupActivities.map((activity) => {
-                      const isRunning = currentActivityId === activity.id;
-                      const groupColor =
-                        selectedGroup.color || DEFAULT_GROUP_COLOR;
-                      return (
-                        <div
-                          key={activity.id}
-                          className="flex items-center gap-2"
-                        >
+                    <>
+                      {activeGroupActivities.length === 0 ? (
+                        <p className="py-2 text-center text-sm text-muted-foreground">
+                          No active activities.
+                        </p>
+                      ) : (
+                        activeGroupActivities.map((activity) => {
+                          const isRunning = currentActivityId === activity.id;
+                          const groupColor =
+                            selectedGroup.color || DEFAULT_GROUP_COLOR;
+                          return (
+                            <div
+                              key={activity.id}
+                              className="flex items-center gap-2"
+                            >
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="iconRoundMd"
+                                className="h-10 w-10 border-border bg-background"
+                                title="Edit activity"
+                                aria-label="Edit activity"
+                                onClick={() => {
+                                  setEditingActivity(activity);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <ActivityPill
+                                name={getActivityDisplayName(
+                                  activity,
+                                  selectedGroup
+                                )}
+                                color={groupColor}
+                                elapsedMs={calculateActivityTime(activity.id)}
+                                isRunning={isRunning}
+                                onNameClick={() => {
+                                  setOpen(false);
+                                  navigate(`/activities/stats/${activity.id}`);
+                                }}
+                                onClick={async () => {
+                                  if (isRunning) {
+                                    await onStopActivity?.();
+                                  } else {
+                                    await onStartActivity?.(activity.id);
+                                  }
+                                  closeDrawer();
+                                }}
+                                onManualEntry={
+                                  onAddManualEntry
+                                    ? () =>
+                                        setManualEntryActivityId(activity.id)
+                                    : undefined
+                                }
+                                className="flex-1"
+                              />
+                            </div>
+                          );
+                        })
+                      )}
+                      {archivedGroupActivities.length > 0 ? (
+                        <div className="flex flex-col items-center pt-2">
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="ghost"
                             size="iconRoundMd"
-                            className="h-10 w-10 border-border bg-background"
-                            title="Edit activity"
-                            aria-label="Edit activity"
-                            onClick={() => {
-                              setEditingActivity(activity);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <ActivityPill
-                            name={getActivityDisplayName(
-                              activity,
-                              selectedGroup
-                            )}
-                            color={groupColor}
-                            elapsedMs={calculateActivityTime(activity.id)}
-                            isRunning={isRunning}
-                            onNameClick={() => {
-                              setOpen(false);
-                              navigate(`/activities/stats/${activity.id}`);
-                            }}
-                            onClick={async () => {
-                              if (isRunning) {
-                                await onStopActivity?.();
-                              } else {
-                                await onStartActivity?.(activity.id);
-                              }
-                              closeDrawer();
-                            }}
-                            onManualEntry={
-                              onAddManualEntry
-                                ? () => setManualEntryActivityId(activity.id)
-                                : undefined
+                            className="text-muted-foreground"
+                            aria-expanded={showArchivedActivities}
+                            aria-label={
+                              showArchivedActivities
+                                ? "Hide archived activities"
+                                : "Show archived activities"
                             }
-                            className="flex-1"
-                          />
+                            onClick={() =>
+                              setShowArchivedActivities((v) => !v)
+                            }
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "h-5 w-5 transition-transform duration-200",
+                                showArchivedActivities && "rotate-180"
+                              )}
+                              aria-hidden
+                            />
+                          </Button>
+                          {showArchivedActivities ? (
+                            <div className="mt-2 w-full space-y-2">
+                              {archivedGroupActivities.map((activity) => {
+                                const isRunning =
+                                  currentActivityId === activity.id;
+                                const groupColor =
+                                  selectedGroup.color ||
+                                  DEFAULT_GROUP_COLOR;
+                                return (
+                                  <div
+                                    key={activity.id}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="iconRoundMd"
+                                      className="h-10 w-10 border-border bg-background"
+                                      title="Restore or delete archived activity"
+                                      aria-label="Restore or delete archived activity"
+                                      onClick={() =>
+                                        setArchivedActionsTarget({
+                                          type: "activity",
+                                          activity,
+                                        })
+                                      }
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <ActivityPill
+                                      name={getActivityDisplayName(
+                                        activity,
+                                        selectedGroup
+                                      )}
+                                      color={groupColor}
+                                      elapsedMs={calculateActivityTime(
+                                        activity.id
+                                      )}
+                                      isRunning={isRunning}
+                                      onNameClick={() => {
+                                        setOpen(false);
+                                        navigate(
+                                          `/activities/stats/${activity.id}`
+                                        );
+                                      }}
+                                      onClick={async () => {
+                                        if (isRunning) {
+                                          await onStopActivity?.();
+                                        } else {
+                                          await onStartActivity?.(
+                                            activity.id
+                                          );
+                                        }
+                                        closeDrawer();
+                                      }}
+                                      onManualEntry={
+                                        onAddManualEntry
+                                          ? () =>
+                                              setManualEntryActivityId(
+                                                activity.id
+                                              )
+                                          : undefined
+                                      }
+                                      className="flex-1"
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : null}
                         </div>
-                      );
-                    })
+                      ) : null}
+                    </>
                   )}
                 </div>
               </>
@@ -389,7 +626,9 @@ export default function ActivityGroupsDrawer({
         />
       ) : null}
 
-      {editingActivity && selectedGroup ? (
+      {editingActivity &&
+      selectedGroup &&
+      !editingActivity.is_archived ? (
         <ActivityDialogForm
           open={editingActivity !== null}
           onOpenChange={(nextOpen) => {
@@ -399,15 +638,17 @@ export default function ActivityGroupsDrawer({
           activity={editingActivity}
           onSaved={() => {
             setEditingActivity(null);
+            setArchivedActivitiesTick((t) => t + 1);
           }}
           onArchived={() => {
             setEditingActivity(null);
+            setArchivedActivitiesTick((t) => t + 1);
             onTasksDataChanged?.();
           }}
         />
       ) : null}
 
-      {editingGroup ? (
+      {editingGroup && !editingGroup.is_archived ? (
         <EditGroupDialog
           open={editingGroup !== null}
           onOpenChange={(nextOpen) => {
@@ -415,20 +656,26 @@ export default function ActivityGroupsDrawer({
           }}
           group={editingGroup}
           onUpdated={(updatedGroup) => {
-            setGroups((prev) =>
-              prev.map((group) =>
-                group.id === updatedGroup.id ? updatedGroup : group
-              )
-            );
             setSelectedGroup((prev) =>
               prev && prev.id === updatedGroup.id ? updatedGroup : prev
             );
             setEditingGroup(updatedGroup);
+            void loadActivityGroupLists()
+              .then(({ active, archived }) => {
+                setGroups(active);
+                setArchivedGroups(archived);
+              })
+              .catch(console.error);
           }}
           onArchived={() => {
             const id = editingGroup.id;
             setEditingGroup(null);
-            setGroups((prev) => prev.filter((g) => g.id !== id));
+            void loadActivityGroupLists()
+              .then(({ active, archived }) => {
+                setGroups(active);
+                setArchivedGroups(archived);
+              })
+              .catch(console.error);
             setSelectedGroup((prev) =>
               prev && prev.id === id ? null : prev
             );
@@ -437,6 +684,63 @@ export default function ActivityGroupsDrawer({
           }}
         />
       ) : null}
+
+      <ArchivedItemActionsDialog
+        target={archivedActionsTarget}
+        onOpenChange={(next) => {
+          if (!next) setArchivedActionsTarget(null);
+        }}
+        onUnarchived={async (t) => {
+          if (t.type === "group") {
+            setSelectedGroup((prev) =>
+              prev?.id === t.group.id
+                ? { ...prev, is_archived: false }
+                : prev
+            );
+          }
+          try {
+            const { active, archived } = await loadActivityGroupLists();
+            setGroups(active);
+            setArchivedGroups(archived);
+          } catch (e) {
+            console.error(e);
+          }
+          setArchivedActivitiesTick((n) => n + 1);
+          onTasksDataChanged?.();
+        }}
+        onDeleteRequested={({ type, id }) => {
+          setDeleteArchivedTarget({ type, id });
+        }}
+      />
+
+      <DeleteConfirmDialog
+        open={deleteArchivedTarget !== null}
+        type={deleteArchivedTarget?.type ?? null}
+        id={deleteArchivedTarget?.id ?? null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setDeleteArchivedTarget(null);
+        }}
+        onDeleted={({ type, id }) => {
+          setDeleteArchivedTarget(null);
+          if (type === "group") {
+            setSelectedGroup((prev) => {
+              if (prev?.id === id) {
+                queueMicrotask(() => setView("groups"));
+                return null;
+              }
+              return prev;
+            });
+          }
+          void loadActivityGroupLists()
+            .then(({ active, archived }) => {
+              setGroups(active);
+              setArchivedGroups(archived);
+            })
+            .catch(console.error);
+          setArchivedActivitiesTick((n) => n + 1);
+          onTasksDataChanged?.();
+        }}
+      />
 
       <ManualTimeEntryDialog
         open={manualEntryActivityId !== null}

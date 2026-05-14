@@ -67,7 +67,9 @@ export default function ArchivedPage() {
         onOpenChange={(open) =>
           !open && setDeleteDialog({ open: false, type: null, id: null })
         }
-        onDeleted={loadArchivedItems}
+        onDeleted={() => {
+          void loadArchivedItems();
+        }}
       />
     </div>
   );

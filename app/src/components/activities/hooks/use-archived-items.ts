@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { db, now } from "@/lib/db";
+import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
+import {
+  unarchiveActivityById,
+  unarchiveGroupById,
+} from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 
 export function useArchivedItems() {
@@ -38,19 +42,7 @@ export function useArchivedItems() {
   const handleUnarchiveGroup = useCallback(
     async (id: string) => {
       try {
-        const n = now();
-        await db.activityGroups.update(id, {
-          is_archived: false,
-          updated_at: n,
-        });
-        const activities = await db.activities
-          .filter((a) => a.group_id === id && !a.deleted_at)
-          .toArray();
-        await Promise.all(
-          activities.map((a) =>
-            db.activities.update(a.id, { is_archived: false, updated_at: n })
-          )
-        );
+        await unarchiveGroupById(id);
         loadArchivedItems();
       } catch (error) {
         logError("Error unarchiving group", error);
@@ -62,23 +54,13 @@ export function useArchivedItems() {
   const handleUnarchiveActivity = useCallback(
     async (id: string) => {
       try {
-        const activity = archivedActivities.find((a) => a.id === id);
-        if (!activity) return;
-        const n = now();
-        const group = allGroups.find((g) => g.id === activity.group_id);
-        if (group?.is_archived) {
-          await db.activityGroups.update(group.id, {
-            is_archived: false,
-            updated_at: n,
-          });
-        }
-        await db.activities.update(id, { is_archived: false, updated_at: n });
+        await unarchiveActivityById(id);
         loadArchivedItems();
       } catch (error) {
         logError("Error unarchiving activity", error);
       }
     },
-    [archivedActivities, allGroups, loadArchivedItems]
+    [loadArchivedItems]
   );
 
   return {

@@ -121,7 +121,7 @@ function ActiveActivityPill({
 
   return (
     <div
-      className="rounded-2xl p-3.5 shadow-sm"
+      className="rounded-2xl p-3 shadow-sm"
       style={{
         backgroundColor: color,
         color: textColor,
@@ -142,23 +142,25 @@ function ActiveActivityPill({
       tabIndex={onEdit ? 0 : undefined}
       aria-label={onEdit ? "Edit running activity" : undefined}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
           {group?.name && (
-            <p className="mb-0.5 truncate text-xs uppercase tracking-wide text-muted-foreground">
+            <p className="mb-0.5 truncate text-xs font-medium leading-normal text-current">
               {group.name}
             </p>
           )}
-          <p className="truncate text-lg font-semibold leading-tight">
+          <p className="truncate text-base font-semibold leading-snug tracking-tight text-current">
             {getActivityDisplayName(activity, group)}
           </p>
         </div>
-        <div>
-          <p className="font-mono">{formatTimerDisplay(elapsedMs)}</p>
+        <div className="shrink-0 tabular-nums">
+          <p className="font-mono text-sm leading-snug">
+            {formatTimerDisplay(elapsedMs)}
+          </p>
         </div>
       </div>
 
-      <div className="mt-2 flex justify-end">
+      <div className="mt-1.5 flex justify-end">
         <Button
           type="button"
           variant="bare"
@@ -166,12 +168,12 @@ function ActiveActivityPill({
             event.stopPropagation();
             onStop();
           }}
-          className="inline-flex h-auto cursor-pointer items-center gap-2 text-sm font-semibold uppercase tracking-wide"
+          className="inline-flex h-auto cursor-pointer items-center gap-1 px-1 py-0 text-xs font-semibold"
           style={{ color: textColor }}
           title="Stop this activity"
         >
-          <Square className="h-3.5 w-3.5" style={{ fill: textColor }} />
-          <span className="shrink-0 text-base">STOP</span>
+          <Square className="h-3 w-3" style={{ fill: textColor }} />
+          <span className="shrink-0 text-base uppercase">Stop</span>
         </Button>
       </div>
     </div>
