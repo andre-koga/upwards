@@ -495,6 +495,11 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Remove focus ring for pointer/touch interactions; keep it for keyboard nav. */
+  :focus:not(:focus-visible) {
+    outline: none;
   }
   body {
     @apply select-none bg-background text-foreground;

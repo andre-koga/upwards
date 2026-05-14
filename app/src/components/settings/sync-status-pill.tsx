@@ -29,7 +29,7 @@ export function SyncStatusPill({
           variant="ghost"
           onClick={onManualSync}
           disabled={syncState.isSyncing || !canSync}
-          className="h-auto gap-1.5 bg-transparent px-1 py-0 text-xs text-muted-foreground shadow-none hover:bg-transparent active:bg-transparent"
+          className="h-auto gap-1.5 bg-transparent px-1 py-0 text-xs text-muted-foreground shadow-none hover:bg-transparent active:bg-transparent disabled:bg-transparent"
           title={
             !isOnline
               ? "Offline"

@@ -57,7 +57,11 @@ function getDailyTaskStreakStatus(
   activity: Activity,
   entry: DailyEntry | undefined
 ): DailyTaskStreakStatus {
-  if (!entry) return "reset";
+  if (!entry) {
+    // For "never" tasks, no daily entry means nothing was logged that day (no
+    // slip occurred), so the streak should continue, not reset.
+    return activity.routine === "never" ? "incrementable" : "reset";
+  }
   const pausedTaskIds = Array.isArray(entry.paused_task_ids)
     ? entry.paused_task_ids
     : [];
