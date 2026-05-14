@@ -60,15 +60,17 @@ export default function GroupPill({
             <span className="font-normal text-muted-foreground">Name…</span>
           )}
         </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onActionClick}
-          className="relative h-full shrink-0 gap-1.5 rounded-full px-4 font-semibold shadow-none"
-        >
-          <span>{actionLabel}</span>
-          <ChevronRight className="h-4 w-4 flex-shrink-0 translate-x-px" />
-        </Button>
+        {onActionClick ? (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onActionClick}
+            className="relative h-full shrink-0 gap-1.5 rounded-full px-4 font-semibold shadow-none"
+          >
+            <span>{actionLabel}</span>
+            <ChevronRight className="h-4 w-4 flex-shrink-0 translate-x-px" />
+          </Button>
+        ) : null}
       </div>
     </div>
   );

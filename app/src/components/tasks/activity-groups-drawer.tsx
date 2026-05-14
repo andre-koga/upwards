@@ -368,7 +368,6 @@ export default function ActivityGroupsDrawer({
                                       group,
                                     })
                                   }
-                                  onActionClick={() => handleOpenGroup(group)}
                                 />
                               ))}
                             </div>
