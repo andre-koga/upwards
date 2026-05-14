@@ -6,13 +6,14 @@ import type {
   JournalLocationRoute,
   LocationData,
 } from "@/lib/db/types";
-import { toJournalVideoPath } from "@/lib/journal";
 import {
-  parseJournalLocationRoute,
-  serializeJournalLocationRoute,
   getCompletionMetadata,
+  isJournalCalendarDateEditable,
   normalizeJournalLocationRoute,
+  parseJournalLocationRoute,
   propagateJournalCompletionStreaksAfterSave,
+  serializeJournalLocationRoute,
+  toJournalVideoPath,
   type JournalFields,
 } from "@/lib/journal";
 
@@ -122,15 +123,7 @@ export function useJournalEntry(currentDate: Date) {
   }, [journalEntry]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const canEditJournal = (() => {
-    const todayMidnight = new Date(toDateString(new Date()) + "T00:00:00");
-    const entryMidnight = new Date(toDateString(currentDate) + "T00:00:00");
-    const diffDays = Math.floor(
-      (todayMidnight.getTime() - entryMidnight.getTime()) /
-        (1000 * 60 * 60 * 24)
-    );
-    return diffDays >= 0 && diffDays <= 7;
-  })();
+  const canEditJournal = isJournalCalendarDateEditable(currentDate);
 
   const saveJournalEntry = useCallback(
     async (fields: JournalFields) => {

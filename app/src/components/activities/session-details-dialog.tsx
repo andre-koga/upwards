@@ -8,6 +8,10 @@ import {
   FormTimeField,
 } from "@/components/forms";
 import { getActivityDisplayName } from "@/lib/activity";
+import {
+  JOURNAL_EDITABLE_DAY_LOOKBACK,
+  isJournalCalendarDateEditable,
+} from "@/lib/journal";
 import { fromDateString, timeToSeconds, toDateString } from "@/lib/time-utils";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
 import { useCallback } from "react";
@@ -72,16 +76,9 @@ export default function SessionDetailsDialog({
   if (!sessionId) return null;
 
   const sessionDateString = details?.entry?.date ?? toDateString(selectedDate);
-  const isLockedHistoricalSession = (() => {
-    if (!details) return false;
-    const todayMidnight = new Date(toDateString(new Date()) + "T00:00:00");
-    const sessionMidnight = new Date(sessionDateString + "T00:00:00");
-    const diffDays = Math.floor(
-      (todayMidnight.getTime() - sessionMidnight.getTime()) /
-        (1000 * 60 * 60 * 24)
-    );
-    return diffDays >= 2;
-  })();
+  const isLockedHistoricalSession =
+    !!details &&
+    !isJournalCalendarDateEditable(fromDateString(sessionDateString));
 
   const handleStartTimeChange = (newStartTime: string) => {
     setStartTime(newStartTime);
@@ -170,7 +167,8 @@ export default function SessionDetailsDialog({
           {error && <p className="text-sm text-destructive">{error}</p>}
           {isLockedHistoricalSession ? (
             <p className="text-sm text-muted-foreground">
-              Sessions from 2+ days ago are read-only.
+              Sessions from more than {JOURNAL_EDITABLE_DAY_LOOKBACK} days ago
+              are read-only.
             </p>
           ) : null}
 

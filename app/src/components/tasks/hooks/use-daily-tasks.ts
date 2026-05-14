@@ -13,6 +13,7 @@ import {
   getGroup,
   getGroupColor,
 } from "@/lib/activity";
+import { isJournalCalendarDateEditable } from "@/lib/journal";
 import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import { useDailyEntry } from "./use-daily-entry";
@@ -34,16 +35,8 @@ export function useDailyTasks({
   refreshTrigger = 0,
 }: UseDailyTasksParams) {
   const dateString = toDateString(currentDate);
-  const isToday = (() => {
-    const todayMidnight = new Date(toDateString(new Date()) + "T00:00:00");
-    const entryMidnight = new Date(dateString + "T00:00:00");
-    const diffDays = Math.floor(
-      (todayMidnight.getTime() - entryMidnight.getTime()) /
-      (1000 * 60 * 60 * 24)
-    );
-    // Treat yesterday as fully editable, same as today.
-    return diffDays >= 0 && diffDays <= 1;
-  })();
+  // Same editable window as the journal card (`canEditJournal`); misleading name retained for callers.
+  const isToday = isJournalCalendarDateEditable(currentDate);
   const [activityStreaks, setActivityStreaks] = useState<
     Record<string, number>
   >({});
