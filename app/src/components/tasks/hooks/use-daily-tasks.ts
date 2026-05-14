@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { db, newId, now } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type {
@@ -14,7 +14,10 @@ import {
   getGroupColor,
 } from "@/lib/activity";
 import { isJournalCalendarDateEditable } from "@/lib/journal";
-import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
+import {
+  getOrComputeActivityStreaksForDate,
+  recomputeActivityStreaksFromDateForActivities,
+} from "@/lib/streak-utils";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
@@ -44,6 +47,8 @@ export function useDailyTasks({
     ActivityPeriod[]
   >([]);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [recalculateStreaksBusy, setRecalculateStreaksBusy] = useState(false);
+  const recalcStreaksInFlightRef = useRef(false);
 
   const {
     taskCounts,
@@ -51,6 +56,7 @@ export function useDailyTasks({
     isBreakDay,
     loading,
     streakDbVersion,
+    bumpStreakDbVersion,
     currentActivityId,
     setCurrentActivityId,
     loadDailyEntry,
@@ -342,6 +348,24 @@ export function useDailyTasks({
     return { sessionId: openPeriod.id, groupId };
   }, [resolvedCurrentActivityId, activityPeriods, activities]);
 
+  const recalculateStreaksFromViewedDate = useCallback(async () => {
+    if (recalcStreaksInFlightRef.current) return;
+    recalcStreaksInFlightRef.current = true;
+    setRecalculateStreaksBusy(true);
+    try {
+      await recomputeActivityStreaksFromDateForActivities(
+        activities,
+        currentDate
+      );
+      bumpStreakDbVersion();
+    } catch (err) {
+      console.error("Error recalculating activity streaks:", err);
+    } finally {
+      recalcStreaksInFlightRef.current = false;
+      setRecalculateStreaksBusy(false);
+    }
+  }, [activities, currentDate, bumpStreakDbVersion]);
+
   const currentActivityElapsedMs = useMemo(() => {
     if (!resolvedCurrentActivityId) return 0;
 
@@ -396,5 +420,7 @@ export function useDailyTasks({
     calculateActivityTotalTime,
     addManualActivityPeriod,
     formatTimerDisplay,
+    recalculateStreaksFromViewedDate,
+    recalculateStreaksBusy,
   };
 }

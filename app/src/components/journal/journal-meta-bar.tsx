@@ -36,16 +36,17 @@ export default function JournalMetaBar({
           )}
         />
       </Button>
-      <Button
-        variant="ghost"
-        size="smIcon"
-        onClick={onEditRequest}
-        disabled={!journal.canEditJournal}
-        className="text-muted-foreground"
-        title="Edit journal"
-      >
-        <Pencil className="h-4 w-4" />
-      </Button>
+      {journal.canEditJournal && (
+        <Button
+          variant="ghost"
+          size="smIcon"
+          onClick={onEditRequest}
+          className="text-muted-foreground"
+          title="Edit journal"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 }

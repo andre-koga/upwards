@@ -285,6 +285,10 @@ export function useDailyEntry(dateString: string) {
     }
   }, [dateString, isBreakDay, loadDailyEntry]);
 
+  const bumpStreakDbVersion = useCallback(() => {
+    setStreakDbVersion((v) => v + 1);
+  }, []);
+
   return {
     dailyEntry,
     taskCounts,
@@ -294,6 +298,7 @@ export function useDailyEntry(dateString: string) {
     currentActivityId,
     setCurrentActivityId,
     streakDbVersion,
+    bumpStreakDbVersion,
     loadDailyEntry,
     getOrCreateDailyEntry,
     incrementTask,

@@ -8,7 +8,7 @@ import AssignActivityDialog from "./assign-activity-dialog";
 import FooterActionsBar from "./footer-actions-bar";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import ManualTimeEntryDialog from "./manual-time-entry-dialog";
-import { Palmtree } from "lucide-react";
+import { Palmtree, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
@@ -78,6 +78,8 @@ export default function DailyTasksList({
     calculateActivityTotalTime,
     addManualActivityPeriod,
     formatTimerDisplay,
+    recalculateStreaksFromViewedDate,
+    recalculateStreaksBusy,
   } = daily;
   const pausedTaskIdSet = new Set(pausedTaskIds);
   const manualEntryActivity = manualEntryActivityId
@@ -115,15 +117,29 @@ export default function DailyTasksList({
             />
           ))
         ) : (
-          <p className="px-1 text-xs text-muted-foreground">
-            No memos yet.
-          </p>
+          <p className="px-1 text-xs text-muted-foreground">No memos yet.</p>
         )}
       </div>
 
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        For Today
-      </p>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          For Today
+        </p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="smIcon"
+          onClick={() => {
+            void recalculateStreaksFromViewedDate();
+          }}
+          disabled={recalculateStreaksBusy}
+          className="h-4 min-h-4 w-4 min-w-4 shrink-0 bg-transparent p-0 text-muted-foreground/50 shadow-none hover:bg-transparent hover:text-muted-foreground/45 focus-visible:ring-1 disabled:opacity-30 [&_svg]:size-3"
+          aria-label="Recompute streak counters from this day through today using your task history"
+          title="Recompute streak counters from this day through today using your task history. Use this if streak numbers look wrong."
+        >
+          <RefreshCw className={cn(recalculateStreaksBusy && "animate-spin")} />
+        </Button>
+      </div>
 
       <div className="flex-1 space-y-2">
         {loading && (
@@ -169,9 +185,7 @@ export default function DailyTasksList({
           disabled={!isToday}
           className={cn(
             "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default",
-            isBreakDay
-              ? "text-amber-500"
-              : "text-muted-foreground"
+            isBreakDay ? "text-amber-500" : "text-muted-foreground"
           )}
           title={isBreakDay ? "Unset break day" : "Mark this day as break day"}
         >

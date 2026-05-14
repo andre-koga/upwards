@@ -233,3 +233,106 @@ export async function getOrComputeActivityStreaksForDate(
 
   return streaks;
 }
+
+/**
+ * Recompute streak counters from `fromDate` through `rangeEndDay` using only
+ * daily entries (not cached streak rows before `fromDate`). Walks from activity
+ * creation so the chain before `fromDate` is correct, then persists rows for
+ * `fromDate` onward. Use this to repair drift from stale caches or sync issues.
+ */
+async function recomputeActivityStreaksFromDateForward(
+  activity: Activity,
+  fromDate: Date,
+  rangeEndDay: Date
+): Promise<void> {
+  if (!isStreakEligible(activity)) return;
+
+  const fromDay = startOfDay(fromDate);
+  const endDay = startOfDay(rangeEndDay);
+  const creationDay = getCreationDay(activity);
+
+  const effectiveFromDay = fromDay < creationDay ? creationDay : fromDay;
+  if (effectiveFromDay > endDay) return;
+
+  const effectiveFromStr = toDateString(effectiveFromDay);
+  const endDateStr = toDateString(endDay);
+
+  const entriesByDate = await getDailyEntriesByDateRange(
+    toDateString(creationDay),
+    endDateStr
+  );
+
+  const existingRows = await db.activityStreaks
+    .where("activity_id")
+    .equals(activity.id)
+    .filter(
+      (row) =>
+        !row.deleted_at && row.date >= effectiveFromStr && row.date <= endDateStr
+    )
+    .toArray();
+  const streakRowByDate = new Map(
+    existingRows.map((row) => [row.date, row])
+  );
+
+  let previousStreak = 0;
+  let cursor = creationDay;
+
+  while (cursor <= endDay) {
+    if (!shouldShowActivity(activity, cursor)) {
+      cursor = shiftDate(cursor, 1);
+      continue;
+    }
+
+    const dateStr = toDateString(cursor);
+    const streakStatus = getDailyTaskStreakStatus(
+      activity,
+      entriesByDate.get(dateStr)
+    );
+    const nextStreak =
+      streakStatus === "skip"
+        ? previousStreak
+        : streakStatus === "incrementable"
+          ? previousStreak + 1
+          : 0;
+
+    if (dateStr >= effectiveFromStr) {
+      const existingRow = streakRowByDate.get(dateStr);
+      await upsertActivityStreak(activity.id, dateStr, nextStreak, existingRow);
+      streakRowByDate.set(dateStr, {
+        id: existingRow?.id ?? newId(),
+        activity_id: activity.id,
+        date: dateStr,
+        streak: nextStreak,
+        created_at: existingRow?.created_at ?? now(),
+        updated_at: now(),
+        synced_at: existingRow?.synced_at ?? null,
+        deleted_at: null,
+      });
+    }
+
+    previousStreak = nextStreak;
+    cursor = shiftDate(cursor, 1);
+  }
+}
+
+/**
+ * Recompute activity streak rows from the given calendar day through
+ * `max(today, fromDate)` (local midnight). Does not rely on streak cache before
+ * `fromDate`, so past bugs can be corrected from any historical day.
+ */
+export async function recomputeActivityStreaksFromDateForActivities(
+  activities: Activity[],
+  fromDate: Date
+): Promise<void> {
+  const fromDay = startOfDay(fromDate);
+  const todayDay = startOfDay(new Date());
+  const rangeEndDay =
+    todayDay.getTime() > fromDay.getTime() ? todayDay : fromDay;
+
+  const eligible = activities.filter(isStreakEligible);
+  await Promise.all(
+    eligible.map((activity) =>
+      recomputeActivityStreaksFromDateForward(activity, fromDay, rangeEndDay)
+    )
+  );
+}
