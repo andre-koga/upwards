@@ -13,7 +13,7 @@ export interface ActivityPillProps {
   onClick?: () => void;
   onManualEntry?: () => void;
   nameClassName?: string;
-  /** When true, renders as a non-interactive div instead of a button */
+  /** When true, renders as a non-interactive display instead of a button. */
   readOnly?: boolean;
   className?: string;
 }
@@ -32,93 +32,38 @@ export default function ActivityPill({
 }: ActivityPillProps) {
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
-  const base =
-    "relative flex items-stretch gap-2 rounded-full overflow-hidden h-10 " +
-    className;
-
-  const actionContent = (
-    <>
-      {isRunning ? (
-        <Square className="h-3.5 w-3.5 shrink-0" style={{ fill: textColor }} />
-      ) : (
-        <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-secondary-foreground" />
-      )}
-      <span className="font-mono text-xs">{timerLabel}</span>
-    </>
-  );
-
-  if (readOnly) {
-    return (
-      <div className={base + " w-full"}>
-        <div className="pointer-events-none flex h-full min-w-0 flex-1 items-center justify-start gap-2 truncate rounded-full border border-input bg-background px-4 text-left text-sm font-medium text-foreground shadow-sm">
-          <span
-            className="h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: color }}
-          />
-          {name ? (
-            <span className={cn("min-w-0 truncate", nameClassName)}>
-              {name}
-            </span>
-          ) : (
-            <span className="min-w-0 font-normal text-muted-foreground">
-              Name…
-            </span>
-          )}
-        </div>
-        <div className="flex h-full min-h-0 items-stretch">
-          <div
-            className={cn(
-              "relative flex h-full shrink-0 items-center justify-center gap-1.5 rounded-full border bg-background px-4 text-xs font-semibold",
-              isRunning ? "border-2" : "border-border text-muted-foreground"
-            )}
-            style={
-              isRunning ? { borderColor: color, color: textColor } : undefined
-            }
-          >
-            {isRunning ? (
-              <>
-                <Square
-                  className="h-3.5 w-3.5 shrink-0"
-                  style={{ fill: textColor }}
-                />
-                <span className="font-mono text-xs">{timerLabel}</span>
-              </>
-            ) : (
-              <>
-                <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-muted-foreground" />
-                <span className="font-mono text-xs text-muted-foreground">
-                  {timerLabel}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className={base + " w-full"}>
+    <div
+      className={cn(
+        "relative flex h-10 w-full items-stretch gap-2 overflow-hidden rounded-full",
+        className,
+      )}
+    >
+      {/* Name / label side */}
       <Button
         type="button"
         variant="outline"
-        onClick={onNameClick}
-        className="h-full flex-1 justify-start gap-2 truncate rounded-full px-4 text-left text-sm font-medium shadow-none"
+        onClick={readOnly ? undefined : onNameClick}
+        className={cn(
+          "h-full flex-1 justify-start gap-2 truncate rounded-full px-4 text-left text-sm font-medium",
+          readOnly ? "pointer-events-none shadow-sm" : "shadow-none",
+        )}
       >
         <span
           className="h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: color }}
         />
-        <span className={cn("truncate", nameClassName)}>
+        <span className={cn("min-w-0 truncate", nameClassName)}>
           {name || (
-            <span className="font-normal text-muted-foreground">
-              Name...
-            </span>
+            <span className="font-normal text-muted-foreground">Name…</span>
           )}
         </span>
       </Button>
-      <div>
-        {onManualEntry ? (
+
+      {/* Timer / action side */}
+      <div className="flex h-full min-h-0 items-stretch">
+        {!readOnly && onManualEntry ? (
           <Button
             type="button"
             variant="outline"
@@ -130,17 +75,42 @@ export default function ActivityPill({
             <Plus className="h-3.5 w-3.5" />
           </Button>
         ) : null}
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onClick}
-          className="relative h-full shrink-0 gap-1.5 rounded-full px-4 font-semibold shadow-none"
-          style={
-            isRunning ? { backgroundColor: color, color: textColor } : undefined
-          }
-        >
-          {actionContent}
-        </Button>
+
+        {readOnly ? (
+          <div
+            className={cn(
+              "relative flex h-full shrink-0 items-center justify-center gap-1.5 rounded-full border bg-background px-4 text-xs font-semibold",
+              isRunning ? "border-2" : "border-border text-muted-foreground",
+            )}
+            style={isRunning ? { borderColor: color, color: textColor } : undefined}
+          >
+            {isRunning ? (
+              <Square className="h-3.5 w-3.5 shrink-0" style={{ fill: textColor }} />
+            ) : (
+              <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-muted-foreground" />
+            )}
+            <span
+              className={cn("font-mono text-xs", !isRunning && "text-muted-foreground")}
+            >
+              {timerLabel}
+            </span>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClick}
+            className="relative h-full shrink-0 gap-1.5 rounded-full px-4 font-semibold shadow-none"
+            style={isRunning ? { backgroundColor: color, color: textColor } : undefined}
+          >
+            {isRunning ? (
+              <Square className="h-3.5 w-3.5 shrink-0" style={{ fill: textColor }} />
+            ) : (
+              <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-secondary-foreground" />
+            )}
+            <span className="font-mono text-xs">{timerLabel}</span>
+          </Button>
+        )}
       </div>
     </div>
   );

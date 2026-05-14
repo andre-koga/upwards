@@ -97,6 +97,29 @@ function clampToTwoDigit(value: number, max: number): string {
   return String(safe).padStart(2, "0");
 }
 
+/** Shift clock time by whole minutes; wraps within the same 24-hour cycle. */
+function adjustDraftMinutes(draft: TimeDraft, deltaMinutes: number): TimeDraft {
+  const hours24Str = toTwentyFourHour(draft.hour12, draft.meridiem);
+  const h24 = Number.parseInt(hours24Str, 10);
+  const min = Number.parseInt(normalizeSegment(draft.minutes, 59), 10);
+  const sec = Number.parseInt(normalizeSegment(draft.seconds, 59), 10);
+
+  let totalMinutes = h24 * 60 + min + deltaMinutes;
+  totalMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+
+  const nextH24 = Math.floor(totalMinutes / 60);
+  const nextMin = totalMinutes % 60;
+  const nextH24Str = String(nextH24).padStart(2, "0");
+  const { hour12, meridiem } = toTwelveHourDisplay(nextH24Str);
+
+  return {
+    hour12,
+    minutes: clampToTwoDigit(nextMin, 59),
+    seconds: clampToTwoDigit(sec, 59),
+    meridiem,
+  };
+}
+
 interface FormTimeFieldProps {
   id: string;
   label: ReactNode;
@@ -422,6 +445,33 @@ export function FormTimeField({
                 }
               >
                 {draft.meridiem}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                className="text-sm font-medium"
+                onClick={() => {
+                  setDraft((prev) => adjustDraftMinutes(prev, -5));
+                  setActiveUnit("minute");
+                }}
+                aria-label="Subtract five minutes"
+              >
+                -5 min
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-sm font-medium"
+                onClick={() => {
+                  setDraft((prev) => adjustDraftMinutes(prev, 5));
+                  setActiveUnit("minute");
+                }}
+                aria-label="Add five minutes"
+              >
+                +5 min
               </Button>
             </div>
 

@@ -20,7 +20,15 @@ export interface FormCalendarDateFieldProps {
   onValueChange: (value: string) => void;
   min?: string;
   max?: string;
+  /**
+   * Prevents interaction and applies system-disabled styling (greyed text, no pointer events).
+   * Use during async operations like saving.
+   */
   disabled?: boolean;
+  /**
+   * Prevents interaction while keeping the field visually "locked but valid" (dashed border,
+   * muted background). Use when the value is fixed by business logic, e.g. a running session.
+   */
   readOnly?: boolean;
   placeholder?: string;
   containerClassName?: string;

@@ -112,15 +112,15 @@ function ActivityTaskItem({
           onPointerUp={clearNeverPressTimeout}
           onPointerLeave={clearNeverPressTimeout}
           onPointerCancel={clearNeverPressTimeout}
-          className={`flex h-7 min-w-[2.75rem] touch-manipulation items-center justify-center rounded-md border px-1 transition-colors ${
-            canUpdateCount ? "cursor-pointer" : "cursor-default text-muted-foreground"
-          } ${
+          className={cn(
+            "flex h-7 min-w-[2.75rem] touch-manipulation items-center justify-center rounded-md border px-1 transition-colors",
+            canUpdateCount ? "cursor-pointer" : "cursor-default text-muted-foreground",
             isComplete
               ? "border-destructive bg-destructive text-destructive-foreground hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)]"
               : count > 0
                 ? "border-destructive bg-[color-mix(in_srgb,hsl(var(--destructive))_18%,hsl(var(--background)))] text-destructive hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_28%,hsl(var(--background)))]"
-                : "border-destructive bg-transparent hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_12%,hsl(var(--background)))]"
-          }`}
+                : "border-destructive bg-transparent hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_12%,hsl(var(--background)))]",
+          )}
           title={
             canUpdateCount
               ? "Tap to add a slip. Hold to clear slips."
@@ -153,13 +153,12 @@ function ActivityTaskItem({
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           }
-          className={
-            isBreakDay || isPaused
-              ? isComplete
+          className={cn(
+            (isBreakDay || isPaused) &&
+              (isComplete
                 ? "border-amber-500 bg-amber-500 text-amber-950"
-                : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-amber-500"
-              : ""
-          }
+                : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-amber-500"),
+          )}
         />
       ) : (
         <Button

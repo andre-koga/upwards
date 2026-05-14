@@ -1,5 +1,4 @@
 import {
-  FormCalendarDateField,
   FormDialog,
   FormDialogActions,
   FormField,
@@ -58,14 +57,12 @@ export default function SessionDetailsDialog({
     selectedActivityId,
     setSelectedActivityId,
     selectedDate,
-    setSelectedDate,
     startTime,
     setStartTime,
     endTime,
     setEndTime,
     handleDelete,
     handleSave,
-    today,
   } = useSessionDetails({
     groupId,
     sessionId: sessionId ?? undefined,
@@ -109,14 +106,6 @@ export default function SessionDetailsDialog({
       ) : (
         <FormStack>
           <FormSelectField
-            id="session-group"
-            label="Group"
-            value={details.group.id}
-            onValueChange={() => undefined}
-            options={[{ value: details.group.id, label: details.group.name }]}
-            disabled
-          />
-          <FormSelectField
             id="session-activity"
             label="Activity"
             value={selectedActivityId}
@@ -129,17 +118,6 @@ export default function SessionDetailsDialog({
               })),
             ]}
             disabled={isLockedHistoricalSession}
-          />
-          <FormCalendarDateField
-            id="session-date"
-            label="Date"
-            value={toDateString(selectedDate)}
-            max={toDateString(today)}
-            readOnly={isRunningSession || isLockedHistoricalSession}
-            onValueChange={(value) => {
-              if (isRunningSession || isLockedHistoricalSession || !value) return;
-              setSelectedDate(fromDateString(value));
-            }}
           />
           <FormTimeField
             id="session-start-time"
