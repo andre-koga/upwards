@@ -76,9 +76,8 @@ export default function FooterActionsBar({
       <div
         className={cn(
           "pointer-events-none fixed inset-0 z-[60] transition-all",
-          pathsDrawerOpen && "pointer-events-auto bg-black/40 backdrop-blur-sm",
-          !pathsDrawerOpen &&
-            "pointer-events-none bg-black/0 backdrop-blur-[0px]"
+          pathsDrawerOpen && "pointer-events-auto bg-black/50 backdrop-blur-sm",
+          !pathsDrawerOpen && "pointer-events-none bg-transparent backdrop-blur-0"
         )}
         onClick={() => setPathsDrawerOpen(false)}
       />
@@ -89,8 +88,8 @@ export default function FooterActionsBar({
         }`}
         style={{ bottom: bottomInset }}
       >
-        <div className="rounded-t-2xl border-t border-border/50 bg-background px-4 pb-8 pt-3 shadow-xl">
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/30" />
+        <div className="rounded-t-2xl border-t border-border bg-background px-4 pb-8 pt-3 shadow-xl">
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted" />
           <div className="space-y-2">
             <Button
               type="button"

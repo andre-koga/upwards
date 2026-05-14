@@ -235,7 +235,7 @@ export function ActivityDialogForm({
               type="button"
               variant="outline"
               size="icon"
-              className="h-8 w-8 shrink-0 rounded-full border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
               disabled={saving}
               onClick={() => setArchiveConfirmOpen(true)}
               title="Archive activity"

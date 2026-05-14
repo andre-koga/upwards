@@ -44,7 +44,7 @@ export function EditGroupDialog({
             type="button"
             variant="outline"
             size="icon"
-            className="h-8 w-8 shrink-0 rounded-full border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
             onClick={() => setArchiveConfirmOpen(true)}
             title="Archive group"
             aria-label="Archive group"

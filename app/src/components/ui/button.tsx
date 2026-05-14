@@ -4,30 +4,37 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/** Hover/focus affordances for real controls live here — avoid one-off hover: classes in feature code. */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:border-input disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+          "bg-primary text-primary-foreground shadow transition-colors hover:bg-[color-mix(in_srgb,hsl(var(--primary))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--primary))_88%,white)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground shadow-sm transition-colors hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)]",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-background text-foreground shadow-sm transition-colors hover:bg-muted",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "bg-secondary text-secondary-foreground shadow-sm transition-colors hover:bg-muted",
+        ghost: "transition-colors hover:bg-muted",
         link: "text-primary underline-offset-4 hover:underline",
         /** Dashed border; used for secondary "add" CTAs in drawers and lists. */
         outlineDashed:
-          "border border-dashed border-input bg-background text-muted-foreground shadow-none hover:bg-accent hover:text-foreground",
+          "border border-dashed border-input bg-background text-muted-foreground shadow-none transition-colors hover:bg-muted",
         /** Task row completion control — incomplete state. */
         taskTodo:
-          "rounded-full border border-muted-foreground bg-transparent text-muted-foreground shadow-none hover:bg-accent/40",
+          "rounded-full border border-muted-foreground bg-transparent text-muted-foreground shadow-none transition-colors hover:bg-muted hover:text-foreground",
         /** Task row completion control — complete state. */
         taskComplete:
-          "rounded-full border border-primary bg-primary text-primary-foreground shadow-none hover:bg-primary/90",
+          "rounded-full border border-primary bg-primary text-primary-foreground shadow-none transition-colors hover:bg-[color-mix(in_srgb,hsl(var(--primary))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--primary))_88%,white)]",
+        /**
+         * No default chrome — for full-bleed hit targets (e.g. video) or controls on
+         * tinted surfaces. Add borders, layout, and colors via className.
+         */
+        bare:
+          "select-none border-0 bg-transparent p-0 shadow-none hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0",
       },
       size: {
         default: "h-9 px-4 py-2",

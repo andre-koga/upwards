@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const FLOATING_BACK_BUTTON_CLASSES =
-  "fixed bottom-3 left-4 z-50 border-border bg-background text-muted-foreground hover:text-foreground";
+  "fixed bottom-3 left-4 z-50 border-border bg-background text-muted-foreground";
 
 interface FloatingBackButtonProps {
   to?: string;

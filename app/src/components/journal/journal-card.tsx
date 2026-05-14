@@ -243,7 +243,7 @@ export default function JournalCard({
                   {journal.draftEmoji}
                 </span>
               ) : (
-                <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl text-muted-foreground/30">
+                <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl text-muted-foreground">
                   🙂
                 </span>
               )}

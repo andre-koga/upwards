@@ -35,7 +35,7 @@ export default function SettingsPage() {
 
       <div className="space-y-1 pt-4 text-center text-xs text-muted-foreground">
         <p>Upwards — local-first habit tracker</p>
-        <p className="scale-75 font-mono opacity-50">
+        <p className="scale-75 font-mono text-muted-foreground">
           {randomPhrase} - {buildLabel}
         </p>
       </div>

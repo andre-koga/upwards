@@ -1,0 +1,24 @@
+---
+description: Keep hover/focus/active styling in shared UI primitives; do not invent per-screen interaction chrome.
+globs: app/src/**/*.{tsx,ts}
+alwaysApply: false
+---
+
+# Interactive states
+
+- **Affordances** (`hover:*`, `active:*`, etc.) for buttons and controls are defined in `app/src/components/ui/button.tsx` (and other `components/ui/*` CVA modules). Do not add separate hover treatments on feature screens unless the user explicitly asks for an exception.
+- In feature code, **prefer** `Button` with an existing `variant` / `size`. If a control needs a new look, add a **named variant** in the CVA (with the same neutral hover recipe as `outline` / `ghost` where appropriate: `hover:bg-muted/50`) instead of pasting utilities into the page.
+- Use **`variant="bare"`** only for full-bleed hit targets (e.g. video thumbnail) or controls on custom-tinted surfaces where borders and hover must be supplied via `className`. Do not use raw `<button>` for app UI.
+- Avoid conflicting utilities (e.g. `variant="outline"` plus `hover:bg-transparent`) so Tailwind’s cascade does not fight your intent.
+- **Accessibility:** keep `focus-visible:ring-*` on real controls; do not remove keyboard focus styles when fixing hover.
+
+```tsx
+// ❌ Raw element — use Button from @/components/ui/button
+<button type="button" className="..." />
+
+// ✅ Default
+<Button type="button" variant="outline" className="..." />
+
+// ✅ Full-bleed thumbnail / tinted toolbar only (`bare` in button.tsx)
+<Button type="button" variant="bare" className="..." />
+```

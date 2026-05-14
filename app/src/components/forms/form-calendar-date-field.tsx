@@ -106,20 +106,20 @@ export function FormCalendarDateField({
             setOpen(true);
           }}
           className={cn(
-            "h-9 min-h-9 flex-1 justify-between bg-muted/30 px-3 py-0 text-sm hover:bg-muted/40",
-            readOnly && "cursor-default border-dashed bg-muted/30",
+            "h-9 min-h-9 flex-1 justify-between bg-muted px-3 py-0 text-sm",
+            readOnly && "cursor-default border-dashed bg-muted",
             buttonClassName
           )}
         >
           <span className="truncate">{labelText}</span>
-          <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground opacity-50" />
+          <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
         </FormControlButton>
         {clearable && selectedDate && !readOnly && !disabled ? (
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+            className="h-9 w-9 shrink-0 rounded-full text-muted-foreground"
             onClick={() => onValueChange("")}
             title={clearLabel}
             aria-label={clearLabel}

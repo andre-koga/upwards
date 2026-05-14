@@ -46,7 +46,7 @@ export default function GroupActivitiesHeader({
           variant="outline"
           size="smIcon"
           onClick={onToggleArchiveGroup}
-          className="h-7 w-7 rounded-full border-muted bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
+          className="h-7 w-7 rounded-full border-muted bg-background shadow-sm"
           title={isArchived ? "Unarchive group" : "Archive group"}
         >
           {isArchived ? (
@@ -63,7 +63,7 @@ export default function GroupActivitiesHeader({
           variant="outline"
           size="smIcon"
           onClick={onEditGroup}
-          className="h-7 w-7 rounded-full border-muted bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
+          className="h-7 w-7 rounded-full border-muted bg-background shadow-sm"
           title="Edit group"
         >
           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />

@@ -111,9 +111,9 @@ export default function AddTaskModal({
         title={triggerTitle}
         aria-label={triggerTitle}
         className={cn(
-          !triggerLabel &&
-            floating &&
-            "fixed bottom-2 right-2 z-[60] gap-0 px-0 text-primary-foreground shadow-md hover:bg-primary/90",
+          floating &&
+            !triggerLabel &&
+            "fixed bottom-2 right-2 z-[60] gap-0 px-0 shadow-md",
           triggerLabel && "rounded-full shadow-md",
           triggerClassName
         )}

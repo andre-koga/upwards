@@ -43,7 +43,7 @@ export default function ActivityPill({
       ) : (
         <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-secondary-foreground" />
       )}
-      <span className="font-mono text-xs opacity-80">{timerLabel}</span>
+      <span className="font-mono text-xs">{timerLabel}</span>
     </>
   );
 
@@ -60,7 +60,7 @@ export default function ActivityPill({
               {name}
             </span>
           ) : (
-            <span className="min-w-0 font-normal text-muted-foreground/50">
+            <span className="min-w-0 font-normal text-muted-foreground">
               Name…
             </span>
           )}
@@ -81,14 +81,12 @@ export default function ActivityPill({
                   className="h-3.5 w-3.5 shrink-0"
                   style={{ fill: textColor }}
                 />
-                <span className="font-mono text-xs opacity-80">
-                  {timerLabel}
-                </span>
+                <span className="font-mono text-xs">{timerLabel}</span>
               </>
             ) : (
               <>
                 <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-muted-foreground" />
-                <span className="font-mono text-xs opacity-80">
+                <span className="font-mono text-xs text-muted-foreground">
                   {timerLabel}
                 </span>
               </>
@@ -105,7 +103,7 @@ export default function ActivityPill({
         type="button"
         variant="outline"
         onClick={onNameClick}
-        className="h-full flex-1 justify-start gap-2 truncate rounded-full px-4 text-left text-sm font-medium shadow-none hover:bg-transparent"
+        className="h-full flex-1 justify-start gap-2 truncate rounded-full px-4 text-left text-sm font-medium shadow-none"
       >
         <span
           className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -113,7 +111,7 @@ export default function ActivityPill({
         />
         <span className={cn("truncate", nameClassName)}>
           {name || (
-            <span className="font-normal text-muted-foreground/50">
+            <span className="font-normal text-muted-foreground">
               Name...
             </span>
           )}

@@ -71,11 +71,11 @@ export function JournalDateCalendarDialog({
             {props.children}
             {isBookmarked ? (
               <Heart
-                className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 fill-red-500 text-red-500 opacity-90"
+                className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 fill-red-600 text-red-600"
                 style={{ width: 10, height: 10 }}
               />
             ) : hasEntry ? (
-              <span className="pointer-events-none absolute bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-current opacity-50" />
+              <span className="pointer-events-none absolute bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-muted-foreground" />
             ) : null}
           </CalendarDayButton>
         );

@@ -57,7 +57,7 @@ export function ArchiveActivityDialog({
         onConfirm={handleArchive}
         confirmLabel={confirmLabel}
         confirmDisabled={!activityId}
-        confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 focus-visible:ring-destructive"
+        confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
         secondaryAction={{
           label: cancelLabel,
           onClick: () => onOpenChange(false),

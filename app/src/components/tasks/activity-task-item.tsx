@@ -82,8 +82,9 @@ function ActivityTaskItem({
   return (
     <div className="flex items-center gap-2">
       {isNeverTask ? (
-        <button
+        <Button
           type="button"
+          variant="bare"
           onClick={
             canUpdateCount && onNeverIncrement
               ? () => {
@@ -111,14 +112,14 @@ function ActivityTaskItem({
           onPointerUp={clearNeverPressTimeout}
           onPointerLeave={clearNeverPressTimeout}
           onPointerCancel={clearNeverPressTimeout}
-          className={`flex h-7 min-w-[2.75rem] touch-manipulation select-none items-center justify-center rounded-md border px-1 transition-colors ${
-            canUpdateCount ? "cursor-pointer" : "cursor-default opacity-60"
+          className={`flex h-7 min-w-[2.75rem] touch-manipulation items-center justify-center rounded-md border px-1 transition-colors ${
+            canUpdateCount ? "cursor-pointer" : "cursor-default text-muted-foreground"
           } ${
             isComplete
-              ? "border-destructive bg-destructive text-destructive-foreground"
+              ? "border-destructive bg-destructive text-destructive-foreground hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)]"
               : count > 0
-                ? "border-destructive/80 bg-destructive/15 text-destructive"
-                : "border-destructive bg-transparent"
+                ? "border-destructive bg-[color-mix(in_srgb,hsl(var(--destructive))_18%,hsl(var(--background)))] text-destructive hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_28%,hsl(var(--background)))]"
+                : "border-destructive bg-transparent hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_12%,hsl(var(--background)))]"
           }`}
           title={
             canUpdateCount
@@ -129,7 +130,7 @@ function ActivityTaskItem({
         >
           {!isComplete ? (
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-foreground" />
+              <Flame className="h-3 w-3 fill-current" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           ) : count === 1 ? (
@@ -139,7 +140,7 @@ function ActivityTaskItem({
               {count}
             </span>
           ) : null}
-        </button>
+        </Button>
       ) : target <= 1 ? (
         <TaskCheckbox
           isComplete={isComplete}
@@ -148,7 +149,7 @@ function ActivityTaskItem({
           title={isPaused ? "Task paused for this day" : undefined}
           completeContent={
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-background" />
+              <Flame className="h-3 w-3 fill-current" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           }
@@ -156,7 +157,7 @@ function ActivityTaskItem({
             isBreakDay || isPaused
               ? isComplete
                 ? "border-amber-500 bg-amber-500 text-amber-950"
-                : "border-amber-500/60 bg-amber-500/10 text-amber-500"
+                : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-amber-500"
               : ""
           }
         />
@@ -169,17 +170,17 @@ function ActivityTaskItem({
           }
           disabled={!canUpdateCount}
           className={cn(
-            "h-7 min-h-[1.75rem] min-w-[2.75rem] rounded-full px-2 text-xs font-semibold shadow-none disabled:cursor-default disabled:opacity-60",
+            "h-7 min-h-[1.75rem] min-w-[2.75rem] rounded-full px-2 text-xs font-semibold shadow-none disabled:cursor-default",
             isBreakDay || isPaused
               ? isComplete
-                ? "border-amber-500 bg-amber-500 text-amber-950 hover:bg-amber-500"
+                ? "border-amber-500 bg-amber-500 text-amber-950"
                 : count > 0
-                  ? "border-amber-500/80 bg-amber-500/20 text-amber-700 hover:bg-amber-500/25"
-                  : "border-amber-500/60 bg-amber-500/10 text-amber-500 hover:bg-amber-500/15"
+                  ? "border-[color-mix(in_srgb,rgb(245_158_11)_82%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_22%,hsl(var(--background)))] text-amber-700"
+                  : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-amber-500"
               : isComplete
-                ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+                ? "border-primary bg-primary text-primary-foreground"
                 : count > 0
-                  ? "border-primary/40 bg-primary/20 text-primary hover:bg-primary/25"
+                  ? "border-primary bg-[color-mix(in_srgb,hsl(var(--primary))_22%,hsl(var(--background)))] text-primary"
                   : "border-muted-foreground text-muted-foreground"
           )}
           title={
@@ -190,7 +191,7 @@ function ActivityTaskItem({
         >
           {isComplete ? (
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-background" />
+              <Flame className="h-3 w-3 fill-current" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           ) : (

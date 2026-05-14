@@ -418,7 +418,7 @@ function JournalLocationMapSurface({
           type="button"
           variant="secondary"
           size="icon"
-          className="absolute right-2 top-2 z-10 h-8 w-8 bg-background/85 shadow-sm backdrop-blur hover:bg-background"
+          className="absolute right-2 top-2 z-10 h-8 w-8 bg-background shadow-sm"
           onPointerDown={stopControlPointer}
           onPointerUp={stopControlPointer}
           onPointerCancel={stopControlPointer}
@@ -434,7 +434,7 @@ function JournalLocationMapSurface({
 
       {fullscreen ? (
         <>
-          <div className="absolute bottom-3 right-3 z-10 flex flex-col overflow-hidden rounded-md border bg-background/90 shadow-sm backdrop-blur">
+          <div className="absolute bottom-3 right-3 z-10 flex flex-col overflow-hidden rounded-md border bg-background shadow-sm">
             <Button
               type="button"
               variant="ghost"
@@ -473,7 +473,7 @@ function JournalLocationMapSurface({
             type="button"
             variant="secondary"
             size="icon"
-            className="absolute bottom-3 left-3 z-10 h-10 w-10 rounded-full bg-background/90 shadow-sm backdrop-blur hover:bg-background"
+            className="absolute bottom-3 left-3 z-10 h-10 w-10 rounded-full bg-background shadow-sm"
             onPointerDown={stopControlPointer}
             onPointerUp={stopControlPointer}
             onPointerCancel={stopControlPointer}
@@ -489,7 +489,7 @@ function JournalLocationMapSurface({
       ) : null}
 
       {resolvedFooterText ? (
-        <div className="pointer-events-none absolute inset-x-2 bottom-2 rounded-md bg-background/85 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur">
+        <div className="pointer-events-none absolute inset-x-2 bottom-2 rounded-md bg-background px-2 py-1 text-[11px] text-muted-foreground shadow-sm">
           {picking ? (
             <span className="inline-flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" aria-hidden />

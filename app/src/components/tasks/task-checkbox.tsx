@@ -32,7 +32,7 @@ function TaskCheckbox({
       size={size === "sm" ? "taskSm" : "taskMd"}
       onClick={isToday ? onClick : undefined}
       disabled={!isToday}
-      className={cn("disabled:cursor-default disabled:opacity-60", className)}
+      className={cn("disabled:cursor-default", className)}
       title={
         title ??
         (isToday

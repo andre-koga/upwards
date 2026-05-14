@@ -158,8 +158,8 @@ export default function ActivityGroupsDrawer({
       <div
         className={cn(
           "fixed inset-0 z-[60] transition-all duration-300 ease-out",
-          open && "pointer-events-auto bg-black/40 backdrop-blur-sm",
-          !open && "pointer-events-none bg-black/0 backdrop-blur-[0px]"
+          open && "pointer-events-auto bg-black/50 backdrop-blur-sm",
+          !open && "pointer-events-none bg-transparent backdrop-blur-none"
         )}
         onClick={handleBackdropClick}
       />
@@ -176,9 +176,9 @@ export default function ActivityGroupsDrawer({
           }
         }}
       >
-        <div className="flex max-h-[70vh] flex-col rounded-t-2xl border-t border-border/50 bg-background shadow-xl">
+        <div className="flex max-h-[70vh] flex-col rounded-t-2xl border-t border-border bg-background shadow-xl">
           <div
-            className="mx-auto mb-1 mt-3 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30"
+            className="mx-auto mb-1 mt-3 h-1 w-10 shrink-0 rounded-full bg-muted"
             aria-hidden
           />
 
@@ -287,7 +287,7 @@ export default function ActivityGroupsDrawer({
                             type="button"
                             variant="outline"
                             size="iconRoundMd"
-                            className="h-10 w-10 border-border/80 bg-background"
+                            className="h-10 w-10 border-border bg-background"
                             title="Edit activity"
                             aria-label="Edit activity"
                             onClick={() => {
@@ -347,7 +347,7 @@ export default function ActivityGroupsDrawer({
         className={[
           !triggerLabel &&
             floating &&
-            "fixed bottom-2 right-2 z-[60] gap-0 px-0 text-primary-foreground hover:bg-primary/90",
+            "fixed bottom-2 right-2 z-[60] gap-0 px-0 shadow-md",
           triggerLabel && "rounded-full shadow-md",
           triggerClassName,
         ]

@@ -13,7 +13,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="hidden md:mx-auto md:block md:max-w-sm md:pt-6">
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-50/80 p-4 text-sm leading-relaxed text-amber-900 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="rounded-2xl border border-amber-400 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900 dark:border-amber-600 dark:bg-amber-950 dark:text-amber-200">
           <p className="font-semibold">Mobile experience notice</p>
           <p className="mt-1">
             This app is currently built for a phone-sized viewport. Desktop

@@ -1,5 +1,6 @@
 import { Flame, MapPin } from "lucide-react";
 import type { LocationData } from "@/lib/db/types";
+import { Button } from "@/components/ui/button";
 
 interface JournalTextSectionProps {
   title: string;
@@ -33,17 +34,18 @@ export default function JournalTextSection({
       {showMetaRow && (
         <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-muted-foreground">
           {canOpenLocations ? (
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onLocationsClick}
-              className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border border-border px-2 py-px text-left transition-colors hover:bg-accent/40"
+              className="inline-flex h-auto min-w-0 max-w-full items-center gap-1 rounded-full px-2 py-px text-left text-xs font-normal text-muted-foreground shadow-none"
               title={hasLocations ? locationLabel : "Add locations visited"}
             >
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="min-w-0 break-words">
                 {hasLocations ? locationLabel : "Add locations"}
               </span>
-            </button>
+            </Button>
           ) : null}
           {showStreak && (
             <span
@@ -60,7 +62,7 @@ export default function JournalTextSection({
 
       <p
         className={`pb-2 text-left font-crimson text-3xl font-bold ${
-          title ? "" : "text-muted-foreground/30"
+          title ? "" : "text-muted-foreground"
         } ${showMetaRow ? "pt-2" : "pt-3"}`}
       >
         {title || "Untitled"}
@@ -68,7 +70,7 @@ export default function JournalTextSection({
 
       <p
         className={`w-full whitespace-pre-wrap text-left font-crimson text-base leading-relaxed ${
-          text ? "text-muted-foreground" : "italic text-muted-foreground/30"
+          text ? "text-muted-foreground" : "italic text-muted-foreground"
         }`}
       >
         {text || "No reflection written."}

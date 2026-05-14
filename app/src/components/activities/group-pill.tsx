@@ -43,7 +43,7 @@ export default function GroupPill({
           type="button"
           variant="outline"
           onClick={onNameClick}
-          className="h-full flex-1 justify-start gap-2.5 truncate rounded-full px-0 pl-3 pr-2 text-left text-sm font-medium shadow-none hover:bg-transparent"
+          className="h-full flex-1 justify-start gap-2.5 truncate rounded-full px-0 pl-3 pr-2 text-left text-sm font-medium shadow-none"
         >
           <span
             className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -51,7 +51,7 @@ export default function GroupPill({
             aria-hidden
           />
           {name || (
-            <span className="font-normal text-muted-foreground/50">Name…</span>
+            <span className="font-normal text-muted-foreground">Name…</span>
           )}
         </Button>
         <Button

@@ -39,7 +39,7 @@ function ActivityTimelineItem({
             }
           : undefined
       }
-      className={`flex items-center justify-between gap-3 px-1.5 py-1.5 ${onClick ? "cursor-pointer rounded-md transition-colors hover:bg-accent/50" : ""} ${className}`}
+      className={`flex items-center justify-between gap-3 px-1.5 py-1.5 ${onClick ? "cursor-pointer rounded-md hover:bg-muted" : ""} ${className}`}
     >
       <div className="flex min-w-0 items-center gap-2">
         <div

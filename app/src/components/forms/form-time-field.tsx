@@ -263,7 +263,7 @@ export function FormTimeField({
         <DialogContent
           size="sm"
           data-no-swipe
-          overlayClassName="z-[85] bg-black/35 backdrop-blur-0"
+          overlayClassName="z-[85] bg-black/50 backdrop-blur-none"
           className="z-[90] rounded-2xl p-4"
           onTouchStart={(event) => event.stopPropagation()}
           onTouchMove={(event) => event.stopPropagation()}
@@ -280,7 +280,7 @@ export function FormTimeField({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <div className="mx-auto w-full rounded-full bg-muted/35">
+            <div className="mx-auto w-full rounded-full bg-muted">
               <svg
                 ref={dialRef}
                 viewBox="0 0 240 240"

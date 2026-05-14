@@ -168,10 +168,10 @@ export default function DailyTasksList({
           }}
           disabled={!isToday}
           className={cn(
-            "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default disabled:opacity-70",
+            "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default",
             isBreakDay
               ? "text-amber-500"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground"
           )}
           title={isBreakDay ? "Unset break day" : "Mark this day as break day"}
         >

@@ -75,7 +75,7 @@ export default function RoutineSelector({
                 label={`Toggle ${day.label}`}
                 className="h-9 min-w-0 flex-1 rounded-md px-0 text-xs font-medium"
                 activeClassName="border-primary bg-primary text-primary-foreground"
-                inactiveClassName="border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                inactiveClassName="border-input bg-background"
               >
                 {day.short}
               </FormToggleButton>

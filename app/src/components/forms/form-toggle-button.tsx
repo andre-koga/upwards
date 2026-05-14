@@ -32,8 +32,8 @@ export function FormToggleButton({
       className={cn(
         "shrink-0 border transition-colors",
         toggled
-          ? "border-primary bg-primary/20 text-primary hover:bg-primary/25"
-          : "border-border text-muted-foreground hover:text-foreground",
+          ? "border-primary bg-[color-mix(in_srgb,hsl(var(--primary))_22%,hsl(var(--background)))] text-primary"
+          : "border-border text-muted-foreground",
         toggled ? activeClassName : inactiveClassName,
         className
       )}

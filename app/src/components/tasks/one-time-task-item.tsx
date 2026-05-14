@@ -145,7 +145,6 @@ function OneTimeTaskItem({
         isComplete={!!task.is_completed}
         isToday={isToday}
         onClick={() => onToggle(task)}
-        size="sm"
       />
 
       <div

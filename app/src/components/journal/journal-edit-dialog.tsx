@@ -157,7 +157,7 @@ export default function JournalEditDialog({
             maxLength={4}
             onChange={(e) => setEmoji(getFirstEmoji(e.target.value))}
             placeholder="🙂"
-            className="h-16 w-16 rounded-full border bg-background text-center text-3xl placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="h-16 w-16 rounded-full border bg-background text-center text-3xl placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
@@ -225,7 +225,7 @@ export default function JournalEditDialog({
                 </FormControlButton>
                 {videoPath.trim().length > 0 ? (
                   <FormControlButton
-                    className="w-10 shrink-0 justify-center px-0 text-destructive hover:text-destructive"
+                    className="w-10 shrink-0 justify-center px-0 text-destructive"
                     onClick={() => {
                       setUploadError(null);
                       setVideoPath("");

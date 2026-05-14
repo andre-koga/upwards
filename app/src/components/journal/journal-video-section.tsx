@@ -19,7 +19,7 @@ interface JournalVideoSectionProps {
 function JournalVideoPlayOverlay({ canPlay }: { canPlay: boolean }) {
   return (
     <span className="absolute inset-0 flex items-center justify-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/20 transition-colors group-hover:bg-black/40">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/20">
         {canPlay ? (
           <svg viewBox="0 0 24 24" fill="white" className="h-6 w-6">
             <path d="M8 5v14l11-7z" />
@@ -57,7 +57,7 @@ export default function JournalVideoSection({
   };
 
   return (
-    <div className={cn("relative aspect-[2/1] w-full bg-muted/50")}>
+    <div className={cn("relative aspect-[2/1] w-full bg-muted")}>
       {hasVideo ? (
         playing ? (
           <video
@@ -69,9 +69,9 @@ export default function JournalVideoSection({
         ) : directVideoThumb ? (
           <Button
             type="button"
-            variant="ghost"
+            variant="bare"
             onClick={handlePlayClick}
-            className="group absolute inset-0 h-full w-full rounded-none p-0 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring"
+            className="!block absolute inset-0 h-full w-full rounded-none"
             title={canPlay ? "Play video" : "Offline – connect to play"}
           >
             <img
@@ -84,13 +84,13 @@ export default function JournalVideoSection({
         ) : directVideoThumbError ? (
           <Button
             type="button"
-            variant="ghost"
+            variant="bare"
             onClick={handlePlayClick}
-            className="group absolute inset-0 h-full w-full rounded-none p-0 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring"
+            className="!block absolute inset-0 h-full w-full rounded-none"
             title={canPlay ? "Play video" : "Offline – connect to play"}
           >
             <div className="absolute inset-0 flex h-full w-full items-center justify-center bg-muted">
-              <span className="text-xs text-muted-foreground/60">
+              <span className="text-xs text-muted-foreground">
                 {directVideoThumbError}
               </span>
             </div>
@@ -98,14 +98,14 @@ export default function JournalVideoSection({
           </Button>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="select-none text-sm text-muted-foreground/40">
+            <span className="select-none text-sm text-muted-foreground">
               Loading preview…
             </span>
           </div>
         )
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="select-none text-sm text-muted-foreground/40">
+          <span className="select-none text-sm text-muted-foreground">
             No video
           </span>
         </div>

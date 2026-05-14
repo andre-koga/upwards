@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/use-auth";
 import { SyncStatusPill } from "./sync-status-pill";
 import { AuthPopup } from "./auth-popup";
 import { logError } from "@/lib/error-utils";
+import { cn } from "@/lib/utils";
 
 const FADE_OUT_DELAY_MS = 2200;
 
@@ -86,11 +87,12 @@ export default function SyncStatus() {
 
   return (
     <div
-      className={`fixed left-3 top-3 z-50 transition-opacity duration-500 ${
+      className={cn(
+        "fixed left-3 top-3 z-50 transition-[visibility] duration-300",
         isVisible
-          ? "pointer-events-auto opacity-100"
-          : "pointer-events-none opacity-0"
-      }`}
+          ? "pointer-events-auto visible"
+          : "pointer-events-none invisible"
+      )}
     >
       <SyncStatusPill
         syncState={syncState}
@@ -108,7 +110,7 @@ export default function SyncStatus() {
       )}
 
       {isOnline && syncState.lastError && (
-        <div className="absolute left-0 top-11 w-72 rounded-lg border border-red-500/50 bg-background p-3 shadow-xl">
+        <div className="absolute left-0 top-11 w-72 rounded-lg border border-red-500 bg-background p-3 shadow-xl">
           <div className="flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
             <div className="flex-1">

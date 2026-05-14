@@ -2,13 +2,13 @@ import { useEffect, useState, memo, useMemo } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { Square } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   formatTimerDisplay,
   getActivityDisplayName,
   getGroup,
 } from "@/lib/activity";
 import { getContrastColor } from "@/lib/color-utils";
+import { Button } from "@/components/ui/button";
 
 function hexToRgba(hex: string, alpha: number): string {
   const normalized = hex.replace("#", "");
@@ -145,7 +145,7 @@ function ActiveActivityPill({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {group?.name && (
-            <p className="mb-0.5 truncate text-xs uppercase tracking-wide opacity-80">
+            <p className="mb-0.5 truncate text-xs uppercase tracking-wide text-muted-foreground">
               {group.name}
             </p>
           )}
@@ -161,12 +161,12 @@ function ActiveActivityPill({
       <div className="mt-2 flex justify-end">
         <Button
           type="button"
-          variant="ghost"
+          variant="bare"
           onClick={(event) => {
             event.stopPropagation();
             onStop();
           }}
-          className="h-auto gap-2 p-0 text-sm font-semibold uppercase tracking-wide shadow-none hover:bg-transparent"
+          className="inline-flex h-auto cursor-pointer items-center gap-2 text-sm font-semibold uppercase tracking-wide"
           style={{ color: textColor }}
           title="Stop this activity"
         >

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { JournalLocationRoute, LocationData } from "@/lib/db/types";
 import { normalizeJournalLocationRoute, searchLocations } from "@/lib/journal";
+import { cn } from "@/lib/utils";
 import JournalLocationMapPicker from "./journal-location-map-picker";
 
 interface JournalLocationsDialogProps {
@@ -247,17 +248,18 @@ export default function JournalLocationsDialog({
       <div className="max-h-36 space-y-1 overflow-y-auto">
         {state.results.length > 0 ? (
           state.results.map((result) => (
-            <button
+            <Button
               key={`${result.displayName}-${result.lat}-${result.lon}`}
               type="button"
+              variant="ghost"
               onClick={() => onPick(result)}
-              className="flex w-full flex-col rounded-md px-2 py-2 text-left text-sm hover:bg-accent"
+              className="h-auto w-full flex-col items-stretch justify-center gap-0.5 rounded-md px-2 py-2 text-left font-normal shadow-none"
             >
               <span className="truncate font-medium">{result.displayName}</span>
               <span className="truncate text-xs text-muted-foreground">
                 {[result.state, result.country].filter(Boolean).join(", ")}
               </span>
-            </button>
+            </Button>
           ))
         ) : state.searching ? (
           <p className="px-2 py-1 text-xs text-muted-foreground">
@@ -295,16 +297,18 @@ export default function JournalLocationsDialog({
                 <Fragment
                   key={`${index}-${loc.displayName}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
                 >
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={() => toggleEdit(index)}
                     disabled={!canEdit}
                     aria-pressed={editingIndex === index}
-                    className={`flex w-full items-center gap-2.5 rounded-lg border px-2 py-1 text-left transition-colors hover:bg-accent/40 disabled:cursor-default disabled:hover:bg-transparent ${
+                    className={cn(
+                      "h-auto min-h-0 w-full justify-start gap-2.5 rounded-lg py-1 pl-2 pr-2 text-left font-normal shadow-none",
                       editingIndex === index
-                        ? "border-primary bg-accent/30"
+                        ? "border-primary bg-muted"
                         : "border-border"
-                    }`}
+                    )}
                   >
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border text-xs font-semibold text-muted-foreground">
                       {index + 1}
@@ -318,7 +322,7 @@ export default function JournalLocationsDialog({
                           "Manual stop"}
                       </span>
                     </span>
-                  </button>
+                  </Button>
 
                   {editingIndex === index ? (
                     <div className="space-y-2">
@@ -346,7 +350,7 @@ export default function JournalLocationsDialog({
                           type="button"
                           variant="outline"
                           size="icon"
-                          className="h-9 w-9 shrink-0 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          className="h-9 w-9 shrink-0 border-destructive text-destructive"
                           onClick={() => setDeleteConfirmIndex(index)}
                           title="Delete location"
                           aria-label="Delete location"
@@ -431,7 +435,7 @@ export default function JournalLocationsDialog({
         <FormDialogActions
           onConfirm={handleDeleteConfirm}
           confirmLabel="Delete"
-          confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 focus-visible:ring-destructive"
+          confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
           secondaryAction={{
             label: "Cancel",
             onClick: () => setDeleteConfirmIndex(null),
