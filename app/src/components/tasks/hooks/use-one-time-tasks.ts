@@ -19,16 +19,6 @@ function sortMemos(tasks: OneTimeTask[]): OneTimeTask[] {
 export function useOneTimeTasks(dateString: string) {
   const [oneTimeTasks, setOneTimeTasks] = useState<OneTimeTask[]>([]);
 
-  const normalizeGroupId = useCallback(
-    async (groupId: string | null | undefined): Promise<string | null> => {
-      if (!groupId) return null;
-      const group = await db.activityGroups.get(groupId);
-      if (!group || group.deleted_at) return null;
-      return group.id;
-    },
-    []
-  );
-
   const loadOneTimeTasks = useCallback(async () => {
     try {
       const today = todayDateString();
@@ -68,14 +58,12 @@ export function useOneTimeTasks(dateString: string) {
       options?: {
         due_date?: string | null;
         is_pinned?: boolean;
-        group_id?: string | null;
       }
     ): Promise<boolean> => {
       const normalizedTitle = normalizeMemoTitle(title);
       if (!normalizedTitle) return false;
       try {
         const n = now();
-        const groupId = await normalizeGroupId(options?.group_id);
         const task: OneTimeTask = {
           id: newId(),
           date: null,
@@ -84,7 +72,7 @@ export function useOneTimeTasks(dateString: string) {
           order_index: null,
           is_pinned: options?.is_pinned ?? false,
           due_date: options?.due_date ?? null,
-          group_id: groupId,
+          group_id: null,
           created_at: n,
           updated_at: n,
           synced_at: null,
@@ -98,7 +86,7 @@ export function useOneTimeTasks(dateString: string) {
         return false;
       }
     },
-    [normalizeGroupId]
+    []
   );
 
   const toggleOneTimeTask = useCallback(async (task: OneTimeTask) => {
@@ -132,7 +120,7 @@ export function useOneTimeTasks(dateString: string) {
     async (
       taskId: string,
       patch: Partial<
-        Pick<OneTimeTask, "title" | "is_pinned" | "due_date" | "group_id">
+        Pick<OneTimeTask, "title" | "is_pinned" | "due_date">
       >
     ): Promise<boolean> => {
       if (patch.title !== undefined && !normalizeMemoTitle(patch.title)) {
@@ -147,9 +135,6 @@ export function useOneTimeTasks(dateString: string) {
         if (patch.title !== undefined) {
           updates.title = normalizeMemoTitle(patch.title);
         }
-        if (patch.group_id !== undefined) {
-          updates.group_id = await normalizeGroupId(patch.group_id);
-        }
         setOneTimeTasks((prev) =>
           sortMemos(
             prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t))
@@ -162,7 +147,7 @@ export function useOneTimeTasks(dateString: string) {
         return false;
       }
     },
-    [normalizeGroupId]
+    []
   );
 
   return {

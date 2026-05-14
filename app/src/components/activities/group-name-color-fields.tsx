@@ -1,33 +1,24 @@
-import { useEffect, useState, type ReactNode } from "react";
-import GroupPill from "@/components/activities/group-pill";
+import { useEffect, useState } from "react";
 import { getContrastColor, hexToHsl, hslToHex } from "@/lib/color-utils";
 
 interface GroupNameColorFieldsProps {
   name: string;
-  emoji?: string;
   color: string;
   onNameChange: (name: string) => void;
   onColorChange: (color: string) => void;
   sectionLabelClassName: string;
   nameInputClassName: string;
-  showPreview?: boolean;
-  showNameField?: boolean;
-  nameFieldPrefix?: ReactNode;
   nameInputAutoFocus?: boolean;
   nameInputMaxLength?: number;
 }
 
 export function GroupNameColorFields({
   name,
-  emoji,
   color,
   onNameChange,
   onColorChange,
   sectionLabelClassName,
   nameInputClassName,
-  showPreview = true,
-  showNameField = true,
-  nameFieldPrefix,
   nameInputAutoFocus = false,
   nameInputMaxLength,
 }: GroupNameColorFieldsProps) {
@@ -46,38 +37,26 @@ export function GroupNameColorFields({
 
   return (
     <>
-      {showPreview ? (
-        <div className="flex flex-1 flex-col justify-center gap-3">
-          <p className={sectionLabelClassName}>Preview</p>
-          <GroupPill name={name} emoji={emoji} color={color} readOnly />
-        </div>
-      ) : null}
-
-      {showNameField ? (
-        <div className="space-y-3">
-          <p className={sectionLabelClassName}>Name</p>
-          <div className="flex items-center gap-2">
-            {nameFieldPrefix ? <div className="shrink-0">{nameFieldPrefix}</div> : null}
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(event) => onNameChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  event.currentTarget.blur();
-                }
-              }}
-              placeholder="e.g. Health, Work, Personal..."
-              className={nameInputClassName}
-              autoFocus={nameInputAutoFocus}
-              maxLength={nameInputMaxLength}
-              required
-            />
-          </div>
-        </div>
-      ) : null}
+      <div className="space-y-3">
+        <p className={sectionLabelClassName}>Name</p>
+        <input
+          id="name"
+          type="text"
+          value={name}
+          onChange={(event) => onNameChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+          }}
+          placeholder="e.g. Health, Work, Personal..."
+          className={nameInputClassName}
+          autoFocus={nameInputAutoFocus}
+          maxLength={nameInputMaxLength}
+          required
+        />
+      </div>
 
       <div className="space-y-4">
         <div

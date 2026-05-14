@@ -6,13 +6,11 @@ import {
 } from "@/components/forms/styles";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import { GroupNameColorFields } from "@/components/activities/group-name-color-fields";
-import { getFirstEmoji } from "@/lib/emoji-utils";
 
 const DEFAULT_COLOR = "#3b82f6";
 
 interface GroupDialogFormData {
   name: string;
-  emoji: string;
   color: string;
 }
 
@@ -36,7 +34,6 @@ export function GroupDialogForm({
   headerEnd,
 }: GroupDialogFormProps) {
   const [name, setName] = useState(initialData?.name ?? "");
-  const [emoji, setEmoji] = useState(initialData?.emoji ?? "");
   const [color, setColor] = useState(initialData?.color ?? DEFAULT_COLOR);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,12 +42,11 @@ export function GroupDialogForm({
     if (!open) return;
     /* eslint-disable react-hooks/set-state-in-effect -- resetting local draft values on dialog open */
     setName(initialData?.name ?? "");
-    setEmoji(initialData?.emoji ?? "");
     setColor(initialData?.color ?? DEFAULT_COLOR);
     setError(null);
     setSaving(false);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [open, initialData?.name, initialData?.emoji, initialData?.color]);
+  }, [open, initialData?.name, initialData?.color]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -70,7 +66,7 @@ export function GroupDialogForm({
     try {
       setSaving(true);
       setError(null);
-      await onSubmit({ name: trimmedName, emoji, color });
+      await onSubmit({ name: trimmedName, color });
       handleOpenChange(false);
     } catch {
       setError(ERROR_MESSAGES.SAVE_GROUP);
@@ -89,25 +85,11 @@ export function GroupDialogForm({
       <FormStack>
         <GroupNameColorFields
           name={name}
-          emoji={emoji}
           color={color}
           onNameChange={setName}
           onColorChange={setColor}
           sectionLabelClassName={dialogFieldLabelClassName}
           nameInputClassName={dialogFieldClassName}
-          nameFieldPrefix={
-            <input
-              id="group-emoji"
-              type="text"
-              value={emoji}
-              maxLength={4}
-              onChange={(event) => setEmoji(getFirstEmoji(event.target.value))}
-              placeholder="🙂"
-              className="h-10 w-10 rounded-full border bg-background text-center text-lg placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary"
-              aria-label="Group emoji"
-            />
-          }
-          showPreview={false}
           nameInputAutoFocus
           nameInputMaxLength={60}
         />

@@ -42,15 +42,8 @@ interface FooterActionsBarProps {
     options?: {
       due_date?: string | null;
       is_pinned?: boolean;
-      group_id?: string | null;
     }
   ) => Promise<boolean>;
-  groupOptions: Array<{
-    value: string;
-    label: string;
-    emoji?: string | null;
-    color?: string | null;
-  }>;
   onTasksDataChanged?: () => void;
 }
 
@@ -67,7 +60,6 @@ export default function FooterActionsBar({
   onStopActivity,
   onAddManualActivityPeriod,
   onAddQuickMemo,
-  groupOptions,
   onTasksDataChanged,
 }: FooterActionsBarProps) {
   const navigate = useNavigate();
@@ -206,7 +198,6 @@ export default function FooterActionsBar({
 
         <AddTaskModal
           onAdd={onAddQuickMemo}
-          groupOptions={groupOptions}
           icon={CircleCheckBig}
           triggerTitle="Add quick memo"
           floating={false}

@@ -24,11 +24,20 @@ export function isValidUuid(value: unknown): value is string {
   return typeof value === "string" && UUID_REGEX.test(value);
 }
 
-function sanitizeUuidReferences(
+/** Normalize outbound/inbound sync rows (Dexie ↔ Supabase). */
+export function normalizeSyncRow(
   table: SyncTable,
   row: Record<string, unknown>
 ): Record<string, unknown> {
   const sanitized = { ...row };
+
+  if (table === "activity_groups") {
+    sanitized.emoji = null;
+  }
+
+  if (table === "one_time_tasks") {
+    sanitized.group_id = null;
+  }
 
   if (table === "activities" && !isValidUuid(sanitized.group_id)) {
     sanitized.group_id = null;
@@ -54,15 +63,6 @@ function sanitizeUuidReferences(
     sanitized.activity_id = null;
   }
 
-  if (
-    table === "one_time_tasks" &&
-    sanitized.group_id !== undefined &&
-    sanitized.group_id !== null &&
-    !isValidUuid(sanitized.group_id)
-  ) {
-    sanitized.group_id = null;
-  }
-
   return sanitized;
 }
 
@@ -81,7 +81,7 @@ export function toRemoteRow<T extends Record<string, unknown>>(
 
   delete remoteRecord.synced_at;
   return {
-    ...sanitizeUuidReferences(table, remoteRecord),
+    ...normalizeSyncRow(table, remoteRecord),
     user_id: userId,
   } as Omit<T, "synced_at"> & { user_id: string };
 }

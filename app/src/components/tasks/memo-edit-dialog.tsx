@@ -1,7 +1,6 @@
 import {
   FormCharacterCount,
   FormCalendarDateField,
-  FormSelectField,
   FormDialog,
   FormDialogActions,
   FormRow,
@@ -20,14 +19,6 @@ interface MemoEditDialogProps {
   onTitleChange: (value: string) => void;
   dueDate: string | null;
   onDueDateChange: (value: string | null) => void;
-  groupId: string | null;
-  onGroupChange: (value: string | null) => void;
-  groupOptions: Array<{
-    value: string;
-    label: string;
-    emoji?: string | null;
-    color?: string | null;
-  }>;
   isPinned: boolean;
   onPinnedChange: (value: boolean) => void;
   onConfirm: () => void;
@@ -35,8 +26,6 @@ interface MemoEditDialogProps {
   confirmLabel?: string;
   confirmDisabled?: boolean;
 }
-
-const NO_GROUP_VALUE = "__no_group__";
 
 export function MemoEditDialog({
   open,
@@ -46,9 +35,6 @@ export function MemoEditDialog({
   onTitleChange,
   dueDate,
   onDueDateChange,
-  groupId,
-  onGroupChange,
-  groupOptions,
   isPinned,
   onPinnedChange,
   onConfirm,
@@ -88,32 +74,6 @@ export function MemoEditDialog({
           message={
             <FormCharacterCount current={title.length} max={MEMO_TITLE_LIMIT} />
           }
-        />
-        <FormSelectField
-          id="memo-project"
-          label="Project"
-          labelClassName="sr-only"
-          value={groupId ?? NO_GROUP_VALUE}
-          onValueChange={(value) =>
-            onGroupChange(value === NO_GROUP_VALUE ? null : value)
-          }
-          options={[
-            { value: NO_GROUP_VALUE, label: "No project" },
-            ...groupOptions.map((option) => ({
-              value: option.value,
-              label: (
-                <span className="flex items-center gap-2">
-                  {option.emoji ? (
-                    <span className="shrink-0 text-sm" aria-hidden>
-                      {option.emoji}
-                    </span>
-                  ) : null}
-                  <span className="truncate">{option.label}</span>
-                </span>
-              ),
-            })),
-          ]}
-          placeholder="Project"
         />
         <FormRow>
           <FormCalendarDateField

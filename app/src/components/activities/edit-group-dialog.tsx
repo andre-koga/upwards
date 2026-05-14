@@ -37,7 +37,6 @@ export function EditGroupDialog({
         confirmLabel="Save Changes"
         initialData={{
           name: group.name,
-          emoji: group.emoji ?? "",
           color: group.color ?? "#3b82f6",
         }}
         headerEnd={
@@ -53,18 +52,18 @@ export function EditGroupDialog({
             <Archive className="h-4 w-4" aria-hidden />
           </Button>
         }
-        onSubmit={async ({ name, emoji, color }) => {
+        onSubmit={async ({ name, color }) => {
           const updatedAt = now();
           await db.activityGroups.update(group.id, {
             name,
-            emoji: emoji || null,
+            emoji: null,
             color,
             updated_at: updatedAt,
           });
           onUpdated?.({
             ...group,
             name,
-            emoji: emoji || null,
+            emoji: null,
             color,
             updated_at: updatedAt,
           });

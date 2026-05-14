@@ -31,26 +31,17 @@ function getDueDateDisplayLabel(dueDate: string): string {
 interface OneTimeTaskItemProps {
   task: OneTimeTask;
   isToday: boolean;
-  groupOptions: Array<{
-    value: string;
-    label: string;
-    emoji?: string | null;
-    color?: string | null;
-  }>;
   onToggle: (task: OneTimeTask) => void;
   onDelete: (taskId: string) => void;
   onUpdate: (
     taskId: string,
-    patch: Partial<
-      Pick<OneTimeTask, "title" | "is_pinned" | "due_date" | "group_id">
-    >
+    patch: Partial<Pick<OneTimeTask, "title" | "is_pinned" | "due_date">>
   ) => Promise<boolean>;
 }
 
 function OneTimeTaskItem({
   task,
   isToday,
-  groupOptions,
   onToggle,
   onDelete,
   onUpdate,
@@ -61,9 +52,6 @@ function OneTimeTaskItem({
     task.due_date
   );
   const [draftPinned, setDraftPinned] = useState(!!task.is_pinned);
-  const [draftGroupId, setDraftGroupId] = useState<string | null>(
-    task.group_id
-  );
   const [saving, setSaving] = useState(false);
 
   const handleOpenEdit = (open: boolean) => {
@@ -71,7 +59,6 @@ function OneTimeTaskItem({
       setDraftTitle(task.title);
       setDraftDueDate(task.due_date);
       setDraftPinned(!!task.is_pinned);
-      setDraftGroupId(task.group_id);
     }
     setEditOpen(open);
   };
@@ -83,7 +70,6 @@ function OneTimeTaskItem({
       title: draftTitle.trim(),
       due_date: draftDueDate || null,
       is_pinned: draftPinned,
-      group_id: draftGroupId,
     });
     if (success) setEditOpen(false);
     setSaving(false);
@@ -152,10 +138,6 @@ function OneTimeTaskItem({
   const dueDateDisplay = task.due_date
     ? getDueDateDisplayLabel(task.due_date)
     : null;
-  const categoryOption = task.group_id
-    ? groupOptions.find((option) => option.value === task.group_id)
-    : null;
-  const categoryEmoji = categoryOption?.emoji ?? null;
 
   return (
     <div className="flex items-center gap-2">
@@ -193,16 +175,11 @@ function OneTimeTaskItem({
         >
           {task.title}
         </p>
-        {(dueDateDisplay || categoryEmoji) && (
+        {dueDateDisplay ? (
           <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
-            {categoryEmoji ? (
-              <span className="shrink-0 text-sm leading-none" aria-hidden>
-                {categoryEmoji}
-              </span>
-            ) : null}
-            {dueDateDisplay ? <span>Due {dueDateDisplay}</span> : null}
+            <span>Due {dueDateDisplay}</span>
           </div>
-        )}
+        ) : null}
         {task.is_pinned ? (
           <span
             className="pointer-events-none absolute bottom-2 right-2 text-primary"
@@ -220,9 +197,6 @@ function OneTimeTaskItem({
         onTitleChange={setDraftTitle}
         dueDate={draftDueDate}
         onDueDateChange={setDraftDueDate}
-        groupId={draftGroupId}
-        onGroupChange={setDraftGroupId}
-        groupOptions={groupOptions}
         isPinned={draftPinned}
         onPinnedChange={setDraftPinned}
         onConfirm={handleSave}

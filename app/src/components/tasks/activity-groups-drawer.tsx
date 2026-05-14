@@ -210,20 +210,11 @@ export default function ActivityGroupsDrawer({
                     </p>
                   ) : (
                     groups.map((group) => {
-                      const currentActivity = currentActivityId
-                        ? activities.find((a) => a.id === currentActivityId)
-                        : undefined;
-                      const isRunningInGroup =
-                        currentActivity &&
-                        currentActivity.group_id === group.id;
-
                       return (
                         <GroupPill
                           key={group.id}
                           name={group.name}
-                          emoji={group.emoji}
                           color={group.color || DEFAULT_GROUP_COLOR}
-                          isRunning={isRunningInGroup}
                           onNameClick={() => {
                             setView("groups");
                             setOpen(false);

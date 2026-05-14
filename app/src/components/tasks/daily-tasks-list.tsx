@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
@@ -12,7 +12,6 @@ import { Palmtree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
-import { FormSelectField } from "@/components/forms";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -49,7 +48,6 @@ export default function DailyTasksList({
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
     string | null
   >(null);
-  const [memoFilter, setMemoFilter] = useState("all");
 
   const {
     isToday,
@@ -88,61 +86,6 @@ export default function DailyTasksList({
   const manualEntryGroup = manualEntryActivity
     ? getGroup(manualEntryActivity)
     : undefined;
-  const activeGroups = useMemo(
-    () => groups.filter((group) => !group.deleted_at && !group.is_archived),
-    [groups]
-  );
-  const groupOptions = useMemo(
-    () =>
-      activeGroups.map((group) => ({
-        value: group.id,
-        label: group.name,
-        emoji: group.emoji,
-        color: group.color,
-      })),
-    [activeGroups]
-  );
-  const memoFilterOptions = useMemo(
-    () => [
-      { value: "all", label: "All projects" },
-      { value: "no-project", label: "Uncategorized" },
-      ...activeGroups.map((group) => ({
-        value: `group:${group.id}`,
-        label: (
-          <span className="flex items-center gap-2">
-            {group.emoji ? (
-              <span className="shrink-0 text-sm" aria-hidden>
-                {group.emoji}
-              </span>
-            ) : null}
-            <span className="truncate">{group.name}</span>
-          </span>
-        ),
-      })),
-    ],
-    [activeGroups]
-  );
-  const effectiveMemoFilter = useMemo(() => {
-    if (memoFilter === "all" || memoFilter === "no-project") {
-      return memoFilter;
-    }
-    if (!memoFilter.startsWith("group:")) {
-      return "all";
-    }
-    const groupId = memoFilter.replace("group:", "");
-    return activeGroups.some((group) => group.id === groupId)
-      ? memoFilter
-      : "all";
-  }, [activeGroups, memoFilter]);
-  const filteredMemos = useMemo(() => {
-    if (effectiveMemoFilter === "all") return oneTimeTasks;
-    if (effectiveMemoFilter === "no-project") {
-      return oneTimeTasks.filter((task) => !task.group_id);
-    }
-    if (!effectiveMemoFilter.startsWith("group:")) return oneTimeTasks;
-    const groupId = effectiveMemoFilter.replace("group:", "");
-    return oneTimeTasks.filter((task) => task.group_id === groupId);
-  }, [effectiveMemoFilter, oneTimeTasks]);
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
     setAssignPeriodId(periodId);
@@ -157,28 +100,15 @@ export default function DailyTasksList({
   return (
     <div className="flex flex-col">
       <div className="mb-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <p className="mr-auto text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Memos
-          </p>
-          <FormSelectField
-            id="memo-filter"
-            label="Filter memos by project"
-            labelClassName="sr-only"
-            value={effectiveMemoFilter}
-            onValueChange={setMemoFilter}
-            options={memoFilterOptions}
-            containerClassName="w-44 space-y-0"
-            triggerClassName="h-8 text-xs rounded-full"
-          />
-        </div>
-        {filteredMemos.length > 0 ? (
-          filteredMemos.map((task) => (
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Memos
+        </p>
+        {oneTimeTasks.length > 0 ? (
+          oneTimeTasks.map((task) => (
             <OneTimeTaskItem
               key={task.id}
               task={task}
               isToday={isToday}
-              groupOptions={groupOptions}
               onToggle={toggleOneTimeTask}
               onDelete={deleteOneTimeTask}
               onUpdate={updateOneTimeTask}
@@ -186,7 +116,7 @@ export default function DailyTasksList({
           ))
         ) : (
           <p className="px-1 text-xs text-muted-foreground">
-            No memos for this filter.
+            No memos yet.
           </p>
         )}
       </div>
@@ -326,7 +256,6 @@ export default function DailyTasksList({
         onStopActivity={handleStopActivity}
         onAddManualActivityPeriod={addManualActivityPeriod}
         onAddQuickMemo={createOneTimeTask}
-        groupOptions={groupOptions}
         onTasksDataChanged={onTasksDataChanged}
       />
 

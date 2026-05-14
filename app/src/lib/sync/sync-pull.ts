@@ -1,7 +1,11 @@
 import { db } from "@/lib/db";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { saveLastSyncAt } from "./sync-storage";
-import { type SyncTable, parseTimestamp } from "./sync-transformers";
+import {
+  type SyncTable,
+  normalizeSyncRow,
+  parseTimestamp,
+} from "./sync-transformers";
 import {
   EPOCH,
   FULL_PULL_TABLES,
@@ -63,7 +67,10 @@ export async function runPull(ctx: PullContext): Promise<string> {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (db[dexieTable] as any).bulkPut(
-          rowsToApply.map((r) => ({ ...r, synced_at: r.updated_at }))
+          rowsToApply.map((r) => ({
+            ...normalizeSyncRow(table, r as Record<string, unknown>),
+            synced_at: r.updated_at,
+          }))
         );
       } finally {
         ctx.setApplyRemoteFromPull(false);

@@ -294,6 +294,35 @@ class UpwardsDB extends Dexie {
             }
           });
       });
+
+    this.version(12)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities: "id, group_id, is_archived, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
+        memoCategories: null,
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("activityGroups")
+          .toCollection()
+          .modify((row: Record<string, unknown>) => {
+            row.emoji = null;
+          });
+        await tx
+          .table("oneTimeTasks")
+          .toCollection()
+          .modify((row: Record<string, unknown>) => {
+            row.group_id = null;
+          });
+      });
   }
 }
 
