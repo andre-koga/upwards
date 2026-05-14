@@ -48,7 +48,9 @@ export function ArchiveActivityDialog({
       description={
         <>
           Are you sure you want to archive &quot;{displayName}&quot;? This will
-          remove it from your active activities list.
+          remove it from your active activities list. You can restore it from
+          the Archived section at the bottom of this group&apos;s list in the
+          activity picker.
         </>
       }
       contentClassName="sm:max-w-md"

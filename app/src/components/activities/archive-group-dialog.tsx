@@ -59,8 +59,8 @@ export function ArchiveGroupDialog({
       description={
         <>
           Are you sure you want to archive &quot;{displayName}&quot;? This will
-          remove it from your active groups list. You can restore it from
-          Settings → Archived.
+          remove it from your active groups list. You can restore it from the
+          activity picker: open Archived at the bottom of the groups list.
         </>
       }
       contentClassName="sm:max-w-md"

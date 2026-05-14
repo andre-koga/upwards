@@ -10,6 +10,22 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-05-14",
+    title: "Simpler groups, clearer sessions, and quicker time edits",
+    bullets: [
+      "Activity groups and tasks no longer use emoji—names and colors carry the group identity.",
+      "The clock-style time picker has -5 min and +5 min shortcuts under the hour, minute, second, and AM/PM controls.",
+      "Archived groups and activities are now easier to manage in the Archive view.",
+    ],
+    fixes: [
+      "Session details is streamlined: pick the activity and adjust start and end time only (group and date are no longer shown; the session still belongs to its original day when you save).",
+      "Calendars in date dialogs have larger month navigation arrows when the grid is large, a cleaner look when today is also the selected day, and disabled days no longer pick up a gray “filled button” background.",
+      "Group pills include clearer accessibility names; delete confirmations and the archived groups/activities drawer were tightened up for reliability.",
+      "Activity pills on read-only days (for example when browsing another day’s tasks) line up visually with the interactive version without duplicate layouts.",
+      "General polish to buttons and hovers so disabled and interactive states read more consistently across the app.",
+    ],
+  },
+  {
     date: "2026-04-28",
     title: "Smarter Location Tracking and Memo Categories",
     bullets: [

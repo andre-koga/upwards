@@ -4,7 +4,6 @@ import GroupPage from "@/pages/group";
 import StatsPage from "@/pages/stats";
 import ActivityStatsPage from "@/pages/activity-stats";
 import SettingsPage from "@/pages/settings";
-import ArchivedPage from "@/pages/archived";
 import TaskOrderPage from "@/pages/task-order";
 import WhatsNewPage from "@/pages/whats-new";
 import SyncStatus from "@/components/settings/sync-status";
@@ -35,7 +34,6 @@ export default function App() {
               />
               <Route path="/activities/:groupId" element={<GroupPage />} />
               <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/settings/archived" element={<ArchivedPage />} />
               <Route path="/settings/task-order" element={<TaskOrderPage />} />
               <Route path="/whats-new" element={<WhatsNewPage />} />
             </Routes>

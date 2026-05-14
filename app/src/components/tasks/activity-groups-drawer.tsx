@@ -39,6 +39,40 @@ async function loadActivityGroupLists(): Promise<{
   return { active, archived };
 }
 
+function ArchivedPillToggle({
+  expanded,
+  onToggle,
+  showLabel,
+  hideLabel,
+}: {
+  expanded: boolean;
+  onToggle: () => void;
+  showLabel: string;
+  hideLabel: string;
+}) {
+  return (
+    <div className="flex w-full justify-center pt-2">
+      <Button
+        type="button"
+        variant="ghost"
+        className="h-auto gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        aria-expanded={expanded}
+        aria-label={expanded ? hideLabel : showLabel}
+        onClick={onToggle}
+      >
+        <span>Archived</span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 transition-transform duration-200",
+            expanded && "rotate-180"
+          )}
+          aria-hidden
+        />
+      </Button>
+    </div>
+  );
+}
+
 interface ActivityGroupsDrawerProps {
   currentActivityId?: string | null;
   activities?: Activity[];
@@ -305,30 +339,15 @@ export default function ActivityGroupsDrawer({
                         })
                       )}
                       {archivedGroups.length > 0 ? (
-                        <div className="flex flex-col items-center pt-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="iconRoundMd"
-                            className="text-muted-foreground"
-                            aria-expanded={showArchivedGroups}
-                            aria-label={
-                              showArchivedGroups
-                                ? "Hide archived groups"
-                                : "Show archived groups"
-                            }
-                            onClick={() =>
+                        <div className="flex w-full flex-col">
+                          <ArchivedPillToggle
+                            expanded={showArchivedGroups}
+                            onToggle={() =>
                               setShowArchivedGroups((v) => !v)
                             }
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "h-5 w-5 transition-transform duration-200",
-                                showArchivedGroups && "rotate-180"
-                              )}
-                              aria-hidden
-                            />
-                          </Button>
+                            showLabel="Show archived groups"
+                            hideLabel="Hide archived groups"
+                          />
                           {showArchivedGroups ? (
                             <div className="mt-2 w-full space-y-2">
                               {archivedGroups.map((group) => (
@@ -466,30 +485,15 @@ export default function ActivityGroupsDrawer({
                         })
                       )}
                       {archivedGroupActivities.length > 0 ? (
-                        <div className="flex flex-col items-center pt-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="iconRoundMd"
-                            className="text-muted-foreground"
-                            aria-expanded={showArchivedActivities}
-                            aria-label={
-                              showArchivedActivities
-                                ? "Hide archived activities"
-                                : "Show archived activities"
-                            }
-                            onClick={() =>
+                        <div className="flex w-full flex-col">
+                          <ArchivedPillToggle
+                            expanded={showArchivedActivities}
+                            onToggle={() =>
                               setShowArchivedActivities((v) => !v)
                             }
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "h-5 w-5 transition-transform duration-200",
-                                showArchivedActivities && "rotate-180"
-                              )}
-                              aria-hidden
-                            />
-                          </Button>
+                            showLabel="Show archived activities"
+                            hideLabel="Hide archived activities"
+                          />
                           {showArchivedActivities ? (
                             <div className="mt-2 w-full space-y-2">
                               {archivedGroupActivities.map((activity) => {
