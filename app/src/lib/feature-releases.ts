@@ -16,6 +16,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
       "Activity groups and tasks no longer use emoji—names and colors carry the group identity.",
       "The clock-style time picker has -5 min and +5 min shortcuts under the hour, minute, second, and AM/PM controls.",
       "Archived groups and activities are now easier to manage in the Archive view.",
+      "Recompute streak counters in case of bugs by pressing the refresh icon in the Today view, to the right of the For Today heading.",
     ],
     fixes: [
       "Session details is streamlined: pick the activity and adjust start and end time only (group and date are no longer shown; the session still belongs to its original day when you save).",
