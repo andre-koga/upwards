@@ -170,7 +170,7 @@ async function ensureStreakForActivityOnDate(
   }
 
   if (computeStartDay > targetDay) {
-    return existingTargetRow?.streak ?? previousStreak;
+    return previousStreak;
   }
 
   const startDateStr = toDateString(computeStartDay);
@@ -181,7 +181,7 @@ async function ensureStreakForActivityOnDate(
   const streakRowByDate = new Map(historicalRows.map((row) => [row.date, row]));
 
   let cursorDay = computeStartDay;
-  let targetStreak = existingTargetRow?.streak ?? 0;
+  let targetStreak = 0;
 
   while (cursorDay <= targetDay) {
     if (!shouldShowActivity(activity, cursorDay)) {
