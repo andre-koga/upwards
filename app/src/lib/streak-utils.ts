@@ -132,7 +132,19 @@ async function ensureStreakForActivityOnDate(
     .filter((row) => !row.deleted_at)
     .first();
 
-  if (existingTargetRow && !forceRecomputeTarget) {
+  if (forceRecomputeTarget) {
+    // Rebuild this specific day from raw daily entries so stale historical
+    // streak rows cannot leak into the visible target-day streak.
+    await recomputeActivityStreaksFromDateForward(activity, targetDay, targetDay);
+    const refreshedTargetRow = await db.activityStreaks
+      .where("[activity_id+date]")
+      .equals([activity.id, targetDateStr])
+      .filter((row) => !row.deleted_at)
+      .first();
+    return refreshedTargetRow?.streak ?? 0;
+  }
+
+  if (existingTargetRow) {
     return existingTargetRow.streak;
   }
 
