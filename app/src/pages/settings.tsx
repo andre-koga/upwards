@@ -8,7 +8,7 @@ import { TaskOrderCard } from "@/components/settings/navigation-cards";
 import { useAuth } from "@/lib/use-auth";
 
 export default function SettingsPage() {
-  const { isSupabaseConfigured } = useAuth();
+  const { isSupabaseConfigured, isAuthed } = useAuth();
   const buildLabel = import.meta.env.VITE_APP_BUILD_TIMESTAMP ?? "dev";
   const randomPhrase = import.meta.env.VITE_APP_RANDOM_PHRASE ?? "hey there!";
   return (
@@ -23,7 +23,7 @@ export default function SettingsPage() {
       {isSupabaseConfigured && (
         <>
           <AuthCard />
-          <ProfileCard />
+          {isAuthed && <ProfileCard />}
           <SyncCard />
         </>
       )}

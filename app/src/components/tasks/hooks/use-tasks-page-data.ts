@@ -23,6 +23,7 @@ export function useTasksPageData({
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const prevSyncingRef = useRef(false);
+  const prevLocalDataVersionRef = useRef(syncEngine.getState().localDataVersion);
 
   const loadData = useCallback(async () => {
     try {
@@ -62,6 +63,19 @@ export function useTasksPageData({
     const unsubscribe = syncEngine.subscribe((state) => {
       const wasSyncing = prevSyncingRef.current;
       prevSyncingRef.current = state.isSyncing;
+
+      // Reload after local data was wiped (sign-out or account switch).
+      if (state.localDataVersion !== prevLocalDataVersionRef.current) {
+        prevLocalDataVersionRef.current = state.localDataVersion;
+        void (async () => {
+          await loadData();
+          await loadJournalEntry({ background: true });
+          await loadJournalMeta();
+          setRefreshTrigger((t) => t + 1);
+        })();
+        return;
+      }
+
       if (wasSyncing && !state.isSyncing) {
         void (async () => {
           await loadDataInBackground();
@@ -72,7 +86,7 @@ export function useTasksPageData({
       }
     });
     return unsubscribe;
-  }, [loadDataInBackground, loadJournalEntry, loadJournalMeta]);
+  }, [loadData, loadDataInBackground, loadJournalEntry, loadJournalMeta]);
 
   const refreshTasksData = useCallback(async () => {
     await loadDataInBackground();

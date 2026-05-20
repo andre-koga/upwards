@@ -6,8 +6,17 @@
  *   goal_invite     — someone invited you to a goal
  *   goal_complete   — a partner completed a goal activity today
  */
-import { useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { supabase, getCachedUserId } from "@/lib/supabase";
+import { useAuth } from "@/lib/use-auth";
 
 export type NotificationKind =
   | "friend_request"
@@ -61,14 +70,28 @@ function creatorIdFromRelation(rel: unknown): string {
   return "";
 }
 
-export function useNotifications() {
+interface NotificationsContextValue {
+  notifications: InboxNotification[];
+  loading: boolean;
+  error: string | null;
+  reload: () => Promise<void>;
+  unreadCount: number;
+}
+
+const NotificationsContext = createContext<NotificationsContextValue | null>(
+  null
+);
+
+export function NotificationsProvider({ children }: { children: ReactNode }) {
+  const { isAuthed } = useAuth();
   const [notifications, setNotifications] = useState<InboxNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const userId = getCachedUserId();
+  const userId = isAuthed ? getCachedUserId() : null;
 
   const load = useCallback(async () => {
     if (!supabase || !userId) {
+      setNotifications([]);
       setLoading(false);
       return;
     }
@@ -243,6 +266,34 @@ export function useNotifications() {
     void load();
   }, [load]);
 
-  const unreadCount = notifications.length;
-  return { notifications, loading, error, reload: load, unreadCount };
+  const unreadCount = useMemo(
+    () =>
+      notifications.filter((n) => n.actionStatus === "pending").length,
+    [notifications]
+  );
+
+  const value = useMemo(
+    () => ({
+      notifications,
+      loading,
+      error,
+      reload: load,
+      unreadCount,
+    }),
+    [notifications, loading, error, load, unreadCount]
+  );
+
+  return (
+    <NotificationsContext.Provider value={value}>
+      {children}
+    </NotificationsContext.Provider>
+  );
+}
+
+export function useNotifications(): NotificationsContextValue {
+  const ctx = useContext(NotificationsContext);
+  if (!ctx) {
+    throw new Error("useNotifications must be used within NotificationsProvider");
+  }
+  return ctx;
 }

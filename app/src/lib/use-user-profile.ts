@@ -38,7 +38,12 @@ export function useUserProfile() {
 
   const load = useCallback(async () => {
     if (!supabase || !userId) {
-      setState((s) => ({ ...s, loading: !userId && Boolean(getCachedSession()) }));
+      setState({
+        username: null,
+        displayName: null,
+        loading: Boolean(getCachedSession()),
+        error: null,
+      });
       return;
     }
     try {

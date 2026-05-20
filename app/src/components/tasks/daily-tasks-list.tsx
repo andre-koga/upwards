@@ -103,12 +103,12 @@ export default function DailyTasksList({
 
   return (
     <div className="flex flex-col">
-      <div className="mb-4 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Memos
-        </p>
-        {oneTimeTasks.length > 0 ? (
-          oneTimeTasks.map((task) => (
+      {oneTimeTasks.length > 0 && (
+        <div className="mb-4 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Memos
+          </p>
+          {oneTimeTasks.map((task) => (
             <OneTimeTaskItem
               key={task.id}
               task={task}
@@ -117,90 +117,87 @@ export default function DailyTasksList({
               onDelete={deleteOneTimeTask}
               onUpdate={updateOneTimeTask}
             />
-          ))
-        ) : (
-          <p className="px-1 text-xs text-muted-foreground">No memos yet.</p>
-        )}
-      </div>
-
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          For Today
-        </p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="smIcon"
-          onClick={() => {
-            void recalculateStreaksFromViewedDate();
-          }}
-          disabled={recalculateStreaksBusy}
-          className="h-4 min-h-4 w-4 min-w-4 shrink-0 bg-transparent p-0 text-muted-foreground/50 shadow-none hover:bg-transparent hover:text-muted-foreground/45 focus-visible:ring-1 disabled:opacity-30 [&_svg]:size-3"
-          aria-label="Recompute streak counters from this day through today using your task history"
-          title="Recompute streak counters from this day through today using your task history. Use this if streak numbers look wrong."
-        >
-          <RefreshCw className={cn(recalculateStreaksBusy && "animate-spin")} />
-        </Button>
-      </div>
-
-      <div className="flex-1 space-y-2">
-        {loading && (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            Loading...
-          </p>
-        )}
-        {!loading && dailyActivities.length === 0 && (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            No daily activities yet. Create some activities to track!
-          </p>
-        )}
-        {!loading &&
-          dailyActivities.map((activity) => (
-            <ActivityTaskItem
-              key={activity.id}
-              activity={activity}
-              group={getGroup(activity)}
-              count={taskCounts[activity.id] || 0}
-              streak={activityStreaks[activity.id] || 0}
-              timeSpent={calculateActivityTime(activity.id)}
-              isPaused={pausedTaskIdSet.has(activity.id)}
-              isBreakDay={isBreakDay}
-              isCurrentActivity={currentActivityId === activity.id}
-              isToday={isToday}
-              partnerStatuses={statusMap[activity.id]}
-              onIncrement={incrementTask}
-              onNeverIncrement={() => incrementNeverSlip(activity.id)}
-              onNeverReset={() => resetNeverTaskCount(activity.id)}
-              onStartActivity={handleStartActivity}
-              onStopActivity={handleStopActivity}
-              onManualEntry={setManualEntryActivityId}
-            />
           ))}
-      </div>
+        </div>
+      )}
 
-      <div className="mt-4 flex flex-col items-center justify-center gap-1">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            void toggleBreakDay();
-          }}
-          disabled={!isToday}
-          className={cn(
-            "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default",
-            isBreakDay ? "text-amber-500" : "text-muted-foreground"
-          )}
-          title={isBreakDay ? "Unset break day" : "Mark this day as break day"}
-        >
-          <Palmtree className="h-3.5 w-3.5" />
-          {isBreakDay ? "Break Day Active" : "Mark as Break Day"}
-        </Button>
-        {!isBreakDay && (
-          <p className="text-center text-[11px] text-muted-foreground">
-            Incomplete tasks won&apos;t affect streaks.
-          </p>
-        )}
-      </div>
+      {(loading || dailyActivities.length > 0) && (
+        <>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              For Today
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="smIcon"
+              onClick={() => {
+                void recalculateStreaksFromViewedDate();
+              }}
+              disabled={recalculateStreaksBusy}
+              className="h-4 min-h-4 w-4 min-w-4 shrink-0 bg-transparent p-0 text-muted-foreground/50 shadow-none hover:bg-transparent hover:text-muted-foreground/45 focus-visible:ring-1 disabled:opacity-30 [&_svg]:size-3"
+              aria-label="Recompute streak counters from this day through today using your task history"
+              title="Recompute streak counters from this day through today using your task history. Use this if streak numbers look wrong."
+            >
+              <RefreshCw className={cn(recalculateStreaksBusy && "animate-spin")} />
+            </Button>
+          </div>
+
+          <div className="flex-1 space-y-2">
+            {loading && (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                Loading...
+              </p>
+            )}
+            {!loading &&
+              dailyActivities.map((activity) => (
+                <ActivityTaskItem
+                  key={activity.id}
+                  activity={activity}
+                  group={getGroup(activity)}
+                  count={taskCounts[activity.id] || 0}
+                  streak={activityStreaks[activity.id] || 0}
+                  timeSpent={calculateActivityTime(activity.id)}
+                  isPaused={pausedTaskIdSet.has(activity.id)}
+                  isBreakDay={isBreakDay}
+                  isCurrentActivity={currentActivityId === activity.id}
+                  isToday={isToday}
+                  partnerStatuses={statusMap[activity.id]}
+                  onIncrement={incrementTask}
+                  onNeverIncrement={() => incrementNeverSlip(activity.id)}
+                  onNeverReset={() => resetNeverTaskCount(activity.id)}
+                  onStartActivity={handleStartActivity}
+                  onStopActivity={handleStopActivity}
+                  onManualEntry={setManualEntryActivityId}
+                />
+              ))}
+          </div>
+
+          <div className="mt-4 flex flex-col items-center justify-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void toggleBreakDay();
+              }}
+              disabled={!isToday}
+              className={cn(
+                "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default",
+                isBreakDay ? "text-amber-500" : "text-muted-foreground"
+              )}
+              title={isBreakDay ? "Unset break day" : "Mark this day as break day"}
+            >
+              <Palmtree className="h-3.5 w-3.5" />
+              {isBreakDay ? "Break Day Active" : "Mark as Break Day"}
+            </Button>
+            {!isBreakDay && (
+              <p className="text-center text-[11px] text-muted-foreground">
+                Incomplete tasks won&apos;t affect streaks.
+              </p>
+            )}
+          </div>
+        </>
+      )}
 
       {(currentActivityId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">

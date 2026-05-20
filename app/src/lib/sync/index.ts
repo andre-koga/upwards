@@ -5,7 +5,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase";
 import { getErrorMessage, ERROR_MESSAGES } from "@/lib/error-utils";
-import { loadLastSyncAt } from "./sync-storage";
+import { loadLastSyncAt, clearLastSyncAt } from "./sync-storage";
 import type { SyncTable } from "./sync-transformers";
 import {
   DEBOUNCE_SYNC_MS,
@@ -21,6 +21,8 @@ export interface SyncState {
   isSyncing: boolean;
   lastSyncAt: string | null;
   lastError: string | null;
+  /** Incremented each time local data is wiped; subscribers can reload on change. */
+  localDataVersion: number;
 }
 
 type StateListener = (state: SyncState) => void;
@@ -30,6 +32,7 @@ class SyncEngine {
     isSyncing: false,
     lastSyncAt: loadLastSyncAt(),
     lastError: null,
+    localDataVersion: 0,
   };
   private listeners = new Set<StateListener>();
   private syncInterval: ReturnType<typeof setInterval> | null = null;
@@ -312,6 +315,22 @@ class SyncEngine {
     } catch (err) {
       console.warn("[sync] pushBeforeSignOut failed (non-fatal):", err);
     }
+  }
+
+  /**
+   * Called after local Dexie tables have been wiped (sign-out or account switch).
+   * Resets in-memory sync state so the next sign-in starts from a clean slate.
+   */
+  resetAfterLocalClear(): void {
+    this.clearDirtyIds();
+    this.pendingResync = false;
+    this.followUpSyncChain = 0;
+    clearLastSyncAt();
+    this.setState({
+      lastSyncAt: null,
+      lastError: null,
+      localDataVersion: this.state.localDataVersion + 1,
+    });
   }
 
   startAutoSync(intervalMs = DEFAULT_PERIODIC_SYNC_MS): void {

@@ -5,6 +5,8 @@ import {
   getCachedSession,
 } from "@/lib/supabase";
 import { syncEngine } from "@/lib/sync";
+import { clearLocalSyncData } from "@/lib/sync/clear-local-sync-data";
+import { clearLastSignedInUserId } from "@/lib/sync/sync-storage";
 
 export function useAuth() {
   const [isAuthed, setIsAuthed] = useState(() => Boolean(getCachedSession()));
@@ -69,6 +71,8 @@ export function useAuth() {
   const signOut = async () => {
     if (!supabase) return;
     await syncEngine.pushBeforeSignOut();
+    await clearLocalSyncData();
+    clearLastSignedInUserId();
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;

@@ -7,7 +7,9 @@ import TaskOrderPage from "@/pages/task-order";
 import WhatsNewPage from "@/pages/whats-new";
 import FriendsPage from "@/pages/friends";
 import { NotificationsFloatingButton } from "@/components/promises/notifications-floating-button";
+import { NotificationsProvider } from "@/lib/promises/use-notifications";
 import SyncStatus from "@/components/settings/sync-status";
+import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { Analytics } from "@vercel/analytics/react"
 
@@ -35,28 +37,31 @@ export default function App() {
       )}
       <div className="min-h-screen md:flex md:h-screen md:items-stretch md:justify-center md:gap-10 md:px-6 md:py-6">
         <main className="relative w-full bg-background md:h-full md:max-w-[430px] md:overflow-hidden md:rounded-2xl md:border md:border-border md:shadow-2xl md:[transform:translateZ(0)]">
-          <SyncStatus />
-          <NotificationsFloatingButton />
-          <div data-app-scroll className="md:h-full md:overflow-y-auto">
-            <Routes>
-              <Route path="/" element={<TodayPage />} />
-              <Route path="/stats" element={<StatsPage />} />
-              <Route
-                path="/promises"
-                element={<Navigate to="/" replace />}
-              />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/settings/task-order" element={<TaskOrderPage />} />
-              <Route path="/whats-new" element={<WhatsNewPage />} />
-              <Route path="/friends" element={<FriendsPage />} />
-              <Route path="/notifications" element={<Navigate to="/" replace />} />
-              {/* Legacy promise routes → home */}
-              <Route path="/promises/:id" element={<Navigate to="/" replace />} />
-              <Route path="/promises/join/:token" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
+          <NotificationsProvider>
+            <SyncStatus />
+            <NotificationsFloatingButton />
+            <div data-app-scroll className="md:h-full md:overflow-y-auto">
+              <Routes>
+                <Route path="/" element={<TodayPage />} />
+                <Route path="/stats" element={<StatsPage />} />
+                <Route
+                  path="/promises"
+                  element={<Navigate to="/" replace />}
+                />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/settings/task-order" element={<TaskOrderPage />} />
+                <Route path="/whats-new" element={<WhatsNewPage />} />
+                <Route path="/friends" element={<FriendsPage />} />
+                <Route path="/notifications" element={<Navigate to="/" replace />} />
+                {/* Legacy promise routes → home */}
+                <Route path="/promises/:id" element={<Navigate to="/" replace />} />
+                <Route path="/promises/join/:token" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </NotificationsProvider>
         </main>
       </div>
+      <AuthDataHandoffDialog />
       <SpeedInsights />
       <Analytics />
     </BrowserRouter>
