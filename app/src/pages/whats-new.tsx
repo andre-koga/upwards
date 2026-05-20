@@ -1,5 +1,11 @@
+import { useLayoutEffect } from "react";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { FEATURE_RELEASES } from "@/lib/feature-releases";
+
+function scrollAppToTop() {
+  window.scrollTo(0, 0);
+  document.querySelector<HTMLElement>("[data-app-scroll]")?.scrollTo(0, 0);
+}
 
 function formatReleaseDate(isoDate: string) {
   const d = new Date(`${isoDate}T12:00:00`);
@@ -11,6 +17,10 @@ function formatReleaseDate(isoDate: string) {
 }
 
 export default function WhatsNewPage() {
+  useLayoutEffect(() => {
+    scrollAppToTop();
+  }, []);
+
   return (
     <div className="space-y-6 p-4 pb-24">
       <header className="space-y-1">

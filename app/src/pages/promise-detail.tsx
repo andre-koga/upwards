@@ -32,7 +32,7 @@ export default function PromiseDetailPage() {
         <p className="text-sm text-muted-foreground">
           Sign in to view this promise.
         </p>
-        <FloatingBackButton to="/promises" title="Promises" />
+        <FloatingBackButton to="/" title="Home" />
       </div>
     );
   }
@@ -43,7 +43,7 @@ export default function PromiseDetailPage() {
         <p className="py-12 text-center text-sm text-muted-foreground">
           Loading…
         </p>
-        <FloatingBackButton to="/promises" title="Promises" />
+        <FloatingBackButton to="/" title="Home" />
       </div>
     );
   }
@@ -52,7 +52,7 @@ export default function PromiseDetailPage() {
     return (
       <div className="p-4 pb-24">
         <p className="text-sm text-destructive">{error ?? "Promise not found."}</p>
-        <FloatingBackButton to="/promises" title="Promises" />
+        <FloatingBackButton to="/" title="Home" />
       </div>
     );
   }
@@ -166,7 +166,7 @@ export default function PromiseDetailPage() {
               className="flex-1 gap-2 text-sm"
               onClick={async () => {
                 await endPromise(promise.id, "completed");
-                navigate("/promises");
+                navigate("/");
               }}
             >
               <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -177,7 +177,7 @@ export default function PromiseDetailPage() {
               className="flex-1 gap-2 text-sm text-destructive"
               onClick={async () => {
                 await endPromise(promise.id, "cancelled");
-                navigate("/promises");
+                navigate("/");
               }}
             >
               <XCircle className="h-4 w-4" />
@@ -199,7 +199,7 @@ export default function PromiseDetailPage() {
         onReact={handleReact}
       />
 
-      <FloatingBackButton to="/promises" title="Promises" />
+      <FloatingBackButton to="/" title="Home" />
     </div>
   );
 }

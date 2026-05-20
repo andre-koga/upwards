@@ -4,7 +4,6 @@ import {
   Calendar,
   CircleCheckBig,
   Folder,
-  HandshakeIcon,
   History,
   Menu,
   MessageSquare,
@@ -98,18 +97,6 @@ export default function FooterActionsBar({
               className="h-11 w-full justify-start rounded-xl"
               onClick={() => {
                 setPathsDrawerOpen(false);
-                navigate("/promises");
-              }}
-            >
-              <HandshakeIcon className="h-4 w-4" />
-              Promises
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full justify-start rounded-xl"
-              onClick={() => {
-                setPathsDrawerOpen(false);
                 navigate("/whats-new");
               }}
             >
@@ -139,7 +126,7 @@ export default function FooterActionsBar({
               className="h-14 min-h-14 flex-1 flex-row gap-2 rounded-xl text-sm font-semibold"
               onClick={() => {
                 setPathsDrawerOpen(false);
-                navigate("/activities/stats");
+                navigate("/stats");
               }}
             >
               <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />

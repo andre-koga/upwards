@@ -1,11 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import StatsPage from "@/pages/stats";
-import ActivityStatsPage from "@/pages/activity-stats";
 import SettingsPage from "@/pages/settings";
 import TaskOrderPage from "@/pages/task-order";
 import WhatsNewPage from "@/pages/whats-new";
-import PromisesPage from "@/pages/promises";
 import PromiseDetailPage from "@/pages/promise-detail";
 import JoinPromisePage from "@/pages/join-promise";
 import NotificationsPage from "@/pages/notifications";
@@ -29,22 +27,17 @@ export default function App() {
         <main className="relative w-full bg-background md:h-full md:max-w-[430px] md:overflow-hidden md:rounded-2xl md:border md:border-border md:shadow-2xl md:[transform:translateZ(0)]">
           <SyncStatus />
           <NotificationsFloatingButton />
-          <div className="md:h-full md:overflow-y-auto">
+          <div data-app-scroll className="md:h-full md:overflow-y-auto">
             <Routes>
               <Route path="/" element={<TodayPage />} />
-              <Route path="/activities/stats" element={<StatsPage />} />
+              <Route path="/stats" element={<StatsPage />} />
               <Route
-                path="/activities/stats/:activityId"
-                element={<ActivityStatsPage />}
-              />
-              <Route
-                path="/activities/:groupId"
+                path="/promises"
                 element={<Navigate to="/" replace />}
               />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/task-order" element={<TaskOrderPage />} />
               <Route path="/whats-new" element={<WhatsNewPage />} />
-              <Route path="/promises" element={<PromisesPage />} />
               <Route path="/promises/:id" element={<PromiseDetailPage />} />
               <Route path="/promises/join/:token" element={<JoinPromisePage />} />
               <Route path="/notifications" element={<NotificationsPage />} />

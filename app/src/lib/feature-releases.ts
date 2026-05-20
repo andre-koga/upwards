@@ -22,7 +22,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
       "New Mark as done state on habits — distinct from Archive — for finite goals you finished.",
     ],
     fixes: [
-      "Promises live under More → Promises. Notifications via the bell button (top right). Sign-in required (uses sync).",
+      "Tap a habit name on For Today to open promise settings (coming soon). Notifications via the bell button (top right). Sign-in required (uses sync).",
       "Journal text, locations, video, and memos are never attached to promises — promise events only carry the habit name and streak.",
     ],
   },

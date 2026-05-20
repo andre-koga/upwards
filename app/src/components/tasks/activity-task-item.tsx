@@ -1,12 +1,12 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { Flame, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import ActivityPill from "@/components/activities/activity-pill";
+import { ActivityPromiseDialog } from "@/components/promises/activity-promise-dialog";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 import type { PartnerStatus } from "@/lib/promises/use-partner-status";
 
@@ -49,7 +49,7 @@ function ActivityTaskItem({
   onStopActivity,
   onManualEntry,
 }: ActivityTaskItemProps) {
-  const navigate = useNavigate();
+  const [promiseDialogOpen, setPromiseDialogOpen] = useState(false);
   const [, setTick] = useState(0);
   const neverPressTimeoutRef = useRef<number | null>(null);
   const longPressHandledRef = useRef(false);
@@ -226,9 +226,7 @@ function ActivityTaskItem({
               ? () => onManualEntry(activity.id)
               : undefined
           }
-          onNameClick={() => {
-            navigate(`/activities/stats/${activity.id}`);
-          }}
+          onNameClick={() => setPromiseDialogOpen(true)}
           nameClassName={isComplete ? "line-through text-muted-foreground" : ""}
           readOnly={!isToday}
         />
@@ -243,6 +241,13 @@ function ActivityTaskItem({
           </p>
         )}
       </div>
+
+      <ActivityPromiseDialog
+        open={promiseDialogOpen}
+        onOpenChange={setPromiseDialogOpen}
+        activity={activity}
+        group={group}
+      />
     </div>
   );
 }

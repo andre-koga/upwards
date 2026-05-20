@@ -99,8 +99,8 @@ export default function JoinPromisePage() {
           <p className="text-sm text-destructive">
             {error ?? "Invite not found or already used."}
           </p>
-          <Button variant="outline" onClick={() => navigate("/promises")}>
-            Go to Promises
+          <Button variant="outline" onClick={() => navigate("/")}>
+            Go home
           </Button>
         </div>
       ) : info.invite.accepted_at ? (
@@ -108,8 +108,8 @@ export default function JoinPromisePage() {
           <p className="text-sm text-muted-foreground">
             This invite has already been accepted.
           </p>
-          <Button variant="outline" onClick={() => navigate("/promises")}>
-            Go to Promises
+          <Button variant="outline" onClick={() => navigate("/")}>
+            Go home
           </Button>
         </div>
       ) : (

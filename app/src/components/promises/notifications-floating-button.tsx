@@ -9,7 +9,7 @@ export function NotificationsFloatingButton() {
   const { unreadCount } = usePromiseNotifications();
   const hasUnread = unreadCount > 0;
 
-  if (pathname === "/notifications") {
+  if (pathname !== "/") {
     return null;
   }
 
