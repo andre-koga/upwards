@@ -44,6 +44,19 @@ This starts the local stack and applies migrations. You'll get:
    pnpm supabase stop
    ```
 
+## Test users (local seed)
+
+After `pnpm supabase db reset` (or first `start` with seed), two accounts are available for testing friends and goals:
+
+| Email | Password | Username | Display name |
+|-------|----------|----------|--------------|
+| `test@test.com` | `password` | `testuser` | Test User |
+| `friend@test.com` | `password` | `frienduser` | Friend User |
+
+**Try the friends flow:** sign in as `test@test.com`, open Friends, send a request to `frienduser`. Sign out, sign in as `friend@test.com`, accept the request.
+
+To add only the friend account without resetting your DB, run `supabase/scripts/seed-test-friend.sql` in Studio SQL Editor or via `psql` against your local database.
+
 ## Migrations
 
 ### Creating a new migration

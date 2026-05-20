@@ -10,20 +10,34 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
-    date: "2026-05-15",
-    title: "Promises — accountability, not sharing",
+    date: "2026-05-20",
+    title: "Goals, Friends, and a unified inbox",
     bullets: [
-      "Make a promise tied to one of your habits and share it with a specific person — not a feed, not the world.",
-      "Mutual mode: both partners track the same habit on For Today and see each other's daily progress.",
-      "Witness mode: one person commits, others get notified of progress without tracking the habit themselves.",
-      "Partner completion shows inline on For Today (e.g. \"Alex ✓ · Sam ○\") for promise-linked habits.",
-      "Private motivate / congratulate reactions go only to the person — no public counts, no likes, no leaderboards.",
-      "New Notifications inbox shows only progress from promises you're part of.",
-      "New Mark as done state on habits — distinct from Archive — for finite goals you finished.",
+      "Tap any habit name on For Today to set a personal Goal — a simple way to commit to showing up for that habit.",
+      "Optionally invite friends from the Goal dialog for extra accountability; they see when you complete the habit.",
+      "Friends page (More → Friends): add people by exact username when you want to share Goals with them.",
+      "Notifications inbox (bell, top right): friend requests, Goal invites, and partner completions in one place.",
+      "When you share a Goal, partners get a subtle \"✓\" or \"○\" on For Today for linked habits.",
     ],
     fixes: [
-      "Tap a habit name on For Today to open promise settings (coming soon). Notifications via the bell button (top right). Sign-in required (uses sync).",
-      "Journal text, locations, video, and memos are never attached to promises — promise events only carry the habit name and streak.",
+      "Simplified codebase: removed token-based invite flow, reactions feature, and several over-engineered tables. Everything now uses a single clean path.",
+      "Display names and usernames now load reliably (no more 'Member / them' placeholder text).",
+      "Partner status resets properly when you switch days or leave a goal — no stale chips.",
+      "Duplicate progress events on the same day are safely deduplicated at the database level.",
+    ],
+  },
+  {
+    date: "2026-05-15",
+    title: "New nav, pinned memos, and simpler group editing",
+    bullets: [
+      "Notifications button is now a fixed bell in the top-right corner (only on the home screen).",
+      "Pinned memos show a pin icon inside the checkbox, matching the visual logic of the For Today section.",
+      "Clicking a group or activity name in the Projects drawer opens the edit dialog directly — no separate page needed.",
+      "Stats moved to a cleaner /stats page; legacy /activities routes removed.",
+    ],
+    fixes: [
+      "Previous/next day navigation dialog is now centered.",
+      "What's New page always opens at the top (newest update first).",
     ],
   },
   {

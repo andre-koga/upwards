@@ -8,11 +8,9 @@ import type {
   JournalEntry,
   OneTimeTask,
   ActivityStreak,
-  Promise as PromiseRecord,
-  PromiseMember,
-  PromiseProgressEvent,
-  PromiseReaction,
-  PromiseInvite,
+  Goal,
+  GoalMember,
+  GoalProgressEvent,
   UserProfile,
 } from "./types";
 
@@ -95,12 +93,10 @@ class UpwardsDB extends Dexie {
   journalEntries!: Table<JournalEntry>;
   oneTimeTasks!: Table<OneTimeTask>;
   activityStreaks!: Table<ActivityStreak>;
-  // Promises / accountability
-  promises!: Table<PromiseRecord>;
-  promiseMembers!: Table<PromiseMember>;
-  promiseProgressEvents!: Table<PromiseProgressEvent>;
-  promiseReactions!: Table<PromiseReaction>;
-  promiseInvites!: Table<PromiseInvite>;
+  // Goals / accountability (simplified schema)
+  promises!: Table<Goal>;
+  promiseMembers!: Table<GoalMember>;
+  promiseProgressEvents!: Table<GoalProgressEvent>;
   userProfiles!: Table<UserProfile>;
 
   constructor() {
@@ -363,7 +359,7 @@ class UpwardsDB extends Dexie {
           });
       });
 
-    // v14: promises / accountability tables
+    // v14: promises / accountability tables (legacy schema — superseded by v15)
     this.version(14).stores({
       activityGroups: "id, name, is_archived, deleted_at, created_at",
       activities:
@@ -382,6 +378,28 @@ class UpwardsDB extends Dexie {
       promiseReactions:
         "id, promise_id, from_user_id, to_user_id, created_at",
       promiseInvites: "id, promise_id, token, created_at",
+      userProfiles: "user_id",
+    });
+
+    // v15: simplified goals schema — drop promiseReactions, promiseInvites;
+    // update promiseMembers index (removed role/kind columns)
+    this.version(15).stores({
+      activityGroups: "id, name, is_archived, deleted_at, created_at",
+      activities:
+        "id, group_id, is_archived, completed_at, deleted_at, created_at",
+      dailyEntries: "id, date, is_break_day, deleted_at",
+      activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+      journalEntries:
+        "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+      oneTimeTasks:
+        "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+      activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+      promises: "id, creator_id, status, created_at",
+      promiseMembers:
+        "id, promise_id, user_id, invite_status, [promise_id+user_id]",
+      promiseProgressEvents: "id, promise_id, user_id, date, created_at",
+      promiseReactions: null,
+      promiseInvites: null,
       userProfiles: "user_id",
     });
   }

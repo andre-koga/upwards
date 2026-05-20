@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Settings,
   Sparkles,
+  Users,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Activity } from "@/lib/db/types";
@@ -119,11 +120,11 @@ export default function FooterActionsBar({
 
           <div className="my-2" role="separator" aria-hidden />
 
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Button
               type="button"
               variant="outline"
-              className="h-14 min-h-14 flex-1 flex-row gap-2 rounded-xl text-sm font-semibold"
+              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
               onClick={() => {
                 setPathsDrawerOpen(false);
                 navigate("/stats");
@@ -135,7 +136,19 @@ export default function FooterActionsBar({
             <Button
               type="button"
               variant="outline"
-              className="h-14 min-h-14 flex-1 flex-row gap-2 rounded-xl text-sm font-semibold"
+              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
+              onClick={() => {
+                setPathsDrawerOpen(false);
+                navigate("/friends");
+              }}
+            >
+              <Users className="h-5 w-5 shrink-0 text-blue-500" />
+              Friends
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
               onClick={() => {
                 setPathsDrawerOpen(false);
                 navigate("/settings");

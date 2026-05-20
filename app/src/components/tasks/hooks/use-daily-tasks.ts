@@ -20,7 +20,7 @@ import {
   recomputeActivityStreaksFromDateForActivities,
 } from "@/lib/streak-utils";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
-import { emitProgressIfComplete, emitStreakMilestoneIfReached } from "@/lib/promises/emit-progress";
+import { emitDailyComplete } from "@/lib/promises/emit-progress";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
@@ -87,7 +87,7 @@ export function useDailyTasks({
       const newCount = (entry?.task_counts as Record<string, number> | null)?.[activityId] ?? 0;
       const group = groups.find((g) => g.id === activity.group_id);
 
-      void emitProgressIfComplete({
+      void emitDailyComplete({
         activityId,
         activityName: getActivityDisplayName(activity, group),
         newCount,
@@ -418,26 +418,6 @@ export function useDailyTasks({
     return Math.max(0, nowMs - startMs);
   }, [resolvedCurrentActivityId, activityPeriods, nowMs]);
 
-  // Emit streak milestones whenever streaks change
-  const prevStreaksRef = useRef<Record<string, number>>({});
-  useEffect(() => {
-    const prev = prevStreaksRef.current;
-    for (const [activityId, streak] of Object.entries(activityStreaks)) {
-      if (streak !== prev[activityId]) {
-        const activity = activities.find((a) => a.id === activityId);
-        if (activity) {
-          const group = groups.find((g) => g.id === activity.group_id);
-          void emitStreakMilestoneIfReached({
-            activityId,
-            activityName: getActivityDisplayName(activity, group),
-            streak,
-            dateString,
-          });
-        }
-      }
-    }
-    prevStreaksRef.current = activityStreaks;
-  }, [activityStreaks, activities, groups, dateString]);
 
   return {
     isToday,

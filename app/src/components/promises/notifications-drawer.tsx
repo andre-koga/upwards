@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Bell, CheckCircle2, XCircle, Flame, Users, Target } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
-import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/lib/promises/use-notifications";
 import { useGoals } from "@/lib/promises/use-goals";
 import { useFriends } from "@/lib/friends/use-friends";
 import { useAuth } from "@/lib/use-auth";
+import { cn } from "@/lib/utils";
 import type { InboxNotification } from "@/lib/promises/use-notifications";
 
 function actorLabel(n: InboxNotification): string {
@@ -25,6 +25,7 @@ function NotificationRow({
   onDeclineFriend,
   onAcceptGoal,
   onDeclineGoal,
+  onClose,
   responding,
 }: {
   n: InboxNotification;
@@ -32,6 +33,7 @@ function NotificationRow({
   onDeclineFriend: (id: string) => void;
   onAcceptGoal: (notification: InboxNotification) => void;
   onDeclineGoal: (n: InboxNotification) => void;
+  onClose: () => void;
   responding: string | null;
 }) {
   const navigate = useNavigate();
@@ -44,7 +46,6 @@ function NotificationRow({
 
   return (
     <div className="flex items-start gap-3 px-4 py-3">
-      {/* Icon */}
       <span className="mt-0.5 shrink-0">
         {n.kind === "friend_request" && (
           <Users className="h-4 w-4 text-blue-500" />
@@ -59,12 +60,11 @@ function NotificationRow({
         ) : null}
       </span>
 
-      {/* Body */}
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-sm leading-snug">
           <span className="font-medium">{actorLabel(n)}</span>{" "}
           {n.kind === "friend_request" && "wants to be friends"}
-          {n.kind === "goal_invite" && "invited you to a Goal"}
+          {n.kind === "goal_invite" && "invited you to join their Goal"}
           {n.kind === "goal_complete" &&
             (n.streak && n.streak >= 7
               ? `hit a ${n.streak}-day streak on "${n.activityName ?? "a habit"}"`
@@ -74,7 +74,6 @@ function NotificationRow({
           {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
         </p>
 
-        {/* Actionable */}
         {n.kind === "friend_request" && n.actionStatus === "pending" && (
           <div className="flex gap-2 pt-1">
             <Button
@@ -125,7 +124,10 @@ function NotificationRow({
           <button
             type="button"
             className="text-xs text-muted-foreground underline"
-            onClick={() => navigate("/")}
+            onClick={() => {
+              onClose();
+              navigate("/");
+            }}
           >
             View on For Today
           </button>
@@ -135,7 +137,12 @@ function NotificationRow({
   );
 }
 
-export default function NotificationsPage() {
+interface NotificationsDrawerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerProps) {
   const navigate = useNavigate();
   const { isAuthed, isSupabaseConfigured } = useAuth();
   const { notifications, loading, error, reload } = useNotifications();
@@ -161,7 +168,6 @@ export default function NotificationsPage() {
     if (!n.goalId) return;
     const rawId = n.id.startsWith("gi-") ? n.id.slice(3) : n.id;
     setResponding(rawId);
-    // Accept without linking a local activity — user can set one from the activity dialog
     await acceptGoalInvite({ goalId: n.goalId });
     await reload();
     setResponding(null);
@@ -177,59 +183,79 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="space-y-4 p-4 pb-24">
-      <header className="space-y-1">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Bell className="h-6 w-6 shrink-0" />
-          Notifications
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Friend requests, Goal invites, and partner progress.
-        </p>
-      </header>
+    <>
+      {/* Backdrop */}
+      <div
+        className={cn(
+          "pointer-events-none fixed inset-0 z-[60] transition-all duration-300",
+          open
+            ? "pointer-events-auto bg-black/50 backdrop-blur-sm"
+            : "bg-transparent backdrop-blur-0"
+        )}
+        onClick={() => onOpenChange(false)}
+      />
 
-      {!isSupabaseConfigured || !isAuthed ? (
-        <div className="space-y-3 rounded-xl border p-4">
-          <p className="text-sm text-muted-foreground">
-            Notifications require a sync account. Sign in from Settings.
-          </p>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => navigate("/settings")}
-          >
-            Go to Settings
-          </Button>
-        </div>
-      ) : loading ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">Loading…</p>
-      ) : error ? (
-        <p className="py-12 text-center text-sm text-destructive">{error}</p>
-      ) : notifications.length === 0 ? (
-        <div className="rounded-xl border border-dashed py-12 text-center">
-          <Bell className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-          <p className="text-sm font-medium">Nothing here yet</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Friend requests, Goal invites, and partner completions will show up here.
-          </p>
-        </div>
-      ) : (
-        <div className="divide-y divide-border overflow-hidden rounded-xl border">
-          {notifications.map((n) => (
-            <NotificationRow
-              key={n.id}
-              n={n}
-              onAcceptFriend={(id) => void handleAcceptFriend(id)}
-              onDeclineFriend={(id) => void handleDeclineFriend(id)}
-              onAcceptGoal={(item) => void handleAcceptGoal(item)}
-              onDeclineGoal={(item) => void handleDeclineGoal(item)}
-              responding={responding}
-            />
-          ))}
-        </div>
-      )}
+      {/* Drawer sliding down from top */}
+      <div
+        className={cn(
+          "fixed inset-x-0 top-0 z-[70] transition-transform duration-300 ease-out",
+          open ? "translate-y-0" : "-translate-y-full"
+        )}
+      >
+        <div className="rounded-b-2xl border-b border-border bg-background shadow-xl pt-2">
+          <div className="max-h-[70svh] overflow-y-auto">
+            {!isSupabaseConfigured || !isAuthed ? (
+              <div className="space-y-3 p-4">
+                <p className="text-sm text-muted-foreground">
+                  Notifications require a sync account. Sign in from Settings.
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate("/settings");
+                  }}
+                >
+                  Go to Settings
+                </Button>
+              </div>
+            ) : loading ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
+            ) : error ? (
+              <p className="py-10 text-center text-sm text-destructive">{error}</p>
+            ) : notifications.length === 0 ? (
+              <div className="py-10 text-center">
+                <Bell className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
+                <p className="text-sm font-medium">Nothing here yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Goal updates and friend requests will show up here.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {notifications.map((n) => (
+                  <NotificationRow
+                    key={n.id}
+                    n={n}
+                    onAcceptFriend={(id) => void handleAcceptFriend(id)}
+                    onDeclineFriend={(id) => void handleDeclineFriend(id)}
+                    onAcceptGoal={(item) => void handleAcceptGoal(item)}
+                    onDeclineGoal={(item) => void handleDeclineGoal(item)}
+                    onClose={() => onOpenChange(false)}
+                    responding={responding}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
-      <FloatingBackButton to="/" title="Home" />
-    </div>
+          {/* Drag handle hint */}
+          <div className="flex justify-center py-2">
+            <div className="h-1 w-10 rounded-full bg-muted" />
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

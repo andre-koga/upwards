@@ -1,6 +1,7 @@
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppearanceCard } from "@/components/settings/appearance-card";
 import { AuthCard } from "@/components/settings/auth-card";
+import { ProfileCard } from "@/components/settings/profile-card";
 import { SyncCard } from "@/components/settings/sync-card";
 import { BackupCard } from "@/components/settings/backup-card";
 import { TaskOrderCard } from "@/components/settings/navigation-cards";
@@ -22,6 +23,7 @@ export default function SettingsPage() {
       {isSupabaseConfigured && (
         <>
           <AuthCard />
+          <ProfileCard />
           <SyncCard />
         </>
       )}
