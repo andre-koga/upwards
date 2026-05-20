@@ -131,7 +131,7 @@ export function getGroupColor(
 }
 
 export function isActiveActivity(a: Activity): boolean {
-  return !a.is_archived && !a.deleted_at;
+  return !a.is_archived && !a.completed_at && !a.deleted_at;
 }
 
 export function isActiveGroup(g: ActivityGroup): boolean {
@@ -223,6 +223,9 @@ export async function stopCurrentActivity(options: {
  */
 export function shouldShowActivity(activity: Activity, date: Date): boolean {
   if (isHiddenGroupDefaultActivity(activity)) return false;
+  // Completed habits are retired — hide from For Today like archived ones.
+  if (activity.completed_at || activity.is_archived || activity.deleted_at)
+    return false;
 
   if (activity.created_at) {
     const creationDay = new Date(activity.created_at);

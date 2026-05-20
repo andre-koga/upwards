@@ -10,6 +10,23 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-05-15",
+    title: "Promises — accountability, not sharing",
+    bullets: [
+      "Make a promise tied to one of your habits and share it with a specific person — not a feed, not the world.",
+      "Mutual mode: both partners track the same habit on For Today and see each other's daily progress.",
+      "Witness mode: one person commits, others get notified of progress without tracking the habit themselves.",
+      "Partner completion shows inline on For Today (e.g. \"Alex ✓ · Sam ○\") for promise-linked habits.",
+      "Private motivate / congratulate reactions go only to the person — no public counts, no likes, no leaderboards.",
+      "New Notifications inbox shows only progress from promises you're part of.",
+      "New Mark as done state on habits — distinct from Archive — for finite goals you finished.",
+    ],
+    fixes: [
+      "Promises live under More → Promises. Notifications via the bell button (top right). Sign-in required (uses sync).",
+      "Journal text, locations, video, and memos are never attached to promises — promise events only carry the habit name and streak.",
+    ],
+  },
+  {
     date: "2026-05-14",
     title: "Simpler groups, clearer sessions, and quicker time edits",
     bullets: [

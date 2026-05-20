@@ -8,6 +8,12 @@ import type {
   JournalEntry,
   OneTimeTask,
   ActivityStreak,
+  Promise as PromiseRecord,
+  PromiseMember,
+  PromiseProgressEvent,
+  PromiseReaction,
+  PromiseInvite,
+  UserProfile,
 } from "./types";
 
 const JOURNAL_VIDEO_PREFIX = "/storage/v1/object/public/journal-videos/";
@@ -89,6 +95,13 @@ class UpwardsDB extends Dexie {
   journalEntries!: Table<JournalEntry>;
   oneTimeTasks!: Table<OneTimeTask>;
   activityStreaks!: Table<ActivityStreak>;
+  // Promises / accountability
+  promises!: Table<PromiseRecord>;
+  promiseMembers!: Table<PromiseMember>;
+  promiseProgressEvents!: Table<PromiseProgressEvent>;
+  promiseReactions!: Table<PromiseReaction>;
+  promiseInvites!: Table<PromiseInvite>;
+  userProfiles!: Table<UserProfile>;
 
   constructor() {
     super("okhabit");
@@ -323,6 +336,54 @@ class UpwardsDB extends Dexie {
             row.group_id = null;
           });
       });
+
+    // v13: add completed_at to activities (mark habit as "done", distinct from archived)
+    this.version(13)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities:
+          "id, group_id, is_archived, completed_at, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("activities")
+          .toCollection()
+          .modify((row: Record<string, unknown>) => {
+            if (!("completed_at" in row)) {
+              row.completed_at = null;
+            }
+          });
+      });
+
+    // v14: promises / accountability tables
+    this.version(14).stores({
+      activityGroups: "id, name, is_archived, deleted_at, created_at",
+      activities:
+        "id, group_id, is_archived, completed_at, deleted_at, created_at",
+      dailyEntries: "id, date, is_break_day, deleted_at",
+      activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+      journalEntries:
+        "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+      oneTimeTasks:
+        "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+      activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+      promises: "id, creator_id, status, created_at",
+      promiseMembers:
+        "id, promise_id, user_id, role, invite_status, [promise_id+user_id]",
+      promiseProgressEvents: "id, promise_id, user_id, date, kind, created_at",
+      promiseReactions:
+        "id, promise_id, from_user_id, to_user_id, created_at",
+      promiseInvites: "id, promise_id, token, created_at",
+      userProfiles: "user_id",
+    });
   }
 }
 

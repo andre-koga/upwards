@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Archive } from "lucide-react";
+import { Archive, CheckCircle } from "lucide-react";
 import { ArchiveActivityDialog } from "@/components/activities/archive-activity-dialog";
+import { MarkDoneActivityDialog } from "@/components/activities/mark-done-activity-dialog";
 import { Button } from "@/components/ui/button";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -126,6 +127,7 @@ export function ActivityDialogForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const [markDoneOpen, setMarkDoneOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -134,12 +136,14 @@ export function ActivityDialogForm({
     setError(null);
     setSaving(false);
     setArchiveConfirmOpen(false);
+    setMarkDoneOpen(false);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, activity]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
       setArchiveConfirmOpen(false);
+      setMarkDoneOpen(false);
     } else {
       setError(null);
       setSaving(false);
@@ -206,6 +210,7 @@ export function ActivityDialogForm({
             routine: payload.routine,
             completion_target: payload.completion_target,
             is_archived: false,
+            completed_at: null,
             order_index: nextOrderIndex,
             created_at: timestamp,
             updated_at: timestamp,
@@ -231,18 +236,32 @@ export function ActivityDialogForm({
         title={isEditing ? "Edit Activity" : "New Activity"}
         headerEnd={
           isEditing ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
-              disabled={saving}
-              onClick={() => setArchiveConfirmOpen(true)}
-              title="Archive activity"
-              aria-label="Archive activity"
-            >
-              <Archive className="h-4 w-4" aria-hidden />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 shrink-0 rounded-full"
+                disabled={saving}
+                onClick={() => setMarkDoneOpen(true)}
+                title="Mark habit as done"
+                aria-label="Mark habit as done"
+              >
+                <CheckCircle className="h-4 w-4" aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
+                disabled={saving}
+                onClick={() => setArchiveConfirmOpen(true)}
+                title="Archive activity"
+                aria-label="Archive activity"
+              >
+                <Archive className="h-4 w-4" aria-hidden />
+              </Button>
+            </div>
           ) : undefined
         }
         contentClassName="sm:max-w-md"
@@ -325,19 +344,32 @@ export function ActivityDialogForm({
       </FormDialog>
 
       {isEditing && activity ? (
-        <ArchiveActivityDialog
-          open={open && archiveConfirmOpen}
-          activityId={activity.id}
-          activityName={getActivityDisplayName(activity, group)}
-          onOpenChange={setArchiveConfirmOpen}
-          cancelLabel="No"
-          confirmLabel="Yes"
-          onArchived={() => {
-            setArchiveConfirmOpen(false);
-            onArchived?.();
-            handleOpenChange(false);
-          }}
-        />
+        <>
+          <ArchiveActivityDialog
+            open={open && archiveConfirmOpen}
+            activityId={activity.id}
+            activityName={getActivityDisplayName(activity, group)}
+            onOpenChange={setArchiveConfirmOpen}
+            cancelLabel="No"
+            confirmLabel="Yes"
+            onArchived={() => {
+              setArchiveConfirmOpen(false);
+              onArchived?.();
+              handleOpenChange(false);
+            }}
+          />
+          <MarkDoneActivityDialog
+            open={open && markDoneOpen}
+            activityId={activity.id}
+            activityName={getActivityDisplayName(activity, group)}
+            onOpenChange={setMarkDoneOpen}
+            onMarkedDone={() => {
+              setMarkDoneOpen(false);
+              onArchived?.();
+              handleOpenChange(false);
+            }}
+          />
+        </>
       ) : null}
     </>
   );

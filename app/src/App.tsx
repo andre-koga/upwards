@@ -6,6 +6,11 @@ import ActivityStatsPage from "@/pages/activity-stats";
 import SettingsPage from "@/pages/settings";
 import TaskOrderPage from "@/pages/task-order";
 import WhatsNewPage from "@/pages/whats-new";
+import PromisesPage from "@/pages/promises";
+import PromiseDetailPage from "@/pages/promise-detail";
+import JoinPromisePage from "@/pages/join-promise";
+import NotificationsPage from "@/pages/notifications";
+import { NotificationsFloatingButton } from "@/components/promises/notifications-floating-button";
 import SyncStatus from "@/components/settings/sync-status";
 
 export default function App() {
@@ -24,6 +29,7 @@ export default function App() {
       <div className="min-h-screen md:flex md:h-screen md:items-stretch md:justify-center md:gap-10 md:px-6 md:py-6">
         <main className="relative w-full bg-background md:h-full md:max-w-[430px] md:overflow-hidden md:rounded-2xl md:border md:border-border md:shadow-2xl md:[transform:translateZ(0)]">
           <SyncStatus />
+          <NotificationsFloatingButton />
           <div className="md:h-full md:overflow-y-auto">
             <Routes>
               <Route path="/" element={<TodayPage />} />
@@ -36,6 +42,10 @@ export default function App() {
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/task-order" element={<TaskOrderPage />} />
               <Route path="/whats-new" element={<WhatsNewPage />} />
+              <Route path="/promises" element={<PromisesPage />} />
+              <Route path="/promises/:id" element={<PromiseDetailPage />} />
+              <Route path="/promises/join/:token" element={<JoinPromisePage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
             </Routes>
           </div>
         </main>

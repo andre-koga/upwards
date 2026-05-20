@@ -12,6 +12,7 @@ import {
   formatTimerDisplay,
   getGroup,
   getGroupColor,
+  getActivityDisplayName,
 } from "@/lib/activity";
 import { isJournalCalendarDateEditable } from "@/lib/journal";
 import {
@@ -19,6 +20,7 @@ import {
   recomputeActivityStreaksFromDateForActivities,
 } from "@/lib/streak-utils";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
+import { emitProgressIfComplete, emitStreakMilestoneIfReached } from "@/lib/promises/emit-progress";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
@@ -67,9 +69,39 @@ export function useDailyTasks({
     toggleBreakDay,
   } = useDailyEntry(dateString);
 
+  // Wraps incrementTask to fire promise progress events after a successful completion.
+  const incrementTaskWithProgress = useCallback(
+    async (activityId: string, target: number, options?: { neverSlip?: boolean }) => {
+      await incrementTask(activityId, target, options);
+      if (options?.neverSlip) return; // slip counts are not completions
+
+      const activity = activities.find((a) => a.id === activityId);
+      if (!activity) return;
+
+      // Read the newly persisted count from IndexedDB to avoid stale closure values.
+      const entry = await db.dailyEntries
+        .where("date")
+        .equals(dateString)
+        .filter((e) => !e.deleted_at)
+        .first();
+      const newCount = (entry?.task_counts as Record<string, number> | null)?.[activityId] ?? 0;
+      const group = groups.find((g) => g.id === activity.group_id);
+
+      void emitProgressIfComplete({
+        activityId,
+        activityName: getActivityDisplayName(activity, group),
+        newCount,
+        completionTarget: activity.completion_target ?? 1,
+        streak: activityStreaks[activityId] ?? 0,
+        dateString,
+      });
+    },
+    [incrementTask, activities, groups, dateString, activityStreaks]
+  );
+
   const incrementNeverSlip = useCallback(
-    (activityId: string) => incrementTask(activityId, 1, { neverSlip: true }),
-    [incrementTask]
+    (activityId: string) => incrementTaskWithProgress(activityId, 1, { neverSlip: true }),
+    [incrementTaskWithProgress]
   );
 
   const {
@@ -386,6 +418,27 @@ export function useDailyTasks({
     return Math.max(0, nowMs - startMs);
   }, [resolvedCurrentActivityId, activityPeriods, nowMs]);
 
+  // Emit streak milestones whenever streaks change
+  const prevStreaksRef = useRef<Record<string, number>>({});
+  useEffect(() => {
+    const prev = prevStreaksRef.current;
+    for (const [activityId, streak] of Object.entries(activityStreaks)) {
+      if (streak !== prev[activityId]) {
+        const activity = activities.find((a) => a.id === activityId);
+        if (activity) {
+          const group = groups.find((g) => g.id === activity.group_id);
+          void emitStreakMilestoneIfReached({
+            activityId,
+            activityName: getActivityDisplayName(activity, group),
+            streak,
+            dateString,
+          });
+        }
+      }
+    }
+    prevStreaksRef.current = activityStreaks;
+  }, [activityStreaks, activities, groups, dateString]);
+
   return {
     isToday,
     loading,
@@ -406,7 +459,7 @@ export function useDailyTasks({
     toggleOneTimeTask,
     deleteOneTimeTask,
     updateOneTimeTask,
-    incrementTask,
+    incrementTask: incrementTaskWithProgress,
     incrementNeverSlip,
     resetNeverTaskCount,
     toggleTaskPaused,

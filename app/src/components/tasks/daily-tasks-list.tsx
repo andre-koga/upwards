@@ -12,6 +12,7 @@ import { Palmtree, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
+import { usePartnerStatus } from "@/lib/promises/use-partner-status";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -81,6 +82,7 @@ export default function DailyTasksList({
     recalculateStreaksFromViewedDate,
     recalculateStreaksBusy,
   } = daily;
+  const { statusMap } = usePartnerStatus(currentDate);
   const pausedTaskIdSet = new Set(pausedTaskIds);
   const manualEntryActivity = manualEntryActivityId
     ? (activities.find((item) => item.id === manualEntryActivityId) ?? null)
@@ -165,6 +167,7 @@ export default function DailyTasksList({
               isBreakDay={isBreakDay}
               isCurrentActivity={currentActivityId === activity.id}
               isToday={isToday}
+              partnerStatuses={statusMap[activity.id]}
               onIncrement={incrementTask}
               onNeverIncrement={() => incrementNeverSlip(activity.id)}
               onNeverReset={() => resetNeverTaskCount(activity.id)}

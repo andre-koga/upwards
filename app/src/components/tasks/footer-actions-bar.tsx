@@ -4,6 +4,7 @@ import {
   Calendar,
   CircleCheckBig,
   Folder,
+  HandshakeIcon,
   History,
   Menu,
   MessageSquare,
@@ -91,6 +92,18 @@ export default function FooterActionsBar({
         <div className="rounded-t-2xl border-t border-border bg-background px-4 pb-8 pt-3 shadow-xl">
           <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted" />
           <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full justify-start rounded-xl"
+              onClick={() => {
+                setPathsDrawerOpen(false);
+                navigate("/promises");
+              }}
+            >
+              <HandshakeIcon className="h-4 w-4" />
+              Promises
+            </Button>
             <Button
               type="button"
               variant="outline"

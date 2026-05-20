@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import ActivityPill from "@/components/activities/activity-pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
+import type { PartnerStatus } from "@/lib/promises/use-partner-status";
 
 interface ActivityTaskItemProps {
   activity: Activity;
@@ -19,6 +20,7 @@ interface ActivityTaskItemProps {
   isBreakDay: boolean;
   isCurrentActivity: boolean;
   isToday: boolean;
+  partnerStatuses?: PartnerStatus[];
   onIncrement: (activityId: string, target: number) => void;
   /** "Never" tasks: tap increments slip count. */
   onNeverIncrement?: () => void;
@@ -39,6 +41,7 @@ function ActivityTaskItem({
   isBreakDay,
   isCurrentActivity,
   isToday,
+  partnerStatuses,
   onIncrement,
   onNeverIncrement,
   onNeverReset,
@@ -229,6 +232,16 @@ function ActivityTaskItem({
           nameClassName={isComplete ? "line-through text-muted-foreground" : ""}
           readOnly={!isToday}
         />
+        {partnerStatuses && partnerStatuses.length > 0 && (
+          <p className="mt-0.5 pl-1 text-[10px] text-muted-foreground leading-none">
+            {partnerStatuses
+              .map((p) => {
+                const name = p.displayName ?? "Partner";
+                return p.completed ? `${name} ✓` : `${name} ○`;
+              })
+              .join(" · ")}
+          </p>
+        )}
       </div>
     </div>
   );
