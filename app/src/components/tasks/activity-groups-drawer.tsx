@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
-import { ChevronDown, ChevronLeft, Pencil, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
@@ -110,7 +109,6 @@ export default function ActivityGroupsDrawer({
   triggerIcon: TriggerIcon = Plus,
   floating = true,
 }: ActivityGroupsDrawerProps) {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"groups" | "activities">("groups");
   const [selectedGroup, setSelectedGroup] = useState<ActivityGroup | null>(
@@ -325,14 +323,7 @@ export default function ActivityGroupsDrawer({
                               key={group.id}
                               name={group.name}
                               color={group.color || DEFAULT_GROUP_COLOR}
-                              onNameClick={() => {
-                                setView("groups");
-                                setOpen(false);
-                                navigate(`/activities/${group.id}`);
-                              }}
-                              onSettingsClick={() => {
-                                setEditingGroup(group);
-                              }}
+                              onNameClick={() => setEditingGroup(group)}
                               onActionClick={() => handleOpenGroup(group)}
                             />
                           );
@@ -355,14 +346,9 @@ export default function ActivityGroupsDrawer({
                                   key={group.id}
                                   name={group.name}
                                   color={group.color || DEFAULT_GROUP_COLOR}
-                                  settingsTitle="Restore or delete archived group"
-                                  settingsAriaLabel="Restore or delete archived group"
-                                  onNameClick={() => {
-                                    setView("groups");
-                                    setOpen(false);
-                                    navigate(`/activities/${group.id}`);
-                                  }}
-                                  onSettingsClick={() =>
+                                  nameTitle="Restore or delete archived group"
+                                  nameAriaLabel="Restore or delete archived group"
+                                  onNameClick={() =>
                                     setArchivedActionsTarget({
                                       type: "group",
                                       group,
@@ -434,52 +420,31 @@ export default function ActivityGroupsDrawer({
                           const groupColor =
                             selectedGroup.color || DEFAULT_GROUP_COLOR;
                           return (
-                            <div
+                            <ActivityPill
                               key={activity.id}
-                              className="flex items-center gap-2"
-                            >
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="iconRoundMd"
-                                className="h-10 w-10 border-border bg-background"
-                                title="Edit activity"
-                                aria-label="Edit activity"
-                                onClick={() => {
-                                  setEditingActivity(activity);
-                                }}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <ActivityPill
-                                name={getActivityDisplayName(
-                                  activity,
-                                  selectedGroup
-                                )}
-                                color={groupColor}
-                                elapsedMs={calculateActivityTime(activity.id)}
-                                isRunning={isRunning}
-                                onNameClick={() => {
-                                  setOpen(false);
-                                  navigate(`/activities/stats/${activity.id}`);
-                                }}
-                                onClick={async () => {
-                                  if (isRunning) {
-                                    await onStopActivity?.();
-                                  } else {
-                                    await onStartActivity?.(activity.id);
-                                  }
-                                  closeDrawer();
-                                }}
-                                onManualEntry={
-                                  onAddManualEntry
-                                    ? () =>
-                                        setManualEntryActivityId(activity.id)
-                                    : undefined
+                              name={getActivityDisplayName(
+                                activity,
+                                selectedGroup
+                              )}
+                              color={groupColor}
+                              elapsedMs={calculateActivityTime(activity.id)}
+                              isRunning={isRunning}
+                              onNameClick={() => setEditingActivity(activity)}
+                              onClick={async () => {
+                                if (isRunning) {
+                                  await onStopActivity?.();
+                                } else {
+                                  await onStartActivity?.(activity.id);
                                 }
-                                className="flex-1"
-                              />
-                            </div>
+                                closeDrawer();
+                              }}
+                              onManualEntry={
+                                onAddManualEntry
+                                  ? () =>
+                                      setManualEntryActivityId(activity.id)
+                                  : undefined
+                              }
+                            />
                           );
                         })
                       )}
@@ -502,63 +467,40 @@ export default function ActivityGroupsDrawer({
                                   selectedGroup.color ||
                                   DEFAULT_GROUP_COLOR;
                                 return (
-                                  <div
+                                  <ActivityPill
                                     key={activity.id}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="iconRoundMd"
-                                      className="h-10 w-10 border-border bg-background"
-                                      title="Restore or delete archived activity"
-                                      aria-label="Restore or delete archived activity"
-                                      onClick={() =>
-                                        setArchivedActionsTarget({
-                                          type: "activity",
-                                          activity,
-                                        })
-                                      }
-                                    >
-                                      <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <ActivityPill
-                                      name={getActivityDisplayName(
+                                    name={getActivityDisplayName(
+                                      activity,
+                                      selectedGroup
+                                    )}
+                                    color={groupColor}
+                                    elapsedMs={calculateActivityTime(
+                                      activity.id
+                                    )}
+                                    isRunning={isRunning}
+                                    onNameClick={() =>
+                                      setArchivedActionsTarget({
+                                        type: "activity",
                                         activity,
-                                        selectedGroup
-                                      )}
-                                      color={groupColor}
-                                      elapsedMs={calculateActivityTime(
-                                        activity.id
-                                      )}
-                                      isRunning={isRunning}
-                                      onNameClick={() => {
-                                        setOpen(false);
-                                        navigate(
-                                          `/activities/stats/${activity.id}`
-                                        );
-                                      }}
-                                      onClick={async () => {
-                                        if (isRunning) {
-                                          await onStopActivity?.();
-                                        } else {
-                                          await onStartActivity?.(
-                                            activity.id
-                                          );
-                                        }
-                                        closeDrawer();
-                                      }}
-                                      onManualEntry={
-                                        onAddManualEntry
-                                          ? () =>
-                                              setManualEntryActivityId(
-                                                activity.id
-                                              )
-                                          : undefined
+                                      })
+                                    }
+                                    onClick={async () => {
+                                      if (isRunning) {
+                                        await onStopActivity?.();
+                                      } else {
+                                        await onStartActivity?.(activity.id);
                                       }
-                                      className="flex-1"
-                                    />
-                                  </div>
+                                      closeDrawer();
+                                    }}
+                                    onManualEntry={
+                                      onAddManualEntry
+                                        ? () =>
+                                            setManualEntryActivityId(
+                                              activity.id
+                                            )
+                                        : undefined
+                                    }
+                                  />
                                 );
                               })}
                             </div>
@@ -611,8 +553,13 @@ export default function ActivityGroupsDrawer({
         onOpenChange={setNewGroupDialogOpen}
         onCreated={(group) => {
           setNewGroupDialogOpen(false);
-          setOpen(false);
-          navigate(`/activities/${group.id}`);
+          void loadActivityGroupLists()
+            .then(({ active, archived }) => {
+              setGroups(active);
+              setArchivedGroups(archived);
+            })
+            .catch(console.error);
+          setEditingGroup(group);
         }}
       />
 
@@ -624,7 +571,9 @@ export default function ActivityGroupsDrawer({
           }}
           group={newActivityDialogGroup}
           onSaved={() => {
-            navigate(`/activities/${newActivityDialogGroup.id}`);
+            setNewActivityDialogGroup(null);
+            setArchivedActivitiesTick((t) => t + 1);
+            onTasksDataChanged?.();
           }}
         />
       ) : null}

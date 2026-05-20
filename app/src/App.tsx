@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import TodayPage from "@/pages/today";
-import GroupPage from "@/pages/group";
 import StatsPage from "@/pages/stats";
 import ActivityStatsPage from "@/pages/activity-stats";
 import SettingsPage from "@/pages/settings";
@@ -38,7 +37,6 @@ export default function App() {
                 path="/activities/stats/:activityId"
                 element={<ActivityStatsPage />}
               />
-              <Route path="/activities/:groupId" element={<GroupPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/task-order" element={<TaskOrderPage />} />
               <Route path="/whats-new" element={<WhatsNewPage />} />

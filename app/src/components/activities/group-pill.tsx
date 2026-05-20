@@ -1,4 +1,4 @@
-import { ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface GroupPillProps {
@@ -6,11 +6,8 @@ export interface GroupPillProps {
   color: string;
   onActionClick?: () => void;
   onNameClick?: () => void;
-  /** When set, shows an edit button on the left that calls this. */
-  onSettingsClick?: () => void;
-  /** Accessibility and tooltip for the settings control (e.g. archived groups). */
-  settingsAriaLabel?: string;
-  settingsTitle?: string;
+  nameTitle?: string;
+  nameAriaLabel?: string;
   className?: string;
 }
 
@@ -19,9 +16,8 @@ export default function GroupPill({
   color,
   onActionClick,
   onNameClick,
-  onSettingsClick,
-  settingsAriaLabel = "Edit group",
-  settingsTitle = "Edit group",
+  nameTitle = "Edit group",
+  nameAriaLabel = "Edit group",
   className = "",
 }: GroupPillProps) {
   const actionLabel = "Start";
@@ -32,23 +28,13 @@ export default function GroupPill({
 
   return (
     <div className={base}>
-      {onSettingsClick && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onSettingsClick}
-          title={settingsTitle}
-          className="h-10 w-10 shrink-0 rounded-full border-border p-0"
-          aria-label={settingsAriaLabel}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
-      )}
       <div className="flex w-full gap-2">
         <Button
           type="button"
           variant="outline"
           onClick={onNameClick}
+          title={nameTitle}
+          aria-label={nameAriaLabel}
           className="h-full flex-1 justify-start gap-2.5 truncate rounded-full px-4 text-left text-sm font-medium shadow-none"
         >
           <span
