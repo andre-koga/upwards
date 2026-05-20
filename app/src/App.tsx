@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import StatsPage from "@/pages/stats";
 import ActivityStatsPage from "@/pages/activity-stats";
@@ -36,6 +36,10 @@ export default function App() {
               <Route
                 path="/activities/stats/:activityId"
                 element={<ActivityStatsPage />}
+              />
+              <Route
+                path="/activities/:groupId"
+                element={<Navigate to="/" replace />}
               />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/task-order" element={<TaskOrderPage />} />
