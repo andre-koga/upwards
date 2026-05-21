@@ -45,7 +45,6 @@ export async function getOrCreateHiddenGroupDefaultActivity(
     name: null,
     routine: null,
     completion_target: 1,
-    is_archived: false,
     completed_at: null,
     order_index: null,
     created_at: timestamp,

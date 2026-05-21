@@ -1,22 +1,17 @@
 import { useState } from "react";
 import { ArchiveRestore } from "lucide-react";
 import { FormDialog, FormDialogActions } from "@/components/forms";
-import type { Activity, ActivityGroup } from "@/lib/db/types";
+import type { ActivityGroup } from "@/lib/db/types";
 import { logError } from "@/lib/error-utils";
-import { unarchiveActivityById, unarchiveGroupById } from "@/lib/activity";
+import { unarchiveGroupById } from "@/lib/activity";
 
-export type ArchivedItemActionsTarget =
-  | { type: "group"; group: ActivityGroup }
-  | { type: "activity"; activity: Activity };
+export type ArchivedItemActionsTarget = { type: "group"; group: ActivityGroup };
 
 interface ArchivedItemActionsDialogProps {
   target: ArchivedItemActionsTarget | null;
   onOpenChange: (open: boolean) => void;
   onUnarchived: (target: ArchivedItemActionsTarget) => void | Promise<void>;
-  onDeleteRequested: (payload: {
-    type: "group" | "activity";
-    id: string;
-  }) => void;
+  onDeleteRequested: (payload: { type: "group"; id: string }) => void;
 }
 
 const destructiveConfirmClassName =
@@ -37,11 +32,7 @@ export function ArchivedItemActionsDialog({
     const current = target;
     setBusy(true);
     try {
-      if (current.type === "group") {
-        await unarchiveGroupById(current.group.id);
-      } else {
-        await unarchiveActivityById(current.activity.id);
-      }
+      await unarchiveGroupById(current.group.id);
       await Promise.resolve(onUnarchived(current));
       onOpenChange(false);
     } catch (error) {
@@ -53,19 +44,9 @@ export function ArchivedItemActionsDialog({
 
   const handleDeleteClick = () => {
     if (!target) return;
-    const id =
-      target.type === "group" ? target.group.id : target.activity.id;
-    const type = target.type;
     onOpenChange(false);
-    onDeleteRequested({ type, id });
+    onDeleteRequested({ type: "group", id: target.group.id });
   };
-
-  const title =
-    target?.type === "group"
-      ? "Archived group"
-      : target?.type === "activity"
-        ? "Archived activity"
-        : "Archived item";
 
   return (
     <FormDialog
@@ -74,8 +55,8 @@ export function ArchivedItemActionsDialog({
         if (!next && busy) return;
         if (!next) onOpenChange(false);
       }}
-      title={title}
-      description="Unarchive to use it again on the Today screen, or delete it permanently."
+      title="Archived group"
+      description="Unarchive to use it again, or delete the group and all its activities permanently."
       contentClassName="sm:max-w-md"
     >
       <FormDialogActions

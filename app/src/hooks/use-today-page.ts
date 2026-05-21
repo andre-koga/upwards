@@ -7,15 +7,32 @@ export function useTodayPage(currentDate: Date) {
   const journal = useJournalEntry(currentDate);
   const { entryDates, bookmarkedDates, loadJournalMeta } = useJournalMeta();
 
-  const { activities, groups, loading, refreshTrigger, refreshTasksData } =
-    useTasksPageData({
-      loadJournalEntry: journal.loadJournalEntry,
-      loadJournalMeta,
-    });
+  const {
+    activities,
+    lookupActivities,
+    groups,
+    lookupGroups,
+    lookupActivityById,
+    lookupGroupById,
+    activityEventsById,
+    groupEventsById,
+    loading,
+    refreshTrigger,
+    refreshTasksData,
+  } = useTasksPageData({
+    loadJournalEntry: journal.loadJournalEntry,
+    loadJournalMeta,
+  });
 
   const dailyTasks = useDailyTasks({
     activities,
+    lookupActivities,
     groups,
+    lookupGroups,
+    lookupActivityById,
+    lookupGroupById,
+    activityEventsById,
+    groupEventsById,
     currentDate,
     refreshTrigger,
   });
@@ -26,7 +43,9 @@ export function useTodayPage(currentDate: Date) {
     bookmarkedDates,
     loadJournalMeta,
     activities,
+    lookupActivities,
     groups,
+    lookupGroups,
     loading,
     refreshTrigger,
     dailyTasks,

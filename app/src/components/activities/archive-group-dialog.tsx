@@ -1,6 +1,6 @@
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { db, now } from "@/lib/db";
-import { stopCurrentActivity } from "@/lib/activity";
+import { appendGroupStatusEvent, stopCurrentActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 
 interface ArchiveGroupDialogProps {
@@ -27,21 +27,11 @@ export function ArchiveGroupDialog({
     try {
       await stopCurrentActivity({ groupId });
       const n = now();
+      await appendGroupStatusEvent(groupId, "archived", true);
       await db.activityGroups.update(groupId, {
         is_archived: true,
         updated_at: n,
       });
-      const groupActivities = await db.activities
-        .filter((activity) => activity.group_id === groupId && !activity.deleted_at)
-        .toArray();
-      await Promise.all(
-        groupActivities.map((activity) =>
-          db.activities.update(activity.id, {
-            is_archived: true,
-            updated_at: n,
-          })
-        )
-      );
       onOpenChange(false);
       onArchived();
     } catch (error) {

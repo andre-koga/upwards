@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase, getCachedUserId } from "@/lib/supabase";
 import { db, newId, now } from "@/lib/db";
-import { isActiveActivity } from "@/lib/activity";
+import { isActiveGroup, buildGroupById, filterActiveActivities } from "@/lib/activity";
 import type { Goal, GoalMember, GoalTargetInput, GoalWithMembers } from "@/lib/db/types";
 import type { Activity } from "@/lib/db/types";
 
@@ -236,10 +236,14 @@ export function useGoals() {
   // Activities eligible to anchor a new goal
   const [eligibleActivities, setEligibleActivities] = useState<Activity[]>([]);
   useEffect(() => {
-    db.activities
-      .filter((a) => isActiveActivity(a))
-      .toArray()
-      .then((acts) => setEligibleActivities(acts))
+    Promise.all([
+      db.activities.filter((a) => !a.completed_at && !a.deleted_at).toArray(),
+      db.activityGroups.filter((g) => isActiveGroup(g)).toArray(),
+    ])
+      .then(([acts, groups]) => {
+        const groupById = buildGroupById(groups);
+        setEligibleActivities(filterActiveActivities(acts, groupById));
+      })
       .catch(console.error);
   }, []);
 

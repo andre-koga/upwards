@@ -4,6 +4,7 @@ import {
   toRemoteRow,
   dedupeRowsForUpsert,
   UPSERT_CONFLICT_TARGET,
+  isValidUuid,
 } from "./sync-transformers";
 import {
   sanitizeForeignKeyRefsBeforeUpsert,
@@ -65,6 +66,20 @@ export async function runPushInternal(
       userId
     );
 
+    const pushRows =
+      table === "activity_streaks"
+        ? normalizedRows.filter((row) => isValidUuid(row.activity_id))
+        : normalizedRows;
+
+    if (table === "activity_streaks") {
+      const skippedNullActivity = normalizedRows.length - pushRows.length;
+      if (skippedNullActivity > 0) {
+        console.warn(
+          `[sync] skipping ${skippedNullActivity} activity_streaks row(s) with null activity_id`
+        );
+      }
+    }
+
     const skippedCount = records.length - rows.length;
     if (skippedCount > 0) {
       console.warn(
@@ -72,7 +87,7 @@ export async function runPushInternal(
       );
     }
 
-    const schemaSafeRows = stripUnknownColumns(table, normalizedRows);
+    const schemaSafeRows = stripUnknownColumns(table, pushRows);
 
     if (schemaSafeRows.length === 0) {
       const now = new Date().toISOString();

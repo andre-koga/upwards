@@ -31,7 +31,9 @@ export default function TodayPage() {
     bookmarkedDates,
     loadJournalMeta,
     activities,
+    lookupActivities,
     groups,
+    lookupGroups,
     loading,
     dailyTasks,
     refreshTasksData,
@@ -186,7 +188,9 @@ export default function TodayPage() {
       <div className="p-3">
         <DailyTasksList
           activities={activities}
+          lookupActivities={lookupActivities}
           groups={groups}
+          lookupGroups={lookupGroups}
           daily={dailyTasks}
           currentDate={currentDate}
           onDateChange={setCurrentDate}

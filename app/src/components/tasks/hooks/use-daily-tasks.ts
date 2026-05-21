@@ -5,6 +5,8 @@ import type {
   Activity,
   ActivityGroup,
   ActivityPeriod,
+  ActivityStatusEvent,
+  GroupStatusEvent,
 } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import {
@@ -13,7 +15,9 @@ import {
   getGroup,
   getGroupColor,
   getActivityDisplayName,
+  type TemporalVisibilityContext,
 } from "@/lib/activity";
+import type { StreakVisibilityDeps } from "@/lib/streak-utils";
 import { isJournalCalendarDateEditable } from "@/lib/journal";
 import {
   getOrComputeActivityStreaksForDate,
@@ -26,8 +30,16 @@ import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
 
 interface UseDailyTasksParams {
+  /** Active habits for starting new tracking today. */
   activities: Activity[];
+  /** All habits (incl. soft-deleted/completed) for historical For Today + timeline. */
+  lookupActivities: Activity[];
   groups: ActivityGroup[];
+  lookupGroups: ActivityGroup[];
+  lookupActivityById: Map<string, Activity>;
+  lookupGroupById: Map<string, ActivityGroup>;
+  activityEventsById: Map<string, ActivityStatusEvent[]>;
+  groupEventsById: Map<string, GroupStatusEvent[]>;
   currentDate: Date;
   /** When this changes, daily entry / periods / tasks are reloaded (e.g. after sync). */
   refreshTrigger?: number;
@@ -35,7 +47,13 @@ interface UseDailyTasksParams {
 
 export function useDailyTasks({
   activities,
+  lookupActivities,
   groups,
+  lookupGroups,
+  lookupActivityById,
+  lookupGroupById,
+  activityEventsById,
+  groupEventsById,
   currentDate,
   refreshTrigger = 0,
 }: UseDailyTasksParams) {
@@ -51,6 +69,24 @@ export function useDailyTasks({
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [recalculateStreaksBusy, setRecalculateStreaksBusy] = useState(false);
   const recalcStreaksInFlightRef = useRef(false);
+
+  const streakVisibilityDeps = useMemo<StreakVisibilityDeps>(
+    () => ({
+      groupById: lookupGroupById,
+      activityEventsById,
+      groupEventsById,
+    }),
+    [lookupGroupById, activityEventsById, groupEventsById]
+  );
+
+  const temporalForViewDate = useMemo<TemporalVisibilityContext>(
+    () => ({
+      viewDate: currentDate,
+      activityEventsById,
+      groupEventsById,
+    }),
+    [currentDate, activityEventsById, groupEventsById]
+  );
 
   const {
     taskCounts,
@@ -75,7 +111,9 @@ export function useDailyTasks({
       await incrementTask(activityId, target, options);
       if (options?.neverSlip) return; // slip counts are not completions
 
-      const activity = activities.find((a) => a.id === activityId);
+      const activity =
+        lookupActivityById.get(activityId) ??
+        activities.find((a) => a.id === activityId);
       if (!activity) return;
 
       // Read the newly persisted count from IndexedDB to avoid stale closure values.
@@ -85,7 +123,9 @@ export function useDailyTasks({
         .filter((e) => !e.deleted_at)
         .first();
       const newCount = (entry?.task_counts as Record<string, number> | null)?.[activityId] ?? 0;
-      const group = groups.find((g) => g.id === activity.group_id);
+      const group =
+        lookupGroupById.get(activity.group_id) ??
+        groups.find((g) => g.id === activity.group_id);
 
       void emitDailyComplete({
         activityId,
@@ -96,7 +136,15 @@ export function useDailyTasks({
         dateString,
       });
     },
-    [incrementTask, activities, groups, dateString, activityStreaks]
+    [
+      incrementTask,
+      lookupActivityById,
+      activities,
+      lookupGroupById,
+      groups,
+      dateString,
+      activityStreaks,
+    ]
   );
 
   const incrementNeverSlip = useCallback(
@@ -170,14 +218,21 @@ export function useDailyTasks({
   useEffect(() => {
     let cancelled = false;
 
-    const visibleActivities = activities.filter((activity) =>
-      shouldShowActivity(activity, currentDate)
-    );
+    const visibleActivities = lookupActivities.filter((activity) => {
+      const group = lookupGroupById.get(activity.group_id);
+      return shouldShowActivity(
+        activity,
+        currentDate,
+        group,
+        temporalForViewDate
+      );
+    });
 
     void getOrComputeActivityStreaksForDate(visibleActivities, currentDate, {
       // Recompute target-day streaks for the viewed date so historical days
       // reflect current task counts instead of stale cached streak rows.
       forceRecomputeTarget: true,
+      visibility: streakVisibilityDeps,
     })
       .then((streaks) => {
         if (!cancelled) {
@@ -192,18 +247,25 @@ export function useDailyTasks({
       cancelled = true;
     };
   }, [
-    activities,
+    lookupActivities,
+    lookupGroupById,
+    temporalForViewDate,
     currentDate,
     isToday,
     taskCounts,
     pausedTaskIds,
     isBreakDay,
     streakDbVersion,
+    streakVisibilityDeps,
   ]);
 
   const dailyActivities = useMemo(
-    () => activities.filter((a) => shouldShowActivity(a, currentDate)),
-    [activities, currentDate]
+    () =>
+      lookupActivities.filter((a) => {
+        const group = lookupGroupById.get(a.group_id);
+        return shouldShowActivity(a, currentDate, group, temporalForViewDate);
+      }),
+    [lookupActivities, lookupGroupById, currentDate, temporalForViewDate]
   );
   const pausedTaskIdSet = useMemo(
     () => new Set(pausedTaskIds),
@@ -212,8 +274,9 @@ export function useDailyTasks({
 
   const getGroupForActivity = useCallback(
     (activity: Activity): ActivityGroup | undefined =>
+      lookupGroupById.get(activity.group_id) ??
       getGroup(groups, activity.group_id),
-    [groups]
+    [lookupGroupById, groups]
   );
 
   const { nonNeverCount, completedCount, completionRate } = useMemo(() => {
@@ -346,19 +409,21 @@ export function useDailyTasks({
     const activitySessions = activityPeriods
       .filter((period) => !!period.end_time)
       .map((period) => {
-        const activity = activities.find((a) => a.id === period.activity_id);
+        const activity = lookupActivityById.get(period.activity_id);
+        const group = activity
+          ? lookupGroupById.get(activity.group_id)
+          : undefined;
         const startTime = new Date(period.start_time).getTime();
         const endTime = new Date(period.end_time!).getTime();
         return {
           id: period.id,
           activityId: period.activity_id,
           groupId: activity?.group_id || "",
-          name:
-            activity?.name ??
-            getGroup(groups, activity?.group_id ?? "")?.name ??
-            "Unknown activity",
+          name: activity
+            ? getActivityDisplayName(activity, group)
+            : "Unknown activity",
           groupColor: activity
-            ? getGroupColor(groups, activity.group_id)
+            ? (group?.color ?? DEFAULT_GROUP_COLOR)
             : DEFAULT_GROUP_COLOR,
           intervalMs: Math.max(0, endTime - startTime),
           startTime,
@@ -366,7 +431,7 @@ export function useDailyTasks({
       });
 
     return activitySessions.sort((a, b) => b.startTime - a.startTime);
-  }, [activityPeriods, activities, groups]);
+  }, [activityPeriods, lookupActivityById, lookupGroupById]);
 
   const runningSession = useMemo(() => {
     if (!resolvedCurrentActivityId) return null;
@@ -374,11 +439,11 @@ export function useDailyTasks({
       (p) => !p.end_time && p.activity_id === resolvedCurrentActivityId
     );
     if (!openPeriod) return null;
-    const activity = activities.find((a) => a.id === resolvedCurrentActivityId);
+    const activity = lookupActivityById.get(resolvedCurrentActivityId);
     const groupId = activity?.group_id ?? null;
     if (!groupId) return null;
     return { sessionId: openPeriod.id, groupId };
-  }, [resolvedCurrentActivityId, activityPeriods, activities]);
+  }, [resolvedCurrentActivityId, activityPeriods, lookupActivityById]);
 
   const recalculateStreaksFromViewedDate = useCallback(async () => {
     if (recalcStreaksInFlightRef.current) return;
@@ -386,8 +451,9 @@ export function useDailyTasks({
     setRecalculateStreaksBusy(true);
     try {
       await recomputeActivityStreaksFromDateForActivities(
-        activities,
-        currentDate
+        lookupActivities,
+        currentDate,
+        { visibility: streakVisibilityDeps }
       );
       bumpStreakDbVersion();
     } catch (err) {
@@ -396,7 +462,7 @@ export function useDailyTasks({
       recalcStreaksInFlightRef.current = false;
       setRecalculateStreaksBusy(false);
     }
-  }, [activities, currentDate, bumpStreakDbVersion]);
+  }, [lookupActivities, currentDate, bumpStreakDbVersion, streakVisibilityDeps]);
 
   const currentActivityElapsedMs = useMemo(() => {
     if (!resolvedCurrentActivityId) return 0;
@@ -421,6 +487,7 @@ export function useDailyTasks({
 
   return {
     isToday,
+    temporalForViewDate,
     loading,
     activityStreaks,
     dailyActivities,

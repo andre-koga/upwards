@@ -8,7 +8,9 @@ export type SyncTable =
   | "activity_periods"
   | "journal_entries"
   | "one_time_tasks"
-  | "activity_streaks";
+  | "activity_streaks"
+  | "activity_status_events"
+  | "group_status_events";
 
 export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
   activity_groups: "id",
@@ -18,6 +20,8 @@ export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
   journal_entries: "user_id,entry_date",
   one_time_tasks: "id",
   activity_streaks: "user_id,activity_id,date",
+  activity_status_events: "id",
+  group_status_events: "id",
 };
 
 export function isValidUuid(value: unknown): value is string {
@@ -61,6 +65,13 @@ export function normalizeSyncRow(
 
   if (table === "activity_streaks" && !isValidUuid(sanitized.activity_id)) {
     sanitized.activity_id = null;
+  }
+
+  if (
+    (table === "activity_status_events" || table === "group_status_events") &&
+    !isValidUuid(sanitized.entity_id)
+  ) {
+    sanitized.entity_id = null;
   }
 
   return sanitized;

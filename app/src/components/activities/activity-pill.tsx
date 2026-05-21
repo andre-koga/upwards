@@ -13,8 +13,10 @@ export interface ActivityPillProps {
   onClick?: () => void;
   onManualEntry?: () => void;
   nameClassName?: string;
-  /** When true, renders as a non-interactive display instead of a button. */
+  /** When true, renders timer/play as non-interactive display instead of buttons. */
   readOnly?: boolean;
+  /** When readOnly, still allow tapping the name (e.g. retired info on past days). */
+  allowNameClickWhenReadOnly?: boolean;
   className?: string;
 }
 
@@ -28,10 +30,12 @@ export default function ActivityPill({
   onManualEntry,
   nameClassName = "",
   readOnly = false,
+  allowNameClickWhenReadOnly = false,
   className = "",
 }: ActivityPillProps) {
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
+  const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
 
   return (
     <div
@@ -44,10 +48,14 @@ export default function ActivityPill({
       <Button
         type="button"
         variant="outline"
-        onClick={readOnly ? undefined : onNameClick}
+        onClick={nameInteractive ? onNameClick : undefined}
         className={cn(
           "h-full flex-1 justify-start gap-2 truncate rounded-full px-4 text-left text-sm font-medium",
-          readOnly ? "pointer-events-none shadow-sm" : "shadow-none",
+          readOnly && !allowNameClickWhenReadOnly
+            ? "pointer-events-none shadow-sm"
+            : readOnly
+              ? "shadow-sm"
+              : "shadow-none",
         )}
       >
         <span

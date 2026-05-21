@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
-import { Archive, CheckCircle } from "lucide-react";
-import { ArchiveActivityDialog } from "@/components/activities/archive-activity-dialog";
-import { MarkDoneActivityDialog } from "@/components/activities/mark-done-activity-dialog";
+import { Trash2 } from "lucide-react";
+import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
-  getActivityDisplayName,
-  isActiveActivity,
   isScheduledRoutine,
   parseRoutine,
   validateActivityData,
@@ -30,7 +27,8 @@ interface ActivityDialogFormProps {
   group: ActivityGroup;
   activity?: Activity;
   onSaved?: () => void;
-  onArchived?: () => void;
+  /** Called after the activity is permanently deleted. */
+  onDeleted?: () => void;
 }
 
 interface ActivityFormData {
@@ -118,7 +116,7 @@ export function ActivityDialogForm({
   group,
   activity,
   onSaved,
-  onArchived,
+  onDeleted,
 }: ActivityDialogFormProps) {
   const isEditing = Boolean(activity);
   const [formData, setFormData] = useState<ActivityFormData>(() =>
@@ -126,8 +124,7 @@ export function ActivityDialogForm({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
-  const [markDoneOpen, setMarkDoneOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -135,16 +132,12 @@ export function ActivityDialogForm({
     setFormData(computeFormDataFromInitial(activity));
     setError(null);
     setSaving(false);
-    setArchiveConfirmOpen(false);
-    setMarkDoneOpen(false);
+    setDeleteConfirmOpen(false);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, activity]);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
-      setArchiveConfirmOpen(false);
-      setMarkDoneOpen(false);
-    } else {
+    if (!nextOpen) {
       setError(null);
       setSaving(false);
     }
@@ -188,7 +181,8 @@ export function ActivityDialogForm({
             const scheduledActivities = await db.activities
               .filter(
                 (item) =>
-                  isActiveActivity(item) &&
+                  !item.completed_at &&
+                  !item.deleted_at &&
                   isScheduledRoutine(item.routine ?? "")
               )
               .toArray();
@@ -209,7 +203,6 @@ export function ActivityDialogForm({
             name: payload.name,
             routine: payload.routine,
             completion_target: payload.completion_target,
-            is_archived: false,
             completed_at: null,
             order_index: nextOrderIndex,
             created_at: timestamp,
@@ -235,33 +228,19 @@ export function ActivityDialogForm({
         onOpenChange={handleOpenChange}
         title={isEditing ? "Edit Activity" : "New Activity"}
         headerEnd={
-          isEditing ? (
-            <div className="flex items-center gap-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 shrink-0 rounded-full"
-                disabled={saving}
-                onClick={() => setMarkDoneOpen(true)}
-                title="Mark habit as done"
-                aria-label="Mark habit as done"
-              >
-                <CheckCircle className="h-4 w-4" aria-hidden />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
-                disabled={saving}
-                onClick={() => setArchiveConfirmOpen(true)}
-                title="Archive activity"
-                aria-label="Archive activity"
-              >
-                <Archive className="h-4 w-4" aria-hidden />
-              </Button>
-            </div>
+          isEditing && activity ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
+              disabled={saving}
+              onClick={() => setDeleteConfirmOpen(true)}
+              title="Delete activity"
+              aria-label="Delete activity"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+            </Button>
           ) : undefined
         }
         contentClassName="sm:max-w-md"
@@ -344,32 +323,17 @@ export function ActivityDialogForm({
       </FormDialog>
 
       {isEditing && activity ? (
-        <>
-          <ArchiveActivityDialog
-            open={open && archiveConfirmOpen}
-            activityId={activity.id}
-            activityName={getActivityDisplayName(activity, group)}
-            onOpenChange={setArchiveConfirmOpen}
-            cancelLabel="No"
-            confirmLabel="Yes"
-            onArchived={() => {
-              setArchiveConfirmOpen(false);
-              onArchived?.();
-              handleOpenChange(false);
-            }}
-          />
-          <MarkDoneActivityDialog
-            open={open && markDoneOpen}
-            activityId={activity.id}
-            activityName={getActivityDisplayName(activity, group)}
-            onOpenChange={setMarkDoneOpen}
-            onMarkedDone={() => {
-              setMarkDoneOpen(false);
-              onArchived?.();
-              handleOpenChange(false);
-            }}
-          />
-        </>
+        <DeleteConfirmDialog
+          open={open && deleteConfirmOpen}
+          type="activity"
+          id={activity.id}
+          onOpenChange={setDeleteConfirmOpen}
+          onDeleted={() => {
+            setDeleteConfirmOpen(false);
+            onDeleted?.();
+            handleOpenChange(false);
+          }}
+        />
       ) : null}
     </>
   );

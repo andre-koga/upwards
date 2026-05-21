@@ -8,11 +8,14 @@ import type {
   JournalEntry,
   OneTimeTask,
   ActivityStreak,
+  ActivityStatusEvent,
+  GroupStatusEvent,
   Goal,
   GoalMember,
   GoalProgressEvent,
   UserProfile,
 } from "./types";
+import { shiftDate, startOfDay } from "@/lib/time-utils";
 
 const JOURNAL_VIDEO_PREFIX = "/storage/v1/object/public/journal-videos/";
 
@@ -93,6 +96,8 @@ class UpwardsDB extends Dexie {
   journalEntries!: Table<JournalEntry>;
   oneTimeTasks!: Table<OneTimeTask>;
   activityStreaks!: Table<ActivityStreak>;
+  activityStatusEvents!: Table<ActivityStatusEvent>;
+  groupStatusEvents!: Table<GroupStatusEvent>;
   // Goals / accountability (simplified schema)
   promises!: Table<Goal>;
   promiseMembers!: Table<GoalMember>;
@@ -402,6 +407,199 @@ class UpwardsDB extends Dexie {
       promiseInvites: null,
       userProfiles: "user_id",
     });
+
+    // v16: remove is_archived from activities — archive is group-only (derived at read time)
+    this.version(16)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities:
+          "id, group_id, completed_at, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        promises: "id, creator_id, status, created_at",
+        promiseMembers:
+          "id, promise_id, user_id, invite_status, [promise_id+user_id]",
+        promiseProgressEvents: "id, promise_id, user_id, date, created_at",
+        promiseReactions: null,
+        promiseInvites: null,
+        userProfiles: "user_id",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("activities")
+          .toCollection()
+          .modify((row: Record<string, unknown>) => {
+            delete row.is_archived;
+          });
+      });
+
+    // v17: append-only status event tables for date-aware visibility
+    this.version(17)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities:
+          "id, group_id, completed_at, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        groupStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        promises: "id, creator_id, status, created_at",
+        promiseMembers:
+          "id, promise_id, user_id, invite_status, [promise_id+user_id]",
+        promiseProgressEvents: "id, promise_id, user_id, date, created_at",
+        promiseReactions: null,
+        promiseInvites: null,
+        userProfiles: "user_id",
+      })
+      .upgrade(async (tx) => {
+        const timestamp = new Date().toISOString();
+        const activityEvents: ActivityStatusEvent[] = [];
+        const groupEvents: GroupStatusEvent[] = [];
+
+        await tx.table("activities").each((activity: Activity) => {
+          if (activity.completed_at) {
+            const actionDay = startOfDay(new Date(activity.completed_at));
+            activityEvents.push({
+              id: uuidv4(),
+              entity_id: activity.id,
+              status_type: "completed",
+              next_value: true,
+              effective_at: shiftDate(actionDay, 1).toISOString(),
+              created_at: timestamp,
+              updated_at: timestamp,
+              synced_at: null,
+              deleted_at: null,
+            });
+          }
+          if (activity.deleted_at) {
+            const actionDay = startOfDay(new Date(activity.deleted_at));
+            activityEvents.push({
+              id: uuidv4(),
+              entity_id: activity.id,
+              status_type: "deleted",
+              next_value: true,
+              effective_at: actionDay.toISOString(),
+              created_at: timestamp,
+              updated_at: timestamp,
+              synced_at: null,
+              deleted_at: null,
+            });
+          }
+        });
+
+        await tx.table("activityGroups").each((group: ActivityGroup) => {
+          if (group.is_archived) {
+            const ref = group.updated_at || group.created_at;
+            const actionDay = startOfDay(new Date(ref));
+            groupEvents.push({
+              id: uuidv4(),
+              entity_id: group.id,
+              status_type: "archived",
+              next_value: true,
+              effective_at: shiftDate(actionDay, 1).toISOString(),
+              created_at: timestamp,
+              updated_at: timestamp,
+              synced_at: null,
+              deleted_at: null,
+            });
+          }
+          if (group.deleted_at) {
+            const actionDay = startOfDay(new Date(group.deleted_at));
+            groupEvents.push({
+              id: uuidv4(),
+              entity_id: group.id,
+              status_type: "deleted",
+              next_value: true,
+              effective_at: actionDay.toISOString(),
+              created_at: timestamp,
+              updated_at: timestamp,
+              synced_at: null,
+              deleted_at: null,
+            });
+          }
+        });
+
+        if (activityEvents.length > 0) {
+          await tx.table("activityStatusEvents").bulkAdd(activityEvents);
+        }
+        if (groupEvents.length > 0) {
+          await tx.table("groupStatusEvents").bulkAdd(groupEvents);
+        }
+      });
+
+    // v18: deleted status hides from action day (today inclusive), not next day
+    this.version(18)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities:
+          "id, group_id, completed_at, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        groupStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        promises: "id, creator_id, status, created_at",
+        promiseMembers:
+          "id, promise_id, user_id, invite_status, [promise_id+user_id]",
+        promiseProgressEvents: "id, promise_id, user_id, date, created_at",
+        promiseReactions: null,
+        promiseInvites: null,
+        userProfiles: "user_id",
+      })
+      .upgrade(async (tx) => {
+        const activities = await tx.table("activities").toArray();
+        const activityById = new Map(
+          activities.map((a: Activity) => [a.id, a])
+        );
+        const groups = await tx.table("activityGroups").toArray();
+        const groupById = new Map(
+          groups.map((g: ActivityGroup) => [g.id, g])
+        );
+
+        await tx
+          .table("activityStatusEvents")
+          .toCollection()
+          .modify((row: ActivityStatusEvent) => {
+            if (row.status_type !== "deleted" || !row.next_value) return;
+            const activity = activityById.get(row.entity_id);
+            if (activity?.deleted_at) {
+              row.effective_at = startOfDay(
+                new Date(activity.deleted_at)
+              ).toISOString();
+            }
+          });
+
+        await tx
+          .table("groupStatusEvents")
+          .toCollection()
+          .modify((row: GroupStatusEvent) => {
+            if (row.status_type !== "deleted" || !row.next_value) return;
+            const group = groupById.get(row.entity_id);
+            if (group?.deleted_at) {
+              row.effective_at = startOfDay(
+                new Date(group.deleted_at)
+              ).toISOString();
+            }
+          });
+      });
   }
 }
 

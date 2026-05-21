@@ -18,8 +18,7 @@ export interface Activity {
   name: string | null; // null = group-default (timing the group without a specific activity)
   routine: string | null;
   completion_target: number | null;
-  is_archived: boolean | null;
-  /** Set when the user marks the habit as "done" (distinct from archived; conveys a finished goal). */
+  /** Set when the user marks the habit as done; hides it from For Today. Clear to reactivate. */
   completed_at: string | null;
   order_index: number | null;
   created_at: string;
@@ -109,6 +108,38 @@ export interface ActivityStreak {
   activity_id: string;
   date: string; // YYYY-MM-DD
   streak: number;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
+/** Append-only status change for an activity (completed / deleted). */
+export type ActivityStatusType = "completed" | "deleted";
+
+export interface ActivityStatusEvent {
+  id: string;
+  entity_id: string;
+  status_type: ActivityStatusType;
+  /** true = enters status; false = leaves it (e.g. uncompleted). */
+  next_value: boolean;
+  /** When this status begins applying (local calendar semantics via startOfDay rules). */
+  effective_at: string;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
+/** Append-only status change for a group (archived / deleted). */
+export type GroupStatusType = "archived" | "deleted";
+
+export interface GroupStatusEvent {
+  id: string;
+  entity_id: string;
+  status_type: GroupStatusType;
+  next_value: boolean;
+  effective_at: string;
   created_at: string;
   updated_at: string;
   synced_at: string | null;

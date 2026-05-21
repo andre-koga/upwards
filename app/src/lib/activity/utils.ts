@@ -1,7 +1,16 @@
 import { db, now } from "@/lib/db";
-import type { Activity, ActivityGroup } from "@/lib/db/types";
+import type {
+  Activity,
+  ActivityGroup,
+  ActivityStatusEvent,
+  GroupStatusEvent,
+} from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { toDateString } from "@/lib/time-utils";
+import {
+  isActivityStatusAsOf,
+  isGroupStatusAsOf,
+} from "./status-events";
 import {
   isHiddenGroupDefaultActivity,
   getOrCreateHiddenGroupDefaultActivity,
@@ -130,12 +139,80 @@ export function getGroupColor(
   return getGroup(groups, groupId)?.color ?? fallback;
 }
 
+/** An activity's archive state is derived solely from its parent group (current snapshot). */
+export function isArchivedViaGroup(
+  group: ActivityGroup | undefined | null
+): boolean {
+  return !!group?.is_archived && !group?.deleted_at;
+}
+
+export interface TemporalVisibilityContext {
+  viewDate: Date;
+  activityEventsById: Map<string, ActivityStatusEvent[]>;
+  groupEventsById: Map<string, GroupStatusEvent[]>;
+}
+
+export function isArchivedViaGroupAsOf(
+  group: ActivityGroup | undefined | null,
+  ctx: TemporalVisibilityContext
+): boolean {
+  if (!group) return false;
+  const events = ctx.groupEventsById.get(group.id) ?? [];
+  return isGroupStatusAsOf(events, "archived", ctx.viewDate, group);
+}
+
+export function isDeletedAsOfActivity(
+  activity: Activity,
+  ctx: TemporalVisibilityContext
+): boolean {
+  const events = ctx.activityEventsById.get(activity.id) ?? [];
+  return isActivityStatusAsOf(events, "deleted", ctx.viewDate, activity);
+}
+
+export function isDeletedAsOfGroup(
+  group: ActivityGroup | undefined | null,
+  ctx: TemporalVisibilityContext
+): boolean {
+  if (!group) return false;
+  const events = ctx.groupEventsById.get(group.id) ?? [];
+  return isGroupStatusAsOf(events, "deleted", ctx.viewDate, group);
+}
+
+export function isCompletedAsOf(
+  activity: Activity,
+  ctx: TemporalVisibilityContext
+): boolean {
+  const events = ctx.activityEventsById.get(activity.id) ?? [];
+  return isActivityStatusAsOf(events, "completed", ctx.viewDate, activity);
+}
+
 export function isActiveActivity(a: Activity): boolean {
-  return !a.is_archived && !a.completed_at && !a.deleted_at;
+  return !a.completed_at && !a.deleted_at;
 }
 
 export function isActiveGroup(g: ActivityGroup): boolean {
   return !g.is_archived && !g.deleted_at;
+}
+
+export function buildGroupById(
+  groups: ActivityGroup[]
+): Map<string, ActivityGroup> {
+  return new Map(groups.map((g) => [g.id, g]));
+}
+
+/**
+ * Filter activities to those that are active (not completed, not deleted) AND
+ * whose parent group is also active (not archived, not deleted).
+ */
+export function filterActiveActivities(
+  activities: Activity[],
+  groupById: Map<string, ActivityGroup>
+): Activity[] {
+  return activities.filter((a) => {
+    if (a.completed_at || a.deleted_at) return false;
+    const group = groupById.get(a.group_id);
+    return !isArchivedViaGroup(group);
+  });
 }
 
 export function isScheduledRoutine(routine: string): boolean {
@@ -218,14 +295,21 @@ export async function stopCurrentActivity(options: {
 }
 
 /**
- * Determines whether an activity should appear for a given date
- * based on its routine configuration.
+ * Determines whether an activity should appear on For Today for a viewed date,
+ * using temporal status history (not current row flags alone).
  */
-export function shouldShowActivity(activity: Activity, date: Date): boolean {
+export function shouldShowActivity(
+  activity: Activity,
+  date: Date,
+  group: ActivityGroup | undefined | null,
+  temporal: TemporalVisibilityContext
+): boolean {
   if (isHiddenGroupDefaultActivity(activity)) return false;
-  // Completed habits are retired — hide from For Today like archived ones.
-  if (activity.completed_at || activity.is_archived || activity.deleted_at)
-    return false;
+
+  if (isCompletedAsOf(activity, temporal)) return false;
+  if (isDeletedAsOfActivity(activity, temporal)) return false;
+  if (isArchivedViaGroupAsOf(group, temporal)) return false;
+  if (isDeletedAsOfGroup(group, temporal)) return false;
 
   if (activity.created_at) {
     const creationDay = new Date(activity.created_at);

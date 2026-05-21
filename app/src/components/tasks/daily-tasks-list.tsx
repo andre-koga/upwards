@@ -17,8 +17,12 @@ import { usePartnerStatus } from "@/lib/promises/use-partner-status";
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
 interface DailyTasksListProps {
+  /** Active habits — used for starting new tracking from the footer. */
   activities: Activity[];
+  /** All habits — used for timeline / running pill labels on historical days. */
+  lookupActivities: Activity[];
   groups: ActivityGroup[];
+  lookupGroups: ActivityGroup[];
   daily: DailyTasksState;
   currentDate: Date;
   onDateChange: (date: Date) => void;
@@ -30,7 +34,9 @@ interface DailyTasksListProps {
 
 export default function DailyTasksList({
   activities,
+  lookupActivities,
   groups,
+  lookupGroups,
   daily,
   currentDate,
   onDateChange,
@@ -52,6 +58,7 @@ export default function DailyTasksList({
 
   const {
     isToday,
+    temporalForViewDate,
     loading,
     activityStreaks,
     dailyActivities,
@@ -76,7 +83,6 @@ export default function DailyTasksList({
     currentActivityElapsedMs,
     loadActivityPeriods,
     calculateActivityTime,
-    calculateActivityTotalTime,
     addManualActivityPeriod,
     formatTimerDisplay,
     recalculateStreaksFromViewedDate,
@@ -161,7 +167,8 @@ export default function DailyTasksList({
                   isPaused={pausedTaskIdSet.has(activity.id)}
                   isBreakDay={isBreakDay}
                   isCurrentActivity={currentActivityId === activity.id}
-                  isToday={isToday}
+                  isEditableDate={isToday}
+                  temporal={temporalForViewDate}
                   partnerStatuses={statusMap[activity.id]}
                   onIncrement={incrementTask}
                   onNeverIncrement={() => incrementNeverSlip(activity.id)}
@@ -216,8 +223,8 @@ export default function DailyTasksList({
           </div>
           <ActiveActivityPill
             currentActivityId={currentActivityId}
-            activities={activities}
-            groups={groups}
+            activities={lookupActivities}
+            groups={lookupGroups}
             elapsedMs={currentActivityElapsedMs}
             onStop={handleStopActivity}
             onEdit={
@@ -265,7 +272,8 @@ export default function DailyTasksList({
         loadJournalMeta={loadJournalMeta}
         currentActivityId={currentActivityId}
         activities={activities}
-        calculateActivityTotalTime={calculateActivityTotalTime}
+        calculateActivityTime={calculateActivityTime}
+        runningActivityElapsedMs={currentActivityElapsedMs}
         onStartActivity={handleStartActivity}
         onStopActivity={handleStopActivity}
         onAddManualActivityPeriod={addManualActivityPeriod}

@@ -1,6 +1,10 @@
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { db, now } from "@/lib/db";
-import { stopCurrentActivity } from "@/lib/activity";
+import {
+  appendActivityStatusEvent,
+  appendGroupStatusEvent,
+  stopCurrentActivity,
+} from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 
 interface DeleteConfirmDialogProps {
@@ -22,17 +26,25 @@ export function DeleteConfirmDialog({
     if (!id || !type) return;
     try {
       const n = now();
+      const actionDate = new Date();
       if (type === "group") {
         await stopCurrentActivity({ groupId: id });
         const activities = await db.activities
           .filter((a) => a.group_id === id)
           .toArray();
+        await appendGroupStatusEvent(id, "deleted", true, actionDate);
+        await Promise.all(
+          activities.map((a) =>
+            appendActivityStatusEvent(a.id, "deleted", true, actionDate)
+          )
+        );
         await db.activities.bulkPut(
           activities.map((a) => ({ ...a, deleted_at: n, updated_at: n }))
         );
         await db.activityGroups.update(id, { deleted_at: n, updated_at: n });
       } else {
         await stopCurrentActivity({ activityId: id });
+        await appendActivityStatusEvent(id, "deleted", true, actionDate);
         await db.activities.update(id, { deleted_at: n, updated_at: n });
       }
       onOpenChange(false);
