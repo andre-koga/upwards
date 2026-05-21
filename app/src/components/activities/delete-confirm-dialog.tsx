@@ -1,13 +1,5 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { db } from "@/lib/db";
+import { FormDialog, FormDialogActions } from "@/components/forms";
+import { db, now } from "@/lib/db";
 import { stopCurrentActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 
@@ -29,16 +21,19 @@ export function DeleteConfirmDialog({
   const handleDelete = async () => {
     if (!id || !type) return;
     try {
+      const n = now();
       if (type === "group") {
         await stopCurrentActivity({ groupId: id });
         const activities = await db.activities
           .filter((a) => a.group_id === id)
           .toArray();
-        await db.activities.bulkDelete(activities.map((a) => a.id));
-        await db.activityGroups.delete(id);
+        await db.activities.bulkPut(
+          activities.map((a) => ({ ...a, deleted_at: n, updated_at: n }))
+        );
+        await db.activityGroups.update(id, { deleted_at: n, updated_at: n });
       } else {
         await stopCurrentActivity({ activityId: id });
-        await db.activities.delete(id);
+        await db.activities.update(id, { deleted_at: n, updated_at: n });
       }
       onOpenChange(false);
       onDeleted({ type, id });
@@ -47,27 +42,31 @@ export function DeleteConfirmDialog({
     }
   };
 
+  const isGroup = type === "group";
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            Permanently Delete {type === "group" ? "Group" : "Activity"}?
-          </DialogTitle>
-          <DialogDescription>
-            This action cannot be undone. This will permanently delete the{" "}
-            {type === "group" ? "group and all activities in it" : "activity"}.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Permanently Delete ${isGroup ? "Group" : "Activity"}?`}
+      description={
+        <>
+          This action cannot be undone. This will permanently delete the{" "}
+          {isGroup ? "group and all activities in it" : "activity"}.
+        </>
+      }
+      contentClassName="sm:max-w-md"
+    >
+      <FormDialogActions
+        onConfirm={handleDelete}
+        confirmLabel="Delete"
+        confirmDisabled={!id || !type}
+        confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
+        secondaryAction={{
+          label: "Cancel",
+          onClick: () => onOpenChange(false),
+        }}
+      />
+    </FormDialog>
   );
 }

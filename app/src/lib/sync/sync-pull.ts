@@ -55,10 +55,35 @@ export async function runPull(ctx: PullContext): Promise<string> {
 
       if (!data || data.length === 0) continue;
 
-      const rowsToApply = data.filter((r) => {
+      // Skip rows modified during this sync cycle.
+      const notDirty = data.filter((r) => {
         const id = String((r as { id: string }).id);
         const dirty = dirtyIdsByTable.get(table);
         return !dirty?.has(id);
+      });
+
+      if (notDirty.length === 0) continue;
+
+      // LWW: skip rows where the local version is newer than the remote version.
+      // This prevents a failed push from being silently overwritten by the pull.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const localRows: Array<{ id: string; updated_at?: string } | undefined> =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (db[dexieTable] as any).bulkGet(
+          notDirty.map((r) => String((r as { id: string }).id))
+        );
+      const localById = new Map(
+        localRows
+          .filter((r): r is { id: string; updated_at?: string } => !!r)
+          .map((r) => [r.id, r])
+      );
+
+      const rowsToApply = notDirty.filter((r) => {
+        const local = localById.get(String((r as { id: string }).id));
+        if (!local) return true; // new remote row — always apply
+        return (
+          parseTimestamp(r.updated_at) >= parseTimestamp(local.updated_at)
+        );
       });
 
       if (rowsToApply.length === 0) continue;
