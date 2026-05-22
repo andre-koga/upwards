@@ -4,6 +4,7 @@ import {
   isSupabaseConfigured,
   getCachedSession,
 } from "@/lib/supabase";
+import { getAuthRedirectUrl } from "@/lib/auth-redirect";
 import { syncEngine } from "@/lib/sync";
 import { clearLocalSyncData } from "@/lib/sync/clear-local-sync-data";
 import { clearLastSignedInUserId } from "@/lib/sync/sync-storage";
@@ -68,6 +69,43 @@ export function useAuth() {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    if (!supabase) return;
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        { redirectTo: getAuthRedirectUrl("/settings/reset-password") }
+      );
+      if (error) throw error;
+    } catch (error) {
+      setAuthError(
+        error instanceof Error ? error.message : "Could not send reset email"
+      );
+      throw error;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    if (!supabase) return;
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    } catch (error) {
+      setAuthError(
+        error instanceof Error ? error.message : "Could not update password"
+      );
+      throw error;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const signOut = async () => {
     if (!supabase) return;
     await syncEngine.pushBeforeSignOut();
@@ -90,6 +128,8 @@ export function useAuth() {
     setAuthError,
     signIn,
     signUp,
+    resetPassword,
+    updatePassword,
     signOut,
   };
 }

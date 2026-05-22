@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import {
   Calendar,
@@ -20,6 +20,10 @@ import { cn } from "@/lib/utils";
 import AddTaskModal from "./add-task-modal";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import FeedbackDialog from "./feedback-dialog";
+import {
+  hasUnreadWhatsNewRelease,
+  markWhatsNewSeen,
+} from "@/lib/whats-new-read";
 
 interface FooterActionsBarProps {
   currentDate: Date;
@@ -70,10 +74,19 @@ export default function FooterActionsBar({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pathsDrawerOpen, setPathsDrawerOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(
+    hasUnreadWhatsNewRelease
+  );
   const { bottomInset } = useVisualViewportLayout();
   const isSelectedToday =
     toDateString(currentDate) === toDateString(new Date());
   const shortDate = formatDateShort(currentDate);
+
+  useEffect(() => {
+    if (pathsDrawerOpen) {
+      setHasUnreadWhatsNew(hasUnreadWhatsNewRelease());
+    }
+  }, [pathsDrawerOpen]);
 
   return (
     <>
@@ -98,14 +111,32 @@ export default function FooterActionsBar({
             <Button
               type="button"
               variant="outline"
-              className="h-11 w-full justify-start rounded-xl"
+              className="relative h-11 w-full justify-start rounded-xl"
               onClick={() => {
+                markWhatsNewSeen();
+                setHasUnreadWhatsNew(false);
                 setPathsDrawerOpen(false);
                 navigate("/whats-new");
               }}
+              title={
+                hasUnreadWhatsNew
+                  ? "What's new (unread updates)"
+                  : "What's new"
+              }
+              aria-label={
+                hasUnreadWhatsNew
+                  ? "What's new (unread updates)"
+                  : "What's new"
+              }
             >
               <History className="h-4 w-4" />
               What’s new
+              {hasUnreadWhatsNew ? (
+                <span
+                  className="absolute right-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-red-500 ring-2 ring-background"
+                  aria-hidden
+                />
+              ) : null}
             </Button>
             <Button
               type="button"

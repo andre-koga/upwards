@@ -24,6 +24,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
       "Projects drawer timers show the correct time tracked for each day.",
       "Sync keeps working when you delete a habit that had streak history.",
       "Friend names and usernames show reliably in goal and notification messages.",
+      "Users can now reset their password.",
     ],
   },
   {

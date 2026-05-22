@@ -9,6 +9,11 @@ import { useGoals } from "@/lib/promises/use-goals";
 import { useFriends } from "@/lib/friends/use-friends";
 import { useAuth } from "@/lib/use-auth";
 import type { InboxNotification } from "@/lib/promises/use-notifications";
+import {
+  clearableNotificationIdsForShare,
+  matchesFriendRequestNotification,
+  matchesGoalShareNotification,
+} from "@/lib/promises/notification-inbox-utils";
 import { NotificationRow } from "@/components/promises/notification-row";
 
 export default function NotificationsPage() {
@@ -22,6 +27,8 @@ export default function NotificationsPage() {
     clearableCount,
     dismissNotification,
     dismissAllClearable,
+    removeNotificationsMatching,
+    dismissNotificationIds,
   } = useNotifications();
   const { acceptShare, declineShare, stopWatching } = useGoals();
   const { respond: respondFriend } = useFriends();
@@ -29,34 +36,65 @@ export default function NotificationsPage() {
 
   const handleAcceptFriend = async (id: string) => {
     setResponding(id);
-    await respondFriend(id, true);
-    await reload();
-    setResponding(null);
+    removeNotificationsMatching((n) => matchesFriendRequestNotification(n, id));
+    try {
+      await respondFriend(id, true);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
   };
 
   const handleDeclineFriend = async (id: string) => {
     setResponding(id);
-    await respondFriend(id, false);
-    await reload();
-    setResponding(null);
+    removeNotificationsMatching((n) => matchesFriendRequestNotification(n, id));
+    try {
+      await respondFriend(id, false);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
   };
 
   const handleAcceptGoalShare = async (n: InboxNotification) => {
     if (!n.shareId) return;
     const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
     setResponding(rawId);
-    await acceptShare(n.shareId);
-    await reload();
-    setResponding(null);
+    removeNotificationsMatching((item) => item.id === n.id);
+    try {
+      await acceptShare(n.shareId);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
   };
 
   const handleDeclineGoalShare = async (n: InboxNotification) => {
     if (!n.shareId) return;
     const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
     setResponding(rawId);
-    await declineShare(n.shareId);
-    await reload();
-    setResponding(null);
+    removeNotificationsMatching((item) => item.id === n.id);
+    try {
+      await declineShare(n.shareId);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
+  };
+
+  const handleStopWatching = async (shareId: string) => {
+    setResponding(shareId);
+    const clearableIds = clearableNotificationIdsForShare(notifications, shareId);
+    removeNotificationsMatching((n) => matchesGoalShareNotification(n, shareId));
+    if (clearableIds.length > 0) {
+      dismissNotificationIds(clearableIds);
+    }
+    try {
+      await stopWatching(shareId);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
   };
 
   return (
@@ -99,7 +137,7 @@ export default function NotificationsPage() {
             Go to Settings
           </Button>
         </div>
-      ) : loading ? (
+      ) : loading && notifications.length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">Loading…</p>
       ) : error ? (
         <p className="py-12 text-center text-sm text-destructive">{error}</p>
@@ -121,10 +159,7 @@ export default function NotificationsPage() {
               onDeclineFriend={(id) => void handleDeclineFriend(id)}
               onAcceptGoalShare={(item) => void handleAcceptGoalShare(item)}
               onDeclineGoalShare={(item) => void handleDeclineGoalShare(item)}
-              onStopWatchingGoalShare={(shareId) => {
-                setResponding(shareId);
-                void stopWatching(shareId).then(() => reload()).finally(() => setResponding(null));
-              }}
+              onStopWatchingGoalShare={(shareId) => void handleStopWatching(shareId)}
               onDismiss={dismissNotification}
               responding={responding}
             />

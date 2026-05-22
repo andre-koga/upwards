@@ -3,7 +3,7 @@ import { AppearanceCard } from "@/components/settings/appearance-card";
 import { AuthCard } from "@/components/settings/auth-card";
 import { ProfileCard } from "@/components/settings/profile-card";
 import { SyncCard } from "@/components/settings/sync-card";
-import { BackupCard } from "@/components/settings/backup-card";
+// import { BackupCard } from "@/components/settings/backup-card";
 import { TaskOrderCard } from "@/components/settings/navigation-cards";
 import { useAuth } from "@/lib/use-auth";
 
@@ -29,7 +29,7 @@ export default function SettingsPage() {
       )}
 
       <TaskOrderCard />
-      <BackupCard />
+      {/* <BackupCard /> */}
 
       <div className="space-y-1 pt-4 text-center text-xs text-muted-foreground">
         <p>Upwards — local-first habit tracker</p>

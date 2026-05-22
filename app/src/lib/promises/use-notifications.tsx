@@ -237,15 +237,24 @@ function buildGoalShareNotification(
   );
 }
 
+export type LoadNotificationsOptions = {
+  /** Keep showing the current list while refreshing (no full-screen loading state). */
+  silent?: boolean;
+};
+
 interface NotificationsContextValue {
   notifications: InboxNotification[];
   loading: boolean;
   error: string | null;
-  reload: () => Promise<void>;
+  reload: (options?: LoadNotificationsOptions) => Promise<void>;
   unreadCount: number;
   clearableCount: number;
   dismissNotification: (id: string) => void;
   dismissAllClearable: () => void;
+  removeNotificationsMatching: (
+    match: (notification: InboxNotification) => boolean
+  ) => void;
+  dismissNotificationIds: (ids: string[]) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(
@@ -258,23 +267,29 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     []
   );
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  /** Hide notifications the user acted on until reload no longer returns them. */
+  const [suppressedIds, setSuppressedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const userId = isAuthed ? getCachedUserId() : null;
 
   useEffect(() => {
     setDismissedIds(new Set());
+    setSuppressedIds(new Set());
   }, [userId]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options?: LoadNotificationsOptions) => {
     if (!supabase || !userId) {
       setAllNotifications([]);
       setDismissedIds(new Set());
       setLoading(false);
       return;
     }
+    const silent = options?.silent ?? false;
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       setError(null);
 
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -428,7 +443,18 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       );
 
       setAllNotifications(inboxItems);
-      setDismissedIds(dismissedSet);
+      setSuppressedIds((prev) => {
+        const next = new Set<string>();
+        for (const id of prev) {
+          if (inboxItems.some((item) => item.id === id)) next.add(id);
+        }
+        return next;
+      });
+      setDismissedIds((prev) => {
+        const merged = new Set(dismissedSet);
+        for (const id of prev) merged.add(id);
+        return merged;
+      });
       void pruneDismissedNotifications(
         userId,
         inboxItems.map((item) => item.id)
@@ -460,7 +486,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           filter: `viewer_user_id=eq.${userId}`,
         },
         () => {
-          void load();
+          void load({ silent: true });
         }
       )
       .on(
@@ -472,7 +498,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           filter: `to_user_id=eq.${userId}`,
         },
         () => {
-          void load();
+          void load({ silent: true });
         }
       )
       .on(
@@ -483,7 +509,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           table: "promise_progress_events",
         },
         () => {
-          void load();
+          void load({ silent: true });
         }
       )
       .on(
@@ -494,7 +520,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           table: "promise_progress_events",
         },
         () => {
-          void load();
+          void load({ silent: true });
         }
       )
       .subscribe();
@@ -505,8 +531,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [userId, load]);
 
   const notifications = useMemo(
-    () => allNotifications.filter((n) => !dismissedIds.has(n.id)),
-    [allNotifications, dismissedIds]
+    () =>
+      allNotifications.filter(
+        (n) => !dismissedIds.has(n.id) && !suppressedIds.has(n.id)
+      ),
+    [allNotifications, dismissedIds, suppressedIds]
   );
 
   const unreadCount = notifications.length;
@@ -543,9 +572,46 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
     setDismissedIds((prev) => new Set([...prev, ...clearableIds]));
     void dismissNotifications(userId, clearableIds).catch(() => {
-      void load();
+      void load({ silent: true });
     });
   }, [notifications, userId, load]);
+
+  const removeNotificationsMatching = useCallback(
+    (match: (notification: InboxNotification) => boolean) => {
+      setAllNotifications((prev) => {
+        const removedIds: string[] = [];
+        const next = prev.filter((n) => {
+          if (match(n)) {
+            removedIds.push(n.id);
+            return false;
+          }
+          return true;
+        });
+        if (removedIds.length > 0) {
+          setSuppressedIds((s) => new Set([...s, ...removedIds]));
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const dismissNotificationIds = useCallback(
+    (ids: string[]) => {
+      if (!userId || ids.length === 0) return;
+      setDismissedIds((prev) => new Set([...prev, ...ids]));
+      setAllNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
+      void dismissNotifications(userId, ids).catch(() => {
+        setDismissedIds((prev) => {
+          const next = new Set(prev);
+          for (const id of ids) next.delete(id);
+          return next;
+        });
+        void load({ silent: true });
+      });
+    },
+    [userId, load]
+  );
 
   const value = useMemo(
     () => ({
@@ -557,6 +623,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       clearableCount,
       dismissNotification,
       dismissAllClearable,
+      removeNotificationsMatching,
+      dismissNotificationIds,
     }),
     [
       notifications,
@@ -567,6 +635,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       clearableCount,
       dismissNotification,
       dismissAllClearable,
+      removeNotificationsMatching,
+      dismissNotificationIds,
     ]
   );
 

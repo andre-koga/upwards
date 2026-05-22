@@ -9,6 +9,11 @@ import { useFriends } from "@/lib/friends/use-friends";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
 import type { InboxNotification } from "@/lib/promises/use-notifications";
+import {
+  clearableNotificationIdsForShare,
+  matchesFriendRequestNotification,
+  matchesGoalShareNotification,
+} from "@/lib/promises/notification-inbox-utils";
 import { NotificationRow } from "@/components/promises/notification-row";
 
 interface NotificationsDrawerProps {
@@ -27,6 +32,8 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
     clearableCount,
     dismissNotification,
     dismissAllClearable,
+    removeNotificationsMatching,
+    dismissNotificationIds,
   } = useNotifications();
   const { acceptShare, declineShare, stopWatching } = useGoals();
   const { respond: respondFriend } = useFriends();
@@ -34,40 +41,71 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
 
   useEffect(() => {
     if (open) {
-      void reload();
+      void reload({ silent: true });
     }
   }, [open, reload]);
 
   const handleAcceptFriend = async (id: string) => {
     setResponding(id);
-    await respondFriend(id, true);
-    await reload();
-    setResponding(null);
+    removeNotificationsMatching((n) => matchesFriendRequestNotification(n, id));
+    try {
+      await respondFriend(id, true);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
   };
 
   const handleDeclineFriend = async (id: string) => {
     setResponding(id);
-    await respondFriend(id, false);
-    await reload();
-    setResponding(null);
+    removeNotificationsMatching((n) => matchesFriendRequestNotification(n, id));
+    try {
+      await respondFriend(id, false);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
   };
 
   const handleAcceptGoalShare = async (n: InboxNotification) => {
     if (!n.shareId) return;
     const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
     setResponding(rawId);
-    await acceptShare(n.shareId);
-    await reload();
-    setResponding(null);
+    removeNotificationsMatching((item) => item.id === n.id);
+    try {
+      await acceptShare(n.shareId);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
   };
 
   const handleDeclineGoalShare = async (n: InboxNotification) => {
     if (!n.shareId) return;
     const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
     setResponding(rawId);
-    await declineShare(n.shareId);
-    await reload();
-    setResponding(null);
+    removeNotificationsMatching((item) => item.id === n.id);
+    try {
+      await declineShare(n.shareId);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
+  };
+
+  const handleStopWatching = async (shareId: string) => {
+    setResponding(shareId);
+    const clearableIds = clearableNotificationIdsForShare(notifications, shareId);
+    removeNotificationsMatching((n) => matchesGoalShareNotification(n, shareId));
+    if (clearableIds.length > 0) {
+      dismissNotificationIds(clearableIds);
+    }
+    try {
+      await stopWatching(shareId);
+      await reload({ silent: true });
+    } finally {
+      setResponding(null);
+    }
   };
 
   return (
@@ -108,7 +146,7 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
             </div>
           )}
 
-          <div className="flex min-h-[35svh] max-h-[70svh] flex-col overflow-y-auto">
+          <div className="flex max-h-[70svh] flex-col overflow-y-auto">
             {!isSupabaseConfigured || !isAuthed ? (
               <div className="flex flex-1 flex-col justify-center space-y-3 p-4">
                 <p className="text-sm text-muted-foreground">
@@ -125,17 +163,17 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
                   Go to Settings
                 </Button>
               </div>
-            ) : loading ? (
-              <p className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+            ) : loading && notifications.length === 0 ? (
+              <p className="flex flex-1 items-center justify-center py-8 text-sm text-muted-foreground">
                 Loading…
               </p>
             ) : error ? (
-              <p className="flex flex-1 items-center justify-center px-4 text-center text-sm text-destructive">
+              <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-destructive">
                 {error}
               </p>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
-                <Bell className="mb-3 h-8 w-8 text-muted-foreground/30" />
+              <div className="flex flex-1 flex-col items-center justify-center px-4 py-2 text-center">
+                <Bell className="m-2 h-6 w-6 text-muted-foreground/30" />
                 <p className="text-sm font-medium">Nothing here yet</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Goal shares and friend requests will show up here.
@@ -151,12 +189,7 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
                     onDeclineFriend={(id) => void handleDeclineFriend(id)}
                     onAcceptGoalShare={(item) => void handleAcceptGoalShare(item)}
                     onDeclineGoalShare={(item) => void handleDeclineGoalShare(item)}
-                    onStopWatchingGoalShare={(shareId) => {
-                      setResponding(shareId);
-                      void stopWatching(shareId)
-                        .then(() => reload())
-                        .finally(() => setResponding(null));
-                    }}
+                    onStopWatchingGoalShare={(shareId) => void handleStopWatching(shareId)}
                     onDismiss={dismissNotification}
                     responding={responding}
                   />

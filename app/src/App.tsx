@@ -3,6 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import StatsPage from "@/pages/stats";
 import SettingsPage from "@/pages/settings";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import TaskOrderPage from "@/pages/task-order";
 import WhatsNewPage from "@/pages/whats-new";
 import FriendsPage from "@/pages/friends";
@@ -51,6 +53,14 @@ export default function App() {
                   element={<Navigate to="/" replace />}
                 />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route
+                  path="/settings/forgot-password"
+                  element={<ForgotPasswordPage />}
+                />
+                <Route
+                  path="/settings/reset-password"
+                  element={<ResetPasswordPage />}
+                />
                 <Route path="/settings/task-order" element={<TaskOrderPage />} />
                 <Route path="/whats-new" element={<WhatsNewPage />} />
                 <Route path="/friends" element={<FriendsPage />} />
