@@ -18,6 +18,12 @@ import {
 import { supabase, getCachedUserId } from "@/lib/supabase";
 import { useAuth } from "@/lib/use-auth";
 import { formatGoalTargetLabel } from "@/lib/promises/notification-labels";
+import {
+  dismissNotifications,
+  fetchDismissedNotificationIds,
+  isNotificationClearable,
+  pruneDismissedNotifications,
+} from "@/lib/promises/notification-dismissals";
 
 export type NotificationKind =
   | "friend_request"
@@ -199,6 +205,9 @@ interface NotificationsContextValue {
   error: string | null;
   reload: () => Promise<void>;
   unreadCount: number;
+  clearableCount: number;
+  dismissNotification: (id: string) => void;
+  dismissAllClearable: () => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(
@@ -207,14 +216,22 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { isAuthed } = useAuth();
-  const [notifications, setNotifications] = useState<InboxNotification[]>([]);
+  const [allNotifications, setAllNotifications] = useState<InboxNotification[]>(
+    []
+  );
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const userId = isAuthed ? getCachedUserId() : null;
 
+  useEffect(() => {
+    setDismissedIds(new Set());
+  }, [userId]);
+
   const load = useCallback(async () => {
     if (!supabase || !userId) {
-      setNotifications([]);
+      setAllNotifications([]);
+      setDismissedIds(new Set());
       setLoading(false);
       return;
     }
@@ -228,6 +245,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         { data: friendReqs, error: frErr },
         goalInvites,
         { data: myMemberships, error: mmErr },
+        dismissedSet,
       ] = await Promise.all([
         supabase
           .from("friend_requests")
@@ -240,6 +258,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           .select("promise_id")
           .eq("user_id", userId)
           .eq("invite_status", "accepted"),
+        fetchDismissedNotificationIds(userId),
       ]);
 
       if (frErr) throw frErr;
@@ -330,11 +349,20 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           )
         );
 
-        setNotifications(
-          [...friendReqItems, ...goalInviteItems, ...completionItems].sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )
+        const inboxItems = [
+          ...friendReqItems,
+          ...goalInviteItems,
+          ...completionItems,
+        ].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        setAllNotifications(inboxItems);
+        setDismissedIds(dismissedSet);
+        void pruneDismissedNotifications(
+          userId,
+          inboxItems.map((item) => item.id)
         );
         return;
       }
@@ -366,11 +394,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         )
       );
 
-      setNotifications(
-        [...friendReqItems, ...goalInviteItems].sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
+      const inboxItems = [...friendReqItems, ...goalInviteItems].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      setAllNotifications(inboxItems);
+      setDismissedIds(dismissedSet);
+      void pruneDismissedNotifications(
+        userId,
+        inboxItems.map((item) => item.id)
       );
     } catch (err) {
       setError(
@@ -422,11 +455,48 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     };
   }, [userId, load]);
 
-  const unreadCount = useMemo(
-    () =>
-      notifications.filter((n) => n.actionStatus === "pending").length,
+  const notifications = useMemo(
+    () => allNotifications.filter((n) => !dismissedIds.has(n.id)),
+    [allNotifications, dismissedIds]
+  );
+
+  const unreadCount = notifications.length;
+
+  const clearableCount = useMemo(
+    () => notifications.filter(isNotificationClearable).length,
     [notifications]
   );
+
+  const dismissNotification = useCallback(
+    (id: string) => {
+      if (!userId) return;
+      const notification = allNotifications.find((n) => n.id === id);
+      if (!notification || !isNotificationClearable(notification)) return;
+
+      setDismissedIds((prev) => new Set([...prev, id]));
+      void dismissNotifications(userId, [id]).catch(() => {
+        setDismissedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      });
+    },
+    [allNotifications, userId]
+  );
+
+  const dismissAllClearable = useCallback(() => {
+    if (!userId) return;
+    const clearableIds = notifications
+      .filter(isNotificationClearable)
+      .map((n) => n.id);
+    if (clearableIds.length === 0) return;
+
+    setDismissedIds((prev) => new Set([...prev, ...clearableIds]));
+    void dismissNotifications(userId, clearableIds).catch(() => {
+      void load();
+    });
+  }, [notifications, userId, load]);
 
   const value = useMemo(
     () => ({
@@ -435,8 +505,20 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       error,
       reload: load,
       unreadCount,
+      clearableCount,
+      dismissNotification,
+      dismissAllClearable,
     }),
-    [notifications, loading, error, load, unreadCount]
+    [
+      notifications,
+      loading,
+      error,
+      load,
+      unreadCount,
+      clearableCount,
+      dismissNotification,
+      dismissAllClearable,
+    ]
   );
 
   return (

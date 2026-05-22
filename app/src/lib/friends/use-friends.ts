@@ -138,7 +138,7 @@ export function useFriends() {
       } else {
         const { error } = await supabase
           .from("friend_requests")
-          .update({ status: "declined", responded_at: new Date().toISOString() })
+          .delete()
           .eq("id", requestId);
         if (error) return { error: error.message };
       }
