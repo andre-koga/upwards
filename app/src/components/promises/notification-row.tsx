@@ -169,19 +169,21 @@ export function NotificationRow({
         )}
       </div>
 
-      {canDismiss && onDismiss && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="smIcon"
-          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-          onClick={() => onDismiss(n.id)}
-          aria-label="Dismiss notification"
-          title="Dismiss"
-        >
-          <X className="h-3.5 w-3.5" />
-        </Button>
-      )}
+      <div className="flex h-7 w-7 shrink-0 items-start justify-center">
+        {canDismiss && onDismiss ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="smIcon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={() => onDismiss(n.id)}
+            aria-label="Dismiss notification"
+            title="Dismiss"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }

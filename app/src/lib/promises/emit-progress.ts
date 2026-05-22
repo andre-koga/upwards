@@ -112,13 +112,16 @@ export async function emitDailyComplete(params: {
   if (goalsErr) throw goalsErr;
   if (!activeGoals || activeGoals.length === 0) return;
 
-  const ts = now();
-  await supabase
+  const { error: nameErr } = await supabase
     .from("promises")
-    .update({ activity_name: params.activityName, updated_at: ts })
+    .update({ activity_name: params.activityName })
     .eq("user_id", userId)
     .eq("activity_id", params.activityId)
     .eq("status", "active");
+
+  if (nameErr) {
+    console.warn("[goals] emitDailyComplete activity_name update failed:", nameErr);
+  }
 
   const streak = await resolveEmitStreak(params.activityId, params.dateString);
 
