@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { ChevronDown, ChevronLeft, Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -25,6 +25,13 @@ import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dial
 import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
 import ManualTimeEntryDialog from "@/components/tasks/manual-time-entry-dialog";
+import { GoalModificationBlockDialog } from "@/components/promises/goal-modification-block-dialog";
+import {
+  formatGoalModificationBlockMessage,
+  getActiveGoalForActivity,
+} from "@/lib/promises/goal-eligibility";
+import { useGoals } from "@/lib/promises/use-goals";
+import { getCachedUserId } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 
 async function loadActivityGroupLists(): Promise<{
@@ -114,6 +121,8 @@ export default function ActivityGroupsDrawer({
   triggerIcon: TriggerIcon = Plus,
   floating = true,
 }: ActivityGroupsDrawerProps) {
+  const { goals } = useGoals();
+  const userId = getCachedUserId();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"groups" | "activities">("groups");
   const [selectedGroup, setSelectedGroup] = useState<ActivityGroup | null>(
@@ -139,6 +148,7 @@ export default function ActivityGroupsDrawer({
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
     string | null
   >(null);
+  const [goalBlockMessage, setGoalBlockMessage] = useState<string | null>(null);
   const pendingContentRef = useRef<
     { type: "activities"; group: ActivityGroup } | { type: "groups" } | null
   >(null);
@@ -190,6 +200,42 @@ export default function ActivityGroupsDrawer({
   }, [open, view, selectedGroup, groupActivitiesTick]);
 
   const reloadGroupActivities = () => setGroupActivitiesTick((t) => t + 1);
+
+  const getCompleteBlockMessage = useCallback(
+    (activityId: string) => {
+      const goal = getActiveGoalForActivity(activityId, goals, userId);
+      return goal
+        ? formatGoalModificationBlockMessage(goal, "complete")
+        : null;
+    },
+    [goals, userId]
+  );
+
+  const handleMarkActivityCompleted = useCallback(
+    async (activityId: string, completed: boolean) => {
+      const blockMessage = completed
+        ? getCompleteBlockMessage(activityId)
+        : null;
+      if (blockMessage) {
+        setGoalBlockMessage(blockMessage);
+        return;
+      }
+
+      try {
+        await setActivityCompleted(activityId, completed, new Date(), {
+          goals,
+          userId,
+        });
+        reloadGroupActivities();
+        onTasksDataChanged?.();
+      } catch (error) {
+        if (error instanceof Error) {
+          setGoalBlockMessage(error.message);
+        }
+      }
+    },
+    [getCompleteBlockMessage, goals, userId, onTasksDataChanged]
+  );
 
   const closeDrawer = () => {
     setView("groups");
@@ -429,10 +475,15 @@ export default function ActivityGroupsDrawer({
                             >
                               <ActivityCompleteToggle
                                 isCompleted={false}
-                                onClick={async () => {
-                                  await setActivityCompleted(activity.id, true);
-                                  reloadGroupActivities();
-                                  onTasksDataChanged?.();
+                                title={
+                                  getCompleteBlockMessage(activity.id) ??
+                                  undefined
+                                }
+                                onClick={() => {
+                                  void handleMarkActivityCompleted(
+                                    activity.id,
+                                    true
+                                  );
                                 }}
                               />
                               <div className="min-w-0 flex-1">
@@ -480,13 +531,11 @@ export default function ActivityGroupsDrawer({
                               >
                                 <ActivityCompleteToggle
                                   isCompleted={true}
-                                  onClick={async () => {
-                                    await setActivityCompleted(
+                                  onClick={() => {
+                                    void handleMarkActivityCompleted(
                                       activity.id,
                                       false
                                     );
-                                    reloadGroupActivities();
-                                    onTasksDataChanged?.();
                                   }}
                                 />
                                 <div className="min-w-0 flex-1">
@@ -691,6 +740,14 @@ export default function ActivityGroupsDrawer({
             })
             .catch(console.error);
           onTasksDataChanged?.();
+        }}
+      />
+
+      <GoalModificationBlockDialog
+        open={goalBlockMessage !== null}
+        message={goalBlockMessage}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setGoalBlockMessage(null);
         }}
       />
 

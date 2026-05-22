@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dialog";
+import { GoalModificationBlockDialog } from "@/components/promises/goal-modification-block-dialog";
 import { Button } from "@/components/ui/button";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -18,6 +19,12 @@ import {
   FormStack,
 } from "@/components/forms";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
+import {
+  formatGoalModificationBlockMessage,
+  getActiveGoalForActivity,
+} from "@/lib/promises/goal-eligibility";
+import { useGoals } from "@/lib/promises/use-goals";
+import { getCachedUserId } from "@/lib/supabase";
 
 const VALID_ROUTINES = ["anytime", "daily", "weekly", "custom", "never"];
 
@@ -119,12 +126,23 @@ export function ActivityDialogForm({
   onDeleted,
 }: ActivityDialogFormProps) {
   const isEditing = Boolean(activity);
+  const { goals } = useGoals();
+  const userId = getCachedUserId();
   const [formData, setFormData] = useState<ActivityFormData>(() =>
     computeFormDataFromInitial(activity)
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [goalBlockMessage, setGoalBlockMessage] = useState<string | null>(null);
+
+  const deleteBlockedGoal =
+    activity && isEditing
+      ? getActiveGoalForActivity(activity.id, goals, userId)
+      : undefined;
+  const deleteBlockedMessage = deleteBlockedGoal
+    ? formatGoalModificationBlockMessage(deleteBlockedGoal, "delete")
+    : null;
 
   useEffect(() => {
     if (!open) return;
@@ -235,8 +253,14 @@ export function ActivityDialogForm({
               size="icon"
               className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
               disabled={saving}
-              onClick={() => setDeleteConfirmOpen(true)}
-              title="Delete activity"
+              onClick={() => {
+                if (deleteBlockedMessage) {
+                  setGoalBlockMessage(deleteBlockedMessage);
+                  return;
+                }
+                setDeleteConfirmOpen(true);
+              }}
+              title={deleteBlockedMessage ?? "Delete activity"}
               aria-label="Delete activity"
             >
               <Trash2 className="h-4 w-4" aria-hidden />
@@ -335,6 +359,14 @@ export function ActivityDialogForm({
           }}
         />
       ) : null}
+
+      <GoalModificationBlockDialog
+        open={goalBlockMessage !== null}
+        message={goalBlockMessage}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setGoalBlockMessage(null);
+        }}
+      />
     </>
   );
 }

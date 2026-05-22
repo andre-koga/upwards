@@ -5,6 +5,8 @@ import TaskCheckbox from "@/components/tasks/task-checkbox";
 interface ActivityCompleteToggleProps {
   isCompleted: boolean;
   onClick: () => void;
+  disabled?: boolean;
+  title?: string;
 }
 
 /**
@@ -16,6 +18,8 @@ interface ActivityCompleteToggleProps {
 function ActivityCompleteToggle({
   isCompleted,
   onClick,
+  disabled = false,
+  title,
 }: ActivityCompleteToggleProps) {
   return (
     <TaskCheckbox
@@ -23,7 +27,11 @@ function ActivityCompleteToggle({
       isToday={true}
       size="sm"
       onClick={onClick}
-      title={isCompleted ? "Mark habit active again" : "Mark habit completed"}
+      disabled={disabled}
+      title={
+        title ??
+        (isCompleted ? "Mark habit active again" : "Mark habit completed")
+      }
       completeContent={<Check className="h-3.5 w-3.5" aria-hidden />}
       className={
         isCompleted

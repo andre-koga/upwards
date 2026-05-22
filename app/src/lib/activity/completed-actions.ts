@@ -1,4 +1,9 @@
 import { db, now } from "@/lib/db";
+import type { GoalWithMembers } from "@/lib/db/types";
+import {
+  formatGoalModificationBlockMessage,
+  getActiveGoalForActivity,
+} from "@/lib/promises/goal-eligibility";
 import { appendActivityStatusEvent } from "./status-events";
 import { stopCurrentActivity } from "./utils";
 import { logError } from "@/lib/error-utils";
@@ -10,9 +15,26 @@ import { logError } from "@/lib/error-utils";
 export async function setActivityCompleted(
   activityId: string,
   completed: boolean,
-  actionDate: Date = new Date()
+  actionDate: Date = new Date(),
+  options?: {
+    goals?: GoalWithMembers[];
+    userId?: string | null;
+  }
 ): Promise<void> {
   try {
+    if (completed && options?.goals) {
+      const goal = getActiveGoalForActivity(
+        activityId,
+        options.goals,
+        options.userId
+      );
+      if (goal) {
+        throw new Error(
+          formatGoalModificationBlockMessage(goal, "complete")
+        );
+      }
+    }
+
     if (completed) {
       await stopCurrentActivity({ activityId });
     }

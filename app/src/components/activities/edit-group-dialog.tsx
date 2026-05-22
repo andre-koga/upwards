@@ -4,6 +4,13 @@ import { db, now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
 import { GroupDialogForm } from "@/components/activities/group-dialog-form";
 import { ArchiveGroupDialog } from "@/components/activities/archive-group-dialog";
+import { GoalModificationBlockDialog } from "@/components/promises/goal-modification-block-dialog";
+import {
+  formatGoalModificationBlockMessage,
+  getActiveGoalBlockingGroup,
+} from "@/lib/promises/goal-eligibility";
+import { useGoals } from "@/lib/promises/use-goals";
+import { getCachedUserId } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 
 interface EditGroupDialogProps {
@@ -21,11 +28,33 @@ export function EditGroupDialog({
   onUpdated,
   onArchived,
 }: EditGroupDialogProps) {
+  const { goals } = useGoals();
+  const userId = getCachedUserId();
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const [goalBlockMessage, setGoalBlockMessage] = useState<string | null>(null);
 
   const handleFormOpenChange = (nextOpen: boolean) => {
     if (nextOpen) setArchiveConfirmOpen(false);
     onOpenChange(nextOpen);
+  };
+
+  const handleArchiveClick = async () => {
+    const activities = await db.activities
+      .filter((activity) => activity.group_id === group.id)
+      .toArray();
+    const blockingGoal = getActiveGoalBlockingGroup(
+      group.id,
+      activities,
+      goals,
+      userId
+    );
+    if (blockingGoal) {
+      setGoalBlockMessage(
+        formatGoalModificationBlockMessage(blockingGoal, "archive", "group")
+      );
+      return;
+    }
+    setArchiveConfirmOpen(true);
   };
 
   return (
@@ -45,7 +74,7 @@ export function EditGroupDialog({
             variant="outline"
             size="icon"
             className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
-            onClick={() => setArchiveConfirmOpen(true)}
+            onClick={() => void handleArchiveClick()}
             title="Archive group"
             aria-label="Archive group"
           >
@@ -81,6 +110,14 @@ export function EditGroupDialog({
           setArchiveConfirmOpen(false);
           onOpenChange(false);
           onArchived?.();
+        }}
+      />
+
+      <GoalModificationBlockDialog
+        open={goalBlockMessage !== null}
+        message={goalBlockMessage}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setGoalBlockMessage(null);
         }}
       />
     </>
