@@ -17,6 +17,8 @@ export const SYNC_TABLES: SyncTable[] = [
   "journal_entries",
   "one_time_tasks",
   "activity_streaks",
+  "activity_status_events",
+  "group_status_events",
 ];
 
 export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
@@ -27,6 +29,8 @@ export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
   journal_entries: "journalEntries",
   one_time_tasks: "oneTimeTasks",
   activity_streaks: "activityStreaks",
+  activity_status_events: "activityStatusEvents",
+  group_status_events: "groupStatusEvents",
 };
 
 /**
@@ -43,4 +47,6 @@ export const FULL_PULL_TABLES: SyncTable[] = [
   "activity_periods",
   "journal_entries",
   "one_time_tasks",
+  "activity_status_events",
+  "group_status_events",
 ];

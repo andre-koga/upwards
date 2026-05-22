@@ -22,6 +22,7 @@ interface FormDialogProps {
   children: ReactNode;
   size?: "default" | "sm";
   contentClassName?: string;
+  overlayClassName?: string;
   headerClassName?: string;
   titleClassName?: string;
   descriptionClassName?: string;
@@ -38,6 +39,7 @@ export function FormDialog({
   children,
   size = "sm",
   contentClassName,
+  overlayClassName,
   headerClassName,
   titleClassName,
   descriptionClassName,
@@ -48,6 +50,7 @@ export function FormDialog({
       <DialogContent
         size={size}
         className={cn("p-4", contentClassName)}
+        overlayClassName={overlayClassName}
         onPointerDownOutside={onContentPointerDownOutside}
       >
         {headerEnd ? (

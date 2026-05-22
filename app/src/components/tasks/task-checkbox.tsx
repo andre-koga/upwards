@@ -13,6 +13,7 @@ interface TaskCheckboxProps {
   className?: string;
   completeContent?: ReactNode;
   incompleteContent?: ReactNode;
+  disabled?: boolean;
 }
 
 function TaskCheckbox({
@@ -24,14 +25,17 @@ function TaskCheckbox({
   className,
   completeContent,
   incompleteContent,
+  disabled = false,
 }: TaskCheckboxProps) {
+  const isInteractive = isToday && !disabled;
+
   return (
     <Button
       type="button"
       variant={isComplete ? "taskComplete" : "taskTodo"}
       size={size === "sm" ? "taskSm" : "taskMd"}
-      onClick={isToday ? onClick : undefined}
-      disabled={!isToday}
+      onClick={isInteractive ? onClick : undefined}
+      disabled={!isInteractive}
       className={cn("disabled:cursor-default", className)}
       title={
         title ??

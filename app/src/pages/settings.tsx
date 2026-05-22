@@ -1,13 +1,14 @@
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppearanceCard } from "@/components/settings/appearance-card";
 import { AuthCard } from "@/components/settings/auth-card";
+import { ProfileCard } from "@/components/settings/profile-card";
 import { SyncCard } from "@/components/settings/sync-card";
-import { BackupCard } from "@/components/settings/backup-card";
+// import { BackupCard } from "@/components/settings/backup-card";
 import { TaskOrderCard } from "@/components/settings/navigation-cards";
 import { useAuth } from "@/lib/use-auth";
 
 export default function SettingsPage() {
-  const { isSupabaseConfigured } = useAuth();
+  const { isSupabaseConfigured, isAuthed } = useAuth();
   const buildLabel = import.meta.env.VITE_APP_BUILD_TIMESTAMP ?? "dev";
   const randomPhrase = import.meta.env.VITE_APP_RANDOM_PHRASE ?? "hey there!";
   return (
@@ -22,12 +23,13 @@ export default function SettingsPage() {
       {isSupabaseConfigured && (
         <>
           <AuthCard />
+          {isAuthed && <ProfileCard />}
           <SyncCard />
         </>
       )}
 
       <TaskOrderCard />
-      <BackupCard />
+      {/* <BackupCard /> */}
 
       <div className="space-y-1 pt-4 text-center text-xs text-muted-foreground">
         <p>Upwards — local-first habit tracker</p>

@@ -1,12 +1,16 @@
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Flame, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { getActivityDisplayName } from "@/lib/activity";
-import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
+import {
+  getActivityDisplayName,
+  getDailyTaskInteractionState,
+  type TemporalVisibilityContext,
+} from "@/lib/activity";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import ActivityPill from "@/components/activities/activity-pill";
+import { ActivityRetiredInfoDialog } from "@/components/activities/activity-retired-info-dialog";
+import type { ActivityRetiredKind } from "@/components/activities/activity-retired-info-dialog";
+import DailyTaskActivityPill from "@/components/tasks/daily-task-activity-pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 
 interface ActivityTaskItemProps {
@@ -18,7 +22,9 @@ interface ActivityTaskItemProps {
   isPaused: boolean;
   isBreakDay: boolean;
   isCurrentActivity: boolean;
-  isToday: boolean;
+  /** Whether the viewed calendar day is within the journal edit window. */
+  isEditableDate: boolean;
+  temporal: TemporalVisibilityContext;
   onIncrement: (activityId: string, target: number) => void;
   /** "Never" tasks: tap increments slip count. */
   onNeverIncrement?: () => void;
@@ -38,7 +44,8 @@ function ActivityTaskItem({
   isPaused,
   isBreakDay,
   isCurrentActivity,
-  isToday,
+  isEditableDate,
+  temporal,
   onIncrement,
   onNeverIncrement,
   onNeverReset,
@@ -46,10 +53,17 @@ function ActivityTaskItem({
   onStopActivity,
   onManualEntry,
 }: ActivityTaskItemProps) {
-  const navigate = useNavigate();
+  const [retiredDialogKind, setRetiredDialogKind] =
+    useState<ActivityRetiredKind | null>(null);
   const [, setTick] = useState(0);
   const neverPressTimeoutRef = useRef<number | null>(null);
   const longPressHandledRef = useRef(false);
+
+  const interaction = useMemo(
+    () =>
+      getDailyTaskInteractionState(activity, temporal, isEditableDate),
+    [activity, temporal, isEditableDate]
+  );
 
   // Only update this specific item when it's running
   useEffect(() => {
@@ -63,8 +77,19 @@ function ActivityTaskItem({
   const isComplete = isNeverTask
     ? count >= target
     : !isPaused && count >= target;
-  const groupColor = group?.color || DEFAULT_GROUP_COLOR;
-  const canUpdateCount = isToday && (!isPaused || isNeverTask);
+  const canUpdateCount =
+    interaction.canEditCounts && (!isPaused || isNeverTask);
+  const activityDisplayName = getActivityDisplayName(activity, group);
+
+  const handleNameClick = () => {
+    if (interaction.retiredKind === "deleted") {
+      setRetiredDialogKind("deleted");
+      return;
+    }
+    if (interaction.retiredKind === "completed") {
+      setRetiredDialogKind("completed");
+    }
+  };
 
   const clearNeverPressTimeout = () => {
     if (neverPressTimeoutRef.current === null) return;
@@ -114,7 +139,9 @@ function ActivityTaskItem({
           onPointerCancel={clearNeverPressTimeout}
           className={cn(
             "flex h-7 min-w-[2.75rem] touch-manipulation items-center justify-center rounded-md border px-1 transition-colors",
-            canUpdateCount ? "cursor-pointer" : "cursor-default text-muted-foreground",
+            canUpdateCount
+              ? "cursor-pointer"
+              : "cursor-default text-muted-foreground",
             isComplete
               ? "border-destructive bg-destructive text-destructive-foreground hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)]"
               : count > 0
@@ -202,34 +229,29 @@ function ActivityTaskItem({
       )}
 
       <div className="flex-1">
-        <ActivityPill
-          name={getActivityDisplayName(activity, group)}
-          color={groupColor}
-          elapsedMs={timeSpent}
-          isRunning={isCurrentActivity}
-          onClick={
-            isToday && !isPaused
-              ? () => {
-                  if (isCurrentActivity) {
-                    onStopActivity();
-                    return;
-                  }
-                  onStartActivity(activity.id);
-                }
-              : undefined
-          }
-          onManualEntry={
-            isToday && !isPaused && onManualEntry
-              ? () => onManualEntry(activity.id)
-              : undefined
-          }
-          onNameClick={() => {
-            navigate(`/activities/stats/${activity.id}`);
-          }}
-          nameClassName={isComplete ? "line-through text-muted-foreground" : ""}
-          readOnly={!isToday}
+        <DailyTaskActivityPill
+          activity={activity}
+          group={group}
+          timeSpent={timeSpent}
+          isCurrentActivity={isCurrentActivity}
+          isPaused={isPaused}
+          interaction={interaction}
+          isDayComplete={isComplete}
+          onNameClick={handleNameClick}
+          onStartActivity={onStartActivity}
+          onStopActivity={onStopActivity}
+          onManualEntry={onManualEntry}
         />
       </div>
+
+      <ActivityRetiredInfoDialog
+        open={retiredDialogKind !== null}
+        kind={retiredDialogKind}
+        activityName={activityDisplayName}
+        onOpenChange={(next) => {
+          if (!next) setRetiredDialogKind(null);
+        }}
+      />
     </div>
   );
 }

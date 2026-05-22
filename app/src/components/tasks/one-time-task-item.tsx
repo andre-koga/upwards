@@ -145,10 +145,24 @@ function OneTimeTaskItem({
         isComplete={!!task.is_completed}
         isToday={isToday}
         onClick={() => onToggle(task)}
+        incompleteContent={
+          task.is_pinned ? (
+            <Pin className="h-3 w-3 fill-current" aria-hidden />
+          ) : undefined
+        }
+        title={
+          task.is_pinned
+            ? isToday
+              ? task.is_completed
+                ? "Pinned memo — mark incomplete"
+                : "Pinned memo — mark complete"
+              : "Pinned memo"
+            : undefined
+        }
       />
 
       <div
-        className="relative flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-xl border border-border"
+        className="flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-xl border border-border"
         onClick={isToday ? handleMemoClick : undefined}
         onPointerDown={isToday ? handleMemoPointerDown : undefined}
         onPointerUp={isToday ? handleMemoPointerUp : undefined}
@@ -178,14 +192,6 @@ function OneTimeTaskItem({
           <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
             <span>Due {dueDateDisplay}</span>
           </div>
-        ) : null}
-        {task.is_pinned ? (
-          <span
-            className="pointer-events-none absolute bottom-2 right-2 text-primary"
-            aria-label="Pinned memo"
-          >
-            <Pin className="h-3.5 w-3.5 fill-current" />
-          </span>
         ) : null}
       </div>
 

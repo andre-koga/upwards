@@ -10,6 +10,38 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-05-22",
+    title: "Goals, friends, and notifications",
+    bullets: [
+      "Set a Goal on a habit to stay accountable — pick a streak target and track how you are doing.",
+      "Add friends by username and share Goals for extra motivation.",
+      "Use the notifications inbox (bell, top right) for friend requests and Goal updates in one place.",
+      "Mark habits as done from the Projects drawer; they stay on For Today through the day you finish them.",
+      "Browse past days on For Today to see which habits and groups were active on that day.",
+    ],
+    fixes: [
+      "Display names and usernames load reliably in friends and Goals.",
+      "Projects drawer timers show the correct time tracked for each day.",
+      "Sync keeps working when you delete a habit that had streak history.",
+      "Friend names and usernames show reliably in goal and notification messages.",
+      "Users can now reset their password.",
+    ],
+  },
+  {
+    date: "2026-05-15",
+    title: "New nav, pinned memos, and simpler group editing",
+    bullets: [
+      "Notifications button is now a fixed bell in the top-right corner (only on the home screen).",
+      "Pinned memos show a pin icon inside the checkbox, matching the visual logic of the For Today section.",
+      "Clicking a group or activity name in the Projects drawer opens the edit dialog directly — no separate page needed.",
+      "Stats moved to a cleaner /stats page; legacy /activities routes removed.",
+    ],
+    fixes: [
+      "Previous/next day navigation dialog is now centered.",
+      "What's New page always opens at the top (newest update first).",
+    ],
+  },
+  {
     date: "2026-05-14",
     title: "Simpler groups, clearer sessions, and quicker time edits",
     bullets: [

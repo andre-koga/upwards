@@ -31,7 +31,9 @@ export default function TodayPage() {
     bookmarkedDates,
     loadJournalMeta,
     activities,
+    lookupActivities,
     groups,
+    lookupGroups,
     loading,
     dailyTasks,
     refreshTasksData,
@@ -154,7 +156,7 @@ export default function TodayPage() {
       }}
     >
       {swipeFeedback && (
-        <div className="pointer-events-none fixed right-3 top-3 z-50">
+        <div className="pointer-events-none fixed inset-x-0 top-3 z-50 flex justify-center px-3">
           <div
             className="flex h-8 items-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs font-medium shadow-sm backdrop-blur-sm"
             style={{
@@ -186,7 +188,9 @@ export default function TodayPage() {
       <div className="p-3">
         <DailyTasksList
           activities={activities}
+          lookupActivities={lookupActivities}
           groups={groups}
+          lookupGroups={lookupGroups}
           daily={dailyTasks}
           currentDate={currentDate}
           onDateChange={setCurrentDate}

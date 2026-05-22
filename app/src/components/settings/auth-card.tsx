@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { LogIn, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -136,6 +137,15 @@ export function AuthCard() {
               </div>
             </form>
           )}
+
+          <p className="text-center">
+            <Link
+              to="/settings/forgot-password"
+              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Forgot password?
+            </Link>
+          </p>
         </>
       )}
     </SettingsSection>

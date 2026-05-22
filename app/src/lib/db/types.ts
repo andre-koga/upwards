@@ -18,7 +18,8 @@ export interface Activity {
   name: string | null; // null = group-default (timing the group without a specific activity)
   routine: string | null;
   completion_target: number | null;
-  is_archived: boolean | null;
+  /** Set when the user marks the habit as done; hides it from For Today. Clear to reactivate. */
+  completed_at: string | null;
   order_index: number | null;
   created_at: string;
   updated_at: string;
@@ -111,4 +112,137 @@ export interface ActivityStreak {
   updated_at: string;
   synced_at: string | null;
   deleted_at: string | null;
+}
+
+/** Append-only status change for an activity (completed / deleted). */
+export type ActivityStatusType = "completed" | "deleted";
+
+export interface ActivityStatusEvent {
+  id: string;
+  entity_id: string;
+  status_type: ActivityStatusType;
+  /** true = enters status; false = leaves it (e.g. uncompleted). */
+  next_value: boolean;
+  /** When this status begins applying (local calendar semantics via startOfDay rules). */
+  effective_at: string;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
+/** Append-only status change for a group (archived / deleted). */
+export type GroupStatusType = "archived" | "deleted";
+
+export interface GroupStatusEvent {
+  id: string;
+  entity_id: string;
+  status_type: GroupStatusType;
+  next_value: boolean;
+  effective_at: string;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
+// ─── Goals ────────────────────────────────────────────────────────────────────
+
+export type GoalStatus = "active" | "completed" | "cancelled";
+export type GoalShareStatus = "pending" | "accepted" | "declined" | "stopped";
+
+export type GoalTargetKind = "streak_count" | "streak_until";
+
+export type GoalTargetInput =
+  | { kind: "streak_count"; streak: number }
+  | { kind: "streak_until"; endDate: string };
+
+export type CreateGoalInput = {
+  activityId: string;
+  name: string;
+  description: string;
+  target: GoalTargetInput;
+};
+
+/** Individual goal owned by one user. Stored in Supabase `promises` table. */
+export interface Goal {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string;
+  activity_id: string;
+  activity_name: string | null;
+  status: GoalStatus;
+  target_kind: GoalTargetKind | null;
+  target_streak: number | null;
+  target_end_date: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface GoalShare {
+  id: string;
+  goal_id: string;
+  owner_user_id: string;
+  viewer_user_id: string;
+  status: GoalShareStatus;
+  created_at: string;
+  responded_at: string | null;
+  username?: string | null;
+  display_name?: string | null;
+}
+
+export interface GoalWithShares extends Goal {
+  shares: GoalShare[];
+}
+
+/** A goal shared with the current user for read-only cheering. */
+export interface SharedGoalView {
+  share: GoalShare;
+  goal: Goal;
+  ownerDisplayName: string | null;
+  ownerUsername: string | null;
+}
+
+/** Progress payload — never contains journal text, locations, or memos. */
+export interface ProgressPayload {
+  activityName: string;
+  streak?: number;
+  completionTarget?: number;
+  goalTargetReached?: boolean;
+}
+
+/** Emitted when the goal owner completes their habit or hits target. */
+export interface GoalProgressEvent {
+  id: string;
+  promise_id: string;
+  user_id: string;
+  date: string;
+  payload: ProgressPayload;
+  created_at: string;
+}
+
+/** User profile — username used for friend invites; display_name shown in UI. */
+export interface UserProfile {
+  user_id: string;
+  username: string | null;
+  display_name: string | null;
+  updated_at: string;
+}
+
+/** A friend request (pending / accepted / declined). */
+export interface FriendRequest {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  status: "pending" | "accepted" | "declined";
+  created_at: string;
+  responded_at: string | null;
+}
+
+/** An accepted friendship (ordered pair). */
+export interface Friendship {
+  user_a: string;
+  user_b: string;
+  created_at: string;
 }

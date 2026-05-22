@@ -43,7 +43,7 @@ It combines activity tracking, streaks, session timelines, and lightweight journ
 - Start/stop sessions per activity with live elapsed time
 - Review session history in timeline format
 - Open session details from timeline entries
-- Browse group-specific historical timelines with infinite scroll on group pages
+- Manage groups and activities from the Projects drawer (edit by tapping the name)
 
 ### Journal & Day Context
 

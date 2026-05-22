@@ -28,7 +28,7 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "name",
     "routine",
     "completion_target",
-    "is_archived",
+    "completed_at",
     "order_index",
     "created_at",
     "updated_at",
@@ -100,6 +100,28 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "updated_at",
     "deleted_at",
   ]),
+  activity_status_events: new Set([
+    "id",
+    "user_id",
+    "entity_id",
+    "status_type",
+    "next_value",
+    "effective_at",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
+  group_status_events: new Set([
+    "id",
+    "user_id",
+    "entity_id",
+    "status_type",
+    "next_value",
+    "effective_at",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+  ]),
 };
 
 /**
@@ -148,10 +170,11 @@ export async function sanitizeForeignKeyRefsBeforeUpsert(
   let result = rows;
 
   if (table === "activity_periods" || table === "activity_streaks") {
+    // Soft-deleted activities still exist locally/remotely; streaks and periods
+    // keep their activity_id for historical data.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const activityIdsRaw: any[] = await (db.activities as any)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((a: any) => !a.deleted_at)
+      .toCollection()
       .primaryKeys();
     const validActivityIds = new Set(
       activityIdsRaw.map((id) => String(id)).filter((id) => isValidUuid(id))

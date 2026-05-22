@@ -19,6 +19,8 @@ export function useDataBackup() {
         activityPeriods,
         journalEntries,
         oneTimeTasks,
+        activityStatusEvents,
+        groupStatusEvents,
       ] = await Promise.all([
         db.activityGroups.toArray(),
         db.activities.toArray(),
@@ -26,17 +28,21 @@ export function useDataBackup() {
         db.activityPeriods.toArray(),
         db.journalEntries.toArray(),
         db.oneTimeTasks.toArray(),
+        db.activityStatusEvents.toArray(),
+        db.groupStatusEvents.toArray(),
       ]);
 
       const backup = {
         exportedAt: new Date().toISOString(),
-        version: 1,
+        version: 2,
         activityGroups,
         activities,
         dailyEntries,
         activityPeriods,
         journalEntries,
         oneTimeTasks,
+        activityStatusEvents,
+        groupStatusEvents,
       };
 
       const blob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -76,12 +82,22 @@ export function useDataBackup() {
           db.activityPeriods,
           db.journalEntries,
           db.oneTimeTasks,
+          db.activityStatusEvents,
+          db.groupStatusEvents,
         ],
         async () => {
           if (data.activityGroups?.length)
             await db.activityGroups.bulkPut(data.activityGroups);
-          if (data.activities?.length)
-            await db.activities.bulkPut(data.activities);
+          if (data.activities?.length) {
+            // Strip legacy is_archived field — archive is now group-only.
+            const normalized = data.activities.map(
+              (a: Record<string, unknown>) => {
+                const { is_archived: _, ...rest } = a;
+                return rest;
+              }
+            );
+            await db.activities.bulkPut(normalized);
+          }
           if (data.dailyEntries?.length)
             await db.dailyEntries.bulkPut(data.dailyEntries);
           if (data.activityPeriods?.length)
@@ -90,6 +106,10 @@ export function useDataBackup() {
             await db.journalEntries.bulkPut(data.journalEntries);
           if (data.oneTimeTasks?.length)
             await db.oneTimeTasks.bulkPut(data.oneTimeTasks);
+          if (data.activityStatusEvents?.length)
+            await db.activityStatusEvents.bulkPut(data.activityStatusEvents);
+          if (data.groupStatusEvents?.length)
+            await db.groupStatusEvents.bulkPut(data.groupStatusEvents);
         }
       );
 

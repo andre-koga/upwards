@@ -4,7 +4,9 @@ import { db, now } from "@/lib/db";
 import type { Activity } from "@/lib/db/types";
 import {
   getActivityDisplayName,
-  isActiveActivity,
+  isActiveGroup,
+  buildGroupById,
+  filterActiveActivities,
   isHiddenGroupDefaultActivity,
   isScheduledRoutine,
 } from "@/lib/activity";
@@ -39,11 +41,12 @@ export default function TaskOrderPage() {
   const loadActivities = useCallback(async () => {
     try {
       setLoading(true);
-      const all = await db.activities
-        .filter((activity) => isActiveActivity(activity))
-        .toArray();
-
-      const reorderable = all
+      const [allActivities, groups] = await Promise.all([
+        db.activities.filter((a) => !a.completed_at && !a.deleted_at).toArray(),
+        db.activityGroups.filter((g) => isActiveGroup(g)).toArray(),
+      ]);
+      const groupById = buildGroupById(groups);
+      const reorderable = filterActiveActivities(allActivities, groupById)
         .filter(
           (activity) =>
             !isHiddenGroupDefaultActivity(activity) &&

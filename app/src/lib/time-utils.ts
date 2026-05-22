@@ -91,6 +91,13 @@ export function startOfDay(date: Date): Date {
   return day;
 }
 
+/** End of local calendar day for inclusive as-of comparisons. */
+export function endOfDay(date: Date): Date {
+  const day = new Date(date);
+  day.setHours(23, 59, 59, 999);
+  return day;
+}
+
 /**
  * Convert HH:MM:SS time string to total seconds.
  */

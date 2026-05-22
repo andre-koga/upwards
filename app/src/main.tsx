@@ -5,6 +5,8 @@ import App from "./App.tsx";
 import "./index.css";
 import { syncEngine } from "./lib/sync";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
+import { prepareSignedInSession } from "./lib/sync/auth-handoff";
+import { emitGuestHandoffNeeded } from "./lib/sync/guest-handoff-emitter";
 import { initializeStoredPalette } from "./lib/palette";
 
 void (async () => {
@@ -23,9 +25,14 @@ void (async () => {
 
 // Drive auto-sync from confirmed auth state — never start before session is known
 if (isSupabaseConfigured && supabase) {
-  supabase.auth.onAuthStateChange((event) => {
-    if (event === "SIGNED_IN") {
-      syncEngine.startAutoSync(60000);
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+      const userId = session?.user?.id;
+      if (!userId) return;
+      void prepareSignedInSession(userId).then((result) => {
+        if (result === "ready") syncEngine.startAutoSync(60000);
+        else emitGuestHandoffNeeded(userId);
+      });
     } else if (event === "SIGNED_OUT") {
       syncEngine.stopAutoSync();
     }

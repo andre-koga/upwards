@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { Archive } from "lucide-react";
-import { ArchiveActivityDialog } from "@/components/activities/archive-activity-dialog";
+import { Trash2 } from "lucide-react";
+import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dialog";
+import { GoalModificationBlockDialog } from "@/components/promises/goal-modification-block-dialog";
 import { Button } from "@/components/ui/button";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
-  getActivityDisplayName,
-  isActiveActivity,
   isScheduledRoutine,
   parseRoutine,
   validateActivityData,
@@ -20,6 +19,12 @@ import {
   FormStack,
 } from "@/components/forms";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
+import {
+  formatGoalModificationBlockMessage,
+  getActiveGoalForActivity,
+} from "@/lib/promises/goal-eligibility";
+import { useGoals } from "@/lib/promises/use-goals";
+import { getCachedUserId } from "@/lib/supabase";
 
 const VALID_ROUTINES = ["anytime", "daily", "weekly", "custom", "never"];
 
@@ -29,7 +34,8 @@ interface ActivityDialogFormProps {
   group: ActivityGroup;
   activity?: Activity;
   onSaved?: () => void;
-  onArchived?: () => void;
+  /** Called after the activity is permanently deleted. */
+  onDeleted?: () => void;
 }
 
 interface ActivityFormData {
@@ -117,15 +123,26 @@ export function ActivityDialogForm({
   group,
   activity,
   onSaved,
-  onArchived,
+  onDeleted,
 }: ActivityDialogFormProps) {
   const isEditing = Boolean(activity);
+  const { goals } = useGoals();
+  const userId = getCachedUserId();
   const [formData, setFormData] = useState<ActivityFormData>(() =>
     computeFormDataFromInitial(activity)
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [goalBlockMessage, setGoalBlockMessage] = useState<string | null>(null);
+
+  const deleteBlockedGoal =
+    activity && isEditing
+      ? getActiveGoalForActivity(activity.id, goals, userId)
+      : undefined;
+  const deleteBlockedMessage = deleteBlockedGoal
+    ? formatGoalModificationBlockMessage(deleteBlockedGoal, "delete")
+    : null;
 
   useEffect(() => {
     if (!open) return;
@@ -133,14 +150,12 @@ export function ActivityDialogForm({
     setFormData(computeFormDataFromInitial(activity));
     setError(null);
     setSaving(false);
-    setArchiveConfirmOpen(false);
+    setDeleteConfirmOpen(false);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, activity]);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
-      setArchiveConfirmOpen(false);
-    } else {
+    if (!nextOpen) {
       setError(null);
       setSaving(false);
     }
@@ -184,7 +199,8 @@ export function ActivityDialogForm({
             const scheduledActivities = await db.activities
               .filter(
                 (item) =>
-                  isActiveActivity(item) &&
+                  !item.completed_at &&
+                  !item.deleted_at &&
                   isScheduledRoutine(item.routine ?? "")
               )
               .toArray();
@@ -205,7 +221,7 @@ export function ActivityDialogForm({
             name: payload.name,
             routine: payload.routine,
             completion_target: payload.completion_target,
-            is_archived: false,
+            completed_at: null,
             order_index: nextOrderIndex,
             created_at: timestamp,
             updated_at: timestamp,
@@ -230,18 +246,24 @@ export function ActivityDialogForm({
         onOpenChange={handleOpenChange}
         title={isEditing ? "Edit Activity" : "New Activity"}
         headerEnd={
-          isEditing ? (
+          isEditing && activity ? (
             <Button
               type="button"
               variant="outline"
               size="icon"
               className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
               disabled={saving}
-              onClick={() => setArchiveConfirmOpen(true)}
-              title="Archive activity"
-              aria-label="Archive activity"
+              onClick={() => {
+                if (deleteBlockedMessage) {
+                  setGoalBlockMessage(deleteBlockedMessage);
+                  return;
+                }
+                setDeleteConfirmOpen(true);
+              }}
+              title={deleteBlockedMessage ?? "Delete activity"}
+              aria-label="Delete activity"
             >
-              <Archive className="h-4 w-4" aria-hidden />
+              <Trash2 className="h-4 w-4" aria-hidden />
             </Button>
           ) : undefined
         }
@@ -325,20 +347,26 @@ export function ActivityDialogForm({
       </FormDialog>
 
       {isEditing && activity ? (
-        <ArchiveActivityDialog
-          open={open && archiveConfirmOpen}
-          activityId={activity.id}
-          activityName={getActivityDisplayName(activity, group)}
-          onOpenChange={setArchiveConfirmOpen}
-          cancelLabel="No"
-          confirmLabel="Yes"
-          onArchived={() => {
-            setArchiveConfirmOpen(false);
-            onArchived?.();
+        <DeleteConfirmDialog
+          open={open && deleteConfirmOpen}
+          type="activity"
+          id={activity.id}
+          onOpenChange={setDeleteConfirmOpen}
+          onDeleted={() => {
+            setDeleteConfirmOpen(false);
+            onDeleted?.();
             handleOpenChange(false);
           }}
         />
       ) : null}
+
+      <GoalModificationBlockDialog
+        open={goalBlockMessage !== null}
+        message={goalBlockMessage}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setGoalBlockMessage(null);
+        }}
+      />
     </>
   );
 }

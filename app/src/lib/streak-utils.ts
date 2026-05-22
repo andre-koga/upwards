@@ -1,7 +1,46 @@
 import { db, newId, now } from "@/lib/db";
-import type { Activity, ActivityStreak, DailyEntry } from "@/lib/db/types";
-import { shouldShowActivity } from "@/lib/activity";
+import type {
+  Activity,
+  ActivityGroup,
+  ActivityStreak,
+  ActivityStatusEvent,
+  DailyEntry,
+  GroupStatusEvent,
+} from "@/lib/db/types";
+import {
+  isNeverRoutine,
+  isNeverTaskSlipRecorded,
+  neverTaskTarget,
+} from "@/lib/activity/never-task";
+import { shouldShowActivity, type TemporalVisibilityContext } from "@/lib/activity";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
+
+export interface StreakVisibilityDeps {
+  groupById: Map<string, ActivityGroup>;
+  activityEventsById: Map<string, ActivityStatusEvent[]>;
+  groupEventsById: Map<string, GroupStatusEvent[]>;
+}
+
+function shouldShowActivityForStreak(
+  activity: Activity,
+  day: Date,
+  visibility?: StreakVisibilityDeps
+): boolean {
+  if (!visibility) {
+    return shouldShowActivity(activity, day, undefined, {
+      viewDate: day,
+      activityEventsById: new Map(),
+      groupEventsById: new Map(),
+    });
+  }
+  const group = visibility.groupById.get(activity.group_id);
+  const temporal: TemporalVisibilityContext = {
+    viewDate: day,
+    activityEventsById: visibility.activityEventsById,
+    groupEventsById: visibility.groupEventsById,
+  };
+  return shouldShowActivity(activity, day, group, temporal);
+}
 
 function isStreakEligible(activity: Activity): boolean {
   return activity.routine !== "anytime";
@@ -11,7 +50,7 @@ function shouldIncrementStreak(
   activity: Activity,
   isCompleted: boolean
 ): boolean {
-  if (activity.routine === "never") {
+  if (isNeverRoutine(activity)) {
     return !isCompleted;
   }
 
@@ -43,12 +82,18 @@ function isCompletedOnDate(
   const pausedTaskIds = Array.isArray(entry.paused_task_ids)
     ? entry.paused_task_ids
     : [];
-  if (activity.routine !== "never" && pausedTaskIds.includes(activity.id)) {
+  if (!isNeverRoutine(activity) && pausedTaskIds.includes(activity.id)) {
     return false;
   }
-  const target = activity.completion_target ?? 1;
+  const target = neverTaskTarget(activity);
   const taskCounts = (entry.task_counts as Record<string, number>) || {};
-  return (taskCounts[activity.id] || 0) >= target;
+  const count = taskCounts[activity.id] || 0;
+
+  if (isNeverRoutine(activity)) {
+    return isNeverTaskSlipRecorded(activity, count);
+  }
+
+  return count >= target;
 }
 
 type DailyTaskStreakStatus = "incrementable" | "reset" | "skip";
@@ -60,12 +105,12 @@ function getDailyTaskStreakStatus(
   if (!entry) {
     // For "never" tasks, no daily entry means nothing was logged that day (no
     // slip occurred), so the streak should continue, not reset.
-    return activity.routine === "never" ? "incrementable" : "reset";
+    return isNeverRoutine(activity) ? "incrementable" : "reset";
   }
   const pausedTaskIds = Array.isArray(entry.paused_task_ids)
     ? entry.paused_task_ids
     : [];
-  if (activity.routine !== "never" && pausedTaskIds.includes(activity.id)) {
+  if (!isNeverRoutine(activity) && pausedTaskIds.includes(activity.id)) {
     return "skip";
   }
   const isCompleted = isCompletedOnDate(activity, entry);
@@ -73,7 +118,7 @@ function getDailyTaskStreakStatus(
   // Break day behavior:
   // - Regular tasks: incomplete is neutral, complete still counts.
   // - Never tasks: non-completion can still count when explicitly not paused.
-  if (entry.is_break_day && activity.routine !== "never" && !isCompleted) {
+  if (entry.is_break_day && !isNeverRoutine(activity) && !isCompleted) {
     return "skip";
   }
 
@@ -119,7 +164,8 @@ async function upsertActivityStreak(
 async function ensureStreakForActivityOnDate(
   activity: Activity,
   targetDate: Date,
-  forceRecomputeTarget: boolean
+  forceRecomputeTarget: boolean,
+  visibility?: StreakVisibilityDeps
 ): Promise<number> {
   if (!isStreakEligible(activity)) return 0;
 
@@ -128,7 +174,7 @@ async function ensureStreakForActivityOnDate(
   const creationDay = getCreationDay(activity);
 
   if (targetDay < creationDay) return 0;
-  if (!shouldShowActivity(activity, targetDay)) return 0;
+  if (!shouldShowActivityForStreak(activity, targetDay, visibility)) return 0;
 
   const existingTargetRow = await db.activityStreaks
     .where("[activity_id+date]")
@@ -139,7 +185,12 @@ async function ensureStreakForActivityOnDate(
   if (forceRecomputeTarget) {
     // Rebuild this specific day from raw daily entries so stale historical
     // streak rows cannot leak into the visible target-day streak.
-    await recomputeActivityStreaksFromDateForward(activity, targetDay, targetDay);
+    await recomputeActivityStreaksFromDateForward(
+      activity,
+      targetDay,
+      targetDay,
+      visibility
+    );
     const refreshedTargetRow = await db.activityStreaks
       .where("[activity_id+date]")
       .equals([activity.id, targetDateStr])
@@ -188,7 +239,7 @@ async function ensureStreakForActivityOnDate(
   let targetStreak = 0;
 
   while (cursorDay <= targetDay) {
-    if (!shouldShowActivity(activity, cursorDay)) {
+    if (!shouldShowActivityForStreak(activity, cursorDay, visibility)) {
       cursorDay = shiftDate(cursorDay, 1);
       continue;
     }
@@ -232,17 +283,22 @@ async function ensureStreakForActivityOnDate(
 export async function getOrComputeActivityStreaksForDate(
   activities: Activity[],
   date: Date,
-  options?: { forceRecomputeTarget?: boolean }
+  options?: {
+    forceRecomputeTarget?: boolean;
+    visibility?: StreakVisibilityDeps;
+  }
 ): Promise<Record<string, number>> {
   const streaks: Record<string, number> = {};
   const forceRecomputeTarget = options?.forceRecomputeTarget ?? false;
+  const visibility = options?.visibility;
 
   await Promise.all(
     activities.map(async (activity) => {
       streaks[activity.id] = await ensureStreakForActivityOnDate(
         activity,
         date,
-        forceRecomputeTarget
+        forceRecomputeTarget,
+        visibility
       );
     })
   );
@@ -259,7 +315,8 @@ export async function getOrComputeActivityStreaksForDate(
 async function recomputeActivityStreaksFromDateForward(
   activity: Activity,
   fromDate: Date,
-  rangeEndDay: Date
+  rangeEndDay: Date,
+  visibility?: StreakVisibilityDeps
 ): Promise<void> {
   if (!isStreakEligible(activity)) return;
 
@@ -294,7 +351,7 @@ async function recomputeActivityStreaksFromDateForward(
   let cursor = creationDay;
 
   while (cursor <= endDay) {
-    if (!shouldShowActivity(activity, cursor)) {
+    if (!shouldShowActivityForStreak(activity, cursor, visibility)) {
       cursor = shiftDate(cursor, 1);
       continue;
     }
@@ -338,17 +395,24 @@ async function recomputeActivityStreaksFromDateForward(
  */
 export async function recomputeActivityStreaksFromDateForActivities(
   activities: Activity[],
-  fromDate: Date
+  fromDate: Date,
+  options?: { visibility?: StreakVisibilityDeps }
 ): Promise<void> {
   const fromDay = startOfDay(fromDate);
   const todayDay = startOfDay(new Date());
   const rangeEndDay =
     todayDay.getTime() > fromDay.getTime() ? todayDay : fromDay;
+  const visibility = options?.visibility;
 
   const eligible = activities.filter(isStreakEligible);
   await Promise.all(
     eligible.map((activity) =>
-      recomputeActivityStreaksFromDateForward(activity, fromDay, rangeEndDay)
+      recomputeActivityStreaksFromDateForward(
+        activity,
+        fromDay,
+        rangeEndDay,
+        visibility
+      )
     )
   );
 }

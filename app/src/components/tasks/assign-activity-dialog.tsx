@@ -4,7 +4,6 @@ import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import {
   isActiveGroup,
-  isActiveActivity,
   formatTimerDisplay,
 } from "@/lib/activity";
 import {
@@ -55,7 +54,7 @@ export default function AssignActivityDialog({
       return;
     }
     const a = await db.activities
-      .filter((act) => act.group_id === groupId && isActiveActivity(act))
+      .filter((act) => act.group_id === groupId && !act.completed_at && !act.deleted_at)
       .sortBy("created_at");
     setActivities(a);
     setSelectedActivityId(a.length > 0 ? a[0].id : "");

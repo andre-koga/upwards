@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import {
   Calendar,
@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Settings,
   Sparkles,
+  Users,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Activity } from "@/lib/db/types";
@@ -19,6 +20,10 @@ import { cn } from "@/lib/utils";
 import AddTaskModal from "./add-task-modal";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import FeedbackDialog from "./feedback-dialog";
+import {
+  hasUnreadWhatsNewRelease,
+  markWhatsNewSeen,
+} from "@/lib/whats-new-read";
 
 interface FooterActionsBarProps {
   currentDate: Date;
@@ -28,7 +33,9 @@ interface FooterActionsBarProps {
   loadJournalMeta: () => Promise<void>;
   currentActivityId: string | null;
   activities: Activity[];
-  calculateActivityTotalTime: (activityId: string) => number;
+  calculateActivityTime: (activityId: string) => number;
+  /** Live elapsed for the open period on the selected day (add to calculateActivityTime). */
+  runningActivityElapsedMs?: number;
   onStartActivity: (activityId: string) => void | Promise<void>;
   onStopActivity: () => void | Promise<void>;
   onAddManualActivityPeriod: (payload: {
@@ -55,7 +62,8 @@ export default function FooterActionsBar({
   loadJournalMeta,
   currentActivityId,
   activities,
-  calculateActivityTotalTime,
+  calculateActivityTime,
+  runningActivityElapsedMs = 0,
   onStartActivity,
   onStopActivity,
   onAddManualActivityPeriod,
@@ -66,10 +74,19 @@ export default function FooterActionsBar({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pathsDrawerOpen, setPathsDrawerOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(
+    hasUnreadWhatsNewRelease
+  );
   const { bottomInset } = useVisualViewportLayout();
   const isSelectedToday =
     toDateString(currentDate) === toDateString(new Date());
   const shortDate = formatDateShort(currentDate);
+
+  useEffect(() => {
+    if (pathsDrawerOpen) {
+      setHasUnreadWhatsNew(hasUnreadWhatsNewRelease());
+    }
+  }, [pathsDrawerOpen]);
 
   return (
     <>
@@ -94,14 +111,32 @@ export default function FooterActionsBar({
             <Button
               type="button"
               variant="outline"
-              className="h-11 w-full justify-start rounded-xl"
+              className="relative h-11 w-full justify-start rounded-xl"
               onClick={() => {
+                markWhatsNewSeen();
+                setHasUnreadWhatsNew(false);
                 setPathsDrawerOpen(false);
                 navigate("/whats-new");
               }}
+              title={
+                hasUnreadWhatsNew
+                  ? "What's new (unread updates)"
+                  : "What's new"
+              }
+              aria-label={
+                hasUnreadWhatsNew
+                  ? "What's new (unread updates)"
+                  : "What's new"
+              }
             >
               <History className="h-4 w-4" />
               What’s new
+              {hasUnreadWhatsNew ? (
+                <span
+                  className="absolute right-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-red-500 ring-2 ring-background"
+                  aria-hidden
+                />
+              ) : null}
             </Button>
             <Button
               type="button"
@@ -119,14 +154,14 @@ export default function FooterActionsBar({
 
           <div className="my-2" role="separator" aria-hidden />
 
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Button
               type="button"
               variant="outline"
-              className="h-14 min-h-14 flex-1 flex-row gap-2 rounded-xl text-sm font-semibold"
+              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
               onClick={() => {
                 setPathsDrawerOpen(false);
-                navigate("/activities/stats");
+                navigate("/stats");
               }}
             >
               <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
@@ -135,7 +170,19 @@ export default function FooterActionsBar({
             <Button
               type="button"
               variant="outline"
-              className="h-14 min-h-14 flex-1 flex-row gap-2 rounded-xl text-sm font-semibold"
+              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
+              onClick={() => {
+                setPathsDrawerOpen(false);
+                navigate("/friends");
+              }}
+            >
+              <Users className="h-5 w-5 shrink-0 text-blue-500" />
+              Friends
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
               onClick={() => {
                 setPathsDrawerOpen(false);
                 navigate("/settings");
@@ -182,7 +229,8 @@ export default function FooterActionsBar({
         <ActivityGroupsDrawer
           currentActivityId={currentActivityId}
           activities={activities}
-          calculateActivityTime={calculateActivityTotalTime}
+          calculateActivityTime={calculateActivityTime}
+          runningActivityElapsedMs={runningActivityElapsedMs}
           onStartActivity={onStartActivity}
           onStopActivity={onStopActivity}
           initialDate={currentDate}
