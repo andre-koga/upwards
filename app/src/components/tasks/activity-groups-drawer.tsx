@@ -84,8 +84,8 @@ function ArchivedPillToggle({
 interface ActivityGroupsDrawerProps {
   currentActivityId?: string | null;
   activities?: Activity[];
-  /** Total tracked time for the selected day (see initialDate), including a live open period when editable. */
-  getActivityElapsedMs?: (activityId: string) => number;
+  /** All-time tracked time per activity, plus live open session when running today. */
+  getActivityDrawerElapsedMs?: (activityId: string) => number;
   onStartActivity?: (activityId: string) => void | Promise<void>;
   onStopActivity?: () => void | Promise<void>;
   initialDate?: Date;
@@ -106,7 +106,7 @@ interface ActivityGroupsDrawerProps {
 export default function ActivityGroupsDrawer({
   currentActivityId,
   activities = [],
-  getActivityElapsedMs = () => 0,
+  getActivityDrawerElapsedMs = () => 0,
   onStartActivity,
   onStopActivity,
   initialDate = new Date(),
@@ -482,7 +482,9 @@ export default function ActivityGroupsDrawer({
                                   selectedGroup
                                 )}
                                 color={groupColor}
-                                elapsedMs={getActivityElapsedMs(activity.id)}
+                                elapsedMs={getActivityDrawerElapsedMs(
+                                  activity.id
+                                )}
                                 isRunning={isRunning}
                                 onNameClick={() => setEditingActivity(activity)}
                                 onClick={async () => {
@@ -531,7 +533,7 @@ export default function ActivityGroupsDrawer({
                                       selectedGroup
                                     )}
                                     color={groupColor}
-                                    elapsedMs={getActivityElapsedMs(
+                                    elapsedMs={getActivityDrawerElapsedMs(
                                       activity.id
                                     )}
                                     isRunning={false}

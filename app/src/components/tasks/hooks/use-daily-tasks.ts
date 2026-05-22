@@ -389,6 +389,31 @@ export function useDailyTasks({
     [activityTotalMsById]
   );
 
+  /** All-time tracked time for drawer pills (closed periods + live open session when running today). */
+  const getActivityDrawerElapsedMs = useCallback(
+    (activityId: string): number => {
+      let totalMs = calculateActivityTotalTime(activityId);
+      if (!isToday || resolvedCurrentActivityId !== activityId) {
+        return totalMs;
+      }
+
+      const openPeriod = allActivityPeriods.find(
+        (period) => period.activity_id === activityId && !period.end_time
+      );
+      if (!openPeriod) return totalMs;
+
+      const startMs = new Date(openPeriod.start_time).getTime();
+      return totalMs + Math.max(0, nowMs - startMs);
+    },
+    [
+      calculateActivityTotalTime,
+      isToday,
+      resolvedCurrentActivityId,
+      allActivityPeriods,
+      nowMs,
+    ]
+  );
+
   const startActivity = useCallback(
     async (activityId: string) => {
       await handleStartActivity(activityId);
@@ -547,6 +572,7 @@ export function useDailyTasks({
     loadActivityPeriods,
     calculateActivityTime,
     getActivityElapsedMs,
+    getActivityDrawerElapsedMs,
     calculateActivityTotalTime,
     addManualActivityPeriod,
     formatTimerDisplay,

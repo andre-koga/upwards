@@ -33,7 +33,8 @@ interface FooterActionsBarProps {
   loadJournalMeta: () => Promise<void>;
   currentActivityId: string | null;
   activities: Activity[];
-  getActivityElapsedMs: (activityId: string) => number;
+  /** All-time tracked time per activity (Projects drawer). */
+  getActivityDrawerElapsedMs: (activityId: string) => number;
   onStartActivity: (activityId: string) => void | Promise<void>;
   onStopActivity: () => void | Promise<void>;
   onAddManualActivityPeriod: (payload: {
@@ -60,7 +61,7 @@ export default function FooterActionsBar({
   loadJournalMeta,
   currentActivityId,
   activities,
-  getActivityElapsedMs,
+  getActivityDrawerElapsedMs,
   onStartActivity,
   onStopActivity,
   onAddManualActivityPeriod,
@@ -226,7 +227,7 @@ export default function FooterActionsBar({
         <ActivityGroupsDrawer
           currentActivityId={currentActivityId}
           activities={activities}
-          getActivityElapsedMs={getActivityElapsedMs}
+          getActivityDrawerElapsedMs={getActivityDrawerElapsedMs}
           onStartActivity={onStartActivity}
           onStopActivity={onStopActivity}
           initialDate={currentDate}

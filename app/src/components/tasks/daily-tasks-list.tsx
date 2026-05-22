@@ -83,6 +83,7 @@ export default function DailyTasksList({
     currentActivityElapsedMs,
     loadActivityPeriods,
     getActivityElapsedMs,
+    getActivityDrawerElapsedMs,
     addManualActivityPeriod,
     formatTimerDisplay,
     recalculateStreaksFromViewedDate,
@@ -283,7 +284,7 @@ export default function DailyTasksList({
         loadJournalMeta={loadJournalMeta}
         currentActivityId={currentActivityId}
         activities={activities}
-        getActivityElapsedMs={getActivityElapsedMs}
+        getActivityDrawerElapsedMs={getActivityDrawerElapsedMs}
         onStartActivity={handleStartActivity}
         onStopActivity={handleStopActivity}
         onAddManualActivityPeriod={addManualActivityPeriod}
