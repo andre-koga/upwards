@@ -10,6 +10,25 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-05-22",
+    title: "Individual goals with read-only sharing",
+    bullets: [
+      "Goals are personal — one owner, one habit, one streak target.",
+      "Share a goal with friends so they can cheer you on; progress shows up in their notifications, not on your home screen.",
+      "My Goals is only for goals you own — friends follow your progress from the notifications inbox.",
+      "Accept or decline goal shares from notifications — no linked habit required on your side.",
+      "Goal cards show your goal name and linked habit; streak target details live in the goal dialog.",
+      "Goal cards turn green when you reach the target or the goal period ends.",
+      "Create goals with a custom name (30 characters) and description (100 characters).",
+      "You can't start a second active goal on the same habit, or mark it complete, delete it, or archive its group until the goal is finished or cancelled.",
+      "Notifications when a friend completes their habit or reaches their goal target.",
+      "Dismiss individual notifications from the inbox.",
+    ],
+    fixes: [
+      "Simpler goal model — no cooperative membership or partner-linked habits.",
+    ],
+  },
+  {
     date: "2026-05-20",
     title: "Goals, Friends, and a unified inbox",
     bullets: [

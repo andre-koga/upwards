@@ -31,40 +31,69 @@ export function formatGoalTargetLabel(goal: {
   return null;
 }
 
-export function formatGoalInviteMessage(
+export function formatGoalShareMessage(
   notification: Pick<
     InboxNotification,
-    "actorDisplayName" | "actorUsername" | "goalLabel" | "activityName"
+    | "actorDisplayName"
+    | "actorUsername"
+    | "goalLabel"
+    | "goalTitle"
+    | "activityName"
   >
 ): string {
   const actor = actorDisplayLabel(notification);
-  const habit = notification.activityName?.trim();
-  const target = notification.goalLabel?.trim();
+  const goalName = notification.goalTitle?.trim();
 
-  if (habit && target) {
-    return `${actor} invited you to join their Goal for ${habit} — ${target}`;
+  if (goalName) {
+    return `${actor} shared a goal with you: "${goalName}"`;
   }
+
+  const habit = notification.activityName?.trim();
   if (habit) {
-    return `${actor} invited you to join their Goal for ${habit}`;
+    return `${actor} shared a goal with you for ${habit}`;
   }
-  if (target) {
-    return `${actor} invited you to join their Goal: ${target}`;
-  }
-  return `${actor} invited you to join their Goal`;
+
+  return `${actor} shared a goal with you`;
 }
+
+/** @deprecated use formatGoalShareMessage */
+export const formatGoalInviteMessage = formatGoalShareMessage;
 
 export function formatGoalCompleteMessage(
   notification: Pick<
     InboxNotification,
-    "actorDisplayName" | "actorUsername" | "activityName" | "streak"
+    "actorDisplayName" | "actorUsername" | "goalTitle" | "streak"
   >
 ): string {
   const actor = actorDisplayLabel(notification);
-  const habit = notification.activityName?.trim() ?? "a habit";
+  const goalName = notification.goalTitle?.trim() ?? "their goal";
 
   if (notification.streak && notification.streak >= 7) {
-    return `${actor} hit a ${notification.streak}-day streak on ${habit}`;
+    return `${actor} logged progress on "${goalName}" — ${notification.streak}-day streak`;
   }
 
-  return `${actor} completed ${habit}`;
+  return `${actor} made progress on "${goalName}"`;
+}
+
+export function formatGoalAchievedMessage(
+  notification: Pick<
+    InboxNotification,
+    "actorDisplayName" | "actorUsername" | "goalTitle" | "goalLabel" | "streak"
+  >
+): string {
+  const actor = actorDisplayLabel(notification);
+  const goalName = notification.goalTitle?.trim() ?? "their goal";
+  const target = notification.goalLabel?.trim();
+
+  if (target && notification.streak && notification.streak > 0) {
+    return `${actor} reached "${goalName}" — ${target} (${notification.streak}d streak)!`;
+  }
+  if (target) {
+    return `${actor} reached "${goalName}" — ${target}!`;
+  }
+  if (notification.streak && notification.streak > 0) {
+    return `${actor} reached "${goalName}" with a ${notification.streak}-day streak!`;
+  }
+
+  return `${actor} reached "${goalName}"!`;
 }

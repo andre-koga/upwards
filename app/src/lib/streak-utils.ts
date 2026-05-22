@@ -7,6 +7,11 @@ import type {
   DailyEntry,
   GroupStatusEvent,
 } from "@/lib/db/types";
+import {
+  isNeverRoutine,
+  isNeverTaskSlipRecorded,
+  neverTaskTarget,
+} from "@/lib/activity/never-task";
 import { shouldShowActivity, type TemporalVisibilityContext } from "@/lib/activity";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 
@@ -45,7 +50,7 @@ function shouldIncrementStreak(
   activity: Activity,
   isCompleted: boolean
 ): boolean {
-  if (activity.routine === "never") {
+  if (isNeverRoutine(activity)) {
     return !isCompleted;
   }
 
@@ -77,12 +82,18 @@ function isCompletedOnDate(
   const pausedTaskIds = Array.isArray(entry.paused_task_ids)
     ? entry.paused_task_ids
     : [];
-  if (activity.routine !== "never" && pausedTaskIds.includes(activity.id)) {
+  if (!isNeverRoutine(activity) && pausedTaskIds.includes(activity.id)) {
     return false;
   }
-  const target = activity.completion_target ?? 1;
+  const target = neverTaskTarget(activity);
   const taskCounts = (entry.task_counts as Record<string, number>) || {};
-  return (taskCounts[activity.id] || 0) >= target;
+  const count = taskCounts[activity.id] || 0;
+
+  if (isNeverRoutine(activity)) {
+    return isNeverTaskSlipRecorded(activity, count);
+  }
+
+  return count >= target;
 }
 
 type DailyTaskStreakStatus = "incrementable" | "reset" | "skip";
@@ -94,12 +105,12 @@ function getDailyTaskStreakStatus(
   if (!entry) {
     // For "never" tasks, no daily entry means nothing was logged that day (no
     // slip occurred), so the streak should continue, not reset.
-    return activity.routine === "never" ? "incrementable" : "reset";
+    return isNeverRoutine(activity) ? "incrementable" : "reset";
   }
   const pausedTaskIds = Array.isArray(entry.paused_task_ids)
     ? entry.paused_task_ids
     : [];
-  if (activity.routine !== "never" && pausedTaskIds.includes(activity.id)) {
+  if (!isNeverRoutine(activity) && pausedTaskIds.includes(activity.id)) {
     return "skip";
   }
   const isCompleted = isCompletedOnDate(activity, entry);
@@ -107,7 +118,7 @@ function getDailyTaskStreakStatus(
   // Break day behavior:
   // - Regular tasks: incomplete is neutral, complete still counts.
   // - Never tasks: non-completion can still count when explicitly not paused.
-  if (entry.is_break_day && activity.routine !== "never" && !isCompleted) {
+  if (entry.is_break_day && !isNeverRoutine(activity) && !isCompleted) {
     return "skip";
   }
 

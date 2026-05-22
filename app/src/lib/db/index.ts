@@ -11,7 +11,6 @@ import type {
   ActivityStatusEvent,
   GroupStatusEvent,
   Goal,
-  GoalMember,
   GoalProgressEvent,
   UserProfile,
 } from "./types";
@@ -98,9 +97,8 @@ class UpwardsDB extends Dexie {
   activityStreaks!: Table<ActivityStreak>;
   activityStatusEvents!: Table<ActivityStatusEvent>;
   groupStatusEvents!: Table<GroupStatusEvent>;
-  // Goals / accountability (simplified schema)
+  // Goals / accountability (Supabase-backed; local cache optional)
   promises!: Table<Goal>;
-  promiseMembers!: Table<GoalMember>;
   promiseProgressEvents!: Table<GoalProgressEvent>;
   userProfiles!: Table<UserProfile>;
 
@@ -599,6 +597,34 @@ class UpwardsDB extends Dexie {
               ).toISOString();
             }
           });
+      });
+
+    // v19: drop local promiseMembers — goals use goal_shares in Supabase only
+    this.version(19)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities:
+          "id, group_id, completed_at, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        groupStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        promises: "id, user_id, status, created_at",
+        promiseMembers: null,
+        promiseProgressEvents: "id, promise_id, user_id, date, created_at",
+        promiseReactions: null,
+        promiseInvites: null,
+        userProfiles: "user_id",
+      })
+      .upgrade(async (tx) => {
+        await tx.table("promiseMembers").clear();
       });
   }
 }

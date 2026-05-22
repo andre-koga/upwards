@@ -9,8 +9,6 @@ import { useFriends } from "@/lib/friends/use-friends";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
 import type { InboxNotification } from "@/lib/promises/use-notifications";
-import { actorDisplayLabel } from "@/lib/promises/notification-labels";
-import { GoalInviteAcceptDialog } from "@/components/promises/goal-invite-accept-dialog";
 import { NotificationRow } from "@/components/promises/notification-row";
 
 interface NotificationsDrawerProps {
@@ -30,12 +28,9 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
     dismissNotification,
     dismissAllClearable,
   } = useNotifications();
-  const { declineGoalInvite } = useGoals();
+  const { acceptShare, declineShare, stopWatching } = useGoals();
   const { respond: respondFriend } = useFriends();
   const [responding, setResponding] = useState<string | null>(null);
-  const [goalInviteAccept, setGoalInviteAccept] = useState<InboxNotification | null>(
-    null
-  );
 
   useEffect(() => {
     if (open) {
@@ -57,23 +52,26 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
     setResponding(null);
   };
 
-  const handleAcceptGoal = (n: InboxNotification) => {
-    onOpenChange(false);
-    setGoalInviteAccept(n);
+  const handleAcceptGoalShare = async (n: InboxNotification) => {
+    if (!n.shareId) return;
+    const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
+    setResponding(rawId);
+    await acceptShare(n.shareId);
+    await reload();
+    setResponding(null);
   };
 
-  const handleDeclineGoal = async (n: InboxNotification) => {
-    if (!n.goalId) return;
-    const rawId = n.id.startsWith("gi-") ? n.id.slice(3) : n.id;
+  const handleDeclineGoalShare = async (n: InboxNotification) => {
+    if (!n.shareId) return;
+    const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
     setResponding(rawId);
-    await declineGoalInvite(n.goalId);
+    await declineShare(n.shareId);
     await reload();
     setResponding(null);
   };
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className={cn(
           "pointer-events-none fixed inset-0 z-[60] transition-all duration-300",
@@ -84,7 +82,6 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
         onClick={() => onOpenChange(false)}
       />
 
-      {/* Drawer sliding down from top */}
       <div
         className={cn(
           "fixed inset-x-0 top-0 z-[70] transition-transform duration-300 ease-out",
@@ -141,7 +138,7 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
                 <Bell className="mb-3 h-8 w-8 text-muted-foreground/30" />
                 <p className="text-sm font-medium">Nothing here yet</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Goal updates and friend requests will show up here.
+                  Goal shares and friend requests will show up here.
                 </p>
               </div>
             ) : (
@@ -152,8 +149,14 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
                     n={n}
                     onAcceptFriend={(id) => void handleAcceptFriend(id)}
                     onDeclineFriend={(id) => void handleDeclineFriend(id)}
-                    onAcceptGoal={handleAcceptGoal}
-                    onDeclineGoal={(item) => void handleDeclineGoal(item)}
+                    onAcceptGoalShare={(item) => void handleAcceptGoalShare(item)}
+                    onDeclineGoalShare={(item) => void handleDeclineGoalShare(item)}
+                    onStopWatchingGoalShare={(shareId) => {
+                      setResponding(shareId);
+                      void stopWatching(shareId)
+                        .then(() => reload())
+                        .finally(() => setResponding(null));
+                    }}
                     onDismiss={dismissNotification}
                     responding={responding}
                   />
@@ -162,24 +165,11 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
             )}
           </div>
 
-          {/* Drag handle hint */}
           <div className="flex justify-center py-2">
             <div className="h-1 w-10 rounded-full bg-muted" />
           </div>
         </div>
       </div>
-
-      <GoalInviteAcceptDialog
-        open={goalInviteAccept !== null}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) setGoalInviteAccept(null);
-        }}
-        goalId={goalInviteAccept?.goalId ?? null}
-        inviterLabel={
-          goalInviteAccept ? actorDisplayLabel(goalInviteAccept) : "Someone"
-        }
-        onAccepted={() => void reload()}
-      />
     </>
   );
 }

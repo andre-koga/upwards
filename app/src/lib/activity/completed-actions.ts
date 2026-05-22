@@ -1,5 +1,5 @@
 import { db, now } from "@/lib/db";
-import type { GoalWithMembers } from "@/lib/db/types";
+import type { GoalWithShares } from "@/lib/db/types";
 import {
   formatGoalModificationBlockMessage,
   getActiveGoalForActivity,
@@ -17,7 +17,7 @@ export async function setActivityCompleted(
   completed: boolean,
   actionDate: Date = new Date(),
   options?: {
-    goals?: GoalWithMembers[];
+    goals?: GoalWithShares[];
     userId?: string | null;
   }
 ): Promise<void> {

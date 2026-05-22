@@ -9,8 +9,6 @@ import { useGoals } from "@/lib/promises/use-goals";
 import { useFriends } from "@/lib/friends/use-friends";
 import { useAuth } from "@/lib/use-auth";
 import type { InboxNotification } from "@/lib/promises/use-notifications";
-import { actorDisplayLabel } from "@/lib/promises/notification-labels";
-import { GoalInviteAcceptDialog } from "@/components/promises/goal-invite-accept-dialog";
 import { NotificationRow } from "@/components/promises/notification-row";
 
 export default function NotificationsPage() {
@@ -25,12 +23,9 @@ export default function NotificationsPage() {
     dismissNotification,
     dismissAllClearable,
   } = useNotifications();
-  const { declineGoalInvite } = useGoals();
+  const { acceptShare, declineShare, stopWatching } = useGoals();
   const { respond: respondFriend } = useFriends();
   const [responding, setResponding] = useState<string | null>(null);
-  const [goalInviteAccept, setGoalInviteAccept] = useState<InboxNotification | null>(
-    null
-  );
 
   const handleAcceptFriend = async (id: string) => {
     setResponding(id);
@@ -46,15 +41,20 @@ export default function NotificationsPage() {
     setResponding(null);
   };
 
-  const handleAcceptGoal = (n: InboxNotification) => {
-    setGoalInviteAccept(n);
+  const handleAcceptGoalShare = async (n: InboxNotification) => {
+    if (!n.shareId) return;
+    const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
+    setResponding(rawId);
+    await acceptShare(n.shareId);
+    await reload();
+    setResponding(null);
   };
 
-  const handleDeclineGoal = async (n: InboxNotification) => {
-    if (!n.goalId) return;
-    const rawId = n.id.startsWith("gi-") ? n.id.slice(3) : n.id;
+  const handleDeclineGoalShare = async (n: InboxNotification) => {
+    if (!n.shareId) return;
+    const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
     setResponding(rawId);
-    await declineGoalInvite(n.goalId);
+    await declineShare(n.shareId);
     await reload();
     setResponding(null);
   };
@@ -81,7 +81,7 @@ export default function NotificationsPage() {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Friend requests, Goal invites, and partner progress.
+            Friend requests, goal shares, and friends&apos; progress.
           </p>
         </div>
       </header>
@@ -108,7 +108,7 @@ export default function NotificationsPage() {
           <Bell className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
           <p className="text-sm font-medium">Nothing here yet</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Friend requests, Goal invites, and partner completions will show up here.
+            Friend requests, goal shares, and progress updates will show up here.
           </p>
         </div>
       ) : (
@@ -119,8 +119,12 @@ export default function NotificationsPage() {
               n={n}
               onAcceptFriend={(id) => void handleAcceptFriend(id)}
               onDeclineFriend={(id) => void handleDeclineFriend(id)}
-              onAcceptGoal={handleAcceptGoal}
-              onDeclineGoal={(item) => void handleDeclineGoal(item)}
+              onAcceptGoalShare={(item) => void handleAcceptGoalShare(item)}
+              onDeclineGoalShare={(item) => void handleDeclineGoalShare(item)}
+              onStopWatchingGoalShare={(shareId) => {
+                setResponding(shareId);
+                void stopWatching(shareId).then(() => reload()).finally(() => setResponding(null));
+              }}
               onDismiss={dismissNotification}
               responding={responding}
             />
@@ -129,18 +133,6 @@ export default function NotificationsPage() {
       )}
 
       <FloatingBackButton to="/" title="Home" />
-
-      <GoalInviteAcceptDialog
-        open={goalInviteAccept !== null}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) setGoalInviteAccept(null);
-        }}
-        goalId={goalInviteAccept?.goalId ?? null}
-        inviterLabel={
-          goalInviteAccept ? actorDisplayLabel(goalInviteAccept) : "Someone"
-        }
-        onAccepted={() => void reload()}
-      />
     </div>
   );
 }

@@ -1,21 +1,17 @@
 import { useEffect, useState } from "react";
 import { db } from "@/lib/db";
-import type { GoalWithMembers } from "@/lib/db/types";
-import { getCachedUserId } from "@/lib/supabase";
+import type { Goal } from "@/lib/db/types";
 import { toDateString } from "@/lib/time-utils";
 
 export interface GoalProgress {
   currentStreak: number;
-  /** True when kind = 'streak_count' and currentStreak >= target_streak. */
   targetReached: boolean;
-  /** True when kind = 'streak_until' and view date is past target_end_date. */
   periodEnded: boolean;
-  /** 0–100, clamped. null when goal has no target. */
   progressPercent: number | null;
 }
 
 export function computeGoalProgress(
-  goal: GoalWithMembers,
+  goal: Pick<Goal, "target_kind" | "target_streak" | "target_end_date" | "created_at">,
   currentStreak: number,
   viewDate: Date = new Date()
 ): GoalProgress {
@@ -59,22 +55,12 @@ export function computeGoalProgress(
   return { currentStreak, targetReached: false, periodEnded: false, progressPercent: null };
 }
 
-export function getGoalLinkedActivityId(
-  goal: GoalWithMembers,
-  userId: string | null | undefined = getCachedUserId()
-): string | null {
-  return (
-    goal.members.find(
-      (m) => m.user_id === userId && m.invite_status === "accepted"
-    )?.member_activity_id ??
-    goal.creator_activity_id ??
-    null
-  );
+export function getGoalActivityId(goal: Goal): string | null {
+  return goal.activity_id ?? null;
 }
 
-/** @deprecated Prefer computeGoalProgress with activityStreaks from useDailyTasks. */
-export function useGoalProgress(goal: GoalWithMembers | undefined): GoalProgress {
-  const activityId = goal ? getGoalLinkedActivityId(goal) : null;
+export function useGoalProgress(goal: Goal | undefined): GoalProgress {
+  const activityId = goal ? getGoalActivityId(goal) : null;
   const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {

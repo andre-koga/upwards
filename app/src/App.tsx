@@ -8,6 +8,7 @@ import WhatsNewPage from "@/pages/whats-new";
 import FriendsPage from "@/pages/friends";
 import { NotificationsFloatingButton } from "@/components/promises/notifications-floating-button";
 import { NotificationsProvider } from "@/lib/promises/use-notifications";
+import { GoalsProvider } from "@/lib/promises/use-goals";
 import SyncStatus from "@/components/settings/sync-status";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
 import { SpeedInsights } from "@vercel/speed-insights/react"
@@ -38,6 +39,7 @@ export default function App() {
       <div className="min-h-screen md:flex md:h-screen md:items-stretch md:justify-center md:gap-10 md:px-6 md:py-6">
         <main className="relative w-full bg-background md:h-full md:max-w-[430px] md:overflow-hidden md:rounded-2xl md:border md:border-border md:shadow-2xl md:[transform:translateZ(0)]">
           <NotificationsProvider>
+            <GoalsProvider>
             <SyncStatus />
             <NotificationsFloatingButton />
             <div data-app-scroll className="md:h-full md:overflow-y-auto">
@@ -58,6 +60,7 @@ export default function App() {
                 <Route path="/promises/join/:token" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
+            </GoalsProvider>
           </NotificationsProvider>
         </main>
       </div>

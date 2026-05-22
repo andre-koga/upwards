@@ -1,32 +1,24 @@
 /**
- * Reusable form for configuring a streak-based goal target.
- * Used on both the "Start a Goal" (create) and "Extend" flows.
- *
- * When `lockedKind` is provided the user cannot switch kinds — only the
- * value field for the existing kind is shown (extend mode).
+ * Streak-only goal target form for create and extend flows.
  */
 import { useState } from "react";
 import {
-  FormCalendarDateField,
   FormDialogActions,
   FormField,
   FormStack,
 } from "@/components/forms";
-import { Button } from "@/components/ui/button";
 import type { GoalTargetInput, GoalTargetKind } from "@/lib/db/types";
 
 interface GoalTargetFormProps {
-  /** Pre-filled initial values (extend mode). */
   initial?: GoalTargetInput;
-  /** When set, the kind toggle is hidden and this kind is forced. */
+  /** When set, only show the field for this legacy kind (extend on streak_until goals). */
   lockedKind?: GoalTargetKind;
-  /** Min streak value to accept (used in extend mode to reject non-increases). */
   minStreak?: number;
-  /** Min end date to accept. Defaults to today. */
   minEndDate?: string;
   submitLabel?: string;
   onSubmit: (target: GoalTargetInput) => void | Promise<void>;
   onCancel?: () => void;
+  confirmDisabled?: boolean;
 }
 
 function todayStr(): string {
@@ -41,9 +33,9 @@ export function GoalTargetForm({
   submitLabel = "Set Goal",
   onSubmit,
   onCancel,
+  confirmDisabled = false,
 }: GoalTargetFormProps) {
-  const defaultKind: GoalTargetKind = lockedKind ?? initial?.kind ?? "streak_count";
-  const [kind, setKind] = useState<GoalTargetKind>(defaultKind);
+  const effectiveKind: GoalTargetKind = lockedKind ?? "streak_count";
   const [streakValue, setStreakValue] = useState<string>(
     initial?.kind === "streak_count" ? String(initial.streak) : ""
   );
@@ -60,7 +52,7 @@ export function GoalTargetForm({
     setValidationError(null);
 
     let target: GoalTargetInput;
-    if (kind === "streak_count") {
+    if (effectiveKind === "streak_count") {
       const n = parseInt(streakValue, 10);
       if (!streakValue || isNaN(n) || n < effectiveMinStreak) {
         setValidationError(
@@ -92,65 +84,39 @@ export function GoalTargetForm({
   };
 
   return (
-    <FormStack className="space-y-5">
-      {/* Kind toggle — hidden when kind is locked (extend mode) */}
-      {!lockedKind && (
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            type="button"
-            variant={kind === "streak_count" ? "default" : "outline"}
-            className="h-auto py-2"
-            onClick={() => {
-              setKind("streak_count");
+    <FormStack className="space-y-3">
+      <div className="space-y-2">
+        {effectiveKind === "streak_count" ? (
+          <FormField
+            id="streak-input"
+            label="Streak target (days)"
+            type="number"
+            min={effectiveMinStreak}
+            placeholder="e.g. 30"
+            value={streakValue}
+            disabled={submitting}
+            onChange={(event) => {
+              setStreakValue(event.target.value);
               setValidationError(null);
             }}
-          >
-            Reach a streak
-          </Button>
-          <Button
-            type="button"
-            variant={kind === "streak_until" ? "default" : "outline"}
-            className="h-auto py-2"
-            onClick={() => {
-              setKind("streak_until");
+            message="Keep the habit going until you hit this streak."
+          />
+        ) : (
+          <FormField
+            id="date-input"
+            label="Keep streak alive until"
+            type="date"
+            min={effectiveMinDate}
+            value={dateValue}
+            disabled={submitting}
+            onChange={(event) => {
+              setDateValue(event.target.value);
               setValidationError(null);
             }}
-          >
-            Until a date
-          </Button>
-        </div>
-      )}
-
-      {kind === "streak_count" ? (
-        <FormField
-          id="streak-input"
-          label="Streak target (days)"
-          type="number"
-          min={effectiveMinStreak}
-          placeholder="e.g. 30"
-          value={streakValue}
-          disabled={submitting}
-          onChange={(event) => {
-            setStreakValue(event.target.value);
-            setValidationError(null);
-          }}
-          message="Keep the habit going until you hit this streak."
-        />
-      ) : (
-        <FormCalendarDateField
-          id="date-input"
-          label="Keep streak alive until"
-          value={dateValue}
-          min={effectiveMinDate}
-          disabled={submitting}
-          placeholder="Select end date"
-          onValueChange={(value) => {
-            setDateValue(value);
-            setValidationError(null);
-          }}
-          message="Don't break the streak before this date."
-        />
-      )}
+            message="Legacy date-based goal — pick a later end date to extend."
+          />
+        )}
+      </div>
 
       {validationError ? (
         <p className="text-xs text-destructive">{validationError}</p>
@@ -159,7 +125,7 @@ export function GoalTargetForm({
       <FormDialogActions
         onConfirm={() => void handleSubmit()}
         confirmLabel={submitting ? "Saving…" : submitLabel}
-        confirmDisabled={submitting}
+        confirmDisabled={submitting || confirmDisabled}
         secondaryAction={
           onCancel
             ? {

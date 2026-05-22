@@ -294,23 +294,11 @@ export async function stopCurrentActivity(options: {
   }
 }
 
-/**
- * Determines whether an activity should appear on For Today for a viewed date,
- * using temporal status history (not current row flags alone).
- */
-export function shouldShowActivity(
-  activity: Activity,
-  date: Date,
-  group: ActivityGroup | undefined | null,
-  temporal: TemporalVisibilityContext
+/** Whether the activity's routine expects completion on the given calendar day. */
+export function isRoutineDueOnDate(
+  activity: { routine?: string | null; created_at?: string | null },
+  date: Date
 ): boolean {
-  if (isHiddenGroupDefaultActivity(activity)) return false;
-
-  if (isCompletedAsOf(activity, temporal)) return false;
-  if (isDeletedAsOfActivity(activity, temporal)) return false;
-  if (isArchivedViaGroupAsOf(group, temporal)) return false;
-  if (isDeletedAsOfGroup(group, temporal)) return false;
-
   if (activity.created_at) {
     const creationDay = new Date(activity.created_at);
     creationDay.setHours(0, 0, 0, 0);
@@ -367,4 +355,24 @@ export function shouldShowActivity(
   }
 
   return true;
+}
+
+/**
+ * Determines whether an activity should appear on For Today for a viewed date,
+ * using temporal status history (not current row flags alone).
+ */
+export function shouldShowActivity(
+  activity: Activity,
+  date: Date,
+  group: ActivityGroup | undefined | null,
+  temporal: TemporalVisibilityContext
+): boolean {
+  if (isHiddenGroupDefaultActivity(activity)) return false;
+
+  if (isCompletedAsOf(activity, temporal)) return false;
+  if (isDeletedAsOfActivity(activity, temporal)) return false;
+  if (isArchivedViaGroupAsOf(group, temporal)) return false;
+  if (isDeletedAsOfGroup(group, temporal)) return false;
+
+  return isRoutineDueOnDate(activity, date);
 }

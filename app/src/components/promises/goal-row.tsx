@@ -1,23 +1,20 @@
-import { memo, useMemo } from "react";
-import { Flame } from "lucide-react";
-import type { Activity, ActivityGroup, GoalWithMembers } from "@/lib/db/types";
+import { memo } from "react";
+import { Eye, Flame } from "lucide-react";
+import type { GoalWithShares } from "@/lib/db/types";
 import {
   computeGoalProgress,
-  getGoalLinkedActivityId,
+  getGoalActivityId,
 } from "@/lib/promises/use-goal-progress";
-import type { GoalMemberDayStatus } from "@/lib/promises/use-goal-member-status";
-import { enrichGoalMemberStatuses } from "@/lib/promises/goal-member-day-status";
 import {
   formatGoalTargetShort,
-  getGoalLinkedActivityName,
+  getEffectiveGoalStreak,
+  getGoalDisplayName,
 } from "@/lib/promises/goal-display";
-import { GoalMemberPill } from "@/components/promises/goal-member-pill";
-import { getCachedUserId } from "@/lib/supabase";
+import type { Activity } from "@/lib/db/types";
 import { cn } from "@/lib/utils";
 
 interface GoalRowProps {
-  goal: GoalWithMembers;
-  memberStatuses: GoalMemberDayStatus[];
+  goal: GoalWithShares;
   activityStreaks: Record<string, number>;
   taskCounts: Record<string, number>;
   pausedTaskIds: string[];
@@ -25,13 +22,26 @@ interface GoalRowProps {
   isEditableDate: boolean;
   viewDate: Date;
   activities: Activity[];
-  groups: ActivityGroup[];
   onClick: () => void;
+}
+
+function formatCardStreakLine(
+  goal: GoalWithShares,
+  currentStreak: number,
+  targetReached: boolean,
+  periodEnded: boolean
+): string {
+  if (targetReached || periodEnded) {
+    return formatGoalTargetShort(goal);
+  }
+  if (goal.target_kind === "streak_count" && goal.target_streak != null) {
+    return `${currentStreak} / ${goal.target_streak} day streak`;
+  }
+  return `${currentStreak}d · ${formatGoalTargetShort(goal)}`;
 }
 
 export const GoalRow = memo(function GoalRow({
   goal,
-  memberStatuses,
   activityStreaks,
   taskCounts,
   pausedTaskIds,
@@ -39,102 +49,86 @@ export const GoalRow = memo(function GoalRow({
   isEditableDate,
   viewDate,
   activities,
-  groups,
   onClick,
 }: GoalRowProps) {
-  const userId = getCachedUserId();
-  const linkedActivityId = getGoalLinkedActivityId(goal, userId);
-  const currentStreak = linkedActivityId
-    ? (activityStreaks[linkedActivityId] ?? 0)
-    : 0;
-  const { progressPercent } = computeGoalProgress(goal, currentStreak, viewDate);
-  const activityName = getGoalLinkedActivityName(
+  const activityId = getGoalActivityId(goal);
+  const linkedActivity = activityId
+    ? activities.find((activity) => activity.id === activityId)
+    : undefined;
+  const currentStreak = getEffectiveGoalStreak({
+    activity: linkedActivity,
+    activityId,
+    activityStreaks,
+    taskCounts,
+    isSelf: true,
+  });
+  const { progressPercent, targetReached, periodEnded } = computeGoalProgress(
     goal,
-    userId,
-    activities,
-    groups
+    currentStreak,
+    viewDate
   );
-  const targetLabel = formatGoalTargetShort(goal);
-
-  const memberActivityIds = useMemo(() => {
-    const map = new Map<string, string | null>();
-    for (const member of goal.members) {
-      if (member.invite_status !== "accepted") continue;
-      map.set(member.user_id, member.member_activity_id);
-    }
-    return map;
-  }, [goal.members]);
-
-  const enrichedMembers = useMemo(
-    () =>
-      enrichGoalMemberStatuses({
-        goal,
-        members: memberStatuses,
-        activityStreaks,
-        taskCounts,
-        pausedTaskIds,
-        isBreakDay,
-        isEditableDate,
-        viewDate,
-        activities,
-        memberActivityIds,
-      }),
-    [
-      goal,
-      memberStatuses,
-      activityStreaks,
-      taskCounts,
-      pausedTaskIds,
-      isBreakDay,
-      isEditableDate,
-      viewDate,
-      activities,
-      memberActivityIds,
-    ]
+  const isGoalReached = targetReached || periodEnded;
+  const progressBarWidth = isGoalReached ? 100 : (progressPercent ?? 0);
+  const goalTitle = getGoalDisplayName(goal);
+  const activityName = goal.activity_name?.trim() ?? "Habit";
+  const viewerCount = goal.shares.filter((s) => s.status === "accepted").length;
+  const streakLine = formatCardStreakLine(
+    goal,
+    currentStreak,
+    targetReached,
+    periodEnded
   );
+
+  void pausedTaskIds;
+  void isBreakDay;
+  void isEditableDate;
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full overflow-hidden rounded-xl border border-border/80 bg-muted/20 text-left transition-colors",
-        "hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        "w-full overflow-hidden rounded-xl border text-left transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        isGoalReached
+          ? "border-green-500/40 bg-green-50/50 hover:bg-green-50/70 dark:border-green-500/30 dark:bg-green-950/25 dark:hover:bg-green-950/35"
+          : "border-border/80 bg-muted/20 hover:bg-muted/35"
       )}
     >
-      <div className="h-1 w-full bg-muted" aria-hidden="true">
+      <div
+        className={cn("h-1 w-full", isGoalReached ? "bg-green-500/20" : "bg-muted")}
+        aria-hidden="true"
+      >
         <div
-          className="h-full bg-primary transition-[width] duration-300"
-          style={{ width: `${progressPercent ?? 0}%` }}
+          className={cn(
+            "h-full transition-[width] duration-300",
+            isGoalReached ? "bg-green-500 dark:bg-green-400" : "bg-primary"
+          )}
+          style={{ width: `${progressBarWidth}%` }}
         />
       </div>
 
-      <div className="space-y-2 px-3 py-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-            <span className="truncate text-sm font-medium leading-tight">
-              {activityName}
-            </span>
-            <span
-              className="shrink-0 text-xs leading-none text-muted-foreground/70"
-              aria-hidden="true"
-            >
-              ·
-            </span>
-            <span className="shrink-0 text-xs leading-none text-muted-foreground">
-              {targetLabel}
-            </span>
-          </div>
-          <span className="inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-muted-foreground">
-            <Flame className="h-3 w-3" />
-            {currentStreak}d
+      <div className="space-y-1 px-3.5 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <span className="min-w-0 truncate text-sm font-semibold leading-tight">
+            {goalTitle}
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-foreground">
+            <Flame className="h-3.5 w-3.5 shrink-0 text-foreground" />
+            <span className="whitespace-nowrap tabular-nums">{streakLine}</span>
           </span>
         </div>
 
-        <div className="flex min-h-6 flex-wrap gap-1.5">
-          {enrichedMembers.map((member) => (
-            <GoalMemberPill key={member.userId} member={member} />
-          ))}
+        <div className="flex items-center justify-between gap-2">
+          <span className="min-w-0 truncate text-xs text-muted-foreground">
+            {activityName}
+          </span>
+          {viewerCount > 0 ? (
+            <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] text-muted-foreground">
+              <Eye className="h-3 w-3" />
+              {viewerCount}
+            </span>
+          ) : null}
         </div>
       </div>
     </button>

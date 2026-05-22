@@ -135,7 +135,6 @@ export function useDailyTasks({
           activityName: getActivityDisplayName(activity, group),
           newCount,
           completionTarget,
-          streak: activityStreaks[activityId] ?? 0,
           dateString,
         });
         setGoalRefreshKey((key) => key + 1);
@@ -148,13 +147,23 @@ export function useDailyTasks({
       lookupGroupById,
       groups,
       dateString,
-      activityStreaks,
     ]
   );
 
   const incrementNeverSlip = useCallback(
-    (activityId: string) => incrementTaskWithProgress(activityId, 1, { neverSlip: true }),
+    async (activityId: string) => {
+      await incrementTaskWithProgress(activityId, 1, { neverSlip: true });
+      setGoalRefreshKey((key) => key + 1);
+    },
     [incrementTaskWithProgress]
+  );
+
+  const resetNeverTaskCountWithGoals = useCallback(
+    async (activityId: string) => {
+      await resetNeverTaskCount(activityId);
+      setGoalRefreshKey((key) => key + 1);
+    },
+    [resetNeverTaskCount]
   );
 
   const {
@@ -513,7 +522,7 @@ export function useDailyTasks({
     updateOneTimeTask,
     incrementTask: incrementTaskWithProgress,
     incrementNeverSlip,
-    resetNeverTaskCount,
+    resetNeverTaskCount: resetNeverTaskCountWithGoals,
     toggleTaskPaused,
     toggleBreakDay,
     handleStartActivity: startActivity,

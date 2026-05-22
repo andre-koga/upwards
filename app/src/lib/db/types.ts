@@ -146,59 +146,62 @@ export interface GroupStatusEvent {
   deleted_at: string | null;
 }
 
-// ─── Goals (Promises) ─────────────────────────────────────────────────────────
+// ─── Goals ────────────────────────────────────────────────────────────────────
 
-export type PromiseStatus = "active" | "completed" | "cancelled";
-export type PromiseInviteStatus = "pending" | "accepted" | "declined";
-
-export interface GoalWithMembers extends Goal {
-  members: GoalMember[];
-}
+export type GoalStatus = "active" | "completed" | "cancelled";
+export type GoalShareStatus = "pending" | "accepted" | "declined" | "stopped";
 
 export type GoalTargetKind = "streak_count" | "streak_until";
 
-/**
- * Discriminated union for the two supported goal target types.
- * Used when creating or extending a goal.
- */
 export type GoalTargetInput =
   | { kind: "streak_count"; streak: number }
-  | { kind: "streak_until"; endDate: string }; // endDate: YYYY-MM-DD
+  | { kind: "streak_until"; endDate: string };
 
-/** A Goal — personal commitment for a habit; friends can join optionally. */
+export type CreateGoalInput = {
+  activityId: string;
+  name: string;
+  description: string;
+  target: GoalTargetInput;
+};
+
+/** Individual goal owned by one user. Stored in Supabase `promises` table. */
 export interface Goal {
   id: string;
-  creator_id: string;
-  /** The creator's local activity id. Used to derive the title at read time. */
-  creator_activity_id: string;
-  /** Display name of the creator's habit at goal creation (for invites/notifications). */
-  creator_activity_name: string | null;
-  status: PromiseStatus;
-  /** null on legacy goals with no configured target. */
+  user_id: string;
+  name: string;
+  description: string;
+  activity_id: string;
+  activity_name: string | null;
+  status: GoalStatus;
   target_kind: GoalTargetKind | null;
-  /** Set when target_kind = 'streak_count'. */
   target_streak: number | null;
-  /** Set when target_kind = 'streak_until'. YYYY-MM-DD. */
   target_end_date: string | null;
   created_at: string;
   completed_at: string | null;
 }
 
-/** Each person in a Goal and their optionally linked local activity.
- *  member_activity_id = null means "witness" (no local habit tracked). */
-export interface GoalMember {
+export interface GoalShare {
   id: string;
-  promise_id: string;
-  user_id: string;
-  /** null = witness; non-null = mutual (tracks a local habit). */
-  member_activity_id: string | null;
-  invite_status: PromiseInviteStatus;
-  joined_at: string | null;
-  /** Populated when members are loaded from Supabase. */
+  goal_id: string;
+  owner_user_id: string;
+  viewer_user_id: string;
+  status: GoalShareStatus;
+  created_at: string;
+  responded_at: string | null;
   username?: string | null;
   display_name?: string | null;
-  created_at: string;
-  updated_at: string;
+}
+
+export interface GoalWithShares extends Goal {
+  shares: GoalShare[];
+}
+
+/** A goal shared with the current user for read-only cheering. */
+export interface SharedGoalView {
+  share: GoalShare;
+  goal: Goal;
+  ownerDisplayName: string | null;
+  ownerUsername: string | null;
 }
 
 /** Progress payload — never contains journal text, locations, or memos. */
@@ -206,14 +209,15 @@ export interface ProgressPayload {
   activityName: string;
   streak?: number;
   completionTarget?: number;
+  goalTargetReached?: boolean;
 }
 
-/** Emitted when a member meets their daily habit target. */
+/** Emitted when the goal owner completes their habit or hits target. */
 export interface GoalProgressEvent {
   id: string;
   promise_id: string;
   user_id: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   payload: ProgressPayload;
   created_at: string;
 }
