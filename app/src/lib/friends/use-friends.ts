@@ -68,7 +68,7 @@ export function useFriends() {
         otherIds.add(r.from_user_id === userId ? r.to_user_id : r.from_user_id);
       }
 
-      const profileMap = await fetchProfiles([...otherIds]);
+      const profileMap = await fetchUserProfiles([...otherIds]);
 
       setFriends(
         (friendships ?? []).map((f: Friendship) => {
@@ -169,7 +169,7 @@ export function useFriends() {
   return { friends, incoming, outgoing, loading, error, reload: load, sendInvite, respond, removeFriend };
 }
 
-async function fetchProfiles(
+export async function fetchUserProfiles(
   userIds: string[]
 ): Promise<Map<string, FriendProfile>> {
   const map = new Map<string, FriendProfile>();

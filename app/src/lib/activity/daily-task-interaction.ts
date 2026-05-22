@@ -9,9 +9,9 @@ export type DailyTaskRetiredKind = "deleted" | "completed";
 export interface DailyTaskInteractionState {
   /** Muted timer/play/manual-time display (checkbox uses canEditCounts). */
   isReadOnly: boolean;
-  /** When set, name tap shows retired info instead of goals. */
+  /** When set, name tap shows retired info. */
   retiredKind: DailyTaskRetiredKind | null;
-  /** Name opens goals or retired info. */
+  /** Name opens retired info dialog when retiredKind is set. */
   canClickName: boolean;
   /** Checkbox / count controls. */
   canEditCounts: boolean;
@@ -69,7 +69,7 @@ export function getDailyTaskInteractionState(
   return {
     isReadOnly: false,
     retiredKind: null,
-    canClickName: true,
+    canClickName: false,
     canEditCounts: true,
     canUseTimer: true,
   };

@@ -61,13 +61,14 @@ export async function emitDailyComplete(params: {
     created_at: ts,
   }));
 
-  // Idempotent: unique constraint (promise_id, user_id, date) handles duplicates
-  for (const row of inserts) {
-    await supabase
-      .from("promise_progress_events")
-      .insert(row)
-      .select()
-      // ON CONFLICT DO NOTHING via ignoreDuplicates
-      .throwOnError();
+  const { error } = await supabase
+    .from("promise_progress_events")
+    .upsert(inserts, {
+      onConflict: "promise_id,user_id,date",
+      ignoreDuplicates: true,
+    });
+
+  if (error) {
+    console.warn("[goals] emitDailyComplete failed:", error.message);
   }
 }

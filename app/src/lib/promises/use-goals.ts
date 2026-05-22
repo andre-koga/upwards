@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase, getCachedUserId } from "@/lib/supabase";
 import { db, newId, now } from "@/lib/db";
-import { isActiveGroup, buildGroupById, filterActiveActivities } from "@/lib/activity";
+import { isActiveGroup, buildGroupById, filterActiveActivities, getActivityDisplayName } from "@/lib/activity";
+import { fetchUserProfiles } from "@/lib/friends/use-friends";
 import type { Goal, GoalMember, GoalTargetInput, GoalWithMembers } from "@/lib/db/types";
 import type { Activity } from "@/lib/db/types";
 
@@ -53,10 +54,21 @@ export function useGoals() {
       if (gErr) throw gErr;
       if (amErr) throw amErr;
 
+      const memberUserIds = [
+        ...new Set((allMembers ?? []).map((m) => m.user_id as string)),
+      ];
+      const profileMap = await fetchUserProfiles(memberUserIds);
+
       const membersByGoal = new Map<string, GoalMember[]>();
       for (const m of allMembers ?? []) {
+        if (m.invite_status === "declined") continue;
         const list = membersByGoal.get(m.promise_id) ?? [];
-        list.push(m as GoalMember);
+        const profile = profileMap.get(m.user_id as string);
+        list.push({
+          ...(m as GoalMember),
+          username: profile?.username ?? null,
+          display_name: profile?.displayName ?? null,
+        });
         membersByGoal.set(m.promise_id, list);
       }
 
@@ -91,10 +103,19 @@ export function useGoals() {
           ? { target_kind: "streak_count", target_streak: target.streak, target_end_date: null }
           : { target_kind: "streak_until", target_streak: null, target_end_date: target.endDate };
 
+      const activity = await db.activities.get(activityId);
+      const group = activity
+        ? await db.activityGroups.get(activity.group_id)
+        : undefined;
+      const creatorActivityName = activity
+        ? getActivityDisplayName(activity, group)
+        : null;
+
       const { error: gErr } = await supabase.from("promises").insert({
         id: goalId,
         creator_id: userId,
         creator_activity_id: activityId,
+        creator_activity_name: creatorActivityName,
         status: "active",
         created_at: ts,
         completed_at: null,
@@ -160,20 +181,39 @@ export function useGoals() {
       if (!supabase || !userId) throw new Error("Sign in to invite");
       const ts = now();
 
-      const { error } = await supabase.from("promise_members").upsert(
-        {
+      const { data: existing, error: findErr } = await supabase
+        .from("promise_members")
+        .select("id")
+        .eq("promise_id", params.goalId)
+        .eq("user_id", params.friendUserId)
+        .maybeSingle();
+      if (findErr) throw findErr;
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from("promise_members")
+          .update({
+            invite_status: "pending",
+            member_activity_id: null,
+            joined_at: null,
+            updated_at: ts,
+          })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("promise_members").insert({
           id: newId(),
           promise_id: params.goalId,
           user_id: params.friendUserId,
-          member_activity_id: null, // filled when they accept
+          member_activity_id: null,
           invite_status: "pending",
           joined_at: null,
           created_at: ts,
           updated_at: ts,
-        },
-        { onConflict: "promise_id,user_id", ignoreDuplicates: true }
-      );
-      if (error) throw error;
+        });
+        if (error) throw error;
+      }
+
       await load();
     },
     [userId, load]
@@ -201,15 +241,16 @@ export function useGoals() {
     [userId, load]
   );
 
-  /** Decline a pending goal invite. */
+  /** Decline a pending goal invite — removes the membership row. */
   const declineGoalInvite = useCallback(
     async (goalId: string): Promise<void> => {
       if (!supabase || !userId) throw new Error("Sign in");
       const { error } = await supabase
         .from("promise_members")
-        .update({ invite_status: "declined", updated_at: now() })
+        .delete()
         .eq("promise_id", goalId)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .eq("invite_status", "pending");
       if (error) throw error;
       await load();
     },

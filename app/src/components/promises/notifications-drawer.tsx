@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, CheckCircle2, XCircle, Flame, Users, Target } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -10,13 +10,24 @@ import { useFriends } from "@/lib/friends/use-friends";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
 import type { InboxNotification } from "@/lib/promises/use-notifications";
+import {
+  actorDisplayLabel,
+  formatGoalCompleteMessage,
+  formatGoalInviteMessage,
+} from "@/lib/promises/notification-labels";
+import { GoalInviteAcceptDialog } from "@/components/promises/goal-invite-accept-dialog";
 
-function actorLabel(n: InboxNotification): string {
-  if (n.actorDisplayName && n.actorUsername)
-    return `${n.actorDisplayName} (@${n.actorUsername})`;
-  if (n.actorUsername) return `@${n.actorUsername}`;
-  if (n.actorDisplayName) return n.actorDisplayName;
-  return "Someone";
+function notificationMessage(n: InboxNotification): string {
+  if (n.kind === "friend_request") {
+    return `${actorDisplayLabel(n)} wants to be friends`;
+  }
+  if (n.kind === "goal_invite") {
+    return formatGoalInviteMessage(n);
+  }
+  if (n.kind === "goal_complete") {
+    return formatGoalCompleteMessage(n);
+  }
+  return "";
 }
 
 function NotificationRow({
@@ -25,7 +36,6 @@ function NotificationRow({
   onDeclineFriend,
   onAcceptGoal,
   onDeclineGoal,
-  onClose,
   responding,
 }: {
   n: InboxNotification;
@@ -33,11 +43,8 @@ function NotificationRow({
   onDeclineFriend: (id: string) => void;
   onAcceptGoal: (notification: InboxNotification) => void;
   onDeclineGoal: (n: InboxNotification) => void;
-  onClose: () => void;
   responding: string | null;
 }) {
-  const navigate = useNavigate();
-
   const rawId = n.id.startsWith("fr-")
     ? n.id.slice(3)
     : n.id.startsWith("gi-")
@@ -61,15 +68,7 @@ function NotificationRow({
       </span>
 
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="text-sm leading-snug">
-          <span className="font-medium">{actorLabel(n)}</span>{" "}
-          {n.kind === "friend_request" && "wants to be friends"}
-          {n.kind === "goal_invite" && "invited you to join their Goal"}
-          {n.kind === "goal_complete" &&
-            (n.streak && n.streak >= 7
-              ? `hit a ${n.streak}-day streak on "${n.activityName ?? "a habit"}"`
-              : `completed "${n.activityName ?? "a habit"}"`)}
-        </p>
+        <p className="text-sm leading-snug">{notificationMessage(n)}</p>
         <p className="text-xs text-muted-foreground">
           {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
         </p>
@@ -119,19 +118,6 @@ function NotificationRow({
             </Button>
           </div>
         )}
-
-        {n.kind === "goal_complete" && (
-          <button
-            type="button"
-            className="text-xs text-muted-foreground underline"
-            onClick={() => {
-              onClose();
-              navigate("/");
-            }}
-          >
-            View on For Today
-          </button>
-        )}
       </div>
     </div>
   );
@@ -146,9 +132,18 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
   const navigate = useNavigate();
   const { isAuthed, isSupabaseConfigured } = useAuth();
   const { notifications, loading, error, reload } = useNotifications();
-  const { acceptGoalInvite, declineGoalInvite } = useGoals();
+  const { declineGoalInvite } = useGoals();
   const { respond: respondFriend } = useFriends();
   const [responding, setResponding] = useState<string | null>(null);
+  const [goalInviteAccept, setGoalInviteAccept] = useState<InboxNotification | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (open) {
+      void reload();
+    }
+  }, [open, reload]);
 
   const handleAcceptFriend = async (id: string) => {
     setResponding(id);
@@ -164,13 +159,9 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
     setResponding(null);
   };
 
-  const handleAcceptGoal = async (n: InboxNotification) => {
-    if (!n.goalId) return;
-    const rawId = n.id.startsWith("gi-") ? n.id.slice(3) : n.id;
-    setResponding(rawId);
-    await acceptGoalInvite({ goalId: n.goalId });
-    await reload();
-    setResponding(null);
+  const handleAcceptGoal = (n: InboxNotification) => {
+    onOpenChange(false);
+    setGoalInviteAccept(n);
   };
 
   const handleDeclineGoal = async (n: InboxNotification) => {
@@ -240,9 +231,8 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
                     n={n}
                     onAcceptFriend={(id) => void handleAcceptFriend(id)}
                     onDeclineFriend={(id) => void handleDeclineFriend(id)}
-                    onAcceptGoal={(item) => void handleAcceptGoal(item)}
+                    onAcceptGoal={handleAcceptGoal}
                     onDeclineGoal={(item) => void handleDeclineGoal(item)}
-                    onClose={() => onOpenChange(false)}
                     responding={responding}
                   />
                 ))}
@@ -256,6 +246,18 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
           </div>
         </div>
       </div>
+
+      <GoalInviteAcceptDialog
+        open={goalInviteAccept !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setGoalInviteAccept(null);
+        }}
+        goalId={goalInviteAccept?.goalId ?? null}
+        inviterLabel={
+          goalInviteAccept ? actorDisplayLabel(goalInviteAccept) : "Someone"
+        }
+        onAccepted={() => void reload()}
+      />
     </>
   );
 }

@@ -17,6 +17,7 @@ import {
 } from "react";
 import { supabase, getCachedUserId } from "@/lib/supabase";
 import { useAuth } from "@/lib/use-auth";
+import { formatGoalTargetLabel } from "@/lib/promises/notification-labels";
 
 export type NotificationKind =
   | "friend_request"
@@ -31,6 +32,8 @@ export interface InboxNotification {
   actorDisplayName: string | null;
   goalId: string | null;
   activityName: string | null;
+  /** Human-readable target summary for goal invites. */
+  goalLabel: string | null;
   /** For friend_request and goal_invite: the status so the UI can show actions. */
   actionStatus: "pending" | "accepted" | "declined" | null;
   createdAt: string;
@@ -39,6 +42,13 @@ export interface InboxNotification {
 }
 
 type ProfileRow = { username: string | null; display_name: string | null };
+
+type PendingGoalInviteRow = {
+  member_id: string;
+  promise_id: string;
+  created_at: string;
+  creator_id: string;
+};
 
 async function fetchProfiles(
   userIds: string[]
@@ -58,16 +68,129 @@ async function fetchProfiles(
   return map;
 }
 
-/** Supabase nested selects return an array or a single object — normalise. */
-function creatorIdFromRelation(rel: unknown): string {
-  if (Array.isArray(rel)) {
-    const first = rel[0] as Record<string, unknown> | undefined;
-    return (first?.creator_id as string) ?? "";
+async function fetchPendingGoalInvites(): Promise<PendingGoalInviteRow[]> {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase.rpc("get_my_pending_goal_invites");
+  if (error) {
+    // Fallback for environments that haven't applied the RPC migration yet.
+    const { data: memberRows, error: memberErr } = await supabase
+      .from("promise_members")
+      .select("id, promise_id, invite_status, created_at")
+      .eq("user_id", getCachedUserId() ?? "")
+      .eq("invite_status", "pending");
+    if (memberErr) throw memberErr;
+
+    const promiseIds = [
+      ...new Set((memberRows ?? []).map((row) => row.promise_id as string)),
+    ];
+    if (promiseIds.length === 0) return [];
+
+    const { data: promiseRows, error: promiseErr } = await supabase
+      .from("promises")
+      .select("id, creator_id")
+      .in("id", promiseIds);
+    if (promiseErr) throw promiseErr;
+
+    const creatorByPromiseId = new Map(
+      (promiseRows ?? []).map((row) => [row.id as string, row.creator_id as string])
+    );
+
+    return (memberRows ?? []).flatMap((row) => {
+      const creatorId = creatorByPromiseId.get(row.promise_id as string);
+      if (!creatorId) return [];
+      return [
+        {
+          member_id: row.id as string,
+          promise_id: row.promise_id as string,
+          created_at: row.created_at as string,
+          creator_id: creatorId,
+        },
+      ];
+    });
   }
-  if (rel && typeof rel === "object") {
-    return ((rel as Record<string, unknown>).creator_id as string) ?? "";
+
+  return (data ?? []) as PendingGoalInviteRow[];
+}
+
+type GoalInviteDetails = {
+  target_kind: string | null;
+  target_streak: number | null;
+  target_end_date: string | null;
+  creator_activity_name: string | null;
+};
+
+async function fetchGoalInviteDetails(
+  promiseIds: string[]
+): Promise<Map<string, GoalInviteDetails>> {
+  const map = new Map<string, GoalInviteDetails>();
+  if (!supabase || promiseIds.length === 0) return map;
+
+  const { data, error } = await supabase
+    .from("promises")
+    .select("id, target_kind, target_streak, target_end_date, creator_activity_name")
+    .in("id", promiseIds);
+  if (error) throw error;
+
+  for (const row of data ?? []) {
+    map.set(row.id as string, {
+      target_kind: (row.target_kind as string | null) ?? null,
+      target_streak: (row.target_streak as number | null) ?? null,
+      target_end_date: (row.target_end_date as string | null) ?? null,
+      creator_activity_name: (row.creator_activity_name as string | null) ?? null,
+    });
   }
-  return "";
+  return map;
+}
+
+async function fetchLatestActivityNamesByPromise(
+  promiseIds: string[]
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (!supabase || promiseIds.length === 0) return map;
+
+  const { data, error } = await supabase
+    .from("promise_progress_events")
+    .select("promise_id, payload, created_at")
+    .in("promise_id", promiseIds)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  for (const row of data ?? []) {
+    const promiseId = row.promise_id as string;
+    if (map.has(promiseId)) continue;
+    const activityName = (row.payload as Record<string, unknown> | null)
+      ?.activityName;
+    if (typeof activityName === "string" && activityName.trim()) {
+      map.set(promiseId, activityName.trim());
+    }
+  }
+  return map;
+}
+
+function buildGoalInviteNotification(
+  gi: PendingGoalInviteRow,
+  profile: ProfileRow | undefined,
+  goalDetails: GoalInviteDetails | undefined,
+  activityNameFromProgress: string | undefined
+): InboxNotification {
+  const activityName =
+    goalDetails?.creator_activity_name?.trim() ||
+    activityNameFromProgress ||
+    null;
+
+  return {
+    id: `gi-${gi.member_id}`,
+    kind: "goal_invite",
+    actorId: gi.creator_id,
+    actorUsername: profile?.username ?? null,
+    actorDisplayName: profile?.display_name ?? null,
+    goalId: gi.promise_id,
+    activityName,
+    goalLabel: goalDetails ? formatGoalTargetLabel(goalDetails) : null,
+    actionStatus: "pending",
+    createdAt: gi.created_at,
+  };
 }
 
 interface NotificationsContextValue {
@@ -101,37 +224,41 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // 1. Friend requests to me (pending)
-      const { data: friendReqs, error: frErr } = await supabase
-        .from("friend_requests")
-        .select("id, from_user_id, status, created_at")
-        .eq("to_user_id", userId)
-        .eq("status", "pending");
+      const [
+        { data: friendReqs, error: frErr },
+        goalInvites,
+        { data: myMemberships, error: mmErr },
+      ] = await Promise.all([
+        supabase
+          .from("friend_requests")
+          .select("id, from_user_id, status, created_at")
+          .eq("to_user_id", userId)
+          .eq("status", "pending"),
+        fetchPendingGoalInvites(),
+        supabase
+          .from("promise_members")
+          .select("promise_id")
+          .eq("user_id", userId)
+          .eq("invite_status", "accepted"),
+      ]);
+
       if (frErr) throw frErr;
-
-      // 2. Goal invites to me (pending member rows + related promise for creator_id)
-      const { data: goalInvites, error: giErr } = await supabase
-        .from("promise_members")
-        .select("id, promise_id, invite_status, created_at, promises(creator_id)")
-        .eq("user_id", userId)
-        .eq("invite_status", "pending");
-      if (giErr) throw giErr;
-
-      // 3. Partner completions in goals I'm accepted in (last 7 days)
-      const { data: myMemberships, error: mmErr } = await supabase
-        .from("promise_members")
-        .select("promise_id")
-        .eq("user_id", userId)
-        .eq("invite_status", "accepted");
       if (mmErr) throw mmErr;
+
+      const invitePromiseIds = [
+        ...new Set(goalInvites.map((invite) => invite.promise_id)),
+      ];
+      const [goalDetailsById, activityNameByPromiseId] = await Promise.all([
+        fetchGoalInviteDetails(invitePromiseIds),
+        fetchLatestActivityNamesByPromise(invitePromiseIds),
+      ]);
 
       const myGoalIds = (myMemberships ?? []).map((m) => m.promise_id as string);
 
-      // Collect actor ids for profile lookup
-      const actorIds: string[] = [
+      const actorIds = [
         ...new Set([
           ...(friendReqs ?? []).map((r) => r.from_user_id as string),
-          ...(goalInvites ?? []).map((gi) => creatorIdFromRelation(gi.promises)),
+          ...goalInvites.map((gi) => gi.creator_id),
         ]),
       ];
 
@@ -149,8 +276,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         if (evErr) throw evErr;
 
         for (const ev of events ?? []) {
-          if (!actorIds.includes(ev.user_id as string)) {
-            actorIds.push(ev.user_id as string);
+          const actorId = ev.user_id as string;
+          if (!actorIds.includes(actorId)) {
+            actorIds.push(actorId);
           }
         }
 
@@ -166,10 +294,14 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
             actorDisplayName: profile?.display_name ?? null,
             goalId: ev.promise_id as string,
             activityName:
-              ((ev.payload as Record<string, unknown>)?.activityName as string) ?? null,
+              ((ev.payload as Record<string, unknown>)?.activityName as string) ??
+              null,
+            goalLabel: null,
             actionStatus: null,
             createdAt: ev.created_at as string,
-            streak: (ev.payload as Record<string, unknown>)?.streak as number | undefined,
+            streak: (ev.payload as Record<string, unknown>)?.streak as
+              | number
+              | undefined,
           };
         });
 
@@ -183,75 +315,63 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
             actorDisplayName: profile?.display_name ?? null,
             goalId: null,
             activityName: null,
+            goalLabel: null,
             actionStatus: "pending",
             createdAt: r.created_at as string,
           };
         });
 
-        const goalInviteItems: InboxNotification[] = (goalInvites ?? []).map((gi) => {
-          const creatorId = creatorIdFromRelation(gi.promises);
-          const profile = profileMap.get(creatorId);
-          return {
-            id: `gi-${gi.id as string}`,
-            kind: "goal_invite" as NotificationKind,
-            actorId: creatorId,
-            actorUsername: profile?.username ?? null,
-            actorDisplayName: profile?.display_name ?? null,
-            goalId: gi.promise_id as string,
-            activityName: null,
-            actionStatus: "pending",
-            createdAt: gi.created_at as string,
-          };
-        });
-
-        const all = [
-          ...friendReqItems,
-          ...goalInviteItems,
-          ...completionItems,
-        ].sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        const goalInviteItems: InboxNotification[] = goalInvites.map((gi) =>
+          buildGoalInviteNotification(
+            gi,
+            profileMap.get(gi.creator_id),
+            goalDetailsById.get(gi.promise_id),
+            activityNameByPromiseId.get(gi.promise_id)
+          )
         );
-        setNotifications(all);
+
+        setNotifications(
+          [...friendReqItems, ...goalInviteItems, ...completionItems].sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+        );
         return;
       }
 
-      // No active goals — just friend requests and goal invites
       const profileMap = await fetchProfiles(actorIds);
 
-      const items: InboxNotification[] = [
-        ...(friendReqs ?? []).map((r) => ({
+      const friendReqItems: InboxNotification[] = (friendReqs ?? []).map((r) => {
+        const profile = profileMap.get(r.from_user_id as string);
+        return {
           id: `fr-${r.id as string}`,
           kind: "friend_request" as NotificationKind,
           actorId: r.from_user_id as string,
-          actorUsername: profileMap.get(r.from_user_id as string)?.username ?? null,
-          actorDisplayName:
-            profileMap.get(r.from_user_id as string)?.display_name ?? null,
+          actorUsername: profile?.username ?? null,
+          actorDisplayName: profile?.display_name ?? null,
           goalId: null,
           activityName: null,
-          actionStatus: "pending" as const,
+          goalLabel: null,
+          actionStatus: "pending",
           createdAt: r.created_at as string,
-        })),
-        ...(goalInvites ?? []).map((gi) => {
-          const creatorId = creatorIdFromRelation(gi.promises);
-          return {
-            id: `gi-${gi.id as string}`,
-            kind: "goal_invite" as NotificationKind,
-            actorId: creatorId,
-            actorUsername: profileMap.get(creatorId)?.username ?? null,
-            actorDisplayName: profileMap.get(creatorId)?.display_name ?? null,
-            goalId: gi.promise_id as string,
-            activityName: null,
-            actionStatus: "pending" as const,
-            createdAt: gi.created_at as string,
-          };
-        }),
-      ].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        };
+      });
+
+      const goalInviteItems: InboxNotification[] = goalInvites.map((gi) =>
+        buildGoalInviteNotification(
+          gi,
+          profileMap.get(gi.creator_id),
+          goalDetailsById.get(gi.promise_id),
+          activityNameByPromiseId.get(gi.promise_id)
+        )
       );
 
-      setNotifications(items);
+      setNotifications(
+        [...friendReqItems, ...goalInviteItems].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load notifications"
@@ -265,6 +385,42 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     /* eslint-disable-next-line react-hooks/set-state-in-effect */
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!supabase || !userId) return;
+
+    const channel = supabase
+      .channel(`notifications:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "promise_members",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void load();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "friend_requests",
+          filter: `to_user_id=eq.${userId}`,
+        },
+        () => {
+          void load();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase?.removeChannel(channel);
+    };
+  }, [userId, load]);
 
   const unreadCount = useMemo(
     () =>

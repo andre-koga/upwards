@@ -171,6 +171,8 @@ export interface Goal {
   creator_id: string;
   /** The creator's local activity id. Used to derive the title at read time. */
   creator_activity_id: string;
+  /** Display name of the creator's habit at goal creation (for invites/notifications). */
+  creator_activity_name: string | null;
   status: PromiseStatus;
   /** null on legacy goals with no configured target. */
   target_kind: GoalTargetKind | null;
@@ -192,6 +194,9 @@ export interface GoalMember {
   member_activity_id: string | null;
   invite_status: PromiseInviteStatus;
   joined_at: string | null;
+  /** Populated when members are loaded from Supabase. */
+  username?: string | null;
+  display_name?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -70,11 +70,13 @@ if (supabase) {
 
   // Populate cache immediately from storage (no network round-trip needed)
   supabase.auth.getSession().then(({ data }) => {
+    _cachedSession = data.session ?? null;
     void validateSession(data.session ?? null);
   });
 
-  // Stay up to date reactively
+  // Stay up to date reactively — prime cache synchronously so sync can run on reload.
   supabase.auth.onAuthStateChange((_event, session) => {
+    _cachedSession = session;
     void validateSession(session);
   });
 }

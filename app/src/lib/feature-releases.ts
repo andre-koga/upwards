@@ -18,12 +18,18 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
       "Friends page (More → Friends): add people by exact username when you want to share Goals with them.",
       "Notifications inbox (bell, top right): friend requests, Goal invites, and partner completions in one place.",
       "When you share a Goal, partners get a subtle \"✓\" or \"○\" on For Today for linked habits.",
+      "Mark habits as done from the Projects drawer — completed habits stay on For Today through the day you finish them, then roll off starting the next day.",
+      "Browse past days on For Today and see what was actually active that day: completed and deleted habits stay visible on the days they matter, without cluttering today.",
     ],
     fixes: [
       "Simplified codebase: removed token-based invite flow, reactions feature, and several over-engineered tables. Everything now uses a single clean path.",
       "Display names and usernames now load reliably (no more 'Member / them' placeholder text).",
       "Partner status resets properly when you switch days or leave a goal — no stale chips.",
       "Duplicate progress events on the same day are safely deduplicated at the database level.",
+      "Projects drawer timers now show correct per-day elapsed time instead of 00:00.",
+      "Creating a new group no longer immediately opens the edit dialog afterward.",
+      "Deleted habits on past days are read-only — no checkbox, play button, or goal controls where the habit is already gone.",
+      "Sync no longer fails when you delete an activity that had streak data.",
     ],
   },
   {

@@ -10,10 +10,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ActivityRetiredInfoDialog } from "@/components/activities/activity-retired-info-dialog";
 import type { ActivityRetiredKind } from "@/components/activities/activity-retired-info-dialog";
-import { ActivityPromiseDialog } from "@/components/promises/activity-promise-dialog";
 import DailyTaskActivityPill from "@/components/tasks/daily-task-activity-pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
-import type { PartnerStatus } from "@/lib/promises/use-partner-status";
 
 interface ActivityTaskItemProps {
   activity: Activity;
@@ -27,7 +25,6 @@ interface ActivityTaskItemProps {
   /** Whether the viewed calendar day is within the journal edit window. */
   isEditableDate: boolean;
   temporal: TemporalVisibilityContext;
-  partnerStatuses?: PartnerStatus[];
   onIncrement: (activityId: string, target: number) => void;
   /** "Never" tasks: tap increments slip count. */
   onNeverIncrement?: () => void;
@@ -49,7 +46,6 @@ function ActivityTaskItem({
   isCurrentActivity,
   isEditableDate,
   temporal,
-  partnerStatuses,
   onIncrement,
   onNeverIncrement,
   onNeverReset,
@@ -57,7 +53,6 @@ function ActivityTaskItem({
   onStopActivity,
   onManualEntry,
 }: ActivityTaskItemProps) {
-  const [promiseDialogOpen, setPromiseDialogOpen] = useState(false);
   const [retiredDialogKind, setRetiredDialogKind] =
     useState<ActivityRetiredKind | null>(null);
   const [, setTick] = useState(0);
@@ -93,9 +88,7 @@ function ActivityTaskItem({
     }
     if (interaction.retiredKind === "completed") {
       setRetiredDialogKind("completed");
-      return;
     }
-    setPromiseDialogOpen(true);
   };
 
   const clearNeverPressTimeout = () => {
@@ -249,16 +242,6 @@ function ActivityTaskItem({
           onStopActivity={onStopActivity}
           onManualEntry={onManualEntry}
         />
-        {partnerStatuses && partnerStatuses.length > 0 && (
-          <p className="mt-0.5 pl-1 text-[10px] text-muted-foreground leading-none">
-            {partnerStatuses
-              .map((p) => {
-                const name = p.displayName ?? "Partner";
-                return p.completed ? `${name} ✓` : `${name} ○`;
-              })
-              .join(" · ")}
-          </p>
-        )}
       </div>
 
       <ActivityRetiredInfoDialog
@@ -268,13 +251,6 @@ function ActivityTaskItem({
         onOpenChange={(next) => {
           if (!next) setRetiredDialogKind(null);
         }}
-      />
-
-      <ActivityPromiseDialog
-        open={promiseDialogOpen}
-        onOpenChange={setPromiseDialogOpen}
-        activity={activity}
-        group={group}
       />
     </div>
   );

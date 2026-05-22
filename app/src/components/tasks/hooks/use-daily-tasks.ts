@@ -68,6 +68,7 @@ export function useDailyTasks({
   >([]);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [recalculateStreaksBusy, setRecalculateStreaksBusy] = useState(false);
+  const [goalRefreshKey, setGoalRefreshKey] = useState(0);
   const recalcStreaksInFlightRef = useRef(false);
 
   const streakVisibilityDeps = useMemo<StreakVisibilityDeps>(
@@ -126,15 +127,19 @@ export function useDailyTasks({
       const group =
         lookupGroupById.get(activity.group_id) ??
         groups.find((g) => g.id === activity.group_id);
+      const completionTarget = activity.completion_target ?? 1;
 
-      void emitDailyComplete({
-        activityId,
-        activityName: getActivityDisplayName(activity, group),
-        newCount,
-        completionTarget: activity.completion_target ?? 1,
-        streak: activityStreaks[activityId] ?? 0,
-        dateString,
-      });
+      if (newCount === completionTarget) {
+        await emitDailyComplete({
+          activityId,
+          activityName: getActivityDisplayName(activity, group),
+          newCount,
+          completionTarget,
+          streak: activityStreaks[activityId] ?? 0,
+          dateString,
+        });
+        setGoalRefreshKey((key) => key + 1);
+      }
     },
     [
       incrementTask,
@@ -522,5 +527,6 @@ export function useDailyTasks({
     formatTimerDisplay,
     recalculateStreaksFromViewedDate,
     recalculateStreaksBusy,
+    goalRefreshKey,
   };
 }

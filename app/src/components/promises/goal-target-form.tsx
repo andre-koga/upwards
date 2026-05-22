@@ -6,9 +6,13 @@
  * value field for the existing kind is shown (extend mode).
  */
 import { useState } from "react";
+import {
+  FormCalendarDateField,
+  FormDialogActions,
+  FormField,
+  FormStack,
+} from "@/components/forms";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { GoalTargetInput, GoalTargetKind } from "@/lib/db/types";
 
 interface GoalTargetFormProps {
@@ -88,88 +92,84 @@ export function GoalTargetForm({
   };
 
   return (
-    <div className="space-y-5">
+    <FormStack className="space-y-5">
       {/* Kind toggle — hidden when kind is locked (extend mode) */}
       {!lockedKind && (
         <div className="grid grid-cols-2 gap-2">
-          <button
+          <Button
             type="button"
-            onClick={() => { setKind("streak_count"); setValidationError(null); }}
-            className={[
-              "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-              kind === "streak_count"
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-transparent text-muted-foreground hover:bg-muted/40",
-            ].join(" ")}
+            variant={kind === "streak_count" ? "default" : "outline"}
+            className="h-auto py-2"
+            onClick={() => {
+              setKind("streak_count");
+              setValidationError(null);
+            }}
           >
             Reach a streak
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            onClick={() => { setKind("streak_until"); setValidationError(null); }}
-            className={[
-              "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-              kind === "streak_until"
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-transparent text-muted-foreground hover:bg-muted/40",
-            ].join(" ")}
+            variant={kind === "streak_until" ? "default" : "outline"}
+            className="h-auto py-2"
+            onClick={() => {
+              setKind("streak_until");
+              setValidationError(null);
+            }}
           >
             Until a date
-          </button>
-        </div>
-      )}
-
-      {/* Value input */}
-      {kind === "streak_count" ? (
-        <div className="space-y-1.5">
-          <Label htmlFor="streak-input">Streak target (days)</Label>
-          <Input
-            id="streak-input"
-            type="number"
-            min={effectiveMinStreak}
-            placeholder="e.g. 30"
-            value={streakValue}
-            onChange={(e) => { setStreakValue(e.target.value); setValidationError(null); }}
-          />
-          <p className="text-xs text-muted-foreground">
-            Keep the habit going until you hit this streak.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-1.5">
-          <Label htmlFor="date-input">Keep streak alive until</Label>
-          <Input
-            id="date-input"
-            type="date"
-            min={effectiveMinDate}
-            value={dateValue}
-            onChange={(e) => { setDateValue(e.target.value); setValidationError(null); }}
-          />
-          <p className="text-xs text-muted-foreground">
-            Don't break the streak before this date.
-          </p>
-        </div>
-      )}
-
-      {validationError && (
-        <p className="text-xs text-destructive">{validationError}</p>
-      )}
-
-      <div className="flex gap-2">
-        {onCancel && (
-          <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
-            Back
           </Button>
-        )}
-        <Button
-          type="button"
-          className="flex-1"
+        </div>
+      )}
+
+      {kind === "streak_count" ? (
+        <FormField
+          id="streak-input"
+          label="Streak target (days)"
+          type="number"
+          min={effectiveMinStreak}
+          placeholder="e.g. 30"
+          value={streakValue}
           disabled={submitting}
-          onClick={() => void handleSubmit()}
-        >
-          {submitting ? "Saving…" : submitLabel}
-        </Button>
-      </div>
-    </div>
+          onChange={(event) => {
+            setStreakValue(event.target.value);
+            setValidationError(null);
+          }}
+          message="Keep the habit going until you hit this streak."
+        />
+      ) : (
+        <FormCalendarDateField
+          id="date-input"
+          label="Keep streak alive until"
+          value={dateValue}
+          min={effectiveMinDate}
+          disabled={submitting}
+          placeholder="Select end date"
+          onValueChange={(value) => {
+            setDateValue(value);
+            setValidationError(null);
+          }}
+          message="Don't break the streak before this date."
+        />
+      )}
+
+      {validationError ? (
+        <p className="text-xs text-destructive">{validationError}</p>
+      ) : null}
+
+      <FormDialogActions
+        onConfirm={() => void handleSubmit()}
+        confirmLabel={submitting ? "Saving…" : submitLabel}
+        confirmDisabled={submitting}
+        secondaryAction={
+          onCancel
+            ? {
+                label: "Back",
+                onClick: onCancel,
+                disabled: submitting,
+              }
+            : undefined
+        }
+      />
+    </FormStack>
   );
 }

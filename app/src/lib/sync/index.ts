@@ -39,6 +39,7 @@ class SyncEngine {
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private onlineHandler: (() => void) | null = null;
   private visibilityHandler: (() => void) | null = null;
+  private pageShowHandler: (() => void) | null = null;
   private periodicIntervalMs = DEFAULT_PERIODIC_SYNC_MS;
   private isAutoSyncEnabled = false;
   private hasMutationHooks = false;
@@ -340,6 +341,7 @@ class SyncEngine {
     this.periodicIntervalMs = intervalMs;
     this.registerMutationHooks();
 
+    // Full sync on app start / page reload once auth is ready.
     void this.sync();
 
     this.resetPeriodicInterval();
@@ -351,6 +353,9 @@ class SyncEngine {
       if (document.visibilityState === "visible") this.runTriggeredSync();
     };
     document.addEventListener("visibilitychange", this.visibilityHandler);
+
+    this.pageShowHandler = () => this.runTriggeredSync();
+    window.addEventListener("pageshow", this.pageShowHandler);
   }
 
   stopAutoSync(): void {
@@ -369,6 +374,10 @@ class SyncEngine {
     if (this.visibilityHandler) {
       document.removeEventListener("visibilitychange", this.visibilityHandler);
       this.visibilityHandler = null;
+    }
+    if (this.pageShowHandler) {
+      window.removeEventListener("pageshow", this.pageShowHandler);
+      this.pageShowHandler = null;
     }
   }
 }

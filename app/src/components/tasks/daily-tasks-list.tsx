@@ -12,7 +12,7 @@ import { Palmtree, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
-import { usePartnerStatus } from "@/lib/promises/use-partner-status";
+import { GoalsSection } from "@/components/promises/goals-section";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -87,8 +87,8 @@ export default function DailyTasksList({
     formatTimerDisplay,
     recalculateStreaksFromViewedDate,
     recalculateStreaksBusy,
+    goalRefreshKey,
   } = daily;
-  const { statusMap } = usePartnerStatus(currentDate);
   const pausedTaskIdSet = new Set(pausedTaskIds);
   const manualEntryActivity = manualEntryActivityId
     ? (activities.find((item) => item.id === manualEntryActivityId) ?? null)
@@ -126,6 +126,18 @@ export default function DailyTasksList({
           ))}
         </div>
       )}
+
+      <GoalsSection
+        lookupActivities={lookupActivities}
+        lookupGroups={lookupGroups}
+        activityStreaks={activityStreaks}
+        taskCounts={taskCounts}
+        pausedTaskIds={pausedTaskIds}
+        isBreakDay={isBreakDay}
+        goalRefreshKey={goalRefreshKey}
+        currentDate={currentDate}
+        isToday={isToday}
+      />
 
       {(loading || dailyActivities.length > 0) && (
         <>
@@ -169,7 +181,6 @@ export default function DailyTasksList({
                   isCurrentActivity={currentActivityId === activity.id}
                   isEditableDate={isToday}
                   temporal={temporalForViewDate}
-                  partnerStatuses={statusMap[activity.id]}
                   onIncrement={incrementTask}
                   onNeverIncrement={() => incrementNeverSlip(activity.id)}
                   onNeverReset={() => resetNeverTaskCount(activity.id)}
