@@ -13,22 +13,32 @@ export function useActivityTracking(
 
   const loadActivityPeriods = useCallback(async () => {
     try {
-      const entry = await db.dailyEntries
+      const entries = await db.dailyEntries
         .where("date")
         .equals(dateString)
         .filter((e) => !e.deleted_at)
-        .first();
+        .toArray();
 
-      if (!entry) {
+      if (entries.length === 0) {
         setActivityPeriods([]);
         return;
       }
 
-      const periods = await db.activityPeriods
-        .where("daily_entry_id")
-        .equals(entry.id)
-        .filter((p) => !p.deleted_at)
-        .sortBy("start_time");
+      const entryIds = new Set(entries.map((entry) => entry.id));
+      const periods = (
+        await db.activityPeriods
+          .filter(
+            (period) =>
+              !period.deleted_at &&
+              !!period.daily_entry_id &&
+              entryIds.has(period.daily_entry_id)
+          )
+          .toArray()
+      ).sort(
+        (left, right) =>
+          new Date(left.start_time).getTime() -
+          new Date(right.start_time).getTime()
+      );
 
       setActivityPeriods(periods);
     } catch (error) {
@@ -44,8 +54,32 @@ export function useActivityTracking(
       return periods.reduce((total, period) => {
         const start = new Date(period.start_time).getTime();
         const end = new Date(period.end_time!).getTime();
-        return total + (end - start);
+        return total + Math.max(0, end - start);
       }, 0);
+    },
+    [activityPeriods]
+  );
+
+  /** Total ms for an activity on this day, optionally including a live open period. */
+  const getActivityElapsedMs = useCallback(
+    (
+      activityId: string,
+      options?: { includeOpenPeriod?: boolean; nowMs?: number }
+    ): number => {
+      const includeOpenPeriod = options?.includeOpenPeriod ?? false;
+      const liveNowMs = options?.nowMs ?? Date.now();
+
+      return activityPeriods
+        .filter((period) => period.activity_id === activityId)
+        .reduce((total, period) => {
+          const start = new Date(period.start_time).getTime();
+          if (period.end_time) {
+            const end = new Date(period.end_time).getTime();
+            return total + Math.max(0, end - start);
+          }
+          if (!includeOpenPeriod) return total;
+          return total + Math.max(0, liveNowMs - start);
+        }, 0);
     },
     [activityPeriods]
   );
@@ -113,6 +147,7 @@ export function useActivityTracking(
     activityPeriods,
     loadActivityPeriods,
     calculateActivityTime,
+    getActivityElapsedMs,
     handleStartActivity,
     handleStopActivity,
   };

@@ -82,7 +82,7 @@ export default function DailyTasksList({
     runningSession,
     currentActivityElapsedMs,
     loadActivityPeriods,
-    calculateActivityTime,
+    getActivityElapsedMs,
     addManualActivityPeriod,
     formatTimerDisplay,
     recalculateStreaksFromViewedDate,
@@ -175,7 +175,7 @@ export default function DailyTasksList({
                   group={getGroup(activity)}
                   count={taskCounts[activity.id] || 0}
                   streak={activityStreaks[activity.id] || 0}
-                  timeSpent={calculateActivityTime(activity.id)}
+                  timeSpent={getActivityElapsedMs(activity.id)}
                   isPaused={pausedTaskIdSet.has(activity.id)}
                   isBreakDay={isBreakDay}
                   isCurrentActivity={currentActivityId === activity.id}
@@ -283,8 +283,7 @@ export default function DailyTasksList({
         loadJournalMeta={loadJournalMeta}
         currentActivityId={currentActivityId}
         activities={activities}
-        calculateActivityTime={calculateActivityTime}
-        runningActivityElapsedMs={currentActivityElapsedMs}
+        getActivityElapsedMs={getActivityElapsedMs}
         onStartActivity={handleStartActivity}
         onStopActivity={handleStopActivity}
         onAddManualActivityPeriod={addManualActivityPeriod}

@@ -84,10 +84,8 @@ function ArchivedPillToggle({
 interface ActivityGroupsDrawerProps {
   currentActivityId?: string | null;
   activities?: Activity[];
-  /** Closed-period time for the selected day (see initialDate). */
-  calculateActivityTime?: (activityId: string) => number;
-  /** Live elapsed for the open period on the selected day. */
-  runningActivityElapsedMs?: number;
+  /** Total tracked time for the selected day (see initialDate), including a live open period when editable. */
+  getActivityElapsedMs?: (activityId: string) => number;
   onStartActivity?: (activityId: string) => void | Promise<void>;
   onStopActivity?: () => void | Promise<void>;
   initialDate?: Date;
@@ -108,8 +106,7 @@ interface ActivityGroupsDrawerProps {
 export default function ActivityGroupsDrawer({
   currentActivityId,
   activities = [],
-  calculateActivityTime = () => 0,
-  runningActivityElapsedMs = 0,
+  getActivityElapsedMs = () => 0,
   onStartActivity,
   onStopActivity,
   initialDate = new Date(),
@@ -284,14 +281,6 @@ export default function ActivityGroupsDrawer({
 
   const incompleteActivities = groupActivities.filter((a) => !a.completed_at);
   const completedActivities = groupActivities.filter((a) => !!a.completed_at);
-
-  const getDrawerElapsedMs = (activityId: string, isRunning: boolean) => {
-    const closedMs = calculateActivityTime(activityId);
-    if (isRunning && currentActivityId === activityId) {
-      return closedMs + runningActivityElapsedMs;
-    }
-    return closedMs;
-  };
 
   const manualEntryActivity = manualEntryActivityId
     ? (groupActivities.find((item) => item.id === manualEntryActivityId) ??
@@ -493,10 +482,7 @@ export default function ActivityGroupsDrawer({
                                   selectedGroup
                                 )}
                                 color={groupColor}
-                                elapsedMs={getDrawerElapsedMs(
-                                  activity.id,
-                                  isRunning
-                                )}
+                                elapsedMs={getActivityElapsedMs(activity.id)}
                                 isRunning={isRunning}
                                 onNameClick={() => setEditingActivity(activity)}
                                 onClick={async () => {
@@ -545,7 +531,7 @@ export default function ActivityGroupsDrawer({
                                       selectedGroup
                                     )}
                                     color={groupColor}
-                                    elapsedMs={calculateActivityTime(
+                                    elapsedMs={getActivityElapsedMs(
                                       activity.id
                                     )}
                                     isRunning={false}

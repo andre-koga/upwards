@@ -179,6 +179,7 @@ export function useDailyTasks({
     activityPeriods,
     loadActivityPeriods,
     calculateActivityTime,
+    getActivityElapsedMs: getActivityElapsedMsRaw,
     handleStartActivity,
     handleStopActivity,
   } = useActivityTracking(
@@ -344,13 +345,27 @@ export function useDailyTasks({
     return latestOpen?.activity_id ?? null;
   }, [activityPeriods]);
 
+  const hasOpenPeriod = useMemo(
+    () => activityPeriods.some((period) => !period.end_time),
+    [activityPeriods]
+  );
+
+  const getActivityElapsedMs = useCallback(
+    (activityId: string) =>
+      getActivityElapsedMsRaw(activityId, {
+        includeOpenPeriod: isToday,
+        nowMs,
+      }),
+    [getActivityElapsedMsRaw, isToday, nowMs]
+  );
+
   useEffect(() => {
-    if (!resolvedCurrentActivityId) return;
+    if (!isToday || !hasOpenPeriod) return;
     const interval = setInterval(() => {
       setNowMs(Date.now());
     }, 1000);
     return () => clearInterval(interval);
-  }, [resolvedCurrentActivityId]);
+  }, [isToday, hasOpenPeriod]);
 
   const activityTotalMsById = useMemo(() => {
     const totals = new Map<string, number>();
@@ -531,6 +546,7 @@ export function useDailyTasks({
     currentActivityElapsedMs,
     loadActivityPeriods,
     calculateActivityTime,
+    getActivityElapsedMs,
     calculateActivityTotalTime,
     addManualActivityPeriod,
     formatTimerDisplay,
