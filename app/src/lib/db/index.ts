@@ -10,8 +10,6 @@ import type {
   ActivityStreak,
   ActivityStatusEvent,
   GroupStatusEvent,
-  Goal,
-  GoalProgressEvent,
   UserProfile,
 } from "./types";
 import { shiftDate, startOfDay } from "@/lib/time-utils";
@@ -97,9 +95,6 @@ class UpwardsDB extends Dexie {
   activityStreaks!: Table<ActivityStreak>;
   activityStatusEvents!: Table<ActivityStatusEvent>;
   groupStatusEvents!: Table<GroupStatusEvent>;
-  // Goals / accountability (Supabase-backed; local cache optional)
-  promises!: Table<Goal>;
-  promiseProgressEvents!: Table<GoalProgressEvent>;
   userProfiles!: Table<UserProfile>;
 
   constructor() {
@@ -625,6 +620,35 @@ class UpwardsDB extends Dexie {
       })
       .upgrade(async (tx) => {
         await tx.table("promiseMembers").clear();
+      });
+
+    // v20: drop local goals tables; milestones + friend completions are Supabase-only
+    this.version(20)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities:
+          "id, group_id, completed_at, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        groupStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        promises: null,
+        promiseMembers: null,
+        promiseProgressEvents: null,
+        promiseReactions: null,
+        promiseInvites: null,
+        userProfiles: "user_id",
+      })
+      .upgrade(async (tx) => {
+        await tx.table("promises").clear();
+        await tx.table("promiseProgressEvents").clear();
       });
   }
 }

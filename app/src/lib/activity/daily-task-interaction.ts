@@ -60,7 +60,7 @@ export function getDailyTaskInteractionState(
     return {
       isReadOnly: true,
       retiredKind: null,
-      canClickName: false,
+      canClickName: true,
       canEditCounts: false,
       canUseTimer: false,
     };
@@ -69,7 +69,7 @@ export function getDailyTaskInteractionState(
   return {
     isReadOnly: false,
     retiredKind: null,
-    canClickName: false,
+    canClickName: true,
     canEditCounts: true,
     canUseTimer: true,
   };

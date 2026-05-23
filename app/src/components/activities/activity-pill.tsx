@@ -18,6 +18,9 @@ export interface ActivityPillProps {
   /** When readOnly, still allow tapping the name (e.g. retired info on past days). */
   allowNameClickWhenReadOnly?: boolean;
   className?: string;
+  /** 0–100 toward next auto milestone; omit to hide bar. */
+  milestoneProgressPercent?: number;
+  milestoneAccentColor?: string;
 }
 
 export default function ActivityPill({
@@ -32,15 +35,21 @@ export default function ActivityPill({
   readOnly = false,
   allowNameClickWhenReadOnly = false,
   className = "",
+  milestoneProgressPercent,
+  milestoneAccentColor,
 }: ActivityPillProps) {
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
   const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
 
+  const showMilestoneBar =
+    milestoneProgressPercent != null && milestoneProgressPercent >= 0;
+
   return (
     <div
       className={cn(
-        "relative flex h-10 w-full items-stretch gap-2 overflow-hidden rounded-full",
+        "relative flex w-full items-stretch gap-2 overflow-hidden rounded-full",
+        showMilestoneBar ? "h-12" : "h-10",
         className,
       )}
     >
@@ -50,7 +59,7 @@ export default function ActivityPill({
         variant="outline"
         onClick={nameInteractive ? onNameClick : undefined}
         className={cn(
-          "h-full flex-1 justify-start gap-2 truncate rounded-full px-4 text-left text-sm font-medium",
+          "h-full min-h-0 flex-1 flex-col items-stretch justify-center gap-0 overflow-hidden rounded-full px-4 py-1 text-left text-sm font-medium",
           readOnly && !allowNameClickWhenReadOnly
             ? "pointer-events-none shadow-sm"
             : readOnly
@@ -58,15 +67,31 @@ export default function ActivityPill({
               : "shadow-none",
         )}
       >
-        <span
-          className="h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{ backgroundColor: color }}
-        />
-        <span className={cn("min-w-0 truncate", nameClassName)}>
-          {name || (
-            <span className="font-normal text-muted-foreground">Name…</span>
-          )}
+        <span className="flex min-w-0 items-center gap-2">
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: color }}
+          />
+          <span className={cn("min-w-0 truncate", nameClassName)}>
+            {name || (
+              <span className="font-normal text-muted-foreground">Name…</span>
+            )}
+          </span>
         </span>
+        {showMilestoneBar ? (
+          <div
+            className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted"
+            aria-hidden
+          >
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-300"
+              style={{
+                width: `${milestoneProgressPercent}%`,
+                backgroundColor: milestoneAccentColor ?? color,
+              }}
+            />
+          </div>
+        ) : null}
       </Button>
 
       {/* Timer / action side */}

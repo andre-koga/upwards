@@ -24,7 +24,7 @@ import {
   recomputeActivityStreaksFromDateForActivities,
 } from "@/lib/streak-utils";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
-import { emitDailyComplete } from "@/lib/promises/emit-progress";
+import { emitActivityCompletion } from "@/lib/social/emit-activity-completion";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
@@ -68,7 +68,6 @@ export function useDailyTasks({
   >([]);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [recalculateStreaksBusy, setRecalculateStreaksBusy] = useState(false);
-  const [goalRefreshKey, setGoalRefreshKey] = useState(0);
   const recalcStreaksInFlightRef = useRef(false);
 
   const streakVisibilityDeps = useMemo<StreakVisibilityDeps>(
@@ -106,18 +105,16 @@ export function useDailyTasks({
     toggleBreakDay,
   } = useDailyEntry(dateString);
 
-  // Wraps incrementTask to fire promise progress events after a successful completion.
   const incrementTaskWithProgress = useCallback(
     async (activityId: string, target: number, options?: { neverSlip?: boolean }) => {
       await incrementTask(activityId, target, options);
-      if (options?.neverSlip) return; // slip counts are not completions
+      if (options?.neverSlip) return;
 
       const activity =
         lookupActivityById.get(activityId) ??
         activities.find((a) => a.id === activityId);
-      if (!activity) return;
+      if (!activity || activity.routine === "never") return;
 
-      // Read the newly persisted count from IndexedDB to avoid stale closure values.
       const entry = await db.dailyEntries
         .where("date")
         .equals(dateString)
@@ -130,14 +127,12 @@ export function useDailyTasks({
       const completionTarget = activity.completion_target ?? 1;
 
       if (newCount === completionTarget) {
-        await emitDailyComplete({
-          activityId,
-          activityName: getActivityDisplayName(activity, group),
-          newCount,
-          completionTarget,
+        const fresh = (await db.activities.get(activityId)) ?? activity;
+        await emitActivityCompletion({
+          activity: fresh,
+          activityName: getActivityDisplayName(fresh, group),
           dateString,
         });
-        setGoalRefreshKey((key) => key + 1);
       }
     },
     [
@@ -153,17 +148,8 @@ export function useDailyTasks({
   const incrementNeverSlip = useCallback(
     async (activityId: string) => {
       await incrementTaskWithProgress(activityId, 1, { neverSlip: true });
-      setGoalRefreshKey((key) => key + 1);
     },
     [incrementTaskWithProgress]
-  );
-
-  const resetNeverTaskCountWithGoals = useCallback(
-    async (activityId: string) => {
-      await resetNeverTaskCount(activityId);
-      setGoalRefreshKey((key) => key + 1);
-    },
-    [resetNeverTaskCount]
   );
 
   const {
@@ -562,7 +548,7 @@ export function useDailyTasks({
     updateOneTimeTask,
     incrementTask: incrementTaskWithProgress,
     incrementNeverSlip,
-    resetNeverTaskCount: resetNeverTaskCountWithGoals,
+    resetNeverTaskCount,
     toggleTaskPaused,
     toggleBreakDay,
     handleStartActivity: startActivity,
@@ -578,6 +564,5 @@ export function useDailyTasks({
     formatTimerDisplay,
     recalculateStreaksFromViewedDate,
     recalculateStreaksBusy,
-    goalRefreshKey,
   };
 }

@@ -93,7 +93,7 @@ export function ProfileCard() {
               )}
             </p>
             <p className="text-xs text-muted-foreground">
-              Shown if you invite friends to a Goal
+              Shown when friends see your shared habit completions
             </p>
           </div>
           <Button
