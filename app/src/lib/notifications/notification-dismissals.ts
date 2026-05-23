@@ -1,12 +1,11 @@
 import { supabase } from "@/lib/supabase";
-import type { InboxNotification } from "@/lib/promises/use-notifications";
+import type { InboxNotification } from "@/lib/notifications/use-notifications";
 
-/** Notifications that still need accept/decline cannot be dismissed. */
 export function isNotificationClearable(
   notification: InboxNotification
 ): boolean {
   if (notification.actionStatus === "pending") return false;
-  return notification.kind === "goal_complete" || notification.kind === "goal_achieved";
+  return notification.kind === "activity_complete";
 }
 
 export async function fetchDismissedNotificationIds(
@@ -44,7 +43,6 @@ export async function dismissNotifications(
   if (error) throw error;
 }
 
-/** Drop dismissal rows for notifications no longer in the inbox window. */
 export async function pruneDismissedNotifications(
   userId: string,
   activeNotificationIds: Iterable<string>

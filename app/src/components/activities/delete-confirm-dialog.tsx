@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { db, now } from "@/lib/db";
 import {
@@ -7,13 +6,6 @@ import {
   stopCurrentActivity,
 } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
-import {
-  formatGoalModificationBlockMessage,
-  getActiveGoalBlockingGroup,
-  getActiveGoalForActivity,
-} from "@/lib/promises/goal-eligibility";
-import { useGoals } from "@/lib/promises/use-goals";
-import { getCachedUserId } from "@/lib/supabase";
 
 interface DeleteConfirmDialogProps {
   open: boolean;
@@ -30,40 +22,8 @@ export function DeleteConfirmDialog({
   onOpenChange,
   onDeleted,
 }: DeleteConfirmDialogProps) {
-  const { goals } = useGoals();
-  const userId = getCachedUserId();
-  const [blockMessage, setBlockMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open || !id || !type) {
-      setBlockMessage(null);
-      return;
-    }
-
-    if (type === "activity") {
-      const goal = getActiveGoalForActivity(id, goals, userId);
-      setBlockMessage(
-        goal ? formatGoalModificationBlockMessage(goal, "delete") : null
-      );
-      return;
-    }
-
-    void db.activities
-      .filter((activity) => activity.group_id === id)
-      .toArray()
-      .then((activities) => {
-        const goal = getActiveGoalBlockingGroup(id, activities, goals, userId);
-        setBlockMessage(
-          goal
-            ? formatGoalModificationBlockMessage(goal, "delete", "group")
-            : null
-        );
-      })
-      .catch(console.error);
-  }, [open, id, type, goals, userId]);
-
   const handleDelete = async () => {
-    if (!id || !type || blockMessage) return;
+    if (!id || !type) return;
     try {
       const n = now();
       const actionDate = new Date();
@@ -100,38 +60,24 @@ export function DeleteConfirmDialog({
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={
-        blockMessage
-          ? "Active goal linked"
-          : `Permanently Delete ${isGroup ? "Group" : "Activity"}?`
-      }
+      title={`Permanently Delete ${isGroup ? "Group" : "Activity"}?`}
       description={
-        blockMessage ?? (
-          <>
-            This action cannot be undone. This will permanently delete the{" "}
-            {isGroup ? "group and all activities in it" : "activity"}.
-          </>
-        )
+        <>
+          This action cannot be undone. This will permanently delete the{" "}
+          {isGroup ? "group and all activities in it" : "activity"}.
+        </>
       }
       contentClassName="sm:max-w-md"
     >
       <FormDialogActions
-        onConfirm={blockMessage ? () => onOpenChange(false) : handleDelete}
-        confirmLabel={blockMessage ? "OK" : "Delete"}
-        confirmDisabled={!blockMessage && (!id || !type)}
-        confirmClassName={
-          blockMessage
-            ? undefined
-            : "bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
-        }
-        secondaryAction={
-          blockMessage
-            ? undefined
-            : {
-                label: "Cancel",
-                onClick: () => onOpenChange(false),
-              }
-        }
+        onConfirm={handleDelete}
+        confirmLabel="Delete"
+        confirmDisabled={!id || !type}
+        confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
+        secondaryAction={{
+          label: "Cancel",
+          onClick: () => onOpenChange(false),
+        }}
       />
     </FormDialog>
   );

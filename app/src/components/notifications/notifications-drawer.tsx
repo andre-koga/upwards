@@ -1,27 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
-import { useNotifications } from "@/lib/promises/use-notifications";
-import { useGoals } from "@/lib/promises/use-goals";
+import {
+  useNotifications,
+  matchesFriendRequestNotification,
+} from "@/lib/notifications/use-notifications";
 import { useFriends } from "@/lib/friends/use-friends";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
-import type { InboxNotification } from "@/lib/promises/use-notifications";
-import {
-  clearableNotificationIdsForShare,
-  matchesFriendRequestNotification,
-  matchesGoalShareNotification,
-} from "@/lib/promises/notification-inbox-utils";
-import { NotificationRow } from "@/components/promises/notification-row";
+import { NotificationRow } from "@/components/notifications/notification-row";
 
 interface NotificationsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerProps) {
+export function NotificationsDrawer({
+  open,
+  onOpenChange,
+}: NotificationsDrawerProps) {
   const navigate = useNavigate();
   const { isAuthed, isSupabaseConfigured } = useAuth();
   const {
@@ -33,21 +31,19 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
     dismissNotification,
     dismissAllClearable,
     removeNotificationsMatching,
-    dismissNotificationIds,
   } = useNotifications();
-  const { acceptShare, declineShare, stopWatching } = useGoals();
   const { respond: respondFriend } = useFriends();
   const [responding, setResponding] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      void reload({ silent: true });
-    }
+    if (open) void reload({ silent: true });
   }, [open, reload]);
 
   const handleAcceptFriend = async (id: string) => {
     setResponding(id);
-    removeNotificationsMatching((n) => matchesFriendRequestNotification(n, id));
+    removeNotificationsMatching((n) =>
+      matchesFriendRequestNotification(n, id)
+    );
     try {
       await respondFriend(id, true);
       await reload({ silent: true });
@@ -58,50 +54,11 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
 
   const handleDeclineFriend = async (id: string) => {
     setResponding(id);
-    removeNotificationsMatching((n) => matchesFriendRequestNotification(n, id));
+    removeNotificationsMatching((n) =>
+      matchesFriendRequestNotification(n, id)
+    );
     try {
       await respondFriend(id, false);
-      await reload({ silent: true });
-    } finally {
-      setResponding(null);
-    }
-  };
-
-  const handleAcceptGoalShare = async (n: InboxNotification) => {
-    if (!n.shareId) return;
-    const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
-    setResponding(rawId);
-    removeNotificationsMatching((item) => item.id === n.id);
-    try {
-      await acceptShare(n.shareId);
-      await reload({ silent: true });
-    } finally {
-      setResponding(null);
-    }
-  };
-
-  const handleDeclineGoalShare = async (n: InboxNotification) => {
-    if (!n.shareId) return;
-    const rawId = n.id.startsWith("gs-") ? n.id.slice(3) : n.shareId;
-    setResponding(rawId);
-    removeNotificationsMatching((item) => item.id === n.id);
-    try {
-      await declineShare(n.shareId);
-      await reload({ silent: true });
-    } finally {
-      setResponding(null);
-    }
-  };
-
-  const handleStopWatching = async (shareId: string) => {
-    setResponding(shareId);
-    const clearableIds = clearableNotificationIdsForShare(notifications, shareId);
-    removeNotificationsMatching((n) => matchesGoalShareNotification(n, shareId));
-    if (clearableIds.length > 0) {
-      dismissNotificationIds(clearableIds);
-    }
-    try {
-      await stopWatching(shareId);
       await reload({ silent: true });
     } finally {
       setResponding(null);
@@ -176,7 +133,7 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
                 <Bell className="m-2 h-6 w-6 text-muted-foreground/30" />
                 <p className="text-sm font-medium">Nothing here yet</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Goal shares and friend requests will show up here.
+                  Friend requests and shared habit completions appear here.
                 </p>
               </div>
             ) : (
@@ -187,9 +144,6 @@ export function NotificationsDrawer({ open, onOpenChange }: NotificationsDrawerP
                     n={n}
                     onAcceptFriend={(id) => void handleAcceptFriend(id)}
                     onDeclineFriend={(id) => void handleDeclineFriend(id)}
-                    onAcceptGoalShare={(item) => void handleAcceptGoalShare(item)}
-                    onDeclineGoalShare={(item) => void handleDeclineGoalShare(item)}
-                    onStopWatchingGoalShare={(shareId) => void handleStopWatching(shareId)}
                     onDismiss={dismissNotification}
                     responding={responding}
                   />

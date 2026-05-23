@@ -10,21 +10,18 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
-    date: "2026-05-22",
-    title: "Goals, friends, and notifications",
+    date: "2026-05-23",
+    title: "Streak milestones and friend sharing",
     bullets: [
-      "Set a Goal on a habit to stay accountable — pick a streak target and track how you are doing.",
-      "Add friends by username and share Goals for extra motivation.",
-      "Use the notifications inbox (bell, top right) for friend requests and Goal updates in one place.",
-      "Mark habits as done from the Projects drawer; they stay on For Today through the day you finish them.",
-      "Browse past days on For Today to see which habits and groups were active on that day.",
+      "Tap a habit on For Today to see your streak, the next milestone, and progress toward it.",
+      "Milestone targets adjust automatically from your current streak — no setup required.",
+      "Toggle Share with friends on a habit to notify friends when you complete it that day.",
+      "Friend notifications show their streak and milestone progress — no invites to accept.",
+      "Add friends by username; the bell inbox handles friend requests and shared completions.",
     ],
     fixes: [
-      "Display names and usernames load reliably in friends and Goals.",
-      "Projects drawer timers show the correct time tracked for each day.",
-      "Sync keeps working when you delete a habit that had streak history.",
-      "Friend names and usernames show reliably in goal and notification messages.",
-      "Users can now reset their password.",
+      "Projects drawer timers show all-time tracked time per habit again.",
+      "Mark habits as done from the Projects drawer; they stay on For Today through the day you finish them.",
     ],
   },
   {

@@ -27,14 +27,13 @@ export function ActivityRetiredInfoDialog({
         isDeleted ? (
           <>
             &quot;{displayName}&quot; has been deleted. You can still see it on
-            past days where you tracked it, but goals and settings are no longer
-            available.
+            past days where you tracked it, but editing is no longer available.
           </>
         ) : (
           <>
             &quot;{displayName}&quot; has been marked as completed. You can
-            still see it on past days where you tracked it, but goals and
-            settings are no longer available.
+            still see it on past days where you tracked it, but editing is no
+            longer available.
           </>
         )
       }

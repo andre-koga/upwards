@@ -12,7 +12,7 @@ import { Palmtree, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
-import { GoalsSection } from "@/components/promises/goals-section";
+import { ActivityStreakDialog } from "@/components/activities/activity-streak-dialog";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -55,6 +55,9 @@ export default function DailyTasksList({
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
     string | null
   >(null);
+  const [streakDialogActivityId, setStreakDialogActivityId] = useState<
+    string | null
+  >(null);
 
   const {
     isToday,
@@ -88,7 +91,6 @@ export default function DailyTasksList({
     formatTimerDisplay,
     recalculateStreaksFromViewedDate,
     recalculateStreaksBusy,
-    goalRefreshKey,
   } = daily;
   const pausedTaskIdSet = new Set(pausedTaskIds);
   const manualEntryActivity = manualEntryActivityId
@@ -96,6 +98,12 @@ export default function DailyTasksList({
     : null;
   const manualEntryGroup = manualEntryActivity
     ? getGroup(manualEntryActivity)
+    : undefined;
+  const streakDialogActivity = streakDialogActivityId
+    ? (lookupActivities.find((a) => a.id === streakDialogActivityId) ?? null)
+    : null;
+  const streakDialogGroup = streakDialogActivity
+    ? getGroup(streakDialogActivity)
     : undefined;
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
@@ -127,18 +135,6 @@ export default function DailyTasksList({
           ))}
         </div>
       )}
-
-      <GoalsSection
-        lookupActivities={lookupActivities}
-        lookupGroups={lookupGroups}
-        activityStreaks={activityStreaks}
-        taskCounts={taskCounts}
-        pausedTaskIds={pausedTaskIds}
-        isBreakDay={isBreakDay}
-        goalRefreshKey={goalRefreshKey}
-        currentDate={currentDate}
-        isToday={isToday}
-      />
 
       {(loading || dailyActivities.length > 0) && (
         <>
@@ -188,6 +184,7 @@ export default function DailyTasksList({
                   onStartActivity={handleStartActivity}
                   onStopActivity={handleStopActivity}
                   onManualEntry={setManualEntryActivityId}
+                  onOpenStreakDialog={setStreakDialogActivityId}
                 />
               ))}
           </div>
@@ -332,6 +329,20 @@ export default function DailyTasksList({
           }
         }}
         onSave={addManualActivityPeriod}
+      />
+
+      <ActivityStreakDialog
+        open={streakDialogActivityId !== null}
+        activity={streakDialogActivity}
+        group={streakDialogGroup}
+        streak={
+          streakDialogActivityId
+            ? activityStreaks[streakDialogActivityId] ?? 0
+            : 0
+        }
+        onOpenChange={(open) => {
+          if (!open) setStreakDialogActivityId(null);
+        }}
       />
     </div>
   );

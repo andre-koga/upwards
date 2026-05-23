@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Bell, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/use-auth";
-import { useNotifications } from "@/lib/promises/use-notifications";
-import { NotificationsDrawer } from "./notifications-drawer";
+import { useNotifications } from "@/lib/notifications/use-notifications";
+import { NotificationsDrawer } from "@/components/notifications/notifications-drawer";
 import { cn } from "@/lib/utils";
 
 export function NotificationsFloatingButton() {
@@ -27,9 +27,7 @@ export function NotificationsFloatingButton() {
             type="button"
             variant="outline"
             size="icon"
-            className={cn(
-              "h-9 w-9 rounded-full border-border bg-background p-0 shadow-md"
-            )}
+            className="h-9 w-9 rounded-full border-border bg-background p-0 shadow-md"
             onClick={() => navigate("/settings")}
             title="Sign in"
             aria-label="Sign in"
@@ -53,9 +51,7 @@ export function NotificationsFloatingButton() {
             type="button"
             variant="outline"
             size="icon"
-            className={cn(
-              "h-9 w-9 rounded-full border-border bg-background p-0 shadow-md"
-            )}
+            className="h-9 w-9 rounded-full border-border bg-background p-0 shadow-md"
             onClick={() => setDrawerOpen(true)}
             title={label}
             aria-label={label}
