@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import ActivityPill from "@/components/activities/activity-pill";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
@@ -5,6 +6,11 @@ import {
   getMilestoneProgress,
   showsMilestones,
 } from "@/lib/activity";
+import {
+  ensureMilestoneCelebrationSeen,
+  isMilestoneCelebrationPending,
+  subscribeMilestoneCelebration,
+} from "@/lib/activity/milestone-celebration";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import type { DailyTaskInteractionState } from "@/lib/activity";
 
@@ -39,9 +45,24 @@ export default function DailyTaskActivityPill({
 }: DailyTaskActivityPillProps) {
   const groupColor = group?.color || DEFAULT_GROUP_COLOR;
   const canUseTimer = interaction.canUseTimer && !isPaused;
+  const [, bumpCelebration] = useState(0);
+
+  useEffect(
+    () => subscribeMilestoneCelebration(() => bumpCelebration((n) => n + 1)),
+    []
+  );
+
   const milestone = showsMilestones(activity.routine)
     ? getMilestoneProgress(streak)
     : null;
+
+  useEffect(() => {
+    if (milestone) ensureMilestoneCelebrationSeen(activity.id, milestone);
+  }, [activity.id, milestone?.current, milestone?.prev, milestone?.next]);
+
+  const milestoneCelebrating =
+    milestone != null &&
+    isMilestoneCelebrationPending(activity.id, milestone);
 
   return (
     <ActivityPill
@@ -75,6 +96,7 @@ export default function DailyTaskActivityPill({
       }
       milestoneProgressPercent={milestone?.progressPercent}
       milestoneAccentColor={groupColor}
+      milestoneCelebrating={milestoneCelebrating}
     />
   );
 }

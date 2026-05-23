@@ -19,6 +19,7 @@ import {
   pruneDismissedNotifications,
 } from "@/lib/notifications/notification-dismissals";
 import { matchesFriendRequestNotification } from "@/lib/notifications/notification-inbox-utils";
+import { milestoneProgressPercent } from "@/lib/activity/milestones";
 
 export type NotificationKind = "friend_request" | "activity_complete";
 
@@ -67,15 +68,6 @@ function friendIdsFromRows(
   );
 }
 
-function milestoneProgressPercent(
-  streak: number,
-  prev: number,
-  next: number
-): number {
-  const span = next - prev;
-  if (span <= 0) return 100;
-  return Math.min(100, Math.round(((streak - prev) / span) * 100));
-}
 
 export type LoadNotificationsOptions = {
   silent?: boolean;

@@ -21,6 +21,8 @@ export interface ActivityPillProps {
   /** 0–100 toward next auto milestone; omit to hide bar. */
   milestoneProgressPercent?: number;
   milestoneAccentColor?: string;
+  /** Full green bar when a ladder milestone was just reached. */
+  milestoneCelebrating?: boolean;
 }
 
 export default function ActivityPill({
@@ -37,6 +39,7 @@ export default function ActivityPill({
   className = "",
   milestoneProgressPercent,
   milestoneAccentColor,
+  milestoneCelebrating = false,
 }: ActivityPillProps) {
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
@@ -48,8 +51,7 @@ export default function ActivityPill({
   return (
     <div
       className={cn(
-        "relative flex w-full items-stretch gap-2 overflow-hidden rounded-full",
-        showMilestoneBar ? "h-12" : "h-10",
+        "relative flex h-10 w-full items-stretch gap-2 overflow-hidden rounded-full",
         className,
       )}
     >
@@ -59,7 +61,7 @@ export default function ActivityPill({
         variant="outline"
         onClick={nameInteractive ? onNameClick : undefined}
         className={cn(
-          "h-full min-h-0 flex-1 flex-col items-stretch justify-center gap-0 overflow-hidden rounded-full px-4 py-1 text-left text-sm font-medium",
+          "h-full min-h-0 flex-1 flex-col items-stretch justify-center gap-0 overflow-hidden rounded-full p-0 text-left text-sm font-medium",
           readOnly && !allowNameClickWhenReadOnly
             ? "pointer-events-none shadow-sm"
             : readOnly
@@ -67,7 +69,29 @@ export default function ActivityPill({
               : "shadow-none",
         )}
       >
-        <span className="flex min-w-0 items-center gap-2">
+        {showMilestoneBar ? (
+          <div className="h-px w-full shrink-0 bg-muted" aria-hidden>
+            <div
+              className={cn(
+                "h-full transition-[width] duration-300",
+                milestoneCelebrating
+                  ? "w-full bg-green-600 dark:bg-green-500"
+                  : "bg-primary",
+              )}
+              style={
+                milestoneCelebrating
+                  ? undefined
+                  : { width: `${milestoneProgressPercent}%` }
+              }
+            />
+          </div>
+        ) : null}
+        <span
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 items-center gap-2 px-4",
+            showMilestoneBar ? "py-0" : "py-1",
+          )}
+        >
           <span
             className="h-2.5 w-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: color }}
@@ -78,20 +102,6 @@ export default function ActivityPill({
             )}
           </span>
         </span>
-        {showMilestoneBar ? (
-          <div
-            className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted"
-            aria-hidden
-          >
-            <div
-              className="h-full rounded-full bg-primary transition-[width] duration-300"
-              style={{
-                width: `${milestoneProgressPercent}%`,
-                backgroundColor: milestoneAccentColor ?? color,
-              }}
-            />
-          </div>
-        ) : null}
       </Button>
 
       {/* Timer / action side */}

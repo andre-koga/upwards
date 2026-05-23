@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Lock, Share2 } from "lucide-react";
 import { db, now } from "@/lib/db";
 import type { Activity } from "@/lib/db/types";
 import { cn } from "@/lib/utils";
@@ -41,30 +42,33 @@ export function ShareCompletionsToggle({
   };
 
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5",
-        className
-      )}
-    >
-      <div className="min-w-0">
-        <p className="text-sm font-medium">Share with friends</p>
-        <p className="text-xs text-muted-foreground">
-          When you complete this habit, friends see your streak and milestone
-          progress.
-        </p>
-      </div>
+    <div className={cn("flex flex-col items-center gap-3", className)}>
       <Button
         type="button"
         variant={shared ? "default" : "outline"}
         size="sm"
         disabled={busy}
-        className="shrink-0 rounded-full px-3"
+        className="gap-2 rounded-full px-4"
         onClick={() => void setShared(!shared)}
         aria-pressed={shared}
       >
-        {shared ? "On" : "Off"}
+        {shared ? (
+          <>
+            <Share2 className="h-4 w-4 shrink-0" aria-hidden />
+            Sharing
+          </>
+        ) : (
+          <>
+            <Lock className="h-4 w-4 shrink-0" aria-hidden />
+            Private
+          </>
+        )}
       </Button>
+      <p className="max-w-sm text-center text-xs text-muted-foreground">
+        {shared
+          ? "Friends see your streak upon completion."
+          : "Only you see this habit’s streak and milestones."}
+      </p>
     </div>
   );
 }
