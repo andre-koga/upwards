@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Loader2, Paperclip, Trash2, X } from "lucide-react";
+import { ImagePlus, Loader2, Trash2, Video, X } from "lucide-react";
 import {
   FormCharacterCount,
   FormControlButton,
@@ -289,25 +289,6 @@ export default function JournalEditDialog({
                 onChange={handlePhotoFilesChange}
               />
               <div className="flex gap-2">
-                <FormControlButton
-                  className="min-w-0 flex-1"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingVideo || uploadingPhotos}
-                  title={
-                    videoPath.trim().length > 0
-                      ? "Replace video"
-                      : "Attach video"
-                  }
-                >
-                  {uploadingVideo ? (
-                    <Loader2 className="animate-spin" aria-hidden />
-                  ) : (
-                    <Paperclip aria-hidden />
-                  )}
-                  {videoPath.trim().length > 0
-                    ? "Replace video"
-                    : "Attach video"}
-                </FormControlButton>
                 {videoPath.trim().length > 0 ? (
                   <FormControlButton
                     className="w-10 shrink-0 justify-center px-0 text-destructive"
@@ -321,12 +302,36 @@ export default function JournalEditDialog({
                     <Trash2 aria-hidden />
                   </FormControlButton>
                 ) : null}
-
                 <FormControlButton
                   className="min-w-0 flex-1"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingVideo || uploadingPhotos}
+                  title={
+                    videoPath.trim().length > 0
+                      ? "Replace video"
+                      : "Add video"
+                  }
+                >
+                  {uploadingVideo ? (
+                    <Loader2 className="animate-spin" aria-hidden />
+                  ) : (
+                    <Video aria-hidden />
+                  )}
+                  {videoPath.trim().length > 0 ? "Replace video" : "Add video"}
+                </FormControlButton>
+
+                <FormControlButton
+                  className="w-10 shrink-0 justify-center px-0"
                   onClick={() => photoInputRef.current?.click()}
                   disabled={uploadingVideo || uploadingPhotos || !canAddMorePhotos}
                   title={
+                    !canAddMorePhotos
+                      ? "Maximum 5 photos reached"
+                      : photoCount > 0
+                      ? `${photoCount}/${MAX_PHOTOS} photos`
+                      : "Add photos"
+                  }
+                  aria-label={
                     !canAddMorePhotos
                       ? "Maximum 5 photos reached"
                       : photoCount > 0
@@ -339,9 +344,6 @@ export default function JournalEditDialog({
                   ) : (
                     <ImagePlus aria-hidden />
                   )}
-                  {photoCount > 0
-                    ? `${photoCount}/${MAX_PHOTOS} photos`
-                    : "Add photos"}
                 </FormControlButton>
               </div>
 
