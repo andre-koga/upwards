@@ -24,6 +24,7 @@ export function useDailyEntry(dateString: string) {
   const [currentActivityId, setCurrentActivityId] = useState<string | null>(
     null
   );
+  const [streakDbVersion, setStreakDbVersion] = useState(0);
 
   // Refs let us compute the exact next persisted values without relying on
   // React state updater callbacks having run before awaiting persistence.
@@ -294,5 +295,7 @@ export function useDailyEntry(dateString: string) {
     resetNeverTaskCount,
     toggleTaskPaused,
     toggleBreakDay,
+    streakDbVersion,
+    bumpStreakDbVersion,
   };
 }
