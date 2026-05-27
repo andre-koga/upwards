@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { db, newId, now } from "@/lib/db";
-import { toDateString } from "@/lib/time-utils";
+import { toDateString, shiftDate, startOfDay } from "@/lib/time-utils";
 import type {
   Activity,
   ActivityGroup,
@@ -17,11 +17,11 @@ import {
   getActivityDisplayName,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
-import type { StreakVisibilityDeps } from "@/lib/streak-utils";
 import { isJournalCalendarDateEditable } from "@/lib/journal";
 import {
   getOrComputeActivityStreaksForDate,
   recomputeActivityStreaksFromDateForActivities,
+  type TodayOverride,
 } from "@/lib/streak-utils";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import { emitActivityCompletion } from "@/lib/social/emit-activity-completion";
@@ -60,17 +60,17 @@ export function useDailyTasks({
   const dateString = toDateString(currentDate);
   // Same editable window as the journal card (`canEditJournal`); misleading name retained for callers.
   const isToday = isJournalCalendarDateEditable(currentDate);
-  const [activityStreaks, setActivityStreaks] = useState<
-    Record<string, number>
-  >({});
+  const [activityStreaks, setActivityStreaks] = useState<Record<string, number>>({});
+  const [baseStreaks, setBaseStreaks] = useState<Record<string, number>>({});
   const [allActivityPeriods, setAllActivityPeriods] = useState<
     ActivityPeriod[]
   >([]);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [recalculateStreaksBusy, setRecalculateStreaksBusy] = useState(false);
+  const [recalcTrigger, setRecalcTrigger] = useState(0);
   const recalcStreaksInFlightRef = useRef(false);
 
-  const streakVisibilityDeps = useMemo<StreakVisibilityDeps>(
+  const streakVisibilityDeps = useMemo(
     () => ({
       groupById: lookupGroupById,
       activityEventsById,
@@ -93,8 +93,6 @@ export function useDailyTasks({
     pausedTaskIds,
     isBreakDay,
     loading,
-    streakDbVersion,
-    bumpStreakDbVersion,
     currentActivityId,
     setCurrentActivityId,
     loadDailyEntry,
@@ -230,18 +228,30 @@ export function useDailyTasks({
     });
 
     void getOrComputeActivityStreaksForDate(visibleActivities, currentDate, {
-      // Recompute target-day streaks for the viewed date so historical days
-      // reflect current task counts instead of stale cached streak rows.
-      forceRecomputeTarget: true,
       visibility: streakVisibilityDeps,
+      todayOverride: {
+        date: dateString,
+        taskCounts,
+        pausedTaskIds,
+        isBreakDay,
+      },
     })
       .then((streaks) => {
-        if (!cancelled) {
-          setActivityStreaks(streaks);
-        }
+        if (!cancelled) setActivityStreaks(streaks);
       })
       .catch((err) => {
         console.error("Error computing activity streaks:", err);
+      });
+
+    const yesterday = shiftDate(startOfDay(currentDate), -1);
+    void getOrComputeActivityStreaksForDate(visibleActivities, yesterday, {
+      visibility: streakVisibilityDeps,
+    })
+      .then((streaks) => {
+        if (!cancelled) setBaseStreaks(streaks);
+      })
+      .catch((err) => {
+        console.error("Error computing base streaks:", err);
       });
 
     return () => {
@@ -256,7 +266,7 @@ export function useDailyTasks({
     taskCounts,
     pausedTaskIds,
     isBreakDay,
-    streakDbVersion,
+    recalcTrigger,
     streakVisibilityDeps,
   ]);
 
@@ -495,14 +505,14 @@ export function useDailyTasks({
         currentDate,
         { visibility: streakVisibilityDeps }
       );
-      bumpStreakDbVersion();
+      setRecalcTrigger((t) => t + 1);
     } catch (err) {
       console.error("Error recalculating activity streaks:", err);
     } finally {
       recalcStreaksInFlightRef.current = false;
       setRecalculateStreaksBusy(false);
     }
-  }, [lookupActivities, currentDate, bumpStreakDbVersion, streakVisibilityDeps]);
+  }, [lookupActivities, currentDate, streakVisibilityDeps]);
 
   const currentActivityElapsedMs = useMemo(() => {
     if (!resolvedCurrentActivityId) return 0;
@@ -530,6 +540,7 @@ export function useDailyTasks({
     temporalForViewDate,
     loading,
     activityStreaks,
+    baseStreaks,
     dailyActivities,
     getGroup: getGroupForActivity,
     nonNeverCount,

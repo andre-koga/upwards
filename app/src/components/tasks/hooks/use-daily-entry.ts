@@ -21,9 +21,6 @@ export function useDailyEntry(dateString: string) {
   const [pausedTaskIds, setPausedTaskIds] = useState<string[]>([]);
   const [isBreakDay, setIsBreakDay] = useState(false);
   const [loading, setLoading] = useState(false);
-  // Bumps whenever we successfully persist task/break-day changes to IndexedDB.
-  // Used to trigger downstream computations that read from the DB (e.g. streaks).
-  const [streakDbVersion, setStreakDbVersion] = useState(0);
   const [currentActivityId, setCurrentActivityId] = useState<string | null>(
     null
   );
@@ -92,7 +89,6 @@ export function useDailyEntry(dateString: string) {
             paused_task_ids: newPausedTaskIds,
             updated_at: now(),
           });
-          setStreakDbVersion((v) => v + 1);
         } else {
           const n = now();
           const newDbEntry: DailyEntry = {
@@ -109,7 +105,6 @@ export function useDailyEntry(dateString: string) {
           };
           await db.dailyEntries.add(newDbEntry);
           setDailyEntry(newDbEntry);
-          setStreakDbVersion((v) => v + 1);
         }
       } catch (err) {
         console.error("Error persisting task count:", err);
@@ -210,7 +205,6 @@ export function useDailyEntry(dateString: string) {
             paused_task_ids: nextPausedTaskIds,
             updated_at: now(),
           });
-          setStreakDbVersion((v) => v + 1);
           return;
         }
 
@@ -229,7 +223,6 @@ export function useDailyEntry(dateString: string) {
         };
         await db.dailyEntries.add(newDbEntry);
         setDailyEntry(newDbEntry);
-        setStreakDbVersion((v) => v + 1);
       } catch (error) {
         console.error("Error toggling paused task:", error);
         loadDailyEntry();
@@ -254,31 +247,29 @@ export function useDailyEntry(dateString: string) {
           is_break_day: nextIsBreakDay,
           updated_at: now(),
         });
-        setDailyEntry({
-          ...entry,
-          is_break_day: nextIsBreakDay,
-          updated_at: now(),
-        });
-        setStreakDbVersion((v) => v + 1);
-        return;
-      }
+          setDailyEntry({
+            ...entry,
+            is_break_day: nextIsBreakDay,
+            updated_at: now(),
+          });
+          return;
+        }
 
-      const n = now();
-      const newDbEntry: DailyEntry = {
-        id: newId(),
-        date: dateString,
-        task_counts: {},
-        paused_task_ids: [],
-        is_break_day: nextIsBreakDay,
-        current_activity_id: null,
-        created_at: n,
-        updated_at: n,
-        synced_at: null,
-        deleted_at: null,
-      };
-      await db.dailyEntries.add(newDbEntry);
-      setDailyEntry(newDbEntry);
-      setStreakDbVersion((v) => v + 1);
+        const n = now();
+        const newDbEntry: DailyEntry = {
+          id: newId(),
+          date: dateString,
+          task_counts: {},
+          paused_task_ids: [],
+          is_break_day: nextIsBreakDay,
+          current_activity_id: null,
+          created_at: n,
+          updated_at: n,
+          synced_at: null,
+          deleted_at: null,
+        };
+        await db.dailyEntries.add(newDbEntry);
+        setDailyEntry(newDbEntry);
     } catch (error) {
       console.error("Error toggling break day:", error);
       loadDailyEntry();
@@ -297,8 +288,6 @@ export function useDailyEntry(dateString: string) {
     loading,
     currentActivityId,
     setCurrentActivityId,
-    streakDbVersion,
-    bumpStreakDbVersion,
     loadDailyEntry,
     getOrCreateDailyEntry,
     incrementTask,
