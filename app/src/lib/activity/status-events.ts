@@ -31,7 +31,7 @@ export function effectiveAtForStatusOn(
   return shiftDate(startOfDay(actionDate), 1).toISOString();
 }
 
-function reduceStatusAsOf<T extends { status_type: string; next_value: boolean; effective_at: string; deleted_at: string | null }>(
+function reduceStatusAsOf<T extends { status_type: string; next_value: boolean; effective_at: string; created_at: string; deleted_at: string | null }>(
   events: T[],
   statusType: string,
   viewDate: Date
@@ -45,7 +45,15 @@ function reduceStatusAsOf<T extends { status_type: string; next_value: boolean; 
         e.status_type === statusType &&
         e.effective_at <= cutoff
     )
-    .sort((a, b) => a.effective_at.localeCompare(b.effective_at));
+    // Sort by when the event was actually written so that the most recently
+    // recorded action always wins. effective_at controls *when* an event
+    // starts applying (the filter above), but created_at determines which
+    // write is authoritative among all in-effect events. This prevents a
+    // "complete then undo on the same day" scenario where the undo event
+    // has an effective_at of startOfDay(today) while the completed event
+    // has effective_at of startOfDay(tomorrow/today+1), causing the
+    // completed event to sort last and incorrectly win.
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
 
   for (const event of relevant) {
     value = event.next_value;
