@@ -8,6 +8,7 @@ export type JournalEditSessionValues = {
   title: string;
   text: string;
   videoPath: string;
+  photoPaths: string[];
 };
 
 const journalEditDrafts = new Map<string, JournalEditSessionValues>();

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Paperclip, Trash2 } from "lucide-react";
+import { ImagePlus, Loader2, Paperclip, Trash2, X } from "lucide-react";
 import {
   FormCharacterCount,
   FormControlButton,
@@ -10,7 +10,13 @@ import {
   FormTextareaField,
 } from "@/components/forms";
 import { getFirstEmoji } from "@/lib/emoji-utils";
-import { JournalVideoUploadError, uploadJournalVideo } from "@/lib/journal";
+import {
+  JournalPhotoUploadError,
+  JournalVideoUploadError,
+  getJournalPhotoUrl,
+  uploadJournalPhoto,
+  uploadJournalVideo,
+} from "@/lib/journal";
 import {
   clearJournalEditSessionDraft,
   getJournalEditSessionDraft,
@@ -19,6 +25,7 @@ import {
 
 const TITLE_LIMIT = 30;
 const TEXT_LIMIT = 300;
+const MAX_PHOTOS = 5;
 
 interface JournalEditDialogProps {
   open: boolean;
@@ -27,6 +34,7 @@ interface JournalEditDialogProps {
   initialTitle: string;
   initialText: string;
   initialVideoPath: string;
+  initialPhotoPaths: string[];
   entryDate: string;
   canUploadVideo: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,6 +43,7 @@ interface JournalEditDialogProps {
     title: string;
     text: string;
     videoPath: string;
+    photoPaths: string[];
   }) => void;
 }
 
@@ -45,6 +54,7 @@ export default function JournalEditDialog({
   initialTitle,
   initialText,
   initialVideoPath,
+  initialPhotoPaths,
   entryDate,
   canUploadVideo,
   onOpenChange,
@@ -54,9 +64,12 @@ export default function JournalEditDialog({
   const [title, setTitle] = useState(initialTitle);
   const [text, setText] = useState(initialText);
   const [videoPath, setVideoPath] = useState(initialVideoPath);
+  const [photoPaths, setPhotoPaths] = useState<string[]>(initialPhotoPaths);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
   const prevOpenRef = useRef(open);
   const closeReasonRef = useRef<"save" | "cancel" | null>(null);
   /** Journal day this form session is for; used as stash key on dismiss. */
@@ -76,14 +89,16 @@ export default function JournalEditDialog({
       setTitle(draft.title);
       setText(draft.text);
       setVideoPath(draft.videoPath);
+      setPhotoPaths(draft.photoPaths);
     } else {
       setEmoji(initialEmoji);
       setTitle(initialTitle);
       setText(initialText);
       setVideoPath(initialVideoPath);
+      setPhotoPaths(initialPhotoPaths);
     }
     setUploadError(null);
-  }, [open, entryDate, initialEmoji, initialTitle, initialText, initialVideoPath]);
+  }, [open, entryDate, initialEmoji, initialTitle, initialText, initialVideoPath, initialPhotoPaths]);
 
   useEffect(() => {
     if (prevOpenRef.current && !open) {
@@ -95,11 +110,12 @@ export default function JournalEditDialog({
           title,
           text,
           videoPath,
+          photoPaths,
         });
       }
     }
     prevOpenRef.current = open;
-  }, [open, emoji, title, text, videoPath]);
+  }, [open, emoji, title, text, videoPath, photoPaths]);
 
   const handleSave = () => {
     closeReasonRef.current = "save";
@@ -109,6 +125,7 @@ export default function JournalEditDialog({
       title: title.trim(),
       text: text.trim(),
       videoPath: videoPath.trim(),
+      photoPaths,
     });
     onOpenChange(false);
   };
@@ -138,6 +155,66 @@ export default function JournalEditDialog({
       if (input) input.value = "";
     }
   };
+
+  const handlePhotoFilesChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    setUploadError(null);
+    setUploadingPhotos(true);
+
+    try {
+      // Determine how many slots remain
+      const currentCount = photoPaths.length;
+      const remaining = MAX_PHOTOS - currentCount;
+      const filesToUpload = files.slice(0, remaining);
+
+      if (filesToUpload.length === 0) {
+        setUploadError(`You can only attach up to ${MAX_PHOTOS} photos per day.`);
+        return;
+      }
+
+      const results = await Promise.allSettled(
+        filesToUpload.map((file) => uploadJournalPhoto(file, entryDate))
+      );
+
+      const newPaths: string[] = [];
+      const errors: string[] = [];
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          newPaths.push(result.value);
+        } else {
+          const err = result.reason;
+          if (err instanceof JournalPhotoUploadError) {
+            errors.push(err.message);
+          } else {
+            errors.push("Failed to upload photo.");
+          }
+        }
+      }
+
+      if (newPaths.length > 0) {
+        setPhotoPaths((prev) => [...prev, ...newPaths]);
+      }
+      if (errors.length > 0) {
+        setUploadError(errors[0]);
+      }
+    } finally {
+      setUploadingPhotos(false);
+      const input = event.target;
+      if (input) input.value = "";
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setUploadError(null);
+    setPhotoPaths((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const photoCount = photoPaths.length;
+  const canAddMorePhotos = photoCount < MAX_PHOTOS;
 
   if (!canEdit) return null;
 
@@ -203,11 +280,19 @@ export default function JournalEditDialog({
                 className="hidden"
                 onChange={handleVideoFileChange}
               />
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handlePhotoFilesChange}
+              />
               <div className="flex gap-2">
                 <FormControlButton
                   className="min-w-0 flex-1"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingVideo}
+                  disabled={uploadingVideo || uploadingPhotos}
                   title={
                     videoPath.trim().length > 0
                       ? "Replace video"
@@ -236,7 +321,61 @@ export default function JournalEditDialog({
                     <Trash2 aria-hidden />
                   </FormControlButton>
                 ) : null}
+
+                <FormControlButton
+                  className="min-w-0 flex-1"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={uploadingVideo || uploadingPhotos || !canAddMorePhotos}
+                  title={
+                    !canAddMorePhotos
+                      ? "Maximum 5 photos reached"
+                      : photoCount > 0
+                      ? `${photoCount}/${MAX_PHOTOS} photos`
+                      : "Add photos"
+                  }
+                >
+                  {uploadingPhotos ? (
+                    <Loader2 className="animate-spin" aria-hidden />
+                  ) : (
+                    <ImagePlus aria-hidden />
+                  )}
+                  {photoCount > 0
+                    ? `${photoCount}/${MAX_PHOTOS} photos`
+                    : "Add photos"}
+                </FormControlButton>
               </div>
+
+              {photoPaths.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {photoPaths.map((path, index) => {
+                    const url = getJournalPhotoUrl(path);
+                    return (
+                      <div key={path} className="relative h-16 w-16 shrink-0">
+                        {url ? (
+                          <img
+                            src={url}
+                            alt={`Photo ${index + 1}`}
+                            className="h-full w-full rounded-md object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center rounded-md bg-muted text-xs text-muted-foreground">
+                            {index + 1}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(index)}
+                          className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow"
+                          title={`Remove photo ${index + 1}`}
+                          aria-label={`Remove photo ${index + 1}`}
+                        >
+                          <X className="h-2.5 w-2.5" aria-hidden />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </>
           )}
         </div>

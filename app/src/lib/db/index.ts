@@ -650,6 +650,41 @@ class UpwardsDB extends Dexie {
         await tx.table("promises").clear();
         await tx.table("promiseProgressEvents").clear();
       });
+
+    // v21: add photo_paths field to journal entries (stored as array, no index needed)
+    this.version(21)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities:
+          "id, group_id, completed_at, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
+        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        groupStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        promises: null,
+        promiseMembers: null,
+        promiseProgressEvents: null,
+        promiseReactions: null,
+        promiseInvites: null,
+        userProfiles: "user_id",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("journalEntries")
+          .toCollection()
+          .modify((entry: Record<string, unknown>) => {
+            if (!("photo_paths" in entry)) {
+              entry.photo_paths = null;
+            }
+          });
+      });
   }
 }
 
