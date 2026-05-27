@@ -18,6 +18,7 @@ import {
 } from "@/lib/activity/milestone-celebration";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ConfettiBurst } from "@/components/ui/confetti-burst";
 
 interface ActivityStreakDialogProps {
   open: boolean;
@@ -83,6 +84,7 @@ export function ActivityStreakDialog({
       title={name}
       contentClassName="space-y-8"
     >
+      <ConfettiBurst active={open && showCelebration} />
       {hasMilestones && progress ? (
         <div className="space-y-6 px-1">
           {showCelebration ? (
