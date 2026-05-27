@@ -23,6 +23,7 @@ import JournalTextSection from "@/components/journal/journal-text-section";
 import JournalEditDialog from "@/components/journal/journal-edit-dialog";
 import JournalLocationsDialog from "@/components/journal/journal-locations-dialog";
 import JournalMetaBar from "@/components/journal/journal-meta-bar";
+import JournalPhotoStack from "@/components/journal/journal-photo-stack";
 import type { LocationData } from "@/lib/db/types";
 
 interface JournalCardProps {
@@ -248,6 +249,9 @@ export default function JournalCard({
                 </span>
               )}
             </div>
+            <div className="pointer-events-auto pb-1">
+              <JournalPhotoStack photoPaths={journal.draftPhotoPaths} />
+            </div>
           </div>
 
           <div className="mx-auto max-w-2xl space-y-3 px-5">
@@ -275,14 +279,16 @@ export default function JournalCard({
           initialTitle={journal.draftTitle}
           initialText={journal.draftText}
           initialVideoPath={journal.draftVideoPath}
+          initialPhotoPaths={journal.draftPhotoPaths}
           entryDate={dateString}
           canUploadVideo={isSupabaseConfigured && isAuthed}
           onOpenChange={handleJournalEditOpenChange}
-          onSave={({ emoji, title, text, videoPath }) => {
+          onSave={({ emoji, title, text, videoPath, photoPaths }) => {
             journal.setDraftEmoji(emoji);
             journal.setDraftTitle(title);
             journal.setDraftText(text);
             journal.setDraftVideoPath(videoPath);
+            journal.setDraftPhotoPaths(photoPaths);
             journal.draftRef.current.emoji = emoji;
             journal.draftRef.current.title = title;
             journal.draftRef.current.text = text;
@@ -290,6 +296,7 @@ export default function JournalCard({
               journal.draftRef.current.videoThumbnail = null;
             }
             journal.draftRef.current.videoPath = videoPath;
+            journal.draftRef.current.photoPaths = photoPaths;
             journal.saveDraft();
           }}
         />

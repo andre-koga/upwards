@@ -172,6 +172,7 @@ export interface JournalFields {
   video_path: string | null;
   location: JournalLocationRoute | null;
   video_thumbnail: string | null;
+  photo_paths: string[] | null;
 }
 
 export interface JournalCompletionMetadata {
@@ -185,8 +186,7 @@ function hasRequiredJournalFields(fields: JournalFields): boolean {
   return Boolean(
     fields.day_emoji?.trim() &&
     fields.title?.trim() &&
-    fields.text_content?.trim() &&
-    fields.video_path?.trim()
+    fields.text_content?.trim()
   );
 }
 

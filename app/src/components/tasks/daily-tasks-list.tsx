@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
+import { isNeverRoutine } from "@/lib/activity";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
@@ -64,6 +65,7 @@ export default function DailyTasksList({
     temporalForViewDate,
     loading,
     activityStreaks,
+    baseStreaks,
     dailyActivities,
     getGroup,
     timelineSessions,
@@ -336,8 +338,13 @@ export default function DailyTasksList({
         activity={streakDialogActivity}
         group={streakDialogGroup}
         streak={
-          streakDialogActivityId
-            ? activityStreaks[streakDialogActivityId] ?? 0
+          streakDialogActivityId && streakDialogActivity
+            ? isNeverRoutine(streakDialogActivity)
+              ? activityStreaks[streakDialogActivityId] ?? 0
+              : Math.max(
+                  activityStreaks[streakDialogActivityId] ?? 0,
+                  baseStreaks[streakDialogActivityId] ?? 0
+                )
             : 0
         }
         onOpenChange={(open) => {

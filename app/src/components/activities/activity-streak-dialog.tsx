@@ -9,6 +9,7 @@ import {
   formatMilestoneLabel,
   showsMilestones,
   isAtMilestoneReached,
+  isNeverRoutine,
 } from "@/lib/activity";
 import {
   acknowledgeMilestoneCelebration,
@@ -87,7 +88,19 @@ export function ActivityStreakDialog({
       <ConfettiBurst active={open && showCelebration} />
       {hasMilestones && progress ? (
         <div className="space-y-6 px-1">
-          {showCelebration ? (
+          {isNeverRoutine(resolved) && displayStreak === 0 ? (
+            <div className="space-y-3 text-center">
+              <p className="text-4xl font-semibold tabular-nums tracking-tight">
+                0
+                <span className="ml-2 text-lg font-normal text-muted-foreground">
+                  {unitLabel}
+                </span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can start strong tomorrow.
+              </p>
+            </div>
+          ) : showCelebration ? (
             <div className="space-y-5 text-center">
               <div className="flex justify-center">
                 <PartyPopper

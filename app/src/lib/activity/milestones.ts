@@ -1,6 +1,6 @@
 /** Auto milestone thresholds (days). */
 export const STREAK_MILESTONES = [
-  0, 3, 5, 7, 10, 14, 21, 30, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 365,
+  0, 1, 2, 3, 5, 7, 10, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84, 91, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 365,
 ] as const;
 
 export interface MilestoneProgress {

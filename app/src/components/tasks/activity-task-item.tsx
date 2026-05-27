@@ -160,7 +160,7 @@ function ActivityTaskItem({
           disabled={!canUpdateCount}
         >
           {!isComplete ? (
-            <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
+            <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none text-muted-foreground">
               <Flame className="h-3 w-3 fill-current" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
@@ -196,7 +196,9 @@ function ActivityTaskItem({
           type="button"
           variant="outline"
           onClick={
-            canUpdateCount ? () => onIncrement(activity.id, target) : undefined
+            canUpdateCount
+              ? () => { onIncrement(activity.id, target); }
+              : undefined
           }
           disabled={!canUpdateCount}
           className={cn(

@@ -34,8 +34,7 @@ export async function emitActivityCompletion(params: {
 
   const streaks = await getOrComputeActivityStreaksForDate(
     [params.activity],
-    fromDateString(params.dateString),
-    { forceRecomputeTarget: true }
+    fromDateString(params.dateString)
   );
   const streak = streaks[params.activity.id] ?? 0;
   const { prev, next } = getMilestoneProgress(streak);
