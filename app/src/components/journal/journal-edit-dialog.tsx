@@ -71,6 +71,7 @@ export default function JournalEditDialog({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const prevOpenRef = useRef(open);
+  const wasOpenRef = useRef(false);
   const closeReasonRef = useRef<"save" | "cancel" | null>(null);
   /** Journal day this form session is for; used as stash key on dismiss. */
   const entryDateSessionRef = useRef(entryDate);
@@ -82,7 +83,13 @@ export default function JournalEditDialog({
   }, [open, entryDate]);
 
   useEffect(() => {
-    if (!open) return;
+    // Only initialize fields when the dialog transitions from closed → open.
+    // Running this whenever initial* props change would reset whatever the user
+    // has already typed if a background save updates those props mid-session.
+    const justOpened = open && !wasOpenRef.current;
+    wasOpenRef.current = open;
+    if (!justOpened) return;
+
     const draft = getJournalEditSessionDraft(entryDate);
     if (draft) {
       setEmoji(draft.emoji);
@@ -98,7 +105,8 @@ export default function JournalEditDialog({
       setPhotoPaths(initialPhotoPaths);
     }
     setUploadError(null);
-  }, [open, entryDate, initialEmoji, initialTitle, initialText, initialVideoPath, initialPhotoPaths]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, entryDate]);
 
   useEffect(() => {
     if (prevOpenRef.current && !open) {
