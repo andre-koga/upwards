@@ -24,7 +24,6 @@ import {
   type TodayOverride,
 } from "@/lib/streak-utils";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
-import { emitActivityCompletion } from "@/lib/social/emit-activity-completion";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
@@ -106,41 +105,8 @@ export function useDailyTasks({
   const incrementTaskWithProgress = useCallback(
     async (activityId: string, target: number, options?: { neverSlip?: boolean }) => {
       await incrementTask(activityId, target, options);
-      if (options?.neverSlip) return;
-
-      const activity =
-        lookupActivityById.get(activityId) ??
-        activities.find((a) => a.id === activityId);
-      if (!activity || activity.routine === "never") return;
-
-      const entry = await db.dailyEntries
-        .where("date")
-        .equals(dateString)
-        .filter((e) => !e.deleted_at)
-        .first();
-      const newCount = (entry?.task_counts as Record<string, number> | null)?.[activityId] ?? 0;
-      const group =
-        lookupGroupById.get(activity.group_id) ??
-        groups.find((g) => g.id === activity.group_id);
-      const completionTarget = activity.completion_target ?? 1;
-
-      if (newCount === completionTarget) {
-        const fresh = (await db.activities.get(activityId)) ?? activity;
-        await emitActivityCompletion({
-          activity: fresh,
-          activityName: getActivityDisplayName(fresh, group),
-          dateString,
-        });
-      }
     },
-    [
-      incrementTask,
-      lookupActivityById,
-      activities,
-      lookupGroupById,
-      groups,
-      dateString,
-    ]
+    [incrementTask]
   );
 
   const incrementNeverSlip = useCallback(

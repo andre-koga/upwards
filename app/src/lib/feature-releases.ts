@@ -11,13 +11,12 @@ export interface FeatureRelease {
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
     date: "2026-05-23",
-    title: "Streak milestones and friend sharing",
+    title: "Daily recap and friend sharing",
     bullets: [
-      "Tap a habit on For Today to see your streak, the next milestone, and progress toward it.",
-      "Milestone targets adjust automatically from your current streak — no setup required.",
-      "Toggle Share with friends on a habit to notify friends when you complete it that day.",
-      "Friend notifications show their streak and milestone progress — no invites to accept.",
-      "Add friends by username; the bell inbox handles friend requests and shared completions.",
+      "When you open the app after a new day, a recap dialog shows yesterday's completed and missed habits.",
+      "Share your day recap with friends, optionally adding a message.",
+      "Friends receive a single notification that opens a summary of your day.",
+      "Add friends by username; the bell inbox handles friend requests and shared day recaps.",
     ],
     fixes: [
       "Projects drawer timers show all-time tracked time per habit again.",

@@ -18,11 +18,6 @@ export interface ActivityPillProps {
   /** When readOnly, still allow tapping the name (e.g. retired info on past days). */
   allowNameClickWhenReadOnly?: boolean;
   className?: string;
-  /** 0–100 toward next auto milestone; omit to hide bar. */
-  milestoneProgressPercent?: number;
-  milestoneAccentColor?: string;
-  /** Full green bar when a ladder milestone was just reached. */
-  milestoneCelebrating?: boolean;
 }
 
 export default function ActivityPill({
@@ -37,16 +32,10 @@ export default function ActivityPill({
   readOnly = false,
   allowNameClickWhenReadOnly = false,
   className = "",
-  milestoneProgressPercent,
-  milestoneAccentColor,
-  milestoneCelebrating = false,
 }: ActivityPillProps) {
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
   const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
-
-  const showMilestoneBar =
-    milestoneProgressPercent != null && milestoneProgressPercent >= 0;
 
   return (
     <div
@@ -69,27 +58,9 @@ export default function ActivityPill({
               : "shadow-none",
         )}
       >
-        {showMilestoneBar ? (
-          <div className="h-px w-full shrink-0 bg-muted" aria-hidden>
-            <div
-              className={cn(
-                "h-full transition-[width] duration-300",
-                milestoneCelebrating
-                  ? "w-full bg-green-600 dark:bg-green-500"
-                  : "bg-primary",
-              )}
-              style={
-                milestoneCelebrating
-                  ? undefined
-                  : { width: `${milestoneProgressPercent}%` }
-              }
-            />
-          </div>
-        ) : null}
         <span
           className={cn(
-            "flex min-h-0 min-w-0 flex-1 items-center gap-2 px-4",
-            showMilestoneBar ? "py-0" : "py-1",
+            "flex min-h-0 min-w-0 flex-1 items-center gap-2 px-4 py-1",
           )}
         >
           <span

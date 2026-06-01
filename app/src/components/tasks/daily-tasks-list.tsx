@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { isNeverRoutine } from "@/lib/activity";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
@@ -13,7 +12,6 @@ import { Palmtree, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
-import { ActivityStreakDialog } from "@/components/activities/activity-streak-dialog";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -54,9 +52,6 @@ export default function DailyTasksList({
     sessionId: string;
   } | null>(null);
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
-    string | null
-  >(null);
-  const [streakDialogActivityId, setStreakDialogActivityId] = useState<
     string | null
   >(null);
 
@@ -100,12 +95,6 @@ export default function DailyTasksList({
     : null;
   const manualEntryGroup = manualEntryActivity
     ? getGroup(manualEntryActivity)
-    : undefined;
-  const streakDialogActivity = streakDialogActivityId
-    ? (lookupActivities.find((a) => a.id === streakDialogActivityId) ?? null)
-    : null;
-  const streakDialogGroup = streakDialogActivity
-    ? getGroup(streakDialogActivity)
     : undefined;
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
@@ -186,7 +175,6 @@ export default function DailyTasksList({
                   onStartActivity={handleStartActivity}
                   onStopActivity={handleStopActivity}
                   onManualEntry={setManualEntryActivityId}
-                  onOpenStreakDialog={setStreakDialogActivityId}
                 />
               ))}
           </div>
@@ -331,25 +319,6 @@ export default function DailyTasksList({
           }
         }}
         onSave={addManualActivityPeriod}
-      />
-
-      <ActivityStreakDialog
-        open={streakDialogActivityId !== null}
-        activity={streakDialogActivity}
-        group={streakDialogGroup}
-        streak={
-          streakDialogActivityId && streakDialogActivity
-            ? isNeverRoutine(streakDialogActivity)
-              ? activityStreaks[streakDialogActivityId] ?? 0
-              : Math.max(
-                  activityStreaks[streakDialogActivityId] ?? 0,
-                  baseStreaks[streakDialogActivityId] ?? 0
-                )
-            : 0
-        }
-        onOpenChange={(open) => {
-          if (!open) setStreakDialogActivityId(null);
-        }}
       />
     </div>
   );

@@ -20,8 +20,6 @@ export interface Activity {
   completion_target: number | null;
   /** Set when the user marks the habit as done; hides it from For Today. Clear to reactivate. */
   completed_at: string | null;
-  /** When true, completing this habit notifies all friends for the day. */
-  share_completions_with_friends?: boolean;
   order_index: number | null;
   created_at: string;
   updated_at: string;

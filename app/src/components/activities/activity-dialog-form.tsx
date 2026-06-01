@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dialog";
-import { ShareCompletionsToggle } from "@/components/activities/share-completions-toggle";
 import { Button } from "@/components/ui/button";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -122,9 +121,6 @@ export function ActivityDialogForm({
   const [formData, setFormData] = useState<ActivityFormData>(() =>
     computeFormDataFromInitial(activity)
   );
-  const [activityState, setActivityState] = useState<Activity | undefined>(
-    activity
-  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -133,7 +129,6 @@ export function ActivityDialogForm({
     if (!open) return;
     /* eslint-disable react-hooks/set-state-in-effect -- intentionally re-initialize draft state on dialog open */
     setFormData(computeFormDataFromInitial(activity));
-    setActivityState(activity);
     setError(null);
     setSaving(false);
     setDeleteConfirmOpen(false);
@@ -207,7 +202,6 @@ export function ActivityDialogForm({
             name: payload.name,
             routine: payload.routine,
             completion_target: payload.completion_target,
-            share_completions_with_friends: false,
             completed_at: null,
             order_index: nextOrderIndex,
             created_at: timestamp,
@@ -301,13 +295,6 @@ export function ActivityDialogForm({
               })
             }
             message="How many times you need to do this per day. 1 = simple checkbox."
-          />
-        ) : null}
-
-        {isEditing && activityState ? (
-          <ShareCompletionsToggle
-            activity={activityState}
-            onUpdated={setActivityState}
           />
         ) : null}
 

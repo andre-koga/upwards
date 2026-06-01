@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import {
   useNotifications,
   matchesFriendRequestNotification,
+  type InboxNotification,
 } from "@/lib/notifications/use-notifications";
 import { useFriends } from "@/lib/friends/use-friends";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationRow } from "@/components/notifications/notification-row";
+import { FriendRecapDialog } from "@/components/notifications/friend-recap-dialog";
 
 interface NotificationsDrawerProps {
   open: boolean;
@@ -34,6 +36,8 @@ export function NotificationsDrawer({
   } = useNotifications();
   const { respond: respondFriend } = useFriends();
   const [responding, setResponding] = useState<string | null>(null);
+  // Kept alive outside the sliding panel so closing the drawer doesn't unmount it.
+  const [activeRecap, setActiveRecap] = useState<InboxNotification | null>(null);
 
   useEffect(() => {
     if (open) void reload({ silent: true });
@@ -65,8 +69,23 @@ export function NotificationsDrawer({
     }
   };
 
+  const handleOpenRecap = (n: InboxNotification) => {
+    dismissNotification(n.id);
+    onOpenChange(false);
+    setActiveRecap(n);
+  };
+
   return (
     <>
+      {/* Recap dialog lives outside the drawer panel so it survives the panel closing */}
+      {activeRecap && (
+        <FriendRecapDialog
+          open={activeRecap !== null}
+          onOpenChange={(next) => { if (!next) setActiveRecap(null); }}
+          n={activeRecap}
+        />
+      )}
+
       <div
         className={cn(
           "pointer-events-none fixed inset-0 z-[60] transition-all duration-300",
@@ -133,7 +152,7 @@ export function NotificationsDrawer({
                 <Bell className="m-2 h-6 w-6 text-muted-foreground/30" />
                 <p className="text-sm font-medium">Nothing here yet</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Friend requests and shared habit completions appear here.
+                  Friend requests and shared day recaps appear here.
                 </p>
               </div>
             ) : (
@@ -145,6 +164,8 @@ export function NotificationsDrawer({
                     onAcceptFriend={(id) => void handleAcceptFriend(id)}
                     onDeclineFriend={(id) => void handleDeclineFriend(id)}
                     onDismiss={dismissNotification}
+                    onOpenRecap={handleOpenRecap}
+                    onCloseDrawer={() => onOpenChange(false)}
                     responding={responding}
                   />
                 ))}
