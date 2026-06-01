@@ -7,12 +7,9 @@ import {
   FormTimeField,
 } from "@/components/forms";
 import { getActivityDisplayName } from "@/lib/activity";
-import {
-  JOURNAL_EDITABLE_DAY_LOOKBACK,
-  isJournalCalendarDateEditable,
-} from "@/lib/journal";
-import { fromDateString, timeToSeconds, toDateString } from "@/lib/time-utils";
+import { toDateString, timeToSeconds } from "@/lib/time-utils";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 import { useCallback } from "react";
 
 interface SessionDetailsDialogProps {
@@ -74,8 +71,7 @@ export default function SessionDetailsDialog({
 
   const sessionDateString = details?.entry?.date ?? toDateString(selectedDate);
   const isLockedHistoricalSession =
-    !!details &&
-    !isJournalCalendarDateEditable(fromDateString(sessionDateString));
+    !!details && sessionDateString !== getEffectiveToday();
 
   const handleStartTimeChange = (newStartTime: string) => {
     setStartTime(newStartTime);
@@ -145,8 +141,7 @@ export default function SessionDetailsDialog({
           {error && <p className="text-sm text-destructive">{error}</p>}
           {isLockedHistoricalSession ? (
             <p className="text-sm text-muted-foreground">
-              Sessions from more than {JOURNAL_EDITABLE_DAY_LOOKBACK} days ago
-              are read-only.
+              Sessions from past days are read-only.
             </p>
           ) : null}
 

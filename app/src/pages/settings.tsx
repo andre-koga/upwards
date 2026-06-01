@@ -5,6 +5,7 @@ import { ProfileCard } from "@/components/settings/profile-card";
 import { SyncCard } from "@/components/settings/sync-card";
 // import { BackupCard } from "@/components/settings/backup-card";
 import { TaskOrderCard } from "@/components/settings/navigation-cards";
+import { DayResetCard } from "@/components/settings/day-reset-card";
 import { useAuth } from "@/lib/use-auth";
 
 export default function SettingsPage() {
@@ -19,6 +20,7 @@ export default function SettingsPage() {
       </header>
 
       <AppearanceCard />
+      <DayResetCard />
 
       {isSupabaseConfigured && (
         <>

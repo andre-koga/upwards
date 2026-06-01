@@ -1,4 +1,4 @@
-import { useState, useRef, type TouchEvent } from "react";
+import { useState, useRef, type TouchEvent, useCallback } from "react";
 import { ChevronLeft, ChevronRight, FlaskConical, ScrollText, Users } from "lucide-react";
 import { toDateString } from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -10,6 +10,8 @@ import { FriendRecapDialog } from "@/components/notifications/friend-recap-dialo
 import { getDailyRecap } from "@/lib/recap/get-daily-recap";
 import type { InboxNotification } from "@/lib/notifications/use-notifications";
 import { Button } from "@/components/ui/button";
+import { getEffectiveToday } from "@/lib/session/day-reset";
+import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -35,7 +37,12 @@ export default function TodayPage() {
   const [devFriendRecap, setDevFriendRecap] = useState<InboxNotification | null>(null);
   const [pastRecapOpen, setPastRecapOpen] = useState(false);
 
-  const todayStr = toDateString(new Date());
+  // Re-render when the day resets so todayStr and isPastDay update live.
+  const [, setResetTick] = useState(0);
+  const handleDayReset = useCallback(() => setResetTick((t) => t + 1), []);
+  useDayResetTimer(handleDayReset);
+
+  const todayStr = getEffectiveToday();
   const currentDateStr = toDateString(currentDate);
   const isPastDay = currentDateStr < todayStr;
 

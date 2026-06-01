@@ -17,7 +17,7 @@ import {
   getActivityDisplayName,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
-import { isJournalCalendarDateEditable } from "@/lib/journal";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 import {
   getOrComputeActivityStreaksForDate,
   recomputeActivityStreaksFromDateForActivities,
@@ -57,8 +57,9 @@ export function useDailyTasks({
   refreshTrigger = 0,
 }: UseDailyTasksParams) {
   const dateString = toDateString(currentDate);
-  // Same editable window as the journal card (`canEditJournal`); misleading name retained for callers.
-  const isToday = isJournalCalendarDateEditable(currentDate);
+  // Tasks and timers are only editable on the current effective day.
+  // Journal entries keep their own 7-day window (isJournalCalendarDateEditable).
+  const isToday = dateString === getEffectiveToday();
   const [activityStreaks, setActivityStreaks] = useState<Record<string, number>>({});
   const [baseStreaks, setBaseStreaks] = useState<Record<string, number>>({});
   const [allActivityPeriods, setAllActivityPeriods] = useState<

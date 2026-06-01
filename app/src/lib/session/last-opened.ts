@@ -1,3 +1,4 @@
+import { getEffectiveToday, getDayResetMinutes } from "@/lib/session/day-reset";
 import { toDateString } from "@/lib/time-utils";
 
 const LAST_OPENED_DATE_KEY = "okhabit:last_opened_date";
@@ -23,9 +24,24 @@ function saveLoginStreak(streak: number): void {
 }
 
 /**
+ * Derive "the effective yesterday" by subtracting one logical day from the
+ * effective today. The logical day boundary is aware of the configured reset
+ * offset so that e.g. 1:30 AM (with a 2 AM reset) is still "yesterday".
+ */
+function effectiveYesterday(today: string): string {
+  // Step back exactly 24 hours from the current reset boundary timestamp
+  const resetMin = getDayResetMinutes();
+  const [y, m, d] = today.split("-").map(Number);
+  const todayResetBoundary = new Date(y, (m || 1) - 1, d || 1);
+  todayResetBoundary.setHours(Math.floor(resetMin / 60), resetMin % 60, 0, 0);
+  const yesterdayBoundary = new Date(todayResetBoundary.getTime() - 86400000);
+  return toDateString(yesterdayBoundary);
+}
+
+/**
  * Returns the next login streak value and persists it.
- * - If lastDate was yesterday → increment
- * - If lastDate is today → return current streak unchanged (already counted)
+ * - If lastDate was the previous effective day → increment
+ * - If lastDate is today's effective day → return current streak unchanged
  * - Otherwise (gap or first open) → reset to 1
  */
 export function computeAndSaveLoginStreak(
@@ -43,7 +59,7 @@ export function computeAndSaveLoginStreak(
     return current;
   }
 
-  const yesterday = toDateString(new Date(new Date(today + "T00:00:00").getTime() - 86400000));
+  const yesterday = effectiveYesterday(today);
   const next = lastDate === yesterday ? current + 1 : 1;
   saveLoginStreak(next);
   return next;

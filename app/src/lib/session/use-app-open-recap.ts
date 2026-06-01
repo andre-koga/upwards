@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toDateString } from "@/lib/time-utils";
+import { getEffectiveToday } from "@/lib/session/day-reset";
+import { splitPeriodsAtDayReset } from "@/lib/activity/split-period-at-reset";
 import {
   computeAndSaveLoginStreak,
   loadLastOpenedDate,
@@ -19,20 +20,19 @@ export function useAppOpenRecap(): AppOpenRecapState {
   const [loginStreak, setLoginStreak] = useState(loadLoginStreak);
   const [open, setOpen] = useState(false);
 
-  // Track whether we've already processed the current visibility session so
-  // re-renders don't re-trigger the check.
   const checkedRef = useRef(false);
 
-  const check = useCallback(() => {
-    const today = toDateString(new Date());
+  const check = useCallback(async () => {
+    // Split any periods that crossed a reset boundary while the app was closed.
+    await splitPeriodsAtDayReset();
+
+    const today = getEffectiveToday();
     const lastDate = loadLastOpenedDate();
 
-    // Compute and persist the new login streak before deciding what to show.
     const streak = computeAndSaveLoginStreak(lastDate, today);
     setLoginStreak(streak);
 
     if (lastDate && lastDate < today) {
-      // User is opening for the first time after a previous day — show recap.
       setRecapDate(lastDate);
       setOpen(true);
     }
@@ -43,12 +43,12 @@ export function useAppOpenRecap(): AppOpenRecapState {
   useEffect(() => {
     if (!checkedRef.current) {
       checkedRef.current = true;
-      check();
+      void check();
     }
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        check();
+        void check();
       }
     };
 
