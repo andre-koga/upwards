@@ -19,9 +19,8 @@ import {
   pruneDismissedNotifications,
 } from "@/lib/notifications/notification-dismissals";
 import { matchesFriendRequestNotification } from "@/lib/notifications/notification-inbox-utils";
-import { milestoneProgressPercent } from "@/lib/activity/milestones";
 
-export type NotificationKind = "friend_request" | "activity_complete";
+export type NotificationKind = "friend_request" | "activity_complete" | "daily_summary";
 
 export interface InboxNotification {
   id: string;
@@ -33,10 +32,19 @@ export interface InboxNotification {
   actionStatus: "pending" | "accepted" | "declined" | null;
   createdAt: string;
   streak?: number;
-  milestonePrev?: number;
-  milestoneNext?: number;
-  progressPercent?: number;
   routine?: string | null;
+  /** For daily_summary notifications */
+  summaryDate?: string;
+  summaryCompletedCount?: number;
+  summaryTotalCount?: number;
+  summaryTotalTrackedMs?: number;
+  summaryCaption?: string | null;
+  summaryCompletions?: {
+    activityName: string;
+    streak: number;
+    routine: string | null;
+    completed?: boolean;
+  }[];
 }
 
 type ProfileRow = { username: string | null; display_name: string | null };
@@ -149,36 +157,32 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
       let completionItems: InboxNotification[] = [];
       if (friendIds.length > 0) {
-        const { data: completions, error: compErr } = await supabase
-          .from("friend_activity_completions")
+        const { data: summaries, error: sumErr } = await supabase
+          .from("friend_daily_summaries")
           .select(
-            "id, user_id, activity_name, streak, milestone_prev, milestone_next, routine, created_at"
+            "id, user_id, date, caption, completed_count, total_count, total_tracked_ms, completions, created_at"
           )
           .in("user_id", friendIds)
           .gte("created_at", since)
           .order("created_at", { ascending: false });
-        if (compErr) throw compErr;
+        if (sumErr) throw sumErr;
 
-        completionItems = (completions ?? []).map((row) => {
-          const streak = (row.streak as number) ?? 0;
-          const prev = (row.milestone_prev as number) ?? 0;
-          const next = (row.milestone_next as number) ?? 1;
-          return {
-            id: `ac-${row.id as string}`,
-            kind: "activity_complete" as const,
-            actorId: row.user_id as string,
-            actorUsername: null,
-            actorDisplayName: null,
-            activityName: (row.activity_name as string) ?? null,
-            actionStatus: null,
-            createdAt: row.created_at as string,
-            streak,
-            milestonePrev: prev,
-            milestoneNext: next,
-            progressPercent: milestoneProgressPercent(streak, prev, next),
-            routine: (row.routine as string | null) ?? null,
-          };
-        });
+        completionItems = (summaries ?? []).map((row) => ({
+          id: `ds-${row.id as string}`,
+          kind: "daily_summary" as const,
+          actorId: row.user_id as string,
+          actorUsername: null,
+          actorDisplayName: null,
+          activityName: null,
+          actionStatus: null,
+          createdAt: row.created_at as string,
+          summaryDate: row.date as string,
+          summaryCompletedCount: (row.completed_count as number) ?? 0,
+          summaryTotalCount: (row.total_count as number) ?? 0,
+          summaryTotalTrackedMs: (row.total_tracked_ms as number) ?? 0,
+          summaryCaption: (row.caption as string | null) ?? null,
+          summaryCompletions: (row.completions as InboxNotification["summaryCompletions"]) ?? [],
+        }));
       }
 
       const actorIds = [

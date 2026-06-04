@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { db, newId, now } from "@/lib/db";
+import { db, now } from "@/lib/db";
 import type {
   Activity,
   ActivityGroup,
@@ -11,12 +11,14 @@ import {
   isHiddenGroupDefaultActivity,
 } from "@/lib/activity";
 import {
-  fromDateString,
   toDateString,
   formatTimeInput,
   combineDateAndTime,
+  shiftDate,
+  timeToSeconds,
   startOfDay,
 } from "@/lib/time-utils";
+import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 
 const NONE_ACTIVITY_VALUE = "__none__";
@@ -102,9 +104,10 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           .sortBy("created_at"),
       ]);
 
-      const initialDate = entry?.date
-        ? fromDateString(entry.date)
-        : new Date(period.start_time);
+      // Use the period's actual start_time to initialise the date picker so
+      // cross-boundary sessions (start before reset, end after) open on the
+      // correct calendar day, not the daily-entry date.
+      const initialDate = new Date(period.start_time);
 
       setDetails({
         group,
@@ -160,17 +163,25 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
 
     const nextStartIso = combineDateAndTime(selectedDate, startTime);
     const isRunning = details.period.end_time === null;
+
+    // If end clock < start clock the session spans overnight; end falls on the
+    // next calendar day.
+    const spansOvernight =
+      !isRunning && !!endTime && timeToSeconds(endTime) < timeToSeconds(startTime);
+    const endDate = spansOvernight ? shiftDate(selectedDate, 1) : selectedDate;
+
     const nextEndIso = isRunning
       ? null
       : endTime
-        ? combineDateAndTime(selectedDate, endTime)
+        ? combineDateAndTime(endDate, endTime)
         : null;
 
+    // Only block truly zero-length sessions (equal times).
     if (
       nextEndIso &&
-      new Date(nextEndIso).getTime() <= new Date(nextStartIso).getTime()
+      new Date(nextEndIso).getTime() === new Date(nextStartIso).getTime()
     ) {
-      setError("End time must be after start time.");
+      setError("End time must be different from start time.");
       return;
     }
 
@@ -178,51 +189,36 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       setSaving(true);
       setError(null);
 
-      const selectedDateString = toDateString(selectedDate);
-      const existingEntry = await db.dailyEntries
-        .where("date")
-        .equals(selectedDateString)
-        .filter((e) => !e.deleted_at)
-        .first();
-
-      let dailyEntryId = existingEntry?.id;
-      if (!dailyEntryId) {
-        const timestamp = now();
-        const created: DailyEntry = {
-          id: newId(),
-          date: selectedDateString,
-          task_counts: {},
-          paused_task_ids: [],
-          is_break_day: false,
-          current_activity_id: null,
-          created_at: timestamp,
-          updated_at: timestamp,
-          synced_at: null,
-          deleted_at: null,
-        };
-        await db.dailyEntries.add(created);
-        dailyEntryId = created.id;
-      }
-
       const nextActivityId =
         selectedActivityId === NONE_ACTIVITY_VALUE
           ? (await getOrCreateHiddenGroupDefaultActivity(details.group)).id
           : selectedActivityId;
 
+      const selectedDateString = toDateString(selectedDate);
+      const entry = await getOrCreateDailyEntry(selectedDateString);
       const n = now();
+
       await db.activityPeriods.update(sessionId, {
         activity_id: nextActivityId,
-        daily_entry_id: dailyEntryId,
+        daily_entry_id: entry.id,
         start_time: nextStartIso,
         end_time: nextEndIso,
         updated_at: n,
       });
 
       if (isRunning) {
-        await db.dailyEntries.update(dailyEntryId, {
+        await db.dailyEntries.update(entry.id, {
           current_activity_id: nextActivityId,
           updated_at: n,
         });
+        // If the session was moved to a different day, clear the old entry's
+        // running indicator.
+        if (details.period.daily_entry_id !== entry.id) {
+          await db.dailyEntries.update(details.period.daily_entry_id, {
+            current_activity_id: null,
+            updated_at: n,
+          });
+        }
       }
 
       onUpdatedRef.current?.();
@@ -246,6 +242,12 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const isRunningSession =
     details?.period != null && details.period.end_time === null;
 
+  const spansOvernight =
+    !isRunningSession &&
+    !!startTime &&
+    !!endTime &&
+    timeToSeconds(endTime) < timeToSeconds(startTime);
+
   return {
     NONE_ACTIVITY_VALUE,
     loading,
@@ -253,6 +255,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     error,
     details,
     isRunningSession,
+    spansOvernight,
     groupActivities,
     selectedActivityId,
     setSelectedActivityId,

@@ -15,6 +15,9 @@ function notificationMessage(n: InboxNotification): string {
   if (n.kind === "friend_request") {
     return `${actorDisplayLabel(n)} wants to be friends`;
   }
+  if (n.kind === "daily_summary") {
+    return `${actorDisplayLabel(n)} shared their day`;
+  }
   const habit = n.activityName?.trim() || "a habit";
   const streak = n.streak ?? 0;
   const unit = n.routine === "never" ? "days without slip" : "day streak";
@@ -31,19 +34,35 @@ export function NotificationRow({
   onAcceptFriend,
   onDeclineFriend,
   onDismiss,
+  onOpenRecap,
+  onCloseDrawer,
   responding,
 }: {
   n: InboxNotification;
   onAcceptFriend: (id: string) => void;
   onDeclineFriend: (id: string) => void;
   onDismiss?: (id: string) => void;
+  onOpenRecap?: (n: InboxNotification) => void;
+  onCloseDrawer?: () => void;
   responding: string | null;
 }) {
   const rawId = rawActionId(n);
   const canDismiss = isNotificationClearable(n);
+  const isClickableRow = n.kind === "daily_summary";
+
+  const handleRowClick = () => {
+    if (!isClickableRow) return;
+    onOpenRecap?.(n);
+  };
 
   return (
-    <div className="flex items-start gap-3 px-4 py-3">
+    <div
+      className={cn(
+        "flex items-start gap-3 px-4 py-3",
+        isClickableRow && "cursor-pointer transition-colors hover:bg-muted/50"
+      )}
+      onClick={isClickableRow ? handleRowClick : undefined}
+    >
       <span className="mt-0.5 shrink-0">
         {n.kind === "friend_request" && (
           <Users className="h-4 w-4 text-blue-500" />
@@ -54,22 +73,28 @@ export function NotificationRow({
           ) : (
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           ))}
+        {n.kind === "daily_summary" && (
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+        )}
       </span>
 
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-sm leading-snug">{notificationMessage(n)}</p>
-        <ActivityCompletionDetails n={n} />
+        {n.kind === "activity_complete" && <ActivityCompletionDetails n={n} />}
         <p className="text-xs text-muted-foreground">
           {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
         </p>
 
         {n.kind === "friend_request" && n.actionStatus === "pending" && (
-          <div className="flex gap-2 pt-1">
+          <div
+            className="flex gap-2 pt-1"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Button
               size="sm"
               variant="outline"
               disabled={responding === rawId}
-              onClick={() => onAcceptFriend(rawId)}
+              onClick={() => { onCloseDrawer?.(); onAcceptFriend(rawId); }}
             >
               <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
               Accept
@@ -78,7 +103,7 @@ export function NotificationRow({
               size="sm"
               variant="ghost"
               disabled={responding === rawId}
-              onClick={() => onDeclineFriend(rawId)}
+              onClick={() => { onCloseDrawer?.(); onDeclineFriend(rawId); }}
             >
               <XCircle className="h-3.5 w-3.5 text-destructive" />
               Decline
@@ -88,15 +113,13 @@ export function NotificationRow({
       </div>
 
       <div className="flex h-7 w-7 shrink-0 items-start justify-center">
-        {canDismiss && onDismiss ? (
+        {canDismiss && onDismiss && !isClickableRow ? (
           <Button
             type="button"
             variant="ghost"
             size="smIcon"
-            className={cn(
-              "h-7 w-7 text-muted-foreground hover:text-foreground"
-            )}
-            onClick={() => onDismiss(n.id)}
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={(e) => { e.stopPropagation(); onDismiss(n.id); }}
             aria-label="Dismiss notification"
             title="Dismiss"
           >

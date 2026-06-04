@@ -78,7 +78,11 @@ export default function FooterActionsBar({
   const { bottomInset } = useVisualViewportLayout();
   const isSelectedToday =
     toDateString(currentDate) === toDateString(new Date());
-  const shortDate = formatDateShort(currentDate);
+  const shortDate = currentDate.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 
   useEffect(() => {
     if (pathsDrawerOpen) {
@@ -234,10 +238,9 @@ export default function FooterActionsBar({
           onAddManualEntry={onAddManualActivityPeriod}
           onTasksDataChanged={onTasksDataChanged}
           floating={false}
-          triggerLabel="Projects"
           triggerTitle="Open projects"
           triggerIcon={Folder}
-          triggerClassName="z-[60] h-12 shadow-lg rounded-full px-6"
+          triggerClassName="z-[60] h-12 w-12 shadow-lg rounded-full px-0"
         />
 
         <AddTaskModal

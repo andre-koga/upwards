@@ -10,14 +10,29 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
-    date: "2026-05-23",
-    title: "Streak milestones and friend sharing",
+    date: "2026-06-04",
+    title: "Overnight sessions & smarter timeline",
     bullets: [
-      "Tap a habit on For Today to see your streak, the next milestone, and progress toward it.",
-      "Milestone targets adjust automatically from your current streak — no setup required.",
-      "Toggle Share with friends on a habit to notify friends when you complete it that day.",
-      "Friend notifications show their streak and milestone progress — no invites to accept.",
-      "Add friends by username; the bell inbox handles friend requests and shared completions.",
+      "Track sessions that run past midnight — they show up on both days automatically.",
+      "Add or edit a session with an end time before the start time; a warning tells you it spans two days and saves correctly.",
+      "Edit sessions and check off habits up to 7 days back (up from today-only).",
+      "The timeline header now shows your day's reset time so you always know which hours count.",
+      "The footer date button shows the day of the week.",
+      "Manual time entries now default to a 5-minute window.",
+    ],
+    fixes: [
+      "Habit timers now show only the time tracked today, not the full session.",
+      "Sharing a day recap works again.",
+    ],
+  },
+  {
+    date: "2026-06-02",
+    title: "Daily recap and friend sharing",
+    bullets: [
+      "When you open the app after a new day, a recap dialog shows yesterday's completed and missed habits.",
+      "Share your day recap with friends, optionally adding a message.",
+      "Friends receive a single notification that opens a summary of your day.",
+      "Add friends by username; the bell inbox handles friend requests and shared day recaps.",
     ],
     fixes: [
       "Projects drawer timers show all-time tracked time per habit again.",

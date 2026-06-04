@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { isNeverRoutine } from "@/lib/activity";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
@@ -13,7 +12,10 @@ import { Palmtree, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
-import { ActivityStreakDialog } from "@/components/activities/activity-streak-dialog";
+import {
+  getDayResetMinutes,
+  formatResetMinutes,
+} from "@/lib/session/day-reset";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -56,12 +58,10 @@ export default function DailyTasksList({
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
     string | null
   >(null);
-  const [streakDialogActivityId, setStreakDialogActivityId] = useState<
-    string | null
-  >(null);
 
   const {
     isToday,
+    isEditableDate,
     temporalForViewDate,
     loading,
     activityStreaks,
@@ -101,18 +101,35 @@ export default function DailyTasksList({
   const manualEntryGroup = manualEntryActivity
     ? getGroup(manualEntryActivity)
     : undefined;
-  const streakDialogActivity = streakDialogActivityId
-    ? (lookupActivities.find((a) => a.id === streakDialogActivityId) ?? null)
-    : null;
-  const streakDialogGroup = streakDialogActivity
-    ? getGroup(streakDialogActivity)
-    : undefined;
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
     setAssignPeriodId(periodId);
     setAssignIntervalMs(intervalMs);
     setAssignDialogOpen(true);
   };
+
+  const resetMin = getDayResetMinutes();
+
+  // Labels shown at the top and bottom of the timeline when a non-midnight
+  // reset is configured, so the user knows when their "day" window starts/ends.
+  const timelineBoundaryLabels = useMemo(() => {
+    if (resetMin === 0) return null;
+    const resetLabel = formatResetMinutes(resetMin);
+
+    // Effective day starts at resetMin on the current calendar date.
+    const [y, m, d] = currentDate.toISOString().split("T")[0].split("-").map(Number);
+    const dayStart = new Date(y, (m || 1) - 1, d || 1);
+    dayStart.setHours(Math.floor(resetMin / 60), resetMin % 60, 0, 0);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const fmt = (date: Date) =>
+      date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+    return {
+      top: `${resetLabel} ${fmt(dayEnd)}`,
+      bottom: `${resetLabel} ${fmt(dayStart)}`,
+    };
+  }, [resetMin, currentDate]);
 
   const handleAssignSuccess = () => {
     void loadActivityPeriods();
@@ -178,7 +195,7 @@ export default function DailyTasksList({
                   isPaused={pausedTaskIdSet.has(activity.id)}
                   isBreakDay={isBreakDay}
                   isCurrentActivity={currentActivityId === activity.id}
-                  isEditableDate={isToday}
+                  isEditableDate={isEditableDate}
                   temporal={temporalForViewDate}
                   onIncrement={incrementTask}
                   onNeverIncrement={() => incrementNeverSlip(activity.id)}
@@ -186,7 +203,6 @@ export default function DailyTasksList({
                   onStartActivity={handleStartActivity}
                   onStopActivity={handleStopActivity}
                   onManualEntry={setManualEntryActivityId}
-                  onOpenStreakDialog={setStreakDialogActivityId}
                 />
               ))}
           </div>
@@ -198,7 +214,7 @@ export default function DailyTasksList({
               onClick={() => {
                 void toggleBreakDay();
               }}
-              disabled={!isToday}
+              disabled={!isEditableDate}
               className={cn(
                 "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default",
                 isBreakDay ? "text-amber-500" : "text-muted-foreground"
@@ -222,6 +238,11 @@ export default function DailyTasksList({
           <div className="ml-1 mr-1.5 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Timeline
+              {timelineBoundaryLabels && (
+                <span className="ml-1.5 font-normal normal-case">
+                  (starts and ends at {formatResetMinutes(resetMin)})
+                </span>
+              )}
             </p>
             <span className="text-xs text-muted-foreground">
               {formatTimerDisplay(
@@ -331,25 +352,6 @@ export default function DailyTasksList({
           }
         }}
         onSave={addManualActivityPeriod}
-      />
-
-      <ActivityStreakDialog
-        open={streakDialogActivityId !== null}
-        activity={streakDialogActivity}
-        group={streakDialogGroup}
-        streak={
-          streakDialogActivityId && streakDialogActivity
-            ? isNeverRoutine(streakDialogActivity)
-              ? activityStreaks[streakDialogActivityId] ?? 0
-              : Math.max(
-                  activityStreaks[streakDialogActivityId] ?? 0,
-                  baseStreaks[streakDialogActivityId] ?? 0
-                )
-            : 0
-        }
-        onOpenChange={(open) => {
-          if (!open) setStreakDialogActivityId(null);
-        }}
       />
     </div>
   );

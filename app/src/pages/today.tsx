@@ -1,10 +1,20 @@
-import { useState, useRef, type TouchEvent } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useRef, type TouchEvent, useCallback } from "react";
+import { ChevronLeft, ChevronRight, FlaskConical, ScrollText, Users } from "lucide-react";
 import { toDateString } from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/journal/journal-card";
 import { pickRandomHabitQuote } from "@/lib/habit-quotes";
 import { useTodayPage } from "@/hooks/use-today-page";
+import { DailyRecapDialog } from "@/components/recap/daily-recap-dialog";
+import { FriendRecapDialog } from "@/components/notifications/friend-recap-dialog";
+import { getDailyRecap } from "@/lib/recap/get-daily-recap";
+import type { InboxNotification } from "@/lib/notifications/use-notifications";
+import { Button } from "@/components/ui/button";
+import { getEffectiveToday } from "@/lib/session/day-reset";
+import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
+import { getActivityDisplayName } from "@/lib/activity";
+
+const IS_DEV = import.meta.env.DEV;
 
 export default function TodayPage() {
   const SWIPE_MIN_DISTANCE_PX = 70;
@@ -24,6 +34,18 @@ export default function TodayPage() {
     y: number;
     canSwipe: boolean;
   } | null>(null);
+  const [devRecapOpen, setDevRecapOpen] = useState(false);
+  const [devFriendRecap, setDevFriendRecap] = useState<InboxNotification | null>(null);
+  const [pastRecapOpen, setPastRecapOpen] = useState(false);
+
+  // Re-render when the day resets so todayStr and isPastDay update live.
+  const [, setResetTick] = useState(0);
+  const handleDayReset = useCallback(() => setResetTick((t) => t + 1), []);
+  useDayResetTimer(handleDayReset);
+
+  const todayStr = getEffectiveToday();
+  const currentDateStr = toDateString(currentDate);
+  const isPastDay = currentDateStr < todayStr;
 
   const {
     journal,
@@ -184,6 +206,101 @@ export default function TodayPage() {
         journal={journal}
         loadJournalMeta={loadJournalMeta}
       />
+
+      {IS_DEV && (
+        <>
+          <div className="flex justify-center gap-2 px-4 pb-1 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-full border-dashed border-muted-foreground/40 text-xs text-muted-foreground"
+              onClick={() => setDevRecapOpen(true)}
+            >
+              <FlaskConical className="h-3.5 w-3.5" />
+              Dev: recap dialog
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-full border-dashed border-muted-foreground/40 text-xs text-muted-foreground"
+              onClick={async () => {
+                const recap = await getDailyRecap(currentDateStr, 0);
+                const mock: InboxNotification = {
+                  id: "dev-friend-recap",
+                  kind: "daily_summary",
+                  actorId: "dev",
+                  actorUsername: "you",
+                  actorDisplayName: "You (friend view)",
+                  activityName: null,
+                  createdAt: new Date().toISOString(),
+                  actionStatus: null,
+                  summaryDate: currentDateStr,
+                  summaryCaption: null,
+                  summaryCompletedCount: recap.completed.length,
+                  summaryTotalCount: recap.completed.length + recap.missed.length,
+                  summaryTotalTrackedMs: recap.totalTrackedMs,
+                  summaryCompletions: [
+                    ...recap.completed.map((c) => ({
+                      activityName: getActivityDisplayName(c.activity, c.group),
+                      streak: c.streak,
+                      routine: c.activity.routine ?? null,
+                      completed: true,
+                    })),
+                    ...recap.missed.map((m) => ({
+                      activityName: getActivityDisplayName(m.activity, m.group),
+                      streak: 0,
+                      routine: m.activity.routine ?? null,
+                      completed: false,
+                    })),
+                  ],
+                };
+                setDevFriendRecap(mock);
+              }}
+            >
+              <Users className="h-3.5 w-3.5" />
+              Dev: friend recap
+            </Button>
+          </div>
+          <DailyRecapDialog
+            open={devRecapOpen}
+            recapDate={currentDateStr}
+            loginStreak={7}
+            onDismiss={() => setDevRecapOpen(false)}
+          />
+          {devFriendRecap && (
+            <FriendRecapDialog
+              open={devFriendRecap !== null}
+              onOpenChange={(next) => { if (!next) setDevFriendRecap(null); }}
+              n={devFriendRecap}
+            />
+          )}
+        </>
+      )}
+
+      {isPastDay && (
+        <>
+          <div className="flex justify-center px-4 pb-1 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-full text-xs"
+              onClick={() => setPastRecapOpen(true)}
+            >
+              <ScrollText className="h-3.5 w-3.5" />
+              View day recap
+            </Button>
+          </div>
+          <DailyRecapDialog
+            open={pastRecapOpen}
+            recapDate={currentDateStr}
+            loginStreak={0}
+            onDismiss={() => setPastRecapOpen(false)}
+          />
+        </>
+      )}
 
       <div className="p-3">
         <DailyTasksList

@@ -17,14 +17,15 @@ import {
   getActivityDisplayName,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
-import { isJournalCalendarDateEditable } from "@/lib/journal";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 import {
   getOrComputeActivityStreaksForDate,
   recomputeActivityStreaksFromDateForActivities,
   type TodayOverride,
 } from "@/lib/streak-utils";
+import { clipPeriodToDay, effectiveDayStartMs } from "@/lib/activity/period-day-utils";
+import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
-import { emitActivityCompletion } from "@/lib/social/emit-activity-completion";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
@@ -58,8 +59,10 @@ export function useDailyTasks({
   refreshTrigger = 0,
 }: UseDailyTasksParams) {
   const dateString = toDateString(currentDate);
-  // Same editable window as the journal card (`canEditJournal`); misleading name retained for callers.
-  const isToday = isJournalCalendarDateEditable(currentDate);
+  // Tasks and timers are only editable on the current effective day.
+  // Journal entries keep their own 7-day window (isJournalCalendarDateEditable).
+  const isToday = dateString === getEffectiveToday();
+  const isEditableDate = isActivityDateEditable(dateString);
   const [activityStreaks, setActivityStreaks] = useState<Record<string, number>>({});
   const [baseStreaks, setBaseStreaks] = useState<Record<string, number>>({});
   const [allActivityPeriods, setAllActivityPeriods] = useState<
@@ -106,41 +109,8 @@ export function useDailyTasks({
   const incrementTaskWithProgress = useCallback(
     async (activityId: string, target: number, options?: { neverSlip?: boolean }) => {
       await incrementTask(activityId, target, options);
-      if (options?.neverSlip) return;
-
-      const activity =
-        lookupActivityById.get(activityId) ??
-        activities.find((a) => a.id === activityId);
-      if (!activity || activity.routine === "never") return;
-
-      const entry = await db.dailyEntries
-        .where("date")
-        .equals(dateString)
-        .filter((e) => !e.deleted_at)
-        .first();
-      const newCount = (entry?.task_counts as Record<string, number> | null)?.[activityId] ?? 0;
-      const group =
-        lookupGroupById.get(activity.group_id) ??
-        groups.find((g) => g.id === activity.group_id);
-      const completionTarget = activity.completion_target ?? 1;
-
-      if (newCount === completionTarget) {
-        const fresh = (await db.activities.get(activityId)) ?? activity;
-        await emitActivityCompletion({
-          activity: fresh,
-          activityName: getActivityDisplayName(fresh, group),
-          dateString,
-        });
-      }
     },
-    [
-      incrementTask,
-      lookupActivityById,
-      activities,
-      lookupGroupById,
-      groups,
-      dateString,
-    ]
+    [incrementTask]
   );
 
   const incrementNeverSlip = useCallback(
@@ -430,9 +400,7 @@ export function useDailyTasks({
       startIso: string;
       endIso: string;
     }) => {
-      const { activityId, dateString: periodDateString, startIso, endIso } =
-        params;
-
+      const { activityId, dateString: periodDateString, startIso, endIso } = params;
       const createdAt = now();
       const dailyEntry = await getOrCreateDailyEntryDb(periodDateString);
 
@@ -456,6 +424,8 @@ export function useDailyTasks({
   );
 
   const timelineSessions = useMemo(() => {
+    const nowMs = Date.now();
+    const dayStartMs = effectiveDayStartMs(dateString);
     const activitySessions = activityPeriods
       .filter((period) => !!period.end_time)
       .map((period) => {
@@ -463,8 +433,13 @@ export function useDailyTasks({
         const group = activity
           ? lookupGroupById.get(activity.group_id)
           : undefined;
-        const startTime = new Date(period.start_time).getTime();
-        const endTime = new Date(period.end_time!).getTime();
+        const startMs = new Date(period.start_time).getTime();
+        const endMs = new Date(period.end_time!).getTime();
+        // Clip the displayed duration to this effective day.
+        const clippedInterval = clipPeriodToDay(startMs, endMs, dateString, nowMs);
+        // Sort by where the session starts within this day (not the raw start_time,
+        // which may be yesterday for cross-boundary periods).
+        const clippedStartMs = Math.max(startMs, dayStartMs);
         return {
           id: period.id,
           activityId: period.activity_id,
@@ -475,13 +450,14 @@ export function useDailyTasks({
           groupColor: activity
             ? (group?.color ?? DEFAULT_GROUP_COLOR)
             : DEFAULT_GROUP_COLOR,
-          intervalMs: Math.max(0, endTime - startTime),
-          startTime,
+          intervalMs: Math.max(0, clippedInterval),
+          startTime: clippedStartMs,
         };
-      });
+      })
+      .filter((s) => s.intervalMs > 0);
 
     return activitySessions.sort((a, b) => b.startTime - a.startTime);
-  }, [activityPeriods, lookupActivityById, lookupGroupById]);
+  }, [activityPeriods, lookupActivityById, lookupGroupById, dateString]);
 
   const runningSession = useMemo(() => {
     if (!resolvedCurrentActivityId) return null;
@@ -531,12 +507,13 @@ export function useDailyTasks({
     if (!activePeriod) return 0;
 
     const startMs = new Date(activePeriod.start_time).getTime();
-    return Math.max(0, nowMs - startMs);
-  }, [resolvedCurrentActivityId, activityPeriods, nowMs]);
+    return clipPeriodToDay(startMs, null, dateString, nowMs);
+  }, [resolvedCurrentActivityId, activityPeriods, nowMs, dateString]);
 
 
   return {
     isToday,
+    isEditableDate,
     temporalForViewDate,
     loading,
     activityStreaks,

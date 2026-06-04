@@ -12,6 +12,7 @@ import {
   combineDateAndTime,
   formatTimeInput,
   fromDateString,
+  shiftDate,
   timeToSeconds,
   toDateString,
 } from "@/lib/time-utils";
@@ -46,6 +47,10 @@ export default function ManualTimeEntryDialog({
 
   const todayString = useMemo(() => toDateString(new Date()), []);
 
+  // True when end clock time is before start clock time (crosses midnight).
+  const spansOvernight = !!startTime && !!endTime &&
+    timeToSeconds(endTime) < timeToSeconds(startTime);
+
   useEffect(() => {
     if (!open) return;
 
@@ -57,12 +62,12 @@ export default function ManualTimeEntryDialog({
     setStartTime(
       hasTodayDefaults
         ? formatTimeInput(
-            new Date(now.getTime() - 30 * 60 * 1000).toISOString()
+            new Date(now.getTime() - 5 * 60 * 1000).toISOString()
           )
         : "09:00:00"
     );
     setEndTime(
-      hasTodayDefaults ? formatTimeInput(now.toISOString()) : "09:30:00"
+      hasTodayDefaults ? formatTimeInput(now.toISOString()) : "09:05:00"
     );
     setSaving(false);
     setError(null);
@@ -76,8 +81,9 @@ export default function ManualTimeEntryDialog({
       return;
     }
 
-    if (timeToSeconds(endTime) <= timeToSeconds(startTime)) {
-      setError("End time must be after start time.");
+    // Equal times produce zero-length sessions — still block that.
+    if (timeToSeconds(endTime) === timeToSeconds(startTime)) {
+      setError("End time must be different from start time.");
       return;
     }
 
@@ -85,12 +91,16 @@ export default function ManualTimeEntryDialog({
       setSaving(true);
       setError(null);
 
-      const date = fromDateString(dateString);
+      const startDate = fromDateString(dateString);
+      // If end is before start on the clock it means the session crossed
+      // midnight, so the end falls on the next calendar day.
+      const endDate = spansOvernight ? shiftDate(startDate, 1) : startDate;
+
       await onSave({
         activityId: activity.id,
         dateString,
-        startIso: combineDateAndTime(date, startTime),
-        endIso: combineDateAndTime(date, endTime),
+        startIso: combineDateAndTime(startDate, startTime),
+        endIso: combineDateAndTime(endDate, endTime),
       });
 
       onOpenChange(false);
@@ -139,6 +149,12 @@ export default function ManualTimeEntryDialog({
           value={endTime}
           onValueChange={setEndTime}
         />
+
+        {spansOvernight && (
+          <p className="text-sm text-amber-600 dark:text-amber-400">
+            This session spans two days.
+          </p>
+        )}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 

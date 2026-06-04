@@ -33,7 +33,6 @@ interface ActivityTaskItemProps {
   onStartActivity: (activityId: string) => void;
   onStopActivity: () => void;
   onManualEntry?: (activityId: string) => void;
-  onOpenStreakDialog?: (activityId: string) => void;
 }
 
 function ActivityTaskItem({
@@ -53,7 +52,6 @@ function ActivityTaskItem({
   onStartActivity,
   onStopActivity,
   onManualEntry,
-  onOpenStreakDialog,
 }: ActivityTaskItemProps) {
   const [retiredDialogKind, setRetiredDialogKind] =
     useState<ActivityRetiredKind | null>(null);
@@ -92,7 +90,6 @@ function ActivityTaskItem({
       setRetiredDialogKind("completed");
       return;
     }
-    onOpenStreakDialog?.(activity.id);
   };
 
   const clearNeverPressTimeout = () => {
@@ -243,7 +240,6 @@ function ActivityTaskItem({
           isPaused={isPaused}
           interaction={interaction}
           isDayComplete={isComplete}
-          streak={streak}
           onNameClick={handleNameClick}
           onStartActivity={onStartActivity}
           onStopActivity={onStopActivity}

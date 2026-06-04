@@ -5,7 +5,7 @@ export function isNotificationClearable(
   notification: InboxNotification
 ): boolean {
   if (notification.actionStatus === "pending") return false;
-  return notification.kind === "activity_complete";
+  return notification.kind === "activity_complete" || notification.kind === "daily_summary";
 }
 
 export async function fetchDismissedNotificationIds(
