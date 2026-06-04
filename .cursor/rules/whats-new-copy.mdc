@@ -1,0 +1,29 @@
+---
+description: Writing style guide for What's New / feature-releases entries
+globs: app/src/lib/feature-releases.ts
+alwaysApply: false
+---
+
+# What's New Copy Style
+
+When adding a new `FeatureRelease` entry to `feature-releases.ts`, follow these rules:
+
+## Voice & tone
+- Write for the user, not the developer. Describe what they can **do** or **see**, not how it works internally.
+- Present tense, active voice: "Track sessions…", "Edit habits…", "The header shows…"
+- No technical jargon: no "DB-level", "ISO timestamps", "schema cache", "effective day boundary", etc.
+
+## Bullets
+- One sentence each. Lead with the action or benefit.
+- ✅ "Track sessions that run past midnight — they show up on both days automatically."
+- ❌ "Sessions that cross the configured day-reset boundary are now stored as a single ActivityPeriod and rendered via UI-level clipping."
+
+## Fixes
+- Plain statement of what was broken and now works.
+- ✅ "Habit timers now show only the time tracked today, not the full session."
+- ❌ "getActivityElapsedMs now clips via clipPeriodToDay instead of using raw start–end diff."
+
+## Title
+- Short noun phrase describing the theme, not a changelog tag.
+- ✅ "Overnight sessions & smarter timeline"
+- ❌ "fix: split-period-at-reset refactor + 7-day editable window"

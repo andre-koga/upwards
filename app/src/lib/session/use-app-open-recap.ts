@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getEffectiveToday } from "@/lib/session/day-reset";
-import { splitPeriodsAtDayReset } from "@/lib/activity/split-period-at-reset";
 import {
   computeAndSaveLoginStreak,
   loadLastOpenedDate,
@@ -23,9 +22,6 @@ export function useAppOpenRecap(): AppOpenRecapState {
   const checkedRef = useRef(false);
 
   const check = useCallback(async () => {
-    // Split any periods that crossed a reset boundary while the app was closed.
-    await splitPeriodsAtDayReset();
-
     const today = getEffectiveToday();
     const lastDate = loadLastOpenedDate();
 

@@ -10,7 +10,23 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
-    date: "2026-05-23",
+    date: "2026-06-04",
+    title: "Overnight sessions & smarter timeline",
+    bullets: [
+      "Track sessions that run past midnight — they show up on both days automatically.",
+      "Add or edit a session with an end time before the start time; a warning tells you it spans two days and saves correctly.",
+      "Edit sessions and check off habits up to 7 days back (up from today-only).",
+      "The timeline header now shows your day's reset time so you always know which hours count.",
+      "The footer date button shows the day of the week.",
+      "Manual time entries now default to a 5-minute window.",
+    ],
+    fixes: [
+      "Habit timers now show only the time tracked today, not the full session.",
+      "Sharing a day recap works again.",
+    ],
+  },
+  {
+    date: "2026-06-02",
     title: "Daily recap and friend sharing",
     bullets: [
       "When you open the app after a new day, a recap dialog shows yesterday's completed and missed habits.",

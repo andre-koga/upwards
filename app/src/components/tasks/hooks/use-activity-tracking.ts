@@ -2,6 +2,12 @@ import { useState, useCallback } from "react";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 import { closeOpenPeriods } from "@/lib/activity";
+import {
+  effectiveDayStartMs,
+  effectiveDayEndMs,
+  clipPeriodToDay,
+} from "@/lib/activity/period-day-utils";
+import { toDateString } from "@/lib/time-utils";
 
 export function useActivityTracking(
   dateString: string,
@@ -13,9 +19,22 @@ export function useActivityTracking(
 
   const loadActivityPeriods = useCallback(async () => {
     try {
+      const dayStartMs = effectiveDayStartMs(dateString);
+      const dayEndMs = effectiveDayEndMs(dateString);
+
+      // Always look back 2 calendar days in addition to the current date.
+      // A period stored on a previous day's daily entry (because it started
+      // before the reset boundary) can still overlap this effective day.
+      // 2 days covers any realistic overnight or long session.
+      const datesToQuery = [dateString];
+      for (let i = 1; i <= 2; i++) {
+        const prev = new Date(dayStartMs - i * 24 * 60 * 60 * 1000);
+        datesToQuery.push(toDateString(prev));
+      }
+
       const entries = await db.dailyEntries
         .where("date")
-        .equals(dateString)
+        .anyOf(datesToQuery)
         .filter((e) => !e.deleted_at)
         .toArray();
 
@@ -25,20 +44,30 @@ export function useActivityTracking(
       }
 
       const entryIds = new Set(entries.map((entry) => entry.id));
-      const periods = (
-        await db.activityPeriods
-          .filter(
-            (period) =>
-              !period.deleted_at &&
-              !!period.daily_entry_id &&
-              entryIds.has(period.daily_entry_id)
-          )
-          .toArray()
-      ).sort(
-        (left, right) =>
-          new Date(left.start_time).getTime() -
-          new Date(right.start_time).getTime()
-      );
+      const candidates = await db.activityPeriods
+        .filter(
+          (period) =>
+            !period.deleted_at &&
+            !!period.daily_entry_id &&
+            entryIds.has(period.daily_entry_id)
+        )
+        .toArray();
+
+      // Keep only periods that actually overlap this effective day's window.
+      const nowMs = Date.now();
+      const periods = candidates
+        .filter((period) => {
+          const startMs = new Date(period.start_time).getTime();
+          const endMs = period.end_time
+            ? new Date(period.end_time).getTime()
+            : nowMs;
+          return startMs < dayEndMs && endMs > dayStartMs;
+        })
+        .sort(
+          (left, right) =>
+            new Date(left.start_time).getTime() -
+            new Date(right.start_time).getTime()
+        );
 
       setActivityPeriods(periods);
     } catch (error) {
@@ -46,21 +75,23 @@ export function useActivityTracking(
     }
   }, [dateString]);
 
+  /** Time an activity contributed to THIS effective day (closed periods only). */
   const calculateActivityTime = useCallback(
     (activityId: string): number => {
-      const periods = activityPeriods.filter(
-        (p) => p.activity_id === activityId && !!p.end_time
-      );
-      return periods.reduce((total, period) => {
-        const start = new Date(period.start_time).getTime();
-        const end = new Date(period.end_time!).getTime();
-        return total + Math.max(0, end - start);
-      }, 0);
+      const nowMs = Date.now();
+      return activityPeriods
+        .filter((p) => p.activity_id === activityId && !!p.end_time)
+        .reduce((total, period) => {
+          const startMs = new Date(period.start_time).getTime();
+          const endMs = new Date(period.end_time!).getTime();
+          return total + clipPeriodToDay(startMs, endMs, dateString, nowMs);
+        }, 0);
     },
-    [activityPeriods]
+    [activityPeriods, dateString]
   );
 
-  /** Total ms for an activity on this day, optionally including a live open period. */
+  /** Total ms an activity contributed to THIS effective day, optionally
+   *  including the live open period. */
   const getActivityElapsedMs = useCallback(
     (
       activityId: string,
@@ -72,16 +103,16 @@ export function useActivityTracking(
       return activityPeriods
         .filter((period) => period.activity_id === activityId)
         .reduce((total, period) => {
-          const start = new Date(period.start_time).getTime();
+          const startMs = new Date(period.start_time).getTime();
           if (period.end_time) {
-            const end = new Date(period.end_time).getTime();
-            return total + Math.max(0, end - start);
+            const endMs = new Date(period.end_time).getTime();
+            return total + clipPeriodToDay(startMs, endMs, dateString, liveNowMs);
           }
           if (!includeOpenPeriod) return total;
-          return total + Math.max(0, liveNowMs - start);
+          return total + clipPeriodToDay(startMs, null, dateString, liveNowMs);
         }, 0);
     },
-    [activityPeriods]
+    [activityPeriods, dateString]
   );
 
   const handleStartActivity = useCallback(

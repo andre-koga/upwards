@@ -12,6 +12,7 @@ import type { InboxNotification } from "@/lib/notifications/use-notifications";
 import { Button } from "@/components/ui/button";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
+import { getActivityDisplayName } from "@/lib/activity";
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -232,21 +233,23 @@ export default function TodayPage() {
                   actorId: "dev",
                   actorUsername: "you",
                   actorDisplayName: "You (friend view)",
+                  activityName: null,
                   createdAt: new Date().toISOString(),
                   actionStatus: null,
                   summaryDate: currentDateStr,
                   summaryCaption: null,
                   summaryCompletedCount: recap.completed.length,
                   summaryTotalCount: recap.completed.length + recap.missed.length,
+                  summaryTotalTrackedMs: recap.totalTrackedMs,
                   summaryCompletions: [
                     ...recap.completed.map((c) => ({
-                      activityName: c.activity.name,
+                      activityName: getActivityDisplayName(c.activity, c.group),
                       streak: c.streak,
                       routine: c.activity.routine ?? null,
                       completed: true,
                     })),
                     ...recap.missed.map((m) => ({
-                      activityName: m.activity.name,
+                      activityName: getActivityDisplayName(m.activity, m.group),
                       streak: 0,
                       routine: m.activity.routine ?? null,
                       completed: false,

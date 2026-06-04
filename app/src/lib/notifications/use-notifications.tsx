@@ -160,7 +160,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const { data: summaries, error: sumErr } = await supabase
           .from("friend_daily_summaries")
           .select(
-            "id, user_id, date, caption, completed_count, total_count, completions, created_at"
+            "id, user_id, date, caption, completed_count, total_count, total_tracked_ms, completions, created_at"
           )
           .in("user_id", friendIds)
           .gte("created_at", since)

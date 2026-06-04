@@ -1,5 +1,10 @@
 import { CheckCircle2, Flame, XCircle } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import type { InboxNotification } from "@/lib/notifications/use-notifications";
 import { formatWeekdayShortDate } from "@/lib/time-utils";
@@ -40,14 +45,14 @@ export function FriendRecapDialog({ open, onOpenChange, n }: FriendRecapDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="space-y-5 p-4">
+      <DialogContent className="space-y-5 p-4" aria-describedby={undefined}>
         {/* Header */}
         <div className="flex flex-col items-center gap-1 text-center">
-          <p className="text-lg font-semibold leading-none tracking-tight">
+          <DialogTitle className="text-lg font-semibold leading-none tracking-tight">
             {name}&rsquo;s Day
-          </p>
+          </DialogTitle>
           {dateLabel && (
-            <p className="text-sm text-muted-foreground">{dateLabel}</p>
+            <DialogDescription>{dateLabel}</DialogDescription>
           )}
         </div>
 

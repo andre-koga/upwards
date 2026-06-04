@@ -7,9 +7,9 @@ import {
   FormTimeField,
 } from "@/components/forms";
 import { getActivityDisplayName } from "@/lib/activity";
-import { toDateString, timeToSeconds } from "@/lib/time-utils";
+import { toDateString } from "@/lib/time-utils";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import { useCallback } from "react";
 
 interface SessionDetailsDialogProps {
@@ -18,18 +18,6 @@ interface SessionDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSessionUpdated?: () => void;
-}
-
-function addOneSecond(time: string): string {
-  const [hours = 0, minutes = 0, seconds = 0] = time.split(":").map(Number);
-  const totalSeconds = Math.min(hours * 3600 + minutes * 60 + seconds + 1, 86399);
-  const nextHours = Math.floor(totalSeconds / 3600);
-  const nextMinutes = Math.floor((totalSeconds % 3600) / 60);
-  const nextSeconds = totalSeconds % 60;
-  return `${String(nextHours).padStart(2, "0")}:${String(nextMinutes).padStart(
-    2,
-    "0"
-  )}:${String(nextSeconds).padStart(2, "0")}`;
 }
 
 export default function SessionDetailsDialog({
@@ -50,6 +38,7 @@ export default function SessionDetailsDialog({
     error,
     details,
     isRunningSession,
+    spansOvernight,
     groupActivities,
     selectedActivityId,
     setSelectedActivityId,
@@ -71,22 +60,7 @@ export default function SessionDetailsDialog({
 
   const sessionDateString = details?.entry?.date ?? toDateString(selectedDate);
   const isLockedHistoricalSession =
-    !!details && sessionDateString !== getEffectiveToday();
-
-  const handleStartTimeChange = (newStartTime: string) => {
-    setStartTime(newStartTime);
-    if (endTime && timeToSeconds(endTime) <= timeToSeconds(newStartTime)) {
-      setEndTime(addOneSecond(newStartTime));
-    }
-  };
-
-  const handleEndTimeChange = (newEndTime: string) => {
-    if (startTime && timeToSeconds(newEndTime) <= timeToSeconds(startTime)) {
-      setEndTime(addOneSecond(startTime));
-      return;
-    }
-    setEndTime(newEndTime);
-  };
+    !!details && !isActivityDateEditable(sessionDateString);
 
   return (
     <FormDialog
@@ -119,7 +93,7 @@ export default function SessionDetailsDialog({
             id="session-start-time"
             label="Start time"
             value={startTime}
-            onValueChange={handleStartTimeChange}
+            onValueChange={setStartTime}
             disabled={isLockedHistoricalSession}
           />
           {isRunningSession ? (
@@ -134,14 +108,19 @@ export default function SessionDetailsDialog({
               id="session-end-time"
               label="End time"
               value={endTime}
-              onValueChange={handleEndTimeChange}
+              onValueChange={setEndTime}
               disabled={isLockedHistoricalSession}
             />
+          )}
+          {spansOvernight && (
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              This session spans two days.
+            </p>
           )}
           {error && <p className="text-sm text-destructive">{error}</p>}
           {isLockedHistoricalSession ? (
             <p className="text-sm text-muted-foreground">
-              Sessions from past days are read-only.
+              Sessions older than 7 days are read-only.
             </p>
           ) : null}
 

@@ -10,6 +10,8 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -89,12 +91,14 @@ export function DailyRecapDialog({
           if (!next) onDismiss();
         }}
       >
-        <DialogContent className="space-y-5 p-4">
+        <DialogContent className="space-y-5 p-4" aria-describedby={undefined}>
           {/* Centered header */}
           <div className="flex flex-col items-center gap-2 text-center">
-            <p className="text-lg font-semibold leading-none tracking-tight">Yesterday</p>
+            <DialogTitle className="text-lg font-semibold leading-none tracking-tight">
+              Yesterday
+            </DialogTitle>
             {dateLabel && (
-              <p className="text-sm text-muted-foreground">{dateLabel}</p>
+              <DialogDescription>{dateLabel}</DialogDescription>
             )}
             {loginStreakLabel && (
               <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
