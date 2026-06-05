@@ -1,3 +1,5 @@
+import { db, newId, now } from "@/lib/db";
+
 /**
  * Extract a user-facing error message from an unknown error.
  */
@@ -11,10 +13,68 @@ export function getErrorMessage(
 }
 
 /**
- * Log an error with context.
+ * Log an error with context and store it in the database.
  */
 export function logError(context: string, err: unknown): void {
+  const message = getErrorMessage(err);
   console.error(`${context}:`, err);
+  
+  // Store in database
+  void (async () => {
+    try {
+      await db.appLogs.add({
+        id: newId(),
+        level: "error",
+        context,
+        message,
+        created_at: now(),
+      });
+    } catch (e) {
+      console.error("Failed to store error log:", e);
+    }
+  })();
+}
+
+/**
+ * Log a success message.
+ */
+export function logSuccess(context: string, message: string): void {
+  console.log(`${context}: ${message}`);
+  
+  void (async () => {
+    try {
+      await db.appLogs.add({
+        id: newId(),
+        level: "success",
+        context,
+        message,
+        created_at: now(),
+      });
+    } catch (e) {
+      console.error("Failed to store success log:", e);
+    }
+  })();
+}
+
+/**
+ * Log an info message.
+ */
+export function logInfo(context: string, message: string): void {
+  console.log(`${context}: ${message}`);
+  
+  void (async () => {
+    try {
+      await db.appLogs.add({
+        id: newId(),
+        level: "info",
+        context,
+        message,
+        created_at: now(),
+      });
+    } catch (e) {
+      console.error("Failed to store info log:", e);
+    }
+  })();
 }
 
 /** Common user-facing error messages */

@@ -172,3 +172,12 @@ export interface Friendship {
   user_b: string;
   created_at: string;
 }
+
+/** Application log entry for errors and important events. */
+export interface AppLog {
+  id: string;
+  level: "error" | "success" | "info" | "warning";
+  context: string;
+  message: string;
+  created_at: string;
+}

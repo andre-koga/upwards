@@ -11,6 +11,7 @@ import type {
   ActivityStatusEvent,
   GroupStatusEvent,
   UserProfile,
+  AppLog,
 } from "./types";
 import { shiftDate, startOfDay } from "@/lib/time-utils";
 
@@ -96,6 +97,7 @@ class UpwardsDB extends Dexie {
   activityStatusEvents!: Table<ActivityStatusEvent>;
   groupStatusEvents!: Table<GroupStatusEvent>;
   userProfiles!: Table<UserProfile>;
+  appLogs!: Table<AppLog>;
 
   constructor() {
     super("okhabit");
@@ -674,6 +676,7 @@ class UpwardsDB extends Dexie {
         promiseReactions: null,
         promiseInvites: null,
         userProfiles: "user_id",
+        appLogs: "id, created_at, level",
       })
       .upgrade(async (tx) => {
         await tx
