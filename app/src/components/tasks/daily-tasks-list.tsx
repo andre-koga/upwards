@@ -81,6 +81,7 @@ export default function DailyTasksList({
     toggleOneTimeTask,
     deleteOneTimeTask,
     updateOneTimeTask,
+    loadOneTimeTasks,
     loadArchivedMemos,
     incrementTask,
     incrementNeverSlip,
@@ -173,6 +174,7 @@ export default function DailyTasksList({
               onDelete={deleteOneTimeTask}
               onUpdate={updateOneTimeTask}
               onArchive={() => {
+                void loadOneTimeTasks();
                 void loadArchivedMemos();
               }}
             />

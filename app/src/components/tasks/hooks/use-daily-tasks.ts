@@ -537,6 +537,7 @@ export function useDailyTasks({
     toggleOneTimeTask,
     deleteOneTimeTask,
     updateOneTimeTask,
+    loadOneTimeTasks,
     loadArchivedMemos,
     incrementTask: incrementTaskWithProgress,
     incrementNeverSlip,
