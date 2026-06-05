@@ -10,7 +10,25 @@ function scrollAppToTop() {
   document.querySelector<HTMLElement>("[data-app-scroll]")?.scrollTo(0, 0);
 }
 
-export default function LogsPage() {
+async function deleteOldLogs() {
+  try {
+    const oneDayAgoMs = Date.now() - 24 * 60 * 60 * 1000;
+    const oneDayAgo = new Date(oneDayAgoMs).toISOString();
+    
+    const oldLogs = await db.appLogs
+      .where("created_at")
+      .below(oneDayAgo)
+      .toArray();
+    
+    if (oldLogs.length > 0) {
+      await db.appLogs.bulkDelete(oldLogs.map(log => log.id));
+    }
+  } catch (error) {
+    console.error("Failed to delete old logs:", error);
+  }
+}
+
+export default function ErrorLogsPage() {
   const [logs, setLogs] = useState<AppLog[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,6 +39,9 @@ export default function LogsPage() {
   useEffect(() => {
     const loadLogs = async () => {
       try {
+        // Delete logs older than 1 day
+        await deleteOldLogs();
+        
         const allLogs = await db.appLogs
           .orderBy("created_at")
           .reverse()
@@ -69,9 +90,9 @@ export default function LogsPage() {
   return (
     <div className="space-y-6 p-4 pb-24">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Logs</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Error Logs</h1>
         <p className="text-sm text-muted-foreground">
-          {logs.length} {logs.length === 1 ? "entry" : "entries"}
+          {logs.length} {logs.length === 1 ? "entry" : "entries"} (last 24 hours)
         </p>
       </header>
 

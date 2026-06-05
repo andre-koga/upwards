@@ -165,11 +165,11 @@ export default function FooterActionsBar({
               setPathsDrawerOpen(false);
               navigate("/logs");
             }}
-            title="View application logs"
-            aria-label="View application logs"
+            title="View error logs"
+            aria-label="View error logs"
           >
             <FileText className="h-4 w-4" />
-            Logs
+            Error Logs
           </Button>
 
           <div className="my-2" role="separator" aria-hidden />
