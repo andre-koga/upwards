@@ -58,7 +58,7 @@ export function ArchivedMemosDialog({
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Archived Memos"
+      title={`Archived Memos${archivedMemos.length > 0 ? ` (${archivedMemos.length})` : ""}`}
       size="default"
       contentClassName="w-96"
     >
