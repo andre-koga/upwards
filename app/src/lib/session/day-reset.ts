@@ -7,12 +7,12 @@ export function getDayResetMinutes(): number {
   const raw = localStorage.getItem(DAY_RESET_MINUTES_KEY);
   if (!raw) return 0;
   const n = parseInt(raw, 10);
-  return isNaN(n) || n < 0 || n > 330 ? 0 : n;
+  return isNaN(n) || n < 0 || n > 480 ? 0 : n;
 }
 
-/** Persists a new day-reset offset (0–330 minutes past midnight). */
+/** Persists a new day-reset offset (0–480 minutes past midnight). */
 export function setDayResetMinutes(minutes: number): void {
-  const clamped = Math.max(0, Math.min(330, Math.round(minutes)));
+  const clamped = Math.max(0, Math.min(480, Math.round(minutes)));
   localStorage.setItem(DAY_RESET_MINUTES_KEY, String(clamped));
 }
 
@@ -67,8 +67,8 @@ export function formatResetMinutes(minutes: number): string {
   return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-/** All valid reset options in half-hour increments from midnight to 5:30 AM. */
+/** All valid reset options in 1-hour increments from midnight to 8 AM. */
 export const DAY_RESET_OPTIONS: { minutes: number; label: string }[] = Array.from(
-  { length: 12 },
-  (_, i) => ({ minutes: i * 30, label: formatResetMinutes(i * 30) })
+  { length: 9 },
+  (_, i) => ({ minutes: i * 60, label: formatResetMinutes(i * 60) })
 );
