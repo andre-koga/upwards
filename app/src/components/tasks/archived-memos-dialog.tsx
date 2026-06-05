@@ -71,10 +71,10 @@ export function ArchivedMemosDialog({
           archivedMemos.map((memo) => (
             <div
               key={memo.id}
-              className="flex items-start justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
+              className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
             >
               <div className="min-w-0 flex-1">
-                <p className="font-medium break-words whitespace-pre-wrap text-xs">{memo.title}</p>
+                <p className="font-medium break-words whitespace-pre-wrap">{memo.title}</p>
                 {memo.due_date && (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Due {formatDateShort(fromDateString(memo.due_date))}
