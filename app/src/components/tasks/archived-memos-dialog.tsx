@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { db, now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
+import { RotateCcw, Trash2 } from "lucide-react";
 
 interface ArchivedMemosDialogProps {
   open: boolean;
@@ -61,7 +62,7 @@ export function ArchivedMemosDialog({
       size="default"
       contentClassName="w-96"
     >
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      <div className="space-y-1 max-h-96 overflow-y-auto">
         {archivedMemos.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground py-8">
             No archived memos
@@ -70,36 +71,40 @@ export function ArchivedMemosDialog({
           archivedMemos.map((memo) => (
             <div
               key={memo.id}
-              className="flex items-start justify-between gap-2 rounded-lg border border-border p-3 text-sm"
+              className="flex items-start justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
             >
               <div className="min-w-0 flex-1">
-                <p className="font-medium break-words whitespace-pre-wrap">{memo.title}</p>
+                <p className="font-medium break-words whitespace-pre-wrap text-xs">{memo.title}</p>
                 {memo.due_date && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Due {formatDateShort(fromDateString(memo.due_date))}
                   </p>
                 )}
               </div>
-              <div className="flex shrink-0 gap-1">
+              <div className="flex shrink-0 gap-0.5">
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={() => handleRestore(memo.id)}
                   disabled={restoringId === memo.id}
-                  className="text-xs"
+                  className="h-6 w-6"
+                  title="Restore memo"
+                  aria-label="Restore memo"
                 >
-                  Restore
+                  <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={() => handleDelete(memo.id)}
                   disabled={restoringId === memo.id}
-                  className="text-xs text-destructive hover:text-destructive"
+                  className="h-6 w-6 text-destructive hover:text-destructive"
+                  title="Delete memo"
+                  aria-label="Delete memo"
                 >
-                  Delete
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
