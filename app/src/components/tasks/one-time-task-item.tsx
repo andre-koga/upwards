@@ -198,7 +198,7 @@ function OneTimeTaskItem({
           tabIndex={isToday ? 0 : undefined}
         >
           <p
-            className={`min-w-0 flex-1 break-words px-3 py-2 text-left text-sm font-medium ${
+            className={`min-w-0 flex-1 break-words whitespace-pre-wrap px-3 py-2 text-left text-sm font-medium ${
               task.is_completed ? "text-muted-foreground line-through" : ""
             }`}
           >
