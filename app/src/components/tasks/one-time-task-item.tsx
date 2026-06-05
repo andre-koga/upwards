@@ -3,6 +3,7 @@ import type { OneTimeTask } from "@/lib/db/types";
 import { Pin } from "lucide-react";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
+import { ArchiveMemoDialog } from "@/components/tasks/archive-memo-dialog";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
 
@@ -37,6 +38,7 @@ interface OneTimeTaskItemProps {
     taskId: string,
     patch: Partial<Pick<OneTimeTask, "title" | "is_pinned" | "due_date">>
   ) => Promise<boolean>;
+  onArchive?: (taskId: string) => void;
 }
 
 function OneTimeTaskItem({
@@ -45,8 +47,10 @@ function OneTimeTaskItem({
   onToggle,
   onDelete,
   onUpdate,
+  onArchive,
 }: OneTimeTaskItemProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState(task.title);
   const [draftDueDate, setDraftDueDate] = useState<string | null>(
     task.due_date
@@ -59,6 +63,7 @@ function OneTimeTaskItem({
       setDraftTitle(task.title);
       setDraftDueDate(task.due_date);
       setDraftPinned(!!task.is_pinned);
+      setArchiveConfirmOpen(false);
     }
     setEditOpen(open);
   };
@@ -78,6 +83,16 @@ function OneTimeTaskItem({
   const handleDelete = () => {
     onDelete(task.id);
     setEditOpen(false);
+  };
+
+  const handleArchiveClick = () => {
+    setArchiveConfirmOpen(true);
+  };
+
+  const handleArchiveConfirm = () => {
+    setArchiveConfirmOpen(false);
+    setEditOpen(false);
+    onArchive?.(task.id);
   };
 
   const handleTogglePin = () => {
@@ -140,59 +155,61 @@ function OneTimeTaskItem({
     : null;
 
   return (
-    <div className="flex items-center gap-2">
-      <TaskCheckbox
-        isComplete={!!task.is_completed}
-        isToday={isToday}
-        onClick={() => onToggle(task)}
-        incompleteContent={
-          task.is_pinned ? (
-            <Pin className="h-3 w-3 fill-current" aria-hidden />
-          ) : undefined
-        }
-        title={
-          task.is_pinned
-            ? isToday
-              ? task.is_completed
-                ? "Pinned memo — mark incomplete"
-                : "Pinned memo — mark complete"
-              : "Pinned memo"
-            : undefined
-        }
-      />
+    <>
+      <div className="flex items-center gap-2">
+        <TaskCheckbox
+          isComplete={!!task.is_completed}
+          isToday={isToday}
+          onClick={() => onToggle(task)}
+          incompleteContent={
+            task.is_pinned ? (
+              <Pin className="h-3 w-3 fill-current" aria-hidden />
+            ) : undefined
+          }
+          title={
+            task.is_pinned
+              ? isToday
+                ? task.is_completed
+                  ? "Pinned memo — mark incomplete"
+                  : "Pinned memo — mark complete"
+                : "Pinned memo"
+              : undefined
+          }
+        />
 
-      <div
-        className="flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-xl border border-border"
-        onClick={isToday ? handleMemoClick : undefined}
-        onPointerDown={isToday ? handleMemoPointerDown : undefined}
-        onPointerUp={isToday ? handleMemoPointerUp : undefined}
-        onPointerLeave={isToday ? handleMemoPointerCancel : undefined}
-        onPointerCancel={isToday ? handleMemoPointerCancel : undefined}
-        onKeyDown={
-          isToday
-            ? (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setEditOpen(true);
+        <div
+          className="flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-xl border border-border"
+          onClick={isToday ? handleMemoClick : undefined}
+          onPointerDown={isToday ? handleMemoPointerDown : undefined}
+          onPointerUp={isToday ? handleMemoPointerUp : undefined}
+          onPointerLeave={isToday ? handleMemoPointerCancel : undefined}
+          onPointerCancel={isToday ? handleMemoPointerCancel : undefined}
+          onKeyDown={
+            isToday
+              ? (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setEditOpen(true);
+                  }
                 }
-              }
-            : undefined
-        }
-        role={isToday ? "button" : undefined}
-        tabIndex={isToday ? 0 : undefined}
-      >
-        <p
-          className={`min-w-0 flex-1 break-words px-3 py-2 text-left text-sm font-medium ${
-            task.is_completed ? "text-muted-foreground line-through" : ""
-          }`}
+              : undefined
+          }
+          role={isToday ? "button" : undefined}
+          tabIndex={isToday ? 0 : undefined}
         >
-          {task.title}
-        </p>
-        {dueDateDisplay ? (
-          <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
-            <span>Due {dueDateDisplay}</span>
-          </div>
-        ) : null}
+          <p
+            className={`min-w-0 flex-1 break-words whitespace-pre-wrap px-3 py-2 text-left text-sm font-medium ${
+              task.is_completed ? "text-muted-foreground line-through" : ""
+            }`}
+          >
+            {task.title}
+          </p>
+          {dueDateDisplay ? (
+            <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
+              <span>Due {dueDateDisplay}</span>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <MemoEditDialog
@@ -206,10 +223,19 @@ function OneTimeTaskItem({
         onPinnedChange={setDraftPinned}
         onConfirm={handleSave}
         onDelete={handleDelete}
+        onArchive={handleArchiveClick}
         confirmLabel="Save"
         confirmDisabled={saving || !draftTitle.trim()}
       />
-    </div>
+
+      <ArchiveMemoDialog
+        open={editOpen && archiveConfirmOpen}
+        memoId={task.id}
+        memoTitle={task.title}
+        onOpenChange={setArchiveConfirmOpen}
+        onArchived={handleArchiveConfirm}
+      />
+    </>
   );
 }
 

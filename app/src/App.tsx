@@ -8,6 +8,7 @@ import ResetPasswordPage from "@/pages/reset-password";
 import TaskOrderPage from "@/pages/task-order";
 import WhatsNewPage from "@/pages/whats-new";
 import FriendsPage from "@/pages/friends";
+import LogsPage from "@/pages/logs";
 import { NotificationsFloatingButton } from "@/components/notifications/notifications-floating-button";
 import { NotificationsProvider } from "@/lib/notifications/use-notifications";
 import SyncStatus from "@/components/settings/sync-status";
@@ -80,6 +81,7 @@ export default function App() {
                 <Route path="/settings/task-order" element={<TaskOrderPage />} />
                 <Route path="/whats-new" element={<WhatsNewPage />} />
                 <Route path="/friends" element={<FriendsPage />} />
+                <Route path="/logs" element={<LogsPage />} />
                 <Route path="/notifications" element={<Navigate to="/" replace />} />
                 {/* Legacy promise routes → home */}
                 <Route path="/promises/:id" element={<Navigate to="/" replace />} />

@@ -18,6 +18,7 @@ function sortMemos(tasks: OneTimeTask[]): OneTimeTask[] {
 
 export function useOneTimeTasks(dateString: string) {
   const [oneTimeTasks, setOneTimeTasks] = useState<OneTimeTask[]>([]);
+  const [archivedMemos, setArchivedMemos] = useState<OneTimeTask[]>([]);
 
   const loadOneTimeTasks = useCallback(async () => {
     try {
@@ -26,12 +27,12 @@ export function useOneTimeTasks(dateString: string) {
       if (dateString === today) {
         const [incompleteTasks, completedTodayTasks] = await Promise.all([
           db.oneTimeTasks
-            .filter((task) => !task.deleted_at && !task.is_completed)
+            .filter((task) => !task.deleted_at && !task.is_completed && !task.is_archived)
             .toArray(),
           db.oneTimeTasks
             .where("date")
             .equals(today)
-            .filter((task) => !task.deleted_at && !!task.is_completed)
+            .filter((task) => !task.deleted_at && !!task.is_completed && !task.is_archived)
             .toArray(),
         ]);
 
@@ -43,7 +44,7 @@ export function useOneTimeTasks(dateString: string) {
       const rawTasks = await db.oneTimeTasks
         .where("date")
         .equals(dateString)
-        .filter((task) => !task.deleted_at && !!task.is_completed)
+        .filter((task) => !task.deleted_at && !!task.is_completed && !task.is_archived)
         .toArray();
       const tasks = sortMemos(rawTasks);
       setOneTimeTasks(tasks);
@@ -51,6 +52,17 @@ export function useOneTimeTasks(dateString: string) {
       console.error("Error loading one-time tasks:", error);
     }
   }, [dateString]);
+
+  const loadArchivedMemos = useCallback(async () => {
+    try {
+      const archived = await db.oneTimeTasks
+        .filter((task) => !task.deleted_at && !!task.is_archived)
+        .toArray();
+      setArchivedMemos(sortMemos(archived));
+    } catch (error) {
+      console.error("Error loading archived memos:", error);
+    }
+  }, []);
 
   const createOneTimeTask = useCallback(
     async (
@@ -73,6 +85,7 @@ export function useOneTimeTasks(dateString: string) {
           is_pinned: options?.is_pinned ?? false,
           due_date: options?.due_date ?? null,
           group_id: null,
+          is_archived: false,
           created_at: n,
           updated_at: n,
           synced_at: null,
@@ -111,6 +124,7 @@ export function useOneTimeTasks(dateString: string) {
   const deleteOneTimeTask = useCallback(async (taskId: string) => {
     const n = now();
     setOneTimeTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setArchivedMemos((prev) => prev.filter((t) => t.id !== taskId));
     // Soft delete so the next push can sync deletion to Supabase; a hard delete
     // leaves the row on the server and full pull brings it back.
     await db.oneTimeTasks.update(taskId, { deleted_at: n, updated_at: n });
@@ -152,7 +166,9 @@ export function useOneTimeTasks(dateString: string) {
 
   return {
     oneTimeTasks,
+    archivedMemos,
     loadOneTimeTasks,
+    loadArchivedMemos,
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,

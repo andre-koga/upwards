@@ -8,7 +8,8 @@ import AssignActivityDialog from "./assign-activity-dialog";
 import FooterActionsBar from "./footer-actions-bar";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import ManualTimeEntryDialog from "./manual-time-entry-dialog";
-import { Palmtree, RefreshCw } from "lucide-react";
+import { ArchivedMemosDialog } from "./archived-memos-dialog";
+import { Palmtree, RefreshCw, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
@@ -58,6 +59,7 @@ export default function DailyTasksList({
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
     string | null
   >(null);
+  const [archivedMemosDialogOpen, setArchivedMemosDialogOpen] = useState(false);
 
   const {
     isToday,
@@ -74,10 +76,13 @@ export default function DailyTasksList({
     pausedTaskIds,
     isBreakDay,
     oneTimeTasks,
+    archivedMemos,
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
     updateOneTimeTask,
+    loadOneTimeTasks,
+    loadArchivedMemos,
     incrementTask,
     incrementNeverSlip,
     resetNeverTaskCount,
@@ -139,9 +144,25 @@ export default function DailyTasksList({
     <div className="flex flex-col">
       {oneTimeTasks.length > 0 && (
         <div className="mb-4 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Memos
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Memos
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="smIcon"
+              onClick={() => {
+                void loadArchivedMemos();
+                setArchivedMemosDialogOpen(true);
+              }}
+              className="h-4 min-h-4 w-4 min-w-4 shrink-0 bg-transparent p-0 text-muted-foreground/50 shadow-none hover:bg-transparent hover:text-muted-foreground/45 focus-visible:ring-1 [&_svg]:size-3"
+              aria-label="View archived memos"
+              title="View archived memos"
+            >
+              <Archive />
+            </Button>
+          </div>
           {oneTimeTasks.map((task) => (
             <OneTimeTaskItem
               key={task.id}
@@ -150,6 +171,10 @@ export default function DailyTasksList({
               onToggle={toggleOneTimeTask}
               onDelete={deleteOneTimeTask}
               onUpdate={updateOneTimeTask}
+              onArchive={() => {
+                void loadOneTimeTasks();
+                void loadArchivedMemos();
+              }}
             />
           ))}
         </div>
@@ -352,6 +377,15 @@ export default function DailyTasksList({
           }
         }}
         onSave={addManualActivityPeriod}
+      />
+
+      <ArchivedMemosDialog
+        open={archivedMemosDialogOpen}
+        onOpenChange={setArchivedMemosDialogOpen}
+        archivedMemos={archivedMemos}
+        onMemoRestored={() => {
+          void loadArchivedMemos();
+        }}
       />
     </div>
   );

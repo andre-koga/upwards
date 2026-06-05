@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ConfettiBurst } from "@/components/ui/confetti-burst";
 import { cn } from "@/lib/utils";
 import { getDailyRecap, type DailyRecapData } from "@/lib/recap/get-daily-recap";
 import { shareDailyRecap } from "@/lib/social/share-daily-recap";
@@ -83,8 +84,16 @@ export function DailyRecapDialog({
         ? "First check-in today"
         : null;
 
+  const showConfetti =
+    open &&
+    !loading &&
+    recap != null &&
+    !recap.isBreakDay &&
+    recap.completionRate === 100;
+
   return (
     <>
+      <ConfettiBurst active={showConfetti} />
       <Dialog
         open={open}
         onOpenChange={(next) => {

@@ -10,6 +10,7 @@ import {
   Settings,
   Sparkles,
   Users,
+  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Activity } from "@/lib/db/types";
@@ -153,6 +154,23 @@ export default function FooterActionsBar({
               Feedback / requests
             </Button>
           </div>
+
+          <div className="my-2" role="separator" aria-hidden />
+
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 w-full justify-start rounded-xl"
+            onClick={() => {
+              setPathsDrawerOpen(false);
+              navigate("/logs");
+            }}
+            title="View error logs"
+            aria-label="View error logs"
+          >
+            <FileText className="h-4 w-4" />
+            Error Logs
+          </Button>
 
           <div className="my-2" role="separator" aria-hidden />
 

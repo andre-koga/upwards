@@ -98,6 +98,7 @@ export interface OneTimeTask {
   due_date: string | null; // YYYY-MM-DD, when memo is due
   /** Legacy column; kept for sync shape. Always null — memos are not tied to projects. */
   group_id: string | null;
+  is_archived: boolean | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;
@@ -169,5 +170,14 @@ export interface FriendRequest {
 export interface Friendship {
   user_a: string;
   user_b: string;
+  created_at: string;
+}
+
+/** Application log entry for errors and important events. */
+export interface AppLog {
+  id: string;
+  level: "error" | "success" | "info" | "warning";
+  context: string;
+  message: string;
   created_at: string;
 }
