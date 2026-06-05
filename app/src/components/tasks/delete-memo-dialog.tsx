@@ -44,11 +44,11 @@ export function DeleteMemoDialog({
       <FormDialogActions
         onConfirm={handleDelete}
         confirmLabel={confirmLabel}
+        confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
         secondaryAction={{
           label: cancelLabel,
           onClick: () => onOpenChange(false),
         }}
-        destructive
       />
     </FormDialog>
   );
