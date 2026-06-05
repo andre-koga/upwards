@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { db, now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { Undo2, Trash2 } from "lucide-react";
 
 interface ArchivedMemosDialogProps {
   open: boolean;
@@ -92,7 +92,7 @@ export function ArchivedMemosDialog({
                   title="Restore memo"
                   aria-label="Restore memo"
                 >
-                  <RotateCcw className="h-3.5 w-3.5" />
+                  <Undo2 className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   type="button"
