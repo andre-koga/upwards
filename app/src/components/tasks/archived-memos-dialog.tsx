@@ -63,7 +63,7 @@ export function ArchivedMemosDialog({
     >
       <div className="space-y-2 max-h-96 overflow-y-auto">
         {archivedMemos.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-4">
+          <p className="text-center text-sm text-muted-foreground py-8">
             No archived memos
           </p>
         ) : (

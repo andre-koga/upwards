@@ -148,22 +148,20 @@ export default function DailyTasksList({
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Memos
             </p>
-            {archivedMemos.length > 0 && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="smIcon"
-                onClick={() => {
-                  void loadArchivedMemos();
-                  setArchivedMemosDialogOpen(true);
-                }}
-                className="h-4 min-h-4 w-4 min-w-4 shrink-0 bg-transparent p-0 text-muted-foreground/50 shadow-none hover:bg-transparent hover:text-muted-foreground/45 focus-visible:ring-1 [&_svg]:size-3"
-                aria-label="View archived memos"
-                title="View archived memos"
-              >
-                <Archive />
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="smIcon"
+              onClick={() => {
+                void loadArchivedMemos();
+                setArchivedMemosDialogOpen(true);
+              }}
+              className="h-4 min-h-4 w-4 min-w-4 shrink-0 bg-transparent p-0 text-muted-foreground/50 shadow-none hover:bg-transparent hover:text-muted-foreground/45 focus-visible:ring-1 [&_svg]:size-3"
+              aria-label="View archived memos"
+              title="View archived memos"
+            >
+              <Archive />
+            </Button>
           </div>
           {oneTimeTasks.map((task) => (
             <OneTimeTaskItem
