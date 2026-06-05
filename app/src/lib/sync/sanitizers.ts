@@ -87,6 +87,7 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "is_pinned",
     "due_date",
     "group_id",
+    "is_archived",
     "created_at",
     "updated_at",
     "deleted_at",
