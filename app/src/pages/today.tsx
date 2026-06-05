@@ -22,7 +22,9 @@ export default function TodayPage() {
   const SWIPE_FEEDBACK_START_PX = 12;
   const SWIPE_FEEDBACK_DIRECTION_RATIO = 1.1;
 
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(
+    () => new Date(`${getEffectiveToday()}T12:00:00`)
+  );
   const [quote] = useState(pickRandomHabitQuote);
   const [swipeFeedback, setSwipeFeedback] = useState<{
     direction: "prev" | "next";

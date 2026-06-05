@@ -8,7 +8,8 @@ import {
   FormTextareaField,
   FormToggleButton,
 } from "@/components/forms";
-import { Pin } from "lucide-react";
+import { Pin, Archive } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { MEMO_TITLE_LIMIT } from "@/components/tasks/memo-title";
 
 interface MemoEditDialogProps {
@@ -23,6 +24,7 @@ interface MemoEditDialogProps {
   onPinnedChange: (value: boolean) => void;
   onConfirm: () => void;
   onDelete?: () => void;
+  onArchive?: () => void;
   confirmLabel?: string;
   confirmDisabled?: boolean;
 }
@@ -39,6 +41,7 @@ export function MemoEditDialog({
   onPinnedChange,
   onConfirm,
   onDelete,
+  onArchive,
   confirmLabel = "Save",
   confirmDisabled = false,
 }: MemoEditDialogProps) {
@@ -58,6 +61,21 @@ export function MemoEditDialog({
       onOpenChange={onOpenChange}
       title={dialogTitle}
       contentClassName="w-80"
+      headerEnd={
+        onArchive ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
+            onClick={onArchive}
+            title="Archive memo"
+            aria-label="Archive memo"
+          >
+            <Archive className="h-4 w-4" aria-hidden />
+          </Button>
+        ) : undefined
+      }
     >
       <FormStack className="space-y-2">
         <FormTextareaField

@@ -122,7 +122,9 @@ export function useDailyTasks({
 
   const {
     oneTimeTasks,
+    archivedMemos,
     loadOneTimeTasks,
+    loadArchivedMemos,
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
@@ -530,10 +532,12 @@ export function useDailyTasks({
     pausedTaskIds,
     isBreakDay,
     oneTimeTasks,
+    archivedMemos,
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
     updateOneTimeTask,
+    loadArchivedMemos,
     incrementTask: incrementTaskWithProgress,
     incrementNeverSlip,
     resetNeverTaskCount,

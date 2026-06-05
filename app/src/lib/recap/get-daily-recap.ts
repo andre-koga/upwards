@@ -1,5 +1,12 @@
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup, DailyEntry } from "@/lib/db/types";
+import {
+  shouldShowActivity,
+  buildActivityEventsByEntityId,
+  buildGroupEventsByEntityId,
+  loadAllActivityStatusEvents,
+  loadAllGroupStatusEvents,
+} from "@/lib/activity";
 import { fromDateString } from "@/lib/time-utils";
 
 export interface RecapCompletedItem {
@@ -57,7 +64,7 @@ function isActivityMissed(
 
 /**
  * Build a recap summary for a given date using data already cached in IndexedDB.
- * Only uses locally cached streak rows — does not trigger a recompute.
+ * Only includes habits that would have appeared in For Today on that date.
  */
 export async function getDailyRecap(
   date: string,
@@ -65,27 +72,37 @@ export async function getDailyRecap(
 ): Promise<DailyRecapData> {
   const dateObj = fromDateString(date);
 
-  const [entry, allActivities, allGroups, allStreakRows] = await Promise.all([
+  const [
+    entry,
+    allActivities,
+    allGroups,
+    allStreakRows,
+    activityStatusEvents,
+    groupStatusEvents,
+  ] = await Promise.all([
     db.dailyEntries
       .where("date")
       .equals(date)
       .filter((e) => !e.deleted_at)
       .first(),
-    db.activities
-      .filter((a) => !a.deleted_at)
-      .toArray(),
-    db.activityGroups
-      .filter((g) => !g.deleted_at)
-      .toArray(),
+    db.activities.toArray(),
+    db.activityGroups.toArray(),
     db.activityStreaks
       .where("date")
       .equals(date)
       .filter((r) => !r.deleted_at)
       .toArray(),
+    loadAllActivityStatusEvents(),
+    loadAllGroupStatusEvents(),
   ]);
 
   const groupById = new Map(allGroups.map((g) => [g.id, g]));
   const streakByActivityId = new Map(allStreakRows.map((r) => [r.activity_id, r.streak]));
+  const temporal = {
+    viewDate: dateObj,
+    activityEventsById: buildActivityEventsByEntityId(activityStatusEvents),
+    groupEventsById: buildGroupEventsByEntityId(groupStatusEvents),
+  };
 
   const isBreakDay = entry?.is_break_day ?? false;
 
@@ -103,25 +120,17 @@ export async function getDailyRecap(
       }
     }
     totalTrackedMs = Math.max(0, totalTrackedMs);
-}
+  }
 
-  // Determine which activities were active (scheduled) on this date.
-  // We use a simple date-based filter: activity must not be deleted and must
-  // have been created on or before this date. For full routine-aware filtering
-  // we would need the status events; we approximate by checking created_at vs date.
-  const dayMs = dateObj.getTime();
-  const activeActivities = allActivities.filter((a) => {
-    if (!a.created_at) return false;
-    return new Date(a.created_at).getTime() <= dayMs + 86400000;
+  const forTodayActivities = allActivities.filter((activity) => {
+    const group = groupById.get(activity.group_id);
+    return shouldShowActivity(activity, dateObj, group, temporal);
   });
 
   const completed: RecapCompletedItem[] = [];
   const missed: RecapMissedItem[] = [];
 
-  for (const activity of activeActivities) {
-    // Skip "anytime" — no daily schedule, never appears in recap
-    if (activity.routine === "anytime") continue;
-
+  for (const activity of forTodayActivities) {
     const group = groupById.get(activity.group_id);
     const streak = streakByActivityId.get(activity.id) ?? 0;
 
@@ -132,9 +141,17 @@ export async function getDailyRecap(
     }
   }
 
-  const totalScheduled = completed.length + missed.length;
+  const pausedIds = Array.isArray(entry?.paused_task_ids) ? entry.paused_task_ids : [];
+  const rateActivities = forTodayActivities.filter(
+    (activity) => activity.routine !== "never" && !pausedIds.includes(activity.id)
+  );
+  const completedForRate = rateActivities.filter((activity) =>
+    isActivityCompleted(activity, entry)
+  ).length;
   const completionRate =
-    totalScheduled === 0 ? 0 : Math.round((completed.length / totalScheduled) * 100);
+    rateActivities.length === 0
+      ? 0
+      : Math.round((completedForRate / rateActivities.length) * 100);
 
   return {
     date,

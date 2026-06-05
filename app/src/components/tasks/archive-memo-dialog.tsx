@@ -1,0 +1,58 @@
+import { FormDialog, FormDialogActions } from "@/components/forms";
+import { db, now } from "@/lib/db";
+import { logError } from "@/lib/error-utils";
+
+interface ArchiveMemoDialogProps {
+  open: boolean;
+  memoId: string | null;
+  memoTitle: string | null;
+  onOpenChange: (open: boolean) => void;
+  onArchived: () => void;
+  cancelLabel?: string;
+  confirmLabel?: string;
+}
+
+export function ArchiveMemoDialog({
+  open,
+  memoId,
+  memoTitle,
+  onOpenChange,
+  onArchived,
+  cancelLabel = "Cancel",
+  confirmLabel = "Archive",
+}: ArchiveMemoDialogProps) {
+  const handleArchive = async () => {
+    if (!memoId) return;
+    try {
+      const n = now();
+      await db.oneTimeTasks.update(memoId, {
+        is_archived: true,
+        updated_at: n,
+      });
+      onOpenChange(false);
+      onArchived();
+    } catch (error) {
+      logError("Error archiving memo", error);
+    }
+  };
+
+  const displayTitle = memoTitle?.trim() || "this memo";
+
+  return (
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Archive memo?"
+      description={`Archive "${displayTitle}"? You can restore it from the archived memos list.`}
+    >
+      <FormDialogActions
+        onConfirm={handleArchive}
+        confirmLabel={confirmLabel}
+        secondaryAction={{
+          label: cancelLabel,
+          onClick: () => onOpenChange(false),
+        }}
+      />
+    </FormDialog>
+  );
+}
