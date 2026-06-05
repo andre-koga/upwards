@@ -10,6 +10,22 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-06-05",
+    title: "Archive memos and error logs",
+    bullets: [
+      "Archive memos you want to hide without deleting them — click the archive icon next to the Memos title to view and restore archived memos.",
+      "Restore or permanently delete archived memos from a compact dialog.",
+      "Error logs page shows all errors and important events from the last 24 hours, automatically cleaned up daily.",
+      "Access Error Logs from the More menu to share logs with support when troubleshooting.",
+      "Day reset time now uses 1-hour increments from midnight to 8 AM for simpler configuration.",
+      "Memo text now properly displays line breaks, matching what you see in the edit dialog.",
+    ],
+    fixes: [
+      "Archived memos now persist correctly after sync.",
+      "Day reset dropdown styling now matches the appearance section for consistency.",
+    ],
+  },
+  {
     date: "2026-06-04",
     title: "Overnight sessions & smarter timeline",
     bullets: [
