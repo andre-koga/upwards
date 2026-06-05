@@ -1,12 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useLayoutEffect } from "react";
 import type { AppLog } from "@/lib/db/types";
 import { db } from "@/lib/db";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
 import { AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
+import { FloatingBackButton } from "@/components/ui/floating-back-button";
+
+function scrollAppToTop() {
+  window.scrollTo(0, 0);
+  document.querySelector<HTMLElement>("[data-app-scroll]")?.scrollTo(0, 0);
+}
 
 export default function LogsPage() {
   const [logs, setLogs] = useState<AppLog[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useLayoutEffect(() => {
+    scrollAppToTop();
+  }, []);
 
   useEffect(() => {
     const loadLogs = async () => {
@@ -57,55 +67,51 @@ export default function LogsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center justify-between gap-4 px-4 py-4">
-          <div>
-            <h1 className="text-2xl font-bold">Logs</h1>
-            <p className="text-sm text-muted-foreground">
-              {logs.length} {logs.length === 1 ? "entry" : "entries"}
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-6 p-4 pb-24">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Logs</h1>
+        <p className="text-sm text-muted-foreground">
+          {logs.length} {logs.length === 1 ? "entry" : "entries"}
+        </p>
+      </header>
 
-      <div className="flex-1 overflow-auto">
-        {loading ? (
-          <div className="flex items-center justify-center p-8">
-            <p className="text-muted-foreground">Loading logs...</p>
-          </div>
-        ) : logs.length === 0 ? (
-          <div className="flex items-center justify-center p-8">
-            <p className="text-muted-foreground">No logs yet</p>
-          </div>
-        ) : (
-          <div className="space-y-2 p-4">
-            {logs.map((log) => (
-              <div
-                key={log.id}
-                className="flex gap-3 rounded-lg border border-border bg-card p-3 text-sm"
-              >
-                <div className="mt-0.5 shrink-0">{getIcon(log.level)}</div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground">
-                        {log.context}
-                      </p>
-                      <p className="break-words text-xs text-muted-foreground">
-                        {log.message}
-                      </p>
-                    </div>
+      {loading ? (
+        <div className="flex items-center justify-center p-8">
+          <p className="text-muted-foreground">Loading logs...</p>
+        </div>
+      ) : logs.length === 0 ? (
+        <div className="flex items-center justify-center p-8">
+          <p className="text-muted-foreground">No logs yet</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {logs.map((log) => (
+            <div
+              key={log.id}
+              className="flex gap-3 rounded-lg border border-border bg-card p-3 text-sm"
+            >
+              <div className="mt-0.5 shrink-0">{getIcon(log.level)}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground">
+                      {log.context}
+                    </p>
+                    <p className="break-words text-xs text-muted-foreground">
+                      {log.message}
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground/70">
-                    {getTimestamp(log.created_at)}
-                  </p>
                 </div>
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  {getTimestamp(log.created_at)}
+                </p>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <FloatingBackButton to="/" title="Home" />
     </div>
   );
 }
