@@ -4,6 +4,7 @@ import { Pin } from "lucide-react";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { ArchiveMemoDialog } from "@/components/tasks/archive-memo-dialog";
+import { DeleteMemoDialog } from "@/components/tasks/delete-memo-dialog";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
 
@@ -51,6 +52,7 @@ function OneTimeTaskItem({
 }: OneTimeTaskItemProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState(task.title);
   const [draftDueDate, setDraftDueDate] = useState<string | null>(
     task.due_date
@@ -81,8 +83,13 @@ function OneTimeTaskItem({
   };
 
   const handleDelete = () => {
-    onDelete(task.id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setDeleteConfirmOpen(false);
     setEditOpen(false);
+    onDelete(task.id);
   };
 
   const handleArchiveClick = () => {
@@ -234,6 +241,14 @@ function OneTimeTaskItem({
         memoTitle={task.title}
         onOpenChange={setArchiveConfirmOpen}
         onArchived={handleArchiveConfirm}
+      />
+
+      <DeleteMemoDialog
+        open={deleteConfirmOpen}
+        memoId={task.id}
+        memoTitle={task.title}
+        onOpenChange={setDeleteConfirmOpen}
+        onDeleted={handleDeleteConfirm}
       />
     </>
   );
