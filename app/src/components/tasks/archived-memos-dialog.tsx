@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { OneTimeTask } from "@/lib/db/types";
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,15 @@ interface ArchivedMemosDialogProps {
 export function ArchivedMemosDialog({
   open,
   onOpenChange,
-  archivedMemos,
+  archivedMemos: initialArchivedMemos,
   onMemoRestored,
 }: ArchivedMemosDialogProps) {
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [archivedMemos, setArchivedMemos] = useState(initialArchivedMemos);
+
+  useEffect(() => {
+    setArchivedMemos(initialArchivedMemos);
+  }, [initialArchivedMemos]);
 
   const handleRestore = async (memoId: string) => {
     setRestoringId(memoId);
@@ -29,6 +34,7 @@ export function ArchivedMemosDialog({
         is_archived: false,
         updated_at: n,
       });
+      setArchivedMemos((prev) => prev.filter((m) => m.id !== memoId));
       onMemoRestored?.();
     } catch (error) {
       logError("Error restoring memo", error);
@@ -40,6 +46,7 @@ export function ArchivedMemosDialog({
   const handleDelete = async (memoId: string) => {
     try {
       await db.oneTimeTasks.delete(memoId);
+      setArchivedMemos((prev) => prev.filter((m) => m.id !== memoId));
       onMemoRestored?.();
     } catch (error) {
       logError("Error deleting memo", error);
@@ -66,7 +73,7 @@ export function ArchivedMemosDialog({
               className="flex items-start justify-between gap-2 rounded-lg border border-border p-3 text-sm"
             >
               <div className="min-w-0 flex-1">
-                <p className="font-medium break-words">{memo.title}</p>
+                <p className="font-medium break-words whitespace-pre-wrap">{memo.title}</p>
                 {memo.due_date && (
                   <p className="text-xs text-muted-foreground mt-1">
                     Due {formatDateShort(fromDateString(memo.due_date))}
