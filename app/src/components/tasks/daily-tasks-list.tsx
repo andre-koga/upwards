@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
@@ -60,6 +60,9 @@ export default function DailyTasksList({
     string | null
   >(null);
   const [archivedMemosDialogOpen, setArchivedMemosDialogOpen] = useState(false);
+  const [activityToStartOnToday, setActivityToStartOnToday] = useState<
+    string | null
+  >(null);
 
   const {
     isToday,
@@ -99,6 +102,14 @@ export default function DailyTasksList({
     recalculateStreaksFromViewedDate,
     recalculateStreaksBusy,
   } = daily;
+
+  // When we navigate to today and have an activity to start, start it
+  useEffect(() => {
+    if (isToday && activityToStartOnToday) {
+      handleStartActivity(activityToStartOnToday);
+      setActivityToStartOnToday(null);
+    }
+  }, [isToday, activityToStartOnToday, handleStartActivity]);
   const pausedTaskIdSet = new Set(pausedTaskIds);
   const manualEntryActivity = manualEntryActivityId
     ? (activities.find((item) => item.id === manualEntryActivityId) ?? null)
@@ -138,6 +149,17 @@ export default function DailyTasksList({
 
   const handleAssignSuccess = () => {
     void loadActivityPeriods();
+  };
+
+  const handleStartActivityFromPastDay = (activityId: string) => {
+    if (isToday) {
+      handleStartActivity(activityId);
+    } else {
+      // Set the activity to start and navigate to today
+      setActivityToStartOnToday(activityId);
+      const today = new Date();
+      onDateChange(today);
+    }
   };
 
   return (
@@ -313,7 +335,7 @@ export default function DailyTasksList({
                         })
                 }
                 onStartActivity={
-                  isToday && !isUnknown ? handleStartActivity : undefined
+                  !isUnknown ? handleStartActivityFromPastDay : undefined
                 }
               />
             );

@@ -2,12 +2,12 @@ import { toDateString } from "@/lib/time-utils";
 
 const DAY_RESET_MINUTES_KEY = "okhabit:day_reset_minutes";
 
-/** Returns the configured day-reset offset in minutes past midnight (default 0 = midnight). */
+/** Returns the configured day-reset offset in minutes past midnight (default 240 = 4 AM). */
 export function getDayResetMinutes(): number {
   const raw = localStorage.getItem(DAY_RESET_MINUTES_KEY);
-  if (!raw) return 0;
+  if (!raw) return 240;
   const n = parseInt(raw, 10);
-  return isNaN(n) || n < 0 || n > 480 ? 0 : n;
+  return isNaN(n) || n < 0 || n > 480 ? 240 : n;
 }
 
 /** Persists a new day-reset offset (0–480 minutes past midnight). */

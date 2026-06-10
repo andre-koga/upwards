@@ -32,7 +32,7 @@ export function DayResetCard() {
     <SettingsSection
       title="Day reset time"
       icon={Clock}
-      description="Choose when your day resets. Useful if you stay up late and want habits to roll over after you sleep."
+      description="Choose a time when you're definitely asleep—before you wake up. Your day will reset at this time."
     >
       <div className="space-y-3">
         <div className="space-y-1">
@@ -74,7 +74,7 @@ export function DayResetCard() {
         </div>
         {selected > 0 && selectedLabel && (
           <p className="text-xs text-muted-foreground">
-            The day flips at {selectedLabel}. Activities started before then count toward the previous day.
+            Your day resets at {selectedLabel}. Pick a time you're always asleep—activities started before then count toward the previous day.
           </p>
         )}
       </div>

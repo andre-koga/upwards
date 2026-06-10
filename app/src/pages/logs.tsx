@@ -10,6 +10,52 @@ function scrollAppToTop() {
   document.querySelector<HTMLElement>("[data-app-scroll]")?.scrollTo(0, 0);
 }
 
+interface LogItemProps {
+  log: AppLog;
+  getIcon: (level: AppLog["level"]) => React.ReactNode;
+  getTimestamp: (isoTime: string) => string;
+}
+
+function LogItem({ log, getIcon, getTimestamp }: LogItemProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleClick = () => {
+    const logText = `${log.context}: ${log.message}`;
+    navigator.clipboard.writeText(logText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      className="flex gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm cursor-pointer hover:bg-muted/50 transition-colors relative"
+    >
+      <div className="mt-0.5 shrink-0">{getIcon(log.level)}</div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-foreground text-xs">
+              {log.context}
+            </p>
+            <p className="break-words text-xs text-muted-foreground">
+              {log.message}
+            </p>
+          </div>
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground/70">
+          {getTimestamp(log.created_at)}
+        </p>
+      </div>
+      {copied && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 text-xs font-medium text-white pointer-events-none">
+          Copied!
+        </div>
+      )}
+    </div>
+  );
+}
+
 async function deleteOldLogs() {
   try {
     const oneDayAgoMs = Date.now() - 24 * 60 * 60 * 1000;
@@ -107,27 +153,7 @@ export default function ErrorLogsPage() {
       ) : (
         <div className="space-y-2">
           {logs.map((log) => (
-            <div
-              key={log.id}
-              className="flex gap-3 rounded-lg border border-border bg-card p-3 text-sm"
-            >
-              <div className="mt-0.5 shrink-0">{getIcon(log.level)}</div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-foreground">
-                      {log.context}
-                    </p>
-                    <p className="break-words text-xs text-muted-foreground">
-                      {log.message}
-                    </p>
-                  </div>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground/70">
-                  {getTimestamp(log.created_at)}
-                </p>
-              </div>
-            </div>
+            <LogItem key={log.id} log={log} getIcon={getIcon} getTimestamp={getTimestamp} />
           ))}
         </div>
       )}
