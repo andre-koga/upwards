@@ -116,7 +116,7 @@ export default function SessionDetailsDialog({
           )}
           {spansOvernight && (
             <p className="text-sm text-amber-600 dark:text-amber-400">
-              This session crosses your {formatResetTime(resetMinutes)} day boundary and will count across two days.
+              This session crosses your {formatResetMinutes(resetMinutes)} day boundary and will count across two days.
             </p>
           )}
           {error && <p className="text-sm text-destructive">{error}</p>}
