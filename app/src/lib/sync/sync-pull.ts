@@ -1,53 +1,46 @@
 import { db } from "@/lib/db";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { saveLastSyncAt } from "./sync-storage";
+import { saveLastServerSyncAt } from "./sync-storage";
 import {
   type SyncTable,
   normalizeSyncRow,
   parseTimestamp,
 } from "./sync-transformers";
-import {
-  EPOCH,
-  FULL_PULL_TABLES,
-  PULL_BUFFER_MS,
-  SYNC_TABLES,
-  TABLE_MAP,
-} from "./sync-constants";
+import { EPOCH, SYNC_TABLES, TABLE_MAP } from "./sync-constants";
 
 export interface PullContext {
   supabase: SupabaseClient;
   userId: string;
-  lastSyncAt: string | null;
+  /** Server-side timestamp from the previous pull (not client time). Null on first pull. */
+  lastServerSyncAt: string | null;
   dirtyIdsByTable: Map<SyncTable, Set<string>>;
   withSuppressedMutationSignals: <T>(operation: () => Promise<T>) => Promise<T>;
   setApplyRemoteFromPull: (value: boolean) => void;
 }
 
-/** @returns ISO timestamp written to storage (for UI `lastSyncAt`). */
+/** @returns The server `now()` captured at the start of this pull (saved as next cutoff). */
 export async function runPull(ctx: PullContext): Promise<string> {
-  const { supabase: client, userId, lastSyncAt, dirtyIdsByTable } = ctx;
-  const fullSince = EPOCH;
+  const { supabase: client, userId, lastServerSyncAt, dirtyIdsByTable } = ctx;
+
+  // Capture server time BEFORE querying so any row written during this pull
+  // will have server_updated_at >= serverNow and will be caught next cycle.
+  const { data: nowData, error: nowError } = await client.rpc("now");
+  if (nowError || !nowData) {
+    throw new Error(`Failed to fetch server time: ${nowError?.message ?? "no data"}`);
+  }
+  const serverNow: string = nowData;
+
+  const since = lastServerSyncAt ?? EPOCH;
 
   await ctx.withSuppressedMutationSignals(async () => {
     for (const table of SYNC_TABLES) {
       const dexieTable = TABLE_MAP[table];
-      const shouldFullPull = FULL_PULL_TABLES.includes(table);
-      const since = shouldFullPull
-        ? fullSince
-        : (() => {
-            if (!lastSyncAt) return fullSince;
-            const sinceMs = Math.max(
-              0,
-              parseTimestamp(lastSyncAt) - PULL_BUFFER_MS
-            );
-            return new Date(sinceMs).toISOString();
-          })();
 
-      const query = client.from(table).select("*").eq("user_id", userId);
-
-      const { data, error } = await (shouldFullPull
-        ? query
-        : query.gt("updated_at", since));
+      const { data, error } = await client
+        .from(table)
+        .select("*")
+        .eq("user_id", userId)
+        .gt("server_updated_at", since);
 
       if (error) {
         throw new Error(`Pull error on ${table}: ${error.message}`);
@@ -103,7 +96,6 @@ export async function runPull(ctx: PullContext): Promise<string> {
     }
   });
 
-  const now = new Date().toISOString();
-  saveLastSyncAt(now);
-  return now;
+  saveLastServerSyncAt(serverNow);
+  return serverNow;
 }

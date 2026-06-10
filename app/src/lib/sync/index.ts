@@ -5,7 +5,10 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase";
 import { getErrorMessage, ERROR_MESSAGES } from "@/lib/error-utils";
-import { loadLastSyncAt, clearLastSyncAt } from "./sync-storage";
+import {
+  loadLastServerSyncAt,
+  clearLastServerSyncAt,
+} from "./sync-storage";
 import type { SyncTable } from "./sync-transformers";
 import {
   DEBOUNCE_SYNC_MS,
@@ -30,7 +33,7 @@ type StateListener = (state: SyncState) => void;
 class SyncEngine {
   private state: SyncState = {
     isSyncing: false,
-    lastSyncAt: loadLastSyncAt(),
+    lastSyncAt: loadLastServerSyncAt(),
     lastError: null,
     localDataVersion: 0,
   };
@@ -54,6 +57,10 @@ class SyncEngine {
   private pendingResync = false;
   /** Counts follow-up syncs scheduled from `sync()`'s finally (dirty / pending); resets when a run finishes with nothing left to do. */
   private followUpSyncChain = 0;
+  /** Timestamp of the last time a triggered sync actually ran (ms). Used to throttle focus/online triggers. */
+  private lastTriggeredSyncMs = 0;
+  /** Minimum ms between focus/online-triggered syncs to avoid redundant pulls on rapid tab switches. */
+  private static readonly FOCUS_SYNC_THROTTLE_MS = 60_000;
 
   getState(): SyncState {
     return this.state;
@@ -123,7 +130,14 @@ class SyncEngine {
   private runTriggeredSync(): void {
     this.clearDebounceTimer();
     this.resetPeriodicInterval();
+    this.lastTriggeredSyncMs = Date.now();
     void this.sync();
+  }
+
+  private runThrottledSync(): void {
+    const elapsed = Date.now() - this.lastTriggeredSyncMs;
+    if (elapsed < SyncEngine.FOCUS_SYNC_THROTTLE_MS) return;
+    this.runTriggeredSync();
   }
 
   private scheduleDebouncedSync(): void {
@@ -254,10 +268,10 @@ class SyncEngine {
     const userId = getCachedUserId();
     if (!userId) return;
 
-    const now = await runPull({
+    const serverNow = await runPull({
       supabase,
       userId,
-      lastSyncAt: this.state.lastSyncAt ?? null,
+      lastServerSyncAt: this.state.lastSyncAt ?? null,
       dirtyIdsByTable: this.dirtyIdsByTable,
       withSuppressedMutationSignals: (op) =>
         this.withSuppressedMutationSignals(op),
@@ -265,7 +279,7 @@ class SyncEngine {
         this.applyRemoteFromPull = value;
       },
     });
-    this.setState({ lastSyncAt: now });
+    this.setState({ lastSyncAt: serverNow });
   }
 
   async sync(): Promise<void> {
@@ -326,7 +340,7 @@ class SyncEngine {
     this.clearDirtyIds();
     this.pendingResync = false;
     this.followUpSyncChain = 0;
-    clearLastSyncAt();
+    clearLastServerSyncAt();
     this.setState({
       lastSyncAt: null,
       lastError: null,
@@ -346,15 +360,15 @@ class SyncEngine {
 
     this.resetPeriodicInterval();
 
-    this.onlineHandler = () => this.runTriggeredSync();
+    this.onlineHandler = () => this.runThrottledSync();
     window.addEventListener("online", this.onlineHandler);
 
     this.visibilityHandler = () => {
-      if (document.visibilityState === "visible") this.runTriggeredSync();
+      if (document.visibilityState === "visible") this.runThrottledSync();
     };
     document.addEventListener("visibilitychange", this.visibilityHandler);
 
-    this.pageShowHandler = () => this.runTriggeredSync();
+    this.pageShowHandler = () => this.runThrottledSync();
     window.addEventListener("pageshow", this.pageShowHandler);
   }
 

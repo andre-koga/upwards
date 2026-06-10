@@ -41,16 +41,16 @@ export function useFriends() {
       ] = await Promise.all([
         supabase
           .from("friendships")
-          .select("*")
+          .select("user_a, user_b, created_at")
           .or(`user_a.eq.${userId},user_b.eq.${userId}`),
         supabase
           .from("friend_requests")
-          .select("*")
+          .select("id, from_user_id, to_user_id, status, created_at, responded_at")
           .eq("to_user_id", userId)
           .eq("status", "pending"),
         supabase
           .from("friend_requests")
-          .select("*")
+          .select("id, from_user_id, to_user_id, status, created_at, responded_at")
           .eq("from_user_id", userId)
           .eq("status", "pending"),
       ]);

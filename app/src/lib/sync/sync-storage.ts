@@ -1,16 +1,21 @@
-const LAST_SYNC_KEY = "okhabit_last_sync_at";
+const LAST_SERVER_SYNC_KEY = "okhabit_last_server_sync_at";
 const LAST_USER_KEY = "okhabit_last_signed_in_user_id";
 
-export function loadLastSyncAt(): string | null {
-  return localStorage.getItem(LAST_SYNC_KEY) ?? null;
+/**
+ * The server-side `now()` timestamp captured at the start of the last
+ * successful pull. Using server time (not client time) as the delta-pull
+ * cutoff eliminates device clock skew entirely.
+ */
+export function loadLastServerSyncAt(): string | null {
+  return localStorage.getItem(LAST_SERVER_SYNC_KEY) ?? null;
 }
 
-export function saveLastSyncAt(ts: string): void {
-  localStorage.setItem(LAST_SYNC_KEY, ts);
+export function saveLastServerSyncAt(ts: string): void {
+  localStorage.setItem(LAST_SERVER_SYNC_KEY, ts);
 }
 
-export function clearLastSyncAt(): void {
-  localStorage.removeItem(LAST_SYNC_KEY);
+export function clearLastServerSyncAt(): void {
+  localStorage.removeItem(LAST_SERVER_SYNC_KEY);
 }
 
 export function loadLastSignedInUserId(): string | null {
