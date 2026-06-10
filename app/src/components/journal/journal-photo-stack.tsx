@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { getJournalPhotoUrl } from "@/lib/journal";
 
@@ -16,6 +16,11 @@ const SLOT_TRANSFORMS: { rotate: number; tx: number; ty: number }[] = [
 
 export default function JournalPhotoStack({ photoPaths }: JournalPhotoStackProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  // Close lightbox when photos change (e.g., when navigating to a different day)
+  useEffect(() => {
+    setLightboxIndex(null);
+  }, [photoPaths]);
 
   if (photoPaths.length === 0) return null;
 
@@ -153,6 +158,16 @@ export default function JournalPhotoStack({ photoPaths }: JournalPhotoStackProps
               </span>
             </>
           )}
+
+          {/* Close button (bottom-right) */}
+          <button
+            type="button"
+            onClick={closeLightbox}
+            className="absolute bottom-4 right-4 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+            aria-label="Close"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
     </>
