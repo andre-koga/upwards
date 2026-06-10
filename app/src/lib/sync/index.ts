@@ -4,7 +4,7 @@ import {
   getCachedUserId,
   isSupabaseConfigured,
 } from "@/lib/supabase";
-import { getErrorMessage, ERROR_MESSAGES } from "@/lib/error-utils";
+import { getErrorMessage, logError, ERROR_MESSAGES } from "@/lib/error-utils";
 import {
   loadLastServerSyncAt,
   clearLastServerSyncAt,
@@ -248,12 +248,13 @@ class SyncEngine {
         { forceAll: true }
       );
       if (failedTables.length > 0) {
-        this.setState({
-          lastError: `Upload failed for: ${failedTables.join(", ")}. Try again.`,
-        });
+        const msg = `Upload failed for: ${failedTables.join(", ")}. Try again.`;
+        logError("Force push to cloud failed", new Error(msg));
+        this.setState({ lastError: msg });
       }
     } catch (err) {
       const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
+      logError("Force push to cloud failed", err);
       this.setState({ lastError: msg });
     } finally {
       this.setState({ isSyncing: false });
@@ -294,13 +295,14 @@ class SyncEngine {
     try {
       const { failedTables } = await this.push();
       if (failedTables.length > 0) {
-        this.setState({
-          lastError: `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`,
-        });
+        const msg = `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`;
+        logError("Sync push failed", new Error(msg));
+        this.setState({ lastError: msg });
       }
       await this.pull();
     } catch (err) {
       const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
+      logError("Sync failed", err);
       this.setState({ lastError: msg });
     } finally {
       this.setState({ isSyncing: false });

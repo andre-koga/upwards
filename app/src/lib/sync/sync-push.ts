@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { supabase, getCachedUserId } from "@/lib/supabase";
+import { logError } from "@/lib/error-utils";
 import {
   toRemoteRow,
   dedupeRowsForUpsert,
@@ -109,10 +110,7 @@ export async function runPushInternal(
 
       if (error) {
         failedTables.push(table);
-        console.warn(
-          `[sync] push failed for ${table}, continuing with other tables:`,
-          error.message
-        );
+        logError(`Sync push failed for table: ${table}`, new Error(error.message));
         continue;
       }
 
@@ -127,10 +125,7 @@ export async function runPushInternal(
       });
     } catch (err) {
       failedTables.push(table);
-      console.warn(
-        `[sync] push failed for ${table}, continuing with other tables:`,
-        err
-      );
+      logError(`Sync push failed for table: ${table}`, err);
     }
   }
 
