@@ -17,7 +17,7 @@ import {
   toDateString,
 } from "@/lib/time-utils";
 
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { getEffectiveToday, getDayResetMinutes, formatResetMinutes } from "@/lib/session/day-reset";
 
 interface ManualTimeEntryDialogProps {
   open: boolean;
@@ -49,9 +49,15 @@ export default function ManualTimeEntryDialog({
 
   const todayString = useMemo(() => getEffectiveToday(), []);
 
-  // True when end clock time is before start clock time (crosses midnight).
-  const spansOvernight = !!startTime && !!endTime &&
+  // A session crosses midnight when endTime < startTime on the clock.
+  // It spans two *logical* days only if the end time also reaches or passes
+  // the configured day-reset boundary (e.g. 4 AM). A session ending at 3 AM
+  // with a 4 AM reset still belongs to the same logical day.
+  const crossesMidnight = !!startTime && !!endTime &&
     timeToSeconds(endTime) < timeToSeconds(startTime);
+  const resetMinutes = useMemo(() => getDayResetMinutes(), []);
+  const spansOvernight = crossesMidnight &&
+    timeToSeconds(endTime) >= resetMinutes * 60;
 
   useEffect(() => {
     if (!open) return;
@@ -94,9 +100,9 @@ export default function ManualTimeEntryDialog({
       setError(null);
 
       const startDate = fromDateString(dateString);
-      // If end is before start on the clock it means the session crossed
-      // midnight, so the end falls on the next calendar day.
-      const endDate = spansOvernight ? shiftDate(startDate, 1) : startDate;
+      // If end is before start on the clock the session crossed calendar
+      // midnight; the end timestamp falls on the next calendar day.
+      const endDate = crossesMidnight ? shiftDate(startDate, 1) : startDate;
 
       await onSave({
         activityId: activity.id,
@@ -154,7 +160,7 @@ export default function ManualTimeEntryDialog({
 
         {spansOvernight && (
           <p className="text-sm text-amber-600 dark:text-amber-400">
-            This session spans two days.
+            This session crosses your {formatResetMinutes(resetMinutes)} day boundary and will count across two days.
           </p>
         )}
 

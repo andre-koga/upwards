@@ -21,7 +21,7 @@ import {
 } from "@/lib/time-utils";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { getEffectiveToday, getDayResetMinutes } from "@/lib/session/day-reset";
 
 const NONE_ACTIVITY_VALUE = "__none__";
 
@@ -168,9 +168,9 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
 
     // If end clock < start clock the session spans overnight; end falls on the
     // next calendar day.
-    const spansOvernight =
+    const crossesMidnightSave =
       !isRunning && !!endTime && timeToSeconds(endTime) < timeToSeconds(startTime);
-    const endDate = spansOvernight ? shiftDate(selectedDate, 1) : selectedDate;
+    const endDate = crossesMidnightSave ? shiftDate(selectedDate, 1) : selectedDate;
 
     const nextEndIso = isRunning
       ? null
@@ -244,11 +244,21 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const isRunningSession =
     details?.period != null && details.period.end_time === null;
 
-  const spansOvernight =
+  // A session crosses midnight if endTime < startTime on the clock.
+  // It spans two *logical* days only if it also crosses the reset boundary
+  // (end time >= reset time). e.g. 11 PM → 3 AM with a 4 AM reset stays on
+  // the same logical day; 11 PM → 5 AM crosses into the next logical day.
+  const crossesMidnight =
     !isRunningSession &&
     !!startTime &&
     !!endTime &&
     timeToSeconds(endTime) < timeToSeconds(startTime);
+
+  const resetMinutes = getDayResetMinutes();
+  const resetSeconds = resetMinutes * 60;
+
+  const spansOvernight =
+    crossesMidnight && timeToSeconds(endTime ?? "00:00:00") >= resetSeconds;
 
   return {
     NONE_ACTIVITY_VALUE,
@@ -258,6 +268,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     details,
     isRunningSession,
     spansOvernight,
+    resetMinutes,
     groupActivities,
     selectedActivityId,
     setSelectedActivityId,

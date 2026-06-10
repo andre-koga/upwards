@@ -10,6 +10,26 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-06-10",
+    title: "Activity stats and a smarter day boundary",
+    bullets: [
+      "Tap any habit to see its stats: streaks, total time, a 90-day heatmap, and a by-day-of-week chart.",
+      "Stats adapt to the habit type — timers show session lengths, check-off habits show success rate, 'never' habits show clean days.",
+      "Filter stats by 7 days, 30 days, 90 days, 1 year, or all time.",
+      "Settings for a habit or group moved to a cog icon — tapping the pill itself now opens stats.",
+    ],
+    fixes: [
+      "Habits created after midnight (but before your day reset time) now appear correctly in For Today.",
+      "Streak counts no longer reset to 0 when you complete a habit after midnight but before your day reset.",
+      "The date picker on manual time entries no longer allows selecting tomorrow when the clock has passed midnight but not yet reached your reset time.",
+      "The main calendar (day navigation) and all other date pickers now highlight the correct logical today based on your reset time.",
+      "Swiping to the next day is blocked at the correct logical today, not the wall-clock date.",
+      "The 'Today' button in the footer correctly identifies the current logical day.",
+      "Due-date labels on one-off tasks ('Today', 'Yesterday') now match your reset time.",
+      "Marking a habit complete from the Projects drawer now stamps it on the correct logical day.",
+    ],
+  },
+  {
     date: "2026-06-05",
     title: "Archive memos and error logs",
     bullets: [

@@ -11,6 +11,7 @@ import { toDateString } from "@/lib/time-utils";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
 import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import { useCallback } from "react";
+import { formatResetMinutes } from "@/lib/session/day-reset";
 
 interface SessionDetailsDialogProps {
   groupId: string;
@@ -39,6 +40,7 @@ export default function SessionDetailsDialog({
     details,
     isRunningSession,
     spansOvernight,
+    resetMinutes,
     groupActivities,
     selectedActivityId,
     setSelectedActivityId,
@@ -114,7 +116,7 @@ export default function SessionDetailsDialog({
           )}
           {spansOvernight && (
             <p className="text-sm text-amber-600 dark:text-amber-400">
-              This session spans two days.
+              This session crosses your {formatResetTime(resetMinutes)} day boundary and will count across two days.
             </p>
           )}
           {error && <p className="text-sm text-destructive">{error}</p>}

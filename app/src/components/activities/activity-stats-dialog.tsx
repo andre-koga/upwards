@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { FormDialog } from "@/components/forms/form-dialog";
 
 type TimeSpan = "7d" | "30d" | "90d" | "1yr" | "all";
-type DayStatus = "done" | "missed" | "slip" | "not_scheduled";
+type DayStatus = "done" | "missed" | "slip" | "not_scheduled" | "break";
 
 /** Raw per-activity data loaded once; period filtering done in render. */
 interface ActivityStats {
@@ -101,7 +101,7 @@ function computePeriodStats(
         ? (raw.completionByDate[d] ?? "not_scheduled")
         : "not_scheduled";
     completionHeatmap.push({ dateStr: d, status });
-    if (status !== "not_scheduled") {
+    if (status !== "not_scheduled" && status !== "break") {
       const dow = cur.getDay();
       weekdayCompletion[dow][1]++;
       scheduledInPeriod++;
@@ -185,7 +185,9 @@ async function loadActivityStats(activityId: string): Promise<ActivityStats> {
   const completionByDate: Record<string, DayStatus> = {};
   if (activity && hasRoutine) {
     const entriesByDate: Record<string, number> = {};
+    const breakDays = new Set<string>();
     for (const e of allDailyEntries) {
+      if (e.is_break_day) breakDays.add(e.date);
       const counts = e.task_counts as Record<string, number> | null;
       if (counts && activityId in counts) entriesByDate[e.date] = counts[activityId] ?? 0;
     }
@@ -193,16 +195,20 @@ async function loadActivityStats(activityId: string): Promise<ActivityStats> {
     let cursor = createdAt;
     while (cursor <= today) {
       const dateStr = toDateString(cursor);
-      const due = isRoutineDueOnDate(activity, cursor);
-      if (due) {
-        const count = entriesByDate[dateStr] ?? 0;
-        if (isNever) {
-          completionByDate[dateStr] = isNeverTaskSlipRecorded(activity, count) ? "slip" : "done";
-        } else {
-          completionByDate[dateStr] = count >= (activity.completion_target ?? 1) ? "done" : "missed";
-        }
+      if (breakDays.has(dateStr)) {
+        completionByDate[dateStr] = "break";
       } else {
-        completionByDate[dateStr] = "not_scheduled";
+        const due = isRoutineDueOnDate(activity, cursor);
+        if (due) {
+          const count = entriesByDate[dateStr] ?? 0;
+          if (isNever) {
+            completionByDate[dateStr] = isNeverTaskSlipRecorded(activity, count) ? "slip" : "done";
+          } else {
+            completionByDate[dateStr] = count >= (activity.completion_target ?? 1) ? "done" : "missed";
+          }
+        } else {
+          completionByDate[dateStr] = "not_scheduled";
+        }
       }
       cursor = shiftDate(cursor, 1);
     }
@@ -341,6 +347,7 @@ function PeriodHeatmap({
     const eRect = e.currentTarget.getBoundingClientRect();
     const ms = day.ms ?? 0;
     const text = ms > 0 ? formatDuration(ms)
+      : day.status === "break" ? "Break day"
       : day.status === "done" ? (isNever ? "✓ Clean" : "✓ Done")
       : day.status === "slip" ? "✗ Slip"
       : day.status === "missed" ? "✗ Missed"
@@ -348,12 +355,13 @@ function PeriodHeatmap({
     show(eRect.left - (cRect?.left ?? 0) + eRect.width / 2, eRect.top - (cRect?.top ?? 0), text);
   };
 
-  function cellStyle(day: typeof days[0]): { bg: string; opacity: number; customColor?: string; showX?: boolean } {
+  function cellStyle(day: typeof days[0]): { bg: string; opacity: number; customColor?: string; showX?: boolean; hollow?: boolean } {
     const ms = day.ms ?? 0;
     const status = day.status;
     const hasFailed = status === "missed" || status === "slip";
     const isNotScheduled = status === "not_scheduled";
 
+    if (status === "break") return { bg: "bg-transparent", opacity: 1, hollow: true };
     if (isNotScheduled && ms === 0) return { bg: "bg-muted", opacity: 0.25 };
 
     if (ms > 0) {
@@ -378,11 +386,11 @@ function PeriodHeatmap({
     return (
       <div ref={containerRef} className="relative flex w-full gap-[3px]">
         {days.map((day) => {
-          const { bg, opacity, customColor, showX } = cellStyle(day);
+          const { bg, opacity, customColor, showX, hollow } = cellStyle(day);
           return (
             <div
               key={day.dateStr}
-              className={`aspect-square flex-1 cursor-pointer rounded-[2px] ${bg} flex items-center justify-center`}
+              className={`aspect-square flex-1 cursor-pointer rounded-[2px] ${bg} flex items-center justify-center ${hollow ? "border border-border" : ""}`}
               style={{ backgroundColor: customColor, opacity }}
               onClick={(e) => handleClick(e, day)}
             >
@@ -407,11 +415,11 @@ function PeriodHeatmap({
           <div key={wi} className="flex flex-1 flex-col gap-[3px]">
             {week.map((day, di) => {
               if (!day) return <div key={di} className="aspect-square w-full" />;
-              const { bg, opacity, customColor, showX } = cellStyle(day);
+              const { bg, opacity, customColor, showX, hollow } = cellStyle(day);
               return (
                 <div
                   key={di}
-                  className={`aspect-square w-full cursor-pointer rounded-[2px] ${bg} flex items-center justify-center`}
+                  className={`aspect-square w-full cursor-pointer rounded-[2px] ${bg} flex items-center justify-center ${hollow ? "border border-border" : ""}`}
                   style={{ backgroundColor: customColor, opacity }}
                   onClick={(e) => handleClick(e, day)}
                 >
