@@ -16,6 +16,7 @@ import SessionDetailsDialog from "@/components/activities/session-details-dialog
 import {
   getDayResetMinutes,
   formatResetMinutes,
+  getEffectiveToday,
 } from "@/lib/session/day-reset";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
@@ -157,7 +158,7 @@ export default function DailyTasksList({
     } else {
       // Set the activity to start and navigate to today
       setActivityToStartOnToday(activityId);
-      const today = new Date();
+      const today = new Date(getEffectiveToday() + "T12:00:00");
       onDateChange(today);
     }
   };

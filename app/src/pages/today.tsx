@@ -125,7 +125,7 @@ export default function TodayPage() {
     const direction = deltaX > 0 ? "prev" : "next";
     const isBlocked =
       direction === "next" &&
-      toDateString(currentDate) === toDateString(new Date());
+      toDateString(currentDate) === getEffectiveToday();
 
     setSwipeFeedback({
       direction,
@@ -160,8 +160,7 @@ export default function TodayPage() {
     }
 
     setCurrentDate((prev) => {
-      const today = new Date();
-      if (toDateString(prev) === toDateString(today)) return prev;
+      if (toDateString(prev) === getEffectiveToday()) return prev;
       const next = new Date(prev);
       next.setDate(next.getDate() + 1);
       return next;

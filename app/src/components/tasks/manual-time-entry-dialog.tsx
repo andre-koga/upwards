@@ -17,6 +17,8 @@ import {
   toDateString,
 } from "@/lib/time-utils";
 
+import { getEffectiveToday } from "@/lib/session/day-reset";
+
 interface ManualTimeEntryDialogProps {
   open: boolean;
   activity: Activity | null;
@@ -45,7 +47,7 @@ export default function ManualTimeEntryDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const todayString = useMemo(() => toDateString(new Date()), []);
+  const todayString = useMemo(() => getEffectiveToday(), []);
 
   // True when end clock time is before start clock time (crosses midnight).
   const spansOvernight = !!startTime && !!endTime &&
@@ -56,7 +58,7 @@ export default function ManualTimeEntryDialog({
 
     const baseDateString = toDateString(initialDate);
     const now = new Date();
-    const hasTodayDefaults = baseDateString === toDateString(now);
+    const hasTodayDefaults = baseDateString === getEffectiveToday();
 
     setDateString(baseDateString);
     setStartTime(

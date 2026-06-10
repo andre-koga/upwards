@@ -111,5 +111,21 @@ export function timeToSeconds(time: string): number {
  * Helper: today as YYYY-MM-DD (local time).
  */
 export function todayDateString(): string {
-  return toDateString(new Date());
+  // Inline effective-day logic to avoid circular dep with day-reset.ts
+  const resetMin = (() => {
+    const raw = localStorage.getItem("okhabit:day_reset_minutes");
+    if (!raw) return 240;
+    const n = parseInt(raw, 10);
+    return isNaN(n) || n < 0 || n > 480 ? 240 : n;
+  })();
+  const now = new Date();
+  if (resetMin > 0) {
+    const currentMin = now.getHours() * 60 + now.getMinutes();
+    if (currentMin < resetMin) {
+      const prev = new Date(now);
+      prev.setDate(prev.getDate() - 1);
+      return toDateString(prev);
+    }
+  }
+  return toDateString(now);
 }

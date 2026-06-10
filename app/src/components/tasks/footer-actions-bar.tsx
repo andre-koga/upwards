@@ -15,6 +15,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import type { Activity } from "@/lib/db/types";
 import { formatDateShort, toDateString } from "@/lib/time-utils";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 import { JournalDateCalendarDialog } from "@/components/journal/journal-date-calendar-dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -78,7 +79,7 @@ export default function FooterActionsBar({
   );
   const { bottomInset } = useVisualViewportLayout();
   const isSelectedToday =
-    toDateString(currentDate) === toDateString(new Date());
+    toDateString(currentDate) === getEffectiveToday();
   const shortDate = currentDate.toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",

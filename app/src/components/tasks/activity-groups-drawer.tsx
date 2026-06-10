@@ -25,6 +25,8 @@ import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dial
 import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
 import ManualTimeEntryDialog from "@/components/tasks/manual-time-entry-dialog";
+import { ActivityStatsDialog } from "@/components/activities/activity-stats-dialog";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 import { Button } from "@/components/ui/button";
 
 async function loadActivityGroupLists(): Promise<{
@@ -133,6 +135,7 @@ export default function ActivityGroupsDrawer({
     useState<ActivityGroup | null>(null);
   const [editingGroup, setEditingGroup] = useState<ActivityGroup | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [statsActivity, setStatsActivity] = useState<Activity | null>(null);
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
     string | null
   >(null);
@@ -191,7 +194,7 @@ export default function ActivityGroupsDrawer({
   const handleMarkActivityCompleted = useCallback(
     async (activityId: string, completed: boolean) => {
       try {
-        await setActivityCompleted(activityId, completed, new Date());
+        await setActivityCompleted(activityId, completed, new Date(getEffectiveToday() + "T12:00:00"));
         reloadGroupActivities();
         onTasksDataChanged?.();
       } catch (error) {
@@ -330,6 +333,7 @@ export default function ActivityGroupsDrawer({
                               name={group.name}
                               color={group.color || DEFAULT_GROUP_COLOR}
                               onNameClick={() => setEditingGroup(group)}
+                              onSettingsClick={() => setEditingGroup(group)}
                               onActionClick={() => handleOpenGroup(group)}
                             />
                           );
@@ -355,6 +359,12 @@ export default function ActivityGroupsDrawer({
                                   nameTitle="Restore or delete archived group"
                                   nameAriaLabel="Restore or delete archived group"
                                   onNameClick={() =>
+                                    setArchivedActionsTarget({
+                                      type: "group",
+                                      group,
+                                    })
+                                  }
+                                  onSettingsClick={() =>
                                     setArchivedActionsTarget({
                                       type: "group",
                                       group,
@@ -450,6 +460,8 @@ export default function ActivityGroupsDrawer({
                                 )}
                                 isRunning={isRunning}
                                 onNameClick={() => setEditingActivity(activity)}
+                                onSettingsClick={() => setEditingActivity(activity)}
+                                onStatsClick={() => setStatsActivity(activity)}
                                 onClick={async () => {
                                   if (isRunning) {
                                     await onStopActivity?.();
@@ -503,6 +515,10 @@ export default function ActivityGroupsDrawer({
                                     onNameClick={() =>
                                       setEditingActivity(activity)
                                     }
+                                    onSettingsClick={() =>
+                                      setEditingActivity(activity)
+                                    }
+                                    onStatsClick={() => setStatsActivity(activity)}
                                     nameClassName="line-through text-muted-foreground"
                                     readOnly
                                   />
@@ -708,6 +724,21 @@ export default function ActivityGroupsDrawer({
           if (!onAddManualEntry) return;
           await onAddManualEntry(payload);
         }}
+      />
+
+      <ActivityStatsDialog
+        open={statsActivity !== null}
+        onOpenChange={(next) => {
+          if (!next) setStatsActivity(null);
+        }}
+        activity={statsActivity}
+        group={
+          statsActivity
+            ? (selectedGroup?.id === statsActivity.group_id
+                ? selectedGroup
+                : groups.find((g) => g.id === statsActivity.group_id) ?? null)
+            : null
+        }
       />
     </>
   );

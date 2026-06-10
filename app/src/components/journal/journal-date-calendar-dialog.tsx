@@ -9,7 +9,8 @@ import { Heart } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { toDateString } from "@/lib/time-utils";
+import { fromDateString, toDateString } from "@/lib/time-utils";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 
 export interface JournalDateCalendarDialogProps {
   open: boolean;
@@ -31,7 +32,7 @@ export function JournalDateCalendarDialog({
   bookmarkedDates = new Set(),
   onCalendarOpen,
 }: JournalDateCalendarDialogProps) {
-  const today = new Date();
+  const effectiveToday = fromDateString(getEffectiveToday());
   const [calendarMonth, setCalendarMonth] = useState(currentDate);
   const prevOpenRef = useRef(false);
 
@@ -96,10 +97,10 @@ export function JournalDateCalendarDialog({
           onSelect={handleDaySelect}
           month={calendarMonth}
           onMonthChange={setCalendarMonth}
-          disabled={{ after: today }}
+          disabled={{ after: effectiveToday }}
           captionLayout="dropdown"
           startMonth={new Date(2020, 0)}
-          endMonth={today}
+          endMonth={effectiveToday}
           fixedWeeks
           className="w-full [--cell-size:3rem]"
           components={calendarComponents}

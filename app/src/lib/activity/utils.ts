@@ -7,6 +7,7 @@ import type {
 } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { toDateString } from "@/lib/time-utils";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 import {
   isActivityStatusAsOf,
   isGroupStatusAsOf,
@@ -252,7 +253,7 @@ export async function stopCurrentActivity(options: {
   groupId?: string;
 }): Promise<void> {
   try {
-    const today = toDateString(new Date());
+    const today = getEffectiveToday();
     const dailyEntry = await db.dailyEntries
       .where("date")
       .equals(today)
@@ -300,11 +301,11 @@ export function isRoutineDueOnDate(
   date: Date
 ): boolean {
   if (activity.created_at) {
-    const creationDay = new Date(activity.created_at);
-    creationDay.setHours(0, 0, 0, 0);
-    const viewDay = new Date(date);
-    viewDay.setHours(0, 0, 0, 0);
-    if (viewDay < creationDay) return false;
+    // Use effective day for the creation timestamp so activities created
+    // after midnight (before the reset) belong to the previous logical day.
+    const effectiveCreationDay = getEffectiveToday(new Date(activity.created_at));
+    const viewDay = toDateString(date);
+    if (viewDay < effectiveCreationDay) return false;
   }
 
   const parsed = parseRoutine(activity.routine || "daily");

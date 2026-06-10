@@ -1,4 +1,4 @@
-import { Play, Plus, Square } from "lucide-react";
+import { Play, Plus, Square, Settings } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity";
 import { getContrastColor } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
@@ -10,8 +10,11 @@ export interface ActivityPillProps {
   elapsedMs?: number;
   isRunning?: boolean;
   onNameClick?: () => void;
+  /** Opens the activity stats dialog when clicking the pill name area. */
+  onStatsClick?: () => void;
   onClick?: () => void;
   onManualEntry?: () => void;
+  onSettingsClick?: () => void;
   nameClassName?: string;
   /** When true, renders timer/play as non-interactive display instead of buttons. */
   readOnly?: boolean;
@@ -26,8 +29,10 @@ export default function ActivityPill({
   elapsedMs = 0,
   isRunning = false,
   onNameClick,
+  onStatsClick,
   onClick,
   onManualEntry,
+  onSettingsClick,
   nameClassName = "",
   readOnly = false,
   allowNameClickWhenReadOnly = false,
@@ -36,6 +41,8 @@ export default function ActivityPill({
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
   const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
+  // Stats click takes priority over onNameClick when provided
+  const handleNameClick = onStatsClick ?? onNameClick;
 
   return (
     <div
@@ -48,7 +55,7 @@ export default function ActivityPill({
       <Button
         type="button"
         variant="outline"
-        onClick={nameInteractive ? onNameClick : undefined}
+        onClick={nameInteractive ? handleNameClick : undefined}
         className={cn(
           "h-full min-h-0 flex-1 flex-col items-stretch justify-center gap-0 overflow-hidden rounded-full p-0 text-left text-sm font-medium",
           readOnly && !allowNameClickWhenReadOnly
@@ -67,11 +74,25 @@ export default function ActivityPill({
             className="h-2.5 w-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: color }}
           />
-          <span className={cn("min-w-0 truncate", nameClassName)}>
+          <span className={cn("min-w-0 flex-1 truncate", nameClassName)}>
             {name || (
               <span className="font-normal text-muted-foreground">Name…</span>
             )}
           </span>
+          {!readOnly && onSettingsClick && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSettingsClick();
+              }}
+              title="Activity settings"
+              aria-label="Activity settings"
+              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+          )}
         </span>
       </Button>
 

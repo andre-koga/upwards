@@ -7,13 +7,13 @@ import { ArchiveMemoDialog } from "@/components/tasks/archive-memo-dialog";
 import { DeleteMemoDialog } from "@/components/tasks/delete-memo-dialog";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 
 function getDueDateDisplayLabel(dueDate: string): string {
   const due = fromDateString(dueDate);
   const dueMs = due.getTime();
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = fromDateString(getEffectiveToday());
   const todayMs = today.getTime();
 
   const yesterday = new Date(today);

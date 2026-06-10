@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface GroupPillProps {
@@ -6,6 +6,7 @@ export interface GroupPillProps {
   color: string;
   onActionClick?: () => void;
   onNameClick?: () => void;
+  onSettingsClick?: () => void;
   nameTitle?: string;
   nameAriaLabel?: string;
   className?: string;
@@ -16,6 +17,7 @@ export default function GroupPill({
   color,
   onActionClick,
   onNameClick,
+  onSettingsClick,
   nameTitle = "Edit group",
   nameAriaLabel = "Edit group",
   className = "",
@@ -42,8 +44,24 @@ export default function GroupPill({
             style={{ backgroundColor: color }}
             aria-hidden
           />
-          {name || (
-            <span className="font-normal text-muted-foreground">Name…</span>
+          <span className="min-w-0 flex-1 truncate">
+            {name || (
+              <span className="font-normal text-muted-foreground">Name…</span>
+            )}
+          </span>
+          {onSettingsClick && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSettingsClick();
+              }}
+              title="Group settings"
+              aria-label="Group settings"
+              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
           )}
         </Button>
         {onActionClick ? (

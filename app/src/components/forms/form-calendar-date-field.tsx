@@ -11,6 +11,7 @@ import {
   fromDateString,
   toDateString,
 } from "@/lib/time-utils";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
 
 export interface FormCalendarDateFieldProps {
@@ -66,11 +67,12 @@ export function FormCalendarDateField({
   }, [value]);
 
   const [calendarMonth, setCalendarMonth] = useState<Date>(
-    selectedDate ?? new Date()
+    selectedDate ?? fromDateString(getEffectiveToday())
   );
 
+  const effectiveTodayStr = getEffectiveToday();
   const minDate = useMemo(() => (min ? fromDateString(min) : undefined), [min]);
-  const maxDate = useMemo(() => (max ? fromDateString(max) : undefined), [max]);
+  const maxDate = useMemo(() => (max ? fromDateString(max) : fromDateString(effectiveTodayStr)), [max, effectiveTodayStr]);
 
   const disabledMatcher = useMemo(() => {
     if (minDate && maxDate) {
@@ -110,7 +112,7 @@ export function FormCalendarDateField({
           aria-readonly={readOnly}
           onClick={() => {
             if (readOnly) return;
-            setCalendarMonth(selectedDate ?? new Date());
+            setCalendarMonth(selectedDate ?? fromDateString(getEffectiveToday()));
             setOpen(true);
           }}
           className={cn(
@@ -145,7 +147,7 @@ export function FormCalendarDateField({
             return;
           }
           if (nextOpen) {
-            setCalendarMonth(selectedDate ?? new Date());
+            setCalendarMonth(selectedDate ?? fromDateString(getEffectiveToday()));
           }
           setOpen(nextOpen);
         }}

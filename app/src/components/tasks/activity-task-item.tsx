@@ -12,6 +12,7 @@ import { ActivityRetiredInfoDialog } from "@/components/activities/activity-reti
 import type { ActivityRetiredKind } from "@/components/activities/activity-retired-info-dialog";
 import DailyTaskActivityPill from "@/components/tasks/daily-task-activity-pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
+import { ActivityStatsDialog } from "@/components/activities/activity-stats-dialog";
 
 interface ActivityTaskItemProps {
   activity: Activity;
@@ -55,6 +56,7 @@ function ActivityTaskItem({
 }: ActivityTaskItemProps) {
   const [retiredDialogKind, setRetiredDialogKind] =
     useState<ActivityRetiredKind | null>(null);
+  const [statsDialogOpen, setStatsDialogOpen] = useState(false);
   const [, setTick] = useState(0);
   const neverPressTimeoutRef = useRef<number | null>(null);
   const longPressHandledRef = useRef(false);
@@ -241,6 +243,7 @@ function ActivityTaskItem({
           interaction={interaction}
           isDayComplete={isComplete}
           onNameClick={handleNameClick}
+          onStatsClick={() => setStatsDialogOpen(true)}
           onStartActivity={onStartActivity}
           onStopActivity={onStopActivity}
           onManualEntry={onManualEntry}
@@ -254,6 +257,13 @@ function ActivityTaskItem({
         onOpenChange={(next) => {
           if (!next) setRetiredDialogKind(null);
         }}
+      />
+
+      <ActivityStatsDialog
+        open={statsDialogOpen}
+        onOpenChange={(next) => setStatsDialogOpen(next)}
+        activity={activity}
+        group={group}
       />
     </div>
   );

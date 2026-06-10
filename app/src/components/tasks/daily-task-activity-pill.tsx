@@ -15,6 +15,7 @@ interface DailyTaskActivityPillProps {
   interaction: DailyTaskInteractionState;
   isDayComplete: boolean;
   onNameClick: () => void;
+  onStatsClick?: () => void;
   onStartActivity: (activityId: string) => void;
   onStopActivity: () => void;
   onManualEntry?: (activityId: string) => void;
@@ -29,6 +30,7 @@ export default function DailyTaskActivityPill({
   interaction,
   isDayComplete,
   onNameClick,
+  onStatsClick,
   onStartActivity,
   onStopActivity,
   onManualEntry,
@@ -47,6 +49,7 @@ export default function DailyTaskActivityPill({
         interaction.isReadOnly && interaction.canClickName
       }
       onNameClick={interaction.canClickName ? onNameClick : undefined}
+      onStatsClick={onStatsClick}
       onClick={
         canUseTimer
           ? () => {

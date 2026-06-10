@@ -17,9 +17,11 @@ import {
   shiftDate,
   timeToSeconds,
   startOfDay,
+  fromDateString,
 } from "@/lib/time-utils";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 
 const NONE_ACTIVITY_VALUE = "__none__";
 
@@ -53,7 +55,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const [details, setDetails] = useState<SessionDetailsData | null>(null);
   const [groupActivities, setGroupActivities] = useState<Activity[]>([]);
   const [selectedActivityId, setSelectedActivityId] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => fromDateString(getEffectiveToday()));
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
@@ -267,6 +269,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     setEndTime,
     handleDelete,
     handleSave,
-    today: useMemo(() => startOfDay(new Date()), []),
+    today: useMemo(() => fromDateString(getEffectiveToday()), []),
   };
 }

@@ -13,6 +13,7 @@ import {
 } from "@/lib/activity/never-task";
 import { shouldShowActivity, type TemporalVisibilityContext } from "@/lib/activity";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 
 export interface StreakVisibilityDeps {
   groupById: Map<string, ActivityGroup>;
@@ -100,7 +101,7 @@ async function computeStreakBackward(
   if (!isStreakEligible(activity)) return 0;
 
   const targetDay = startOfDay(targetDate);
-  const creationDay = startOfDay(new Date(activity.created_at));
+  const creationDay = startOfDay(new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00"));
   if (targetDay < creationDay) return 0;
   if (!shouldShowActivityForStreak(activity, targetDay, visibility)) return 0;
 
@@ -218,7 +219,7 @@ export async function recomputeActivityStreaksFromDateForActivities(
   fromDate: Date,
   options?: { visibility?: StreakVisibilityDeps }
 ): Promise<void> {
-  const todayDay = startOfDay(new Date());
+  const todayDay = startOfDay(new Date(getEffectiveToday() + "T00:00:00"));
   const fromDay = startOfDay(fromDate);
   const endDay = todayDay.getTime() > fromDay.getTime() ? todayDay : fromDay;
   const visibility = options?.visibility;
