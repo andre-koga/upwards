@@ -20,7 +20,7 @@ interface CellPresentation {
   kind: CellKind;
   intensity: number;
   interactive: boolean;
-  dashedBorder?: boolean;
+  breakDot?: boolean;
   fillOpacity?: number;
 }
 
@@ -41,7 +41,7 @@ function getActivityCellPresentation(
 ): CellPresentation {
   const ms = day.ms ?? 0;
   const status = day.status;
-  const timerIntensity = ms > 0 ? Math.max(0.15, ms / maxMs) : 0;
+  const timeOpacity = ms > 0 ? Math.max(0.15, ms / maxMs) : undefined;
   const hasFailed = status === "missed" || status === "slip";
 
   if (day.isBeforeCreation || status === "not_scheduled") {
@@ -54,19 +54,32 @@ function getActivityCellPresentation(
 
   if (hasRoutine) {
     if (hasFailed) {
-      return { kind: "failure", intensity: 0, interactive: true };
+      return {
+        kind: "failure",
+        intensity: 0,
+        interactive: true,
+        fillOpacity: timeOpacity,
+      };
     }
     if (status === "done") {
       return {
         kind: "success",
         intensity: 0,
         interactive: true,
-        dashedBorder: day.isBreakDay,
+        breakDot: day.isBreakDay,
+        fillOpacity: timeOpacity,
       };
     }
   }
 
-  if (ms > 0) return { kind: "timer_filled", intensity: timerIntensity, interactive: true };
+  if (ms > 0) {
+    return {
+      kind: "timer_filled",
+      intensity: 0,
+      interactive: true,
+      fillOpacity: timeOpacity,
+    };
+  }
   return { kind: "timer_empty", intensity: 0, interactive: true };
 }
 
@@ -127,20 +140,33 @@ function buildDowRows(days: HeatmapDay[]): (HeatmapDay | null)[][] {
   return rows;
 }
 
-function TimerIntensityBar({
-  intensity,
-  color,
-  className,
-}: {
-  intensity: number;
-  color: string;
-  className?: string;
-}) {
-  if (intensity <= 0) return null;
+function BreakDayDot({ className }: { className?: string }) {
   return (
     <div
-      className={cn("absolute bottom-0 left-0 right-0", className)}
-      style={{ height: `${intensity * 100}%`, backgroundColor: color }}
+      className={cn(
+        "pointer-events-none absolute inset-0 flex items-center justify-center",
+        className,
+      )}
+      aria-hidden
+    >
+      <span className="h-1 w-1 rounded-full bg-foreground" />
+    </div>
+  );
+}
+
+function TimeWeightedFill({
+  color,
+  fillOpacity,
+  className,
+}: {
+  color: string;
+  fillOpacity: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn("absolute inset-[0.5px] rounded-[2px]", className)}
+      style={{ backgroundColor: color, opacity: fillOpacity }}
     />
   );
 }
@@ -167,44 +193,48 @@ function HeatmapCell({
 
   if (kind === "no_count" || kind === "aggregate_off") {
     return (
-      <div className={cn(base, "bg-muted")} onClick={onClick} />
+      <div
+        className={cn(base, "border border-muted-foreground/50 bg-transparent")}
+        onClick={onClick}
+      />
     );
   }
 
   if (kind === "break") {
     return (
-      <div
-        className={cn(base, "border border-dashed border-muted-foreground/40 bg-transparent")}
-        onClick={onClick}
-      />
+      <div className={cn(base, "bg-muted/25")} onClick={onClick}>
+        <BreakDayDot />
+      </div>
     );
   }
 
   if (kind === "success") {
-    if (presentation.dashedBorder) {
-      return (
-        <div
-          className={cn(base, "border border-dashed border-muted-foreground/40")}
-          onClick={onClick}
-        >
-          <div
-            className="absolute inset-[0.5px] rounded-[2px]"
-            style={{ backgroundColor: color }}
-          />
-        </div>
-      );
-    }
     return (
-      <div className={base} style={{ backgroundColor: color }} onClick={onClick} />
+      <div
+        className={cn(base, presentation.fillOpacity != null && "bg-muted/25")}
+        style={
+          presentation.fillOpacity == null ? { backgroundColor: color } : undefined
+        }
+        onClick={onClick}
+      >
+        {presentation.fillOpacity != null && (
+          <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
+        )}
+        {presentation.breakDot && <BreakDayDot />}
+      </div>
     );
   }
 
   if (kind === "failure" || kind === "aggregate_outline") {
+    if (presentation.fillOpacity != null) {
+      return (
+        <div className={cn(base, "bg-muted/25")} onClick={onClick}>
+          <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
+        </div>
+      );
+    }
     return (
-      <div
-        className={cn(base, "border border-muted-foreground/50 bg-transparent")}
-        onClick={onClick}
-      />
+      <div className={cn(base, "bg-muted")} onClick={onClick} />
     );
   }
 
@@ -228,7 +258,10 @@ function HeatmapCell({
   if (kind === "timer_filled") {
     return (
       <div className={cn(base, "bg-muted/25")} onClick={onClick}>
-        <TimerIntensityBar intensity={intensity} color={color} />
+        <TimeWeightedFill
+          color={color}
+          fillOpacity={presentation.fillOpacity ?? 1}
+        />
       </div>
     );
   }
@@ -267,7 +300,7 @@ function ActivityHeatmapLegend({ color, isNever }: { color: string; isNever: boo
       <LegendItem
         swatch={
           <LegendSwatch>
-            <span className="h-full w-full border border-muted-foreground/50 bg-transparent" />
+            <span className="h-full w-full bg-muted" />
           </LegendSwatch>
         }
         label={isNever ? "Slip" : "Missed"}
@@ -276,7 +309,9 @@ function ActivityHeatmapLegend({ color, isNever }: { color: string; isNever: boo
         <LegendItem
           swatch={
             <LegendSwatch>
-              <span className="h-full w-full border border-dashed border-muted-foreground/40 bg-transparent" />
+              <span className="relative h-full w-full bg-muted/25">
+                <BreakDayDot />
+              </span>
             </LegendSwatch>
           }
           label="Break"
@@ -285,7 +320,7 @@ function ActivityHeatmapLegend({ color, isNever }: { color: string; isNever: boo
       <LegendItem
         swatch={
           <LegendSwatch>
-            <span className="h-full w-full bg-muted" />
+            <span className="h-full w-full border border-muted-foreground/50 bg-transparent" />
           </LegendSwatch>
         }
         label="Off"
@@ -327,7 +362,7 @@ function AggregateHeatmapLegend({ fillColor }: { fillColor?: string }) {
       <LegendItem
         swatch={
           <LegendSwatch>
-            <span className="h-full w-full bg-muted" />
+            <span className="h-full w-full border border-muted-foreground/50 bg-transparent" />
           </LegendSwatch>
         }
         label="Off"
