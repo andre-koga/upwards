@@ -202,7 +202,7 @@ function HeatmapCell({
 
   if (kind === "break") {
     return (
-      <div className={cn(base, "bg-muted/25")} onClick={onClick}>
+      <div className={cn(base, "bg-muted")} onClick={onClick}>
         <BreakDayDot />
       </div>
     );
@@ -309,7 +309,7 @@ function ActivityHeatmapLegend({ color, isNever }: { color: string; isNever: boo
         <LegendItem
           swatch={
             <LegendSwatch>
-              <span className="relative h-full w-full bg-muted/25">
+              <span className="relative h-full w-full bg-muted">
                 <BreakDayDot />
               </span>
             </LegendSwatch>
