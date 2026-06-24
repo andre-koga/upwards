@@ -108,12 +108,13 @@ function getActivityTooltipText(day: HeatmapDay, isNever: boolean): string {
   const ms = day.ms ?? 0;
   const status = day.status;
 
+  if (ms > 0) return formatDuration(ms);
+
   if (day.isBreakDay && status === "done") return "Break";
   if (status === "break") return "Break";
   if (status === "done") return isNever ? "Clean" : "Done";
   if (status === "slip") return "Slip";
   if (status === "missed") return "Missed";
-  if (ms > 0) return formatDuration(ms);
   return "—";
 }
 
@@ -144,7 +145,7 @@ function BreakDayDot({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "pointer-events-none absolute inset-0 flex items-center justify-center",
+        "pointer-events-none absolute inset-0 z-10 flex items-center justify-center",
         className,
       )}
       aria-hidden
@@ -171,6 +172,24 @@ function TimeWeightedFill({
   );
 }
 
+function CellBackground({
+  className,
+  style,
+  dimmed,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+  dimmed?: boolean;
+}) {
+  return (
+    <div
+      className={cn("absolute inset-0 rounded-[2px]", dimmed && "opacity-50", className)}
+      style={style}
+      aria-hidden
+    />
+  );
+}
+
 function HeatmapCell({
   presentation,
   color,
@@ -188,21 +207,23 @@ function HeatmapCell({
   const base = cn(
     "relative aspect-square w-full overflow-hidden rounded-[2px]",
     interactive && "cursor-pointer",
-    weekdayDimmed && "opacity-50",
   );
 
   if (kind === "no_count" || kind === "aggregate_off") {
     return (
-      <div
-        className={cn(base, "border border-muted-foreground/50 bg-transparent")}
-        onClick={onClick}
-      />
+      <div className={base} onClick={onClick}>
+        <CellBackground
+          dimmed={weekdayDimmed}
+          className="border border-muted-foreground/50 bg-transparent"
+        />
+      </div>
     );
   }
 
   if (kind === "break") {
     return (
-      <div className={cn(base, "bg-muted")} onClick={onClick}>
+      <div className={base} onClick={onClick}>
+        <CellBackground dimmed={weekdayDimmed} className="bg-muted" />
         <BreakDayDot />
       </div>
     );
@@ -210,13 +231,12 @@ function HeatmapCell({
 
   if (kind === "success") {
     return (
-      <div
-        className={cn(base, presentation.fillOpacity != null && "bg-muted/25")}
-        style={
-          presentation.fillOpacity == null ? { backgroundColor: color } : undefined
-        }
-        onClick={onClick}
-      >
+      <div className={base} onClick={onClick}>
+        {presentation.fillOpacity != null ? (
+          <CellBackground className="bg-muted/25" />
+        ) : (
+          <CellBackground style={{ backgroundColor: color }} />
+        )}
         {presentation.fillOpacity != null && (
           <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
         )}
@@ -228,19 +248,25 @@ function HeatmapCell({
   if (kind === "failure" || kind === "aggregate_outline") {
     if (presentation.fillOpacity != null) {
       return (
-        <div className={cn(base, "bg-muted/25")} onClick={onClick}>
-          <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
+        <div className={base} onClick={onClick}>
+          <CellBackground dimmed={weekdayDimmed} className="bg-muted/25" />
+          <div className={cn("absolute inset-0", weekdayDimmed && "opacity-50")}>
+            <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
+          </div>
         </div>
       );
     }
     return (
-      <div className={cn(base, "bg-muted")} onClick={onClick} />
+      <div className={base} onClick={onClick}>
+        <CellBackground dimmed={weekdayDimmed} className="bg-muted" />
+      </div>
     );
   }
 
   if (kind === "aggregate_fill") {
     return (
-      <div className={cn(base, "bg-muted/25")} onClick={onClick}>
+      <div className={base} onClick={onClick}>
+        <CellBackground className="bg-muted/25" />
         <div
           className={cn(
             "absolute inset-[0.5px] rounded-[2px]",
@@ -257,7 +283,8 @@ function HeatmapCell({
 
   if (kind === "timer_filled") {
     return (
-      <div className={cn(base, "bg-muted/25")} onClick={onClick}>
+      <div className={base} onClick={onClick}>
+        <CellBackground className="bg-muted/25" />
         <TimeWeightedFill
           color={color}
           fillOpacity={presentation.fillOpacity ?? 1}
@@ -266,7 +293,11 @@ function HeatmapCell({
     );
   }
 
-  return <div className={cn(base, "bg-muted/25")} onClick={onClick} />;
+  return (
+    <div className={base} onClick={onClick}>
+      <CellBackground className="bg-muted/25" />
+    </div>
+  );
 }
 
 function LegendSwatch({ children }: { children: React.ReactNode }) {
@@ -416,7 +447,11 @@ export function ConsistencyHeatmap({
         : getActivityCellPresentation(day, maxMs, hasRoutine);
     const weekdayDimmed =
       isWeekdayDate(day.dateStr) &&
-      (presentation.kind === "no_count" || presentation.kind === "aggregate_off");
+      (presentation.kind === "no_count" ||
+        presentation.kind === "aggregate_off" ||
+        presentation.kind === "failure" ||
+        presentation.kind === "aggregate_outline" ||
+        presentation.kind === "break");
     return (
       <HeatmapCell
         presentation={presentation}
