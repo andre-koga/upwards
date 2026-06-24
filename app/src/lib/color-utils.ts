@@ -1,6 +1,9 @@
 /** Default color for active groups/activities when none is set */
 export const DEFAULT_GROUP_COLOR = "#888";
 
+/** Theme primary — resolves with palette / light-dark changes */
+export const THEME_PRIMARY_COLOR = "hsl(var(--primary))";
+
 /** Default color for archived items */
 export const DEFAULT_ARCHIVED_COLOR = "#6b7280";
 

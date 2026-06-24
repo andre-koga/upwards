@@ -10,12 +10,27 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-06-23",
+    title: "Habit stats, rebuilt",
+    bullets: [
+      "The Stats page is your performance hub — weekly completion, streaks, a 90-day heatmap, and where your time goes by group.",
+      "Open any group to compare habits with sparklines and trends, then dive into one habit for session history, records, and patterns.",
+      "Tap a group in Projects to peek at its stats without leaving your day.",
+      "Each habit has a compound score that rises with wins and falls with misses — one number that tracks real momentum.",
+      "Time-of-day charts reveal when you usually work on habits, from the overview down to a single habit.",
+      "Monthly completion trends chart your last year — overall and broken out by group on one view.",
+      "The 90-day heatmap is clearer: solid wins, outlined misses, dashed breaks, muted off days.",
+    ],
+    fixes: [
+      "Never habits no longer show break days on the heatmap.",
+    ],
+  },
+  {
     date: "2026-06-10",
     title: "Activity stats and a smarter day boundary",
     bullets: [
-      "Tap any habit to see its stats: streaks, total time, a 90-day heatmap, and a by-day-of-week chart.",
+      "Tap any habit to see its stats: streaks, a 90-day heatmap, and a by-day-of-week chart.",
       "Stats adapt to the habit type — timers show session lengths, check-off habits show success rate, 'never' habits show clean days.",
-      "Filter stats by 7 days, 30 days, 90 days, 1 year, or all time.",
       "Settings for a habit or group moved to a cog icon — tapping the pill itself now opens stats.",
     ],
     fixes: [

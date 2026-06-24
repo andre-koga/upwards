@@ -2,6 +2,8 @@ import { useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import StatsPage from "@/pages/stats";
+import GroupStatsPage from "@/pages/stats-group";
+import ActivityStatsPage from "@/pages/stats-activity";
 import SettingsPage from "@/pages/settings";
 import ForgotPasswordPage from "@/pages/forgot-password";
 import ResetPasswordPage from "@/pages/reset-password";
@@ -65,6 +67,11 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<TodayPage />} />
                 <Route path="/stats" element={<StatsPage />} />
+                <Route path="/stats/groups/:groupId" element={<GroupStatsPage />} />
+                <Route
+                  path="/stats/groups/:groupId/activities/:activityId"
+                  element={<ActivityStatsPage />}
+                />
                 <Route
                   path="/promises"
                   element={<Navigate to="/" replace />}

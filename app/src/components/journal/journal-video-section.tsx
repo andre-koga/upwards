@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CloudOff } from "lucide-react";
 import { useDirectVideoThumbnail } from "./hooks/use-direct-video-thumbnail";
 import { cn } from "@/lib/utils";
@@ -50,6 +50,10 @@ export default function JournalVideoSection({
     videoUrlForThumb: videoSrcForThumb,
     onThumbnailGenerated,
   });
+
+  useEffect(() => {
+    setPlaying(false);
+  }, [videoSrcForThumb]);
 
   const handlePlayClick = () => {
     if (!canPlay) return;

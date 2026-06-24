@@ -1,17 +1,19 @@
 import { Link } from "react-router-dom";
-import { X, Settings } from "lucide-react";
+import { Undo2, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const FLOATING_BACK_BUTTON_CLASSES =
-  "fixed bottom-3 left-4 z-50 border-border bg-background text-muted-foreground";
+const FLOATING_BACK_BUTTON_BASE =
+  "border-border bg-background text-muted-foreground shadow-md";
 
 interface FloatingBackButtonProps {
   to?: string;
   onClick?: () => void;
   title?: string;
   "aria-label"?: string;
-  icon?: "back" | "settings";
+  icon?: "back" | "undo" | "settings";
+  /** When false, omits fixed corner positioning (for grouped nav controls). */
+  fixed?: boolean;
   className?: string;
 }
 
@@ -21,10 +23,16 @@ export function FloatingBackButton({
   title,
   "aria-label": ariaLabel,
   icon = "back",
+  fixed = true,
   className,
 }: FloatingBackButtonProps) {
-  const Icon = icon === "settings" ? Settings : X;
-  const merged = cn(FLOATING_BACK_BUTTON_CLASSES, className);
+  const Icon =
+    icon === "settings" ? Settings : icon === "undo" ? Undo2 : X;
+  const merged = cn(
+    FLOATING_BACK_BUTTON_BASE,
+    fixed && "fixed bottom-3 left-4 z-50",
+    className,
+  );
 
   if (to !== undefined) {
     return (

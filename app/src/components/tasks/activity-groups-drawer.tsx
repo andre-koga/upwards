@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { ChevronDown, ChevronLeft, Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -26,6 +27,7 @@ import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
 import ManualTimeEntryDialog from "@/components/tasks/manual-time-entry-dialog";
 import { ActivityStatsDialog } from "@/components/activities/activity-stats-dialog";
+import { GroupStatsDialog } from "@/components/activities/group-stats-dialog";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { Button } from "@/components/ui/button";
 
@@ -113,6 +115,7 @@ export default function ActivityGroupsDrawer({
   triggerIcon: TriggerIcon = Plus,
   floating = true,
 }: ActivityGroupsDrawerProps) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"groups" | "activities">("groups");
   const [selectedGroup, setSelectedGroup] = useState<ActivityGroup | null>(
@@ -136,6 +139,7 @@ export default function ActivityGroupsDrawer({
   const [editingGroup, setEditingGroup] = useState<ActivityGroup | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [statsActivity, setStatsActivity] = useState<Activity | null>(null);
+  const [statsGroup, setStatsGroup] = useState<ActivityGroup | null>(null);
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
     string | null
   >(null);
@@ -332,7 +336,7 @@ export default function ActivityGroupsDrawer({
                               key={group.id}
                               name={group.name}
                               color={group.color || DEFAULT_GROUP_COLOR}
-                              onNameClick={() => setEditingGroup(group)}
+                              onStatsClick={() => setStatsGroup(group)}
                               onSettingsClick={() => setEditingGroup(group)}
                               onActionClick={() => handleOpenGroup(group)}
                             />
@@ -724,6 +728,14 @@ export default function ActivityGroupsDrawer({
           if (!onAddManualEntry) return;
           await onAddManualEntry(payload);
         }}
+      />
+
+      <GroupStatsDialog
+        open={statsGroup !== null}
+        onOpenChange={(next) => {
+          if (!next) setStatsGroup(null);
+        }}
+        group={statsGroup}
       />
 
       <ActivityStatsDialog

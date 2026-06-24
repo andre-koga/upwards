@@ -6,6 +6,8 @@ export interface GroupPillProps {
   color: string;
   onActionClick?: () => void;
   onNameClick?: () => void;
+  /** Opens group stats when clicking the pill name area. */
+  onStatsClick?: () => void;
   onSettingsClick?: () => void;
   nameTitle?: string;
   nameAriaLabel?: string;
@@ -17,12 +19,17 @@ export default function GroupPill({
   color,
   onActionClick,
   onNameClick,
+  onStatsClick,
   onSettingsClick,
-  nameTitle = "Edit group",
-  nameAriaLabel = "Edit group",
+  nameTitle,
+  nameAriaLabel,
   className = "",
 }: GroupPillProps) {
   const actionLabel = "Start";
+  const handleNameClick = onStatsClick ?? onNameClick;
+  const resolvedNameTitle = nameTitle ?? (onStatsClick ? "View group stats" : "Edit group");
+  const resolvedNameAriaLabel =
+    nameAriaLabel ?? (onStatsClick ? "View group stats" : "Edit group");
 
   const base =
     "relative flex items-stretch gap-2 rounded-full overflow-hidden h-10 " +
@@ -34,9 +41,9 @@ export default function GroupPill({
         <Button
           type="button"
           variant="outline"
-          onClick={onNameClick}
-          title={nameTitle}
-          aria-label={nameAriaLabel}
+          onClick={handleNameClick}
+          title={resolvedNameTitle}
+          aria-label={resolvedNameAriaLabel}
           className="h-full flex-1 justify-start gap-2.5 truncate rounded-full px-4 text-left text-sm font-medium shadow-none"
         >
           <span
