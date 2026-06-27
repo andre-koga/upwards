@@ -23,7 +23,11 @@ import {
   recomputeActivityStreaksFromDateForActivities,
   type TodayOverride,
 } from "@/lib/streak-utils";
-import { clipPeriodToDay, effectiveDayStartMs } from "@/lib/activity/period-day-utils";
+import {
+  clipPeriodToDay,
+  effectiveDateForMs,
+  effectiveDayStartMs,
+} from "@/lib/activity/period-day-utils";
 import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import { useDailyEntry } from "./use-daily-entry";
@@ -402,9 +406,10 @@ export function useDailyTasks({
       startIso: string;
       endIso: string;
     }) => {
-      const { activityId, dateString: periodDateString, startIso, endIso } = params;
+      const { activityId, startIso, endIso } = params;
       const createdAt = now();
-      const dailyEntry = await getOrCreateDailyEntryDb(periodDateString);
+      const entryDateString = effectiveDateForMs(new Date(startIso).getTime());
+      const dailyEntry = await getOrCreateDailyEntryDb(entryDateString);
 
       const period: ActivityPeriod = {
         id: newId(),

@@ -16,9 +16,9 @@ import { StatsPageShell } from "@/components/stats/stats-page-shell";
 import { StatsSectionCard } from "@/components/stats/stats-section-card";
 import { ConsistencyHeatmap } from "@/components/stats/consistency-heatmap";
 import { MonthlyLineChart } from "@/components/stats/monthly-line-chart";
-import { HorizontalBarChart } from "@/components/stats/horizontal-bar-chart";
 import { GroupNavCard } from "@/components/stats/group-nav-card";
 import { TimeOfDayChart } from "@/components/stats/time-of-day-chart";
+import { timeOfDayHasData } from "@/lib/stats/aggregates";
 
 export default function StatsPage() {
   const navigate = useNavigate();
@@ -107,53 +107,8 @@ export default function StatsPage() {
             />
           </StatsSectionCard>
 
-          {(stats.monthlyCompletionByGroup.length > 0 ||
-            stats.monthlyCompletion.some((p) => p.rate !== null)) && (
-            <StatsSectionCard icon={TrendingUp} label="Completion rate">
-              <MonthlyLineChart
-                series={
-                  stats.monthlyCompletionByGroup.length > 0
-                    ? stats.monthlyCompletionByGroup
-                    : undefined
-                }
-                points={
-                  stats.monthlyCompletionByGroup.length === 0
-                    ? stats.monthlyCompletion
-                    : undefined
-                }
-                color={
-                  stats.monthlyCompletionByGroup.length === 0
-                    ? THEME_PRIMARY_COLOR
-                    : undefined
-                }
-                isNever={false}
-              />
-            </StatsSectionCard>
-          )}
-
-          {stats.timeByGroup30d.length > 0 && (
-            <StatsSectionCard icon={Clock} label="Time by group · 30d">
-              <HorizontalBarChart
-                color="#3b82f6"
-                items={stats.timeByGroup30d.map((g) => ({
-                  id: g.groupId,
-                  label: g.groupName,
-                  value: g.ms,
-                  color: g.color,
-                }))}
-                onItemClick={(id) => navigate(`/stats/groups/${id}`)}
-              />
-            </StatsSectionCard>
-          )}
-
-          {stats.timeOfDayBuckets.some((v) => v > 0) && (
-            <StatsSectionCard icon={Clock} label="Time of day · 30d">
-              <TimeOfDayChart buckets={stats.timeOfDayBuckets} color={THEME_PRIMARY_COLOR} />
-            </StatsSectionCard>
-          )}
-
           {stats.groups.length > 0 && (
-            <StatsSectionCard icon={Layers} label="Group completion · 30d">
+            <StatsSectionCard icon={Layers} label="Groups · 30d">
               <div className="flex flex-col gap-1">
                 {stats.groups.map((g) => (
                   <GroupNavCard
@@ -162,11 +117,43 @@ export default function StatsPage() {
                     color={g.group.color || DEFAULT_GROUP_COLOR}
                     habitCount={g.habitCount}
                     completionRate30d={g.completionRate30d}
-                    sparklineRates={g.sparklineRates}
+                    trackedMs30d={g.trackedMs30d}
+                    sparklineDays={g.sparklineDays}
                     onClick={() => navigate(`/stats/groups/${g.group.id}`)}
                   />
                 ))}
               </div>
+            </StatsSectionCard>
+          )}
+
+          {(stats.weeklyCompletionByGroup.length > 0 ||
+            stats.weeklyCompletion.some((p) => p.rate !== null)) && (
+            <StatsSectionCard icon={TrendingUp} label="Completion rate">
+              <MonthlyLineChart
+                series={
+                  stats.weeklyCompletionByGroup.length > 0
+                    ? stats.weeklyCompletionByGroup
+                    : undefined
+                }
+                points={
+                  stats.weeklyCompletionByGroup.length === 0
+                    ? stats.weeklyCompletion
+                    : undefined
+                }
+                xAxisLabels={stats.monthlyCompletion}
+                color={
+                  stats.weeklyCompletionByGroup.length === 0
+                    ? THEME_PRIMARY_COLOR
+                    : undefined
+                }
+                isNever={false}
+              />
+            </StatsSectionCard>
+          )}
+
+          {timeOfDayHasData(stats.timeOfDaySegments) && (
+            <StatsSectionCard icon={Clock} label="Time of day · 30d">
+              <TimeOfDayChart segments={stats.timeOfDaySegments} />
             </StatsSectionCard>
           )}
 

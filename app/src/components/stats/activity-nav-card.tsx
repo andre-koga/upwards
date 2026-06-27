@@ -1,8 +1,42 @@
+import { ChevronRight, Clock, Sparkles } from "lucide-react";
+import { formatCompoundScore } from "@/lib/activity";
 import type { ActivitySparklineDay } from "@/lib/stats";
 import { formatDuration } from "@/lib/stats/format";
 import { cn } from "@/lib/utils";
+import { SparklineBar } from "./sparkline-bar";
+import { StatPill } from "./stat-pill";
 
-function ActivityDaySparkline({
+const MISSING_STAT = "—";
+
+function ActivityCompletionSparkline({
+  days,
+  color,
+}: {
+  days: ActivitySparklineDay[];
+  color: string;
+}) {
+  if (days.length === 0) return null;
+
+  return (
+    <div className="flex h-4 w-full items-end gap-px" aria-hidden>
+      {days.map((day, i) => {
+        const height =
+          day.rate > 0 ? Math.max(2, Math.round((day.rate / 100) * 16)) : 2;
+        return (
+          <SparklineBar
+            key={i}
+            height={height}
+            color={color}
+            isBreakDay={day.isBreakDay}
+            hasValue={day.rate > 0}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function ActivityTimerSparkline({
   days,
   color,
 }: {
@@ -17,37 +51,19 @@ function ActivityDaySparkline({
     <div className="flex h-4 w-full items-end gap-px" aria-hidden>
       {days.map((day, i) => {
         const height =
-          day.ms > 0
-            ? Math.max(2, Math.round((day.ms / maxMs) * 16))
-            : day.rate > 0
-              ? Math.max(2, Math.round((day.rate / 100) * 16))
-              : 2;
-        const active = day.ms > 0 || day.rate > 0;
+          day.ms > 0 ? Math.max(2, Math.round((day.ms / maxMs) * 16)) : 2;
         return (
-          <div
+          <SparklineBar
             key={i}
-            className="min-w-0 flex-1 rounded-[1px] bg-muted"
-            style={{
-              height,
-              backgroundColor: active ? color : undefined,
-            }}
+            height={height}
+            color={color}
+            isBreakDay={day.isBreakDay}
+            hasValue={day.ms > 0}
           />
         );
       })}
     </div>
   );
-}
-
-function detailLabel(
-  scheduled30d: number,
-  completed30d: number,
-  sparklineDays: ActivitySparklineDay[],
-): string {
-  if (scheduled30d > 0) {
-    return `${completed30d}/${scheduled30d}`;
-  }
-  const trackedMs = sparklineDays.reduce((sum, day) => sum + day.ms, 0);
-  return trackedMs > 0 ? formatDuration(trackedMs) : "—";
 }
 
 export function ActivityNavCard({
@@ -57,8 +73,11 @@ export function ActivityNavCard({
   completed30d,
   scheduled30d,
   sparklineDays,
+  compoundScore,
+  trackedMs30d,
   onClick,
   className,
+  completed = false,
 }: {
   name: string;
   color: string;
@@ -66,25 +85,75 @@ export function ActivityNavCard({
   completed30d: number;
   scheduled30d: number;
   sparklineDays: ActivitySparklineDay[];
+  compoundScore?: number | null;
+  trackedMs30d: number;
   onClick?: () => void;
   className?: string;
+  completed?: boolean;
 }) {
-  const rateLabel =
-    completionRate30d === null ? "—" : `${Math.round(completionRate30d)}%`;
+  const showCompletion = scheduled30d > 0;
+  const showTimerSparkline = !showCompletion && trackedMs30d > 0;
+  const completionLabel = showCompletion
+    ? completionRate30d === null
+      ? MISSING_STAT
+      : `${Math.round(completionRate30d)}%`
+    : MISSING_STAT;
+  const scoreLabel =
+    compoundScore != null ? formatCompoundScore(compoundScore) : MISSING_STAT;
+  const timeLabel =
+    trackedMs30d > 0 ? formatDuration(trackedMs30d) : MISSING_STAT;
 
   const body = (
     <>
-      <div className="flex items-start gap-2">
-        <span className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">{name}</span>
-        <p className="shrink-0 text-sm font-semibold tabular-nums leading-tight">{rateLabel}</p>
-      </div>
-      <div className="space-y-1">
-        <ActivityDaySparkline days={sparklineDays} color={color} />
-        <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
-          <span>{detailLabel(scheduled30d, completed30d, sparklineDays)}</span>
-          <span>30d</span>
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          <span
+            className={cn(
+              "min-w-0 truncate text-sm font-medium leading-tight",
+              completed && "text-muted-foreground line-through",
+            )}
+          >
+            {name}
+          </span>
+          <div className="flex shrink-0 items-center gap-1">
+            <StatPill icon={<Sparkles className="h-2.5 w-2.5 shrink-0" aria-hidden />}>
+              {scoreLabel}
+            </StatPill>
+            <StatPill icon={<Clock className="h-2.5 w-2.5 shrink-0" aria-hidden />}>
+              {timeLabel}
+            </StatPill>
+          </div>
         </div>
+        <span className="shrink-0 text-sm font-semibold tabular-nums leading-tight">
+          {completionLabel}
+        </span>
+        {onClick && (
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        )}
       </div>
+      {(showCompletion || showTimerSparkline) && (
+        <div className="space-y-1">
+          {showCompletion && (
+            <>
+              <ActivityCompletionSparkline days={sparklineDays} color={color} />
+              <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                <span>
+                  {completed30d}/{scheduled30d}
+                </span>
+                <span>30d</span>
+              </div>
+            </>
+          )}
+          {showTimerSparkline && (
+            <>
+              <ActivityTimerSparkline days={sparklineDays} color={color} />
+              <div className="flex justify-end text-[10px] text-muted-foreground">
+                <span>30d</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </>
   );
 

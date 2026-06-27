@@ -11,17 +11,26 @@ import {
   isHiddenGroupDefaultActivity,
 } from "@/lib/activity";
 import {
+  effectiveDateForMs,
+  getLogicalEndDate,
+  resolvePeriodFromLogicalDay,
+  spansLogicalDays,
+  timestampForLogicalDayTime,
+} from "@/lib/activity/period-day-utils";
+import {
   toDateString,
   formatTimeInput,
-  combineDateAndTime,
-  shiftDate,
+  formatWeekdayShortDate,
   timeToSeconds,
-  startOfDay,
   fromDateString,
 } from "@/lib/time-utils";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
-import { getEffectiveToday, getDayResetMinutes } from "@/lib/session/day-reset";
+import {
+  getEffectiveToday,
+  getDayResetMinutes,
+  formatResetMinutes,
+} from "@/lib/session/day-reset";
 
 const NONE_ACTIVITY_VALUE = "__none__";
 
@@ -55,7 +64,9 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const [details, setDetails] = useState<SessionDetailsData | null>(null);
   const [groupActivities, setGroupActivities] = useState<Activity[]>([]);
   const [selectedActivityId, setSelectedActivityId] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date>(() => fromDateString(getEffectiveToday()));
+  const [selectedDate, setSelectedDate] = useState<Date>(() =>
+    fromDateString(getEffectiveToday()),
+  );
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
@@ -106,10 +117,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           .sortBy("created_at"),
       ]);
 
-      // Use the period's actual start_time to initialise the date picker so
-      // cross-boundary sessions (start before reset, end after) open on the
-      // correct calendar day, not the daily-entry date.
-      const initialDate = new Date(period.start_time);
+      const startMs = new Date(period.start_time).getTime();
+      const logicalDateStr = effectiveDateForMs(startMs);
 
       setDetails({
         group,
@@ -123,16 +132,16 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         entry,
       });
       setGroupActivities(
-        activities.filter((item) => !isHiddenGroupDefaultActivity(item))
+        activities.filter((item) => !isHiddenGroupDefaultActivity(item)),
       );
       setSelectedActivityId(
         activity &&
           !activity.deleted_at &&
           !isHiddenGroupDefaultActivity(activity)
           ? activity.id
-          : NONE_ACTIVITY_VALUE
+          : NONE_ACTIVITY_VALUE,
       );
-      setSelectedDate(initialDate);
+      setSelectedDate(fromDateString(logicalDateStr));
       setStartTime(formatTimeInput(period.start_time));
       setEndTime(formatTimeInput(period.end_time));
       setLoading(false);
@@ -163,28 +172,39 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       return;
     }
 
-    const nextStartIso = combineDateAndTime(selectedDate, startTime);
     const isRunning = details.period.end_time === null;
+    const logicalDateStr = toDateString(selectedDate);
+    const resetMinutes = getDayResetMinutes();
 
-    // If end clock < start clock the session spans overnight; end falls on the
-    // next calendar day.
-    const crossesMidnightSave =
-      !isRunning && !!endTime && timeToSeconds(endTime) < timeToSeconds(startTime);
-    const endDate = crossesMidnightSave ? shiftDate(selectedDate, 1) : selectedDate;
+    let nextStartIso: string;
+    let nextEndIso: string | null;
 
-    const nextEndIso = isRunning
-      ? null
-      : endTime
-        ? combineDateAndTime(endDate, endTime)
-        : null;
+    if (isRunning) {
+      const startMs = timestampForLogicalDayTime(
+        logicalDateStr,
+        startTime,
+        resetMinutes,
+      );
+      nextStartIso = new Date(startMs).toISOString();
+      nextEndIso = null;
+    } else {
+      if (!endTime) {
+        setError("Please set an end time.");
+        return;
+      }
+      if (timeToSeconds(endTime) === timeToSeconds(startTime)) {
+        setError("End time must be different from start time.");
+        return;
+      }
 
-    // Only block truly zero-length sessions (equal times).
-    if (
-      nextEndIso &&
-      new Date(nextEndIso).getTime() === new Date(nextStartIso).getTime()
-    ) {
-      setError("End time must be different from start time.");
-      return;
+      const resolved = resolvePeriodFromLogicalDay(
+        logicalDateStr,
+        startTime,
+        endTime,
+        resetMinutes,
+      );
+      nextStartIso = resolved.startIso;
+      nextEndIso = resolved.endIso;
     }
 
     try {
@@ -196,8 +216,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           ? (await getOrCreateHiddenGroupDefaultActivity(details.group)).id
           : selectedActivityId;
 
-      const selectedDateString = toDateString(selectedDate);
-      const entry = await getOrCreateDailyEntry(selectedDateString);
+      const entryDateString = effectiveDateForMs(new Date(nextStartIso).getTime());
+      const entry = await getOrCreateDailyEntry(entryDateString);
       const n = now();
 
       await db.activityPeriods.update(sessionId, {
@@ -213,8 +233,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           current_activity_id: nextActivityId,
           updated_at: n,
         });
-        // If the session was moved to a different day, clear the old entry's
-        // running indicator.
         if (details.period.daily_entry_id !== entry.id) {
           await db.dailyEntries.update(details.period.daily_entry_id, {
             current_activity_id: null,
@@ -244,21 +262,30 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const isRunningSession =
     details?.period != null && details.period.end_time === null;
 
-  // A session crosses midnight if endTime < startTime on the clock.
-  // It spans two *logical* days only if it also crosses the reset boundary
-  // (end time >= reset time). e.g. 11 PM → 3 AM with a 4 AM reset stays on
-  // the same logical day; 11 PM → 5 AM crosses into the next logical day.
-  const crossesMidnight =
-    !isRunningSession &&
-    !!startTime &&
-    !!endTime &&
-    timeToSeconds(endTime) < timeToSeconds(startTime);
-
   const resetMinutes = getDayResetMinutes();
-  const resetSeconds = resetMinutes * 60;
 
-  const spansOvernight =
-    crossesMidnight && timeToSeconds(endTime ?? "00:00:00") >= resetSeconds;
+  const spanWarning = useMemo(() => {
+    if (isRunningSession || !startTime || !endTime) return null;
+    if (timeToSeconds(endTime) === timeToSeconds(startTime)) return null;
+
+    const logicalDateStr = toDateString(selectedDate);
+    const { startMs, endMs } = resolvePeriodFromLogicalDay(
+      logicalDateStr,
+      startTime,
+      endTime,
+      resetMinutes,
+    );
+
+    if (!spansLogicalDays(startMs, endMs)) return null;
+
+    const startDay = formatWeekdayShortDate(
+      fromDateString(effectiveDateForMs(startMs)),
+    );
+    const endDay = formatWeekdayShortDate(
+      fromDateString(getLogicalEndDate(startMs, endMs)),
+    );
+    return `This session spans ${startDay} and ${endDay} (crosses your ${formatResetMinutes(resetMinutes)} day boundary).`;
+  }, [isRunningSession, startTime, endTime, selectedDate, resetMinutes]);
 
   return {
     NONE_ACTIVITY_VALUE,
@@ -267,7 +294,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     error,
     details,
     isRunningSession,
-    spansOvernight,
+    spanWarning,
     resetMinutes,
     groupActivities,
     selectedActivityId,

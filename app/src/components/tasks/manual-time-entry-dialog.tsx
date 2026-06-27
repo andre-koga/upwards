@@ -7,12 +7,17 @@ import {
   FormTimeField,
 } from "@/components/forms";
 import { getActivityDisplayName } from "@/lib/activity";
+import {
+  effectiveDateForMs,
+  getLogicalEndDate,
+  resolvePeriodFromLogicalDay,
+  spansLogicalDays,
+} from "@/lib/activity/period-day-utils";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
-  combineDateAndTime,
   formatTimeInput,
+  formatWeekdayShortDate,
   fromDateString,
-  shiftDate,
   timeToSeconds,
   toDateString,
 } from "@/lib/time-utils";
@@ -48,16 +53,31 @@ export default function ManualTimeEntryDialog({
   const [error, setError] = useState<string | null>(null);
 
   const todayString = useMemo(() => getEffectiveToday(), []);
-
-  // A session crosses midnight when endTime < startTime on the clock.
-  // It spans two *logical* days only if the end time also reaches or passes
-  // the configured day-reset boundary (e.g. 4 AM). A session ending at 3 AM
-  // with a 4 AM reset still belongs to the same logical day.
-  const crossesMidnight = !!startTime && !!endTime &&
-    timeToSeconds(endTime) < timeToSeconds(startTime);
   const resetMinutes = useMemo(() => getDayResetMinutes(), []);
-  const spansOvernight = crossesMidnight &&
-    timeToSeconds(endTime) >= resetMinutes * 60;
+
+  const resolvedPeriod = useMemo(() => {
+    if (!startTime || !endTime) return null;
+    if (timeToSeconds(endTime) === timeToSeconds(startTime)) return null;
+    return resolvePeriodFromLogicalDay(
+      dateString,
+      startTime,
+      endTime,
+      resetMinutes,
+    );
+  }, [dateString, startTime, endTime, resetMinutes]);
+
+  const spanWarning = useMemo(() => {
+    if (!resolvedPeriod || !spansLogicalDays(resolvedPeriod.startMs, resolvedPeriod.endMs)) {
+      return null;
+    }
+    const startDay = formatWeekdayShortDate(
+      fromDateString(effectiveDateForMs(resolvedPeriod.startMs)),
+    );
+    const endDay = formatWeekdayShortDate(
+      fromDateString(getLogicalEndDate(resolvedPeriod.startMs, resolvedPeriod.endMs)),
+    );
+    return `This session spans ${startDay} and ${endDay} (crosses your ${formatResetMinutes(resetMinutes)} day boundary).`;
+  }, [resolvedPeriod, resetMinutes]);
 
   useEffect(() => {
     if (!open) return;
@@ -89,9 +109,25 @@ export default function ManualTimeEntryDialog({
       return;
     }
 
-    // Equal times produce zero-length sessions — still block that.
     if (timeToSeconds(endTime) === timeToSeconds(startTime)) {
       setError("End time must be different from start time.");
+      return;
+    }
+
+    const { startIso, endIso, startMs, endMs } = resolvePeriodFromLogicalDay(
+      dateString,
+      startTime,
+      endTime,
+      resetMinutes,
+    );
+
+    const nowMs = Date.now();
+    if (endMs > nowMs) {
+      setError("End time can't be in the future.");
+      return;
+    }
+    if (startMs > nowMs) {
+      setError("Start time can't be in the future.");
       return;
     }
 
@@ -99,16 +135,11 @@ export default function ManualTimeEntryDialog({
       setSaving(true);
       setError(null);
 
-      const startDate = fromDateString(dateString);
-      // If end is before start on the clock the session crossed calendar
-      // midnight; the end timestamp falls on the next calendar day.
-      const endDate = crossesMidnight ? shiftDate(startDate, 1) : startDate;
-
       await onSave({
         activityId: activity.id,
-        dateString,
-        startIso: combineDateAndTime(startDate, startTime),
-        endIso: combineDateAndTime(endDate, endTime),
+        dateString: effectiveDateForMs(startMs),
+        startIso,
+        endIso,
       });
 
       onOpenChange(false);
@@ -158,9 +189,9 @@ export default function ManualTimeEntryDialog({
           onValueChange={setEndTime}
         />
 
-        {spansOvernight && (
+        {spanWarning && (
           <p className="text-sm text-amber-600 dark:text-amber-400">
-            This session crosses your {formatResetMinutes(resetMinutes)} day boundary and will count across two days.
+            {spanWarning}
           </p>
         )}
 

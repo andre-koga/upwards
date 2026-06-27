@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import type { MonthlyCompletionPoint, MonthlyCompletionSeries } from "@/lib/stats";
+import { CHART_POINT_RADIUS } from "./chart-constants";
 import { FloatingTooltip, useFloatingTooltip } from "./use-floating-tooltip";
 
 const MONTHLY_CHART_HEIGHT = 112;
@@ -37,15 +38,39 @@ function formatPointTooltip(
   return `${p.rate}%`;
 }
 
+function buildMonthAxisLabels(
+  plotPoints: MonthlyCompletionPoint[],
+  monthlyLabels: MonthlyCompletionPoint[],
+): { index: number; label: string }[] {
+  const labels: { index: number; label: string }[] = [];
+  const usedIndices = new Set<number>();
+
+  for (const month of monthlyLabels) {
+    let index = plotPoints.findIndex((w) => w.monthKey.slice(0, 7) === month.monthKey);
+    if (index < 0) {
+      index = plotPoints.findIndex((w) => w.monthKey >= `${month.monthKey}-01`);
+    }
+    if (index >= 0 && !usedIndices.has(index)) {
+      usedIndices.add(index);
+      labels.push({ index, label: month.label });
+    }
+  }
+
+  return labels;
+}
+
 export function MonthlyLineChart({
   points,
   color,
   series,
+  xAxisLabels,
   isNever,
 }: {
   points?: MonthlyCompletionPoint[];
   color?: string;
   series?: MonthlyCompletionSeries[];
+  /** Month labels for the x-axis when plot points are weekly */
+  xAxisLabels?: MonthlyCompletionPoint[];
   isNever?: boolean;
 }) {
   const { tooltip, visible, show } = useFloatingTooltip();
@@ -60,14 +85,17 @@ export function MonthlyLineChart({
 
   if (chartSeries.length === 0) return null;
 
-  const monthLabels = chartSeries[0].points;
+  const plotPoints = chartSeries[0].points;
   const plotW = MONTHLY_CHART_WIDTH - MONTHLY_PAD.left - MONTHLY_PAD.right;
   const plotH = MONTHLY_CHART_HEIGHT - MONTHLY_PAD.top - MONTHLY_PAD.bottom;
   const multiSeries = chartSeries.length > 1;
+  const axisLabels = xAxisLabels
+    ? buildMonthAxisLabels(plotPoints, xAxisLabels)
+    : plotPoints.map((p, i) => ({ index: i, label: p.label }));
 
   const xAt = (i: number) =>
     MONTHLY_PAD.left +
-    (monthLabels.length <= 1 ? plotW / 2 : (i / (monthLabels.length - 1)) * plotW);
+    (plotPoints.length <= 1 ? plotW / 2 : (i / (plotPoints.length - 1)) * plotW);
   const yAt = (rate: number) => MONTHLY_PAD.top + plotH - (rate / 100) * plotH;
 
   const handlePointClick = (
@@ -134,7 +162,7 @@ export function MonthlyLineChart({
                 key={`${s.id}-${p.monthKey}`}
                 cx={xAt(i)}
                 cy={yAt(p.rate)}
-                r={multiSeries ? 2.5 : 3}
+                r={CHART_POINT_RADIUS}
                 fill={s.color}
                 className="cursor-pointer"
                 onClick={(e) => handlePointClick(e, p, s.label || undefined)}
@@ -142,16 +170,16 @@ export function MonthlyLineChart({
             ),
           ),
         )}
-        {monthLabels.map((p, i) => (
+        {axisLabels.map(({ index, label }) => (
           <text
-            key={`${p.monthKey}-label`}
-            x={xAt(i)}
+            key={`${plotPoints[index]?.monthKey ?? index}-label`}
+            x={xAt(index)}
             y={MONTHLY_CHART_HEIGHT - 5}
             textAnchor="middle"
             fontSize={10}
             className="fill-muted-foreground"
           >
-            {p.label}
+            {label}
           </text>
         ))}
       </svg>
@@ -163,7 +191,7 @@ export function MonthlyLineChart({
               className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"
             >
               <span
-                className="h-2 w-2 shrink-0 rounded-full"
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
                 style={{ backgroundColor: s.color }}
                 aria-hidden
               />

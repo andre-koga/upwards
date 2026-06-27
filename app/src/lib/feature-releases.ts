@@ -10,6 +10,21 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-06-27",
+    title: "Stats, refined",
+    bullets: [
+      "Time-of-day charts now stack by activity (in a group) or by group (on the overview), so you can see what filled each hour instead of one solid bar.",
+      "Groups and activities sit right under the 90-day heatmap with sparklines, tracked time, and completion at a glance.",
+      "Break days show on sparklines with a small amber mark at the bottom of each day.",
+      "Tap a group or activity row to drill in — a chevron shows the way.",
+    ],
+    fixes: [
+      "Group sparklines now count never habits toward completion.",
+      "Break days on the overall heatmap show your real completion rate, not 100% by default.",
+      "Activity heatmap break days use the same amber styling as off days.",
+    ],
+  },
+  {
     date: "2026-06-23",
     title: "Habit stats, rebuilt",
     bullets: [

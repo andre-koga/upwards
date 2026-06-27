@@ -5,6 +5,7 @@ import {
   Clock,
   BarChart3,
   TrendingUp,
+  Sparkles,
 } from "lucide-react";
 import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
@@ -14,6 +15,7 @@ import { formatWeekdayShortDate, fromDateString } from "@/lib/time-utils";
 import { StatsPageShell } from "@/components/stats/stats-page-shell";
 import { StatsSectionCard } from "@/components/stats/stats-section-card";
 import { ActivityStatsCore } from "@/components/stats/activity-stats-core";
+import { ScoreLineChart } from "@/components/stats/score-line-chart";
 import { TimeOfDayChart } from "@/components/stats/time-of-day-chart";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -84,6 +86,12 @@ export default function ActivityStatsPage() {
       {stats && (
         <div className="flex flex-col gap-2">
           <ActivityStatsCore stats={stats} color={color} />
+
+          {stats.compoundScoreSeries90d && stats.compoundScoreSeries90d.length > 0 && (
+            <StatsSectionCard icon={Sparkles} label="Score · 90d">
+              <ScoreLineChart points={stats.compoundScoreSeries90d} color={color} />
+            </StatsSectionCard>
+          )}
 
           {stats.activityCompletionRate90d !== null && stats.groupCompletionRate90d !== null && (
             <StatsSectionCard icon={TrendingUp} label="Vs group · 90d">

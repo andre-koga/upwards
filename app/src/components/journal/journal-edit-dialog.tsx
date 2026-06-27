@@ -13,6 +13,7 @@ import { getFirstEmoji } from "@/lib/emoji-utils";
 import {
   JournalPhotoUploadError,
   JournalVideoUploadError,
+  deleteJournalPhoto,
   getJournalPhotoUrl,
   uploadJournalPhoto,
   uploadJournalVideo,
@@ -75,6 +76,8 @@ export default function JournalEditDialog({
   const closeReasonRef = useRef<"save" | "cancel" | null>(null);
   /** Journal day this form session is for; used as stash key on dismiss. */
   const entryDateSessionRef = useRef(entryDate);
+  /** Photo paths when this edit session opened; used to detect removals and orphans. */
+  const initialPhotoPathsRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -97,12 +100,14 @@ export default function JournalEditDialog({
       setText(draft.text);
       setVideoPath(draft.videoPath);
       setPhotoPaths(draft.photoPaths);
+      initialPhotoPathsRef.current = draft.photoPaths;
     } else {
       setEmoji(initialEmoji);
       setTitle(initialTitle);
       setText(initialText);
       setVideoPath(initialVideoPath);
       setPhotoPaths(initialPhotoPaths);
+      initialPhotoPathsRef.current = initialPhotoPaths;
     }
     setUploadError(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,9 +130,34 @@ export default function JournalEditDialog({
     prevOpenRef.current = open;
   }, [open, emoji, title, text, videoPath, photoPaths]);
 
+  const deleteRemovedSavedPhotos = (finalPhotoPaths: string[]) => {
+    const removedPaths = initialPhotoPathsRef.current.filter(
+      (path) => !finalPhotoPaths.includes(path)
+    );
+    if (removedPaths.length === 0) return;
+    void Promise.all(
+      removedPaths.map((path) =>
+        deleteJournalPhoto(path).catch(() => undefined)
+      )
+    );
+  };
+
+  const deleteOrphanedUploads = (currentPhotoPaths: string[]) => {
+    const orphanedPaths = currentPhotoPaths.filter(
+      (path) => !initialPhotoPathsRef.current.includes(path)
+    );
+    if (orphanedPaths.length === 0) return;
+    void Promise.all(
+      orphanedPaths.map((path) =>
+        deleteJournalPhoto(path).catch(() => undefined)
+      )
+    );
+  };
+
   const handleSave = () => {
     closeReasonRef.current = "save";
     clearJournalEditSessionDraft(entryDateSessionRef.current);
+    deleteRemovedSavedPhotos(photoPaths);
     onSave({
       emoji: getFirstEmoji(emoji),
       title: title.trim(),
@@ -218,7 +248,12 @@ export default function JournalEditDialog({
 
   const removePhoto = (index: number) => {
     setUploadError(null);
+    const path = photoPaths[index];
+    if (!path) return;
     setPhotoPaths((prev) => prev.filter((_, i) => i !== index));
+    if (!initialPhotoPathsRef.current.includes(path)) {
+      void deleteJournalPhoto(path).catch(() => undefined);
+    }
   };
 
   const photoCount = photoPaths.length;
@@ -399,6 +434,7 @@ export default function JournalEditDialog({
           onClick: () => {
             closeReasonRef.current = "cancel";
             clearJournalEditSessionDraft(entryDateSessionRef.current);
+            deleteOrphanedUploads(photoPaths);
             onOpenChange(false);
           },
         }}

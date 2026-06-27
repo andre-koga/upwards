@@ -3,11 +3,11 @@ import { db, now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 import { closeOpenPeriods } from "@/lib/activity";
 import {
+  calendarDatesOverlappingEffectiveDay,
   effectiveDayStartMs,
   effectiveDayEndMs,
   clipPeriodToDay,
 } from "@/lib/activity/period-day-utils";
-import { toDateString } from "@/lib/time-utils";
 
 export function useActivityTracking(
   dateString: string,
@@ -22,15 +22,7 @@ export function useActivityTracking(
       const dayStartMs = effectiveDayStartMs(dateString);
       const dayEndMs = effectiveDayEndMs(dateString);
 
-      // Always look back 2 calendar days in addition to the current date.
-      // A period stored on a previous day's daily entry (because it started
-      // before the reset boundary) can still overlap this effective day.
-      // 2 days covers any realistic overnight or long session.
-      const datesToQuery = [dateString];
-      for (let i = 1; i <= 2; i++) {
-        const prev = new Date(dayStartMs - i * 24 * 60 * 60 * 1000);
-        datesToQuery.push(toDateString(prev));
-      }
+      const datesToQuery = calendarDatesOverlappingEffectiveDay(dateString);
 
       const entries = await db.dailyEntries
         .where("date")

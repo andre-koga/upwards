@@ -48,7 +48,7 @@ export function getDailyTaskInteractionState(
 
   if (isCompletedRetired) {
     return {
-      isReadOnly: false,
+      isReadOnly: !isEditableDate,
       retiredKind: "completed",
       canClickName: true,
       canEditCounts: isEditableDate,

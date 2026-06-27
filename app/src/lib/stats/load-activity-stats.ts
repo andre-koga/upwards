@@ -1,10 +1,10 @@
 import { db } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
-import { computeCompoundScore } from "@/lib/activity";
+import { computeCompoundScore, computeCompoundScoreSeries } from "@/lib/activity";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { effectiveDateForMs } from "@/lib/activity/period-day-utils";
 import { isNeverRoutine } from "@/lib/activity/never-task";
-import { startOfDay, toDateString } from "@/lib/time-utils";
+import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 import {
   buildActivityCompletionByDate,
   buildBreakDaysSet,
@@ -64,6 +64,7 @@ export async function loadActivityStats(activityId: string): Promise<ActivitySta
 
   let completionByDate: Record<string, import("./types").DayStatus> = {};
   let compoundScore: number | null = null;
+  let compoundScoreSeries90d: import("@/lib/activity").CompoundScorePoint[] | undefined;
 
   if (activity && hasRoutine) {
     completionByDate = buildActivityCompletionByDate(
@@ -74,6 +75,15 @@ export async function loadActivityStats(activityId: string): Promise<ActivitySta
       today,
     );
     compoundScore = computeCompoundScore(activity, entriesByDate, breakDays, createdAt, today);
+    const ninetyDaysAgo = shiftDate(today, -89);
+    compoundScoreSeries90d = computeCompoundScoreSeries(
+      activity,
+      entriesByDate,
+      breakDays,
+      createdAt,
+      ninetyDaysAgo,
+      today,
+    );
   }
 
   return {
@@ -88,6 +98,7 @@ export async function loadActivityStats(activityId: string): Promise<ActivitySta
     completionByDate,
     breakDateStrs: breakDays,
     compoundScore,
+    compoundScoreSeries90d,
   };
 }
 

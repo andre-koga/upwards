@@ -1,4 +1,5 @@
 import type { Activity, ActivityGroup } from "@/lib/db/types";
+import type { CompoundScorePoint } from "@/lib/activity";
 
 export type DayStatus = "done" | "missed" | "slip" | "not_scheduled" | "break";
 
@@ -29,6 +30,7 @@ export interface ActivityStats {
   completionByDate: Record<string, DayStatus>;
   breakDateStrs: Set<string>;
   compoundScore: number | null;
+  compoundScoreSeries90d?: CompoundScorePoint[];
 }
 
 export type HeatmapDay = {
@@ -43,12 +45,26 @@ export type HeatmapDay = {
   habitsScheduled?: number;
 };
 
+export type SparklineDay = {
+  rate: number;
+  isBreakDay?: boolean;
+};
+
 export interface GroupNavSummary {
   group: ActivityGroup;
   habitCount: number;
   completionRate30d: number | null;
-  sparklineRates: number[];
+  trackedMs30d: number;
+  sparklineDays: SparklineDay[];
 }
+
+export type TimeOfDaySegment = {
+  id: string;
+  label: string;
+  color: string;
+  buckets: number[];
+  opacity?: number;
+};
 
 export interface OverallStats {
   weekCompletionRate: number | null;
@@ -61,14 +77,16 @@ export interface OverallStats {
   consistencyHeatmap90: HeatmapDay[];
   monthlyCompletion: MonthlyCompletionPoint[];
   monthlyCompletionByGroup: MonthlyCompletionSeries[];
-  timeByGroup30d: { groupId: string; groupName: string; color: string; ms: number }[];
-  timeOfDayBuckets: number[];
+  weeklyCompletion: MonthlyCompletionPoint[];
+  weeklyCompletionByGroup: MonthlyCompletionSeries[];
+  timeOfDaySegments: TimeOfDaySegment[];
   groups: GroupNavSummary[];
 }
 
 export type ActivitySparklineDay = {
   rate: number;
   ms: number;
+  isBreakDay?: boolean;
 };
 
 export interface HabitComparisonRow {
@@ -81,6 +99,8 @@ export interface HabitComparisonRow {
   scheduled30d: number;
   sparklineDays: ActivitySparklineDay[];
   sparklineWeeks: HeatmapDay[];
+  compoundScore?: number | null;
+  trackedMs30d: number;
 }
 
 export interface GroupStats {
@@ -92,10 +112,7 @@ export interface GroupStats {
   groupCompoundScore: number | null;
   consistencyHeatmap90: HeatmapDay[];
   habitComparison: HabitComparisonRow[];
-  monthlyCompletion: MonthlyCompletionPoint[];
-  timerByHabit30d: { activityId: string; name: string; ms: number }[];
-  timeOfDayBuckets: number[];
-  completedHabits: HabitComparisonRow[];
+  timeOfDaySegments: TimeOfDaySegment[];
 }
 
 export interface ActivityRecords {

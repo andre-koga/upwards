@@ -6,7 +6,7 @@ import {
   completionRate,
   getToday,
 } from "./completion";
-import type { HeatmapDay, MonthlyCompletionPoint } from "./types";
+import type { HeatmapDay, MonthlyCompletionPoint, TimeOfDaySegment } from "./types";
 
 export function sumTimerMsByDate(
   periods: ActivityPeriod[],
@@ -39,35 +39,114 @@ export function sumTimerMsInRange(
 }
 
 const TIME_OF_DAY_WINDOW_DAYS = 30;
+const HOUR_COUNT = 24;
+
+function getTimeOfDayWindow(): { fromMs: number; toMs: number } {
+  const today = getToday();
+  const fromDate = shiftDate(today, -(TIME_OF_DAY_WINDOW_DAYS - 1));
+  return {
+    fromMs: startOfDay(fromDate).getTime(),
+    toMs: startOfDay(shiftDate(today, 1)).getTime(),
+  };
+}
+
+function emptyHourBuckets(): number[] {
+  return Array.from({ length: HOUR_COUNT }, () => 0);
+}
+
+function addPeriodMsToHourBuckets(
+  buckets: number[],
+  startMs: number,
+  endMs: number,
+  fromMs: number,
+  toMs: number,
+): void {
+  let cursor = Math.max(startMs, fromMs);
+  const cappedEnd = Math.min(endMs, toMs);
+  while (cursor < cappedEnd) {
+    const date = new Date(cursor);
+    const hour = date.getHours();
+    const hourEnd = new Date(date);
+    hourEnd.setMinutes(0, 0, 0);
+    hourEnd.setHours(hour + 1);
+    const segmentEnd = Math.min(cappedEnd, hourEnd.getTime());
+    buckets[hour] += segmentEnd - cursor;
+    cursor = segmentEnd;
+  }
+}
 
 /** Total tracked ms per clock hour (0–23) over the last 30 days. */
 export function buildTimeOfDayBuckets(periods: ActivityPeriod[]): number[] {
-  const today = getToday();
-  const fromDate = shiftDate(today, -(TIME_OF_DAY_WINDOW_DAYS - 1));
-  const fromMs = startOfDay(fromDate).getTime();
-  const toMs = startOfDay(shiftDate(today, 1)).getTime();
-
-  const buckets = Array.from({ length: 24 }, () => 0);
+  const { fromMs, toMs } = getTimeOfDayWindow();
+  const buckets = emptyHourBuckets();
   for (const p of periods) {
     if (p.deleted_at || !p.end_time) continue;
     const startMs = new Date(p.start_time).getTime();
     const endMs = new Date(p.end_time).getTime();
     if (endMs <= startMs) continue;
-
-    let cursor = Math.max(startMs, fromMs);
-    const cappedEnd = Math.min(endMs, toMs);
-    while (cursor < cappedEnd) {
-      const date = new Date(cursor);
-      const hour = date.getHours();
-      const hourEnd = new Date(date);
-      hourEnd.setMinutes(0, 0, 0);
-      hourEnd.setHours(hour + 1);
-      const segmentEnd = Math.min(cappedEnd, hourEnd.getTime());
-      buckets[hour] += segmentEnd - cursor;
-      cursor = segmentEnd;
-    }
+    addPeriodMsToHourBuckets(buckets, startMs, endMs, fromMs, toMs);
   }
   return buckets;
+}
+
+export type TimeOfDayContributor = {
+  id: string;
+  label: string;
+  color: string;
+  activityIds: Set<string>;
+};
+
+/** Per-contributor tracked ms per clock hour over the last 30 days. */
+export function buildTimeOfDaySegments(
+  periods: ActivityPeriod[],
+  contributors: TimeOfDayContributor[],
+): TimeOfDaySegment[] {
+  const { fromMs, toMs } = getTimeOfDayWindow();
+  const contributorByActivity = new Map<string, TimeOfDayContributor>();
+  for (const contributor of contributors) {
+    for (const activityId of contributor.activityIds) {
+      contributorByActivity.set(activityId, contributor);
+    }
+  }
+
+  const bucketMap = new Map(contributors.map((c) => [c.id, emptyHourBuckets()]));
+
+  for (const p of periods) {
+    if (p.deleted_at || !p.end_time) continue;
+    const contributor = contributorByActivity.get(p.activity_id);
+    if (!contributor) continue;
+    const buckets = bucketMap.get(contributor.id);
+    if (!buckets) continue;
+    const startMs = new Date(p.start_time).getTime();
+    const endMs = new Date(p.end_time).getTime();
+    if (endMs <= startMs) continue;
+    addPeriodMsToHourBuckets(buckets, startMs, endMs, fromMs, toMs);
+  }
+
+  return contributors
+    .map((c) => ({
+      id: c.id,
+      label: c.label,
+      color: c.color,
+      buckets: bucketMap.get(c.id) ?? emptyHourBuckets(),
+    }))
+    .filter((seg) => seg.buckets.some((v) => v > 0))
+    .sort(
+      (a, b) =>
+        b.buckets.reduce((s, v) => s + v, 0) - a.buckets.reduce((s, v) => s + v, 0),
+    );
+}
+
+export function timeOfDayHasData(segments: TimeOfDaySegment[]): boolean {
+  return segments.some((s) => s.buckets.some((v) => v > 0));
+}
+
+export function timeOfDayTotalsFromSegments(segments: TimeOfDaySegment[]): number[] {
+  const totals = emptyHourBuckets();
+  for (const seg of segments) {
+    for (let h = 0; h < HOUR_COUNT; h++) totals[h] += seg.buckets[h];
+  }
+  return totals;
 }
 
 export function computeTimeByGroup(
@@ -118,11 +197,13 @@ export function buildAggregateHeatmap90(
       breakDays,
       cur,
       cur,
+      { countBreakDayMisses: true },
     );
     const rate = completionRate(completed, scheduled);
     days.push({
       dateStr,
       isBeforeCreation: false,
+      isBreakDay: breakDays.has(dateStr),
       completionRate: rate ?? undefined,
       habitsCompleted: scheduled > 0 ? completed : undefined,
       habitsScheduled: scheduled > 0 ? scheduled : undefined,
@@ -170,6 +251,42 @@ export function buildMonthlyCompletionFromTotals(
       scheduled,
     };
   });
+}
+
+export function buildWeeklyCompletionFromTotals(
+  dailyTotals: Map<string, { completed: number; scheduled: number }>,
+  fromDate: Date,
+  toDate: Date,
+): MonthlyCompletionPoint[] {
+  const points: MonthlyCompletionPoint[] = [];
+  let weekStart = fromDate;
+
+  while (weekStart <= toDate) {
+    const weekEnd = shiftDate(weekStart, 6);
+    const end = weekEnd > toDate ? toDate : weekEnd;
+    let completed = 0;
+    let scheduled = 0;
+    let cur = weekStart;
+    while (cur <= end) {
+      const totals = dailyTotals.get(toDateString(cur));
+      if (totals) {
+        completed += totals.completed;
+        scheduled += totals.scheduled;
+      }
+      cur = shiftDate(cur, 1);
+    }
+    const weekKey = toDateString(weekStart);
+    points.push({
+      monthKey: weekKey,
+      label: "",
+      rate: completionRate(completed, scheduled),
+      completed,
+      scheduled,
+    });
+    weekStart = shiftDate(weekStart, 7);
+  }
+
+  return points;
 }
 
 export function buildDailyCompletionTotals(

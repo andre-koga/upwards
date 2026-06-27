@@ -7,7 +7,7 @@ import { FloatingTooltip, useFloatingTooltip } from "./use-floating-tooltip";
 
 type CellKind =
   | "no_count"
-  | "break"
+  | "break_off"
   | "success"
   | "failure"
   | "timer_empty"
@@ -20,7 +20,7 @@ interface CellPresentation {
   kind: CellKind;
   intensity: number;
   interactive: boolean;
-  breakDot?: boolean;
+  breakOutline?: boolean;
   fillOpacity?: number;
 }
 
@@ -28,10 +28,6 @@ const HEATMAP_DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 function mondayFirstIndex(date: Date): number {
   return (date.getDay() + 6) % 7;
-}
-
-function isWeekdayDate(dateStr: string): boolean {
-  return mondayFirstIndex(new Date(dateStr + "T00:00:00")) < 5;
 }
 
 function getActivityCellPresentation(
@@ -44,20 +40,24 @@ function getActivityCellPresentation(
   const timeOpacity = ms > 0 ? Math.max(0.15, ms / maxMs) : undefined;
   const hasFailed = status === "missed" || status === "slip";
 
-  if (day.isBeforeCreation || status === "not_scheduled") {
+  if (day.isBeforeCreation) {
     return { kind: "no_count", intensity: 0, interactive: true };
   }
 
-  if (status === "break") {
-    return { kind: "break", intensity: 0, interactive: true };
+  if (status === "not_scheduled") {
+    if (day.isBreakDay) {
+      return { kind: "break_off", intensity: 0, interactive: true };
+    }
+    return { kind: "no_count", intensity: 0, interactive: true };
   }
 
   if (hasRoutine) {
-    if (hasFailed) {
+    if (status === "break" || hasFailed) {
       return {
         kind: "failure",
         intensity: 0,
         interactive: true,
+        breakOutline: status === "break" || day.isBreakDay,
         fillOpacity: timeOpacity,
       };
     }
@@ -66,7 +66,7 @@ function getActivityCellPresentation(
         kind: "success",
         intensity: 0,
         interactive: true,
-        breakDot: day.isBreakDay,
+        breakOutline: day.isBreakDay,
         fillOpacity: timeOpacity,
       };
     }
@@ -85,20 +85,38 @@ function getActivityCellPresentation(
 
 function getAggregateCellPresentation(day: HeatmapDay): CellPresentation {
   const rate = day.completionRate;
-  if (day.isBeforeCreation || rate === undefined || day.status === "not_scheduled") {
+  if (day.isBeforeCreation) {
+    return { kind: "aggregate_off", intensity: 0, interactive: true };
+  }
+  if (day.isBreakDay && (rate === undefined || day.status === "not_scheduled")) {
+    return { kind: "break_off", intensity: 0, interactive: true };
+  }
+  if (rate === undefined || day.status === "not_scheduled") {
     return { kind: "aggregate_off", intensity: 0, interactive: true };
   }
   if (rate === 0) {
-    return { kind: "aggregate_outline", intensity: 0, interactive: true };
+    return {
+      kind: "aggregate_outline",
+      intensity: 0,
+      interactive: true,
+      breakOutline: day.isBreakDay,
+    };
   }
   if (rate === 100) {
-    return { kind: "aggregate_fill", intensity: 1, interactive: true, fillOpacity: 1 };
+    return {
+      kind: "aggregate_fill",
+      intensity: 1,
+      interactive: true,
+      fillOpacity: 1,
+      breakOutline: day.isBreakDay,
+    };
   }
   return {
     kind: "aggregate_fill",
     intensity: rate / 100,
     interactive: true,
     fillOpacity: rate / 100,
+    breakOutline: day.isBreakDay,
   };
 }
 
@@ -121,8 +139,13 @@ function getActivityTooltipText(day: HeatmapDay, isNever: boolean): string {
 function getAggregateTooltipText(day: HeatmapDay): string {
   const rate = day.completionRate;
   if (day.isBeforeCreation || rate === undefined || day.status === "not_scheduled") {
-    return "Off";
+    return day.isBreakDay ? "Break" : "Off";
   }
+  if (day.habitsScheduled != null && day.habitsCompleted != null) {
+    const detail = `${day.habitsCompleted}/${day.habitsScheduled}`;
+    return day.isBreakDay ? `Break · ${rate}% (${detail})` : `${rate}% (${detail})`;
+  }
+  if (day.isBreakDay) return `Break · ${rate}%`;
   return `${rate}%`;
 }
 
@@ -141,17 +164,12 @@ function buildDowRows(days: HeatmapDay[]): (HeatmapDay | null)[][] {
   return rows;
 }
 
-function BreakDayDot({ className }: { className?: string }) {
+function BreakDayOutline() {
   return (
-    <div
-      className={cn(
-        "pointer-events-none absolute inset-0 z-10 flex items-center justify-center",
-        className,
-      )}
+    <CellBackground
+      className="z-10 border border-amber-500 bg-transparent"
       aria-hidden
-    >
-      <span className="h-1 w-1 rounded-full bg-foreground" />
-    </div>
+    />
   );
 }
 
@@ -175,15 +193,13 @@ function TimeWeightedFill({
 function CellBackground({
   className,
   style,
-  dimmed,
 }: {
   className?: string;
   style?: React.CSSProperties;
-  dimmed?: boolean;
 }) {
   return (
     <div
-      className={cn("absolute inset-0 rounded-[2px]", dimmed && "opacity-50", className)}
+      className={cn("absolute inset-0 rounded-[2px]", className)}
       style={style}
       aria-hidden
     />
@@ -194,13 +210,11 @@ function HeatmapCell({
   presentation,
   color,
   aggregateFillColor,
-  weekdayDimmed,
   onClick,
 }: {
   presentation: CellPresentation;
   color: string;
   aggregateFillColor?: string;
-  weekdayDimmed?: boolean;
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
   const { kind, intensity, interactive } = presentation;
@@ -212,19 +226,15 @@ function HeatmapCell({
   if (kind === "no_count" || kind === "aggregate_off") {
     return (
       <div className={base} onClick={onClick}>
-        <CellBackground
-          dimmed={weekdayDimmed}
-          className="border border-muted-foreground/50 bg-transparent"
-        />
+        <CellBackground className="border border-muted-foreground/50 bg-transparent" />
       </div>
     );
   }
 
-  if (kind === "break") {
+  if (kind === "break_off") {
     return (
       <div className={base} onClick={onClick}>
-        <CellBackground dimmed={weekdayDimmed} className="bg-muted" />
-        <BreakDayDot />
+        <BreakDayOutline />
       </div>
     );
   }
@@ -240,7 +250,7 @@ function HeatmapCell({
         {presentation.fillOpacity != null && (
           <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
         )}
-        {presentation.breakDot && <BreakDayDot />}
+        {presentation.breakOutline && <BreakDayOutline />}
       </div>
     );
   }
@@ -249,16 +259,16 @@ function HeatmapCell({
     if (presentation.fillOpacity != null) {
       return (
         <div className={base} onClick={onClick}>
-          <CellBackground dimmed={weekdayDimmed} className="bg-muted/25" />
-          <div className={cn("absolute inset-0", weekdayDimmed && "opacity-50")}>
-            <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
-          </div>
+          <CellBackground className="bg-muted/25" />
+          <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
+          {presentation.breakOutline && <BreakDayOutline />}
         </div>
       );
     }
     return (
       <div className={base} onClick={onClick}>
-        <CellBackground dimmed={weekdayDimmed} className="bg-muted" />
+        <CellBackground className="bg-muted" />
+        {presentation.breakOutline && <BreakDayOutline />}
       </div>
     );
   }
@@ -277,6 +287,7 @@ function HeatmapCell({
             opacity: presentation.fillOpacity ?? 1,
           }}
         />
+        {presentation.breakOutline && <BreakDayOutline />}
       </div>
     );
   }
@@ -340,9 +351,7 @@ function ActivityHeatmapLegend({ color, isNever }: { color: string; isNever: boo
         <LegendItem
           swatch={
             <LegendSwatch>
-              <span className="relative h-full w-full bg-muted">
-                <BreakDayDot />
-              </span>
+              <span className="h-full w-full border border-amber-500 bg-transparent" />
             </LegendSwatch>
           }
           label="Break"
@@ -389,6 +398,14 @@ function AggregateHeatmapLegend({ fillColor }: { fillColor?: string }) {
           </LegendSwatch>
         }
         label="High"
+      />
+      <LegendItem
+        swatch={
+          <LegendSwatch>
+            <span className="h-full w-full border border-amber-500 bg-transparent" />
+          </LegendSwatch>
+        }
+        label="Break"
       />
       <LegendItem
         swatch={
@@ -445,19 +462,11 @@ export function ConsistencyHeatmap({
       mode === "aggregate"
         ? getAggregateCellPresentation(day)
         : getActivityCellPresentation(day, maxMs, hasRoutine);
-    const weekdayDimmed =
-      isWeekdayDate(day.dateStr) &&
-      (presentation.kind === "no_count" ||
-        presentation.kind === "aggregate_off" ||
-        presentation.kind === "failure" ||
-        presentation.kind === "aggregate_outline" ||
-        presentation.kind === "break");
     return (
       <HeatmapCell
         presentation={presentation}
         color={color}
         aggregateFillColor={mode === "aggregate" ? aggregateColor : undefined}
-        weekdayDimmed={weekdayDimmed}
         onClick={presentation.interactive ? (e) => handleClick(e, day) : undefined}
       />
     );

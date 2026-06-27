@@ -7,11 +7,14 @@ import { getEffectiveToday } from "@/lib/session/day-reset";
 import type { DayStatus } from "./types";
 
 /** Routine habits that count toward completion % (excludes anytime and never). */
-export function isCountableRoutine(activity: Activity): boolean {
+export function isCountableRoutine(
+  activity: Activity,
+  options?: { includeCompleted?: boolean },
+): boolean {
   return (
     activity.routine !== "anytime" &&
     activity.routine !== "never" &&
-    !activity.completed_at
+    (options?.includeCompleted === true || !activity.completed_at)
   );
 }
 
@@ -78,24 +81,92 @@ export function buildActivityCompletionByDate(
   return completionByDate;
 }
 
+const COUNTABLE_DAY_STATUSES: DayStatus[] = ["done", "missed", "slip"];
+
+/** Per-activity completion totals from a pre-built completion map (includes never habits). */
+export function computeActivityCompletionTotals(
+  completionByDate: Record<string, DayStatus>,
+  fromDate: Date,
+  toDate: Date,
+): { completed: number; scheduled: number } {
+  let completed = 0;
+  let scheduled = 0;
+  let cursor = fromDate;
+  while (cursor <= toDate) {
+    const status = completionByDate[toDateString(cursor)];
+    if (status && COUNTABLE_DAY_STATUSES.includes(status)) {
+      scheduled++;
+      if (status === "done") completed++;
+    }
+    cursor = shiftDate(cursor, 1);
+  }
+  return { completed, scheduled };
+}
+
+export function dayCompletionRate(status: DayStatus | undefined): number {
+  if (status === "done") return 100;
+  if (status === "missed" || status === "slip") return 0;
+  return 0;
+}
+
+/** Group completion totals across routine habits, including never tasks. */
+export function computeGroupRoutineCompletionTotals(
+  activities: Activity[],
+  entriesByDate: Map<string, DailyEntry>,
+  breakDays: Set<string>,
+  fromDate: Date,
+  toDate: Date,
+  options?: { includeCompleted?: boolean },
+): { completed: number; scheduled: number } {
+  let completed = 0;
+  let scheduled = 0;
+
+  for (const activity of activities) {
+    if (activity.routine === "anytime") continue;
+    if (options?.includeCompleted !== true && activity.completed_at) continue;
+
+    const createdAt = startOfDay(
+      new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00"),
+    );
+    const rangeFrom = fromDate > createdAt ? fromDate : createdAt;
+    if (rangeFrom > toDate) continue;
+
+    const completionByDate = buildActivityCompletionByDate(
+      activity,
+      entriesByDate,
+      breakDays,
+      createdAt,
+      toDate,
+    );
+    const totals = computeActivityCompletionTotals(completionByDate, rangeFrom, toDate);
+    completed += totals.completed;
+    scheduled += totals.scheduled;
+  }
+
+  return { completed, scheduled };
+}
+
 export function computeCompletionTotals(
   activities: Activity[],
   entriesByDate: Map<string, DailyEntry>,
   breakDays: Set<string>,
   fromDate: Date,
   toDate: Date,
+  options?: { includeCompleted?: boolean; countBreakDayMisses?: boolean },
 ): { completed: number; scheduled: number } {
   let completed = 0;
   let scheduled = 0;
 
-  const countable = activities.filter(isCountableRoutine);
+  const countable = activities.filter((a) => isCountableRoutine(a, options));
   if (countable.length === 0) return { completed: 0, scheduled: 0 };
 
   let cursor = fromDate;
   while (cursor <= toDate) {
     const entry = entriesByDate.get(toDateString(cursor));
     for (const activity of countable) {
-      const outcome = getScheduledDayOutcome(activity, cursor, entry, breakDays);
+      const outcome = getScheduledDayOutcome(activity, cursor, entry, breakDays, {
+        countBreakDayMisses: options?.countBreakDayMisses,
+      });
       if (outcome === "win") {
         scheduled++;
         completed++;

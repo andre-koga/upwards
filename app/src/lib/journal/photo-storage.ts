@@ -56,6 +56,28 @@ export async function uploadJournalPhoto(
   return data.path;
 }
 
+export async function deleteJournalPhoto(photoPath: string): Promise<void> {
+  const path = photoPath.trim();
+  if (!path || !isSupabaseConfigured || !supabase) {
+    return;
+  }
+
+  const userId = getCachedUserId();
+  if (!userId || !path.startsWith(`${userId}/`)) {
+    return;
+  }
+
+  const { error } = await supabase.storage
+    .from(JOURNAL_PHOTO_BUCKET)
+    .remove([path]);
+
+  if (error) {
+    throw new JournalPhotoUploadError(
+      error.message ?? "Failed to delete photo."
+    );
+  }
+}
+
 export function getJournalPhotoUrl(photoPath: string): string | null {
   if (!photoPath.trim() || !isSupabaseConfigured || !supabase) {
     return null;

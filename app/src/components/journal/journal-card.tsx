@@ -237,8 +237,8 @@ export default function JournalCard({
             }}
           />
 
-          <div className="pointer-events-none relative z-10 mx-auto -mt-10 flex w-full max-w-2xl items-end justify-between px-4">
-            <div className="pointer-events-auto relative">
+          <div className="pointer-events-none relative z-10 mx-auto -mt-10 h-20 w-full max-w-2xl px-4">
+            <div className="pointer-events-auto absolute bottom-0 left-4">
               {journal.draftEmoji ? (
                 <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl">
                   {journal.draftEmoji}
@@ -249,7 +249,7 @@ export default function JournalCard({
                 </span>
               )}
             </div>
-            <div className="pointer-events-auto pb-1">
+            <div className="pointer-events-auto absolute bottom-1 right-4">
               <JournalPhotoStack photoPaths={journal.draftPhotoPaths} />
             </div>
           </div>
