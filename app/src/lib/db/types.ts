@@ -99,6 +99,20 @@ export interface OneTimeTask {
   /** Legacy column; kept for sync shape. Always null — memos are not tied to projects. */
   group_id: string | null;
   is_archived: boolean | null;
+  /** Set when spawned from a recurring_memos preset. */
+  recurring_memo_id: string | null;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
+export interface RecurringMemo {
+  id: string;
+  title: string;
+  routine: string;
+  is_pinned: boolean | null;
+  is_enabled: boolean | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;

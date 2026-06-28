@@ -9,6 +9,7 @@ import FooterActionsBar from "./footer-actions-bar";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import ManualTimeEntryDialog from "./manual-time-entry-dialog";
 import { ArchivedMemosDialog } from "./archived-memos-dialog";
+import { RecurringMemosDialog } from "./recurring-memos-dialog";
 import { Palmtree, RefreshCw, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -61,6 +62,7 @@ export default function DailyTasksList({
     string | null
   >(null);
   const [archivedMemosDialogOpen, setArchivedMemosDialogOpen] = useState(false);
+  const [recurringMemosDialogOpen, setRecurringMemosDialogOpen] = useState(false);
   const [activityToStartOnToday, setActivityToStartOnToday] = useState<
     string | null
   >(null);
@@ -100,8 +102,6 @@ export default function DailyTasksList({
     getActivityDrawerElapsedMs,
     addManualActivityPeriod,
     formatTimerDisplay,
-    recalculateStreaksFromViewedDate,
-    recalculateStreaksBusy,
   } = daily;
 
   // When we navigate to today and have an activity to start, start it
@@ -165,26 +165,41 @@ export default function DailyTasksList({
 
   return (
     <div className="flex flex-col">
-      {oneTimeTasks.length > 0 && (
+      {(oneTimeTasks.length > 0 || isToday) && (
         <div className="mb-4 space-y-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Memos
             </p>
-            <Button
-              type="button"
-              variant="ghost"
-              size="smIcon"
-              onClick={() => {
-                void loadArchivedMemos();
-                setArchivedMemosDialogOpen(true);
-              }}
-              className="h-4 min-h-4 w-4 min-w-4 shrink-0 bg-transparent p-0 text-muted-foreground/50 shadow-none hover:bg-transparent hover:text-muted-foreground/45 focus-visible:ring-1 [&_svg]:size-3"
-              aria-label="View archived memos"
-              title="View archived memos"
-            >
-              <Archive />
-            </Button>
+            <div className="flex w-full gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setRecurringMemosDialogOpen(true);
+                }}
+                className="h-7 min-w-0 flex-1 gap-1.5 rounded-full px-2.5 text-xs font-medium text-muted-foreground shadow-none"
+                aria-label="Manage recurring memos"
+              >
+                <RefreshCw className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                Recurring
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void loadArchivedMemos();
+                  setArchivedMemosDialogOpen(true);
+                }}
+                className="h-7 min-w-0 flex-1 gap-1.5 rounded-full px-2.5 text-xs font-medium text-muted-foreground shadow-none"
+                aria-label="View archived memos"
+              >
+                <Archive className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                Archive
+              </Button>
+            </div>
           </div>
           {oneTimeTasks.map((task) => (
             <OneTimeTaskItem
@@ -205,24 +220,10 @@ export default function DailyTasksList({
 
       {(loading || dailyActivities.length > 0) && (
         <>
-          <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="mb-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               For Today
             </p>
-            <Button
-              type="button"
-              variant="ghost"
-              size="smIcon"
-              onClick={() => {
-                void recalculateStreaksFromViewedDate();
-              }}
-              disabled={recalculateStreaksBusy}
-              className="h-4 min-h-4 w-4 min-w-4 shrink-0 bg-transparent p-0 text-muted-foreground/50 shadow-none hover:bg-transparent hover:text-muted-foreground/45 focus-visible:ring-1 disabled:opacity-30 [&_svg]:size-3"
-              aria-label="Recompute streak counters from this day through today using your task history"
-              title="Recompute streak counters from this day through today using your task history. Use this if streak numbers look wrong."
-            >
-              <RefreshCw className={cn(recalculateStreaksBusy && "animate-spin")} />
-            </Button>
           </div>
 
           <div className="flex-1 space-y-2">
@@ -408,6 +409,14 @@ export default function DailyTasksList({
         archivedMemos={archivedMemos}
         onMemoRestored={() => {
           void loadArchivedMemos();
+        }}
+      />
+
+      <RecurringMemosDialog
+        open={recurringMemosDialogOpen}
+        onOpenChange={setRecurringMemosDialogOpen}
+        onPresetsChanged={() => {
+          void loadOneTimeTasks();
         }}
       />
     </div>

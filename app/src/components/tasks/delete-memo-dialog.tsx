@@ -1,5 +1,5 @@
 import { FormDialog, FormDialogActions } from "@/components/forms";
-import { db } from "@/lib/db";
+import { db, now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
 
 interface DeleteMemoDialogProps {
@@ -24,7 +24,9 @@ export function DeleteMemoDialog({
   const handleDelete = async () => {
     if (!memoId) return;
     try {
-      await db.oneTimeTasks.delete(memoId);
+      const n = now();
+      // Soft delete so recurring spawn idempotency still sees today's instance.
+      await db.oneTimeTasks.update(memoId, { deleted_at: n, updated_at: n });
       onOpenChange(false);
       onDeleted();
     } catch (error) {

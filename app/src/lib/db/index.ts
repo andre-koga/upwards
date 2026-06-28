@@ -7,6 +7,7 @@ import type {
   ActivityPeriod,
   JournalEntry,
   OneTimeTask,
+  RecurringMemo,
   ActivityStreak,
   ActivityStatusEvent,
   GroupStatusEvent,
@@ -93,6 +94,7 @@ class UpwardsDB extends Dexie {
   activityPeriods!: Table<ActivityPeriod>;
   journalEntries!: Table<JournalEntry>;
   oneTimeTasks!: Table<OneTimeTask>;
+  recurringMemos!: Table<RecurringMemo>;
   activityStreaks!: Table<ActivityStreak>;
   activityStatusEvents!: Table<ActivityStatusEvent>;
   groupStatusEvents!: Table<GroupStatusEvent>;
@@ -685,6 +687,38 @@ class UpwardsDB extends Dexie {
           .modify((entry: Record<string, unknown>) => {
             if (!("photo_paths" in entry)) {
               entry.photo_paths = null;
+            }
+          });
+      });
+
+    // v22: recurring memo presets + link from spawned one_time_tasks
+    this.version(22)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities:
+          "id, group_id, completed_at, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, recurring_memo_id, deleted_at, created_at",
+        recurringMemos: "id, deleted_at, created_at",
+        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        groupStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        userProfiles: "user_id",
+        appLogs: "id, created_at, level",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("oneTimeTasks")
+          .toCollection()
+          .modify((task: Record<string, unknown>) => {
+            if (!("recurring_memo_id" in task)) {
+              task.recurring_memo_id = null;
             }
           });
       });

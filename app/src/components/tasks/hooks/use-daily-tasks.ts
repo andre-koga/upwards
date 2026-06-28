@@ -33,6 +33,7 @@ import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
+import { spawnRecurringMemosForToday } from "@/lib/memos/spawn-recurring-memos";
 
 interface UseDailyTasksParams {
   /** Active habits for starting new tracking today. */
@@ -48,6 +49,8 @@ interface UseDailyTasksParams {
   currentDate: Date;
   /** When this changes, daily entry / periods / tasks are reloaded (e.g. after sync). */
   refreshTrigger?: number;
+  /** Incremented when the logical day resets while the app is open. */
+  dayResetTick?: number;
 }
 
 export function useDailyTasks({
@@ -61,6 +64,7 @@ export function useDailyTasks({
   groupEventsById,
   currentDate,
   refreshTrigger = 0,
+  dayResetTick = 0,
 }: UseDailyTasksParams) {
   const dateString = toDateString(currentDate);
   // Tasks and timers are only editable on the current effective day.
@@ -135,6 +139,13 @@ export function useDailyTasks({
     updateOneTimeTask,
   } = useOneTimeTasks(dateString);
 
+  const loadMemosWithSpawn = useCallback(async () => {
+    if (dateString === getEffectiveToday()) {
+      await spawnRecurringMemosForToday();
+    }
+    await loadOneTimeTasks();
+  }, [dateString, loadOneTimeTasks]);
+
   const {
     activityPeriods,
     loadActivityPeriods,
@@ -165,13 +176,13 @@ export function useDailyTasks({
     loadActivityPeriods();
     /* eslint-disable-next-line react-hooks/set-state-in-effect -- loading IndexedDB periods into local state for all-time activity totals */
     loadAllActivityPeriods();
-    loadOneTimeTasks();
+    void loadMemosWithSpawn();
   }, [
     currentDate,
     loadDailyEntry,
     loadActivityPeriods,
     loadAllActivityPeriods,
-    loadOneTimeTasks,
+    loadMemosWithSpawn,
   ]);
 
   // When sync completes, refresh daily data without showing loading (avoids flash/scroll reset).
@@ -181,14 +192,19 @@ export function useDailyTasks({
     loadActivityPeriods();
     /* eslint-disable-next-line react-hooks/set-state-in-effect -- refreshing IndexedDB periods into local state after sync */
     loadAllActivityPeriods();
-    loadOneTimeTasks();
+    void loadMemosWithSpawn();
   }, [
     refreshTrigger,
     loadDailyEntry,
     loadActivityPeriods,
     loadAllActivityPeriods,
-    loadOneTimeTasks,
+    loadMemosWithSpawn,
   ]);
+
+  useEffect(() => {
+    if (dayResetTick === 0) return;
+    void loadMemosWithSpawn();
+  }, [dayResetTick, loadMemosWithSpawn]);
 
   useEffect(() => {
     let cancelled = false;

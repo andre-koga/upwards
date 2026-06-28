@@ -3,7 +3,7 @@ import { useJournalMeta } from "@/components/journal/hooks/use-journal-meta";
 import { useTasksPageData } from "@/components/tasks/hooks/use-tasks-page-data";
 import { useDailyTasks } from "@/components/tasks/hooks/use-daily-tasks";
 
-export function useTodayPage(currentDate: Date) {
+export function useTodayPage(currentDate: Date, dayResetTick = 0) {
   const journal = useJournalEntry(currentDate);
   const { entryDates, bookmarkedDates, loadJournalMeta } = useJournalMeta();
 
@@ -35,6 +35,7 @@ export function useTodayPage(currentDate: Date) {
     groupEventsById,
     currentDate,
     refreshTrigger,
+    dayResetTick,
   });
 
   return {

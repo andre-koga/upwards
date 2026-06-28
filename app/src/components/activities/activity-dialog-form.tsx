@@ -6,9 +6,13 @@ import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
   isScheduledRoutine,
-  parseRoutine,
   validateActivityData,
 } from "@/lib/activity";
+import {
+  buildRoutineString,
+  computeRoutineFormFromString,
+  type RoutineFormData,
+} from "@/lib/activity/routine-form";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import RoutineSelector from "@/components/activities/routine-selector";
 import {
@@ -18,7 +22,6 @@ import {
   FormStack,
 } from "@/components/forms";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
-const VALID_ROUTINES = ["anytime", "daily", "weekly", "custom", "never"];
 
 interface ActivityDialogFormProps {
   open: boolean;
@@ -30,83 +33,20 @@ interface ActivityDialogFormProps {
   onDeleted?: () => void;
 }
 
-interface ActivityFormData {
+interface ActivityFormData extends RoutineFormData {
   name: string;
-  routine: string;
-  weeklyDays: number[];
-  monthlyDay: number;
-  customInterval: number | string;
-  customUnit: "days" | "weeks" | "months";
   completion_target: number | string;
 }
 
 function computeFormDataFromInitial(
   initialData?: Partial<Activity> | null
 ): ActivityFormData {
-  const defaults: ActivityFormData = {
-    name: "",
-    routine: "daily",
-    weeklyDays: [],
-    monthlyDay: 1,
-    customInterval: 1,
-    customUnit: "days",
-    completion_target: 1,
-  };
-  if (!initialData) return defaults;
-
-  const parsed = parseRoutine(initialData.routine || "daily");
-  let baseRoutine = "daily";
-  let weeklyDays: number[] = [];
-  let monthlyDay = 1;
-  let customInterval = 1;
-  let customUnit: "days" | "weeks" | "months" = "days";
-
-  switch (parsed.type) {
-    case "weekly":
-      baseRoutine = "weekly";
-      weeklyDays = parsed.days;
-      break;
-    case "monthly":
-      baseRoutine = "monthly";
-      monthlyDay = parsed.day;
-      break;
-    case "custom":
-      baseRoutine = "custom";
-      customInterval = parsed.interval;
-      customUnit = parsed.unit;
-      break;
-    case "daily":
-    case "anytime":
-    case "never":
-      baseRoutine = parsed.type;
-      break;
-    case "unknown":
-      baseRoutine = VALID_ROUTINES.includes(parsed.raw) ? parsed.raw : "daily";
-      break;
-  }
-
+  const routineForm = computeRoutineFormFromString(initialData?.routine);
   return {
-    name: initialData.name || "",
-    routine: baseRoutine,
-    weeklyDays,
-    monthlyDay,
-    customInterval,
-    customUnit,
-    completion_target: initialData.completion_target ?? 1,
+    name: initialData?.name || "",
+    ...routineForm,
+    completion_target: initialData?.completion_target ?? 1,
   };
-}
-
-function buildRoutineConfig(formData: ActivityFormData) {
-  if (formData.routine === "weekly" && formData.weeklyDays.length > 0) {
-    return `weekly:${formData.weeklyDays.sort().join(",")}`;
-  }
-  if (formData.routine === "monthly") {
-    return `monthly:${formData.monthlyDay}`;
-  }
-  if (formData.routine === "custom") {
-    return `custom:${Math.max(1, parseInt(String(formData.customInterval)) || 1)}:${formData.customUnit}`;
-  }
-  return formData.routine;
 }
 
 export function ActivityDialogForm({
@@ -144,7 +84,7 @@ export function ActivityDialogForm({
   };
 
   const handleSave = async () => {
-    const routineConfig = buildRoutineConfig(formData);
+    const routineConfig = buildRoutineString(formData);
     const payload = {
       name: formData.name.trim(),
       routine: routineConfig,
@@ -262,6 +202,7 @@ export function ActivityDialogForm({
           <RoutineSelector
             routine={formData.routine}
             weeklyDays={formData.weeklyDays}
+            monthlyDay={formData.monthlyDay}
             customInterval={formData.customInterval}
             customUnit={formData.customUnit}
             onRoutineChange={(value) =>
@@ -269,6 +210,9 @@ export function ActivityDialogForm({
             }
             onWeeklyDaysChange={(days) =>
               setFormData({ ...formData, weeklyDays: days })
+            }
+            onMonthlyDayChange={(day) =>
+              setFormData({ ...formData, monthlyDay: day })
             }
             onCustomIntervalChange={(interval) =>
               setFormData({ ...formData, customInterval: interval })

@@ -40,9 +40,14 @@ export default function TodayPage() {
   const [devFriendRecap, setDevFriendRecap] = useState<InboxNotification | null>(null);
   const [pastRecapOpen, setPastRecapOpen] = useState(false);
 
+  const [dayResetTick, setDayResetTick] = useState(0);
+
   // Re-render when the day resets so todayStr and isPastDay update live.
   const [, setResetTick] = useState(0);
-  const handleDayReset = useCallback(() => setResetTick((t) => t + 1), []);
+  const handleDayReset = useCallback(() => {
+    setResetTick((t) => t + 1);
+    setDayResetTick((t) => t + 1);
+  }, []);
   useDayResetTimer(handleDayReset);
 
   const todayStr = getEffectiveToday();
@@ -61,7 +66,7 @@ export default function TodayPage() {
     loading,
     dailyTasks,
     refreshTasksData,
-  } = useTodayPage(currentDate);
+  } = useTodayPage(currentDate, dayResetTick);
 
   if (loading) {
     return (
