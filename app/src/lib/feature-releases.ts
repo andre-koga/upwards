@@ -10,6 +10,13 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-06-28",
+    title: "Recurring memos",
+    bullets: [
+      "Set memos to repeat on a schedule and they'll show up on your list automatically when they're due.",
+    ],
+  },
+  {
     date: "2026-06-27",
     title: "Stats, refined",
     bullets: [
