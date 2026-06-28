@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import {
-  Calendar,
   CircleCheckBig,
+  ExternalLink,
+  FileText,
   Folder,
+  Github,
   History,
   Menu,
   MessageSquare,
   Settings,
   Sparkles,
   Users,
-  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Activity } from "@/lib/db/types";
@@ -154,24 +155,45 @@ export default function FooterActionsBar({
               <MessageSquare className="h-4 w-4" />
               Feedback / requests
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full justify-start rounded-xl"
+              onClick={() => {
+                setPathsDrawerOpen(false);
+                navigate("/logs");
+              }}
+              title="View error logs"
+              aria-label="View error logs"
+            >
+              <FileText className="h-4 w-4" />
+              Error Logs
+            </Button>
+            <Button
+              variant="outline"
+              className="h-11 w-full rounded-xl p-0"
+              asChild
+            >
+              <a
+                href="https://github.com/andre-koga/upwards"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setPathsDrawerOpen(false)}
+                title="View source on GitHub"
+                aria-label="View source on GitHub"
+                className="flex h-11 w-full items-center justify-between gap-2 px-4"
+              >
+                <span className="flex items-center gap-2">
+                  <Github className="h-4 w-4" />
+                  GitHub
+                </span>
+                <ExternalLink
+                  className="h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
+              </a>
+            </Button>
           </div>
-
-          <div className="my-2" role="separator" aria-hidden />
-
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 w-full justify-start rounded-xl"
-            onClick={() => {
-              setPathsDrawerOpen(false);
-              navigate("/logs");
-            }}
-            title="View error logs"
-            aria-label="View error logs"
-          >
-            <FileText className="h-4 w-4" />
-            Error Logs
-          </Button>
 
           <div className="my-2" role="separator" aria-hidden />
 
@@ -222,7 +244,7 @@ export default function FooterActionsBar({
           type="button"
           variant="outline"
           size="icon"
-          className="rounded-full border-border bg-background shadow-lg"
+          className="h-10 w-10 rounded-full border-border bg-background shadow-lg"
           onClick={() => setPathsDrawerOpen((v) => !v)}
           title="Open more actions"
           aria-label="Open more actions"
@@ -230,20 +252,29 @@ export default function FooterActionsBar({
           <Menu className="h-5 w-5" />
         </Button>
 
-        <div className="mr-auto">
+        <div className="mr-auto flex items-center gap-2">
           <Button
             type="button"
             variant="outline"
             size="icon"
+            className="h-10 w-10 rounded-full border bg-background shadow-lg"
+            onClick={() => navigate("/stats")}
+            title="Stats"
+            aria-label="Stats"
+          >
+            <Sparkles className="h-4 w-4 text-amber-500" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
             className={cn(
-              "w-auto rounded-full border px-4 shadow-lg",
+              "h-10 rounded-full border px-3 shadow-lg",
               isSelectedToday && ""
             )}
             onClick={() => setCalendarOpen(true)}
             title="Pick a date"
             aria-label="Pick a date"
           >
-            <Calendar className="h-4 w-4" />
             <span className="font-semibold text-foreground">{shortDate}</span>
           </Button>
         </div>
