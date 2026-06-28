@@ -48,7 +48,7 @@ export async function loadOverallStats(): Promise<OverallStats> {
     ]);
 
   const activities = allActivities.filter((a) => !isHiddenGroupDefaultActivity(a));
-  const countable = activities.filter(isCountableRoutine);
+  const countable = activities.filter((a) => isCountableRoutine(a));
   const breakDays = buildBreakDaysSet(allDailyEntries);
   const entriesByDate = buildEntriesByDateMap(allDailyEntries);
 

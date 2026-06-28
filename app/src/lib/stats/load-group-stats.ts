@@ -125,7 +125,7 @@ export async function loadGroupStats(groupId: string): Promise<GroupStats | null
 
   const activities = sortActivitiesByOrder(allActivities);
   const active = activities.filter((a) => !a.completed_at);
-  const countable = activities.filter(isCountableRoutine);
+  const countable = activities.filter((a) => isCountableRoutine(a));
   const routineHabits = activities.filter(isRoutineHabit);
 
   const breakDays = buildBreakDaysSet(allDailyEntries);

@@ -83,7 +83,7 @@ export async function loadActivityExtendedStats(
   const entriesByDate = buildEntriesByDateMap(allDailyEntries);
 
   const ninetyRange = dateRangeDaysBack(90);
-  const groupCountable = groupActivities.filter(isCountableRoutine);
+  const groupCountable = groupActivities.filter((a) => isCountableRoutine(a));
   const groupTotals90 = computeCompletionTotals(
     groupCountable,
     entriesByDate,
