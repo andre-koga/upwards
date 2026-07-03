@@ -1,6 +1,8 @@
 import { useLayoutEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { FEATURE_RELEASES } from "@/lib/feature-releases";
+import { getActiveLocaleTag } from "@/lib/i18n";
 
 function scrollAppToTop() {
   window.scrollTo(0, 0);
@@ -9,7 +11,7 @@ function scrollAppToTop() {
 
 function formatReleaseDate(isoDate: string) {
   const d = new Date(`${isoDate}T12:00:00`);
-  return d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString(getActiveLocaleTag(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -17,6 +19,8 @@ function formatReleaseDate(isoDate: string) {
 }
 
 export default function WhatsNewPage() {
+  const { t } = useTranslation("nav");
+
   useLayoutEffect(() => {
     scrollAppToTop();
   }, []);
@@ -24,9 +28,9 @@ export default function WhatsNewPage() {
   return (
     <div className="space-y-6 p-4 pb-24">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">What’s new</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("whatsNew")}</h1>
         <p className="text-sm text-muted-foreground">
-          Recent updates and improvements to Upwards
+          {t("whatsNewPage.subtitle")}
         </p>
       </header>
 
@@ -51,7 +55,7 @@ export default function WhatsNewPage() {
             {release.fixes != null && release.fixes.length > 0 && (
               <div className="mt-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Bug fixes
+                  {t("whatsNewPage.bugFixes")}
                 </p>
                 <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-muted-foreground">
                   {release.fixes.map((line) => (
@@ -64,7 +68,7 @@ export default function WhatsNewPage() {
         ))}
       </ol>
 
-      <FloatingBackButton to="/" title="Home" />
+      <FloatingBackButton to="/" title={t("home")} />
     </div>
   );
 }

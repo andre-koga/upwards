@@ -1,3 +1,4 @@
+import i18n from "@/lib/i18n";
 import { db, now } from "@/lib/db";
 import type {
   Activity,
@@ -91,19 +92,24 @@ export function formatRoutineDisplay(routine: string | null): string {
   const parsed = parseRoutine(routine);
   switch (parsed.type) {
     case "daily":
-      return "Daily";
+      return i18n.t("projects:routine.display.daily");
     case "anytime":
-      return "Anytime";
+      return i18n.t("projects:routine.display.anytime");
     case "never":
-      return "Never";
+      return i18n.t("projects:routine.display.never");
     case "weekly": {
-      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      return `Weekly: ${parsed.days.map((d) => dayNames[d]).join(", ")}`;
+      const days = parsed.days
+        .map((d) => i18n.t(`projects:routine.display.weekdayShort.${d}`))
+        .join(", ");
+      return i18n.t("projects:routine.display.weekly", { days });
     }
     case "monthly":
-      return `Monthly: Day ${parsed.day}`;
+      return i18n.t("projects:routine.display.monthly", { day: parsed.day });
     case "custom":
-      return `Every ${parsed.interval} ${parsed.unit}`;
+      return i18n.t("projects:routine.display.every", {
+        interval: parsed.interval,
+        unit: i18n.t(`projects:routine.${parsed.unit}`),
+      });
     case "unknown":
       return parsed.raw.charAt(0).toUpperCase() + parsed.raw.slice(1);
   }

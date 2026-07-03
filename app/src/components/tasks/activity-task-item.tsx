@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Flame, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
@@ -54,6 +55,7 @@ function ActivityTaskItem({
   onStopActivity,
   onManualEntry,
 }: ActivityTaskItemProps) {
+  const { t } = useTranslation("projects");
   const [retiredDialogKind, setRetiredDialogKind] =
     useState<ActivityRetiredKind | null>(null);
   const [statsDialogOpen, setStatsDialogOpen] = useState(false);
@@ -152,9 +154,7 @@ function ActivityTaskItem({
                 : "border-destructive bg-transparent hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_12%,hsl(var(--background)))]",
           )}
           title={
-            canUpdateCount
-              ? "Tap to add a slip. Hold to clear slips."
-              : undefined
+            canUpdateCount ? t("taskItem.neverSlipHint") : undefined
           }
           disabled={!canUpdateCount}
         >
@@ -176,7 +176,7 @@ function ActivityTaskItem({
           isComplete={isComplete}
           isToday={canUpdateCount}
           onClick={() => onIncrement(activity.id, target)}
-          title={isPaused ? "Task paused for this day" : undefined}
+          title={isPaused ? t("taskItem.pausedForDay") : undefined}
           completeContent={
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
               <Flame className="h-3 w-3 fill-current" />
@@ -216,8 +216,8 @@ function ActivityTaskItem({
           )}
           title={
             canUpdateCount
-              ? `${count} / ${target} — click to increment`
-              : `${count} / ${target}`
+              ? t("taskItem.incrementHint", { count, target })
+              : t("taskItem.countTarget", { count, target })
           }
         >
           {isComplete ? (

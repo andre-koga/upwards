@@ -1,20 +1,22 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowUpDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SettingsSection } from "@/components/ui/settings-section";
 
 export function TaskOrderCard() {
+  const { t } = useTranslation("settings");
   return (
     <SettingsSection
-      title="Task order"
+      title={t("taskOrder.title")}
       icon={ArrowUpDown}
-      description="Choose the display order for scheduled tasks shown on the home page."
+      description={t("taskOrder.description")}
     >
       <Button variant="outline" className="w-full" asChild>
         <Link to="/settings/task-order">
           <ArrowUpDown className="h-4 w-4" />
-          Reorder daily tasks
+          {t("taskOrder.reorder")}
         </Link>
       </Button>
     </SettingsSection>

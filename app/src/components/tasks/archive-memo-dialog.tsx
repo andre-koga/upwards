@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { db, now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
@@ -18,9 +19,11 @@ export function ArchiveMemoDialog({
   memoTitle,
   onOpenChange,
   onArchived,
-  cancelLabel = "Cancel",
-  confirmLabel = "Archive",
+  cancelLabel,
+  confirmLabel,
 }: ArchiveMemoDialogProps) {
+  const { t } = useTranslation("tasks");
+  const { t: tCommon } = useTranslation("common");
   const handleArchive = async () => {
     if (!memoId) return;
     try {
@@ -36,20 +39,20 @@ export function ArchiveMemoDialog({
     }
   };
 
-  const displayTitle = memoTitle?.trim() || "this memo";
+  const displayTitle = memoTitle?.trim() || t("memo.thisMemo");
 
   return (
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Archive memo?"
-      description={`Archive "${displayTitle}"? You can restore it from the archived memos list.`}
+      title={t("memo.archiveConfirm.title")}
+      description={t("memo.archiveConfirm.description", { title: displayTitle })}
     >
       <FormDialogActions
         onConfirm={handleArchive}
-        confirmLabel={confirmLabel}
+        confirmLabel={confirmLabel ?? t("memo.archiveConfirm.confirm")}
         secondaryAction={{
-          label: cancelLabel,
+          label: cancelLabel ?? tCommon("cancel"),
           onClick: () => onOpenChange(false),
         }}
       />

@@ -1,0 +1,22 @@
+{
+  "title": "Amigos",
+  "subtitle": "Adicione pessoas pelo nome de usuário exato.",
+  "signInRequired": "Entre na sua conta para adicionar amigos.",
+  "setUsername": "Defina um",
+  "usernameInSettings": "nome de usuário em Configurações",
+  "beforeInviting": "antes de convidar amigos.",
+  "addFriend": "Adicionar amigo",
+  "usernamePlaceholder": "nome_de_usuario",
+  "invite": "Convidar",
+  "incomingRequests": "Pedidos recebidos",
+  "wantsToBeFriends": "Quer ser seu amigo",
+  "accept": "Aceitar",
+  "decline": "Recusar",
+  "sentRequests": "Pedidos enviados",
+  "pending": "Pendente",
+  "friendsList": "Amigos",
+  "noFriendsYet": "Nenhum amigo ainda — convide alguém!",
+  "unknownUser": "Usuário desconhecido",
+  "actorWithUsername": "{{displayName}} (@{{username}})",
+  "actorUsernameOnly": "@{{username}}"
+}

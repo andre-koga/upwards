@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { OneTimeTask } from "@/lib/db/types";
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ export function ArchivedMemosDialog({
   archivedMemos: initialArchivedMemos,
   onMemoRestored,
 }: ArchivedMemosDialogProps) {
+  const { t } = useTranslation("tasks");
+  const { t: tCommon } = useTranslation("common");
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [archivedMemos, setArchivedMemos] = useState(initialArchivedMemos);
 
@@ -58,14 +61,18 @@ export function ArchivedMemosDialog({
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={`Archived Memos${archivedMemos.length > 0 ? ` (${archivedMemos.length})` : ""}`}
+      title={
+        archivedMemos.length > 0
+          ? t("memo.archivedDialog.titleWithCount", { count: archivedMemos.length })
+          : t("memo.archivedDialog.title")
+      }
       size="default"
       contentClassName="w-96"
     >
       <div className="space-y-1 max-h-96 overflow-y-auto">
         {archivedMemos.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground py-8">
-            No archived memos
+            {t("memo.archivedDialog.empty")}
           </p>
         ) : (
           archivedMemos.map((memo) => (
@@ -77,7 +84,7 @@ export function ArchivedMemosDialog({
                 <p className="font-medium break-words whitespace-pre-wrap">{memo.title}</p>
                 {memo.due_date && (
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Due {formatDateShort(fromDateString(memo.due_date))}
+                    {t("memo.due", { date: formatDateShort(fromDateString(memo.due_date)) })}
                   </p>
                 )}
               </div>
@@ -89,8 +96,8 @@ export function ArchivedMemosDialog({
                   onClick={() => handleRestore(memo.id)}
                   disabled={restoringId === memo.id}
                   className="h-6 w-6"
-                  title="Restore memo"
-                  aria-label="Restore memo"
+                  title={t("memo.archivedDialog.restore")}
+                  aria-label={t("memo.archivedDialog.restore")}
                 >
                   <Undo2 className="h-3.5 w-3.5" />
                 </Button>
@@ -101,8 +108,8 @@ export function ArchivedMemosDialog({
                   onClick={() => handleDelete(memo.id)}
                   disabled={restoringId === memo.id}
                   className="h-6 w-6 text-destructive hover:text-destructive"
-                  title="Delete memo"
-                  aria-label="Delete memo"
+                  title={t("memo.archivedDialog.delete")}
+                  aria-label={t("memo.archivedDialog.delete")}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -113,7 +120,7 @@ export function ArchivedMemosDialog({
       </div>
       <FormDialogActions
         onConfirm={() => onOpenChange(false)}
-        confirmLabel="Close"
+        confirmLabel={tCommon("close")}
         secondaryAction={undefined}
       />
     </FormDialog>

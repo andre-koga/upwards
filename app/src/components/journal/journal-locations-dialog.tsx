@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader2, Search, Trash2 } from "lucide-react";
 import { FormDialog, FormDialogActions, FormStack } from "@/components/forms";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,8 @@ export default function JournalLocationsDialog({
   canEdit,
   onSave,
 }: JournalLocationsDialogProps) {
+  const { t } = useTranslation("journal");
+  const { t: tCommon } = useTranslation("common");
   const [draftRoute, setDraftRoute] = useState<JournalLocationRoute>(() =>
     normalizeJournalLocationRoute(route)
   );
@@ -79,7 +82,7 @@ export default function JournalLocationsDialog({
           setEditSearch((prev) => ({
             ...prev,
             results: [],
-            error: "Could not search locations right now.",
+            error: t("locations.searchError"),
           }));
         })
         .finally(() => {
@@ -113,7 +116,7 @@ export default function JournalLocationsDialog({
           setAddSearch((prev) => ({
             ...prev,
             results: [],
-            error: "Could not search locations right now.",
+            error: t("locations.searchError"),
           }));
         })
         .finally(() => {
@@ -236,8 +239,8 @@ export default function JournalLocationsDialog({
   const deleteConfirmName =
     deleteConfirmIndex != null
       ? draftRoute.locations[deleteConfirmIndex]?.displayName.trim() ||
-        "this location"
-      : "this location";
+        t("locations.thisLocation")
+      : t("locations.thisLocation");
 
   const renderResults = (
     state: SearchState,
@@ -263,11 +266,11 @@ export default function JournalLocationsDialog({
           ))
         ) : state.searching ? (
           <p className="px-2 py-1 text-xs text-muted-foreground">
-            Searching...
+            {t("locations.searching")}
           </p>
         ) : (
           <p className="px-2 py-1 text-xs text-muted-foreground">
-            No matches found.
+            {t("locations.noMatches")}
           </p>
         )}
       </div>
@@ -279,8 +282,8 @@ export default function JournalLocationsDialog({
       <FormDialog
         open={open}
         onOpenChange={handleLocationsOpenChange}
-        title="Locations visited"
-        description={`Review and edit places tracked for this day (up to ${MAX_DAILY_LOCATIONS}).`}
+        title={t("locations.title")}
+        description={t("locations.description", { count: MAX_DAILY_LOCATIONS })}
         contentClassName="sm:max-w-md"
       >
         <FormStack className="space-y-2">
@@ -288,7 +291,7 @@ export default function JournalLocationsDialog({
             locations={draftRoute.locations}
             readOnly
             className="h-44"
-            ariaLabel="Map of locations visited"
+            ariaLabel={t("locations.mapAriaLabel")}
           />
 
           {draftRoute.locations.length > 0 ? (
@@ -319,7 +322,7 @@ export default function JournalLocationsDialog({
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {[loc.state, loc.country].filter(Boolean).join(", ") ||
-                          "Manual stop"}
+                          t("locations.manualStop")}
                       </span>
                     </span>
                   </Button>
@@ -335,7 +338,7 @@ export default function JournalLocationsDialog({
                             onChange={(event) =>
                               handleEditQueryChange(event.target.value)
                             }
-                            placeholder="Search to replace this location..."
+                            placeholder={t("locations.searchReplacePlaceholder")}
                             className="pl-9"
                             disabled={!canEdit}
                           />
@@ -352,8 +355,8 @@ export default function JournalLocationsDialog({
                           size="icon"
                           className="h-9 w-9 shrink-0 border-destructive text-destructive"
                           onClick={() => setDeleteConfirmIndex(index)}
-                          title="Delete location"
-                          aria-label="Delete location"
+                          title={t("locations.deleteLocation")}
+                          aria-label={t("locations.deleteLocation")}
                         >
                           <Trash2 className="h-4 w-4" aria-hidden />
                         </Button>
@@ -378,7 +381,7 @@ export default function JournalLocationsDialog({
                 <Input
                   value={addSearch.query}
                   onChange={(event) => handleAddQueryChange(event.target.value)}
-                  placeholder="Search to add a location..."
+                  placeholder={t("locations.searchAddPlaceholder")}
                   className="border-dashed pl-9"
                   disabled={!canEdit}
                 />
@@ -398,19 +401,19 @@ export default function JournalLocationsDialog({
 
           {draftRoute.locations.length === 0 && !canAddLocation ? (
             <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-              No locations tracked yet.
+              {t("locations.noLocationsYet")}
             </p>
           ) : null}
         </FormStack>
 
         <FormDialogActions
           onConfirm={handleSave}
-          confirmLabel={canEdit ? "Save locations" : "Close"}
+          confirmLabel={canEdit ? t("locations.save") : tCommon("close")}
           containerClassName="pt-0"
           secondaryAction={
             canEdit
               ? {
-                  label: "Cancel",
+                  label: tCommon("cancel"),
                   onClick: () => onOpenChange(false),
                 }
               : undefined
@@ -423,21 +426,18 @@ export default function JournalLocationsDialog({
         onOpenChange={(nextOpen) => {
           if (!nextOpen) setDeleteConfirmIndex(null);
         }}
-        title="Delete location"
-        description={
-          <>
-            Are you sure you want to delete &quot;{deleteConfirmName}&quot; from
-            this day&apos;s route?
-          </>
-        }
+        title={t("locations.deleteConfirmTitle")}
+        description={t("locations.deleteConfirmDescription", {
+          name: deleteConfirmName,
+        })}
         contentClassName="sm:max-w-md"
       >
         <FormDialogActions
           onConfirm={handleDeleteConfirm}
-          confirmLabel="Delete"
+          confirmLabel={tCommon("delete")}
           confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
           secondaryAction={{
-            label: "Cancel",
+            label: tCommon("cancel"),
             onClick: () => setDeleteConfirmIndex(null),
           }}
         />

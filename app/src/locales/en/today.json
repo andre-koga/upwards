@@ -1,0 +1,26 @@
+{
+  "loading": "Loading...",
+  "swipe": {
+    "alreadyToday": "Already on today",
+    "previousDay": "Previous day",
+    "nextDay": "Next day"
+  },
+  "viewDayRecap": "View day recap",
+  "sections": {
+    "memos": "Memos",
+    "forToday": "For Today",
+    "timeline": "Timeline",
+    "timelineBoundary": "(starts and ends at {{time}})"
+  },
+  "recurringMemosButton": "Recurring",
+  "manageRecurringMemos": "Manage recurring memos",
+  "archiveButton": "Archive",
+  "viewArchivedMemos": "View archived memos",
+  "breakDay": {
+    "unset": "Unset break day",
+    "set": "Mark this day as break day",
+    "active": "Break Day Active",
+    "markAsBreakDay": "Mark as Break Day",
+    "helper": "Incomplete tasks won't affect streaks."
+  }
+}

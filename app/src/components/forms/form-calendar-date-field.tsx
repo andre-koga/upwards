@@ -70,9 +70,8 @@ export function FormCalendarDateField({
     selectedDate ?? fromDateString(getEffectiveToday())
   );
 
-  const effectiveTodayStr = getEffectiveToday();
   const minDate = useMemo(() => (min ? fromDateString(min) : undefined), [min]);
-  const maxDate = useMemo(() => (max ? fromDateString(max) : fromDateString(effectiveTodayStr)), [max, effectiveTodayStr]);
+  const maxDate = useMemo(() => (max ? fromDateString(max) : undefined), [max]);
 
   const disabledMatcher = useMemo(() => {
     if (minDate && maxDate) {

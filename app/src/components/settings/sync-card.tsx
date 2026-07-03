@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Upload, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { syncEngine } from "@/lib/sync";
 import { useAuth } from "@/lib/use-auth";
 
 export function SyncCard() {
+  const { t } = useTranslation("settings");
   const { isAuthed } = useAuth();
   const [isForcePushing, setIsForcePushing] = useState(false);
   const [isSyncing, setIsSyncing] = useState(syncEngine.getState().isSyncing);
@@ -29,8 +31,8 @@ export function SyncCard() {
 
   return (
     <SettingsSection
-      title="Cloud sync"
-      description="Force push uploads all local data to the cloud, overwriting remote with local. Use when you have local data that is not syncing."
+      title={t("sync.title")}
+      description={t("sync.description")}
     >
       <Button
         variant="outline"
@@ -43,7 +45,7 @@ export function SyncCard() {
         ) : (
           <Upload className="h-4 w-4" />
         )}
-        {isForcePushing ? "Pushing…" : "Force push to cloud"}
+        {isForcePushing ? t("sync.pushing") : t("sync.forcePush")}
       </Button>
     </SettingsSection>
   );

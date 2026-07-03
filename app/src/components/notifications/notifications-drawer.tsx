@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,8 @@ export function NotificationsDrawer({
   open,
   onOpenChange,
 }: NotificationsDrawerProps) {
+  const { t } = useTranslation("nav");
+  const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
   const { isAuthed, isSupabaseConfigured } = useAuth();
   const {
@@ -106,7 +109,7 @@ export function NotificationsDrawer({
           {isSupabaseConfigured && isAuthed && (
             <div className="flex h-11 items-center justify-between gap-3 border-b border-border px-4">
               <span className="text-sm font-semibold leading-none">
-                Notifications
+                {t("notificationsDrawer.title")}
               </span>
               {clearableCount > 0 && (
                 <Button
@@ -116,7 +119,7 @@ export function NotificationsDrawer({
                   className="shrink-0 px-2 text-xs text-muted-foreground"
                   onClick={dismissAllClearable}
                 >
-                  Clear all
+                  {t("notificationsDrawer.clearAll")}
                 </Button>
               )}
             </div>
@@ -126,7 +129,7 @@ export function NotificationsDrawer({
             {!isSupabaseConfigured || !isAuthed ? (
               <div className="flex flex-1 flex-col justify-center space-y-3 p-4">
                 <p className="text-sm text-muted-foreground">
-                  Notifications require a sync account. Sign in from Settings.
+                  {t("notificationsDrawer.signInRequired")}
                 </p>
                 <Button
                   variant="outline"
@@ -136,12 +139,12 @@ export function NotificationsDrawer({
                     navigate("/settings");
                   }}
                 >
-                  Go to Settings
+                  {t("notificationsDrawer.goToSettings")}
                 </Button>
               </div>
             ) : loading && notifications.length === 0 ? (
               <p className="flex flex-1 items-center justify-center py-8 text-sm text-muted-foreground">
-                Loading…
+                {tCommon("loading")}
               </p>
             ) : error ? (
               <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-destructive">
@@ -150,9 +153,9 @@ export function NotificationsDrawer({
             ) : notifications.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center px-4 py-2 text-center">
                 <Bell className="m-2 h-6 w-6 text-muted-foreground/30" />
-                <p className="text-sm font-medium">Nothing here yet</p>
+                <p className="text-sm font-medium">{t("notificationsDrawer.empty")}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Friend requests and shared day recaps appear here.
+                  {t("notificationsDrawer.emptyHelper")}
                 </p>
               </div>
             ) : (

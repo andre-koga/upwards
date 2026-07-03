@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -145,6 +146,8 @@ export function FormTimeField({
   message,
   messageClassName,
 }: FormTimeFieldProps) {
+  const { t } = useTranslation("projects");
+  const { t: tCommon } = useTranslation("common");
   const [hours24, minutes, seconds] = useMemo(() => splitTime(value), [value]);
   const { hour12, meridiem } = useMemo(
     () => toTwelveHourDisplay(hours24),
@@ -299,7 +302,7 @@ export function FormTimeField({
           <DialogHeader>
             <DialogTitle>{label}</DialogTitle>
             <DialogDescription>
-              Drag the dial or tap values to edit time.
+              {t("timeField.dialDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -457,9 +460,9 @@ export function FormTimeField({
                   setDraft((prev) => adjustDraftMinutes(prev, -5));
                   setActiveUnit("minute");
                 }}
-                aria-label="Subtract five minutes"
+                aria-label={t("timeField.subtractFiveMin")}
               >
-                -5 min
+                {t("timeField.subtractFiveMinShort")}
               </Button>
               <Button
                 type="button"
@@ -469,16 +472,16 @@ export function FormTimeField({
                   setDraft((prev) => adjustDraftMinutes(prev, 5));
                   setActiveUnit("minute");
                 }}
-                aria-label="Add five minutes"
+                aria-label={t("timeField.addFiveMin")}
               >
-                +5 min
+                {t("timeField.addFiveMinShort")}
               </Button>
             </div>
 
             <FormDialogActions
               onConfirm={commitDraft}
               secondaryAction={{
-                label: "Cancel",
+                label: tCommon("cancel"),
                 onClick: () => setOpen(false),
               }}
             />

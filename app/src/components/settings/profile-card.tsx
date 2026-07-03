@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ const usernameInputId = "settings-username";
 const displayNameInputId = "settings-display-name";
 
 export function ProfileCard() {
+  const { t } = useTranslation("settings");
+  const { t: tCommon } = useTranslation("common");
   const { username, displayName, loading, setUsername, setDisplayName } =
     useUserProfile();
   const [usernameInput, setUsernameInput] = useState("");
@@ -52,16 +55,16 @@ export function ProfileCard() {
   if (loading) return null;
 
   return (
-    <SettingsSection title="Profile">
+    <SettingsSection title={t("profile.title")}>
       {/* Display name */}
       {editingDisplayName ? (
         <form onSubmit={(e) => void handleSaveDisplayName(e)} className="space-y-2">
-          <Label htmlFor={displayNameInputId}>Display name</Label>
+          <Label htmlFor={displayNameInputId}>{t("profile.displayName")}</Label>
           <Input
             id={displayNameInputId}
             value={displayNameInput}
             onChange={(e) => setDisplayNameInput(e.target.value)}
-            placeholder="Your name"
+            placeholder={t("profile.namePlaceholder")}
             autoFocus
           />
           {displayNameError && (
@@ -69,7 +72,7 @@ export function ProfileCard() {
           )}
           <div className="flex gap-2">
             <Button type="submit" disabled={saving} className="flex-1">
-              {saving ? "Saving…" : "Save"}
+              {saving ? tCommon("saving") : tCommon("save")}
             </Button>
             <Button
               type="button"
@@ -80,7 +83,7 @@ export function ProfileCard() {
                 setDisplayNameError(null);
               }}
             >
-              Cancel
+              {tCommon("cancel")}
             </Button>
           </div>
         </form>
@@ -89,11 +92,11 @@ export function ProfileCard() {
           <div className="space-y-0.5">
             <p className="text-sm font-medium">
               {displayName ?? (
-                <span className="text-muted-foreground">No display name</span>
+                <span className="text-muted-foreground">{t("profile.noDisplayName")}</span>
               )}
             </p>
             <p className="text-xs text-muted-foreground">
-              Shown when friends see your shared habit completions
+              {t("profile.displayNameHelper")}
             </p>
           </div>
           <Button
@@ -104,7 +107,7 @@ export function ProfileCard() {
               setEditingDisplayName(true);
             }}
           >
-            {displayName ? "Edit" : "Set name"}
+            {displayName ? tCommon("edit") : t("profile.setName")}
           </Button>
         </div>
       )}
@@ -112,28 +115,28 @@ export function ProfileCard() {
       {/* Username */}
       {editingUsername ? (
         <form onSubmit={(e) => void handleSaveUsername(e)} className="space-y-2 pt-2">
-          <Label htmlFor={usernameInputId}>Username</Label>
+          <Label htmlFor={usernameInputId}>{t("profile.username")}</Label>
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground">@</span>
             <Input
               id={usernameInputId}
               value={usernameInput}
               onChange={(e) => setUsernameInput(e.target.value.toLowerCase())}
-              placeholder="your_username"
+              placeholder={t("profile.usernamePlaceholder")}
               pattern="[a-z0-9_]{3,20}"
-              title="3–20 characters: a-z, 0-9, underscore"
+              title={t("profile.usernamePatternTitle")}
               autoFocus
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Letters, numbers, underscore. 3–20 characters.
+            {t("profile.usernameFormatHelper")}
           </p>
           {usernameError && (
             <p className="text-xs text-destructive">{usernameError}</p>
           )}
           <div className="flex gap-2">
             <Button type="submit" disabled={saving} className="flex-1">
-              {saving ? "Saving…" : "Save"}
+              {saving ? tCommon("saving") : tCommon("save")}
             </Button>
             <Button
               type="button"
@@ -144,7 +147,7 @@ export function ProfileCard() {
                 setUsernameError(null);
               }}
             >
-              Cancel
+              {tCommon("cancel")}
             </Button>
           </div>
         </form>
@@ -157,11 +160,11 @@ export function ProfileCard() {
                 {username ? (
                   <span className="font-mono">@{username}</span>
                 ) : (
-                  <span className="text-muted-foreground">No username</span>
+                  <span className="text-muted-foreground">{t("profile.noUsername")}</span>
                 )}
               </p>
               <p className="text-xs text-muted-foreground">
-                Friends can find you by exact username
+                {t("profile.usernameHelper")}
               </p>
             </div>
           </div>
@@ -173,7 +176,7 @@ export function ProfileCard() {
               setEditingUsername(true);
             }}
           >
-            {username ? "Edit" : "Set username"}
+            {username ? tCommon("edit") : t("profile.setUsername")}
           </Button>
         </div>
       )}

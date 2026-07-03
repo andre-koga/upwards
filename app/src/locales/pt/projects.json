@@ -1,0 +1,88 @@
+{
+  "drawer": {
+    "pickGroupOrActivity": "Escolher grupo ou atividade",
+    "closePicker": "Fechar seletor de atividades",
+    "groups": "Grupos",
+    "newGroup": "Novo grupo",
+    "noGroupsYet": "Nenhum grupo ainda.",
+    "noActiveGroups": "Nenhum grupo ativo.",
+    "showArchivedGroups": "Mostrar grupos arquivados",
+    "hideArchivedGroups": "Ocultar grupos arquivados",
+    "restoreOrDeleteGroup": "Restaurar ou excluir grupo arquivado",
+    "backToGroups": "Voltar aos grupos",
+    "newActivity": "Nova atividade",
+    "noGroupSelected": "Nenhum grupo selecionado.",
+    "noActivitiesInGroup": "Nenhuma atividade neste grupo.",
+    "noActiveActivities": "Nenhuma atividade ativa.",
+    "archived": "Arquivados"
+  },
+  "routine": {
+    "type": "Tipo de rotina",
+    "anytime": "A qualquer momento (sem agenda)",
+    "daily": "Diário",
+    "weekly": "Semanal",
+    "monthly": "Mensal",
+    "custom": "Personalizado",
+    "never": "Nunca (evitar isso)",
+    "dayOfMonth": "Dia do mês",
+    "every": "A cada",
+    "customInterval": "Intervalo personalizado",
+    "customUnit": "Unidade personalizada",
+    "days": "dias",
+    "weeks": "semanas",
+    "months": "meses",
+    "toggleDay": "Alternar {{day}}",
+    "weekdays": {
+      "sunday": "Domingo",
+      "monday": "Segunda-feira",
+      "tuesday": "Terça-feira",
+      "wednesday": "Quarta-feira",
+      "thursday": "Quinta-feira",
+      "friday": "Sexta-feira",
+      "saturday": "Sábado"
+    },
+    "display": {
+      "daily": "Diário",
+      "anytime": "A qualquer momento",
+      "never": "Nunca",
+      "weekly": "Semanal: {{days}}",
+      "monthly": "Mensal: dia {{day}}",
+      "every": "A cada {{interval}} {{unit}}",
+      "weekdayShort": {
+        "0": "Dom",
+        "1": "Seg",
+        "2": "Ter",
+        "3": "Qua",
+        "4": "Qui",
+        "5": "Sex",
+        "6": "Sáb"
+      }
+    }
+  },
+  "manualEntry": {
+    "title": "Adicionar registro de tempo",
+    "description": "Sessão manual para {{name}}",
+    "date": "Data",
+    "startTime": "Hora de início",
+    "endTime": "Hora de término",
+    "spanWarning": "Esta sessão abrange {{startDay}} e {{endDay}} (cruza o limite do dia às {{resetTime}}).",
+    "errorBothTimes": "Defina as horas de início e término.",
+    "errorSameTime": "A hora de término deve ser diferente da hora de início.",
+    "errorEndFuture": "A hora de término não pode estar no futuro.",
+    "errorStartFuture": "A hora de início não pode estar no futuro.",
+    "errorSaveFailed": "Falha ao salvar o registro. Tente novamente."
+  },
+  "taskItem": {
+    "neverSlipHint": "Toque para registrar um escorregão. Segure para limpar escorregões.",
+    "pausedForDay": "Tarefa pausada para este dia",
+    "incrementHint": "{{count}} / {{target}} — clique para incrementar",
+    "countTarget": "{{count}} / {{target}}"
+  },
+  "timeField": {
+    "dialDescription": "Arraste o mostrador ou toque nos valores para editar o horário.",
+    "subtractFiveMin": "Subtrair cinco minutos",
+    "addFiveMin": "Adicionar cinco minutos",
+    "subtractFiveMinShort": "-5 min",
+    "addFiveMinShort": "+5 min"
+  }
+}

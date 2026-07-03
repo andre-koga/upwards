@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FormCalendarDateField,
   FormDialog,
@@ -46,6 +47,8 @@ export default function ManualTimeEntryDialog({
   onOpenChange,
   onSave,
 }: ManualTimeEntryDialogProps) {
+  const { t } = useTranslation("projects");
+  const { t: tCommon } = useTranslation("common");
   const [dateString, setDateString] = useState(() => toDateString(initialDate));
   const [startTime, setStartTime] = useState("09:00:00");
   const [endTime, setEndTime] = useState("09:30:00");
@@ -76,8 +79,12 @@ export default function ManualTimeEntryDialog({
     const endDay = formatWeekdayShortDate(
       fromDateString(getLogicalEndDate(resolvedPeriod.startMs, resolvedPeriod.endMs)),
     );
-    return `This session spans ${startDay} and ${endDay} (crosses your ${formatResetMinutes(resetMinutes)} day boundary).`;
-  }, [resolvedPeriod, resetMinutes]);
+    return t("manualEntry.spanWarning", {
+      startDay,
+      endDay,
+      resetTime: formatResetMinutes(resetMinutes),
+    });
+  }, [resolvedPeriod, resetMinutes, t]);
 
   useEffect(() => {
     if (!open) return;
@@ -105,12 +112,12 @@ export default function ManualTimeEntryDialog({
     if (!activity) return;
 
     if (!startTime || !endTime) {
-      setError("Please set both start and end times.");
+      setError(t("manualEntry.errorBothTimes"));
       return;
     }
 
     if (timeToSeconds(endTime) === timeToSeconds(startTime)) {
-      setError("End time must be different from start time.");
+      setError(t("manualEntry.errorSameTime"));
       return;
     }
 
@@ -123,11 +130,11 @@ export default function ManualTimeEntryDialog({
 
     const nowMs = Date.now();
     if (endMs > nowMs) {
-      setError("End time can't be in the future.");
+      setError(t("manualEntry.errorEndFuture"));
       return;
     }
     if (startMs > nowMs) {
-      setError("Start time can't be in the future.");
+      setError(t("manualEntry.errorStartFuture"));
       return;
     }
 
@@ -145,7 +152,7 @@ export default function ManualTimeEntryDialog({
       onOpenChange(false);
     } catch (saveError) {
       console.error("Error creating manual activity entry:", saveError);
-      setError("Failed to save entry. Please try again.");
+      setError(t("manualEntry.errorSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -155,10 +162,12 @@ export default function ManualTimeEntryDialog({
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Add time entry"
+      title={t("manualEntry.title")}
       description={
         activity
-          ? `Manual session for ${getActivityDisplayName(activity, group)}`
+          ? t("manualEntry.description", {
+              name: getActivityDisplayName(activity, group),
+            })
           : undefined
       }
       contentClassName="sm:max-w-md"
@@ -166,7 +175,7 @@ export default function ManualTimeEntryDialog({
       <FormStack>
         <FormCalendarDateField
           id="manual-entry-date"
-          label="Date"
+          label={t("manualEntry.date")}
           value={dateString}
           max={todayString}
           onValueChange={(value) => {
@@ -177,14 +186,14 @@ export default function ManualTimeEntryDialog({
 
         <FormTimeField
           id="manual-entry-start"
-          label="Start time"
+          label={t("manualEntry.startTime")}
           value={startTime}
           onValueChange={setStartTime}
         />
 
         <FormTimeField
           id="manual-entry-end"
-          label="End time"
+          label={t("manualEntry.endTime")}
           value={endTime}
           onValueChange={setEndTime}
         />
@@ -199,10 +208,10 @@ export default function ManualTimeEntryDialog({
 
         <FormDialogActions
           onConfirm={handleSave}
-          confirmLabel={saving ? "Saving..." : "Save"}
+          confirmLabel={saving ? tCommon("saving") : tCommon("save")}
           confirmDisabled={saving || !activity}
           secondaryAction={{
-            label: "Cancel",
+            label: tCommon("cancel"),
             onClick: () => onOpenChange(false),
             disabled: saving,
           }}

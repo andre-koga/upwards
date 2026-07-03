@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Sparkles,
   CalendarDays,
@@ -21,6 +22,7 @@ import { TimeOfDayChart } from "@/components/stats/time-of-day-chart";
 import { timeOfDayHasData } from "@/lib/stats/aggregates";
 
 export default function StatsPage() {
+  const { t } = useTranslation("stats");
   const navigate = useNavigate();
   const [stats, setStats] = useState<OverallStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,18 +50,18 @@ export default function StatsPage() {
 
   return (
     <StatsPageShell
-      title="Stats"
+      title={t("title")}
       icon={<Sparkles className="h-6 w-6 shrink-0" />}
-      subtitle="Your overall habit performance"
+      subtitle={t("subtitle")}
       loading={loading}
     >
       {stats && (
         <div className="flex flex-col gap-2">
-          <StatsSectionCard icon={TrendingUp} label="This week">
+          <StatsSectionCard icon={TrendingUp} label={t("sections.thisWeek")}>
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
                 <p className="text-xl font-bold tabular-nums">{weekRate}</p>
-                <p className="text-[11px] text-muted-foreground">Completion</p>
+                <p className="text-[11px] text-muted-foreground">{t("sections.completion")}</p>
               </div>
               <div>
                 <p className="text-xl font-bold tabular-nums">
@@ -68,13 +70,13 @@ export default function StatsPage() {
                     /{stats.weekScheduled}
                   </span>
                 </p>
-                <p className="text-[11px] text-muted-foreground">Wins</p>
+                <p className="text-[11px] text-muted-foreground">{t("sections.wins")}</p>
               </div>
               <div>
                 <p className="text-xl font-bold tabular-nums">
                   {formatDuration(stats.weekTrackedMs)}
                 </p>
-                <p className="text-[11px] text-muted-foreground">Tracked</p>
+                <p className="text-[11px] text-muted-foreground">{t("sections.tracked")}</p>
               </div>
             </div>
           </StatsSectionCard>
@@ -83,7 +85,7 @@ export default function StatsPage() {
             <div className="flex flex-col items-center gap-1">
               <Flame className="h-3.5 w-3.5 text-muted-foreground" />
               <p className="text-lg font-bold tabular-nums">{stats.loginStreak}d</p>
-              <p className="text-[10px] text-muted-foreground">Check-in</p>
+              <p className="text-[10px] text-muted-foreground">{t("sections.checkIn")}</p>
             </div>
             <div className="flex flex-col items-center gap-1">
               <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
@@ -91,16 +93,16 @@ export default function StatsPage() {
                 {stats.journalStreak ?? "—"}
                 {stats.journalStreak !== null ? "d" : ""}
               </p>
-              <p className="text-[10px] text-muted-foreground">Journal</p>
+              <p className="text-[10px] text-muted-foreground">{t("sections.journal")}</p>
             </div>
             <div className="flex flex-col items-center gap-1">
               <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
               <p className="text-lg font-bold tabular-nums">{stats.bestCurrentHabitStreak}d</p>
-              <p className="text-[10px] text-muted-foreground">Best streak</p>
+              <p className="text-[10px] text-muted-foreground">{t("sections.bestStreak")}</p>
             </div>
           </div>
 
-          <StatsSectionCard icon={CalendarDays} label="90-day consistency">
+          <StatsSectionCard icon={CalendarDays} label={t("sections.consistency90d")}>
             <ConsistencyHeatmap
               days={stats.consistencyHeatmap90}
               mode="aggregate"
@@ -108,7 +110,7 @@ export default function StatsPage() {
           </StatsSectionCard>
 
           {stats.groups.length > 0 && (
-            <StatsSectionCard icon={Layers} label="Groups · 30d">
+            <StatsSectionCard icon={Layers} label={t("sections.groups30d")}>
               <div className="flex flex-col gap-1">
                 {stats.groups.map((g) => (
                   <GroupNavCard
@@ -128,7 +130,7 @@ export default function StatsPage() {
 
           {(stats.weeklyCompletionByGroup.length > 0 ||
             stats.weeklyCompletion.some((p) => p.rate !== null)) && (
-            <StatsSectionCard icon={TrendingUp} label="Completion rate">
+            <StatsSectionCard icon={TrendingUp} label={t("sections.completionRate")}>
               <MonthlyLineChart
                 series={
                   stats.weeklyCompletionByGroup.length > 0
@@ -152,14 +154,14 @@ export default function StatsPage() {
           )}
 
           {timeOfDayHasData(stats.timeOfDaySegments) && (
-            <StatsSectionCard icon={Clock} label="Time of day · 30d">
+            <StatsSectionCard icon={Clock} label={t("sections.timeOfDay30d")}>
               <TimeOfDayChart segments={stats.timeOfDaySegments} />
             </StatsSectionCard>
           )}
 
           {stats.groups.length === 0 && (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              Create a group in Projects to start tracking stats.
+              {t("createGroupHint")}
             </p>
           )}
         </div>

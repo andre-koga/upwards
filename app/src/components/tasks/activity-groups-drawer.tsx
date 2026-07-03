@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { ChevronDown, ChevronLeft, Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -55,6 +56,8 @@ function ArchivedPillToggle({
   showLabel: string;
   hideLabel: string;
 }) {
+  const { t } = useTranslation("projects");
+
   return (
     <div className="flex w-full justify-center pt-2">
       <Button
@@ -65,7 +68,7 @@ function ArchivedPillToggle({
         aria-label={expanded ? hideLabel : showLabel}
         onClick={onToggle}
       >
-        <span>Archived</span>
+        <span>{t("drawer.archived")}</span>
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 transition-transform duration-200",
@@ -110,12 +113,14 @@ export default function ActivityGroupsDrawer({
   onAddManualEntry,
   onTasksDataChanged,
   triggerClassName,
-  triggerTitle = "Pick group or activity",
+  triggerTitle,
   triggerLabel,
   triggerIcon: TriggerIcon = Plus,
   floating = true,
 }: ActivityGroupsDrawerProps) {
+  const { t } = useTranslation("projects");
   const navigate = useNavigate();
+  const resolvedTriggerTitle = triggerTitle ?? t("drawer.pickGroupOrActivity");
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"groups" | "activities">("groups");
   const [selectedGroup, setSelectedGroup] = useState<ActivityGroup | null>(
@@ -302,7 +307,7 @@ export default function ActivityGroupsDrawer({
             {view === "groups" ? (
               <>
                 <div className="shrink-0 px-5 pb-3 pt-2">
-                  <h2 className="text-center text-lg font-semibold">Groups</h2>
+                  <h2 className="text-center text-lg font-semibold">{t("drawer.groups")}</h2>
                 </div>
                 <div className="flex shrink-0 justify-center px-4 pb-6">
                   <Button
@@ -315,19 +320,19 @@ export default function ActivityGroupsDrawer({
                     }}
                   >
                     <Plus className="h-4 w-4" />
-                    New Group
+                    {t("drawer.newGroup")}
                   </Button>
                 </div>
                 <div className="space-y-2 px-4 pb-12">
                   {groups.length === 0 && archivedGroups.length === 0 ? (
                     <p className="py-6 text-center text-sm text-muted-foreground">
-                      No groups yet.
+                      {t("drawer.noGroupsYet")}
                     </p>
                   ) : (
                     <>
                       {groups.length === 0 ? (
                         <p className="py-2 text-center text-sm text-muted-foreground">
-                          No active groups.
+                          {t("drawer.noActiveGroups")}
                         </p>
                       ) : (
                         groups.map((group) => {
@@ -350,8 +355,8 @@ export default function ActivityGroupsDrawer({
                             onToggle={() =>
                               setShowArchivedGroups((v) => !v)
                             }
-                            showLabel="Show archived groups"
-                            hideLabel="Hide archived groups"
+                            showLabel={t("drawer.showArchivedGroups")}
+                            hideLabel={t("drawer.hideArchivedGroups")}
                           />
                           {showArchivedGroups ? (
                             <div className="mt-2 w-full space-y-2">
@@ -360,8 +365,8 @@ export default function ActivityGroupsDrawer({
                                   key={group.id}
                                   name={group.name}
                                   color={group.color || DEFAULT_GROUP_COLOR}
-                                  nameTitle="Restore or delete archived group"
-                                  nameAriaLabel="Restore or delete archived group"
+                                  nameTitle={t("drawer.restoreOrDeleteGroup")}
+                                  nameAriaLabel={t("drawer.restoreOrDeleteGroup")}
                                   onNameClick={() =>
                                     setArchivedActionsTarget({
                                       type: "group",
@@ -393,7 +398,7 @@ export default function ActivityGroupsDrawer({
                     size="iconRoundMd"
                     onClick={handleBackToGroups}
                     className="text-muted-foreground"
-                    aria-label="Back to groups"
+                    aria-label={t("drawer.backToGroups")}
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -414,24 +419,24 @@ export default function ActivityGroupsDrawer({
                       }}
                     >
                       <Plus className="h-4 w-4" />
-                      New Activity
+                      {t("drawer.newActivity")}
                     </Button>
                   </div>
                 )}
                 <div className="space-y-2 px-4 pb-12">
                   {!selectedGroup ? (
                     <p className="py-6 text-center text-sm text-muted-foreground">
-                      No group selected.
+                      {t("drawer.noGroupSelected")}
                     </p>
                   ) : groupActivities.length === 0 ? (
                     <p className="py-6 text-center text-sm text-muted-foreground">
-                      No activities in this group.
+                      {t("drawer.noActivitiesInGroup")}
                     </p>
                   ) : (
                     <>
                       {incompleteActivities.length === 0 ? (
                         <p className="py-2 text-center text-sm text-muted-foreground">
-                          No active activities.
+                          {t("drawer.noActiveActivities")}
                         </p>
                       ) : (
                         incompleteActivities.map((activity) => {
@@ -547,9 +552,9 @@ export default function ActivityGroupsDrawer({
         variant="default"
         size={triggerLabel ? "default" : "floatingNav"}
         onClick={() => setOpen((v) => !v)}
-        title={triggerLabel || !open ? triggerTitle : "Close activity picker"}
+        title={triggerLabel || !open ? resolvedTriggerTitle : t("drawer.closePicker")}
         aria-label={
-          triggerLabel || !open ? triggerTitle : "Close activity picker"
+          triggerLabel || !open ? resolvedTriggerTitle : t("drawer.closePicker")
         }
         className={[
           !triggerLabel &&

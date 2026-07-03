@@ -23,8 +23,10 @@ import {
   setStoredPalette,
 } from "@/lib/palette";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const ThemeSwitcher = () => {
+  const { t } = useTranslation("settings");
   const { theme, setTheme } = useTheme();
   const [palette, setPalette] = useState<PaletteValue>(getStoredPalette());
 
@@ -43,9 +45,12 @@ const ThemeSwitcher = () => {
 
   const ActiveModeIcon = activeModeOption.icon;
   const ActivePaletteIcon = activePaletteOption.icon;
+  const activeModeLabel = t(`appearance.modes.${activeModeOption.value}`);
+  const activePaletteLabel = t(`appearance.palettes.${activePaletteOption.value}`);
 
   const renderModeItem = (modeOption: ThemeModeOption) => {
     const OptionIcon = modeOption.icon;
+    const label = t(`appearance.modes.${modeOption.value}`);
 
     return (
       <DropdownMenuRadioItem
@@ -54,13 +59,14 @@ const ThemeSwitcher = () => {
         value={modeOption.value}
       >
         <OptionIcon size={ICON_SIZE} className="text-muted-foreground" />
-        <span>{modeOption.label}</span>
+        <span>{label}</span>
       </DropdownMenuRadioItem>
     );
   };
 
   const renderPaletteItem = (paletteOption: PaletteOption) => {
     const OptionIcon = paletteOption.icon;
+    const label = t(`appearance.palettes.${paletteOption.value}`);
 
     return (
       <DropdownMenuRadioItem
@@ -69,7 +75,7 @@ const ThemeSwitcher = () => {
         value={paletteOption.value}
       >
         <OptionIcon size={ICON_SIZE} className="text-muted-foreground" />
-        <span>{paletteOption.label}</span>
+        <span>{label}</span>
       </DropdownMenuRadioItem>
     );
   };
@@ -87,7 +93,7 @@ const ThemeSwitcher = () => {
     <div className="space-y-3">
       <div className="space-y-1">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Theme
+          {t("appearance.theme")}
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -101,7 +107,7 @@ const ThemeSwitcher = () => {
                   size={ICON_SIZE}
                   className="text-muted-foreground"
                 />
-                <span className="text-sm">{activeModeOption.label}</span>
+                <span className="text-sm">{activeModeLabel}</span>
               </span>
               <ChevronDown size={ICON_SIZE} className="text-muted-foreground" />
             </Button>
@@ -111,7 +117,7 @@ const ThemeSwitcher = () => {
             align="start"
             sideOffset={6}
           >
-            <DropdownMenuLabel>Theme</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("appearance.theme")}</DropdownMenuLabel>
             <DropdownMenuRadioGroup value={activeMode} onValueChange={setTheme}>
               {THEME_MODE_OPTIONS.map((modeOption) =>
                 renderModeItem(modeOption)
@@ -123,7 +129,7 @@ const ThemeSwitcher = () => {
 
       <div className="space-y-1">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Palette
+          {t("appearance.palette")}
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -137,7 +143,7 @@ const ThemeSwitcher = () => {
                   size={ICON_SIZE}
                   className="text-muted-foreground"
                 />
-                <span className="text-sm">{activePaletteOption.label}</span>
+                <span className="text-sm">{activePaletteLabel}</span>
               </span>
               <ChevronDown size={ICON_SIZE} className="text-muted-foreground" />
             </Button>
@@ -147,7 +153,7 @@ const ThemeSwitcher = () => {
             align="start"
             sideOffset={6}
           >
-            <DropdownMenuLabel>Palette</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("appearance.palette")}</DropdownMenuLabel>
             <DropdownMenuRadioGroup
               value={palette}
               onValueChange={handlePaletteChange}

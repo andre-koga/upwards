@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { BarChart3, Clock, Layers } from "lucide-react";
 import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
@@ -12,6 +13,7 @@ import { TimeOfDayChart } from "@/components/stats/time-of-day-chart";
 import { timeOfDayHasData } from "@/lib/stats/aggregates";
 
 export default function GroupStatsPage() {
+  const { t } = useTranslation("stats");
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const [stats, setStats] = useState<GroupStats | null>(null);
@@ -54,17 +56,17 @@ export default function GroupStatsPage() {
             {stats.group.name}
           </span>
         ) : (
-          "Group"
+          t("group")
         )
       }
       icon={<BarChart3 className="h-6 w-6 shrink-0" />}
-      subtitle="How this group is performing"
+      subtitle={t("groupSubtitle")}
       backTo="/stats"
-      backTitle="Back to stats"
+      backTitle={t("backToStats")}
       loading={loading}
     >
       {!loading && !stats && (
-        <p className="text-sm text-muted-foreground">Group not found.</p>
+        <p className="text-sm text-muted-foreground">{t("groupNotFound")}</p>
       )}
 
       {stats && (
@@ -72,7 +74,7 @@ export default function GroupStatsPage() {
           <GroupStatsCore stats={stats} color={color} />
 
           {stats.habitComparison.length > 0 && (
-            <StatsSectionCard icon={Layers} label="Activities · 30d">
+            <StatsSectionCard icon={Layers} label={t("sections.activities30d")}>
               <div className="flex flex-col gap-1">
                 {stats.habitComparison.map((row) => (
                   <ActivityNavCard
@@ -94,14 +96,14 @@ export default function GroupStatsPage() {
           )}
 
           {timeOfDayHasData(stats.timeOfDaySegments) && (
-            <StatsSectionCard icon={Clock} label="Time of day · 30d">
+            <StatsSectionCard icon={Clock} label={t("sections.timeOfDay30d")}>
               <TimeOfDayChart segments={stats.timeOfDaySegments} />
             </StatsSectionCard>
           )}
 
           {stats.habitComparison.length === 0 && (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              No habits in this group yet.
+              {t("noHabitsInGroup")}
             </p>
           )}
         </div>

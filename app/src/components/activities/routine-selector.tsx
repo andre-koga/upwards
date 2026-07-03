@@ -6,17 +6,18 @@ import {
   FormToggleButton,
 } from "@/components/forms";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
-const DAYS = [
-  { short: "S", label: "Sunday" },
-  { short: "M", label: "Monday" },
-  { short: "T", label: "Tuesday" },
-  { short: "W", label: "Wednesday" },
-  { short: "T", label: "Thursday" },
-  { short: "F", label: "Friday" },
-  { short: "S", label: "Saturday" },
-];
+const WEEKDAY_KEYS = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+] as const;
 
 interface RoutineSelectorProps {
   routine: string;
@@ -33,22 +34,42 @@ interface RoutineSelectorProps {
   trailingSlot?: ReactNode;
 }
 
-const DEFAULT_ROUTINE_OPTIONS = [
-  { value: "anytime", label: "Anytime (no schedule)" },
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
-  { value: "custom", label: "Custom" },
-  { value: "never", label: "Never (avoid this)" },
-];
+export function useDefaultRoutineOptions() {
+  const { t } = useTranslation("projects");
 
-const MEMO_ROUTINE_OPTIONS = [
+  return useMemo(
+    () => [
+      { value: "anytime", label: t("routine.anytime") },
+      { value: "daily", label: t("routine.daily") },
+      { value: "weekly", label: t("routine.weekly") },
+      { value: "custom", label: t("routine.custom") },
+      { value: "never", label: t("routine.never") },
+    ],
+    [t]
+  );
+}
+
+export function useMemoRoutineOptions() {
+  const { t } = useTranslation("projects");
+
+  return useMemo(
+    () => [
+      { value: "daily", label: t("routine.daily") },
+      { value: "weekly", label: t("routine.weekly") },
+      { value: "monthly", label: t("routine.monthly") },
+      { value: "custom", label: t("routine.custom") },
+    ],
+    [t]
+  );
+}
+
+/** @deprecated Use useMemoRoutineOptions() inside a component. */
+export const MEMO_ROUTINE_OPTIONS = [
   { value: "daily", label: "Daily" },
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },
   { value: "custom", label: "Custom" },
 ];
-
-export { MEMO_ROUTINE_OPTIONS };
 
 export default function RoutineSelector({
   routine,
@@ -61,9 +82,23 @@ export default function RoutineSelector({
   onMonthlyDayChange,
   onCustomIntervalChange,
   onCustomUnitChange,
-  options = DEFAULT_ROUTINE_OPTIONS,
+  options,
   trailingSlot,
 }: RoutineSelectorProps) {
+  const { t } = useTranslation("projects");
+  const defaultOptions = useDefaultRoutineOptions();
+  const resolvedOptions = options ?? defaultOptions;
+
+  const weekdays = useMemo(
+    () =>
+      WEEKDAY_KEYS.map((key, index) => ({
+        short: t(`routine.weekdays.${key}`).charAt(0),
+        label: t(`routine.weekdays.${key}`),
+        index,
+      })),
+    [t]
+  );
+
   const toggleWeekday = (day: number) => {
     onWeeklyDaysChange(
       weeklyDays.includes(day)
@@ -77,11 +112,11 @@ export default function RoutineSelector({
       <FormRow className="items-end gap-2">
         <FormSelectField
           id="activity-routine"
-          label="Routine type"
+          label={t("routine.type")}
           labelClassName="sr-only"
           value={routine}
           onValueChange={onRoutineChange}
-          options={options}
+          options={resolvedOptions}
           containerClassName="min-w-0 flex-1 space-y-0"
         />
         {trailingSlot}
@@ -89,10 +124,10 @@ export default function RoutineSelector({
 
       {routine === "monthly" && onMonthlyDayChange && (
         <div className="space-y-1 pt-3">
-          <p className={dialogFieldLabelClassName}>Day of month</p>
+          <p className={dialogFieldLabelClassName}>{t("routine.dayOfMonth")}</p>
           <FormField
             id="monthly-routine-day"
-            label="Day of month"
+            label={t("routine.dayOfMonth")}
             labelClassName="sr-only"
             type="number"
             min="1"
@@ -111,12 +146,12 @@ export default function RoutineSelector({
       {routine === "weekly" && (
         <div className="pt-3">
           <FormRow className="items-stretch gap-1">
-            {DAYS.map((day, index) => (
+            {weekdays.map((day) => (
               <FormToggleButton
-                key={`${day.label}-${index}`}
-                toggled={weeklyDays.includes(index)}
-                onToggle={() => toggleWeekday(index)}
-                label={`Toggle ${day.label}`}
+                key={`${day.label}-${day.index}`}
+                toggled={weeklyDays.includes(day.index)}
+                onToggle={() => toggleWeekday(day.index)}
+                label={t("routine.toggleDay", { day: day.label })}
                 className="h-9 min-w-0 flex-1 rounded-md px-0 text-xs font-medium"
                 activeClassName="border-primary bg-primary text-primary-foreground"
                 inactiveClassName="border-input bg-background"
@@ -130,11 +165,11 @@ export default function RoutineSelector({
 
       {routine === "custom" && (
         <div className="space-y-1 pt-3">
-          <p className={dialogFieldLabelClassName}>Every</p>
+          <p className={dialogFieldLabelClassName}>{t("routine.every")}</p>
           <FormRow>
             <FormField
               id="custom-routine-interval"
-              label="Custom interval"
+              label={t("routine.customInterval")}
               labelClassName="sr-only"
               type="number"
               min="1"
@@ -148,16 +183,16 @@ export default function RoutineSelector({
             />
             <FormSelectField
               id="custom-routine-unit"
-              label="Custom unit"
+              label={t("routine.customUnit")}
               labelClassName="sr-only"
               value={customUnit}
               onValueChange={(value) =>
                 onCustomUnitChange(value as "days" | "weeks" | "months")
               }
               options={[
-                { value: "days", label: "Days" },
-                { value: "weeks", label: "Weeks" },
-                { value: "months", label: "Months" },
+                { value: "days", label: t("routine.days") },
+                { value: "weeks", label: t("routine.weeks") },
+                { value: "months", label: t("routine.months") },
               ]}
               containerClassName="flex-1 space-y-0"
               triggerClassName="h-10"

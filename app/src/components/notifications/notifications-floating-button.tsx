@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Bell, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/use-auth";
@@ -8,6 +9,7 @@ import { NotificationsDrawer } from "@/components/notifications/notifications-dr
 import { cn } from "@/lib/utils";
 
 export function NotificationsFloatingButton() {
+  const { t } = useTranslation("nav");
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { isAuthed } = useAuth();
@@ -29,8 +31,8 @@ export function NotificationsFloatingButton() {
             size="icon"
             className="h-9 w-9 rounded-full border-border bg-background p-0 shadow-md"
             onClick={() => navigate("/settings")}
-            title="Sign in"
-            aria-label="Sign in"
+            title={t("signIn")}
+            aria-label={t("signIn")}
           >
             <LogIn className="h-4 w-4" />
           </Button>
@@ -40,8 +42,8 @@ export function NotificationsFloatingButton() {
   }
 
   const label = hasUnread
-    ? `Notifications (${unreadCount} unread)`
-    : "Notifications";
+    ? t("notificationsUnread", { count: unreadCount })
+    : t("notifications");
 
   return (
     <>

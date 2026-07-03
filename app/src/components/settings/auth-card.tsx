@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { LogIn, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ const emailId = "settings-sync-email";
 const passwordId = "settings-sync-password";
 
 export function AuthCard() {
+  const { t } = useTranslation("settings");
   const {
     isAuthed,
     currentUserEmail,
@@ -55,13 +57,13 @@ export function AuthCard() {
   };
 
   return (
-    <SettingsSection title="Sync account">
+    <SettingsSection title={t("auth.title")}>
       {isAuthed ? (
         <>
           <p className="text-sm text-muted-foreground">
-            Signed in as{" "}
+            {t("auth.signedInAs")}{" "}
             <span className="font-medium text-foreground">
-              {currentUserEmail ?? "Unknown email"}
+              {currentUserEmail ?? t("auth.unknownEmail")}
             </span>
           </p>
           <Button
@@ -70,7 +72,7 @@ export function AuthCard() {
             onClick={signOut}
           >
             <LogOut className="h-4 w-4" />
-            Sign out
+            {t("auth.signOut")}
           </Button>
         </>
       ) : (
@@ -84,13 +86,13 @@ export function AuthCard() {
             }}
           >
             <LogIn className="h-4 w-4" />
-            {showAuthForm ? "Hide login" : "Sign in / Sign up"}
+            {showAuthForm ? t("auth.hideLogin") : t("auth.signInSignUp")}
           </Button>
 
           {showAuthForm && (
             <form onSubmit={handleSignIn} className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor={emailId}>Email</Label>
+                <Label htmlFor={emailId}>{t("auth.email")}</Label>
                 <Input
                   id={emailId}
                   type="email"
@@ -102,7 +104,7 @@ export function AuthCard() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor={passwordId}>Password</Label>
+                <Label htmlFor={passwordId}>{t("auth.password")}</Label>
                 <Input
                   id={passwordId}
                   type="password"
@@ -115,7 +117,7 @@ export function AuthCard() {
 
               {authError && (
                 <p
-                  className={`text-xs ${authError.includes("Check your email") ? "text-green-500" : "text-destructive"}`}
+                  className={`text-xs ${authError === t("auth.checkEmail") ? "text-green-500" : "text-destructive"}`}
                 >
                   {authError}
                 </p>
@@ -123,7 +125,7 @@ export function AuthCard() {
 
               <div className="flex gap-2">
                 <Button type="submit" disabled={authLoading} className="flex-1">
-                  {authLoading ? "…" : "Sign in"}
+                  {authLoading ? "…" : t("auth.signIn")}
                 </Button>
                 <Button
                   type="button"
@@ -132,7 +134,7 @@ export function AuthCard() {
                   className="flex-1"
                   onClick={() => void handleSignUp()}
                 >
-                  {authLoading ? "…" : "Sign up"}
+                  {authLoading ? "…" : t("auth.signUp")}
                 </Button>
               </div>
             </form>
@@ -143,7 +145,7 @@ export function AuthCard() {
               to="/settings/forgot-password"
               className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
-              Forgot password?
+              {t("auth.forgotPassword")}
             </Link>
           </p>
         </>

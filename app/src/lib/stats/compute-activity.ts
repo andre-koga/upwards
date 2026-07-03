@@ -1,5 +1,6 @@
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
+import { getActiveLocaleTag } from "@/lib/i18n";
 import type { ActivityStats, HeatmapDay, MonthlyCompletionPoint } from "./types";
 
 export function computeAllTimeWeekdayStats(raw: ActivityStats): {
@@ -70,7 +71,7 @@ export function computeMonthlyCompletionRates(raw: ActivityStats): MonthlyComple
 
   return months.map(({ year, month, key }) => {
     const { completed, scheduled } = buckets.get(key)!;
-    const label = new Date(year, month, 1).toLocaleDateString(undefined, { month: "short" });
+    const label = new Date(year, month, 1).toLocaleDateString(getActiveLocaleTag(), { month: "short" });
     return {
       monthKey: key,
       label,

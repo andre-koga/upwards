@@ -1,4 +1,6 @@
 import { memo, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { OneTimeTask } from "@/lib/db/types";
 import { Pin, RefreshCw } from "lucide-react";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
@@ -9,7 +11,7 @@ import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 
-function getDueDateDisplayLabel(dueDate: string): string {
+function getDueDateDisplayLabel(dueDate: string, t: TFunction<"tasks">): string {
   const due = fromDateString(dueDate);
   const dueMs = due.getTime();
 
@@ -23,10 +25,10 @@ function getDueDateDisplayLabel(dueDate: string): string {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowMs = tomorrow.getTime();
 
-  if (dueMs < yesterdayMs) return "Past";
-  if (dueMs === yesterdayMs) return "Yesterday";
-  if (dueMs === todayMs) return "Today";
-  if (dueMs === tomorrowMs) return "Tomorrow";
+  if (dueMs < yesterdayMs) return t("memo.dueLabels.past");
+  if (dueMs === yesterdayMs) return t("memo.dueLabels.yesterday");
+  if (dueMs === todayMs) return t("memo.dueLabels.today");
+  if (dueMs === tomorrowMs) return t("memo.dueLabels.tomorrow");
   return formatDateShort(due);
 }
 
@@ -50,6 +52,8 @@ function OneTimeTaskItem({
   onUpdate,
   onArchive,
 }: OneTimeTaskItemProps) {
+  const { t } = useTranslation("tasks");
+  const { t: tCommon } = useTranslation("common");
   const [editOpen, setEditOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -158,7 +162,7 @@ function OneTimeTaskItem({
   };
 
   const dueDateDisplay = task.due_date
-    ? getDueDateDisplayLabel(task.due_date)
+    ? getDueDateDisplayLabel(task.due_date, t)
     : null;
 
   return (
@@ -177,9 +181,9 @@ function OneTimeTaskItem({
             task.is_pinned
               ? isToday
                 ? task.is_completed
-                  ? "Pinned memo — mark incomplete"
-                  : "Pinned memo — mark complete"
-                : "Pinned memo"
+                  ? t("memo.pinnedMarkIncomplete")
+                  : t("memo.pinnedMarkComplete")
+                : t("memo.pinnedMemo")
               : undefined
           }
         />
@@ -215,7 +219,7 @@ function OneTimeTaskItem({
             <div className="flex items-center justify-between gap-2 px-3 pb-2">
               {dueDateDisplay ? (
                 <span className="min-w-0 text-xs text-muted-foreground">
-                  Due {dueDateDisplay}
+                  {t("memo.due", { date: dueDateDisplay })}
                 </span>
               ) : (
                 <span />
@@ -223,11 +227,11 @@ function OneTimeTaskItem({
               {task.recurring_memo_id ? (
                 <span
                   className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium leading-none text-muted-foreground shadow-sm"
-                  title="Recurring memo"
-                  aria-label="Recurring memo"
+                  title={t("memo.recurringMemo")}
+                  aria-label={t("memo.recurringMemo")}
                 >
                   <RefreshCw className="h-3 w-3 shrink-0" aria-hidden />
-                  Recurring
+                  {t("memo.recurring")}
                 </span>
               ) : null}
             </div>
@@ -247,7 +251,7 @@ function OneTimeTaskItem({
         onConfirm={handleSave}
         onDelete={handleDelete}
         onArchive={handleArchiveClick}
-        confirmLabel="Save"
+        confirmLabel={tCommon("save")}
         confirmDisabled={saving || !draftTitle.trim()}
       />
 

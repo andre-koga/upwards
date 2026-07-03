@@ -1,6 +1,7 @@
 import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
 import { effectiveDateForMs } from "@/lib/activity/period-day-utils";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
+import { getActiveLocaleTag } from "@/lib/i18n";
 import {
   computeCompletionTotals,
   completionRate,
@@ -242,7 +243,7 @@ export function buildMonthlyCompletionFromTotals(
 
   return months.map(({ year, month, key }) => {
     const { completed, scheduled } = buckets.get(key)!;
-    const label = new Date(year, month, 1).toLocaleDateString(undefined, { month: "short" });
+    const label = new Date(year, month, 1).toLocaleDateString(getActiveLocaleTag(), { month: "short" });
     return {
       monthKey: key,
       label,

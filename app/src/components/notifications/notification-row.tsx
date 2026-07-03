@@ -1,27 +1,31 @@
 import { CheckCircle2, Flame, Users, X, XCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { ActivityCompletionDetails } from "@/components/notifications/activity-completion-details";
 import type { InboxNotification } from "@/lib/notifications/use-notifications";
 import { isNotificationClearable } from "@/lib/notifications/notification-dismissals";
 import { cn } from "@/lib/utils";
+import { getActiveDateFnsLocale } from "@/lib/i18n";
+import type { TFunction } from "i18next";
 
-function actorDisplayLabel(n: InboxNotification): string {
+function actorDisplayLabel(n: InboxNotification, t: TFunction<"notifications">): string {
   const name = n.actorDisplayName?.trim() || n.actorUsername?.trim();
-  return name || "Someone";
+  return name || t("someone");
 }
 
-function notificationMessage(n: InboxNotification): string {
+function notificationMessage(n: InboxNotification, t: TFunction<"notifications">): string {
+  const name = actorDisplayLabel(n, t);
   if (n.kind === "friend_request") {
-    return `${actorDisplayLabel(n)} wants to be friends`;
+    return t("friendRequest", { name });
   }
   if (n.kind === "daily_summary") {
-    return `${actorDisplayLabel(n)} shared their day`;
+    return t("dailySummary", { name });
   }
-  const habit = n.activityName?.trim() || "a habit";
+  const habit = n.activityName?.trim() || t("aHabit");
   const streak = n.streak ?? 0;
-  const unit = n.routine === "never" ? "days without slip" : "day streak";
-  return `${actorDisplayLabel(n)} completed ${habit} · ${streak} ${unit}`;
+  const unit = n.routine === "never" ? t("daysWithoutSlip") : t("dayStreak");
+  return t("activityComplete", { name, habit, streak, unit });
 }
 
 function rawActionId(n: InboxNotification): string {
@@ -46,6 +50,7 @@ export function NotificationRow({
   onCloseDrawer?: () => void;
   responding: string | null;
 }) {
+  const { t } = useTranslation("notifications");
   const rawId = rawActionId(n);
   const canDismiss = isNotificationClearable(n);
   const isClickableRow = n.kind === "daily_summary";
@@ -79,10 +84,13 @@ export function NotificationRow({
       </span>
 
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="text-sm leading-snug">{notificationMessage(n)}</p>
+        <p className="text-sm leading-snug">{notificationMessage(n, t)}</p>
         {n.kind === "activity_complete" && <ActivityCompletionDetails n={n} />}
         <p className="text-xs text-muted-foreground">
-          {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+          {formatDistanceToNow(new Date(n.createdAt), {
+            addSuffix: true,
+            locale: getActiveDateFnsLocale(),
+          })}
         </p>
 
         {n.kind === "friend_request" && n.actionStatus === "pending" && (
@@ -97,7 +105,7 @@ export function NotificationRow({
               onClick={() => { onCloseDrawer?.(); onAcceptFriend(rawId); }}
             >
               <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-              Accept
+              {t("accept")}
             </Button>
             <Button
               size="sm"
@@ -106,7 +114,7 @@ export function NotificationRow({
               onClick={() => { onCloseDrawer?.(); onDeclineFriend(rawId); }}
             >
               <XCircle className="h-3.5 w-3.5 text-destructive" />
-              Decline
+              {t("decline")}
             </Button>
           </div>
         )}
@@ -120,8 +128,8 @@ export function NotificationRow({
             size="smIcon"
             className="h-7 w-7 text-muted-foreground hover:text-foreground"
             onClick={(e) => { e.stopPropagation(); onDismiss(n.id); }}
-            aria-label="Dismiss notification"
-            title="Dismiss"
+            aria-label={t("dismissAria")}
+            title={t("dismiss")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>

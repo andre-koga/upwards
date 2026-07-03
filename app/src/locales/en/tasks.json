@@ -1,0 +1,57 @@
+{
+  "memo": {
+    "editTitle": "Edit memo",
+    "newTitle": "New memo",
+    "archive": "Archive memo",
+    "titleLabel": "Memo title",
+    "titlePlaceholder": "Task title…",
+    "dueDate": "Due date",
+    "pin": "Pin memo",
+    "unpin": "Unpin memo",
+    "due": "Due {{date}}",
+    "recurring": "Recurring",
+    "recurringMemo": "Recurring memo",
+    "pinnedMarkIncomplete": "Pinned memo — mark incomplete",
+    "pinnedMarkComplete": "Pinned memo — mark complete",
+    "pinnedMemo": "Pinned memo",
+    "dueLabels": {
+      "past": "Past",
+      "yesterday": "Yesterday",
+      "today": "Today",
+      "tomorrow": "Tomorrow"
+    },
+    "thisMemo": "this memo",
+    "deleteConfirm": {
+      "title": "Delete memo?",
+      "description": "Delete \"{{title}}\"? This action cannot be undone."
+    },
+    "archiveConfirm": {
+      "title": "Archive memo?",
+      "description": "Archive \"{{title}}\"? You can restore it from the archived memos list.",
+      "confirm": "Archive"
+    },
+    "archivedDialog": {
+      "title": "Archived Memos",
+      "titleWithCount": "Archived Memos ({{count}})",
+      "empty": "No archived memos",
+      "restore": "Restore memo",
+      "delete": "Delete memo"
+    }
+  },
+  "addTask": {
+    "trigger": "Add one-time task"
+  },
+  "recurringMemo": {
+    "editTitle": "Edit recurring memo",
+    "newTitle": "New recurring memo",
+    "titleLabel": "Memo title",
+    "titlePlaceholder": "e.g. meds",
+    "repeat": "Repeat",
+    "paused": "Paused"
+  },
+  "recurringMemos": {
+    "title": "Recurring Memos",
+    "titleWithCount": "Recurring Memos ({{count}})",
+    "empty": "No recurring memos yet"
+  }
+}

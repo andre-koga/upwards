@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
+import { getActiveLocaleTag } from "@/lib/i18n";
 import {
   CircleCheckBig,
   ExternalLink,
@@ -71,6 +73,7 @@ export default function FooterActionsBar({
   onAddQuickMemo,
   onTasksDataChanged,
 }: FooterActionsBarProps) {
+  const { t } = useTranslation("nav");
   const navigate = useNavigate();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pathsDrawerOpen, setPathsDrawerOpen] = useState(false);
@@ -81,7 +84,7 @@ export default function FooterActionsBar({
   const { bottomInset } = useVisualViewportLayout();
   const isSelectedToday =
     toDateString(currentDate) === getEffectiveToday();
-  const shortDate = currentDate.toLocaleDateString("en-US", {
+  const shortDate = currentDate.toLocaleDateString(getActiveLocaleTag(), {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -124,18 +127,14 @@ export default function FooterActionsBar({
                 navigate("/whats-new");
               }}
               title={
-                hasUnreadWhatsNew
-                  ? "What's new (unread updates)"
-                  : "What's new"
+                hasUnreadWhatsNew ? t("whatsNewUnread") : t("whatsNew")
               }
               aria-label={
-                hasUnreadWhatsNew
-                  ? "What's new (unread updates)"
-                  : "What's new"
+                hasUnreadWhatsNew ? t("whatsNewUnread") : t("whatsNew")
               }
             >
               <History className="h-4 w-4" />
-              What’s new
+              {t("whatsNew")}
               {hasUnreadWhatsNew ? (
                 <span
                   className="absolute right-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-red-500 ring-2 ring-background"
@@ -153,7 +152,7 @@ export default function FooterActionsBar({
               }}
             >
               <MessageSquare className="h-4 w-4" />
-              Feedback / requests
+              {t("feedback")}
             </Button>
             <Button
               type="button"
@@ -163,11 +162,11 @@ export default function FooterActionsBar({
                 setPathsDrawerOpen(false);
                 navigate("/logs");
               }}
-              title="View error logs"
-              aria-label="View error logs"
+              title={t("viewErrorLogs")}
+              aria-label={t("viewErrorLogs")}
             >
               <FileText className="h-4 w-4" />
-              Error Logs
+              {t("errorLogs")}
             </Button>
             <Button
               variant="outline"
@@ -179,13 +178,13 @@ export default function FooterActionsBar({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setPathsDrawerOpen(false)}
-                title="View source on GitHub"
-                aria-label="View source on GitHub"
+                title={t("githubSource")}
+                aria-label={t("githubSource")}
                 className="flex h-11 w-full items-center justify-between gap-2 px-4"
               >
                 <span className="flex items-center gap-2">
                   <Github className="h-4 w-4" />
-                  GitHub
+                  {t("github")}
                 </span>
                 <ExternalLink
                   className="h-4 w-4 shrink-0 text-muted-foreground"
@@ -208,7 +207,7 @@ export default function FooterActionsBar({
               }}
             >
               <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
-              Stats
+              {t("stats")}
             </Button>
             <Button
               type="button"
@@ -220,7 +219,7 @@ export default function FooterActionsBar({
               }}
             >
               <Users className="h-5 w-5 shrink-0 text-blue-500" />
-              Friends
+              {t("friends")}
             </Button>
             <Button
               type="button"
@@ -232,7 +231,7 @@ export default function FooterActionsBar({
               }}
             >
               <Settings className="h-5 w-5 shrink-0" />
-              Settings
+              {t("settings")}
             </Button>
           </div>
         </div>
@@ -246,8 +245,8 @@ export default function FooterActionsBar({
           size="icon"
           className="h-10 w-10 rounded-full border-border bg-background shadow-lg"
           onClick={() => setPathsDrawerOpen((v) => !v)}
-          title="Open more actions"
-          aria-label="Open more actions"
+          title={t("openMoreActions")}
+          aria-label={t("openMoreActions")}
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -256,24 +255,13 @@ export default function FooterActionsBar({
           <Button
             type="button"
             variant="outline"
-            size="icon"
-            className="h-10 w-10 rounded-full border bg-background shadow-lg"
-            onClick={() => navigate("/stats")}
-            title="Stats"
-            aria-label="Stats"
-          >
-            <Sparkles className="h-4 w-4 text-amber-500" aria-hidden />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
             className={cn(
               "h-10 rounded-full border px-3 shadow-lg",
               isSelectedToday && ""
             )}
             onClick={() => setCalendarOpen(true)}
-            title="Pick a date"
-            aria-label="Pick a date"
+            title={t("pickDate")}
+            aria-label={t("pickDate")}
           >
             <span className="font-semibold text-foreground">{shortDate}</span>
           </Button>
@@ -288,7 +276,7 @@ export default function FooterActionsBar({
           onAddManualEntry={onAddManualActivityPeriod}
           onTasksDataChanged={onTasksDataChanged}
           floating={false}
-          triggerTitle="Open projects"
+          triggerTitle={t("openProjects")}
           triggerIcon={Folder}
           triggerClassName="z-[60] h-12 w-12 shadow-lg rounded-full px-0"
         />
@@ -296,7 +284,7 @@ export default function FooterActionsBar({
         <AddTaskModal
           onAdd={onAddQuickMemo}
           icon={CircleCheckBig}
-          triggerTitle="Add quick memo"
+          triggerTitle={t("addQuickMemo")}
           floating={false}
           triggerClassName="z-[60] h-12 w-12 rounded-full px-0 shadow-lg"
         />

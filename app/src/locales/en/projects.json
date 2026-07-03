@@ -1,0 +1,88 @@
+{
+  "drawer": {
+    "pickGroupOrActivity": "Pick group or activity",
+    "closePicker": "Close activity picker",
+    "groups": "Groups",
+    "newGroup": "New Group",
+    "noGroupsYet": "No groups yet.",
+    "noActiveGroups": "No active groups.",
+    "showArchivedGroups": "Show archived groups",
+    "hideArchivedGroups": "Hide archived groups",
+    "restoreOrDeleteGroup": "Restore or delete archived group",
+    "backToGroups": "Back to groups",
+    "newActivity": "New Activity",
+    "noGroupSelected": "No group selected.",
+    "noActivitiesInGroup": "No activities in this group.",
+    "noActiveActivities": "No active activities.",
+    "archived": "Archived"
+  },
+  "routine": {
+    "type": "Routine type",
+    "anytime": "Anytime (no schedule)",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "custom": "Custom",
+    "never": "Never (avoid this)",
+    "dayOfMonth": "Day of month",
+    "every": "Every",
+    "customInterval": "Custom interval",
+    "customUnit": "Custom unit",
+    "days": "Days",
+    "weeks": "Weeks",
+    "months": "Months",
+    "toggleDay": "Toggle {{day}}",
+    "weekdays": {
+      "sunday": "Sunday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday"
+    },
+    "display": {
+      "daily": "Daily",
+      "anytime": "Anytime",
+      "never": "Never",
+      "weekly": "Weekly: {{days}}",
+      "monthly": "Monthly: Day {{day}}",
+      "every": "Every {{interval}} {{unit}}",
+      "weekdayShort": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      }
+    }
+  },
+  "manualEntry": {
+    "title": "Add time entry",
+    "description": "Manual session for {{name}}",
+    "date": "Date",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "spanWarning": "This session spans {{startDay}} and {{endDay}} (crosses your {{resetTime}} day boundary).",
+    "errorBothTimes": "Please set both start and end times.",
+    "errorSameTime": "End time must be different from start time.",
+    "errorEndFuture": "End time can't be in the future.",
+    "errorStartFuture": "Start time can't be in the future.",
+    "errorSaveFailed": "Failed to save entry. Please try again."
+  },
+  "taskItem": {
+    "neverSlipHint": "Tap to add a slip. Hold to clear slips.",
+    "pausedForDay": "Task paused for this day",
+    "incrementHint": "{{count}} / {{target}} — click to increment",
+    "countTarget": "{{count}} / {{target}}"
+  },
+  "timeField": {
+    "dialDescription": "Drag the dial or tap values to edit time.",
+    "subtractFiveMin": "Subtract five minutes",
+    "addFiveMin": "Add five minutes",
+    "subtractFiveMinShort": "-5 min",
+    "addFiveMinShort": "+5 min"
+  }
+}

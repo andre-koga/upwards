@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
@@ -31,12 +32,15 @@ interface AddTaskModalProps {
 export default function AddTaskModal({
   onAdd,
   triggerClassName,
-  triggerTitle = "Add one-time task",
+  triggerTitle,
   triggerLabel,
   icon: Icon = Plus,
   disabled = false,
   floating = true,
 }: AddTaskModalProps) {
+  const { t } = useTranslation("tasks");
+  const { t: tCommon } = useTranslation("common");
+  const resolvedTriggerTitle = triggerTitle ?? t("addTask.trigger");
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState<string | null>(null);
@@ -90,7 +94,7 @@ export default function AddTaskModal({
       <MemoEditDialog
         open={open}
         onOpenChange={handleOpenChange}
-        dialogTitle="New memo"
+        dialogTitle={t("memo.newTitle")}
         title={title}
         onTitleChange={setTitle}
         dueDate={dueDate}
@@ -98,7 +102,7 @@ export default function AddTaskModal({
         isPinned={isPinned}
         onPinnedChange={setIsPinned}
         onConfirm={handleAdd}
-        confirmLabel="Add"
+        confirmLabel={tCommon("add")}
         confirmDisabled={adding || !title.trim()}
       />
 
@@ -108,8 +112,8 @@ export default function AddTaskModal({
         size={triggerLabel ? "default" : "floatingNav"}
         onClick={() => handleOpenChange(!open)}
         disabled={disabled}
-        title={triggerTitle}
-        aria-label={triggerTitle}
+        title={resolvedTriggerTitle}
+        aria-label={resolvedTriggerTitle}
         className={cn(
           floating &&
             !triggerLabel &&

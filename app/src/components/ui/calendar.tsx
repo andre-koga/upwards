@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { fromDateString } from "@/lib/time-utils";
+import { getActiveDateFnsLocale, getActiveLocaleTag } from "@/lib/i18n";
 
 function Calendar({
   className,
@@ -37,6 +38,7 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       today={effectiveToday}
+      locale={getActiveDateFnsLocale()}
       className={cn(
         "group/calendar bg-background p-3 [--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -46,7 +48,7 @@ function Calendar({
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          date.toLocaleString(getActiveLocaleTag(), { month: "short" }),
         ...formatters,
       }}
       classNames={{

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { db, now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
@@ -18,9 +19,11 @@ export function DeleteMemoDialog({
   memoTitle,
   onOpenChange,
   onDeleted,
-  cancelLabel = "Cancel",
-  confirmLabel = "Delete",
+  cancelLabel,
+  confirmLabel,
 }: DeleteMemoDialogProps) {
+  const { t } = useTranslation("tasks");
+  const { t: tCommon } = useTranslation("common");
   const handleDelete = async () => {
     if (!memoId) return;
     try {
@@ -34,21 +37,21 @@ export function DeleteMemoDialog({
     }
   };
 
-  const displayTitle = memoTitle?.trim() || "this memo";
+  const displayTitle = memoTitle?.trim() || t("memo.thisMemo");
 
   return (
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Delete memo?"
-      description={`Delete "${displayTitle}"? This action cannot be undone.`}
+      title={t("memo.deleteConfirm.title")}
+      description={t("memo.deleteConfirm.description", { title: displayTitle })}
     >
       <FormDialogActions
         onConfirm={handleDelete}
-        confirmLabel={confirmLabel}
+        confirmLabel={confirmLabel ?? tCommon("delete")}
         confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
         secondaryAction={{
-          label: cancelLabel,
+          label: cancelLabel ?? tCommon("cancel"),
           onClick: () => onOpenChange(false),
         }}
       />

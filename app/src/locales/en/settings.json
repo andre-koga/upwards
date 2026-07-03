@@ -1,0 +1,119 @@
+{
+  "page": {
+    "title": "Settings",
+    "subtitle": "Manage your preferences",
+    "tagline": "Upwards — local-first habit tracker"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "theme": "Theme",
+    "palette": "Palette",
+    "modes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "palettes": {
+      "default": "Classic",
+      "ocean": "Ocean Breeze",
+      "sunset": "Warm Sunset",
+      "forest": "Deep Forest",
+      "mocha": "Hot Mocha",
+      "cyberpunk": "Cyberpunk",
+      "pastel dreams": "Pastel Dreams",
+      "graphite": "Pure Graphite",
+      "jellyfish": "Jellyfish"
+    }
+  },
+  "language": {
+    "title": "Language",
+    "current": "Language",
+    "comingSoon": "More languages are on the way."
+  },
+  "dayReset": {
+    "title": "Day reset time",
+    "description": "Choose a time when you're definitely asleep—before you wake up. Your day will reset at this time.",
+    "resetAt": "Reset at",
+    "midnight": "Midnight",
+    "helper": "Your day resets at {{time}}. Pick a time you're always asleep—activities started before then count toward the previous day."
+  },
+  "auth": {
+    "title": "Sync account",
+    "signedInAs": "Signed in as",
+    "unknownEmail": "Unknown email",
+    "signOut": "Sign out",
+    "signInSignUp": "Sign in / Sign up",
+    "hideLogin": "Hide login",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "forgotPassword": "Forgot password?",
+    "checkEmail": "Check your email to confirm your account!",
+    "signInFailed": "Sign in failed",
+    "signUpFailed": "Sign up failed",
+    "resetEmailFailed": "Could not send reset email",
+    "updatePasswordFailed": "Could not update password",
+    "syncNotConfigured": "Sync is not configured for this build.",
+    "forgotPasswordPage": {
+      "title": "Reset password",
+      "description": "Enter the email for your sync account. We will send a link to choose a new password.",
+      "sent": "If an account exists for {{email}}, you will receive a reset link shortly. Check your inbox and spam folder.",
+      "sendLink": "Send reset link",
+      "sending": "Sending…"
+    },
+    "resetPasswordPage": {
+      "title": "New password",
+      "verifying": "Verifying reset link…",
+      "invalidLink": "This reset link is invalid or has expired.",
+      "requestNewLink": "Request a new link",
+      "updatedTitle": "Password updated",
+      "updatedDescription": "Your password has been changed. You are signed in with your sync account.",
+      "goToSettings": "Go to Settings",
+      "chooseDescription": "Choose a new password for your sync account.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "passwordTooShort": "Password must be at least 6 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "saveNewPassword": "Save new password"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "displayName": "Display name",
+    "noDisplayName": "No display name",
+    "displayNameHelper": "Shown when friends see your shared habit completions",
+    "namePlaceholder": "Your name",
+    "setName": "Set name",
+    "username": "Username",
+    "noUsername": "No username",
+    "usernameHelper": "Friends can find you by exact username",
+    "usernamePlaceholder": "your_username",
+    "usernamePatternTitle": "3–20 characters: a-z, 0-9, underscore",
+    "usernameFormatHelper": "Letters, numbers, underscore. 3–20 characters.",
+    "setUsername": "Set username",
+    "notSignedIn": "Not signed in",
+    "usernameInvalid": "Username must be 3–20 characters: a-z, 0-9, underscore only.",
+    "usernameTaken": "That username is already taken.",
+    "usernameSaveFailed": "Failed to save username",
+    "loadFailed": "Failed to load profile",
+    "displayNameSaveFailed": "Failed to save display name"
+  },
+  "sync": {
+    "title": "Cloud sync",
+    "description": "Force push uploads all local data to the cloud, overwriting remote with local. Use when you have local data that is not syncing.",
+    "forcePush": "Force push to cloud",
+    "pushing": "Pushing…"
+  },
+  "taskOrder": {
+    "title": "Task order",
+    "description": "Reorder scheduled tasks shown on the home page.",
+    "reorder": "Reorder daily tasks",
+    "dailySorting": "Daily task sorting",
+    "loadingActivities": "Loading activities...",
+    "empty": "No scheduled activities available to reorder.",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "savingOrder": "Saving order..."
+  }
+}

@@ -1,3 +1,5 @@
+import { getActiveLocaleTag } from "@/lib/i18n";
+
 /**
  * Parse YYYY-MM-DD string to Date (local time).
  */
@@ -17,20 +19,20 @@ export function toDateString(date: Date): string {
 }
 
 /**
- * Format Date for display (e.g. "Jan 15").
+ * Format Date for display (e.g. "Jan 15"), using the active app locale.
  */
 export function formatDateShort(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(getActiveLocaleTag(), {
     month: "short",
     day: "numeric",
   });
 }
 
 /**
- * Format Date as weekday + short month/day (e.g. "Mon, Jan 15").
+ * Format Date as weekday + short month/day (e.g. "Mon, Jan 15"), using the active app locale.
  */
 export function formatWeekdayShortDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(getActiveLocaleTag(), {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -60,7 +62,7 @@ export function formatSyncTime(
   if (!isoTime) return fallback;
   const date = new Date(isoTime);
   if (Number.isNaN(date.getTime())) return fallback;
-  return date.toLocaleTimeString();
+  return date.toLocaleTimeString(getActiveLocaleTag());
 }
 
 /**

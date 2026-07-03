@@ -1,4 +1,5 @@
 import { Flame, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { LocationData } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +20,7 @@ export default function JournalTextSection({
   onLocationsClick,
   journalCompletionStreak,
 }: JournalTextSectionProps) {
+  const { t } = useTranslation("journal");
   const showStreak = typeof journalCompletionStreak === "number";
   const hasLocations = Boolean(locations?.length);
   const canOpenLocations = typeof onLocationsClick === "function";
@@ -28,6 +30,8 @@ export default function JournalTextSection({
   const locationLabel = locations?.length
     ? locations.map((l) => l.displayName).join(" → ")
     : "";
+
+  const streakLabel = t("journalStreak", { count: journalCompletionStreak ?? 0 });
 
   return (
     <>
@@ -39,19 +43,19 @@ export default function JournalTextSection({
               variant="outline"
               onClick={onLocationsClick}
               className="inline-flex h-auto min-w-0 max-w-full items-center gap-1 rounded-full px-2 py-px text-left text-xs font-normal text-muted-foreground shadow-none"
-              title={hasLocations ? locationLabel : "Add locations visited"}
+              title={hasLocations ? locationLabel : t("addLocationsVisited")}
             >
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="min-w-0 break-words">
-                {hasLocations ? locationLabel : "Add locations"}
+                {hasLocations ? locationLabel : t("addLocations")}
               </span>
             </Button>
           ) : null}
           {showStreak && (
             <span
               className="inline-flex shrink-0 items-center gap-0.5 tabular-nums"
-              title={`Journal streak: ${journalCompletionStreak}`}
-              aria-label={`Journal streak: ${journalCompletionStreak}`}
+              title={streakLabel}
+              aria-label={streakLabel}
             >
               <Flame className="h-3 w-3 shrink-0" />
               {journalCompletionStreak}
@@ -65,7 +69,7 @@ export default function JournalTextSection({
           title ? "" : "text-muted-foreground"
         } ${showMetaRow ? "pt-2" : "pt-3"}`}
       >
-        {title || "Untitled"}
+        {title || t("untitled")}
       </p>
 
       <p
@@ -73,7 +77,7 @@ export default function JournalTextSection({
           text ? "text-muted-foreground" : "italic text-muted-foreground"
         }`}
       >
-        {text || "No reflection written."}
+        {text || t("noReflection")}
       </p>
     </>
   );

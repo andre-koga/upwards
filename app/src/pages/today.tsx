@@ -1,4 +1,5 @@
 import { useState, useRef, type TouchEvent, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, FlaskConical, ScrollText, Users } from "lucide-react";
 import { toDateString } from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -17,6 +18,7 @@ import { getActivityDisplayName } from "@/lib/activity";
 const IS_DEV = import.meta.env.DEV;
 
 export default function TodayPage() {
+  const { t } = useTranslation("today");
   const SWIPE_MIN_DISTANCE_PX = 70;
   const SWIPE_DIRECTION_RATIO = 1.35;
   const SWIPE_FEEDBACK_START_PX = 12;
@@ -71,7 +73,7 @@ export default function TodayPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t("loading")}</p>
       </div>
     );
   }
@@ -198,10 +200,10 @@ export default function TodayPage() {
             )}
             <span>
               {swipeFeedback.blocked
-                ? "Already on today"
+                ? t("swipe.alreadyToday")
                 : swipeFeedback.direction === "prev"
-                  ? "Previous day"
-                  : "Next day"}
+                  ? t("swipe.previousDay")
+                  : t("swipe.nextDay")}
             </span>
           </div>
         </div>
@@ -296,7 +298,7 @@ export default function TodayPage() {
               onClick={() => setPastRecapOpen(true)}
             >
               <ScrollText className="h-3.5 w-3.5" />
-              View day recap
+              {t("viewDayRecap")}
             </Button>
           </div>
           <DailyRecapDialog
