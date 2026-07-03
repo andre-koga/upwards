@@ -1,0 +1,47 @@
+{
+  "whatsNew": "Novidades",
+  "whatsNewUnread": "Novidades (atualizações não lidas)",
+  "feedback": "Feedback / sugestões",
+  "errorLogs": "Logs de erro",
+  "viewErrorLogs": "Ver logs de erro",
+  "github": "GitHub",
+  "githubSource": "Ver código no GitHub",
+  "stats": "Estatísticas",
+  "friends": "Amigos",
+  "settings": "Configurações",
+  "openMoreActions": "Abrir mais ações",
+  "pickDate": "Escolher data",
+  "openProjects": "Abrir projetos",
+  "addQuickMemo": "Adicionar memo rápido",
+  "signIn": "Entrar",
+  "home": "Início",
+  "back": "Voltar",
+  "backToSettings": "Voltar às configurações",
+  "whatsNewPage": {
+    "subtitle": "Atualizações e melhorias recentes no Upwards",
+    "bugFixes": "Correções de bugs"
+  },
+  "notifications": "Notificações",
+  "notificationsUnread": "Notificações ({{count}} não lidas)",
+  "feedbackDialog": {
+    "title": "Enviar feedback",
+    "description": "Conte o que você quer melhorar, adicionar ou corrigir.",
+    "label": "Feedback",
+    "placeholder": "Compartilhe sua sugestão ou feedback...",
+    "send": "Enviar feedback",
+    "sending": "Enviando...",
+    "errorEmpty": "Digite seu feedback antes de enviar.",
+    "errorNoSync": "É necessário sincronização na nuvem e uma conta conectada para enviar feedback.",
+    "errorGeneric": "Não foi possível enviar o feedback agora.",
+    "helperNoSync": "A sincronização na nuvem não está configurada neste dispositivo.",
+    "helperSignIn": "Entre na sua conta para enviar feedback pelo app."
+  },
+  "notificationsDrawer": {
+    "title": "Notificações",
+    "clearAll": "Limpar tudo",
+    "signInRequired": "As notificações exigem uma conta de sincronização. Entre em Configurações.",
+    "goToSettings": "Ir para Configurações",
+    "empty": "Nada por aqui ainda",
+    "emptyHelper": "Pedidos de amizade e resumos de dia compartilhados aparecem aqui."
+  }
+}

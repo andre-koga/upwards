@@ -1,0 +1,58 @@
+{
+  "title": "Estatísticas",
+  "subtitle": "Seu desempenho geral nos hábitos",
+  "backToStats": "Voltar às estatísticas",
+  "backToGroup": "Voltar ao grupo",
+  "back": "Voltar",
+  "group": "Grupo",
+  "groupSubtitle": "Como este grupo está indo",
+  "groupNotFound": "Grupo não encontrado.",
+  "habit": "Hábito",
+  "habitSubtitle": "Estatísticas completas do hábito",
+  "habitNotFound": "Hábito não encontrado.",
+  "noHabitsInGroup": "Nenhum hábito neste grupo ainda.",
+  "createGroupHint": "Crie um grupo em Projetos para começar a acompanhar estatísticas.",
+  "sections": {
+    "thisWeek": "Esta semana",
+    "completion": "Conclusão",
+    "wins": "Vitórias",
+    "tracked": "Registrado",
+    "checkIn": "Check-in",
+    "journal": "Diário",
+    "bestStreak": "Melhor sequência",
+    "consistency90d": "Consistência em 90 dias",
+    "groups30d": "Grupos · 30d",
+    "completionRate": "Taxa de conclusão",
+    "timeOfDay30d": "Horário do dia · 30d",
+    "activities30d": "Atividades · 30d",
+    "score90d": "Pontuação · 90d",
+    "vsGroup90d": "Vs grupo · 90d",
+    "records": "Recordes",
+    "recentSessions": "Sessões recentes"
+  },
+  "records": {
+    "longestStreak": "Maior sequência",
+    "bestMonth": "Melhor mês",
+    "busiestDay": "Dia mais movimentado",
+    "allTimeTracked": "Total registrado"
+  },
+  "vsGroup": {
+    "you": "Você: {{rate}}%",
+    "groupAvg": "Média do grupo: {{rate}}%"
+  },
+  "labels": {
+    "completion30d": "Conclusão 30d",
+    "avgScore": "Pontuação média",
+    "activeHabits": "Hábitos ativos",
+    "allTimeTracked": "Total registrado",
+    "consistency90d": "Consistência em 90 dias",
+    "score": "Pontuação",
+    "scoreHelper": "+1% vitória, −1% falha",
+    "cleanStreak": "Sequência limpa",
+    "streak": "Sequência",
+    "currentBest": "Atual / melhor",
+    "last90Days": "Últimos 90 dias",
+    "completionRate": "Taxa de conclusão",
+    "byDayOfWeek": "Por dia da semana"
+  }
+}

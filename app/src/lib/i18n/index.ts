@@ -1,42 +1,70 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import type { Locale } from "date-fns";
-import { enUS } from "date-fns/locale";
-import common from "@/locales/en/common.json";
-import nav from "@/locales/en/nav.json";
-import settings from "@/locales/en/settings.json";
-import tasks from "@/locales/en/tasks.json";
-import today from "@/locales/en/today.json";
-import journal from "@/locales/en/journal.json";
-import stats from "@/locales/en/stats.json";
-import friends from "@/locales/en/friends.json";
-import notifications from "@/locales/en/notifications.json";
-import projects from "@/locales/en/projects.json";
-import { resolveInitialLocale, type LocaleValue } from "./locale-storage";
+import { enUS, ptBR } from "date-fns/locale";
+import enCommon from "@/locales/en/common.json";
+import enNav from "@/locales/en/nav.json";
+import enSettings from "@/locales/en/settings.json";
+import enTasks from "@/locales/en/tasks.json";
+import enToday from "@/locales/en/today.json";
+import enJournal from "@/locales/en/journal.json";
+import enStats from "@/locales/en/stats.json";
+import enFriends from "@/locales/en/friends.json";
+import enNotifications from "@/locales/en/notifications.json";
+import enProjects from "@/locales/en/projects.json";
+import ptCommon from "@/locales/pt/common.json";
+import ptNav from "@/locales/pt/nav.json";
+import ptSettings from "@/locales/pt/settings.json";
+import ptTasks from "@/locales/pt/tasks.json";
+import ptToday from "@/locales/pt/today.json";
+import ptJournal from "@/locales/pt/journal.json";
+import ptStats from "@/locales/pt/stats.json";
+import ptFriends from "@/locales/pt/friends.json";
+import ptNotifications from "@/locales/pt/notifications.json";
+import ptProjects from "@/locales/pt/projects.json";
+import {
+  LOCALE_HTML_TAGS,
+  resolveInitialLocale,
+  type LocaleValue,
+} from "./locale-storage";
 
 const resources = {
   en: {
-    common,
-    nav,
-    settings,
-    tasks,
-    today,
-    journal,
-    stats,
-    friends,
-    notifications,
-    projects,
+    common: enCommon,
+    nav: enNav,
+    settings: enSettings,
+    tasks: enTasks,
+    today: enToday,
+    journal: enJournal,
+    stats: enStats,
+    friends: enFriends,
+    notifications: enNotifications,
+    projects: enProjects,
+  },
+  pt: {
+    common: ptCommon,
+    nav: ptNav,
+    settings: ptSettings,
+    tasks: ptTasks,
+    today: ptToday,
+    journal: ptJournal,
+    stats: ptStats,
+    friends: ptFriends,
+    notifications: ptNotifications,
+    projects: ptProjects,
   },
 } as const;
 
 /** Maps our supported app locales to Intl/BCP-47 tags used for date formatting. */
 const INTL_LOCALE_TAGS: Record<LocaleValue, string> = {
   en: "en-US",
+  pt: "pt-BR",
 };
 
 /** Maps our supported app locales to date-fns Locale objects. */
 const DATE_FNS_LOCALES: Record<LocaleValue, Locale> = {
   en: enUS,
+  pt: ptBR,
 };
 
 void i18n.use(initReactI18next).init({
@@ -50,9 +78,11 @@ void i18n.use(initReactI18next).init({
 });
 
 if (typeof document !== "undefined") {
-  document.documentElement.lang = i18n.language;
+  const initial = resolveInitialLocale();
+  document.documentElement.lang = LOCALE_HTML_TAGS[initial] ?? initial;
   i18n.on("languageChanged", (lng) => {
-    document.documentElement.lang = lng;
+    const locale = (lng as LocaleValue) || "en";
+    document.documentElement.lang = LOCALE_HTML_TAGS[locale] ?? locale;
   });
 }
 

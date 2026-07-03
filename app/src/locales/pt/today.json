@@ -1,0 +1,26 @@
+{
+  "loading": "Carregando...",
+  "swipe": {
+    "alreadyToday": "Já está em hoje",
+    "previousDay": "Dia anterior",
+    "nextDay": "Próximo dia"
+  },
+  "viewDayRecap": "Ver resumo do dia",
+  "sections": {
+    "memos": "Memos",
+    "forToday": "Para hoje",
+    "timeline": "Linha do tempo",
+    "timelineBoundary": "(começa e termina às {{time}})"
+  },
+  "recurringMemosButton": "Recorrentes",
+  "manageRecurringMemos": "Gerenciar memos recorrentes",
+  "archiveButton": "Arquivo",
+  "viewArchivedMemos": "Ver memos arquivados",
+  "breakDay": {
+    "unset": "Desmarcar dia de pausa",
+    "set": "Marcar este dia como dia de pausa",
+    "active": "Dia de pausa ativo",
+    "markAsBreakDay": "Marcar como dia de pausa",
+    "helper": "Tarefas incompletas não afetam sequências."
+  }
+}

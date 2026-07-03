@@ -1,0 +1,57 @@
+{
+  "memo": {
+    "editTitle": "Editar memo",
+    "newTitle": "Novo memo",
+    "archive": "Arquivar memo",
+    "titleLabel": "Título do memo",
+    "titlePlaceholder": "Título da tarefa…",
+    "dueDate": "Data de vencimento",
+    "pin": "Fixar memo",
+    "unpin": "Desfixar memo",
+    "due": "Vence em {{date}}",
+    "recurring": "Recorrente",
+    "recurringMemo": "Memo recorrente",
+    "pinnedMarkIncomplete": "Memo fixado — marcar incompleto",
+    "pinnedMarkComplete": "Memo fixado — marcar completo",
+    "pinnedMemo": "Memo fixado",
+    "dueLabels": {
+      "past": "Passado",
+      "yesterday": "Ontem",
+      "today": "Hoje",
+      "tomorrow": "Amanhã"
+    },
+    "thisMemo": "este memo",
+    "deleteConfirm": {
+      "title": "Excluir memo?",
+      "description": "Excluir \"{{title}}\"? Esta ação não pode ser desfeita."
+    },
+    "archiveConfirm": {
+      "title": "Arquivar memo?",
+      "description": "Arquivar \"{{title}}\"? Você pode restaurá-lo na lista de memos arquivados.",
+      "confirm": "Arquivar"
+    },
+    "archivedDialog": {
+      "title": "Memos arquivados",
+      "titleWithCount": "Memos arquivados ({{count}})",
+      "empty": "Nenhum memo arquivado",
+      "restore": "Restaurar memo",
+      "delete": "Excluir memo"
+    }
+  },
+  "addTask": {
+    "trigger": "Adicionar tarefa única"
+  },
+  "recurringMemo": {
+    "editTitle": "Editar memo recorrente",
+    "newTitle": "Novo memo recorrente",
+    "titleLabel": "Título do memo",
+    "titlePlaceholder": "ex.: remédios",
+    "repeat": "Repetir",
+    "paused": "Pausado"
+  },
+  "recurringMemos": {
+    "title": "Memos recorrentes",
+    "titleWithCount": "Memos recorrentes ({{count}})",
+    "empty": "Nenhum memo recorrente ainda"
+  }
+}

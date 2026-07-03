@@ -1,4 +1,4 @@
-export type LocaleValue = "en";
+export type LocaleValue = "en" | "pt";
 
 export interface LocaleOption {
   value: LocaleValue;
@@ -7,7 +7,14 @@ export interface LocaleOption {
 
 export const LOCALE_OPTIONS: LocaleOption[] = [
   { value: "en", label: "English" },
+  { value: "pt", label: "Português (Brasil)" },
 ];
+
+/** BCP-47 tag for `document.documentElement.lang` and accessibility. */
+export const LOCALE_HTML_TAGS: Record<LocaleValue, string> = {
+  en: "en",
+  pt: "pt-BR",
+};
 
 export const DEFAULT_LOCALE: LocaleValue = "en";
 
@@ -51,6 +58,6 @@ export function setStoredLocale(locale: LocaleValue): void {
     localStorage.setItem(LOCALE_STORAGE_KEY, locale);
   }
   if (typeof document !== "undefined") {
-    document.documentElement.lang = locale;
+    document.documentElement.lang = LOCALE_HTML_TAGS[locale] ?? locale;
   }
 }

@@ -108,7 +108,7 @@ export function formatRoutineDisplay(routine: string | null): string {
     case "custom":
       return i18n.t("projects:routine.display.every", {
         interval: parsed.interval,
-        unit: parsed.unit,
+        unit: i18n.t(`projects:routine.${parsed.unit}`),
       });
     case "unknown":
       return parsed.raw.charAt(0).toUpperCase() + parsed.raw.slice(1);

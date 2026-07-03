@@ -1,0 +1,13 @@
+{
+  "someone": "Alguém",
+  "aHabit": "um hábito",
+  "daysWithoutSlip": "dias sem escorregão",
+  "dayStreak": "dias de sequência",
+  "friendRequest": "{{name}} quer ser seu amigo",
+  "dailySummary": "{{name}} compartilhou o dia",
+  "activityComplete": "{{name}} concluiu {{habit}} · {{streak}} {{unit}}",
+  "accept": "Aceitar",
+  "decline": "Recusar",
+  "dismiss": "Dispensar",
+  "dismissAria": "Dispensar notificação"
+}
