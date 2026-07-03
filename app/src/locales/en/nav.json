@@ -1,0 +1,47 @@
+{
+  "whatsNew": "What's new",
+  "whatsNewUnread": "What's new (unread updates)",
+  "feedback": "Feedback / requests",
+  "errorLogs": "Error Logs",
+  "viewErrorLogs": "View error logs",
+  "github": "GitHub",
+  "githubSource": "View source on GitHub",
+  "stats": "Stats",
+  "friends": "Friends",
+  "settings": "Settings",
+  "openMoreActions": "Open more actions",
+  "pickDate": "Pick a date",
+  "openProjects": "Open projects",
+  "addQuickMemo": "Add quick memo",
+  "signIn": "Sign in",
+  "home": "Home",
+  "back": "Back",
+  "backToSettings": "Back to Settings",
+  "whatsNewPage": {
+    "subtitle": "Recent updates and improvements to Upwards",
+    "bugFixes": "Bug fixes"
+  },
+  "notifications": "Notifications",
+  "notificationsUnread": "Notifications ({{count}} unread)",
+  "feedbackDialog": {
+    "title": "Send feedback",
+    "description": "Tell us what you want improved, added, or fixed.",
+    "label": "Feedback",
+    "placeholder": "Share your request or feedback...",
+    "send": "Send feedback",
+    "sending": "Sending...",
+    "errorEmpty": "Please enter your feedback before submitting.",
+    "errorNoSync": "You need cloud sync and a signed-in account to send feedback.",
+    "errorGeneric": "Could not send feedback right now.",
+    "helperNoSync": "Cloud sync is not configured on this device.",
+    "helperSignIn": "Sign in to send feedback from inside the app."
+  },
+  "notificationsDrawer": {
+    "title": "Notifications",
+    "clearAll": "Clear all",
+    "signInRequired": "Notifications require a sync account. Sign in from Settings.",
+    "goToSettings": "Go to Settings",
+    "empty": "Nothing here yet",
+    "emptyHelper": "Friend requests and shared day recaps appear here."
+  }
+}

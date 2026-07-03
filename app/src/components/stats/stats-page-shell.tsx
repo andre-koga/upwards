@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { cn } from "@/lib/utils";
 
@@ -7,9 +8,9 @@ export function StatsPageShell({
   icon,
   subtitle,
   backTo,
-  backTitle = "Back",
+  backTitle,
   homeTo = "/",
-  homeTitle = "Home",
+  homeTitle,
   loading,
   children,
   className,
@@ -25,6 +26,11 @@ export function StatsPageShell({
   children?: ReactNode;
   className?: string;
 }) {
+  const { t: tStats } = useTranslation("stats");
+  const { t: tNav } = useTranslation("nav");
+  const resolvedBackTitle = backTitle ?? tStats("back");
+  const resolvedHomeTitle = homeTitle ?? tNav("home");
+
   return (
     <div className={cn("space-y-3 p-4 pb-24", className)}>
       <header className="space-y-1">
@@ -46,12 +52,12 @@ export function StatsPageShell({
       )}
 
       <div className="fixed bottom-3 left-4 z-50 flex items-center gap-2">
-        <FloatingBackButton fixed={false} to={homeTo} title={homeTitle} />
+        <FloatingBackButton fixed={false} to={homeTo} title={resolvedHomeTitle} />
         {backTo && backTo !== homeTo ? (
           <FloatingBackButton
             fixed={false}
             to={backTo}
-            title={backTitle}
+            title={resolvedBackTitle}
             icon="undo"
           />
         ) : null}

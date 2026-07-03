@@ -2,6 +2,7 @@ import { useEffect, useState, useLayoutEffect } from "react";
 import type { AppLog } from "@/lib/db/types";
 import { db } from "@/lib/db";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
+import { getActiveLocaleTag } from "@/lib/i18n";
 import { AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 
@@ -120,7 +121,7 @@ export default function ErrorLogsPage() {
   const getTimestamp = (isoTime: string) => {
     try {
       const date = new Date(isoTime);
-      const timeStr = date.toLocaleTimeString("en-US", {
+      const timeStr = date.toLocaleTimeString(getActiveLocaleTag(), {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",

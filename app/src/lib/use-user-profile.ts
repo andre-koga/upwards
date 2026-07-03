@@ -1,10 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase, getCachedUserId, getCachedSession } from "@/lib/supabase";
 import { now } from "@/lib/db";
+import {
+  getStoredLocale,
+  isLocaleValue,
+  resolveInitialLocale,
+  setStoredLocale,
+  type LocaleValue,
+} from "@/lib/i18n/locale-storage";
+import i18n from "@/lib/i18n";
 
 interface UserProfileState {
   username: string | null;
   displayName: string | null;
+  locale: LocaleValue;
   loading: boolean;
   error: string | null;
 }
@@ -14,9 +24,12 @@ export function useUserProfile() {
   // the session cache is filled asynchronously after validateSession().
   const [userId, setUserId] = useState<string | null>(() => getCachedUserId());
 
+  const { t } = useTranslation("settings");
+
   const [state, setState] = useState<UserProfileState>({
     username: null,
     displayName: null,
+    locale: resolveInitialLocale(),
     loading: true,
     error: null,
   });
@@ -41,6 +54,7 @@ export function useUserProfile() {
       setState({
         username: null,
         displayName: null,
+        locale: resolveInitialLocale(),
         loading: Boolean(getCachedSession()),
         error: null,
       });
@@ -49,14 +63,37 @@ export function useUserProfile() {
     try {
       const { data, error } = await supabase
         .from("user_profiles")
-        .select("username, display_name")
+        .select("username, display_name, locale")
         .eq("user_id", userId)
         .maybeSingle();
       if (error) throw error;
+
+      // Sign-in merge: adopt the synced locale if one exists; otherwise push
+      // whatever this device already had (guest pick) up to the account.
+      const remoteLocale = data?.locale as string | null | undefined;
+      let locale: LocaleValue;
+      if (remoteLocale && isLocaleValue(remoteLocale)) {
+        locale = remoteLocale;
+        setStoredLocale(locale);
+        void i18n.changeLanguage(locale);
+      } else {
+        const deviceLocale = getStoredLocale();
+        locale = deviceLocale ?? resolveInitialLocale();
+        if (deviceLocale) {
+          void supabase
+            .from("user_profiles")
+            .upsert(
+              { user_id: userId, locale: deviceLocale, updated_at: now() },
+              { onConflict: "user_id" }
+            );
+        }
+      }
+
       /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setState({
         username: (data?.username as string | null) ?? null,
         displayName: (data?.display_name as string | null) ?? null,
+        locale,
         loading: false,
         error: null,
       });
@@ -65,10 +102,10 @@ export function useUserProfile() {
       setState((s) => ({
         ...s,
         loading: false,
-        error: err instanceof Error ? err.message : "Failed to load profile",
+        error: err instanceof Error ? err.message : t("profile.loadFailed"),
       }));
     }
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     void load();
@@ -76,9 +113,9 @@ export function useUserProfile() {
 
   const setUsername = useCallback(
     async (username: string): Promise<{ error: string | null }> => {
-      if (!supabase || !userId) return { error: "Not signed in" };
+      if (!supabase || !userId) return { error: t("profile.notSignedIn") };
       if (!/^[a-z0-9_]{3,20}$/.test(username)) {
-        return { error: "Username must be 3–20 characters: a-z, 0-9, underscore only." };
+        return { error: t("profile.usernameInvalid") };
       }
       try {
         const { error } = await supabase.from("user_profiles").upsert(
@@ -91,24 +128,24 @@ export function useUserProfile() {
         );
         if (error) {
           if (error.code === "23505") {
-            return { error: "That username is already taken." };
+            return { error: t("profile.usernameTaken") };
           }
           throw error;
         }
         setState((s) => ({ ...s, username, error: null }));
         return { error: null };
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Failed to save username";
+        const msg = err instanceof Error ? err.message : t("profile.usernameSaveFailed");
         setState((s) => ({ ...s, error: msg }));
         return { error: msg };
       }
     },
-    [userId]
+    [userId, t]
   );
 
   const setDisplayName = useCallback(
     async (displayName: string): Promise<{ error: string | null }> => {
-      if (!supabase || !userId) return { error: "Not signed in" };
+      if (!supabase || !userId) return { error: t("profile.notSignedIn") };
       try {
         const { error } = await supabase.from("user_profiles").upsert(
           { user_id: userId, display_name: displayName, updated_at: now() },
@@ -118,8 +155,25 @@ export function useUserProfile() {
         setState((s) => ({ ...s, displayName, error: null }));
         return { error: null };
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Failed to save display name";
+        const msg = err instanceof Error ? err.message : t("profile.displayNameSaveFailed");
         return { error: msg };
+      }
+    },
+    [userId, t]
+  );
+
+  const setLocale = useCallback(
+    (locale: LocaleValue) => {
+      setStoredLocale(locale);
+      void i18n.changeLanguage(locale);
+      setState((s) => ({ ...s, locale }));
+      if (supabase && userId) {
+        void supabase
+          .from("user_profiles")
+          .upsert(
+            { user_id: userId, locale, updated_at: now() },
+            { onConflict: "user_id" }
+          );
       }
     },
     [userId]
@@ -130,6 +184,7 @@ export function useUserProfile() {
     reload: load,
     setUsername,
     setDisplayName,
+    setLocale,
   };
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   supabase,
   isSupabaseConfigured,
@@ -10,6 +11,7 @@ import { clearLocalSyncData } from "@/lib/sync/clear-local-sync-data";
 import { clearLastSignedInUserId } from "@/lib/sync/sync-storage";
 
 export function useAuth() {
+  const { t } = useTranslation("settings");
   const [isAuthed, setIsAuthed] = useState(() => Boolean(getCachedSession()));
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -46,7 +48,7 @@ export function useAuth() {
       });
       if (error) throw error;
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Sign in failed");
+      setAuthError(error instanceof Error ? error.message : t("auth.signInFailed"));
       throw error;
     } finally {
       setAuthLoading(false);
@@ -60,9 +62,9 @@ export function useAuth() {
     try {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
-      setAuthError("Check your email to confirm your account!");
+      setAuthError(t("auth.checkEmail"));
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Sign up failed");
+      setAuthError(error instanceof Error ? error.message : t("auth.signUpFailed"));
       throw error;
     } finally {
       setAuthLoading(false);
@@ -81,7 +83,7 @@ export function useAuth() {
       if (error) throw error;
     } catch (error) {
       setAuthError(
-        error instanceof Error ? error.message : "Could not send reset email"
+        error instanceof Error ? error.message : t("auth.resetEmailFailed")
       );
       throw error;
     } finally {
@@ -98,7 +100,7 @@ export function useAuth() {
       if (error) throw error;
     } catch (error) {
       setAuthError(
-        error instanceof Error ? error.message : "Could not update password"
+        error instanceof Error ? error.message : t("auth.updatePasswordFailed")
       );
       throw error;
     } finally {

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   FormCharacterCount,
   FormCalendarDateField,
@@ -32,7 +33,7 @@ interface MemoEditDialogProps {
 export function MemoEditDialog({
   open,
   onOpenChange,
-  dialogTitle = "Edit memo",
+  dialogTitle,
   title,
   onTitleChange,
   dueDate,
@@ -42,9 +43,11 @@ export function MemoEditDialog({
   onConfirm,
   onDelete,
   onArchive,
-  confirmLabel = "Save",
+  confirmLabel,
   confirmDisabled = false,
 }: MemoEditDialogProps) {
+  const { t } = useTranslation("tasks");
+  const { t: tCommon } = useTranslation("common");
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
@@ -59,7 +62,7 @@ export function MemoEditDialog({
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={dialogTitle}
+      title={dialogTitle ?? t("memo.editTitle")}
       contentClassName="w-80"
       headerEnd={
         onArchive ? (
@@ -69,8 +72,8 @@ export function MemoEditDialog({
             size="icon"
             className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
             onClick={onArchive}
-            title="Archive memo"
-            aria-label="Archive memo"
+            title={t("memo.archive")}
+            aria-label={t("memo.archive")}
           >
             <Archive className="h-4 w-4" aria-hidden />
           </Button>
@@ -80,13 +83,13 @@ export function MemoEditDialog({
       <FormStack className="space-y-2">
         <FormTextareaField
           id="memo-title"
-          label="Memo title"
+          label={t("memo.titleLabel")}
           labelClassName="sr-only"
           autoFocus
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Task title…"
+          placeholder={t("memo.titlePlaceholder")}
           maxLength={MEMO_TITLE_LIMIT}
           rows={5}
           message={
@@ -96,18 +99,18 @@ export function MemoEditDialog({
         <FormRow>
           <FormCalendarDateField
             id="memo-due-date"
-            label="Due date"
+            label={t("memo.dueDate")}
             labelClassName="sr-only"
             value={dueDate ?? ""}
             onValueChange={(value) => onDueDateChange(value || null)}
             containerClassName="flex-1 space-y-0"
-            placeholder="Due date"
+            placeholder={t("memo.dueDate")}
             clearable
           />
           <FormToggleButton
             toggled={isPinned}
             onToggle={onPinnedChange}
-            label={isPinned ? "Unpin memo" : "Pin memo"}
+            label={isPinned ? t("memo.unpin") : t("memo.pin")}
           >
             <Pin className={isPinned ? "h-4 w-4 fill-current" : "h-4 w-4"} />
           </FormToggleButton>
@@ -115,12 +118,12 @@ export function MemoEditDialog({
       </FormStack>
       <FormDialogActions
         onConfirm={onConfirm}
-        confirmLabel={confirmLabel}
+        confirmLabel={confirmLabel ?? tCommon("save")}
         confirmDisabled={confirmDisabled}
         secondaryAction={
           onDelete
             ? {
-                label: "Delete",
+                label: tCommon("delete"),
                 onClick: onDelete,
                 destructive: true,
               }

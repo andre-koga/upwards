@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,9 @@ import { useAuth } from "@/lib/use-auth";
 const emailId = "forgot-password-email";
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation("settings");
+  const { t: tCommon } = useTranslation("common");
+  const { t: tNav } = useTranslation("nav");
   const { isSupabaseConfigured, authLoading, authError, setAuthError, resetPassword } =
     useAuth();
   const [email, setEmail] = useState("");
@@ -31,12 +35,14 @@ export default function ForgotPasswordPage() {
     return (
       <div className="space-y-3 p-4 pb-24">
         <header className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Reset password</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {t("auth.forgotPasswordPage.title")}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Sync is not configured for this build.
+            {t("auth.syncNotConfigured")}
           </p>
         </header>
-        <FloatingBackButton to="/settings" title="Settings" />
+        <FloatingBackButton to="/settings" title={tNav("settings")} />
       </div>
     );
   }
@@ -44,32 +50,32 @@ export default function ForgotPasswordPage() {
   return (
     <div className="space-y-3 p-4 pb-24">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Reset password</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t("auth.forgotPasswordPage.title")}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Enter the email for your sync account. We will send a link to choose a
-          new password.
+          {t("auth.forgotPasswordPage.description")}
         </p>
       </header>
 
       {sent ? (
         <div className="space-y-3 rounded-xl border border-border p-4">
           <p className="text-sm text-green-600 dark:text-green-500">
-            If an account exists for {email.trim()}, you will receive a reset link
-            shortly. Check your inbox and spam folder.
+            {t("auth.forgotPasswordPage.sent", { email: email.trim() })}
           </p>
           <Button variant="outline" className="w-full" asChild>
-            <Link to="/settings">Back to Settings</Link>
+            <Link to="/settings">{tNav("backToSettings")}</Link>
           </Button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border p-4">
           <div className="space-y-2">
-            <Label htmlFor={emailId}>Email</Label>
+            <Label htmlFor={emailId}>{tCommon("email")}</Label>
             <Input
               id={emailId}
               type="email"
               autoComplete="email"
-              placeholder="you@example.com"
+              placeholder={tCommon("emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -81,18 +87,20 @@ export default function ForgotPasswordPage() {
           )}
 
           <Button type="submit" className="w-full" disabled={authLoading}>
-            {authLoading ? "Sending…" : "Send reset link"}
+            {authLoading
+              ? t("auth.forgotPasswordPage.sending")
+              : t("auth.forgotPasswordPage.sendLink")}
           </Button>
         </form>
       )}
 
       <p className="text-center text-xs text-muted-foreground">
         <Link to="/settings" className="underline underline-offset-2">
-          Back to Settings
+          {tNav("backToSettings")}
         </Link>
       </p>
 
-      <FloatingBackButton to="/settings" title="Settings" />
+      <FloatingBackButton to="/settings" title={tNav("settings")} />
     </div>
   );
 }

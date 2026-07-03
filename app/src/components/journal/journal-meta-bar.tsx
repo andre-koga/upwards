@@ -1,4 +1,5 @@
 import { Heart, Pencil } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ export default function JournalMetaBar({
   journal,
   onEditRequest,
 }: JournalMetaBarProps) {
+  const { t } = useTranslation("journal");
   return (
     <div className="relative flex justify-end gap-2 p-4">
       <Button
@@ -26,7 +28,7 @@ export default function JournalMetaBar({
         }}
         className="text-muted-foreground"
         title={
-          journal.draftBookmarked ? "Remove bookmark" : "Bookmark this day"
+          journal.draftBookmarked ? t("removeBookmark") : t("bookmarkDay")
         }
       >
         <Heart
@@ -42,7 +44,7 @@ export default function JournalMetaBar({
           size="smIcon"
           onClick={onEditRequest}
           className="text-muted-foreground"
-          title="Edit journal"
+          title={t("editJournal")}
         >
           <Pencil className="h-4 w-4" />
         </Button>

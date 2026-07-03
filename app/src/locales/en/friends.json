@@ -1,0 +1,22 @@
+{
+  "title": "Friends",
+  "subtitle": "Add people by exact username.",
+  "signInRequired": "Sign in to add friends.",
+  "setUsername": "Set a",
+  "usernameInSettings": "username in Settings",
+  "beforeInviting": "before inviting friends.",
+  "addFriend": "Add a friend",
+  "usernamePlaceholder": "username",
+  "invite": "Invite",
+  "incomingRequests": "Incoming requests",
+  "wantsToBeFriends": "Wants to be friends",
+  "accept": "Accept",
+  "decline": "Decline",
+  "sentRequests": "Sent requests",
+  "pending": "Pending",
+  "friendsList": "Friends",
+  "noFriendsYet": "No friends yet — invite someone!",
+  "unknownUser": "Unknown user",
+  "actorWithUsername": "{{displayName}} (@{{username}})",
+  "actorUsernameOnly": "@{{username}}"
+}

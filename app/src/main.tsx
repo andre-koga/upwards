@@ -8,6 +8,7 @@ import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { prepareSignedInSession } from "./lib/sync/auth-handoff";
 import { emitGuestHandoffNeeded } from "./lib/sync/guest-handoff-emitter";
 import { initializeStoredPalette } from "./lib/palette";
+import "./lib/i18n";
 
 void (async () => {
   try {

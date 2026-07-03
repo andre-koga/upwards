@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
@@ -19,6 +20,7 @@ import {
   formatResetMinutes,
   getEffectiveToday,
 } from "@/lib/session/day-reset";
+import { getActiveLocaleTag } from "@/lib/i18n";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -51,6 +53,7 @@ export default function DailyTasksList({
   loadJournalMeta,
   onTasksDataChanged,
 }: DailyTasksListProps) {
+  const { t } = useTranslation("today");
   const [assignPeriodId, setAssignPeriodId] = useState<string | null>(null);
   const [assignIntervalMs, setAssignIntervalMs] = useState(0);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -140,7 +143,7 @@ export default function DailyTasksList({
     const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
     const fmt = (date: Date) =>
-      date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      date.toLocaleDateString(getActiveLocaleTag(), { month: "short", day: "numeric" });
 
     return {
       top: `${resetLabel} ${fmt(dayEnd)}`,
@@ -169,7 +172,7 @@ export default function DailyTasksList({
         <div className="mb-4 space-y-2">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Memos
+              {t("sections.memos")}
             </p>
             <div className="flex w-full gap-1.5">
               <Button
@@ -180,10 +183,10 @@ export default function DailyTasksList({
                   setRecurringMemosDialogOpen(true);
                 }}
                 className="h-7 min-w-0 flex-1 gap-1.5 rounded-full px-2.5 text-xs font-medium text-muted-foreground shadow-none"
-                aria-label="Manage recurring memos"
+                aria-label={t("manageRecurringMemos")}
               >
                 <RefreshCw className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Recurring
+                {t("recurringMemosButton")}
               </Button>
               <Button
                 type="button"
@@ -194,10 +197,10 @@ export default function DailyTasksList({
                   setArchivedMemosDialogOpen(true);
                 }}
                 className="h-7 min-w-0 flex-1 gap-1.5 rounded-full px-2.5 text-xs font-medium text-muted-foreground shadow-none"
-                aria-label="View archived memos"
+                aria-label={t("viewArchivedMemos")}
               >
                 <Archive className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Archive
+                {t("archiveButton")}
               </Button>
             </div>
           </div>
@@ -222,14 +225,14 @@ export default function DailyTasksList({
         <>
           <div className="mb-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              For Today
+              {t("sections.forToday")}
             </p>
           </div>
 
           <div className="flex-1 space-y-2">
             {loading && (
               <p className="py-4 text-center text-sm text-muted-foreground">
-                Loading...
+                {t("loading")}
               </p>
             )}
             {!loading &&
@@ -268,14 +271,14 @@ export default function DailyTasksList({
                 "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default",
                 isBreakDay ? "text-amber-500" : "text-muted-foreground"
               )}
-              title={isBreakDay ? "Unset break day" : "Mark this day as break day"}
+              title={isBreakDay ? t("breakDay.unset") : t("breakDay.set")}
             >
               <Palmtree className="h-3.5 w-3.5" />
-              {isBreakDay ? "Break Day Active" : "Mark as Break Day"}
+              {isBreakDay ? t("breakDay.active") : t("breakDay.markAsBreakDay")}
             </Button>
             {!isBreakDay && (
               <p className="text-center text-[11px] text-muted-foreground">
-                Incomplete tasks won&apos;t affect streaks.
+                {t("breakDay.helper")}
               </p>
             )}
           </div>
@@ -286,10 +289,10 @@ export default function DailyTasksList({
         <div className="mt-6 space-y-2">
           <div className="ml-1 mr-1.5 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Timeline
+              {t("sections.timeline")}
               {timelineBoundaryLabels && (
                 <span className="ml-1.5 font-normal normal-case">
-                  (starts and ends at {formatResetMinutes(resetMin)})
+                  {t("sections.timelineBoundary", { time: formatResetMinutes(resetMin) })}
                 </span>
               )}
             </p>

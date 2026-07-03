@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ImagePlus, Loader2, Trash2, Video, X } from "lucide-react";
 import {
   FormCharacterCount,
@@ -61,6 +62,8 @@ export default function JournalEditDialog({
   onOpenChange,
   onSave,
 }: JournalEditDialogProps) {
+  const { t } = useTranslation("journal");
+  const { t: tCommon } = useTranslation("common");
   const [emoji, setEmoji] = useState(initialEmoji);
   const [title, setTitle] = useState(initialTitle);
   const [text, setText] = useState(initialText);
@@ -180,7 +183,7 @@ export default function JournalEditDialog({
       const path = await uploadJournalVideo(file, entryDate);
       setVideoPath(path);
     } catch (error) {
-      let message = "Failed to upload video.";
+      let message = t("upload.videoFailed");
       if (error instanceof JournalVideoUploadError) {
         message = error.message;
       } else if (error instanceof Error) {
@@ -210,7 +213,7 @@ export default function JournalEditDialog({
       const filesToUpload = files.slice(0, remaining);
 
       if (filesToUpload.length === 0) {
-        setUploadError(`You can only attach up to ${MAX_PHOTOS} photos per day.`);
+        setUploadError(t("upload.maxPhotos", { count: MAX_PHOTOS }));
         return;
       }
 
@@ -228,7 +231,7 @@ export default function JournalEditDialog({
           if (err instanceof JournalPhotoUploadError) {
             errors.push(err.message);
           } else {
-            errors.push("Failed to upload photo.");
+            errors.push(t("upload.photoFailed"));
           }
         }
       }
@@ -265,7 +268,7 @@ export default function JournalEditDialog({
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Edit journal"
+      title={t("editTitle")}
       contentClassName="w-[22rem]"
     >
       <FormStack>
@@ -283,12 +286,12 @@ export default function JournalEditDialog({
 
         <FormField
           id="journal-title"
-          label="Journal title"
+          label={t("titleLabel")}
           labelClassName="sr-only"
           value={title}
           maxLength={TITLE_LIMIT}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Give this day a title..."
+          placeholder={t("titlePlaceholder")}
           message={
             <FormCharacterCount current={title.length} max={TITLE_LIMIT} />
           }
@@ -296,12 +299,12 @@ export default function JournalEditDialog({
 
         <FormTextareaField
           id="journal-reflection"
-          label="Journal reflection"
+          label={t("reflectionLabel")}
           labelClassName="sr-only"
           value={text}
           maxLength={TEXT_LIMIT}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Write your thoughts for the day..."
+          placeholder={t("reflectionPlaceholder")}
           rows={4}
           className="leading-relaxed"
           message={
@@ -339,8 +342,8 @@ export default function JournalEditDialog({
                       setUploadError(null);
                       setVideoPath("");
                     }}
-                    title="Remove video"
-                    aria-label="Remove video"
+                    title={t("upload.removeVideo")}
+                    aria-label={t("upload.removeVideo")}
                   >
                     <Trash2 aria-hidden />
                   </FormControlButton>
@@ -351,8 +354,8 @@ export default function JournalEditDialog({
                   disabled={uploadingVideo || uploadingPhotos}
                   title={
                     videoPath.trim().length > 0
-                      ? "Replace video"
-                      : "Add video"
+                      ? t("upload.replaceVideo")
+                      : t("upload.addVideo")
                   }
                 >
                   {uploadingVideo ? (
@@ -360,7 +363,7 @@ export default function JournalEditDialog({
                   ) : (
                     <Video aria-hidden />
                   )}
-                  {videoPath.trim().length > 0 ? "Replace video" : "Add video"}
+                  {videoPath.trim().length > 0 ? t("upload.replaceVideo") : t("upload.addVideo")}
                 </FormControlButton>
 
                 <FormControlButton
@@ -369,17 +372,17 @@ export default function JournalEditDialog({
                   disabled={uploadingVideo || uploadingPhotos || !canAddMorePhotos}
                   title={
                     !canAddMorePhotos
-                      ? "Maximum 5 photos reached"
+                      ? t("upload.maxPhotosReached", { count: MAX_PHOTOS })
                       : photoCount > 0
-                      ? `${photoCount}/${MAX_PHOTOS} photos`
-                      : "Add photos"
+                      ? t("upload.photoCount", { current: photoCount, max: MAX_PHOTOS })
+                      : t("upload.addPhotos")
                   }
                   aria-label={
                     !canAddMorePhotos
-                      ? "Maximum 5 photos reached"
+                      ? t("upload.maxPhotosReached", { count: MAX_PHOTOS })
                       : photoCount > 0
-                      ? `${photoCount}/${MAX_PHOTOS} photos`
-                      : "Add photos"
+                      ? t("upload.photoCount", { current: photoCount, max: MAX_PHOTOS })
+                      : t("upload.addPhotos")
                   }
                 >
                   {uploadingPhotos ? (
@@ -399,7 +402,7 @@ export default function JournalEditDialog({
                         {url ? (
                           <img
                             src={url}
-                            alt={`Photo ${index + 1}`}
+                            alt={t("upload.photoAlt", { index: index + 1 })}
                             className="h-full w-full rounded-md object-cover"
                           />
                         ) : (
@@ -411,8 +414,8 @@ export default function JournalEditDialog({
                           type="button"
                           onClick={() => removePhoto(index)}
                           className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow"
-                          title={`Remove photo ${index + 1}`}
-                          aria-label={`Remove photo ${index + 1}`}
+                          title={t("upload.removePhoto", { index: index + 1 })}
+                          aria-label={t("upload.removePhoto", { index: index + 1 })}
                         >
                           <X className="h-2.5 w-2.5" aria-hidden />
                         </button>
@@ -428,9 +431,9 @@ export default function JournalEditDialog({
 
       <FormDialogActions
         onConfirm={handleSave}
-        confirmLabel="Save"
+        confirmLabel={tCommon("save")}
         secondaryAction={{
-          label: "Cancel",
+          label: tCommon("cancel"),
           onClick: () => {
             closeReasonRef.current = "cancel";
             clearJournalEditSessionDraft(entryDateSessionRef.current);

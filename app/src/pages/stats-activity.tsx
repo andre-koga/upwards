@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Trophy,
   Clock,
@@ -23,6 +24,7 @@ import type { Activity, ActivityGroup } from "@/lib/db/types";
 const MAX_SESSIONS_SHOWN = 20;
 
 export default function ActivityStatsPage() {
+  const { t } = useTranslation("stats");
   const { groupId, activityId } = useParams<{ groupId: string; activityId: string }>();
   const [stats, setStats] = useState<ActivityExtendedStats | null>(null);
   const [group, setGroup] = useState<ActivityGroup | null>(null);
@@ -59,7 +61,7 @@ export default function ActivityStatsPage() {
   }
 
   const color = group?.color || DEFAULT_GROUP_COLOR;
-  const activityName = activity ? getActivityDisplayName(activity, group) : "Habit";
+  const activityName = activity ? getActivityDisplayName(activity, group) : t("habit");
 
   return (
     <StatsPageShell
@@ -74,13 +76,13 @@ export default function ActivityStatsPage() {
         </span>
       }
       icon={<BarChart3 className="h-6 w-6 shrink-0" />}
-      subtitle="Full habit stats"
+      subtitle={t("habitSubtitle")}
       backTo={`/stats/groups/${groupId}`}
-      backTitle="Back to group"
+      backTitle={t("backToGroup")}
       loading={loading}
     >
       {!loading && !stats && (
-        <p className="text-sm text-muted-foreground">Habit not found.</p>
+        <p className="text-sm text-muted-foreground">{t("habitNotFound")}</p>
       )}
 
       {stats && (
@@ -88,30 +90,30 @@ export default function ActivityStatsPage() {
           <ActivityStatsCore stats={stats} color={color} />
 
           {stats.compoundScoreSeries90d && stats.compoundScoreSeries90d.length > 0 && (
-            <StatsSectionCard icon={Sparkles} label="Score · 90d">
+            <StatsSectionCard icon={Sparkles} label={t("sections.score90d")}>
               <ScoreLineChart points={stats.compoundScoreSeries90d} color={color} />
             </StatsSectionCard>
           )}
 
           {stats.activityCompletionRate90d !== null && stats.groupCompletionRate90d !== null && (
-            <StatsSectionCard icon={TrendingUp} label="Vs group · 90d">
+            <StatsSectionCard icon={TrendingUp} label={t("sections.vsGroup90d")}>
               <p className="text-center text-sm">
                 <span className="font-semibold tabular-nums">
-                  You: {stats.activityCompletionRate90d}%
+                  {t("vsGroup.you", { rate: stats.activityCompletionRate90d })}
                 </span>
                 <span className="text-muted-foreground">
                   {" "}
-                  · Group avg: {stats.groupCompletionRate90d}%
+                  · {t("vsGroup.groupAvg", { rate: stats.groupCompletionRate90d })}
                 </span>
               </p>
             </StatsSectionCard>
           )}
 
-          <StatsSectionCard icon={Trophy} label="Records">
+          <StatsSectionCard icon={Trophy} label={t("sections.records")}>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="font-semibold tabular-nums">{stats.records.longestStreak}d</p>
-                <p className="text-[11px] text-muted-foreground">Longest streak</p>
+                <p className="text-[11px] text-muted-foreground">{t("records.longestStreak")}</p>
               </div>
               <div>
                 <p className="font-semibold tabular-nums">
@@ -120,7 +122,7 @@ export default function ActivityStatsPage() {
                     : "—"}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
-                  Best month
+                  {t("records.bestMonth")}
                   {stats.records.bestMonthLabel ? ` (${stats.records.bestMonthLabel})` : ""}
                 </p>
               </div>
@@ -129,7 +131,7 @@ export default function ActivityStatsPage() {
                   {formatDuration(stats.records.busiestDayMs)}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
-                  Busiest day
+                  {t("records.busiestDay")}
                   {stats.records.busiestDayStr ? ` (${stats.records.busiestDayStr})` : ""}
                 </p>
               </div>
@@ -137,13 +139,13 @@ export default function ActivityStatsPage() {
                 <p className="font-semibold tabular-nums">
                   {formatDuration(stats.records.totalTrackedMs)}
                 </p>
-                <p className="text-[11px] text-muted-foreground">All-time tracked</p>
+                <p className="text-[11px] text-muted-foreground">{t("records.allTimeTracked")}</p>
               </div>
             </div>
           </StatsSectionCard>
 
           {stats.sessions.length > 0 && (
-            <StatsSectionCard icon={Clock} label="Recent sessions">
+            <StatsSectionCard icon={Clock} label={t("sections.recentSessions")}>
               <ul className="space-y-1.5 text-sm">
                 {stats.sessions.slice(0, MAX_SESSIONS_SHOWN).map((session) => (
                   <li
@@ -161,7 +163,7 @@ export default function ActivityStatsPage() {
           )}
 
           {stats.timeOfDayBuckets.some((v) => v > 0) && (
-            <StatsSectionCard icon={Clock} label="Time of day · 30d">
+            <StatsSectionCard icon={Clock} label={t("sections.timeOfDay30d")}>
               <TimeOfDayChart buckets={stats.timeOfDayBuckets} color={color} />
             </StatsSectionCard>
           )}

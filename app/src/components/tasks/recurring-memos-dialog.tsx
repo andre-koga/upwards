@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { RecurringMemo } from "@/lib/db/types";
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ export function RecurringMemosDialog({
   onOpenChange,
   onPresetsChanged,
 }: RecurringMemosDialogProps) {
+  const { t } = useTranslation("tasks");
+  const { t: tCommon } = useTranslation("common");
   const {
     recurringMemos,
     loadRecurringMemos,
@@ -75,7 +78,11 @@ export function RecurringMemosDialog({
       <FormDialog
         open={open}
         onOpenChange={onOpenChange}
-        title={`Recurring Memos${recurringMemos.length > 0 ? ` (${recurringMemos.length})` : ""}`}
+        title={
+          recurringMemos.length > 0
+            ? t("recurringMemos.titleWithCount", { count: recurringMemos.length })
+            : t("recurringMemos.title")
+        }
         size="default"
         contentClassName="w-96"
         headerEnd={
@@ -85,8 +92,8 @@ export function RecurringMemosDialog({
             size="icon"
             className="h-8 w-8 shrink-0 rounded-full"
             onClick={openCreate}
-            title="New recurring memo"
-            aria-label="New recurring memo"
+            title={t("recurringMemo.newTitle")}
+            aria-label={t("recurringMemo.newTitle")}
           >
             <Plus className="h-4 w-4" aria-hidden />
           </Button>
@@ -95,7 +102,7 @@ export function RecurringMemosDialog({
         <div className="space-y-1 max-h-96 overflow-y-auto">
           {recurringMemos.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-8">
-              No recurring memos yet
+              {t("recurringMemos.empty")}
             </p>
           ) : (
             recurringMemos.map((memo) => (
@@ -109,7 +116,7 @@ export function RecurringMemosDialog({
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {formatRoutineDisplay(memo.routine)}
-                    {memo.is_enabled === false ? " · Paused" : ""}
+                    {memo.is_enabled === false ? ` · ${t("recurringMemo.paused")}` : ""}
                   </p>
                 </div>
                 <Button
@@ -118,8 +125,8 @@ export function RecurringMemosDialog({
                   size="icon"
                   onClick={() => openEdit(memo)}
                   className="h-6 w-6 shrink-0"
-                  title="Edit recurring memo"
-                  aria-label="Edit recurring memo"
+                  title={t("recurringMemo.editTitle")}
+                  aria-label={t("recurringMemo.editTitle")}
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
@@ -129,7 +136,7 @@ export function RecurringMemosDialog({
         </div>
         <FormDialogActions
           onConfirm={() => onOpenChange(false)}
-          confirmLabel="Close"
+          confirmLabel={tCommon("close")}
           secondaryAction={undefined}
         />
       </FormDialog>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Clock, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/lib/session/day-reset";
 
 export function DayResetCard() {
+  const { t } = useTranslation("settings");
   const [selected, setSelected] = useState(() => getDayResetMinutes());
 
   const handleChange = (value: string) => {
@@ -30,14 +32,14 @@ export function DayResetCard() {
 
   return (
     <SettingsSection
-      title="Day reset time"
+      title={t("dayReset.title")}
       icon={Clock}
-      description="Choose a time when you're definitely asleep—before you wake up. Your day will reset at this time."
+      description={t("dayReset.description")}
     >
       <div className="space-y-3">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Reset at
+            {t("dayReset.resetAt")}
           </p>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -55,7 +57,7 @@ export function DayResetCard() {
               align="start"
               sideOffset={6}
             >
-              <DropdownMenuLabel>Reset at</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("dayReset.resetAt")}</DropdownMenuLabel>
               <DropdownMenuRadioGroup
                 value={String(selected)}
                 onValueChange={handleChange}
@@ -74,7 +76,7 @@ export function DayResetCard() {
         </div>
         {selected > 0 && selectedLabel && (
           <p className="text-xs text-muted-foreground">
-            Your day resets at {selectedLabel}. Pick a time you're always asleep—activities started before then count toward the previous day.
+            {t("dayReset.helper", { time: selectedLabel })}
           </p>
         )}
       </div>

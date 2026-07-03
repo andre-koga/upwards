@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import { db, now } from "@/lib/db";
 import type { Activity } from "@/lib/db/types";
@@ -34,6 +35,8 @@ function compareActivities(left: Activity, right: Activity): number {
 }
 
 export default function TaskOrderPage() {
+  const { t } = useTranslation("settings");
+  const { t: tNav } = useTranslation("nav");
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -118,23 +121,25 @@ export default function TaskOrderPage() {
   return (
     <div className="space-y-3 p-4 pb-24">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Task order</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t("taskOrder.title")}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Reorder scheduled tasks shown on the home page.
+          {t("taskOrder.description")}
         </p>
       </header>
 
-      <SettingsSection title="Daily task sorting">
+      <SettingsSection title={t("taskOrder.dailySorting")}>
         <div className="space-y-2">
           {loading && (
             <p className="text-sm text-muted-foreground">
-              Loading activities...
+              {t("taskOrder.loadingActivities")}
             </p>
           )}
 
           {!loading && activities.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              No scheduled activities available to reorder.
+              {t("taskOrder.empty")}
             </p>
           )}
 
@@ -159,7 +164,7 @@ export default function TaskOrderPage() {
                     className="h-8 w-8"
                     onClick={() => void moveItem(index, "up")}
                     disabled={saving || index === 0}
-                    title="Move up"
+                    title={t("taskOrder.moveUp")}
                   >
                     <ChevronUp className="h-4 w-4" />
                   </Button>
@@ -170,7 +175,7 @@ export default function TaskOrderPage() {
                     className="h-8 w-8"
                     onClick={() => void moveItem(index, "down")}
                     disabled={saving || index === activities.length - 1}
-                    title="Move down"
+                    title={t("taskOrder.moveDown")}
                   >
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -179,12 +184,14 @@ export default function TaskOrderPage() {
             ))}
 
           {saving && (
-            <p className="text-xs text-muted-foreground">Saving order...</p>
+            <p className="text-xs text-muted-foreground">
+              {t("taskOrder.savingOrder")}
+            </p>
           )}
         </div>
       </SettingsSection>
 
-      <FloatingBackButton to="/settings" title="Back to Settings" />
+      <FloatingBackButton to="/settings" title={tNav("backToSettings")} />
     </div>
   );
 }
