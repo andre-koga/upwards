@@ -5,17 +5,17 @@
     "archive": "Arquivar memo",
     "titleLabel": "Título do memo",
     "titlePlaceholder": "Título da tarefa…",
-    "dueDate": "Data de vencimento",
+    "dueDate": "Data limite",
     "pin": "Fixar memo",
     "unpin": "Desfixar memo",
-    "due": "Vence em {{date}}",
+    "due": "Prazo: {{date}}",
     "recurring": "Recorrente",
     "recurringMemo": "Memo recorrente",
-    "pinnedMarkIncomplete": "Memo fixado — marcar incompleto",
-    "pinnedMarkComplete": "Memo fixado — marcar completo",
+    "pinnedMarkIncomplete": "Memo fixado — marcar como incompleto",
+    "pinnedMarkComplete": "Memo fixado — marcar como concluído",
     "pinnedMemo": "Memo fixado",
     "dueLabels": {
-      "past": "Passado",
+      "past": "Atrasado",
       "yesterday": "Ontem",
       "today": "Hoje",
       "tomorrow": "Amanhã"
@@ -23,23 +23,23 @@
     "thisMemo": "este memo",
     "deleteConfirm": {
       "title": "Excluir memo?",
-      "description": "Excluir \"{{title}}\"? Esta ação não pode ser desfeita."
+      "description": "Excluir \"{{title}}\"? Não será possível desfazer esta ação."
     },
     "archiveConfirm": {
       "title": "Arquivar memo?",
-      "description": "Arquivar \"{{title}}\"? Você pode restaurá-lo na lista de memos arquivados.",
+      "description": "Arquivar \"{{title}}\"? Você poderá restaurá-lo pela lista de memos arquivados.",
       "confirm": "Arquivar"
     },
     "archivedDialog": {
       "title": "Memos arquivados",
       "titleWithCount": "Memos arquivados ({{count}})",
-      "empty": "Nenhum memo arquivado",
+      "empty": "Não há memos arquivados",
       "restore": "Restaurar memo",
       "delete": "Excluir memo"
     }
   },
   "addTask": {
-    "trigger": "Adicionar tarefa única"
+    "trigger": "Adicionar tarefa avulsa"
   },
   "recurringMemo": {
     "editTitle": "Editar memo recorrente",
@@ -52,6 +52,6 @@
   "recurringMemos": {
     "title": "Memos recorrentes",
     "titleWithCount": "Memos recorrentes ({{count}})",
-    "empty": "Nenhum memo recorrente ainda"
+    "empty": "Ainda não há memos recorrentes"
   }
 }
