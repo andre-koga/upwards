@@ -2,7 +2,7 @@
   "page": {
     "title": "Configurações",
     "subtitle": "Gerencie suas preferências",
-    "tagline": "Upwards — rastreador de hábitos local-first"
+    "tagline": "Upwards — rastreador de hábitos que prioriza dados locais"
   },
   "appearance": {
     "title": "Aparência",
@@ -16,11 +16,11 @@
     "palettes": {
       "default": "Clássico",
       "ocean": "Brisa do oceano",
-      "sunset": "Pôr do sol quente",
+      "sunset": "Pôr do sol aconchegante",
       "forest": "Floresta profunda",
       "mocha": "Mocha quente",
       "cyberpunk": "Cyberpunk",
-      "pastel dreams": "Sonhos pastéis",
+      "pastel dreams": "Sonhos em pastel",
       "graphite": "Grafite puro",
       "jellyfish": "Água-viva"
     }
@@ -31,46 +31,46 @@
     "comingSoon": "Mais idiomas em breve."
   },
   "dayReset": {
-    "title": "Horário de reinício do dia",
-    "description": "Escolha um horário em que você certamente estará dormindo — antes de acordar. Seu dia será reiniciado nesse horário.",
-    "resetAt": "Reiniciar às",
+    "title": "Horário de virada do dia",
+    "description": "Escolha um horário em que você com certeza estará dormindo, antes de acordar. Seu dia vira nesse horário.",
+    "resetAt": "Virada às",
     "midnight": "Meia-noite",
-    "helper": "Seu dia reinicia às {{time}}. Escolha um horário em que você sempre está dormindo — atividades iniciadas antes disso contam para o dia anterior."
+    "helper": "Seu dia vira às {{time}}. Escolha um horário em que você costuma estar dormindo — atividades iniciadas antes desse horário contam para o dia anterior."
   },
   "auth": {
-    "title": "Conta de sincronização",
+    "title": "Conta para sincronização",
     "signedInAs": "Conectado como",
     "unknownEmail": "E-mail desconhecido",
     "signOut": "Sair",
-    "signInSignUp": "Entrar / Cadastrar",
+    "signInSignUp": "Entrar / criar conta",
     "hideLogin": "Ocultar login",
     "email": "E-mail",
     "password": "Senha",
     "signIn": "Entrar",
-    "signUp": "Cadastrar",
+    "signUp": "Criar conta",
     "forgotPassword": "Esqueceu a senha?",
-    "checkEmail": "Verifique seu e-mail para confirmar a conta!",
-    "signInFailed": "Falha ao entrar",
-    "signUpFailed": "Falha ao cadastrar",
+    "checkEmail": "Confira seu e-mail para confirmar a conta!",
+    "signInFailed": "Não foi possível entrar",
+    "signUpFailed": "Não foi possível criar a conta",
     "resetEmailFailed": "Não foi possível enviar o e-mail de redefinição",
     "updatePasswordFailed": "Não foi possível atualizar a senha",
     "syncNotConfigured": "A sincronização não está configurada nesta versão.",
     "forgotPasswordPage": {
       "title": "Redefinir senha",
-      "description": "Digite o e-mail da sua conta de sincronização. Enviaremos um link para escolher uma nova senha.",
-      "sent": "Se existir uma conta para {{email}}, você receberá um link de redefinição em breve. Verifique a caixa de entrada e o spam.",
+      "description": "Digite o e-mail da sua conta de sincronização. Vamos enviar um link para você escolher uma nova senha.",
+      "sent": "Se existir uma conta para {{email}}, você receberá um link de redefinição em breve. Verifique sua caixa de entrada e a pasta de spam.",
       "sendLink": "Enviar link de redefinição",
       "sending": "Enviando…"
     },
     "resetPasswordPage": {
       "title": "Nova senha",
-      "verifying": "Verificando link de redefinição…",
+      "verifying": "Verificando o link de redefinição…",
       "invalidLink": "Este link de redefinição é inválido ou expirou.",
       "requestNewLink": "Solicitar novo link",
       "updatedTitle": "Senha atualizada",
-      "updatedDescription": "Sua senha foi alterada. Você está conectado com sua conta de sincronização.",
+      "updatedDescription": "Sua senha foi alterada. Você está conectado à sua conta de sincronização.",
       "goToSettings": "Ir para Configurações",
-      "chooseDescription": "Escolha uma nova senha para sua conta de sincronização.",
+      "chooseDescription": "Escolha uma nova senha para a sua conta de sincronização.",
       "newPassword": "Nova senha",
       "confirmPassword": "Confirmar senha",
       "passwordTooShort": "A senha deve ter pelo menos 6 caracteres.",
@@ -82,38 +82,38 @@
     "title": "Perfil",
     "displayName": "Nome de exibição",
     "noDisplayName": "Sem nome de exibição",
-    "displayNameHelper": "Exibido quando amigos veem suas conclusões de hábitos compartilhadas",
+    "displayNameHelper": "Aparece quando amigos veem hábitos que você concluiu e compartilhou",
     "namePlaceholder": "Seu nome",
     "setName": "Definir nome",
     "username": "Nome de usuário",
     "noUsername": "Sem nome de usuário",
-    "usernameHelper": "Amigos podem encontrá-lo pelo nome de usuário exato",
+    "usernameHelper": "Seus amigos podem encontrar você pelo nome de usuário exato",
     "usernamePlaceholder": "seu_usuario",
-    "usernamePatternTitle": "3–20 caracteres: a-z, 0-9, sublinhado",
-    "usernameFormatHelper": "Letras, números e sublinhado. 3–20 caracteres.",
+    "usernamePatternTitle": "3–20 caracteres: a-z, 0-9 e traço baixo",
+    "usernameFormatHelper": "Letras, números e traço baixo. 3–20 caracteres.",
     "setUsername": "Definir nome de usuário",
-    "notSignedIn": "Não conectado",
-    "usernameInvalid": "O nome de usuário deve ter 3–20 caracteres: apenas a-z, 0-9 e sublinhado.",
+    "notSignedIn": "Você não está conectado",
+    "usernameInvalid": "O nome de usuário deve ter 3–20 caracteres: apenas a-z, 0-9 e traço baixo.",
     "usernameTaken": "Este nome de usuário já está em uso.",
-    "usernameSaveFailed": "Falha ao salvar nome de usuário",
-    "loadFailed": "Falha ao carregar perfil",
-    "displayNameSaveFailed": "Falha ao salvar nome de exibição"
+    "usernameSaveFailed": "Não foi possível salvar o nome de usuário",
+    "loadFailed": "Não foi possível carregar o perfil",
+    "displayNameSaveFailed": "Não foi possível salvar o nome de exibição"
   },
   "sync": {
     "title": "Sincronização na nuvem",
-    "description": "O envio forçado envia todos os dados locais para a nuvem, sobrescrevendo o remoto com o local. Use quando tiver dados locais que não estão sincronizando.",
-    "forcePush": "Enviar forçado para a nuvem",
+    "description": "O envio forçado manda todos os dados locais para a nuvem e substitui os dados remotos pelos dados deste dispositivo. Use se tiver dados locais que não estão sincronizando.",
+    "forcePush": "Forçar envio para a nuvem",
     "pushing": "Enviando…"
   },
   "taskOrder": {
     "title": "Ordem das tarefas",
     "description": "Reordene as tarefas agendadas exibidas na página inicial.",
     "reorder": "Reordenar tarefas diárias",
-    "dailySorting": "Ordenação das tarefas diárias",
+    "dailySorting": "Como ordenar tarefas diárias",
     "loadingActivities": "Carregando atividades...",
-    "empty": "Nenhuma atividade agendada disponível para reordenar.",
+    "empty": "Não há atividades agendadas para reordenar.",
     "moveUp": "Mover para cima",
     "moveDown": "Mover para baixo",
-    "savingOrder": "Salvando ordem..."
+    "savingOrder": "Salvando a ordem..."
   }
 }

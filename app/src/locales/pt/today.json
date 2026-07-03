@@ -1,7 +1,7 @@
 {
   "loading": "Carregando...",
   "swipe": {
-    "alreadyToday": "Já está em hoje",
+    "alreadyToday": "Você já está no dia de hoje",
     "previousDay": "Dia anterior",
     "nextDay": "Próximo dia"
   },
@@ -10,17 +10,17 @@
     "memos": "Memos",
     "forToday": "Para hoje",
     "timeline": "Linha do tempo",
-    "timelineBoundary": "(começa e termina às {{time}})"
+    "timelineBoundary": "(o dia começa e termina às {{time}})"
   },
   "recurringMemosButton": "Recorrentes",
   "manageRecurringMemos": "Gerenciar memos recorrentes",
   "archiveButton": "Arquivo",
   "viewArchivedMemos": "Ver memos arquivados",
   "breakDay": {
-    "unset": "Desmarcar dia de pausa",
-    "set": "Marcar este dia como dia de pausa",
-    "active": "Dia de pausa ativo",
-    "markAsBreakDay": "Marcar como dia de pausa",
-    "helper": "Tarefas incompletas não afetam sequências."
+    "unset": "Desmarcar dia de descanso",
+    "set": "Marcar este dia como dia de descanso",
+    "active": "Dia de descanso ativo",
+    "markAsBreakDay": "Marcar como dia de descanso",
+    "helper": "Tarefas incompletas não prejudicam suas sequências."
   }
 }
