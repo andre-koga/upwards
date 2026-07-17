@@ -38,7 +38,8 @@ export default function JournalArchiveBanner({
     return (
       <div
         className={cn(
-          "relative overflow-hidden rounded-xl",
+          // Break out of the journal page `p-4` so the photo is edge-to-edge.
+          "relative -mx-4 overflow-hidden",
           className
         )}
         role="separator"
