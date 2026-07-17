@@ -19,6 +19,24 @@ interface JournalArchiveEntryProps {
   entry: JournalEntry;
 }
 
+/** Soft diagonal washes — picked stably per entry so bookmarked days vary. */
+const BOOKMARK_GRADIENTS = [
+  "bg-gradient-to-br from-rose-500/10 via-amber-400/5 to-transparent dark:from-rose-400/15 dark:via-amber-300/10",
+  "bg-gradient-to-bl from-sky-500/10 via-teal-400/5 to-transparent dark:from-sky-400/15 dark:via-teal-300/10",
+  "bg-gradient-to-tr from-orange-500/10 via-rose-400/5 to-transparent dark:from-orange-400/15 dark:via-rose-300/10",
+  "bg-gradient-to-tl from-emerald-500/10 via-lime-400/5 to-transparent dark:from-emerald-400/15 dark:via-lime-300/10",
+  "bg-gradient-to-br from-fuchsia-500/10 via-pink-400/5 to-transparent dark:from-fuchsia-400/15 dark:via-pink-300/10",
+  "bg-gradient-to-bl from-cyan-500/10 via-sky-400/5 to-transparent dark:from-cyan-400/15 dark:via-sky-300/10",
+] as const;
+
+function bookmarkGradientFor(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  return BOOKMARK_GRADIENTS[Math.abs(hash) % BOOKMARK_GRADIENTS.length];
+}
+
 function MediaLightbox({
   children,
   onClose,
@@ -227,6 +245,9 @@ export default function JournalArchiveEntry({
   const locations = entry.location?.locations ?? [];
   const locationLabel = locations.map((l) => l.displayName).join(" → ");
   const isBookmarked = Boolean(entry.is_bookmarked);
+  const bookmarkGradient = isBookmarked
+    ? bookmarkGradientFor(entry.id || entry.entry_date)
+    : null;
 
   const openDay = () => {
     try {
@@ -241,8 +262,7 @@ export default function JournalArchiveEntry({
     <article
       className={cn(
         "space-y-4 rounded-2xl p-3 -mx-1 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both",
-        isBookmarked &&
-          "bg-gradient-to-br from-rose-500/10 via-amber-400/5 to-transparent dark:from-rose-400/15 dark:via-amber-300/10"
+        bookmarkGradient
       )}
     >
       {(hasVideo || photoPaths.length > 0) && (
