@@ -120,7 +120,7 @@ export default function JournalPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-12">
+        <div className="space-y-5">
           {debouncedQuery ? (
             <p className="text-xs text-muted-foreground">
               {t("archive.resultCount", { count: totalMatching })}
