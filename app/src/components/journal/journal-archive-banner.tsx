@@ -54,7 +54,7 @@ export default function JournalArchiveBanner({
           className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/35 to-black/15"
           aria-hidden
         />
-        <p className="absolute inset-x-0 bottom-0 px-4 pb-3 pt-8 text-center font-crimson text-xl font-semibold tracking-tight text-white drop-shadow-sm">
+        <p className="absolute inset-0 flex items-center justify-center px-4 text-center font-crimson text-xl font-semibold tracking-tight text-white drop-shadow-sm">
           {label}
         </p>
       </div>
