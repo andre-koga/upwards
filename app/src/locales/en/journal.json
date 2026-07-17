@@ -20,6 +20,20 @@
     "photoAlt": "Photo {{index}}",
     "removePhoto": "Remove photo {{index}}"
   },
+  "archive": {
+    "title": "Journal",
+    "subtitle": "Every day you've written, in one place.",
+    "searchPlaceholder": "Search by words, emoji, place, date…",
+    "clearSearch": "Clear search",
+    "loading": "Loading your journal…",
+    "empty": "No journal entries yet",
+    "emptyHelper": "Write a reflection on Today and it will show up here.",
+    "noResults": "No matching days",
+    "noResultsHelper": "Try different words, an emoji, or a date.",
+    "resultCount": "{{count}} days found",
+    "loadingMore": "Loading more…",
+    "end": "You've reached the beginning."
+  },
   "untitled": "Untitled",
   "noReflection": "No reflection written.",
   "addLocationsVisited": "Add locations visited",

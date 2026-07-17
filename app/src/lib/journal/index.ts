@@ -5,3 +5,5 @@ export * from "./video-storage";
 export * from "./video-compression";
 export * from "./photo-storage";
 export * from "./photo-compression";
+export * from "./holidays";
+export * from "./archive";
