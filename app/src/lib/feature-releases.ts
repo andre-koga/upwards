@@ -17,6 +17,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
     fixes: [
       "Journal archive entries use the full width for text, show each photo in its own spot, and mark hearted days with a red heart.",
+      "Year, month, and holiday changes get their own banners in the journal feed.",
     ],
   },
   {

@@ -66,14 +66,15 @@ export function useJournalArchive(searchQuery: string) {
       if (item.kind === "entry") {
         if (entryCount >= visibleCount) break;
         entryCount += 1;
-      }
-      if (item.kind === "month") {
-        const remainingEntries = visibleCount - entryCount;
-        if (remainingEntries <= 0) break;
+      } else if (entryCount >= visibleCount) {
+        break;
       }
       items.push(item);
     }
-    while (items.length > 0 && items[items.length - 1]?.kind === "month") {
+    while (
+      items.length > 0 &&
+      items[items.length - 1]?.kind !== "entry"
+    ) {
       items.pop();
     }
     const totalEntries = filteredEntries.length;

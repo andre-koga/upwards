@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 
 interface JournalArchiveEntryProps {
   entry: JournalEntry;
-  holiday: string | null;
 }
 
 function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
@@ -159,7 +158,6 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
 
 export default function JournalArchiveEntry({
   entry,
-  holiday,
 }: JournalArchiveEntryProps) {
   const { t } = useTranslation("journal");
   const navigate = useNavigate();
@@ -189,7 +187,7 @@ export default function JournalArchiveEntry({
   const hasVideo = Boolean(videoSrc || entry.video_thumbnail);
   const locations = entry.location?.locations ?? [];
   const locationLabel = locations.map((l) => l.displayName).join(" → ");
-  const showMetaRow = locations.length > 0 || entry.is_bookmarked || holiday;
+  const showMetaRow = locations.length > 0 || Boolean(entry.is_bookmarked);
 
   const openDay = () => {
     try {
@@ -222,19 +220,12 @@ export default function JournalArchiveEntry({
 
       {showMetaRow ? (
         <div className="flex items-start justify-end gap-2">
-          <div className="min-w-0 max-w-[85%] text-right">
-            {holiday ? (
-              <p className="text-xs text-amber-700 dark:text-amber-400">
-                {holiday}
-              </p>
-            ) : null}
-            {locations.length > 0 ? (
-              <p className="inline-flex max-w-full items-start justify-end gap-1 text-xs text-muted-foreground">
-                <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
-                <span className="min-w-0 break-words">{locationLabel}</span>
-              </p>
-            ) : null}
-          </div>
+          {locations.length > 0 ? (
+            <p className="inline-flex min-w-0 max-w-[85%] items-start justify-end gap-1 text-right text-xs text-muted-foreground">
+              <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+              <span className="min-w-0 break-words">{locationLabel}</span>
+            </p>
+          ) : null}
           {entry.is_bookmarked ? (
             <Heart
               className="mt-0.5 h-3.5 w-3.5 shrink-0 fill-red-500 text-red-500"
