@@ -75,7 +75,7 @@ describe("journal archive helpers", () => {
     expect(journalEntryMatchesQuery(entry, "missing", "en")).toBe(false);
   });
 
-  it("inserts year, month, and holiday banners", () => {
+  it("inserts month and holiday banners", () => {
     const feed = buildJournalArchiveFeed(
       [
         makeEntry({ entry_date: "2026-07-04", title: "A" }),
@@ -85,25 +85,22 @@ describe("journal archive helpers", () => {
       "en"
     );
     expect(feed.map((i) => i.kind)).toEqual([
-      "year",
       "month",
       "holiday",
       "entry",
       "month",
       "entry",
-      "year",
       "month",
       "holiday",
       "entry",
     ]);
-    expect(feed[0]).toMatchObject({ kind: "year", year: 2026 });
-    expect(feed[1]).toMatchObject({ kind: "month", year: 2026, month: 7 });
-    expect(feed[2]).toMatchObject({
+    expect(feed[0]).toMatchObject({ kind: "month", year: 2026, month: 7 });
+    expect(feed[1]).toMatchObject({
       kind: "holiday",
       name: "Independence Day",
     });
-    expect(feed[6]).toMatchObject({ kind: "year", year: 2025 });
-    expect(feed[8]).toMatchObject({
+    expect(feed[5]).toMatchObject({ kind: "month", year: 2025, month: 12 });
+    expect(feed[6]).toMatchObject({
       kind: "holiday",
       name: "Christmas Day",
     });

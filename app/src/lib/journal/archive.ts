@@ -65,13 +65,12 @@ export function journalEntryMatchesQuery(
 }
 
 export type JournalArchiveItem =
-  | { kind: "year"; key: string; year: number }
   | { kind: "month"; key: string; year: number; month: number }
   | { kind: "holiday"; key: string; name: string; date: string }
   | { kind: "entry"; entry: JournalEntry; holiday: string | null };
 
 /**
- * Build a newest-first feed with year, month, and holiday banners.
+ * Build a newest-first feed with month and holiday banners.
  */
 export function buildJournalArchiveFeed(
   entries: JournalEntry[],
@@ -82,19 +81,12 @@ export function buildJournalArchiveFeed(
   );
 
   const items: JournalArchiveItem[] = [];
-  let lastYear: number | null = null;
   let lastMonthKey = "";
 
   for (const entry of sorted) {
     const year = Number(entry.entry_date.slice(0, 4));
     const month = Number(entry.entry_date.slice(5, 7));
     const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-
-    if (lastYear !== year) {
-      items.push({ kind: "year", key: `y-${year}`, year });
-      lastYear = year;
-      lastMonthKey = "";
-    }
 
     if (monthKey !== lastMonthKey) {
       items.push({ kind: "month", key: monthKey, year, month });
@@ -126,9 +118,6 @@ export const JOURNAL_ARCHIVE_PAGE_SIZE = 12;
 export function formatArchiveMonthLabel(year: number, month: number): string {
   return new Date(year, month - 1, 1).toLocaleDateString(getActiveLocaleTag(), {
     month: "long",
+    year: "numeric",
   });
-}
-
-export function formatArchiveYearLabel(year: number): string {
-  return String(year);
 }

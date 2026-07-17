@@ -7,10 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useJournalArchive } from "@/hooks/use-journal-archive";
 import JournalArchiveEntry from "@/components/journal/journal-archive-entry";
 import JournalArchiveBanner from "@/components/journal/journal-archive-banner";
-import {
-  formatArchiveMonthLabel,
-  formatArchiveYearLabel,
-} from "@/lib/journal/archive";
+import { formatArchiveMonthLabel } from "@/lib/journal/archive";
 
 function scrollAppToTop() {
   window.scrollTo(0, 0);
@@ -131,20 +128,12 @@ export default function JournalPage() {
           ) : null}
 
           {visibleItems.map((item) => {
-            if (item.kind === "year") {
-              return (
-                <JournalArchiveBanner
-                  key={item.key}
-                  variant="year"
-                  label={formatArchiveYearLabel(item.year)}
-                />
-              );
-            }
             if (item.kind === "month") {
               return (
                 <JournalArchiveBanner
                   key={item.key}
                   variant="month"
+                  month={item.month}
                   label={formatArchiveMonthLabel(item.year, item.month)}
                 />
               );

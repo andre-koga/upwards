@@ -15,7 +15,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     bullets: [
       "On an installed phone app, the top and bottom bars match your theme.",
       "Journal entries show media on top, day number beside your writing, and photos in a grid.",
-      "Year, month, and holiday banners mark the journal feed as you scroll.",
+      "Month banners with seasonal images (and holiday banners) mark the journal feed as you scroll.",
     ],
   },
   {
