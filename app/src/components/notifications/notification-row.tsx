@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ActivityCompletionDetails } from "@/components/notifications/activity-completion-details";
 import type { InboxNotification } from "@/lib/notifications/use-notifications";
 import { isNotificationClearable } from "@/lib/notifications/notification-dismissals";
-import { cn } from "@/lib/utils";
 import { getActiveDateFnsLocale } from "@/lib/i18n";
 import type { TFunction } from "i18next";
 
@@ -18,9 +17,6 @@ function notificationMessage(n: InboxNotification, t: TFunction<"notifications">
   const name = actorDisplayLabel(n, t);
   if (n.kind === "friend_request") {
     return t("friendRequest", { name });
-  }
-  if (n.kind === "daily_summary") {
-    return t("dailySummary", { name });
   }
   const habit = n.activityName?.trim() || t("aHabit");
   const streak = n.streak ?? 0;
@@ -38,7 +34,6 @@ export function NotificationRow({
   onAcceptFriend,
   onDeclineFriend,
   onDismiss,
-  onOpenRecap,
   onCloseDrawer,
   responding,
 }: {
@@ -46,28 +41,15 @@ export function NotificationRow({
   onAcceptFriend: (id: string) => void;
   onDeclineFriend: (id: string) => void;
   onDismiss?: (id: string) => void;
-  onOpenRecap?: (n: InboxNotification) => void;
   onCloseDrawer?: () => void;
   responding: string | null;
 }) {
   const { t } = useTranslation("notifications");
   const rawId = rawActionId(n);
   const canDismiss = isNotificationClearable(n);
-  const isClickableRow = n.kind === "daily_summary";
-
-  const handleRowClick = () => {
-    if (!isClickableRow) return;
-    onOpenRecap?.(n);
-  };
 
   return (
-    <div
-      className={cn(
-        "flex items-start gap-3 px-4 py-3",
-        isClickableRow && "cursor-pointer transition-colors hover:bg-muted/50"
-      )}
-      onClick={isClickableRow ? handleRowClick : undefined}
-    >
+    <div className="flex items-start gap-3 px-4 py-3">
       <span className="mt-0.5 shrink-0">
         {n.kind === "friend_request" && (
           <Users className="h-4 w-4 text-blue-500" />
@@ -78,9 +60,6 @@ export function NotificationRow({
           ) : (
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           ))}
-        {n.kind === "daily_summary" && (
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-        )}
       </span>
 
       <div className="min-w-0 flex-1 space-y-1">
@@ -94,15 +73,15 @@ export function NotificationRow({
         </p>
 
         {n.kind === "friend_request" && n.actionStatus === "pending" && (
-          <div
-            className="flex gap-2 pt-1"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex gap-2 pt-1">
             <Button
               size="sm"
               variant="outline"
               disabled={responding === rawId}
-              onClick={() => { onCloseDrawer?.(); onAcceptFriend(rawId); }}
+              onClick={() => {
+                onCloseDrawer?.();
+                onAcceptFriend(rawId);
+              }}
             >
               <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
               {t("accept")}
@@ -111,7 +90,10 @@ export function NotificationRow({
               size="sm"
               variant="ghost"
               disabled={responding === rawId}
-              onClick={() => { onCloseDrawer?.(); onDeclineFriend(rawId); }}
+              onClick={() => {
+                onCloseDrawer?.();
+                onDeclineFriend(rawId);
+              }}
             >
               <XCircle className="h-3.5 w-3.5 text-destructive" />
               {t("decline")}
@@ -121,13 +103,13 @@ export function NotificationRow({
       </div>
 
       <div className="flex h-7 w-7 shrink-0 items-start justify-center">
-        {canDismiss && onDismiss && !isClickableRow ? (
+        {canDismiss && onDismiss ? (
           <Button
             type="button"
             variant="ghost"
             size="smIcon"
             className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={(e) => { e.stopPropagation(); onDismiss(n.id); }}
+            onClick={() => onDismiss(n.id)}
             aria-label={t("dismissAria")}
             title={t("dismiss")}
           >

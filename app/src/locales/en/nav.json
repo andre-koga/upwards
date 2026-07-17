@@ -42,6 +42,6 @@
     "signInRequired": "Notifications require a sync account. Sign in from Settings.",
     "goToSettings": "Go to Settings",
     "empty": "Nothing here yet",
-    "emptyHelper": "Friend requests and shared day recaps appear here."
+    "emptyHelper": "Friend requests appear here."
   }
 }

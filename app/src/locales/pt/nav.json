@@ -42,6 +42,6 @@
     "signInRequired": "As notificações precisam de uma conta sincronizada. Entre em Configurações.",
     "goToSettings": "Ir para Configurações",
     "empty": "Nada por aqui ainda",
-    "emptyHelper": "Pedidos de amizade e resumos do dia compartilhados aparecem aqui."
+    "emptyHelper": "Pedidos de amizade aparecem aqui."
   }
 }

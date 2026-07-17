@@ -95,17 +95,13 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
     fixes: [
       "Habit timers now show only the time tracked today, not the full session.",
-      "Sharing a day recap works again.",
     ],
   },
   {
     date: "2026-06-02",
-    title: "Daily recap and friend sharing",
+    title: "Friends and notifications",
     bullets: [
-      "When you open the app after a new day, a recap dialog shows yesterday's completed and missed habits.",
-      "Share your day recap with friends, optionally adding a message.",
-      "Friends receive a single notification that opens a summary of your day.",
-      "Add friends by username; the bell inbox handles friend requests and shared day recaps.",
+      "Add friends by username; the bell inbox handles friend requests.",
     ],
     fixes: [
       "Projects drawer timers show all-time tracked time per habit again.",

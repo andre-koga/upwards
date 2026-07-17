@@ -4,7 +4,6 @@
   "daysWithoutSlip": "dias sem deslizes",
   "dayStreak": "dias seguidos",
   "friendRequest": "{{name}} quer se conectar com você",
-  "dailySummary": "{{name}} compartilhou o dia",
   "activityComplete": "{{name}} concluiu {{habit}} · {{streak}} {{unit}}",
   "accept": "Aceitar",
   "decline": "Recusar",
