@@ -32,7 +32,11 @@
     "noResultsHelper": "Try different words, an emoji, or a date.",
     "resultCount": "{{count}} days found",
     "loadingMore": "Loading more…",
-    "end": "You've reached the beginning."
+    "end": "You've reached the beginning.",
+    "closePhoto": "Close",
+    "previousPhoto": "Previous photo",
+    "nextPhoto": "Next photo",
+    "photoUnavailable": "Photo unavailable"
   },
   "untitled": "Untitled",
   "noReflection": "No reflection written.",

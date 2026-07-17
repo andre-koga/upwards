@@ -15,6 +15,9 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     bullets: [
       "When Upwards is installed on your phone, the top and bottom system bars follow your light/dark theme and color palette instead of staying black.",
     ],
+    fixes: [
+      "Journal archive entries use the full width for text, show each photo in its own spot, and mark hearted days with a red heart.",
+    ],
   },
   {
     date: "2026-07-17",
