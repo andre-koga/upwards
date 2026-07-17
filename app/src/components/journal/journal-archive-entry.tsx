@@ -300,27 +300,27 @@ export default function JournalArchiveEntry({
         className="group grid w-full grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 gap-y-1 text-left"
       >
         <div className="flex flex-col items-center gap-1.5 pt-0.5">
-          <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
-            {dayNumber}
-          </span>
-          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            {weekday}
-          </span>
           <span
             className={cn(
-              "mt-1 text-4xl leading-none",
+              "text-4xl leading-none",
               !entry.day_emoji && "text-muted-foreground"
             )}
             aria-hidden
           >
             {entry.day_emoji?.trim() || "🙂"}
           </span>
-          {isBookmarked ? (
-            <Heart
-              className="h-3.5 w-3.5 fill-red-500 text-red-500"
-              aria-label={t("bookmarkDay")}
-            />
-          ) : null}
+          <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+            {dayNumber}
+          </span>
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            {weekday}
+            {isBookmarked ? (
+              <Heart
+                className="h-3 w-3 fill-red-500 text-red-500"
+                aria-label={t("bookmarkDay")}
+              />
+            ) : null}
+          </span>
         </div>
 
         <div className="min-w-0 space-y-1.5">
