@@ -11,6 +11,13 @@ export interface FeatureRelease {
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
     date: "2026-07-17",
+    title: "Installed app chrome matches your theme",
+    bullets: [
+      "When Upwards is installed on your phone, the top and bottom system bars follow your light/dark theme and color palette instead of staying black.",
+    ],
+  },
+  {
+    date: "2026-07-17",
     title: "Journal archive",
     bullets: [
       "Open Journal from the menu to scroll through every day you've written — emoji, text, photos, and video in one timeline.",
