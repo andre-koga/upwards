@@ -309,11 +309,11 @@ export default function JournalArchiveEntry({
           >
             {entry.day_emoji?.trim() || "🙂"}
           </span>
-          <div className="flex flex-col items-center gap-0.5 rounded-full border border-muted px-2.5 py-1.5">
+          <div className="flex w-fit flex-col items-center gap-1 rounded-full border border-muted px-1.5 py-3">
             <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
               {dayNumber}
             </span>
-            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               {weekday}
             </span>
           </div>
