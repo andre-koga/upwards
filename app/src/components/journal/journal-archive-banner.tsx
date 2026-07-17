@@ -38,8 +38,7 @@ export default function JournalArchiveBanner({
     return (
       <div
         className={cn(
-          // Break out of the journal page `p-4` so the photo is edge-to-edge.
-          "relative -mx-4 overflow-hidden",
+          "relative overflow-hidden rounded-3xl",
           className
         )}
         role="separator"
@@ -48,7 +47,7 @@ export default function JournalArchiveBanner({
         <img
           src={imageSrc}
           alt=""
-          className="aspect-[2.4/1] w-full object-cover"
+          className="aspect-[3.2/1] w-full object-cover"
           draggable={false}
         />
         <div
