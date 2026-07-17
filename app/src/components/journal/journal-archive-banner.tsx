@@ -38,7 +38,7 @@ export default function JournalArchiveBanner({
     return (
       <div
         className={cn(
-          "relative overflow-hidden rounded-xl",
+          "relative overflow-hidden rounded-3xl",
           className
         )}
         role="separator"
@@ -47,7 +47,7 @@ export default function JournalArchiveBanner({
         <img
           src={imageSrc}
           alt=""
-          className="aspect-[2.4/1] w-full object-cover"
+          className="aspect-[3.2/1] w-full object-cover"
           draggable={false}
         />
         <div

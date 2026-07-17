@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Heart, MapPin, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +17,78 @@ import { cn } from "@/lib/utils";
 
 interface JournalArchiveEntryProps {
   entry: JournalEntry;
+}
+
+/** Soft diagonal washes — picked stably per entry so bookmarked days vary. */
+const BOOKMARK_GRADIENTS = [
+  "bg-gradient-to-br from-rose-500/10 via-amber-400/5 to-transparent dark:from-rose-400/15 dark:via-amber-300/10",
+  "bg-gradient-to-bl from-sky-500/10 via-teal-400/5 to-transparent dark:from-sky-400/15 dark:via-teal-300/10",
+  "bg-gradient-to-tr from-orange-500/10 via-rose-400/5 to-transparent dark:from-orange-400/15 dark:via-rose-300/10",
+  "bg-gradient-to-tl from-emerald-500/10 via-lime-400/5 to-transparent dark:from-emerald-400/15 dark:via-lime-300/10",
+  "bg-gradient-to-br from-fuchsia-500/10 via-pink-400/5 to-transparent dark:from-fuchsia-400/15 dark:via-pink-300/10",
+  "bg-gradient-to-bl from-cyan-500/10 via-sky-400/5 to-transparent dark:from-cyan-400/15 dark:via-sky-300/10",
+] as const;
+
+function bookmarkGradientFor(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  return BOOKMARK_GRADIENTS[Math.abs(hash) % BOOKMARK_GRADIENTS.length];
+}
+
+function MediaLightbox({
+  children,
+  onClose,
+  ariaLabel,
+}: {
+  children: ReactNode;
+  onClose: () => void;
+  ariaLabel: string;
+}) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={ariaLabel}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="smIcon"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className="absolute right-4 top-4 z-10 h-7 w-7 rounded-full bg-black/60 text-white hover:bg-black/80 hover:text-white"
+        aria-label="Close"
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+      {children}
+    </div>,
+    document.body
+  );
 }
 
 function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
@@ -70,27 +143,10 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
       </div>
 
       {lightboxIndex !== null ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            setLightboxIndex(null);
-          }}
+        <MediaLightbox
+          ariaLabel={t("upload.photoAlt", { index: lightboxIndex + 1 })}
+          onClose={() => setLightboxIndex(null)}
         >
-          <Button
-            type="button"
-            variant="ghost"
-            size="smIcon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightboxIndex(null);
-            }}
-            className="absolute right-4 top-4 z-10 h-7 w-7 rounded-full bg-black/60 text-white hover:bg-black/80 hover:text-white"
-            aria-label={t("archive.closePhoto")}
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
-
           <div
             className="relative flex max-h-[90dvh] max-w-[90dvw] items-center justify-center"
             onClick={(e) => e.stopPropagation()}
@@ -150,7 +206,7 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
               </span>
             </>
           ) : null}
-        </div>
+        </MediaLightbox>
       ) : null}
     </>
   );
@@ -162,6 +218,7 @@ export default function JournalArchiveEntry({
   const { t } = useTranslation("journal");
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [videoOpen, setVideoOpen] = useState(false);
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -187,7 +244,10 @@ export default function JournalArchiveEntry({
   const hasVideo = Boolean(videoSrc || entry.video_thumbnail);
   const locations = entry.location?.locations ?? [];
   const locationLabel = locations.map((l) => l.displayName).join(" → ");
-  const showMetaRow = locations.length > 0 || Boolean(entry.is_bookmarked);
+  const isBookmarked = Boolean(entry.is_bookmarked);
+  const bookmarkGradient = isBookmarked
+    ? bookmarkGradientFor(entry.id || entry.entry_date)
+    : null;
 
   const openDay = () => {
     try {
@@ -199,69 +259,102 @@ export default function JournalArchiveEntry({
   };
 
   return (
-    <article className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
+    <article
+      className={cn(
+        "space-y-4 rounded-2xl p-3 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both",
+        bookmarkGradient
+      )}
+    >
       {(hasVideo || photoPaths.length > 0) && (
         <div className="space-y-2">
           {hasVideo ? (
-            <div className="overflow-hidden rounded-xl">
-              <JournalVideoSection
-                videoSrc={videoSrc ?? ""}
-                canPlay={isOnline && Boolean(videoSrc)}
-                thumbnail={{
-                  videoSrc: videoSrc,
-                  storedThumbnail: entry.video_thumbnail,
-                }}
-              />
-            </div>
+            <button
+              type="button"
+              className="relative block w-full overflow-hidden rounded-xl text-left"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isOnline || !videoSrc) return;
+                setVideoOpen(true);
+              }}
+              aria-label={t("archive.openVideo")}
+            >
+              <div className="pointer-events-none">
+                <JournalVideoSection
+                  videoSrc={videoSrc ?? ""}
+                  canPlay={false}
+                  thumbnail={{
+                    videoSrc: videoSrc,
+                    storedThumbnail: entry.video_thumbnail,
+                  }}
+                />
+              </div>
+            </button>
           ) : null}
           <ArchivePhotoGrid photoPaths={photoPaths} />
         </div>
       )}
 
-      {showMetaRow ? (
-        <div className="flex items-start justify-end gap-2">
-          {locations.length > 0 ? (
-            <p className="inline-flex min-w-0 max-w-[85%] items-start justify-end gap-1 text-right text-xs text-muted-foreground">
-              <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
-              <span className="min-w-0 break-words">{locationLabel}</span>
-            </p>
-          ) : null}
-          {entry.is_bookmarked ? (
-            <Heart
-              className="mt-0.5 h-3.5 w-3.5 shrink-0 fill-red-500 text-red-500"
-              aria-label={t("bookmarkDay")}
+      {videoOpen && videoSrc ? (
+        <MediaLightbox
+          ariaLabel={t("archive.openVideo")}
+          onClose={() => setVideoOpen(false)}
+        >
+          <div
+            className="relative w-[min(92vw,40rem)] overflow-hidden rounded-xl bg-black"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <video
+              className="aspect-[2/1] w-full object-contain"
+              src={videoSrc}
+              controls
+              autoPlay
+              playsInline
             />
-          ) : null}
-        </div>
+          </div>
+        </MediaLightbox>
       ) : null}
 
       <button
         type="button"
         onClick={openDay}
-        className="group grid w-full grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 gap-y-1 text-left"
+        className="group grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-left"
       >
         <div className="flex flex-col items-center gap-1.5 pt-0.5">
-          <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
-            {dayNumber}
-          </span>
-          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            {weekday}
-          </span>
+          <div className="flex w-fit flex-col items-center gap-1 rounded-full border border-muted px-1.5 py-3">
+            <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+              {dayNumber}
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {weekday}
+            </span>
+          </div>
           <span
             className={cn(
-              "mt-1 text-3xl leading-none",
+              "text-4xl leading-none",
               !entry.day_emoji && "text-muted-foreground"
             )}
             aria-hidden
           >
             {entry.day_emoji?.trim() || "🙂"}
           </span>
+          {isBookmarked ? (
+            <Heart
+              className="h-3 w-3 fill-red-500 text-red-500"
+              aria-label={t("bookmarkDay")}
+            />
+          ) : null}
         </div>
 
         <div className="min-w-0 space-y-1.5">
           <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
             {entry.title?.trim() || t("untitled")}
           </h2>
+          {locations.length > 0 ? (
+            <p className="inline-flex min-w-0 max-w-full items-start gap-1 text-xs text-muted-foreground">
+              <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+              <span className="min-w-0 break-words">{locationLabel}</span>
+            </p>
+          ) : null}
           {entry.text_content?.trim() ? (
             <p className="whitespace-pre-wrap font-crimson text-base leading-relaxed text-muted-foreground">
               {entry.text_content}
