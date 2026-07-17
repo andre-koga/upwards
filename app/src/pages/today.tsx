@@ -1,13 +1,28 @@
 import { useState, useRef, type TouchEvent, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { toDateString } from "@/lib/time-utils";
+import { toDateString, fromDateString } from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/journal/journal-card";
 import { pickRandomHabitQuote } from "@/lib/habit-quotes";
 import { useTodayPage } from "@/hooks/use-today-page";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
+import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
+
+function consumeJournalJumpDate(): Date | null {
+  try {
+    const raw = sessionStorage.getItem(JOURNAL_JUMP_DATE_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(JOURNAL_JUMP_DATE_KEY);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+    const date = fromDateString(raw);
+    if (Number.isNaN(date.getTime()) || toDateString(date) !== raw) return null;
+    return date;
+  } catch {
+    return null;
+  }
+}
 
 export default function TodayPage() {
   const { t } = useTranslation("today");
@@ -17,7 +32,9 @@ export default function TodayPage() {
   const SWIPE_FEEDBACK_DIRECTION_RATIO = 1.1;
 
   const [currentDate, setCurrentDate] = useState(
-    () => new Date(`${getEffectiveToday()}T12:00:00`)
+    () =>
+      consumeJournalJumpDate() ??
+      new Date(`${getEffectiveToday()}T12:00:00`)
   );
   const [quote] = useState(pickRandomHabitQuote);
   const [swipeFeedback, setSwipeFeedback] = useState<{

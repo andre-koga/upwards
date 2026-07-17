@@ -20,6 +20,20 @@
     "photoAlt": "Foto {{index}}",
     "removePhoto": "Remover foto {{index}}"
   },
+  "archive": {
+    "title": "Diário",
+    "subtitle": "Todos os dias que você escreveu, em um só lugar.",
+    "searchPlaceholder": "Buscar por palavras, emoji, lugar, data…",
+    "clearSearch": "Limpar busca",
+    "loading": "Carregando seu diário…",
+    "empty": "Nenhuma entrada ainda",
+    "emptyHelper": "Escreva uma reflexão em Hoje e ela aparece aqui.",
+    "noResults": "Nenhum dia encontrado",
+    "noResultsHelper": "Tente outras palavras, um emoji ou uma data.",
+    "resultCount": "{{count}} dias encontrados",
+    "loadingMore": "Carregando mais…",
+    "end": "Você chegou ao começo."
+  },
   "untitled": "Sem título",
   "noReflection": "Nenhuma reflexão escrita ainda.",
   "addLocationsVisited": "Adicionar locais visitados",

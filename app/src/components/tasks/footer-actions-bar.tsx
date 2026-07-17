@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { getActiveLocaleTag } from "@/lib/i18n";
 import {
+  BookOpen,
   CircleCheckBig,
   ExternalLink,
   FileText,
@@ -17,7 +18,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Activity } from "@/lib/db/types";
-import { formatDateShort, toDateString } from "@/lib/time-utils";
+import { toDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { JournalDateCalendarDialog } from "@/components/journal/journal-date-calendar-dialog";
 import { Button } from "@/components/ui/button";
@@ -196,7 +197,19 @@ export default function FooterActionsBar({
 
           <div className="my-2" role="separator" aria-hidden />
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
+              onClick={() => {
+                setPathsDrawerOpen(false);
+                navigate("/journal");
+              }}
+            >
+              <BookOpen className="h-5 w-5 shrink-0 text-rose-500" />
+              {t("journal")}
+            </Button>
             <Button
               type="button"
               variant="outline"

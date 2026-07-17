@@ -10,6 +10,15 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    date: "2026-07-17",
+    title: "Journal archive",
+    bullets: [
+      "Open Journal from the menu to scroll through every day you've written — emoji, text, photos, and video in one timeline.",
+      "Search by words, emoji, places, or dates, and jump straight into any day by tapping it.",
+      "Month and year markers keep the feed oriented as you scroll, and holidays show up next to matching days.",
+    ],
+  },
+  {
     date: "2026-06-28",
     title: "Recurring memos",
     bullets: [
