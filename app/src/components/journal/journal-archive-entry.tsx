@@ -261,7 +261,7 @@ export default function JournalArchiveEntry({
   return (
     <article
       className={cn(
-        "space-y-4 rounded-2xl p-3 -mx-1 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both",
+        "space-y-4 rounded-2xl p-3 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both",
         bookmarkGradient
       )}
     >
