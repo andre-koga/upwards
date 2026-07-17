@@ -36,7 +36,8 @@
     "closePhoto": "Close",
     "previousPhoto": "Previous photo",
     "nextPhoto": "Next photo",
-    "photoUnavailable": "Photo unavailable"
+    "photoUnavailable": "Photo unavailable",
+    "openVideo": "Play video"
   },
   "untitled": "Untitled",
   "noReflection": "No reflection written.",
