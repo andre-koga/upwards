@@ -119,7 +119,7 @@ export default function JournalPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-12">
           {debouncedQuery ? (
             <p className="text-xs text-muted-foreground">
               {t("archive.resultCount", { count: totalMatching })}
@@ -128,7 +128,7 @@ export default function JournalPage() {
 
           {visibleItems.map((item) =>
             item.kind === "month" ? (
-              <div key={`m-${item.key}`} className="pt-2 first:pt-0">
+              <div key={`m-${item.key}`} className="pt-4 first:pt-0">
                 <JournalArchiveMonthHeader
                   year={item.year}
                   month={item.month}

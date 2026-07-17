@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Flame, Heart, MapPin, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, MapPin, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { JournalEntry } from "@/lib/db/types";
@@ -36,11 +36,11 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
       ? "grid-cols-1"
       : photoPaths.length === 2
         ? "grid-cols-2"
-        : "grid-cols-2 sm:grid-cols-3";
+        : "grid-cols-2";
 
   return (
     <>
-      <div className={cn("mt-3 grid gap-2", cols)}>
+      <div className={cn("grid gap-2", cols)}>
         {photoPaths.map((path, index) => {
           const url = getJournalPhotoUrl(path);
           return (
@@ -51,7 +51,10 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
                 e.stopPropagation();
                 setLightboxIndex(index);
               }}
-              className="relative aspect-square overflow-hidden rounded-lg bg-muted"
+              className={cn(
+                "relative overflow-hidden rounded-lg bg-muted",
+                photoPaths.length === 1 ? "aspect-[2/1]" : "aspect-square"
+              )}
               aria-label={t("upload.photoAlt", { index: index + 1 })}
             >
               {url ? (
@@ -176,7 +179,7 @@ export default function JournalArchiveEntry({
   const date = fromDateString(entry.entry_date);
   const dayNumber = date.getDate();
   const weekday = date.toLocaleDateString(getActiveLocaleTag(), {
-    weekday: "long",
+    weekday: "short",
   });
 
   const videoSrc = entry.video_path
@@ -186,6 +189,7 @@ export default function JournalArchiveEntry({
   const hasVideo = Boolean(videoSrc || entry.video_thumbnail);
   const locations = entry.location?.locations ?? [];
   const locationLabel = locations.map((l) => l.displayName).join(" → ");
+  const showMetaRow = locations.length > 0 || entry.is_bookmarked || holiday;
 
   const openDay = () => {
     try {
@@ -197,99 +201,83 @@ export default function JournalArchiveEntry({
   };
 
   return (
-    <article className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
-      <button
-        type="button"
-        onClick={openDay}
-        className="group w-full space-y-2 text-left"
-      >
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="font-crimson text-lg font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
-            {dayNumber}
-          </span>
-          <span className="text-sm capitalize text-muted-foreground">
-            {weekday}
-          </span>
-          {holiday ? (
-            <>
-              <span className="text-muted-foreground/50" aria-hidden>
-                ·
-              </span>
-              <span className="text-sm text-amber-700 dark:text-amber-400">
-                {holiday}
-              </span>
-            </>
+    <article className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
+      {(hasVideo || photoPaths.length > 0) && (
+        <div className="space-y-2">
+          {hasVideo ? (
+            <div className="overflow-hidden rounded-xl">
+              <JournalVideoSection
+                videoSrc={videoSrc ?? ""}
+                canPlay={isOnline && Boolean(videoSrc)}
+                thumbnail={{
+                  videoSrc: videoSrc,
+                  storedThumbnail: entry.video_thumbnail,
+                }}
+              />
+            </div>
           ) : null}
+          <ArchivePhotoGrid photoPaths={photoPaths} />
+        </div>
+      )}
+
+      {showMetaRow ? (
+        <div className="flex items-start justify-end gap-2">
+          <div className="min-w-0 max-w-[85%] text-right">
+            {holiday ? (
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                {holiday}
+              </p>
+            ) : null}
+            {locations.length > 0 ? (
+              <p className="inline-flex max-w-full items-start justify-end gap-1 text-xs text-muted-foreground">
+                <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+                <span className="min-w-0 break-words">{locationLabel}</span>
+              </p>
+            ) : null}
+          </div>
           {entry.is_bookmarked ? (
             <Heart
-              className="h-3.5 w-3.5 fill-red-500 text-red-500"
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 fill-red-500 text-red-500"
               aria-label={t("bookmarkDay")}
             />
           ) : null}
         </div>
+      ) : null}
 
-        <div className="flex items-start gap-3">
+      <button
+        type="button"
+        onClick={openDay}
+        className="group grid w-full grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 gap-y-1 text-left"
+      >
+        <div className="flex flex-col items-center gap-1.5 pt-0.5">
+          <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+            {dayNumber}
+          </span>
+          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            {weekday}
+          </span>
           <span
             className={cn(
-              "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-2xl",
+              "mt-1 text-3xl leading-none",
               !entry.day_emoji && "text-muted-foreground"
             )}
             aria-hidden
           >
             {entry.day_emoji?.trim() || "🙂"}
           </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="font-crimson text-xl font-bold leading-snug">
-              {entry.title?.trim() || t("untitled")}
-            </h2>
-            {entry.text_content?.trim() ? (
-              <p className="mt-1 whitespace-pre-wrap font-crimson text-[15px] leading-relaxed text-muted-foreground">
-                {entry.text_content}
-              </p>
-            ) : null}
-          </div>
         </div>
 
-        {(locations.length > 0 ||
-          (entry.is_journal_complete &&
-            typeof entry.journal_completion_streak === "number")) && (
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            {locations.length > 0 ? (
-              <span className="inline-flex min-w-0 items-center gap-1">
-                <MapPin className="h-3 w-3 shrink-0" />
-                <span className="min-w-0 break-words">{locationLabel}</span>
-              </span>
-            ) : null}
-            {entry.is_journal_complete &&
-            typeof entry.journal_completion_streak === "number" ? (
-              <span
-                className="inline-flex items-center gap-0.5 tabular-nums"
-                title={t("journalStreak", {
-                  count: entry.journal_completion_streak,
-                })}
-              >
-                <Flame className="h-3 w-3 shrink-0" />
-                {entry.journal_completion_streak}
-              </span>
-            ) : null}
-          </div>
-        )}
+        <div className="min-w-0 space-y-1.5">
+          <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
+            {entry.title?.trim() || t("untitled")}
+          </h2>
+          {entry.text_content?.trim() ? (
+            <p className="whitespace-pre-wrap font-crimson text-base leading-relaxed text-muted-foreground">
+              {entry.text_content}
+            </p>
+          ) : null}
+        </div>
       </button>
-
-      {hasVideo ? (
-        <div className="mt-3 overflow-hidden rounded-xl">
-          <JournalVideoSection
-            videoSrc={videoSrc ?? ""}
-            canPlay={isOnline && Boolean(videoSrc)}
-            thumbnail={{
-              videoSrc: videoSrc,
-              storedThumbnail: entry.video_thumbnail,
-            }}
-          />
-        </div>
-      ) : null}
-
-      <ArchivePhotoGrid photoPaths={photoPaths} />
     </article>
   );
 }
