@@ -312,15 +312,15 @@ export default function JournalArchiveEntry({
           <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
             {dayNumber}
           </span>
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             {weekday}
-            {isBookmarked ? (
-              <Heart
-                className="h-3 w-3 fill-red-500 text-red-500"
-                aria-label={t("bookmarkDay")}
-              />
-            ) : null}
           </span>
+          {isBookmarked ? (
+            <Heart
+              className="h-3 w-3 fill-red-500 text-red-500"
+              aria-label={t("bookmarkDay")}
+            />
+          ) : null}
         </div>
 
         <div className="min-w-0 space-y-1.5">
