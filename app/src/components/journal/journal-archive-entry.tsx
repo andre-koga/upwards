@@ -300,6 +300,14 @@ export default function JournalArchiveEntry({
         className="group grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-left"
       >
         <div className="flex flex-col items-center gap-1.5 pt-0.5">
+          <div className="flex w-fit flex-col items-center gap-1 rounded-full border border-muted px-1.5 py-3">
+            <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+              {dayNumber}
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {weekday}
+            </span>
+          </div>
           <span
             className={cn(
               "text-4xl leading-none",
@@ -309,14 +317,6 @@ export default function JournalArchiveEntry({
           >
             {entry.day_emoji?.trim() || "🙂"}
           </span>
-          <div className="flex w-fit flex-col items-center gap-1 rounded-full border border-muted px-1.5 py-3">
-            <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
-              {dayNumber}
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {weekday}
-            </span>
-          </div>
           {isBookmarked ? (
             <Heart
               className="h-3 w-3 fill-red-500 text-red-500"
