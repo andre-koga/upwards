@@ -16,24 +16,13 @@ import { NotificationsFloatingButton } from "@/components/notifications/notifica
 import { NotificationsProvider } from "@/lib/notifications/use-notifications";
 import SyncStatus from "@/components/settings/sync-status";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
-import { DailyRecapDialog } from "@/components/recap/daily-recap-dialog";
-import { useAppOpenRecap } from "@/lib/session/use-app-open-recap";
+import { useAppOpenSession } from "@/lib/session/use-app-open-session";
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { Analytics } from "@vercel/analytics/react"
 
-function AppWithRecap() {
-  const { recapDate, loginStreak, open, dismiss } = useAppOpenRecap();
-
-  return (
-    <>
-      <DailyRecapDialog
-        open={open}
-        recapDate={recapDate}
-        loginStreak={loginStreak}
-        onDismiss={dismiss}
-      />
-    </>
-  );
+function AppSession() {
+  useAppOpenSession();
+  return null;
 }
 
 export default function App() {
@@ -61,7 +50,7 @@ export default function App() {
       <div className="min-h-screen md:flex md:h-screen md:items-stretch md:justify-center md:gap-10 md:px-6 md:py-6">
         <main className="relative w-full bg-background md:h-full md:max-w-[430px] md:overflow-hidden md:rounded-2xl md:border md:border-border md:shadow-2xl md:[transform:translateZ(0)]">
           <NotificationsProvider>
-            <AppWithRecap />
+            <AppSession />
             <SyncStatus />
             <NotificationsFloatingButton />
             <div data-app-scroll className="md:h-full md:overflow-y-auto">

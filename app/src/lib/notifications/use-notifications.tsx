@@ -1,5 +1,5 @@
 /**
- * Unified notifications inbox: friend requests + shared habit completions.
+ * Unified notifications inbox: friend requests (+ legacy activity_complete kind).
  */
 import {
   createContext,
@@ -20,7 +20,7 @@ import {
 } from "@/lib/notifications/notification-dismissals";
 import { matchesFriendRequestNotification } from "@/lib/notifications/notification-inbox-utils";
 
-export type NotificationKind = "friend_request" | "activity_complete" | "daily_summary";
+export type NotificationKind = "friend_request" | "activity_complete";
 
 export interface InboxNotification {
   id: string;
@@ -33,18 +33,6 @@ export interface InboxNotification {
   createdAt: string;
   streak?: number;
   routine?: string | null;
-  /** For daily_summary notifications */
-  summaryDate?: string;
-  summaryCompletedCount?: number;
-  summaryTotalCount?: number;
-  summaryTotalTrackedMs?: number;
-  summaryCaption?: string | null;
-  summaryCompletions?: {
-    activityName: string;
-    streak: number;
-    routine: string | null;
-    completed?: boolean;
-  }[];
 }
 
 type ProfileRow = { username: string | null; display_name: string | null };
@@ -66,16 +54,6 @@ async function fetchProfiles(
   }
   return map;
 }
-
-function friendIdsFromRows(
-  userId: string,
-  rows: { user_a: string; user_b: string }[]
-): string[] {
-  return rows.map((row) =>
-    row.user_a === userId ? row.user_b : row.user_a
-  );
-}
-
 
 export type LoadNotificationsOptions = {
   silent?: boolean;
@@ -128,11 +106,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       if (!silent) setLoading(true);
       setError(null);
 
-      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
       const [
         { data: friendReqs, error: frErr },
-        { data: friendships, error: fsErr },
         dismissedSet,
       ] = await Promise.all([
         supabase
@@ -140,56 +115,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           .select("id, from_user_id, status, created_at")
           .eq("to_user_id", userId)
           .eq("status", "pending"),
-        supabase
-          .from("friendships")
-          .select("user_a, user_b")
-          .or(`user_a.eq.${userId},user_b.eq.${userId}`),
         fetchDismissedNotificationIds(userId),
       ]);
 
       if (frErr) throw frErr;
-      if (fsErr) throw fsErr;
-
-      const friendIds = friendIdsFromRows(
-        userId,
-        (friendships ?? []) as { user_a: string; user_b: string }[]
-      );
-
-      let completionItems: InboxNotification[] = [];
-      if (friendIds.length > 0) {
-        const { data: summaries, error: sumErr } = await supabase
-          .from("friend_daily_summaries")
-          .select(
-            "id, user_id, date, caption, completed_count, total_count, total_tracked_ms, completions, created_at"
-          )
-          .in("user_id", friendIds)
-          .gte("created_at", since)
-          .order("created_at", { ascending: false });
-        if (sumErr) throw sumErr;
-
-        completionItems = (summaries ?? []).map((row) => ({
-          id: `ds-${row.id as string}`,
-          kind: "daily_summary" as const,
-          actorId: row.user_id as string,
-          actorUsername: null,
-          actorDisplayName: null,
-          activityName: null,
-          actionStatus: null,
-          createdAt: row.created_at as string,
-          summaryDate: row.date as string,
-          summaryCompletedCount: (row.completed_count as number) ?? 0,
-          summaryTotalCount: (row.total_count as number) ?? 0,
-          summaryTotalTrackedMs: (row.total_tracked_ms as number) ?? 0,
-          summaryCaption: (row.caption as string | null) ?? null,
-          summaryCompletions: (row.completions as InboxNotification["summaryCompletions"]) ?? [],
-        }));
-      }
 
       const actorIds = [
-        ...new Set([
-          ...(friendReqs ?? []).map((r) => r.from_user_id as string),
-          ...completionItems.map((n) => n.actorId),
-        ]),
+        ...new Set((friendReqs ?? []).map((r) => r.from_user_id as string)),
       ];
       const profiles = await fetchProfiles(actorIds);
 
@@ -208,16 +140,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         };
       });
 
-      completionItems = completionItems.map((n) => {
-        const profile = profiles.get(n.actorId);
-        return {
-          ...n,
-          actorUsername: profile?.username ?? null,
-          actorDisplayName: profile?.display_name ?? null,
-        };
-      });
-
-      const merged = [...friendItems, ...completionItems].sort(
+      const merged = [...friendItems].sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
