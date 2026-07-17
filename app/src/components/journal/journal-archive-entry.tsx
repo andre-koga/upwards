@@ -308,7 +308,7 @@ export default function JournalArchiveEntry({
           </span>
           <span
             className={cn(
-              "mt-1 text-3xl leading-none",
+              "mt-1 text-4xl leading-none",
               !entry.day_emoji && "text-muted-foreground"
             )}
             aria-hidden
