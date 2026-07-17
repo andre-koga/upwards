@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useJournalArchive } from "@/hooks/use-journal-archive";
 import JournalArchiveEntry from "@/components/journal/journal-archive-entry";
-import JournalArchiveMonthHeader from "@/components/journal/journal-archive-month-header";
+import JournalArchiveBanner from "@/components/journal/journal-archive-banner";
+import { formatArchiveMonthLabel } from "@/lib/journal/archive";
 
 function scrollAppToTop() {
   window.scrollTo(0, 0);
@@ -119,29 +120,40 @@ export default function JournalPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-12">
           {debouncedQuery ? (
             <p className="text-xs text-muted-foreground">
               {t("archive.resultCount", { count: totalMatching })}
             </p>
           ) : null}
 
-          {visibleItems.map((item) =>
-            item.kind === "month" ? (
-              <div key={`m-${item.key}`} className="pt-2 first:pt-0">
-                <JournalArchiveMonthHeader
-                  year={item.year}
+          {visibleItems.map((item) => {
+            if (item.kind === "month") {
+              return (
+                <JournalArchiveBanner
+                  key={item.key}
+                  variant="month"
                   month={item.month}
+                  label={formatArchiveMonthLabel(item.year, item.month)}
                 />
-              </div>
-            ) : (
+              );
+            }
+            if (item.kind === "holiday") {
+              return (
+                <JournalArchiveBanner
+                  key={item.key}
+                  variant="holiday"
+                  label={item.name}
+                />
+              );
+            }
+            return (
               <JournalArchiveEntry
                 key={item.entry.id}
                 entry={item.entry}
-                holiday={item.holiday}
               />
-            )
-          )}
+            );
+          })}
 
           <div ref={sentinelRef} className="h-8" aria-hidden />
 

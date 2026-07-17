@@ -74,8 +74,8 @@ export default defineConfig({
         name: "Upwards",
         short_name: "Upwards",
         description: "Local-first habit tracker",
-        theme_color: "#000000",
-        background_color: "#000000",
+        theme_color: "#ffffff",
+        background_color: "#ffffff",
         display: "standalone",
         start_url: "/",
         icons: [
@@ -84,7 +84,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff2}"],
         runtimeCaching: [],
       },
     }),

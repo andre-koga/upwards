@@ -75,23 +75,34 @@ describe("journal archive helpers", () => {
     expect(journalEntryMatchesQuery(entry, "missing", "en")).toBe(false);
   });
 
-  it("inserts month separators when the month changes", () => {
+  it("inserts month and holiday banners", () => {
     const feed = buildJournalArchiveFeed(
       [
         makeEntry({ entry_date: "2026-07-04", title: "A" }),
         makeEntry({ entry_date: "2026-06-01", title: "B" }),
-        makeEntry({ entry_date: "2026-06-15", title: "C" }),
+        makeEntry({ entry_date: "2025-12-25", title: "C" }),
       ],
       "en"
     );
     expect(feed.map((i) => i.kind)).toEqual([
       "month",
+      "holiday",
       "entry",
       "month",
       "entry",
+      "month",
+      "holiday",
       "entry",
     ]);
     expect(feed[0]).toMatchObject({ kind: "month", year: 2026, month: 7 });
-    expect(feed[2]).toMatchObject({ kind: "month", year: 2026, month: 6 });
+    expect(feed[1]).toMatchObject({
+      kind: "holiday",
+      name: "Independence Day",
+    });
+    expect(feed[5]).toMatchObject({ kind: "month", year: 2025, month: 12 });
+    expect(feed[6]).toMatchObject({
+      kind: "holiday",
+      name: "Christmas Day",
+    });
   });
 });

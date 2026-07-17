@@ -11,11 +11,19 @@ export interface FeatureRelease {
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
     date: "2026-07-17",
+    title: "Theme-aware chrome & journal polish",
+    bullets: [
+      "On an installed phone app, the top and bottom bars match your theme.",
+      "Journal entries show media on top, day number beside your writing, and photos in a grid.",
+      "Month banners with seasonal images (and holiday banners) mark the journal feed as you scroll.",
+    ],
+  },
+  {
+    date: "2026-07-17",
     title: "Journal archive",
     bullets: [
       "Open Journal from the menu to scroll through every day you've written — emoji, text, photos, and video in one timeline.",
       "Search by words, emoji, places, or dates, and jump straight into any day by tapping it.",
-      "Month and year markers keep the feed oriented as you scroll, and holidays show up next to matching days.",
     ],
   },
   {

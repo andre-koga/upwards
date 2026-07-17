@@ -16,6 +16,7 @@ import { NotificationsFloatingButton } from "@/components/notifications/notifica
 import { NotificationsProvider } from "@/lib/notifications/use-notifications";
 import SyncStatus from "@/components/settings/sync-status";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
+import { BrowserChromeThemeSync } from "@/components/layout/browser-chrome-theme-sync";
 import { useAppOpenSession } from "@/lib/session/use-app-open-session";
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { Analytics } from "@vercel/analytics/react"
@@ -30,6 +31,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <BrowserChromeThemeSync />
       {!noticeDismissed && (
         <div className="hidden md:mx-auto md:block md:max-w-sm md:pt-6">
           <button

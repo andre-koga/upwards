@@ -66,10 +66,11 @@ export function journalEntryMatchesQuery(
 
 export type JournalArchiveItem =
   | { kind: "month"; key: string; year: number; month: number }
+  | { kind: "holiday"; key: string; name: string; date: string }
   | { kind: "entry"; entry: JournalEntry; holiday: string | null };
 
 /**
- * Build a newest-first feed with month/year separators when the month changes.
+ * Build a newest-first feed with month and holiday banners.
  */
 export function buildJournalArchiveFeed(
   entries: JournalEntry[],
@@ -86,14 +87,26 @@ export function buildJournalArchiveFeed(
     const year = Number(entry.entry_date.slice(0, 4));
     const month = Number(entry.entry_date.slice(5, 7));
     const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+
     if (monthKey !== lastMonthKey) {
       items.push({ kind: "month", key: monthKey, year, month });
       lastMonthKey = monthKey;
     }
+
+    const holiday = getHolidayName(entry.entry_date, locale);
+    if (holiday) {
+      items.push({
+        kind: "holiday",
+        key: `h-${entry.entry_date}-${holiday}`,
+        name: holiday,
+        date: entry.entry_date,
+      });
+    }
+
     items.push({
       kind: "entry",
       entry,
-      holiday: getHolidayName(entry.entry_date, locale),
+      holiday,
     });
   }
 
@@ -101,3 +114,10 @@ export function buildJournalArchiveFeed(
 }
 
 export const JOURNAL_ARCHIVE_PAGE_SIZE = 12;
+
+export function formatArchiveMonthLabel(year: number, month: number): string {
+  return new Date(year, month - 1, 1).toLocaleDateString(getActiveLocaleTag(), {
+    month: "long",
+    year: "numeric",
+  });
+}
