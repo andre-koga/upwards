@@ -3,7 +3,8 @@ import type { CompoundScorePoint } from "@/lib/activity";
 import { formatCompoundScore } from "@/lib/activity";
 import { formatWeekdayShortDate, fromDateString } from "@/lib/time-utils";
 import { CHART_POINT_RADIUS } from "./chart-constants";
-import { FloatingTooltip, useFloatingTooltip } from "./use-floating-tooltip";
+import { FloatingTooltip } from "./floating-tooltip";
+import { useFloatingTooltip } from "./use-floating-tooltip";
 
 const CHART_HEIGHT = 112;
 const CHART_WIDTH = 300;
@@ -13,10 +14,17 @@ function formatAxisScore(score: number): string {
   return score.toFixed(2);
 }
 
-function pickXLabels(points: CompoundScorePoint[]): { index: number; label: string }[] {
+function pickXLabels(
+  points: CompoundScorePoint[]
+): { index: number; label: string }[] {
   if (points.length === 0) return [];
   if (points.length === 1) {
-    return [{ index: 0, label: formatWeekdayShortDate(fromDateString(points[0].dateStr)) }];
+    return [
+      {
+        index: 0,
+        label: formatWeekdayShortDate(fromDateString(points[0].dateStr)),
+      },
+    ];
   }
   const indices = [0, Math.floor((points.length - 1) / 2), points.length - 1];
   return [...new Set(indices)].map((index) => ({
@@ -58,8 +66,10 @@ export function ScoreLineChart({
     const plotH = CHART_HEIGHT - PAD.top - PAD.bottom;
 
     const xAt = (i: number) =>
-      PAD.left + (points.length <= 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
-    const yAt = (score: number) => PAD.top + plotH - ((score - yMin) / yRange) * plotH;
+      PAD.left +
+      (points.length <= 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
+    const yAt = (score: number) =>
+      PAD.top + plotH - ((score - yMin) / yRange) * plotH;
 
     const linePath = points
       .map((p, i) => {
@@ -78,14 +88,14 @@ export function ScoreLineChart({
 
   const handlePointClick = (
     e: React.MouseEvent<SVGCircleElement>,
-    point: CompoundScorePoint,
+    point: CompoundScorePoint
   ) => {
     const cRect = containerRef.current?.getBoundingClientRect();
     const eRect = e.currentTarget.getBoundingClientRect();
     show(
       eRect.left - (cRect?.left ?? 0) + eRect.width / 2,
       eRect.top - (cRect?.top ?? 0),
-      `${formatWeekdayShortDate(fromDateString(point.dateStr))} · ${formatCompoundScore(point.score)}`,
+      `${formatWeekdayShortDate(fromDateString(point.dateStr))} · ${formatCompoundScore(point.score)}`
     );
   };
 
@@ -103,7 +113,9 @@ export function ScoreLineChart({
               y1={chart.yAt(tick)}
               x2={CHART_WIDTH - PAD.right}
               y2={chart.yAt(tick)}
-              className={tick === 1 ? "stroke-muted-foreground/40" : "stroke-border"}
+              className={
+                tick === 1 ? "stroke-muted-foreground/40" : "stroke-border"
+              }
               strokeWidth={1}
               strokeDasharray={tick === 1 ? "3 3" : undefined}
             />

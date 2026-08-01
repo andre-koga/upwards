@@ -82,7 +82,7 @@ export function effectiveDateForMs(ms: number): string {
 export function timestampForLogicalDayTime(
   logicalDateStr: string,
   timeStr: string,
-  resetMinutes = getDayResetMinutes(),
+  resetMinutes = getDayResetMinutes()
 ): number {
   const resetSec = resetMinutes * 60;
   const timeSec = timeToSeconds(timeStr);
@@ -110,7 +110,7 @@ export function resolvePeriodFromLogicalDay(
   logicalDateStr: string,
   startTime: string,
   endTime: string,
-  resetMinutes = getDayResetMinutes(),
+  resetMinutes = getDayResetMinutes()
 ): ResolvedPeriod {
   const resetSec = resetMinutes * 60;
   const startSec = timeToSeconds(startTime);
@@ -133,12 +133,12 @@ export function resolvePeriodFromLogicalDay(
     endDate = base;
   }
 
-  let startMs = new Date(combineDateAndTime(startDate, startTime)).getTime();
+  const startMs = new Date(combineDateAndTime(startDate, startTime)).getTime();
   let endMs = new Date(combineDateAndTime(endDate, endTime)).getTime();
 
   if (endMs <= startMs) {
     endMs = new Date(
-      combineDateAndTime(shiftDate(endDate, 1), endTime),
+      combineDateAndTime(shiftDate(endDate, 1), endTime)
     ).getTime();
   }
 
@@ -165,7 +165,7 @@ export function spansLogicalDays(startMs: number, endMs: number): boolean {
  */
 export function calendarDatesOverlappingEffectiveDay(
   dateStr: string,
-  bufferDays = 1,
+  bufferDays = 1
 ): string[] {
   const dayStart = effectiveDayStartMs(dateStr);
   const dayEnd = effectiveDayEndMs(dateStr);

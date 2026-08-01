@@ -18,7 +18,9 @@ export function StatsSectionCard({
         <div className="mb-2 flex items-center gap-1.5 text-muted-foreground">
           {Icon ? <Icon className="h-3.5 w-3.5 shrink-0" /> : null}
           {label ? (
-            <span className="text-[11px] font-medium uppercase tracking-wide">{label}</span>
+            <span className="text-[11px] font-medium uppercase tracking-wide">
+              {label}
+            </span>
           ) : null}
         </div>
       )}

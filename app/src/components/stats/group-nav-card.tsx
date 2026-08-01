@@ -7,13 +7,20 @@ import { StatPill } from "./stat-pill";
 
 const MISSING_STAT = "—";
 
-function MiniRateSparkline({ days, color }: { days: SparklineDay[]; color: string }) {
+function MiniRateSparkline({
+  days,
+  color,
+}: {
+  days: SparklineDay[];
+  color: string;
+}) {
   if (days.length === 0) return null;
 
   return (
     <div className="flex h-4 w-full items-end gap-px" aria-hidden>
       {days.map((day, i) => {
-        const height = day.rate <= 0 ? 2 : Math.max(2, Math.round((day.rate / 100) * 16));
+        const height =
+          day.rate <= 0 ? 2 : Math.max(2, Math.round((day.rate / 100) * 16));
         return (
           <SparklineBar
             key={i}
@@ -57,8 +64,12 @@ export function GroupNavCard({
     <>
       <div className="flex min-w-0 items-center gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          <span className="min-w-0 truncate text-sm font-medium leading-tight">{name}</span>
-          <StatPill icon={<Clock className="h-2.5 w-2.5 shrink-0" aria-hidden />}>
+          <span className="min-w-0 truncate text-sm font-medium leading-tight">
+            {name}
+          </span>
+          <StatPill
+            icon={<Clock className="h-2.5 w-2.5 shrink-0" aria-hidden />}
+          >
             {timeLabel}
           </StatPill>
         </div>
@@ -66,7 +77,10 @@ export function GroupNavCard({
           {rateLabel}
         </span>
         {onClick && (
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+          <ChevronRight
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
         )}
       </div>
       <div className="space-y-1">
@@ -80,7 +94,16 @@ export function GroupNavCard({
   );
 
   if (!onClick) {
-    return <div className={cn("flex w-full flex-col gap-1.5 rounded-lg text-left", className)}>{body}</div>;
+    return (
+      <div
+        className={cn(
+          "flex w-full flex-col gap-1.5 rounded-lg text-left",
+          className
+        )}
+      >
+        {body}
+      </div>
+    );
   }
 
   return (
@@ -88,7 +111,7 @@ export function GroupNavCard({
       type="button"
       className={cn(
         "flex w-full flex-col gap-1.5 rounded-lg text-left transition-colors",
-        className,
+        className
       )}
       onClick={onClick}
     >

@@ -3,7 +3,8 @@ import type { HeatmapDay } from "@/lib/stats";
 import { formatDuration } from "@/lib/stats/format";
 import { cn } from "@/lib/utils";
 import { THEME_PRIMARY_COLOR } from "@/lib/color-utils";
-import { FloatingTooltip, useFloatingTooltip } from "./use-floating-tooltip";
+import { FloatingTooltip } from "./floating-tooltip";
+import { useFloatingTooltip } from "./use-floating-tooltip";
 
 type CellKind =
   | "no_count"
@@ -33,7 +34,7 @@ function mondayFirstIndex(date: Date): number {
 function getActivityCellPresentation(
   day: HeatmapDay,
   maxMs: number,
-  hasRoutine: boolean,
+  hasRoutine: boolean
 ): CellPresentation {
   const ms = day.ms ?? 0;
   const status = day.status;
@@ -88,7 +89,10 @@ function getAggregateCellPresentation(day: HeatmapDay): CellPresentation {
   if (day.isBeforeCreation) {
     return { kind: "aggregate_off", intensity: 0, interactive: true };
   }
-  if (day.isBreakDay && (rate === undefined || day.status === "not_scheduled")) {
+  if (
+    day.isBreakDay &&
+    (rate === undefined || day.status === "not_scheduled")
+  ) {
     return { kind: "break_off", intensity: 0, interactive: true };
   }
   if (rate === undefined || day.status === "not_scheduled") {
@@ -138,12 +142,18 @@ function getActivityTooltipText(day: HeatmapDay, isNever: boolean): string {
 
 function getAggregateTooltipText(day: HeatmapDay): string {
   const rate = day.completionRate;
-  if (day.isBeforeCreation || rate === undefined || day.status === "not_scheduled") {
+  if (
+    day.isBeforeCreation ||
+    rate === undefined ||
+    day.status === "not_scheduled"
+  ) {
     return day.isBreakDay ? "Break" : "Off";
   }
   if (day.habitsScheduled != null && day.habitsCompleted != null) {
     const detail = `${day.habitsCompleted}/${day.habitsScheduled}`;
-    return day.isBreakDay ? `Break · ${rate}% (${detail})` : `${rate}% (${detail})`;
+    return day.isBreakDay
+      ? `Break · ${rate}% (${detail})`
+      : `${rate}% (${detail})`;
   }
   if (day.isBreakDay) return `Break · ${rate}%`;
   return `${rate}%`;
@@ -151,7 +161,10 @@ function getAggregateTooltipText(day: HeatmapDay): string {
 
 function buildDowRows(days: HeatmapDay[]): (HeatmapDay | null)[][] {
   const firstDow = mondayFirstIndex(new Date(days[0].dateStr + "T00:00:00"));
-  const padded: (HeatmapDay | null)[] = [...Array<null>(firstDow).fill(null), ...days];
+  const padded: (HeatmapDay | null)[] = [
+    ...Array<null>(firstDow).fill(null),
+    ...days,
+  ];
   const weeks: (HeatmapDay | null)[][] = [];
   for (let i = 0; i < padded.length; i += 7) weeks.push(padded.slice(i, i + 7));
 
@@ -217,10 +230,10 @@ function HeatmapCell({
   aggregateFillColor?: string;
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
-  const { kind, intensity, interactive } = presentation;
+  const { kind, interactive } = presentation;
   const base = cn(
     "relative aspect-square w-full overflow-hidden rounded-[2px]",
-    interactive && "cursor-pointer",
+    interactive && "cursor-pointer"
   );
 
   if (kind === "no_count" || kind === "aggregate_off") {
@@ -248,7 +261,10 @@ function HeatmapCell({
           <CellBackground style={{ backgroundColor: color }} />
         )}
         {presentation.fillOpacity != null && (
-          <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
+          <TimeWeightedFill
+            color={color}
+            fillOpacity={presentation.fillOpacity}
+          />
         )}
         {presentation.breakOutline && <BreakDayOutline />}
       </div>
@@ -260,7 +276,10 @@ function HeatmapCell({
       return (
         <div className={base} onClick={onClick}>
           <CellBackground className="bg-muted/25" />
-          <TimeWeightedFill color={color} fillOpacity={presentation.fillOpacity} />
+          <TimeWeightedFill
+            color={color}
+            fillOpacity={presentation.fillOpacity}
+          />
           {presentation.breakOutline && <BreakDayOutline />}
         </div>
       );
@@ -280,10 +299,12 @@ function HeatmapCell({
         <div
           className={cn(
             "absolute inset-[0.5px] rounded-[2px]",
-            !aggregateFillColor && "bg-foreground",
+            !aggregateFillColor && "bg-foreground"
           )}
           style={{
-            ...(aggregateFillColor ? { backgroundColor: aggregateFillColor } : {}),
+            ...(aggregateFillColor
+              ? { backgroundColor: aggregateFillColor }
+              : {}),
             opacity: presentation.fillOpacity ?? 1,
           }}
         />
@@ -319,7 +340,13 @@ function LegendSwatch({ children }: { children: React.ReactNode }) {
   );
 }
 
-function LegendItem({ swatch, label }: { swatch: React.ReactNode; label: string }) {
+function LegendItem({
+  swatch,
+  label,
+}: {
+  swatch: React.ReactNode;
+  label: string;
+}) {
   return (
     <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
       {swatch}
@@ -328,13 +355,22 @@ function LegendItem({ swatch, label }: { swatch: React.ReactNode; label: string 
   );
 }
 
-function ActivityHeatmapLegend({ color, isNever }: { color: string; isNever: boolean }) {
+function ActivityHeatmapLegend({
+  color,
+  isNever,
+}: {
+  color: string;
+  isNever: boolean;
+}) {
   return (
     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
       <LegendItem
         swatch={
           <LegendSwatch>
-            <span className="h-full w-full" style={{ backgroundColor: color }} />
+            <span
+              className="h-full w-full"
+              style={{ backgroundColor: color }}
+            />
           </LegendSwatch>
         }
         label={isNever ? "Clean" : "Done"}
@@ -391,7 +427,10 @@ function AggregateHeatmapLegend({ fillColor }: { fillColor?: string }) {
         swatch={
           <LegendSwatch>
             {fillColor ? (
-              <span className="h-full w-full" style={{ backgroundColor: fillColor }} />
+              <span
+                className="h-full w-full"
+                style={{ backgroundColor: fillColor }}
+              />
             ) : (
               <span className="h-full w-full bg-foreground" />
             )}
@@ -447,13 +486,16 @@ export function ConsistencyHeatmap({
       ? getAggregateTooltipText(day)
       : getActivityTooltipText(day, isNever);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>, day: HeatmapDay) => {
+  const handleClick = (
+    e: React.MouseEvent<HTMLDivElement>,
+    day: HeatmapDay
+  ) => {
     const cRect = containerRef.current?.getBoundingClientRect();
     const eRect = e.currentTarget.getBoundingClientRect();
     show(
       eRect.left - (cRect?.left ?? 0) + eRect.width / 2,
       eRect.top - (cRect?.top ?? 0),
-      getTooltip(day),
+      getTooltip(day)
     );
   };
 
@@ -467,7 +509,9 @@ export function ConsistencyHeatmap({
         presentation={presentation}
         color={color}
         aggregateFillColor={mode === "aggregate" ? aggregateColor : undefined}
-        onClick={presentation.interactive ? (e) => handleClick(e, day) : undefined}
+        onClick={
+          presentation.interactive ? (e) => handleClick(e, day) : undefined
+        }
       />
     );
   };
@@ -507,7 +551,7 @@ export function ConsistencyHeatmap({
               <div
                 className={cn(
                   "flex w-3 shrink-0 items-center justify-center text-[10px] leading-none text-muted-foreground",
-                  isWeekendLabel && "font-bold",
+                  isWeekendLabel && "font-bold"
                 )}
               >
                 {HEATMAP_DAY_LABELS[dow]}
@@ -515,7 +559,11 @@ export function ConsistencyHeatmap({
               <div className="flex min-w-0 flex-1 gap-[3px]">
                 {row.map((day, wi) => (
                   <div key={wi} className="min-w-0 flex-1">
-                    {day ? renderCell(day) : <div className="aspect-square w-full" />}
+                    {day ? (
+                      renderCell(day)
+                    ) : (
+                      <div className="aspect-square w-full" />
+                    )}
                   </div>
                 ))}
               </div>

@@ -110,16 +110,20 @@ export function ActivityNavCard({
           <span
             className={cn(
               "min-w-0 truncate text-sm font-medium leading-tight",
-              completed && "text-muted-foreground line-through",
+              completed && "text-muted-foreground line-through"
             )}
           >
             {name}
           </span>
           <div className="flex shrink-0 items-center gap-1">
-            <StatPill icon={<Sparkles className="h-2.5 w-2.5 shrink-0" aria-hidden />}>
+            <StatPill
+              icon={<Sparkles className="h-2.5 w-2.5 shrink-0" aria-hidden />}
+            >
               {scoreLabel}
             </StatPill>
-            <StatPill icon={<Clock className="h-2.5 w-2.5 shrink-0" aria-hidden />}>
+            <StatPill
+              icon={<Clock className="h-2.5 w-2.5 shrink-0" aria-hidden />}
+            >
               {timeLabel}
             </StatPill>
           </div>
@@ -128,7 +132,10 @@ export function ActivityNavCard({
           {completionLabel}
         </span>
         {onClick && (
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+          <ChevronRight
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
         )}
       </div>
       {(showCompletion || showTimerSparkline) && (
@@ -159,7 +166,7 @@ export function ActivityNavCard({
 
   const classNames = cn(
     "flex w-full flex-col gap-1.5 rounded-lg text-left",
-    className,
+    className
   );
 
   if (!onClick) {
