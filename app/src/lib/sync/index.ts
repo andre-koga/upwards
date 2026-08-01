@@ -5,10 +5,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase";
 import { getErrorMessage, logError, ERROR_MESSAGES } from "@/lib/error-utils";
-import {
-  loadLastServerSyncAt,
-  clearLastServerSyncAt,
-} from "./sync-storage";
+import { loadLastServerSyncAt, clearLastServerSyncAt } from "./sync-storage";
 import type { SyncTable } from "./sync-transformers";
 import {
   DEBOUNCE_SYNC_MS,
@@ -19,6 +16,8 @@ import {
 } from "./sync-constants";
 import { runPushInternal } from "./sync-push";
 import { runPull } from "./sync-pull";
+import { recordSyncIssue } from "./sync-issues-store";
+import { touchLocalDevice } from "./device-id";
 
 export interface SyncState {
   isSyncing: boolean;
@@ -72,6 +71,14 @@ class SyncEngine {
   }
 
   private setState(patch: Partial<SyncState>): void {
+    if (patch.lastError && typeof patch.lastError === "string") {
+      void recordSyncIssue({
+        kind: "error",
+        title: "Sync error",
+        detail: patch.lastError,
+        account_id: getCachedUserId(),
+      });
+    }
     this.state = { ...this.state, ...patch };
     this.listeners.forEach((l) => l(this.state));
   }
@@ -281,6 +288,7 @@ class SyncEngine {
       },
     });
     this.setState({ lastSyncAt: serverNow });
+    void touchLocalDevice(userId);
   }
 
   async sync(): Promise<void> {

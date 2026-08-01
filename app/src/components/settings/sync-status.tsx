@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import { syncEngine } from "@/lib/sync";
 import { useAuth } from "@/lib/use-auth";
@@ -114,6 +115,12 @@ export default function SyncStatus() {
               <p className="text-xs text-muted-foreground">
                 {syncState.lastError}
               </p>
+              <Link
+                to="/settings/sync-issues"
+                className="mt-2 inline-block text-xs font-medium text-red-500 underline-offset-2 hover:underline"
+              >
+                View sync issues
+              </Link>
             </div>
           </div>
         </div>

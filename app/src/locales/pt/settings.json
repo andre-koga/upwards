@@ -103,7 +103,60 @@
     "title": "Sincronização na nuvem",
     "description": "O envio forçado manda todos os dados locais para a nuvem e substitui os dados remotos pelos dados deste dispositivo. Use se tiver dados locais que não estão sincronizando.",
     "forcePush": "Forçar envio para a nuvem",
-    "pushing": "Enviando…"
+    "pushing": "Enviando…",
+    "issuesLink": "Problemas de sincronização",
+    "issuesBadge": "{{count}} problemas de sincronização abertos"
+  },
+  "syncIssues": {
+    "page": {
+      "title": "Problemas de sincronização",
+      "subtitle": "Revise conflitos, alterações pendentes e erros de sincronização"
+    },
+    "loading": "Carregando status de sincronização…",
+    "sections": {
+      "review": {
+        "title": "Precisa da sua revisão",
+        "description": "Alterações de outros dispositivos que precisam da sua decisão.",
+        "empty": "Nada precisa da sua revisão no momento."
+      },
+      "pending": {
+        "title": "Aguardando sincronização",
+        "description": "Alterações locais neste dispositivo que ainda não chegaram à nuvem.",
+        "empty": "Todas as alterações locais foram enviadas à nuvem.",
+        "itemTitle": "{{type}} em {{entity}}",
+        "itemDetail": "Operação {{id}}"
+      },
+      "errors": {
+        "title": "Erros de sincronização",
+        "description": "Problemas ao enviar ou baixar seus dados.",
+        "empty": "Sem erros de sincronização no momento."
+      },
+      "resolved": {
+        "title": "Resolvidos",
+        "description": "Problemas dispensados ou corrigidos recentemente.",
+        "empty": "Nenhum problema resolvido recentemente."
+      },
+      "device": {
+        "title": "Este dispositivo",
+        "description": "Identidade e última sincronização bem-sucedida desta instalação.",
+        "idLabel": "ID do dispositivo",
+        "lastSeenLabel": "Última sincronização bem-sucedida",
+        "accountLabel": "Conta de sincronização",
+        "empty": "Este dispositivo ainda não completou uma sincronização."
+      }
+    },
+    "actions": {
+      "retrySync": "Tentar sincronizar novamente",
+      "retry": "Tentar novamente",
+      "dismiss": "Dispensar",
+      "discard": "Descartar"
+    },
+    "discardDialog": {
+      "title": "Descartar alteração local?",
+      "message": "Isso remove a alteração pendente apenas deste dispositivo. Ela não será enviada e você não pode desfazer isso de outro dispositivo.",
+      "confirm": "Descartar permanentemente",
+      "cancel": "Cancelar"
+    }
   },
   "taskOrder": {
     "title": "Ordem das tarefas",

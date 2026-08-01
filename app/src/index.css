@@ -32,6 +32,15 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    /* Overlay stacking: chrome < sheet < dialog < popover < lightbox */
+    --z-chrome: 40;
+    --z-floating: 50;
+    --z-sheet-overlay: 60;
+    --z-sheet: 70;
+    --z-dialog-overlay: 80;
+    --z-dialog: 80;
+    --z-popover: 90;
+    --z-lightbox: 100;
   }
   .dark {
     color-scheme: dark;

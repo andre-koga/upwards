@@ -195,3 +195,48 @@ export interface AppLog {
   message: string;
   created_at: string;
 }
+
+export type SyncPendingStatus = "pending" | "acked" | "discarded" | "failed";
+export interface SyncPendingOperation {
+  id: string; // row id
+  operation_id: string; // globally unique idempotency key
+  account_id: string | null;
+  device_id: string;
+  entity_type: string;
+  entity_id: string | null;
+  operation_type: string;
+  payload: unknown;
+  base_revision: string | null;
+  status: SyncPendingStatus;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+  acked_at: string | null;
+}
+
+export type SyncIssueKind = "conflict" | "pending" | "error" | "info";
+export type SyncIssueStatus = "open" | "resolved" | "deferred";
+export interface SyncIssue {
+  id: string;
+  kind: SyncIssueKind;
+  status: SyncIssueStatus;
+  account_id: string | null;
+  title: string;
+  detail: string | null;
+  entity_type: string | null;
+  entity_id: string | null;
+  operation_id: string | null;
+  payload: unknown;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+}
+
+export interface SyncDeviceRecord {
+  id: string; // device_id
+  account_id: string | null;
+  label: string | null;
+  last_seen_at: string;
+  created_at: string;
+  retired_at: string | null;
+}

@@ -103,7 +103,60 @@
     "title": "Cloud sync",
     "description": "Force push uploads all local data to the cloud, overwriting remote with local. Use when you have local data that is not syncing.",
     "forcePush": "Force push to cloud",
-    "pushing": "Pushing…"
+    "pushing": "Pushing…",
+    "issuesLink": "Sync issues",
+    "issuesBadge": "{{count}} open sync issues"
+  },
+  "syncIssues": {
+    "page": {
+      "title": "Sync issues",
+      "subtitle": "Review conflicts, pending changes, and sync errors"
+    },
+    "loading": "Loading sync status…",
+    "sections": {
+      "review": {
+        "title": "Needs your review",
+        "description": "Changes from different devices that need your decision.",
+        "empty": "Nothing needs your review right now."
+      },
+      "pending": {
+        "title": "Waiting to sync",
+        "description": "Local changes saved on this device that have not reached the cloud yet.",
+        "empty": "All local changes have been sent to the cloud.",
+        "itemTitle": "{{type}} on {{entity}}",
+        "itemDetail": "Operation {{id}}"
+      },
+      "errors": {
+        "title": "Sync errors",
+        "description": "Problems while uploading or downloading your data.",
+        "empty": "No sync errors right now."
+      },
+      "resolved": {
+        "title": "Resolved",
+        "description": "Recently dismissed or fixed issues.",
+        "empty": "No recently resolved issues."
+      },
+      "device": {
+        "title": "This device",
+        "description": "Identity and last successful sync for this installation.",
+        "idLabel": "Device ID",
+        "lastSeenLabel": "Last successful sync",
+        "accountLabel": "Sync account",
+        "empty": "This device has not completed a sync yet."
+      }
+    },
+    "actions": {
+      "retrySync": "Retry sync",
+      "retry": "Retry",
+      "dismiss": "Dismiss",
+      "discard": "Discard"
+    },
+    "discardDialog": {
+      "title": "Discard local change?",
+      "message": "This removes the pending change from this device only. It will not be uploaded, and you cannot undo this from another device.",
+      "confirm": "Discard permanently",
+      "cancel": "Cancel"
+    }
   },
   "taskOrder": {
     "title": "Task order",
