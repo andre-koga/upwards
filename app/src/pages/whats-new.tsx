@@ -36,7 +36,7 @@ export default function WhatsNewPage() {
 
       <ol className="space-y-8 border-l border-border pl-4">
         {FEATURE_RELEASES.map((release) => (
-          <li key={release.date} className="relative">
+          <li key={release.id} className="relative">
             <span
               className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"
               aria-hidden

@@ -16,6 +16,7 @@
   "pending": "Pendente",
   "friendsList": "Amigos",
   "noFriendsYet": "Você ainda não tem amigos — convide alguém!",
+  "removeFriend": "Remover amigo",
   "unknownUser": "Usuário desconhecido",
   "actorWithUsername": "{{displayName}} (@{{username}})",
   "actorUsernameOnly": "@{{username}}"

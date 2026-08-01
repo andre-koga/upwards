@@ -5,8 +5,9 @@ import {
   useState,
   type ComponentProps,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { Heart } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { fromDateString, toDateString } from "@/lib/time-utils";
@@ -32,6 +33,7 @@ export function JournalDateCalendarDialog({
   bookmarkedDates = new Set(),
   onCalendarOpen,
 }: JournalDateCalendarDialogProps) {
+  const { t } = useTranslation("nav");
   const effectiveToday = fromDateString(getEffectiveToday());
   const [calendarMonth, setCalendarMonth] = useState(currentDate);
   const prevOpenRef = useRef(false);
@@ -91,6 +93,7 @@ export function JournalDateCalendarDialog({
         size="sm"
         className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2"
       >
+        <DialogTitle className="sr-only">{t("pickDate")}</DialogTitle>
         <Calendar
           mode="single"
           selected={currentDate}

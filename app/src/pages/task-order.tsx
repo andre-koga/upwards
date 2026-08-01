@@ -165,6 +165,7 @@ export default function TaskOrderPage() {
                     onClick={() => void moveItem(index, "up")}
                     disabled={saving || index === 0}
                     title={t("taskOrder.moveUp")}
+                    aria-label={t("taskOrder.moveUp")}
                   >
                     <ChevronUp className="h-4 w-4" />
                   </Button>
@@ -176,6 +177,7 @@ export default function TaskOrderPage() {
                     onClick={() => void moveItem(index, "down")}
                     disabled={saving || index === activities.length - 1}
                     title={t("taskOrder.moveDown")}
+                    aria-label={t("taskOrder.moveDown")}
                   >
                     <ChevronDown className="h-4 w-4" />
                   </Button>

@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Users, UserPlus, CheckCircle2, XCircle, UserMinus, Clock } from "lucide-react";
+import {
+  Users,
+  UserPlus,
+  CheckCircle2,
+  XCircle,
+  UserMinus,
+  Clock,
+} from "lucide-react";
 
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { Button } from "@/components/ui/button";
@@ -16,7 +23,8 @@ function actorLabel(
   displayName: string | null,
   t: (key: string, opts?: Record<string, string>) => string
 ): string {
-  if (displayName && username) return t("actorWithUsername", { displayName, username });
+  if (displayName && username)
+    return t("actorWithUsername", { displayName, username });
   if (username) return t("actorUsernameOnly", { username });
   if (displayName) return displayName;
   return t("unknownUser");
@@ -28,8 +36,16 @@ export default function FriendsPage() {
   const { t: tNav } = useTranslation("nav");
   const { isAuthed, isSupabaseConfigured } = useAuth();
   const { username, loading: profileLoading } = useUserProfile();
-  const { friends, incoming, outgoing, loading, error, sendInvite, respond, removeFriend } =
-    useFriends();
+  const {
+    friends,
+    incoming,
+    outgoing,
+    loading,
+    error,
+    sendInvite,
+    respond,
+    removeFriend,
+  } = useFriends();
 
   const [inviteInput, setInviteInput] = useState("");
   const [inviteError, setInviteError] = useState<string | null>(null);
@@ -45,9 +61,7 @@ export default function FriendsPage() {
             <Users className="h-6 w-6" /> {t("title")}
           </h1>
         </header>
-        <p className="text-sm text-muted-foreground">
-          {t("signInRequired")}
-        </p>
+        <p className="text-sm text-muted-foreground">{t("signInRequired")}</p>
         <FloatingBackButton to="/" title={tNav("home")} />
       </div>
     );
@@ -86,9 +100,7 @@ export default function FriendsPage() {
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
           <Users className="h-6 w-6" /> {t("title")}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("subtitle")}
-        </p>
+        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </header>
 
       {!profileLoading && !username && (
@@ -120,21 +132,27 @@ export default function FriendsPage() {
           </div>
           <Button
             type="submit"
-            disabled={profileLoading || !username || inviteSending || !inviteInput.trim()}
+            disabled={
+              profileLoading ||
+              !username ||
+              inviteSending ||
+              !inviteInput.trim()
+            }
+            aria-label={t("invite")}
           >
             <UserPlus className="h-4 w-4" />
             <span className="ml-1 hidden sm:inline">{t("invite")}</span>
           </Button>
         </form>
-        {inviteError && <p className="text-xs text-destructive">{inviteError}</p>}
+        {inviteError && (
+          <p className="text-xs text-destructive">{inviteError}</p>
+        )}
       </section>
 
       {loading && (
         <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
       )}
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {incoming.length > 0 && (
         <section className="space-y-2">
@@ -149,9 +167,15 @@ export default function FriendsPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">
-                    {actorLabel(req.profile?.username ?? null, req.profile?.displayName ?? null, t)}
+                    {actorLabel(
+                      req.profile?.username ?? null,
+                      req.profile?.displayName ?? null,
+                      t
+                    )}
                   </p>
-                  <p className="text-xs text-muted-foreground">{t("wantsToBeFriends")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("wantsToBeFriends")}
+                  </p>
                 </div>
                 <div className="ml-2 flex shrink-0 gap-1">
                   <Button
@@ -159,6 +183,7 @@ export default function FriendsPage() {
                     variant="outline"
                     disabled={respondingId === req.id}
                     onClick={() => void handleRespond(req.id, true)}
+                    aria-label={t("accept")}
                   >
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
                     <span className="ml-1 hidden sm:inline">{t("accept")}</span>
@@ -168,9 +193,12 @@ export default function FriendsPage() {
                     variant="ghost"
                     disabled={respondingId === req.id}
                     onClick={() => void handleRespond(req.id, false)}
+                    aria-label={t("decline")}
                   >
                     <XCircle className="h-4 w-4 text-destructive" />
-                    <span className="ml-1 hidden sm:inline">{t("decline")}</span>
+                    <span className="ml-1 hidden sm:inline">
+                      {t("decline")}
+                    </span>
                   </Button>
                 </div>
               </li>
@@ -192,9 +220,15 @@ export default function FriendsPage() {
               >
                 <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <p className="flex-1 truncate text-sm">
-                  {actorLabel(req.profile?.username ?? null, req.profile?.displayName ?? null, t)}
+                  {actorLabel(
+                    req.profile?.username ?? null,
+                    req.profile?.displayName ?? null,
+                    t
+                  )}
                 </p>
-                <span className="text-xs text-muted-foreground">{t("pending")}</span>
+                <span className="text-xs text-muted-foreground">
+                  {t("pending")}
+                </span>
               </li>
             ))}
           </ul>
@@ -210,14 +244,19 @@ export default function FriendsPage() {
         )}
         <ul className="space-y-2">
           {friends.map((f) => {
-            const otherId = f.user_a === getCachedUserId() ? f.user_b : f.user_a;
+            const otherId =
+              f.user_a === getCachedUserId() ? f.user_b : f.user_a;
             return (
               <li
                 key={`${f.user_a}-${f.user_b}`}
                 className="flex items-center justify-between rounded-lg border p-3"
               >
                 <p className="flex-1 truncate text-sm font-medium">
-                  {actorLabel(f.profile?.username ?? null, f.profile?.displayName ?? null, t)}
+                  {actorLabel(
+                    f.profile?.username ?? null,
+                    f.profile?.displayName ?? null,
+                    t
+                  )}
                 </p>
                 <Button
                   size="sm"
@@ -225,6 +264,7 @@ export default function FriendsPage() {
                   className="text-muted-foreground hover:text-destructive"
                   disabled={removingId === otherId}
                   onClick={() => void handleRemove(otherId)}
+                  aria-label={t("removeFriend")}
                 >
                   <UserMinus className="h-4 w-4" />
                 </Button>

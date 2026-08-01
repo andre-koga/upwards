@@ -7,6 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface AuthPopupProps {
   onClose?: () => void;
@@ -57,22 +59,36 @@ export function AuthPopup({ onClose, onSignedIn }: AuthPopupProps) {
           <DialogTitle>Sign In to Sync</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSignIn} className="space-y-3">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-            required
-          />
+          <div>
+            <Label htmlFor="auth-popup-email" className="sr-only">
+              Email
+            </Label>
+            <Input
+              id="auth-popup-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="auth-popup-password" className="sr-only">
+              Password
+            </Label>
+            <Input
+              id="auth-popup-password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
           {authError && (
             <p
               className={`text-xs ${authError.includes("Check your email") ? "text-green-500" : "text-red-500"}`}
