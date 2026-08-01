@@ -15,6 +15,11 @@ import { Palmtree, RefreshCw, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
+import { ActivityStatsDialog } from "@/components/activities/activity-stats-dialog";
+import {
+  ActivityRetiredInfoDialog,
+  type ActivityRetiredKind,
+} from "@/components/activities/activity-retired-info-dialog";
 import {
   getDayResetMinutes,
   formatResetMinutes,
@@ -29,7 +34,6 @@ interface DailyTasksListProps {
   activities: Activity[];
   /** All habits — used for timeline / running pill labels on historical days. */
   lookupActivities: Activity[];
-  groups: ActivityGroup[];
   lookupGroups: ActivityGroup[];
   daily: DailyTasksState;
   currentDate: Date;
@@ -43,7 +47,6 @@ interface DailyTasksListProps {
 export default function DailyTasksList({
   activities,
   lookupActivities,
-  groups,
   lookupGroups,
   daily,
   currentDate,
@@ -65,10 +68,16 @@ export default function DailyTasksList({
     string | null
   >(null);
   const [archivedMemosDialogOpen, setArchivedMemosDialogOpen] = useState(false);
-  const [recurringMemosDialogOpen, setRecurringMemosDialogOpen] = useState(false);
+  const [recurringMemosDialogOpen, setRecurringMemosDialogOpen] =
+    useState(false);
   const [activityToStartOnToday, setActivityToStartOnToday] = useState<
     string | null
   >(null);
+  const [statsActivity, setStatsActivity] = useState<Activity | null>(null);
+  const [retiredInfo, setRetiredInfo] = useState<{
+    kind: ActivityRetiredKind;
+    activityName: string;
+  } | null>(null);
 
   const {
     isToday,
@@ -76,7 +85,6 @@ export default function DailyTasksList({
     temporalForViewDate,
     loading,
     activityStreaks,
-    baseStreaks,
     dailyActivities,
     getGroup,
     timelineSessions,
@@ -107,12 +115,15 @@ export default function DailyTasksList({
     formatTimerDisplay,
   } = daily;
 
-  // When we navigate to today and have an activity to start, start it
+  // When we navigate back to today with a pending activity, consume the
+  // intent: start tracking and clear it. This is an event-driven one-shot,
+  // not derived state, so it must live in an effect.
   useEffect(() => {
-    if (isToday && activityToStartOnToday) {
-      handleStartActivity(activityToStartOnToday);
-      setActivityToStartOnToday(null);
-    }
+    if (!isToday || !activityToStartOnToday) return;
+    const activityId = activityToStartOnToday;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing the consumed one-shot intent after acting on it
+    setActivityToStartOnToday(null);
+    handleStartActivity(activityId);
   }, [isToday, activityToStartOnToday, handleStartActivity]);
   const pausedTaskIdSet = new Set(pausedTaskIds);
   const manualEntryActivity = manualEntryActivityId
@@ -137,13 +148,20 @@ export default function DailyTasksList({
     const resetLabel = formatResetMinutes(resetMin);
 
     // Effective day starts at resetMin on the current calendar date.
-    const [y, m, d] = currentDate.toISOString().split("T")[0].split("-").map(Number);
+    const [y, m, d] = currentDate
+      .toISOString()
+      .split("T")[0]
+      .split("-")
+      .map(Number);
     const dayStart = new Date(y, (m || 1) - 1, d || 1);
     dayStart.setHours(Math.floor(resetMin / 60), resetMin % 60, 0, 0);
     const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
     const fmt = (date: Date) =>
-      date.toLocaleDateString(getActiveLocaleTag(), { month: "short", day: "numeric" });
+      date.toLocaleDateString(getActiveLocaleTag(), {
+        month: "short",
+        day: "numeric",
+      });
 
     return {
       top: `${resetLabel} ${fmt(dayEnd)}`,
@@ -250,11 +268,15 @@ export default function DailyTasksList({
                   isEditableDate={isEditableDate}
                   temporal={temporalForViewDate}
                   onIncrement={incrementTask}
-                  onNeverIncrement={() => incrementNeverSlip(activity.id)}
-                  onNeverReset={() => resetNeverTaskCount(activity.id)}
+                  onNeverIncrement={incrementNeverSlip}
+                  onNeverReset={resetNeverTaskCount}
                   onStartActivity={handleStartActivity}
                   onStopActivity={handleStopActivity}
                   onManualEntry={setManualEntryActivityId}
+                  onShowStats={setStatsActivity}
+                  onShowRetiredInfo={(kind, activityName) =>
+                    setRetiredInfo({ kind, activityName })
+                  }
                 />
               ))}
           </div>
@@ -292,7 +314,9 @@ export default function DailyTasksList({
               {t("sections.timeline")}
               {timelineBoundaryLabels && (
                 <span className="ml-1.5 font-normal normal-case">
-                  {t("sections.timelineBoundary", { time: formatResetMinutes(resetMin) })}
+                  {t("sections.timelineBoundary", {
+                    time: formatResetMinutes(resetMin),
+                  })}
                 </span>
               )}
             </p>
@@ -420,6 +444,24 @@ export default function DailyTasksList({
         onOpenChange={setRecurringMemosDialogOpen}
         onPresetsChanged={() => {
           void loadOneTimeTasks();
+        }}
+      />
+
+      <ActivityStatsDialog
+        open={statsActivity !== null}
+        onOpenChange={(open) => {
+          if (!open) setStatsActivity(null);
+        }}
+        activity={statsActivity}
+        group={statsActivity ? getGroup(statsActivity) : undefined}
+      />
+
+      <ActivityRetiredInfoDialog
+        open={retiredInfo !== null}
+        kind={retiredInfo?.kind ?? null}
+        activityName={retiredInfo?.activityName ?? ""}
+        onOpenChange={(open) => {
+          if (!open) setRetiredInfo(null);
         }}
       />
     </div>

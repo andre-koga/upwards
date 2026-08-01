@@ -25,10 +25,8 @@ export function useTodayPage(currentDate: Date, dayResetTick = 0) {
   });
 
   const dailyTasks = useDailyTasks({
-    activities,
     lookupActivities,
     groups,
-    lookupGroups,
     lookupActivityById,
     lookupGroupById,
     activityEventsById,

@@ -33,8 +33,7 @@ export default function TodayPage() {
 
   const [currentDate, setCurrentDate] = useState(
     () =>
-      consumeJournalJumpDate() ??
-      new Date(`${getEffectiveToday()}T12:00:00`)
+      consumeJournalJumpDate() ?? new Date(`${getEffectiveToday()}T12:00:00`)
   );
   const [quote] = useState(pickRandomHabitQuote);
   const [swipeFeedback, setSwipeFeedback] = useState<{
@@ -51,9 +50,7 @@ export default function TodayPage() {
   const [dayResetTick, setDayResetTick] = useState(0);
 
   // Re-render when the day resets so swipe "today" boundary updates live.
-  const [, setResetTick] = useState(0);
   const handleDayReset = useCallback(() => {
-    setResetTick((t) => t + 1);
     setDayResetTick((t) => t + 1);
   }, []);
   useDayResetTimer(handleDayReset);
@@ -65,7 +62,6 @@ export default function TodayPage() {
     loadJournalMeta,
     activities,
     lookupActivities,
-    groups,
     lookupGroups,
     loading,
     dailyTasks,
@@ -133,8 +129,7 @@ export default function TodayPage() {
 
     const direction = deltaX > 0 ? "prev" : "next";
     const isBlocked =
-      direction === "next" &&
-      toDateString(currentDate) === getEffectiveToday();
+      direction === "next" && toDateString(currentDate) === getEffectiveToday();
 
     setSwipeFeedback({
       direction,
@@ -221,7 +216,6 @@ export default function TodayPage() {
         <DailyTasksList
           activities={activities}
           lookupActivities={lookupActivities}
-          groups={groups}
           lookupGroups={lookupGroups}
           daily={dailyTasks}
           currentDate={currentDate}

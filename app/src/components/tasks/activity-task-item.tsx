@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Flame, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -9,11 +9,9 @@ import {
 } from "@/lib/activity";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ActivityRetiredInfoDialog } from "@/components/activities/activity-retired-info-dialog";
 import type { ActivityRetiredKind } from "@/components/activities/activity-retired-info-dialog";
 import DailyTaskActivityPill from "@/components/tasks/daily-task-activity-pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
-import { ActivityStatsDialog } from "@/components/activities/activity-stats-dialog";
 
 interface ActivityTaskItemProps {
   activity: Activity;
@@ -29,12 +27,16 @@ interface ActivityTaskItemProps {
   temporal: TemporalVisibilityContext;
   onIncrement: (activityId: string, target: number) => void;
   /** "Never" tasks: tap increments slip count. */
-  onNeverIncrement?: () => void;
+  onNeverIncrement?: (activityId: string) => void;
   /** "Never" tasks: hold to clear slip count. */
-  onNeverReset?: () => void;
+  onNeverReset?: (activityId: string) => void;
   onStartActivity: (activityId: string) => void;
   onStopActivity: () => void;
   onManualEntry?: (activityId: string) => void;
+  /** Opens the shared stats dialog hosted by the task list. */
+  onShowStats: (activity: Activity) => void;
+  /** Opens the shared retired-info dialog hosted by the task list. */
+  onShowRetiredInfo: (kind: ActivityRetiredKind, activityName: string) => void;
 }
 
 function ActivityTaskItem({
@@ -54,27 +56,17 @@ function ActivityTaskItem({
   onStartActivity,
   onStopActivity,
   onManualEntry,
+  onShowStats,
+  onShowRetiredInfo,
 }: ActivityTaskItemProps) {
   const { t } = useTranslation("projects");
-  const [retiredDialogKind, setRetiredDialogKind] =
-    useState<ActivityRetiredKind | null>(null);
-  const [statsDialogOpen, setStatsDialogOpen] = useState(false);
-  const [, setTick] = useState(0);
   const neverPressTimeoutRef = useRef<number | null>(null);
   const longPressHandledRef = useRef(false);
 
   const interaction = useMemo(
-    () =>
-      getDailyTaskInteractionState(activity, temporal, isEditableDate),
+    () => getDailyTaskInteractionState(activity, temporal, isEditableDate),
     [activity, temporal, isEditableDate]
   );
-
-  // Only update this specific item when it's running
-  useEffect(() => {
-    if (!isCurrentActivity) return;
-    const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, [isCurrentActivity]);
 
   const target = activity.completion_target ?? 1;
   const isNeverTask = activity.routine === "never";
@@ -87,11 +79,11 @@ function ActivityTaskItem({
 
   const handleNameClick = () => {
     if (interaction.retiredKind === "deleted") {
-      setRetiredDialogKind("deleted");
+      onShowRetiredInfo("deleted", activityDisplayName);
       return;
     }
     if (interaction.retiredKind === "completed") {
-      setRetiredDialogKind("completed");
+      onShowRetiredInfo("completed", activityDisplayName);
       return;
     }
   };
@@ -122,7 +114,7 @@ function ActivityTaskItem({
                     longPressHandledRef.current = false;
                     return;
                   }
-                  onNeverIncrement();
+                  onNeverIncrement(activity.id);
                 }
               : undefined
           }
@@ -133,7 +125,7 @@ function ActivityTaskItem({
                   clearNeverPressTimeout();
                   neverPressTimeoutRef.current = window.setTimeout(() => {
                     longPressHandledRef.current = true;
-                    onNeverReset();
+                    onNeverReset(activity.id);
                     neverPressTimeoutRef.current = null;
                   }, 500);
                 }
@@ -151,11 +143,9 @@ function ActivityTaskItem({
               ? "border-destructive bg-destructive text-destructive-foreground hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)]"
               : count > 0
                 ? "border-destructive bg-[color-mix(in_srgb,hsl(var(--destructive))_18%,hsl(var(--background)))] text-destructive hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_28%,hsl(var(--background)))]"
-                : "border-destructive bg-transparent hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_12%,hsl(var(--background)))]",
+                : "border-destructive bg-transparent hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_12%,hsl(var(--background)))]"
           )}
-          title={
-            canUpdateCount ? t("taskItem.neverSlipHint") : undefined
-          }
+          title={canUpdateCount ? t("taskItem.neverSlipHint") : undefined}
           disabled={!canUpdateCount}
         >
           {!isComplete ? (
@@ -187,7 +177,7 @@ function ActivityTaskItem({
             (isBreakDay || isPaused) &&
               (isComplete
                 ? "border-amber-500 bg-amber-500 text-amber-950"
-                : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-amber-500"),
+                : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-amber-500")
           )}
         />
       ) : (
@@ -196,7 +186,9 @@ function ActivityTaskItem({
           variant="outline"
           onClick={
             canUpdateCount
-              ? () => { onIncrement(activity.id, target); }
+              ? () => {
+                  onIncrement(activity.id, target);
+                }
               : undefined
           }
           disabled={!canUpdateCount}
@@ -243,28 +235,12 @@ function ActivityTaskItem({
           interaction={interaction}
           isDayComplete={isComplete}
           onNameClick={handleNameClick}
-          onStatsClick={() => setStatsDialogOpen(true)}
+          onStatsClick={() => onShowStats(activity)}
           onStartActivity={onStartActivity}
           onStopActivity={onStopActivity}
           onManualEntry={onManualEntry}
         />
       </div>
-
-      <ActivityRetiredInfoDialog
-        open={retiredDialogKind !== null}
-        kind={retiredDialogKind}
-        activityName={activityDisplayName}
-        onOpenChange={(next) => {
-          if (!next) setRetiredDialogKind(null);
-        }}
-      />
-
-      <ActivityStatsDialog
-        open={statsDialogOpen}
-        onOpenChange={(next) => setStatsDialogOpen(next)}
-        activity={activity}
-        group={group}
-      />
     </div>
   );
 }
