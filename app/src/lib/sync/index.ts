@@ -5,7 +5,12 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase";
 import { getErrorMessage, logError, ERROR_MESSAGES } from "@/lib/error-utils";
-import { loadLastServerSyncAt, clearLastServerSyncAt } from "./sync-storage";
+import {
+  loadLastServerSyncAt,
+  clearLastServerSyncAt,
+  loadLastAppliedSequence,
+  saveLastAppliedSequence,
+} from "./sync-storage";
 import type { SyncTable } from "./sync-transformers";
 import {
   DEBOUNCE_SYNC_MS,
@@ -16,6 +21,10 @@ import {
 } from "./sync-constants";
 import { runPushInternal } from "./sync-push";
 import { runPull } from "./sync-pull";
+import {
+  pushPendingOperations,
+  pullAndApplyOperations,
+} from "./sync-operations";
 import { recordSyncIssue } from "./sync-issues-store";
 import { touchLocalDevice } from "./device-id";
 
@@ -301,13 +310,31 @@ class SyncEngine {
     this.clearDirtyIds();
     this.setState({ isSyncing: true, lastError: null });
     try {
-      const { failedTables } = await this.push();
+      const pushOpsResult = await pushPendingOperations();
+      if (!pushOpsResult.failed && pushOpsResult.maxSequence != null) {
+        saveLastAppliedSequence(pushOpsResult.maxSequence);
+      }
+
+      const { failedTables } = await runPushInternal(
+        {
+          withLocalSyncMetadataWrites: (op) =>
+            this.withLocalSyncMetadataWrites(op),
+        },
+        { forceAll: false }
+      );
       if (failedTables.length > 0) {
         const msg = `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`;
         logError("Sync push failed", new Error(msg));
         this.setState({ lastError: msg });
       }
       await this.pull();
+
+      const pullOpsResult = await pullAndApplyOperations(
+        loadLastAppliedSequence()
+      );
+      if (pullOpsResult.maxSequence != null) {
+        saveLastAppliedSequence(pullOpsResult.maxSequence);
+      }
     } catch (err) {
       const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
       logError("Sync failed", err);

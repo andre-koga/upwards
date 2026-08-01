@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import type { ActivityPeriod } from "@/lib/db/types";
 import { isActiveGroup, isHiddenGroupDefaultActivity } from "@/lib/activity";
+import { buildDefinitionVersionsByActivityId } from "@/lib/activity/definition-versions";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { loadLoginStreak } from "@/lib/session/last-opened";
 import { shiftDate, toDateString } from "@/lib/time-utils";
@@ -43,6 +44,7 @@ export async function loadOverallStats(): Promise<OverallStats> {
     allPeriods,
     allStreakRows,
     latestJournal,
+    definitionVersions,
   ] = await Promise.all([
     db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
     db.activities.filter((a) => !a.deleted_at).toArray(),
@@ -57,6 +59,7 @@ export async function loadOverallStats(): Promise<OverallStats> {
           rows.sort((a, b) => b.entry_date.localeCompare(a.entry_date))[0] ??
           null
       ),
+    db.activityDefinitionVersions.filter((row) => !row.deleted_at).toArray(),
   ]);
 
   const activities = allActivities.filter(
@@ -65,13 +68,18 @@ export async function loadOverallStats(): Promise<OverallStats> {
   const countable = activities.filter((a) => isCountableRoutine(a));
   const breakDays = buildBreakDaysSet(allDailyEntries);
   const entriesByDate = buildEntriesByDateMap(allDailyEntries);
+  const completionOptions = {
+    definitionVersionsByActivityId:
+      buildDefinitionVersionsByActivityId(definitionVersions),
+  };
 
   const weekTotals = computeCompletionTotals(
     countable,
     entriesByDate,
     breakDays,
     weekRange.from,
-    weekRange.to
+    weekRange.to,
+    completionOptions
   );
 
   const allTimerByActivity = new Map<string, Record<string, number>>();
@@ -113,7 +121,8 @@ export async function loadOverallStats(): Promise<OverallStats> {
     entriesByDate,
     breakDays,
     yearAgo,
-    today
+    today,
+    completionOptions
   );
   const monthlyCompletion = buildMonthlyCompletionFromTotals(dailyTotalsYear);
   const weeklyCompletion = buildWeeklyCompletionFromTotals(
@@ -131,7 +140,8 @@ export async function loadOverallStats(): Promise<OverallStats> {
         entriesByDate,
         breakDays,
         yearAgo,
-        today
+        today,
+        completionOptions
       );
       return {
         id: group.id,
@@ -151,7 +161,8 @@ export async function loadOverallStats(): Promise<OverallStats> {
         entriesByDate,
         breakDays,
         yearAgo,
-        today
+        today,
+        completionOptions
       );
       return {
         id: group.id,
@@ -164,7 +175,8 @@ export async function loadOverallStats(): Promise<OverallStats> {
   const consistencyHeatmap90 = buildAggregateHeatmap90(
     countable,
     entriesByDate,
-    breakDays
+    breakDays,
+    completionOptions
   );
 
   const groupSummaries: GroupNavSummary[] = groups.map((group) => {
@@ -177,7 +189,7 @@ export async function loadOverallStats(): Promise<OverallStats> {
       breakDays,
       thirtyDaysAgo,
       today,
-      { includeCompleted: true }
+      { includeCompleted: true, ...completionOptions }
     );
 
     let trackedMs30d = 0;
@@ -200,7 +212,7 @@ export async function loadOverallStats(): Promise<OverallStats> {
         breakDays,
         cur,
         cur,
-        { includeCompleted: true }
+        { includeCompleted: true, ...completionOptions }
       );
       sparklineDays.push({
         rate: completionRate(dayTotals.completed, dayTotals.scheduled) ?? 0,

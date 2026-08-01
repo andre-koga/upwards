@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import type { ActivityPeriod } from "@/lib/db/types";
+import { buildDefinitionVersionsByActivityId } from "@/lib/activity/definition-versions";
 import { toDateString } from "@/lib/time-utils";
 import {
   buildBreakDaysSet,
@@ -12,12 +13,16 @@ import {
 import { computeMonthlyCompletionRates } from "./compute-activity";
 import { buildTimeOfDayBuckets } from "./aggregates";
 import { loadActivityStats } from "./load-activity-stats";
-import type { ActivityExtendedStats, ActivityRecords, SessionLogEntry } from "./types";
+import type {
+  ActivityExtendedStats,
+  ActivityRecords,
+  SessionLogEntry,
+} from "./types";
 
 function computeRecords(
   stats: Awaited<ReturnType<typeof loadActivityStats>>,
   periods: ActivityPeriod[],
-  monthlyPoints: { label: string; rate: number | null }[],
+  monthlyPoints: { label: string; rate: number | null }[]
 ): ActivityRecords {
   let busiestDayMs = 0;
   let busiestDayStr: string | null = null;
@@ -42,7 +47,7 @@ function computeRecords(
     if (p.deleted_at || !p.end_time) continue;
     totalTrackedMs += Math.max(
       0,
-      new Date(p.end_time).getTime() - new Date(p.start_time).getTime(),
+      new Date(p.end_time).getTime() - new Date(p.start_time).getTime()
     );
   }
 
@@ -58,22 +63,29 @@ function computeRecords(
 
 export async function loadActivityExtendedStats(
   activityId: string,
-  groupId: string,
+  groupId: string
 ): Promise<ActivityExtendedStats | null> {
-  const [base, activity, allDailyEntries, allPeriods, groupActivities] =
-    await Promise.all([
-      loadActivityStats(activityId),
-      db.activities.get(activityId),
-      db.dailyEntries.filter((e) => !e.deleted_at).toArray(),
-      db.activityPeriods
-        .where("activity_id")
-        .equals(activityId)
-        .filter((p) => !p.deleted_at)
-        .toArray(),
-      db.activities
-        .filter((a) => a.group_id === groupId && !a.deleted_at)
-        .toArray(),
-    ]);
+  const [
+    base,
+    activity,
+    allDailyEntries,
+    allPeriods,
+    groupActivities,
+    definitionVersions,
+  ] = await Promise.all([
+    loadActivityStats(activityId),
+    db.activities.get(activityId),
+    db.dailyEntries.filter((e) => !e.deleted_at).toArray(),
+    db.activityPeriods
+      .where("activity_id")
+      .equals(activityId)
+      .filter((p) => !p.deleted_at)
+      .toArray(),
+    db.activities
+      .filter((a) => a.group_id === groupId && !a.deleted_at)
+      .toArray(),
+    db.activityDefinitionVersions.filter((row) => !row.deleted_at).toArray(),
+  ]);
 
   if (!activity) return null;
 
@@ -81,6 +93,10 @@ export async function loadActivityExtendedStats(
 
   const breakDays = buildBreakDaysSet(allDailyEntries);
   const entriesByDate = buildEntriesByDateMap(allDailyEntries);
+  const completionOptions = {
+    definitionVersionsByActivityId:
+      buildDefinitionVersionsByActivityId(definitionVersions),
+  };
 
   const ninetyRange = dateRangeDaysBack(90);
   const groupCountable = groupActivities.filter((a) => isCountableRoutine(a));
@@ -90,6 +106,7 @@ export async function loadActivityExtendedStats(
     breakDays,
     ninetyRange.from,
     ninetyRange.to,
+    completionOptions
   );
   const activityTotals90 = computeCompletionTotals(
     isCountableRoutine(activity) ? [activity] : [],
@@ -97,6 +114,7 @@ export async function loadActivityExtendedStats(
     breakDays,
     ninetyRange.from,
     ninetyRange.to,
+    completionOptions
   );
 
   const sessions: SessionLogEntry[] = allPeriods
@@ -107,7 +125,7 @@ export async function loadActivityExtendedStats(
       startTime: p.start_time,
       durationMs: Math.max(
         0,
-        new Date(p.end_time!).getTime() - new Date(p.start_time).getTime(),
+        new Date(p.end_time!).getTime() - new Date(p.start_time).getTime()
       ),
     }))
     .sort((a, b) => b.startTime.localeCompare(a.startTime));
@@ -119,10 +137,13 @@ export async function loadActivityExtendedStats(
     records: computeRecords(base, allPeriods, monthlyPoints),
     sessions,
     timeOfDayBuckets,
-    groupCompletionRate90d: completionRate(groupTotals90.completed, groupTotals90.scheduled),
+    groupCompletionRate90d: completionRate(
+      groupTotals90.completed,
+      groupTotals90.scheduled
+    ),
     activityCompletionRate90d: completionRate(
       activityTotals90.completed,
-      activityTotals90.scheduled,
+      activityTotals90.scheduled
     ),
   };
 }

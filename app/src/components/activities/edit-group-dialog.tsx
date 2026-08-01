@@ -53,7 +53,7 @@ export function EditGroupDialog({
             <Archive className="h-4 w-4" aria-hidden />
           </Button>
         }
-        onSubmit={async ({ name, color }) => {
+        onSubmit={async ({ name, color, effectiveFrom }) => {
           const updatedAt = now();
           const updated: ActivityGroup = {
             ...group,
@@ -68,9 +68,13 @@ export function EditGroupDialog({
             color,
             updated_at: updatedAt,
           });
-          await appendGroupDefinitionVersion({ group: updated });
+          await appendGroupDefinitionVersion({
+            group: updated,
+            effectiveFrom,
+          });
           onUpdated?.(updated);
         }}
+        definitionEdit={{ createdAt: group.created_at }}
       />
 
       <ArchiveGroupDialog

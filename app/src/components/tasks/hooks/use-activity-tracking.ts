@@ -98,7 +98,9 @@ export function useActivityTracking(
           const startMs = new Date(period.start_time).getTime();
           if (period.end_time) {
             const endMs = new Date(period.end_time).getTime();
-            return total + clipPeriodToDay(startMs, endMs, dateString, liveNowMs);
+            return (
+              total + clipPeriodToDay(startMs, endMs, dateString, liveNowMs)
+            );
           }
           if (!includeOpenPeriod) return total;
           return total + clipPeriodToDay(startMs, null, dateString, liveNowMs);

@@ -135,7 +135,10 @@ export function computeGroupRoutineCompletionTotals(
   breakDays: Set<string>,
   fromDate: Date,
   toDate: Date,
-  options?: { includeCompleted?: boolean }
+  options?: {
+    includeCompleted?: boolean;
+    definitionVersionsByActivityId?: Map<string, ActivityDefinitionVersion[]>;
+  }
 ): { completed: number; scheduled: number } {
   let completed = 0;
   let scheduled = 0;
@@ -144,8 +147,16 @@ export function computeGroupRoutineCompletionTotals(
     if (activity.routine === "anytime") continue;
     if (options?.includeCompleted !== true && activity.completed_at) continue;
 
+    const versions =
+      options?.definitionVersionsByActivityId?.get(activity.id) ?? [];
+    const version = pickDefinitionVersionAsOf(versions, toDateString(fromDate));
+    const schedulable = version
+      ? activityLikeFromDefinition(version)
+      : activity;
     const createdAt = startOfDay(
-      new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00")
+      new Date(
+        getEffectiveToday(new Date(schedulable.created_at!)) + "T00:00:00"
+      )
     );
     const rangeFrom = fromDate > createdAt ? fromDate : createdAt;
     if (rangeFrom > toDate) continue;
@@ -155,7 +166,8 @@ export function computeGroupRoutineCompletionTotals(
       entriesByDate,
       breakDays,
       createdAt,
-      toDate
+      toDate,
+      { definitionVersions: versions }
     );
     const totals = computeActivityCompletionTotals(
       completionByDate,
@@ -175,7 +187,11 @@ export function computeCompletionTotals(
   breakDays: Set<string>,
   fromDate: Date,
   toDate: Date,
-  options?: { includeCompleted?: boolean; countBreakDayMisses?: boolean }
+  options?: {
+    includeCompleted?: boolean;
+    countBreakDayMisses?: boolean;
+    definitionVersionsByActivityId?: Map<string, ActivityDefinitionVersion[]>;
+  }
 ): { completed: number; scheduled: number } {
   let completed = 0;
   let scheduled = 0;
@@ -187,6 +203,9 @@ export function computeCompletionTotals(
   while (cursor <= toDate) {
     const entry = entriesByDate.get(toDateString(cursor));
     for (const activity of countable) {
+      const definitionVersions = options?.definitionVersionsByActivityId?.get(
+        activity.id
+      );
       const outcome = getScheduledDayOutcome(
         activity,
         cursor,
@@ -194,6 +213,7 @@ export function computeCompletionTotals(
         breakDays,
         {
           countBreakDayMisses: options?.countBreakDayMisses,
+          definitionVersions,
         }
       );
       if (outcome === "win") {

@@ -33,8 +33,7 @@ const buttonVariants = cva(
          * No default chrome — for full-bleed hit targets (e.g. video) or controls on
          * tinted surfaces. Add borders, layout, and colors via className.
          */
-        bare:
-          "select-none border-0 bg-transparent p-0 shadow-none hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        bare: "select-none border-0 bg-transparent p-0 shadow-none hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0",
       },
       size: {
         default: "h-9 px-4 py-2",

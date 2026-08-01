@@ -42,7 +42,7 @@ function localMs(
   month: number,
   day: number,
   hour: number,
-  minute = 0,
+  minute = 0
 ): number {
   return new Date(year, month - 1, day, hour, minute, 0, 0).getTime();
 }
@@ -59,7 +59,7 @@ describe("resolvePeriodFromLogicalDay", () => {
       "2026-06-26",
       "01:00:00",
       "01:30:00",
-      RESET_5AM,
+      RESET_5AM
     );
 
     expect(result.startMs).toBe(localMs(2026, 6, 27, 1, 0));
@@ -73,7 +73,7 @@ describe("resolvePeriodFromLogicalDay", () => {
       "2026-06-27",
       "03:00:00",
       "06:00:00",
-      RESET_5AM,
+      RESET_5AM
     );
 
     expect(result.startMs).toBe(localMs(2026, 6, 27, 3, 0));
@@ -88,7 +88,7 @@ describe("resolvePeriodFromLogicalDay", () => {
       "2026-06-26",
       "23:00:00",
       "02:00:00",
-      RESET_5AM,
+      RESET_5AM
     );
 
     expect(result.startMs).toBe(localMs(2026, 6, 26, 23, 0));
@@ -103,7 +103,7 @@ describe("resolvePeriodFromLogicalDay", () => {
       "2026-06-26",
       "23:00:00",
       "06:00:00",
-      RESET_5AM,
+      RESET_5AM
     );
 
     expect(result.startMs).toBe(localMs(2026, 6, 26, 23, 0));
@@ -120,7 +120,7 @@ describe("resolvePeriodFromLogicalDay", () => {
       "2026-06-26",
       "23:00:00",
       "02:00:00",
-      0,
+      0
     );
 
     expect(result.startMs).toBe(localMs(2026, 6, 26, 23, 0));

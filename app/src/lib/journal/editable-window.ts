@@ -14,12 +14,9 @@ export function isJournalCalendarDateEditable(
   const todayMidnight = new Date(toDateString(referenceNow) + "T00:00:00");
   const entryMidnight = new Date(toDateString(viewedDate) + "T00:00:00");
   const diffDays = Math.floor(
-    (todayMidnight.getTime() - entryMidnight.getTime()) /
-      (1000 * 60 * 60 * 24)
+    (todayMidnight.getTime() - entryMidnight.getTime()) / (1000 * 60 * 60 * 24)
   );
-  return (
-    diffDays >= 0 && diffDays <= JOURNAL_EDITABLE_DAY_LOOKBACK
-  );
+  return diffDays >= 0 && diffDays <= JOURNAL_EDITABLE_DAY_LOOKBACK;
 }
 
 /**
@@ -35,8 +32,7 @@ export function isActivityDateEditable(
   const todayMidnight = new Date(todayStr + "T00:00:00");
   const entryMidnight = new Date(dateString + "T00:00:00");
   const diffDays = Math.floor(
-    (todayMidnight.getTime() - entryMidnight.getTime()) /
-      (1000 * 60 * 60 * 24)
+    (todayMidnight.getTime() - entryMidnight.getTime()) / (1000 * 60 * 60 * 24)
   );
   return diffDays >= 0 && diffDays <= JOURNAL_EDITABLE_DAY_LOOKBACK;
 }

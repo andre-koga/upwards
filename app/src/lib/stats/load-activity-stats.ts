@@ -98,7 +98,8 @@ export async function loadActivityStats(
       entriesByDate,
       breakDays,
       createdAt,
-      today
+      today,
+      definitionVersions
     );
     const ninetyDaysAgo = shiftDate(today, -89);
     compoundScoreSeries90d = computeCompoundScoreSeries(
@@ -107,7 +108,8 @@ export async function loadActivityStats(
       breakDays,
       createdAt,
       ninetyDaysAgo,
-      today
+      today,
+      definitionVersions
     );
   }
 

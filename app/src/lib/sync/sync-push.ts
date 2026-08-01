@@ -110,7 +110,10 @@ export async function runPushInternal(
 
       if (error) {
         failedTables.push(table);
-        logError(`Sync push failed for table: ${table}`, new Error(error.message));
+        logError(
+          `Sync push failed for table: ${table}`,
+          new Error(error.message)
+        );
         continue;
       }
 

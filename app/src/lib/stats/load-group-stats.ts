@@ -8,6 +8,7 @@ import {
 } from "@/lib/activity";
 import { isNeverRoutine } from "@/lib/activity/never-task";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
+import { buildDefinitionVersionsByActivityId } from "@/lib/activity/definition-versions";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import {
@@ -94,7 +95,8 @@ function buildHabitRow(
       entriesByDate,
       breakDays,
       createdAt,
-      today
+      today,
+      definitionVersions
     );
   }
 
@@ -151,12 +153,19 @@ export async function loadGroupStats(
   const breakDays = buildBreakDaysSet(allDailyEntries);
   const entriesByDate = buildEntriesByDateMap(allDailyEntries);
 
+  const versionsByActivity =
+    buildDefinitionVersionsByActivityId(definitionVersions);
+  const completionOptions = {
+    definitionVersionsByActivityId: versionsByActivity,
+  };
+
   const totals30 = computeCompletionTotals(
     countable,
     entriesByDate,
     breakDays,
     thirtyDaysAgo,
-    today
+    today,
+    completionOptions
   );
   const earliestCreated = activities.reduce((min, a) => {
     const d = startOfDay(
@@ -169,7 +178,8 @@ export async function loadGroupStats(
     entriesByDate,
     breakDays,
     earliestCreated,
-    today
+    today,
+    completionOptions
   );
 
   const activityIds = new Set(activities.map((a) => a.id));
@@ -191,7 +201,14 @@ export async function loadGroupStats(
       new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00")
     );
     compoundScores.push(
-      computeCompoundScore(activity, entriesByDate, breakDays, createdAt, today)
+      computeCompoundScore(
+        activity,
+        entriesByDate,
+        breakDays,
+        createdAt,
+        today,
+        versionsByActivity.get(activity.id) ?? []
+      )
     );
   }
   const groupCompoundScore =
@@ -201,16 +218,6 @@ export async function loadGroupStats(
             1000
         ) / 1000
       : null;
-
-  const versionsByActivity = new Map<
-    string,
-    import("@/lib/db/types").ActivityDefinitionVersion[]
-  >();
-  for (const version of definitionVersions) {
-    const list = versionsByActivity.get(version.activity_id) ?? [];
-    list.push(version);
-    versionsByActivity.set(version.activity_id, list);
-  }
 
   const buildRows = (list: Activity[]) =>
     list.map((activity) =>
@@ -260,7 +267,8 @@ export async function loadGroupStats(
     consistencyHeatmap90: buildAggregateHeatmap90(
       countable,
       entriesByDate,
-      breakDays
+      breakDays,
+      completionOptions
     ),
     habitComparison,
     timeOfDaySegments,

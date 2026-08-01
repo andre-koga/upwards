@@ -31,4 +31,6 @@ export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
   activity_streaks: "activityStreaks",
   activity_status_events: "activityStatusEvents",
   group_status_events: "groupStatusEvents",
+  activity_definition_versions: "activityDefinitionVersions",
+  group_definition_versions: "groupDefinitionVersions",
 };

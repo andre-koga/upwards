@@ -78,6 +78,15 @@
     "incrementHint": "{{count}} / {{target}} — toque para aumentar",
     "countTarget": "{{count}} / {{target}}"
   },
+  "definitionEffectiveFrom": {
+    "labelSchedule": "Aplicar agenda/regras a partir de",
+    "labelSettings": "Aplicar configurações a partir de",
+    "today": "Hoje",
+    "beginning": "Desde o início",
+    "custom": "Data personalizada",
+    "customDate": "Data de vigência",
+    "helper": "Dias passados mantêm a agenda e as regras anteriores, a menos que você aplique esta alteração retroativamente."
+  },
   "timeField": {
     "dialDescription": "Arraste o controle circular ou toque nos valores para editar o horário.",
     "subtractFiveMin": "Subtrair cinco minutos",

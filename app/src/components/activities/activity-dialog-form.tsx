@@ -21,6 +21,8 @@ import {
   FormDialogActions,
   FormField,
   FormStack,
+  DefinitionEffectiveFromField,
+  useDefinitionEffectiveFromState,
 } from "@/components/forms";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
 
@@ -65,6 +67,10 @@ export function ActivityDialogForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const effectiveFromControl = useDefinitionEffectiveFromState(
+    activity?.created_at ?? "",
+    open && activity ? activity.id : undefined
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -118,7 +124,10 @@ export function ActivityDialogForm({
           completion_target: updated.completion_target,
           updated_at: updated.updated_at,
         });
-        await appendActivityDefinitionVersion({ activity: updated });
+        await appendActivityDefinitionVersion({
+          activity: updated,
+          effectiveFrom: effectiveFromControl.effectiveFrom,
+        });
       } else {
         const timestamp = now();
         const activityId = newId();
@@ -259,6 +268,19 @@ export function ActivityDialogForm({
                 })
               }
               message="How many times you need to do this per day. 1 = simple checkbox."
+            />
+          ) : null}
+
+          {isEditing && activity ? (
+            <DefinitionEffectiveFromField
+              idPrefix="activity-definition"
+              createdAt={activity.created_at}
+              variant="activity"
+              mode={effectiveFromControl.state.mode}
+              onModeChange={effectiveFromControl.setMode}
+              customDate={effectiveFromControl.state.customDate}
+              onCustomDateChange={effectiveFromControl.setCustomDate}
+              disabled={saving}
             />
           ) : null}
 

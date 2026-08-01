@@ -27,12 +27,18 @@ export function useOneTimeTasks(dateString: string) {
       if (dateString === today) {
         const [incompleteTasks, completedTodayTasks] = await Promise.all([
           db.oneTimeTasks
-            .filter((task) => !task.deleted_at && !task.is_completed && !task.is_archived)
+            .filter(
+              (task) =>
+                !task.deleted_at && !task.is_completed && !task.is_archived
+            )
             .toArray(),
           db.oneTimeTasks
             .where("date")
             .equals(today)
-            .filter((task) => !task.deleted_at && !!task.is_completed && !task.is_archived)
+            .filter(
+              (task) =>
+                !task.deleted_at && !!task.is_completed && !task.is_archived
+            )
             .toArray(),
         ]);
 
@@ -44,7 +50,9 @@ export function useOneTimeTasks(dateString: string) {
       const rawTasks = await db.oneTimeTasks
         .where("date")
         .equals(dateString)
-        .filter((task) => !task.deleted_at && !!task.is_completed && !task.is_archived)
+        .filter(
+          (task) => !task.deleted_at && !!task.is_completed && !task.is_archived
+        )
         .toArray();
       const tasks = sortMemos(rawTasks);
       setOneTimeTasks(tasks);
@@ -135,9 +143,7 @@ export function useOneTimeTasks(dateString: string) {
   const updateOneTimeTask = useCallback(
     async (
       taskId: string,
-      patch: Partial<
-        Pick<OneTimeTask, "title" | "is_pinned" | "due_date">
-      >
+      patch: Partial<Pick<OneTimeTask, "title" | "is_pinned" | "due_date">>
     ): Promise<boolean> => {
       if (patch.title !== undefined && !normalizeMemoTitle(patch.title)) {
         return false;

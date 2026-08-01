@@ -26,12 +26,11 @@ export function FloatingBackButton({
   fixed = true,
   className,
 }: FloatingBackButtonProps) {
-  const Icon =
-    icon === "settings" ? Settings : icon === "undo" ? Undo2 : X;
+  const Icon = icon === "settings" ? Settings : icon === "undo" ? Undo2 : X;
   const merged = cn(
     FLOATING_BACK_BUTTON_BASE,
     fixed && "fixed bottom-3 left-4 z-50",
-    className,
+    className
   );
 
   if (to !== undefined) {

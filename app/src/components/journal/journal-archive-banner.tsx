@@ -37,10 +37,7 @@ export default function JournalArchiveBanner({
   if (variant === "month" && imageSrc) {
     return (
       <div
-        className={cn(
-          "relative overflow-hidden rounded-3xl",
-          className
-        )}
+        className={cn("relative overflow-hidden rounded-3xl", className)}
         role="separator"
         aria-label={label}
       >

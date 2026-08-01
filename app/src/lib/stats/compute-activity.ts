@@ -1,7 +1,11 @@
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
-import type { ActivityStats, HeatmapDay, MonthlyCompletionPoint } from "./types";
+import type {
+  ActivityStats,
+  HeatmapDay,
+  MonthlyCompletionPoint,
+} from "./types";
 
 export function computeAllTimeWeekdayStats(raw: ActivityStats): {
   weekdayTimerAvgMs: number[];
@@ -13,7 +17,10 @@ export function computeAllTimeWeekdayStats(raw: ActivityStats): {
 
   const weekdayTimerTotalMs = [0, 0, 0, 0, 0, 0, 0];
   const weekdayOccurrences = [0, 0, 0, 0, 0, 0, 0];
-  const weekdayCompletion: [number, number][] = Array.from({ length: 7 }, () => [0, 0]);
+  const weekdayCompletion: [number, number][] = Array.from(
+    { length: 7 },
+    () => [0, 0]
+  );
 
   let cur = createdAt;
   while (cur <= today) {
@@ -32,13 +39,15 @@ export function computeAllTimeWeekdayStats(raw: ActivityStats): {
   }
 
   const weekdayTimerAvgMs = weekdayTimerTotalMs.map((total, i) =>
-    weekdayOccurrences[i] > 0 ? Math.round(total / weekdayOccurrences[i]) : 0,
+    weekdayOccurrences[i] > 0 ? Math.round(total / weekdayOccurrences[i]) : 0
   );
 
   return { weekdayTimerAvgMs, weekdayCompletion };
 }
 
-export function computeMonthlyCompletionRates(raw: ActivityStats): MonthlyCompletionPoint[] {
+export function computeMonthlyCompletionRates(
+  raw: ActivityStats
+): MonthlyCompletionPoint[] {
   const todayStr = getEffectiveToday();
   const today = startOfDay(new Date(todayStr + "T00:00:00"));
 
@@ -52,7 +61,9 @@ export function computeMonthlyCompletionRates(raw: ActivityStats): MonthlyComple
     });
   }
 
-  const buckets = new Map(months.map((m) => [m.key, { completed: 0, scheduled: 0 }]));
+  const buckets = new Map(
+    months.map((m) => [m.key, { completed: 0, scheduled: 0 }])
+  );
 
   let cur = startOfDay(new Date(raw.createdAtStr + "T00:00:00"));
   while (cur <= today) {
@@ -71,7 +82,10 @@ export function computeMonthlyCompletionRates(raw: ActivityStats): MonthlyComple
 
   return months.map(({ year, month, key }) => {
     const { completed, scheduled } = buckets.get(key)!;
-    const label = new Date(year, month, 1).toLocaleDateString(getActiveLocaleTag(), { month: "short" });
+    const label = new Date(year, month, 1).toLocaleDateString(
+      getActiveLocaleTag(),
+      { month: "short" }
+    );
     return {
       monthKey: key,
       label,
@@ -85,7 +99,7 @@ export function computeMonthlyCompletionRates(raw: ActivityStats): MonthlyComple
 export function buildHeatmapDays(
   stats: ActivityStats,
   fromDate: Date,
-  toDate: Date,
+  toDate: Date
 ): HeatmapDay[] {
   const days: HeatmapDay[] = [];
   let cur = fromDate;
@@ -99,7 +113,10 @@ export function buildHeatmapDays(
         ? (stats.completionByDate[d] ?? "not_scheduled")
         : undefined;
     const isBreakDay =
-      !isBeforeCreation && stats.hasRoutine && !stats.isNever && stats.breakDateStrs.has(d);
+      !isBeforeCreation &&
+      stats.hasRoutine &&
+      !stats.isNever &&
+      stats.breakDateStrs.has(d);
     days.push({ dateStr: d, ms, status, isBeforeCreation, isBreakDay });
     cur = shiftDate(cur, 1);
   }
@@ -116,7 +133,7 @@ export function buildHeatmap90(stats: ActivityStats): HeatmapDay[] {
 export function buildSparklineWeeks(
   completionByDate: Record<string, import("./types").DayStatus>,
   createdAtStr: string,
-  weeks: number,
+  weeks: number
 ): HeatmapDay[] {
   const todayStr = getEffectiveToday();
   const today = startOfDay(new Date(todayStr + "T00:00:00"));
@@ -126,7 +143,9 @@ export function buildSparklineWeeks(
   while (cur <= today) {
     const d = toDateString(cur);
     const isBeforeCreation = d < createdAtStr;
-    const status = isBeforeCreation ? undefined : (completionByDate[d] ?? "not_scheduled");
+    const status = isBeforeCreation
+      ? undefined
+      : (completionByDate[d] ?? "not_scheduled");
     days.push({ dateStr: d, status, isBeforeCreation });
     cur = shiftDate(cur, 1);
   }

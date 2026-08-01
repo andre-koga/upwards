@@ -48,7 +48,9 @@ export function useAuth() {
       });
       if (error) throw error;
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : t("auth.signInFailed"));
+      setAuthError(
+        error instanceof Error ? error.message : t("auth.signInFailed")
+      );
       throw error;
     } finally {
       setAuthLoading(false);
@@ -64,7 +66,9 @@ export function useAuth() {
       if (error) throw error;
       setAuthError(t("auth.checkEmail"));
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : t("auth.signUpFailed"));
+      setAuthError(
+        error instanceof Error ? error.message : t("auth.signUpFailed")
+      );
       throw error;
     } finally {
       setAuthLoading(false);

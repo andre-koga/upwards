@@ -1,0 +1,324 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { SyncPendingOperation } from "@/lib/db/types";
+
+const pendingOps: SyncPendingOperation[] = [];
+const activityVersions: import("@/lib/db/types").ActivityDefinitionVersion[] =
+  [];
+const groupVersions: import("@/lib/db/types").GroupDefinitionVersion[] = [];
+const activities: Array<{
+  id: string;
+  name?: string | null;
+  updated_at?: string;
+}> = [];
+const activityGroups: Array<{
+  id: string;
+  name?: string;
+  updated_at?: string;
+}> = [];
+const syncIssues: import("@/lib/db/types").SyncIssue[] = [];
+
+const rpcMock = vi.fn();
+
+vi.mock("@/lib/supabase", () => ({
+  supabase: { rpc: (...args: unknown[]) => rpcMock(...args) },
+  getCachedUserId: () => "user-1",
+}));
+
+vi.mock("@/lib/db", () => ({
+  db: {
+    syncPendingOperations: {
+      toArray: async () => [...pendingOps],
+      where: (index: string) => ({
+        equals: (value: string) => ({
+          toArray: async () =>
+            pendingOps.filter((row) => {
+              if (index === "status") return row.status === value;
+              return true;
+            }),
+        }),
+      }),
+      update: async (id: string, patch: Partial<SyncPendingOperation>) => {
+        const row = pendingOps.find((op) => op.id === id);
+        if (row) Object.assign(row, patch);
+      },
+    },
+    activityDefinitionVersions: {
+      put: async (row: import("@/lib/db/types").ActivityDefinitionVersion) => {
+        const idx = activityVersions.findIndex((v) => v.id === row.id);
+        if (idx >= 0) activityVersions[idx] = row;
+        else activityVersions.push(row);
+      },
+    },
+    groupDefinitionVersions: {
+      put: async (row: import("@/lib/db/types").GroupDefinitionVersion) => {
+        const idx = groupVersions.findIndex((v) => v.id === row.id);
+        if (idx >= 0) groupVersions[idx] = row;
+        else groupVersions.push(row);
+      },
+    },
+    activities: {
+      update: async (id: string, patch: Record<string, unknown>) => {
+        const row = activities.find((a) => a.id === id);
+        if (row) Object.assign(row, patch);
+      },
+    },
+    activityGroups: {
+      update: async (id: string, patch: Record<string, unknown>) => {
+        const row = activityGroups.find((g) => g.id === id);
+        if (row) Object.assign(row, patch);
+      },
+    },
+    syncIssues: {
+      filter: (
+        predicate: (issue: import("@/lib/db/types").SyncIssue) => boolean
+      ) => ({
+        first: async () => syncIssues.find(predicate) ?? undefined,
+      }),
+      add: async (row: import("@/lib/db/types").SyncIssue) => {
+        syncIssues.push(row);
+      },
+    },
+  },
+  now: () => "2026-08-01T12:00:00.000Z",
+  newId: () => "issue-new",
+}));
+
+vi.mock("@/lib/sync/device-id", () => ({
+  getOrCreateDeviceId: () => "local-device",
+}));
+
+vi.mock("@/lib/session/day-reset", () => ({
+  getEffectiveToday: () => "2026-08-01",
+}));
+
+import {
+  buildActivityDefinitionVersionFromOp,
+  isSyncOperationsRpcMissing,
+  maxServerSequence,
+  pushPendingOperations,
+  pullAndApplyOperations,
+  toSubmitSyncOperationInput,
+} from "./sync-operations";
+
+function makePending(
+  overrides: Partial<SyncPendingOperation> &
+    Pick<SyncPendingOperation, "operation_id">
+): SyncPendingOperation {
+  return {
+    id: overrides.id ?? `row-${overrides.operation_id}`,
+    operation_id: overrides.operation_id,
+    account_id: "user-1",
+    device_id: overrides.device_id ?? "local-device",
+    entity_type: overrides.entity_type ?? "activity_definition",
+    entity_id: overrides.entity_id ?? "activity-1",
+    operation_type: overrides.operation_type ?? "definition.update",
+    payload: overrides.payload ?? {
+      version_id: "ver-1",
+      fields: { name: "Run" },
+    },
+    base_revision: overrides.base_revision ?? null,
+    status: overrides.status ?? "pending",
+    last_error: null,
+    created_at: overrides.created_at ?? "2026-08-01T10:00:00.000Z",
+    updated_at: overrides.updated_at ?? "2026-08-01T10:00:00.000Z",
+    acked_at: null,
+  };
+}
+
+describe("sync-operations helpers", () => {
+  it("detects missing RPC errors", () => {
+    expect(
+      isSyncOperationsRpcMissing({
+        code: "PGRST202",
+        message: "Could not find the function public.submit_sync_operations",
+      })
+    ).toBe(true);
+    expect(isSyncOperationsRpcMissing({ message: "network down" })).toBe(false);
+  });
+
+  it("computes max server sequence", () => {
+    expect(maxServerSequence([1, 5, 3])).toBe(5);
+    expect(maxServerSequence([undefined, null])).toBeUndefined();
+  });
+
+  it("builds submit payload from pending row", () => {
+    const pending = makePending({ operation_id: "op-1" });
+    expect(toSubmitSyncOperationInput(pending)).toEqual({
+      operation_id: "op-1",
+      device_id: "local-device",
+      entity_type: "activity_definition",
+      entity_id: "activity-1",
+      operation_type: "definition.update",
+      payload: pending.payload,
+      base_revision: null,
+    });
+  });
+
+  it("builds activity definition version from remote op", () => {
+    const version = buildActivityDefinitionVersionFromOp({
+      operation_id: "op-remote",
+      device_id: "other-device",
+      entity_type: "activity_definition",
+      entity_id: "activity-1",
+      operation_type: "definition.update",
+      payload: {
+        version_id: "ver-remote",
+        effective_from: "2026-08-01",
+        fields: { name: "Yoga", routine: "daily", group_id: "g-1" },
+      },
+      base_revision: null,
+      status: "accepted",
+      server_sequence: 42,
+      created_at: "2026-08-01T11:00:00.000Z",
+    });
+    expect(version?.id).toBe("ver-remote");
+    expect(version?.server_sequence).toBe(42);
+    expect(version?.name).toBe("Yoga");
+  });
+});
+
+describe("pushPendingOperations", () => {
+  beforeEach(() => {
+    pendingOps.length = 0;
+    syncIssues.length = 0;
+    rpcMock.mockReset();
+  });
+
+  it("skips when RPC is missing", async () => {
+    pendingOps.push(makePending({ operation_id: "op-1" }));
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: {
+        code: "PGRST202",
+        message: "Could not find the function public.submit_sync_operations",
+      },
+    });
+
+    const result = await pushPendingOperations();
+    expect(result).toEqual({ failed: false, skipped: true });
+    expect(pendingOps[0].status).toBe("pending");
+  });
+
+  it("acks accepted and duplicate results", async () => {
+    pendingOps.push(
+      makePending({ operation_id: "op-accepted", id: "row-1" }),
+      makePending({ operation_id: "op-dup", id: "row-2" })
+    );
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-accepted",
+          status: "accepted",
+          server_sequence: 10,
+        },
+        { operation_id: "op-dup", status: "duplicate", server_sequence: 11 },
+      ],
+      error: null,
+    });
+
+    const result = await pushPendingOperations();
+    expect(result).toEqual({ failed: false, maxSequence: 11 });
+    expect(pendingOps[0].status).toBe("acked");
+    expect(pendingOps[1].status).toBe("acked");
+  });
+
+  it("records conflict and acks pending op", async () => {
+    pendingOps.push(makePending({ operation_id: "op-conflict", id: "row-3" }));
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-conflict",
+          status: "conflict",
+          server_sequence: 12,
+        },
+      ],
+      error: null,
+    });
+
+    const result = await pushPendingOperations();
+    expect(result.failed).toBe(false);
+    expect(pendingOps[0].status).toBe("acked");
+    expect(syncIssues).toHaveLength(1);
+    expect(syncIssues[0].kind).toBe("conflict");
+    expect(syncIssues[0].operation_id).toBe("op-conflict");
+  });
+});
+
+describe("pullAndApplyOperations", () => {
+  beforeEach(() => {
+    activityVersions.length = 0;
+    groupVersions.length = 0;
+    activities.length = 0;
+    activityGroups.length = 0;
+    syncIssues.length = 0;
+    rpcMock.mockReset();
+    activities.push({ id: "activity-1", name: "Old" });
+  });
+
+  it("skips when RPC is missing", async () => {
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: {
+        code: "PGRST202",
+        message: "Could not find the function public.pull_sync_operations",
+      },
+    });
+
+    const result = await pullAndApplyOperations(0);
+    expect(result).toEqual({ skipped: true });
+  });
+
+  it("applies remote accepted definition ops from other devices", async () => {
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-remote",
+          device_id: "other-device",
+          entity_type: "activity_definition",
+          entity_id: "activity-1",
+          operation_type: "definition.update",
+          payload: {
+            version_id: "ver-remote",
+            effective_from: "2026-08-01",
+            fields: { name: "Yoga" },
+          },
+          base_revision: null,
+          status: "accepted",
+          server_sequence: 20,
+          created_at: "2026-08-01T11:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+
+    const result = await pullAndApplyOperations(5);
+    expect(result.maxSequence).toBe(20);
+    expect(activityVersions).toHaveLength(1);
+    expect(activityVersions[0].name).toBe("Yoga");
+    expect(activities[0].name).toBe("Yoga");
+  });
+
+  it("creates conflict issue for remote conflict ops", async () => {
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-conflict-remote",
+          device_id: "other-device",
+          entity_type: "activity_definition",
+          entity_id: "activity-1",
+          operation_type: "definition.update",
+          payload: {},
+          base_revision: "ver-old",
+          status: "conflict",
+          server_sequence: 21,
+          created_at: "2026-08-01T11:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+
+    await pullAndApplyOperations(10);
+    expect(syncIssues).toHaveLength(1);
+    expect(syncIssues[0].operation_id).toBe("op-conflict-remote");
+  });
+});

@@ -107,7 +107,9 @@ export default function FeedbackDialog({
       </FormStack>
       <FormDialogActions
         onConfirm={() => void handleSubmit()}
-        confirmLabel={submitting ? t("feedbackDialog.sending") : t("feedbackDialog.send")}
+        confirmLabel={
+          submitting ? t("feedbackDialog.sending") : t("feedbackDialog.send")
+        }
         confirmDisabled={submitting || !canSubmit || !message.trim()}
         secondaryAction={{
           label: tCommon("cancel"),

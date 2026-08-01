@@ -11,7 +11,10 @@ import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 
-function getDueDateDisplayLabel(dueDate: string, t: TFunction<"tasks">): string {
+function getDueDateDisplayLabel(
+  dueDate: string,
+  t: TFunction<"tasks">
+): string {
   const due = fromDateString(dueDate);
   const dueMs = due.getTime();
 
@@ -209,7 +212,7 @@ function OneTimeTaskItem({
           tabIndex={isToday ? 0 : undefined}
         >
           <p
-            className={`min-w-0 flex-1 break-words whitespace-pre-wrap px-3 py-2 text-left text-sm font-medium ${
+            className={`min-w-0 flex-1 whitespace-pre-wrap break-words px-3 py-2 text-left text-sm font-medium ${
               task.is_completed ? "text-muted-foreground line-through" : ""
             }`}
           >

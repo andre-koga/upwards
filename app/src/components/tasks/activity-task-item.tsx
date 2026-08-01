@@ -5,6 +5,7 @@ import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
   getActivityDisplayName,
   getDailyTaskInteractionState,
+  type SchedulableActivity,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,8 @@ interface ActivityTaskItemProps {
   /** Whether the viewed calendar day is within the journal edit window. */
   isEditableDate: boolean;
   temporal: TemporalVisibilityContext;
+  /** Definition effective on the viewed date (routine / target). */
+  schedulable?: SchedulableActivity;
   onIncrement: (activityId: string, target: number) => void;
   /** "Never" tasks: tap increments slip count. */
   onNeverIncrement?: (activityId: string) => void;
@@ -50,6 +53,7 @@ function ActivityTaskItem({
   isCurrentActivity,
   isEditableDate,
   temporal,
+  schedulable,
   onIncrement,
   onNeverIncrement,
   onNeverReset,
@@ -68,8 +72,9 @@ function ActivityTaskItem({
     [activity, temporal, isEditableDate]
   );
 
-  const target = activity.completion_target ?? 1;
-  const isNeverTask = activity.routine === "never";
+  const effective = schedulable ?? activity;
+  const target = effective.completion_target ?? 1;
+  const isNeverTask = effective.routine === "never";
   const isComplete = isNeverTask
     ? count >= target
     : !isPaused && count >= target;

@@ -71,10 +71,7 @@ export function useJournalArchive(searchQuery: string) {
       }
       items.push(item);
     }
-    while (
-      items.length > 0 &&
-      items[items.length - 1]?.kind !== "entry"
-    ) {
+    while (items.length > 0 && items[items.length - 1]?.kind !== "entry") {
       items.pop();
     }
     const totalEntries = filteredEntries.length;

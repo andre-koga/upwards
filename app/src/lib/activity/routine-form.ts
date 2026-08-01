@@ -1,6 +1,13 @@
 import { parseRoutine } from "./utils";
 
-const VALID_ROUTINES = ["anytime", "daily", "weekly", "monthly", "custom", "never"];
+const VALID_ROUTINES = [
+  "anytime",
+  "daily",
+  "weekly",
+  "monthly",
+  "custom",
+  "never",
+];
 
 export interface RoutineFormData {
   routine: string;

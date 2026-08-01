@@ -160,6 +160,8 @@ export async function appendActivityDefinitionVersion(
         version_id: version.id,
         parent_version_id: version.parent_version_id,
         effective_from: version.effective_from,
+        recorded_at: version.recorded_at,
+        schema_version: version.schema_version,
         fields,
       },
       base_revision: latest?.id ?? null,
@@ -231,6 +233,8 @@ export async function appendGroupDefinitionVersion(
         version_id: version.id,
         parent_version_id: version.parent_version_id,
         effective_from: version.effective_from,
+        recorded_at: version.recorded_at,
+        schema_version: version.schema_version,
         fields,
       },
       base_revision: latest?.id ?? null,
@@ -289,6 +293,18 @@ export async function ensureBaselineGroupDefinition(
     throw new Error("Failed to create baseline group definition version");
   }
   return version;
+}
+
+export function buildDefinitionVersionsByActivityId(
+  versions: ActivityDefinitionVersion[]
+): Map<string, ActivityDefinitionVersion[]> {
+  const map = new Map<string, ActivityDefinitionVersion[]>();
+  for (const version of versions) {
+    const list = map.get(version.activity_id) ?? [];
+    list.push(version);
+    map.set(version.activity_id, list);
+  }
+  return map;
 }
 
 /** Pure helper for tests: pick the version effective on a logical date. */

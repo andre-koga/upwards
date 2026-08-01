@@ -4,15 +4,14 @@ import type {
   Activity,
   ActivityGroup,
   ActivityStatusEvent,
+  ActivityDefinitionVersion,
   GroupStatusEvent,
 } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { toDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
-import {
-  isActivityStatusAsOf,
-  isGroupStatusAsOf,
-} from "./status-events";
+import { isActivityStatusAsOf, isGroupStatusAsOf } from "./status-events";
+import { activityLikeFromDefinition } from "./definition-versions";
 import {
   isHiddenGroupDefaultActivity,
   getOrCreateHiddenGroupDefaultActivity,
@@ -157,6 +156,26 @@ export interface TemporalVisibilityContext {
   viewDate: Date;
   activityEventsById: Map<string, ActivityStatusEvent[]>;
   groupEventsById: Map<string, GroupStatusEvent[]>;
+  activityDefinitionsById?: Map<string, ActivityDefinitionVersion | Activity>;
+}
+
+function isDefinitionVersion(
+  value: ActivityDefinitionVersion | Activity
+): value is ActivityDefinitionVersion {
+  return "effective_from" in value && "activity_id" in value;
+}
+
+function schedulableFromResolved(
+  resolved: ActivityDefinitionVersion | Activity
+): Pick<Activity, "routine" | "created_at" | "completion_target"> {
+  if (isDefinitionVersion(resolved)) {
+    return activityLikeFromDefinition(resolved);
+  }
+  return {
+    routine: resolved.routine,
+    created_at: resolved.created_at,
+    completion_target: resolved.completion_target,
+  };
 }
 
 export function isArchivedViaGroupAsOf(
@@ -309,7 +328,9 @@ export function isRoutineDueOnDate(
   if (activity.created_at) {
     // Use effective day for the creation timestamp so activities created
     // after midnight (before the reset) belong to the previous logical day.
-    const effectiveCreationDay = getEffectiveToday(new Date(activity.created_at));
+    const effectiveCreationDay = getEffectiveToday(
+      new Date(activity.created_at)
+    );
     const viewDay = toDateString(date);
     if (viewDay < effectiveCreationDay) return false;
   }
@@ -381,5 +402,7 @@ export function shouldShowActivity(
   if (isArchivedViaGroupAsOf(group, temporal)) return false;
   if (isDeletedAsOfGroup(group, temporal)) return false;
 
-  return isRoutineDueOnDate(activity, date);
+  const resolved = temporal.activityDefinitionsById?.get(activity.id);
+  const schedulable = resolved ? schedulableFromResolved(resolved) : activity;
+  return isRoutineDueOnDate(schedulable, date);
 }

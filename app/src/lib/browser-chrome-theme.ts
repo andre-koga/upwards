@@ -97,10 +97,7 @@ export function syncBrowserChromeTheme(): void {
     }
   }
 
-  ensureMeta(COLOR_SCHEME_META, "color-scheme").setAttribute(
-    "content",
-    scheme
-  );
+  ensureMeta(COLOR_SCHEME_META, "color-scheme").setAttribute("content", scheme);
 }
 
 /**

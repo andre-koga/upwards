@@ -18,7 +18,9 @@ interface NominatimPlace {
   address?: NominatimAddress;
 }
 
-function firstNonEmpty(...values: Array<string | null | undefined>): string | null {
+function firstNonEmpty(
+  ...values: Array<string | null | undefined>
+): string | null {
   for (const value of values) {
     const trimmed = value?.trim();
     if (trimmed) return trimmed;

@@ -2,7 +2,10 @@ import { useState, useCallback } from "react";
 import { db, newId, now } from "@/lib/db";
 import type { RecurringMemo } from "@/lib/db/types";
 import { normalizeMemoTitle } from "@/components/tasks/memo-title";
-import { buildRoutineString, type RoutineFormData } from "@/lib/activity/routine-form";
+import {
+  buildRoutineString,
+  type RoutineFormData,
+} from "@/lib/activity/routine-form";
 import {
   loadActiveRecurringMemos,
   spawnRecurringMemosForToday,
@@ -58,7 +61,9 @@ export function useRecurringMemos() {
   const updateRecurringMemo = useCallback(
     async (
       id: string,
-      patch: Partial<Pick<RecurringMemo, "title" | "routine" | "is_pinned" | "is_enabled">>
+      patch: Partial<
+        Pick<RecurringMemo, "title" | "routine" | "is_pinned" | "is_enabled">
+      >
     ): Promise<boolean> => {
       if (patch.title !== undefined && !normalizeMemoTitle(patch.title)) {
         return false;

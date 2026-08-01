@@ -31,7 +31,9 @@ export default function JournalTextSection({
     ? locations.map((l) => l.displayName).join(" → ")
     : "";
 
-  const streakLabel = t("journalStreak", { count: journalCompletionStreak ?? 0 });
+  const streakLabel = t("journalStreak", {
+    count: journalCompletionStreak ?? 0,
+  });
 
   return (
     <>
