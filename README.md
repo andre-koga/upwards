@@ -62,3 +62,13 @@ It combines activity tracking, streaks, session timelines, and lightweight journ
 ## Product Focus
 
 Upwards is designed to make consistency visible, reduce friction in daily tracking, and preserve meaningful day-by-day progress over time.
+
+---
+
+## Architecture
+
+Changes to persistence, offline synchronization, historical views, lifecycle
+behavior, or statistics must follow the
+[temporal data and sync architecture](docs/architecture/temporal-data-sync.md).
+It defines the app's append-only history, effective-dated definitions,
+multi-device conflict handling, and in-app recovery requirements.

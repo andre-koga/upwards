@@ -1,0 +1,24 @@
+---
+description: Required temporal history, offline sync, conflict, and statistics architecture
+alwaysApply: true
+---
+
+# Temporal Data Architecture
+
+Before planning or changing database schemas, Supabase, synchronization,
+Dexie/IndexedDB, offline behavior, lifecycle state, historical views,
+statistics, streaks, backup/restore, media persistence, account switching, or
+conflict handling, read the complete architecture decision:
+
+- `docs/architecture/temporal-data-sync.md`
+
+Treat that document as binding repository guidance. Do not introduce:
+
+- Current mutable definitions as the source of historical truth
+- Client-clock last-write-wins conflict resolution
+- Ordinary hard deletion of accepted user history
+- Non-idempotent synchronization operations
+- Conflicts or pending-data failures without an in-app review/recovery path
+
+Any intentional departure must update the architecture document and explain
+the changed product tradeoff before implementation.
