@@ -1,4 +1,4 @@
-import type { InboxNotification } from "@/lib/notifications/use-notifications";
+import type { InboxNotification } from "@/lib/notifications/notification-inbox-types";
 
 export function matchesFriendRequestNotification(
   notification: InboxNotification,

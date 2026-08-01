@@ -1,15 +1,12 @@
 import { useEffect, useState, useLayoutEffect } from "react";
 import type { AppLog } from "@/lib/db/types";
 import { db } from "@/lib/db";
-import { formatDateShort, fromDateString } from "@/lib/time-utils";
+import { formatDateShort } from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
 import { AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
-
-function scrollAppToTop() {
-  window.scrollTo(0, 0);
-  document.querySelector<HTMLElement>("[data-app-scroll]")?.scrollTo(0, 0);
-}
+import { AppPageShell } from "@/components/layout/app-page-shell";
+import { scrollAppToTop } from "@/lib/scroll-app-to-top";
 
 interface LogItemProps {
   log: AppLog;
@@ -30,15 +27,13 @@ function LogItem({ log, getIcon, getTimestamp }: LogItemProps) {
   return (
     <div
       onClick={handleClick}
-      className="flex gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm cursor-pointer hover:bg-muted/50 transition-colors relative"
+      className="relative flex cursor-pointer gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors hover:bg-muted/50"
     >
       <div className="mt-0.5 shrink-0">{getIcon(log.level)}</div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-foreground text-xs">
-              {log.context}
-            </p>
+            <p className="text-xs font-medium text-foreground">{log.context}</p>
             <p className="break-words text-xs text-muted-foreground">
               {log.message}
             </p>
@@ -49,7 +44,7 @@ function LogItem({ log, getIcon, getTimestamp }: LogItemProps) {
         </p>
       </div>
       {copied && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 text-xs font-medium text-white pointer-events-none">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 text-xs font-medium text-white">
           Copied!
         </div>
       )}
@@ -61,14 +56,14 @@ async function deleteOldLogs() {
   try {
     const oneDayAgoMs = Date.now() - 24 * 60 * 60 * 1000;
     const oneDayAgo = new Date(oneDayAgoMs).toISOString();
-    
+
     const oldLogs = await db.appLogs
       .where("created_at")
       .below(oneDayAgo)
       .toArray();
-    
+
     if (oldLogs.length > 0) {
-      await db.appLogs.bulkDelete(oldLogs.map(log => log.id));
+      await db.appLogs.bulkDelete(oldLogs.map((log) => log.id));
     }
   } catch (error) {
     console.error("Failed to delete old logs:", error);
@@ -88,7 +83,7 @@ export default function ErrorLogsPage() {
       try {
         // Delete logs older than 1 day
         await deleteOldLogs();
-        
+
         const allLogs = await db.appLogs
           .orderBy("created_at")
           .reverse()
@@ -135,14 +130,10 @@ export default function ErrorLogsPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 pb-24">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Error Logs</h1>
-        <p className="text-sm text-muted-foreground">
-          {logs.length} {logs.length === 1 ? "entry" : "entries"} (last 24 hours)
-        </p>
-      </header>
-
+    <AppPageShell
+      title="Error Logs"
+      subtitle={`${logs.length} ${logs.length === 1 ? "entry" : "entries"} (last 24 hours)`}
+    >
       {loading ? (
         <div className="flex items-center justify-center p-8">
           <p className="text-muted-foreground">Loading logs...</p>
@@ -154,12 +145,17 @@ export default function ErrorLogsPage() {
       ) : (
         <div className="space-y-2">
           {logs.map((log) => (
-            <LogItem key={log.id} log={log} getIcon={getIcon} getTimestamp={getTimestamp} />
+            <LogItem
+              key={log.id}
+              log={log}
+              getIcon={getIcon}
+              getTimestamp={getTimestamp}
+            />
           ))}
         </div>
       )}
 
       <FloatingBackButton to="/" title="Home" />
-    </div>
+    </AppPageShell>
   );
 }

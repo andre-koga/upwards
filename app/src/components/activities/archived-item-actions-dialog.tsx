@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArchiveRestore } from "lucide-react";
 import { FormDialog, FormDialogActions } from "@/components/forms";
+import { dialogPrimaryDestructiveClassName } from "@/components/forms/styles";
 import type { ActivityGroup } from "@/lib/db/types";
 import { logError } from "@/lib/error-utils";
 import { unarchiveGroupById } from "@/lib/activity";
@@ -13,9 +14,6 @@ interface ArchivedItemActionsDialogProps {
   onUnarchived: (target: ArchivedItemActionsTarget) => void | Promise<void>;
   onDeleteRequested: (payload: { type: "group"; id: string }) => void;
 }
-
-const destructiveConfirmClassName =
-  "bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive";
 
 export function ArchivedItemActionsDialog({
   target,
@@ -63,7 +61,7 @@ export function ArchivedItemActionsDialog({
         onConfirm={handleDeleteClick}
         confirmLabel="Delete"
         confirmDisabled={busy}
-        confirmClassName={destructiveConfirmClassName}
+        confirmClassName={dialogPrimaryDestructiveClassName}
         secondaryAction={{
           label: (
             <>

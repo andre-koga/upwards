@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { SectionLabel } from "@/components/ui/section-label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +47,9 @@ const ThemeSwitcher = () => {
   const ActiveModeIcon = activeModeOption.icon;
   const ActivePaletteIcon = activePaletteOption.icon;
   const activeModeLabel = t(`appearance.modes.${activeModeOption.value}`);
-  const activePaletteLabel = t(`appearance.palettes.${activePaletteOption.value}`);
+  const activePaletteLabel = t(
+    `appearance.palettes.${activePaletteOption.value}`
+  );
 
   const renderModeItem = (modeOption: ThemeModeOption) => {
     const OptionIcon = modeOption.icon;
@@ -92,9 +95,9 @@ const ThemeSwitcher = () => {
   return (
     <div className="space-y-3">
       <div className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <SectionLabel className="font-medium">
           {t("appearance.theme")}
-        </p>
+        </SectionLabel>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -128,9 +131,9 @@ const ThemeSwitcher = () => {
       </div>
 
       <div className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <SectionLabel className="font-medium">
           {t("appearance.palette")}
-        </p>
+        </SectionLabel>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

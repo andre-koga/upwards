@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { AlertCircle } from "lucide-react";
 import { syncEngine } from "@/lib/sync";
 import { useAuth } from "@/lib/use-auth";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { SyncStatusPill } from "./sync-status-pill";
 import { AuthPopup } from "./auth-popup";
 import { logError } from "@/lib/error-utils";
@@ -12,7 +13,7 @@ const FADE_OUT_DELAY_MS = 2200;
 export default function SyncStatus() {
   const [syncState, setSyncState] = useState(syncEngine.getState());
   const { isSupabaseConfigured, isAuthed } = useAuth();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const isOnline = useOnlineStatus();
   const [isVisible, setIsVisible] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const hideTimerRef = useRef<number | null>(null);
@@ -28,16 +29,9 @@ export default function SyncStatus() {
   useEffect(() => {
     const unsubscribe = syncEngine.subscribe(setSyncState);
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
     return () => {
       clearHideTimer();
       unsubscribe();
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 

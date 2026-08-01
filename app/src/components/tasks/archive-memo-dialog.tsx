@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FormDialog, FormDialogActions } from "@/components/forms";
+import { ConfirmFormDialog } from "@/components/forms";
 import { db, now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
 
@@ -42,20 +42,14 @@ export function ArchiveMemoDialog({
   const displayTitle = memoTitle?.trim() || t("memo.thisMemo");
 
   return (
-    <FormDialog
+    <ConfirmFormDialog
       open={open}
       onOpenChange={onOpenChange}
       title={t("memo.archiveConfirm.title")}
-      description={t("memo.archiveConfirm.description", { title: displayTitle })}
-    >
-      <FormDialogActions
-        onConfirm={handleArchive}
-        confirmLabel={confirmLabel ?? t("memo.archiveConfirm.confirm")}
-        secondaryAction={{
-          label: cancelLabel ?? tCommon("cancel"),
-          onClick: () => onOpenChange(false),
-        }}
-      />
-    </FormDialog>
+      message={t("memo.archiveConfirm.description", { title: displayTitle })}
+      confirmLabel={confirmLabel ?? t("memo.archiveConfirm.confirm")}
+      cancelLabel={cancelLabel ?? tCommon("cancel")}
+      onConfirm={() => void handleArchive()}
+    />
   );
 }

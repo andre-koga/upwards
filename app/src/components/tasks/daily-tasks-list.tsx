@@ -13,6 +13,7 @@ import { ArchivedMemosDialog } from "./archived-memos-dialog";
 import { RecurringMemosDialog } from "./recurring-memos-dialog";
 import { Palmtree, RefreshCw, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 import { ActivityStatsDialog } from "@/components/activities/activity-stats-dialog";
@@ -189,9 +190,7 @@ export default function DailyTasksList({
       {(oneTimeTasks.length > 0 || isToday) && (
         <div className="mb-4 space-y-2">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("sections.memos")}
-            </p>
+            <SectionLabel>{t("sections.memos")}</SectionLabel>
             <div className="flex w-full gap-1.5">
               <Button
                 type="button"
@@ -242,9 +241,7 @@ export default function DailyTasksList({
       {(loading || dailyActivities.length > 0) && (
         <>
           <div className="mb-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("sections.forToday")}
-            </p>
+            <SectionLabel>{t("sections.forToday")}</SectionLabel>
           </div>
 
           <div className="flex-1 space-y-2">
@@ -310,7 +307,7 @@ export default function DailyTasksList({
       {(currentActivityId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">
           <div className="ml-1 mr-1.5 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <SectionLabel>
               {t("sections.timeline")}
               {timelineBoundaryLabels && (
                 <span className="ml-1.5 font-normal normal-case">
@@ -319,7 +316,7 @@ export default function DailyTasksList({
                   })}
                 </span>
               )}
-            </p>
+            </SectionLabel>
             <span className="text-xs text-muted-foreground">
               {formatTimerDisplay(
                 timelineSessions.reduce(

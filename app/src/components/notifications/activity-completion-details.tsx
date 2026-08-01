@@ -1,4 +1,4 @@
-import type { InboxNotification } from "@/lib/notifications/use-notifications";
+import type { InboxNotification } from "@/lib/notifications/notification-inbox-types";
 import { useTranslation } from "react-i18next";
 
 export function ActivityCompletionDetails({ n }: { n: InboxNotification }) {
@@ -7,11 +7,10 @@ export function ActivityCompletionDetails({ n }: { n: InboxNotification }) {
   if (n.kind !== "activity_complete") return null;
   if (n.streak == null) return null;
 
-  const unit =
-    n.routine === "never" ? t("daysWithoutSlip") : t("dayStreak");
+  const unit = n.routine === "never" ? t("daysWithoutSlip") : t("dayStreak");
 
   return (
-    <p className="text-xs text-muted-foreground tabular-nums pt-0.5">
+    <p className="pt-0.5 text-xs tabular-nums text-muted-foreground">
       {n.streak} {unit}
     </p>
   );

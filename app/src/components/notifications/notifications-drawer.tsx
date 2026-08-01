@@ -3,10 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  useNotifications,
-  matchesFriendRequestNotification,
-} from "@/lib/notifications/use-notifications";
+import { useNotifications } from "@/lib/notifications/use-notifications";
+import { matchesFriendRequestNotification } from "@/lib/notifications/notification-inbox-utils";
 import { useFriends } from "@/lib/friends/use-friends";
 import { useAuth } from "@/lib/use-auth";
 import { NotificationRow } from "@/components/notifications/notification-row";

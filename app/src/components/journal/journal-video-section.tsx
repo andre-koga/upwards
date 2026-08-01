@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CloudOff } from "lucide-react";
 import { useDirectVideoThumbnail } from "./hooks/use-direct-video-thumbnail";
 import { cn } from "@/lib/utils";
@@ -38,11 +38,13 @@ export default function JournalVideoSection({
   canPlay,
   onThumbnailGenerated,
 }: JournalVideoSectionProps) {
-  const [playing, setPlaying] = useState(false);
+  const [playingSrc, setPlayingSrc] = useState<string | null>(null);
 
   const storedThumbnail = thumbnail?.storedThumbnail ?? null;
   const videoSrcForThumb = thumbnail?.videoSrc ?? videoSrc;
   const hasVideo = videoSrcForThumb.trim().length > 0;
+  // Playing state is keyed to the current source — a new video resets it.
+  const playing = hasVideo && playingSrc === videoSrcForThumb;
 
   const { directVideoThumb, directVideoThumbError } = useDirectVideoThumbnail({
     hasDirectVideo: hasVideo,
@@ -51,13 +53,9 @@ export default function JournalVideoSection({
     onThumbnailGenerated,
   });
 
-  useEffect(() => {
-    setPlaying(false);
-  }, [videoSrcForThumb]);
-
   const handlePlayClick = () => {
     if (!canPlay) return;
-    setPlaying(true);
+    setPlayingSrc(videoSrcForThumb);
   };
 
   return (
@@ -75,7 +73,7 @@ export default function JournalVideoSection({
             type="button"
             variant="bare"
             onClick={handlePlayClick}
-            className="!block absolute inset-0 h-full w-full rounded-none"
+            className="absolute inset-0 !block h-full w-full rounded-none"
             title={canPlay ? "Play video" : "Offline – connect to play"}
           >
             <img
@@ -90,7 +88,7 @@ export default function JournalVideoSection({
             type="button"
             variant="bare"
             onClick={handlePlayClick}
-            className="!block absolute inset-0 h-full w-full rounded-none"
+            className="absolute inset-0 !block h-full w-full rounded-none"
             title={canPlay ? "Play video" : "Offline – connect to play"}
           >
             <div className="absolute inset-0 flex h-full w-full items-center justify-center bg-muted">

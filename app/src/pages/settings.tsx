@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { AppPageShell } from "@/components/layout/app-page-shell";
 import { AppearanceCard } from "@/components/settings/appearance-card";
 import { LanguageCard } from "@/components/settings/language-card";
 import { AuthCard } from "@/components/settings/auth-card";
@@ -17,12 +18,11 @@ export default function SettingsPage() {
   const buildLabel = import.meta.env.VITE_APP_BUILD_TIMESTAMP ?? "dev";
   const randomPhrase = import.meta.env.VITE_APP_RANDOM_PHRASE ?? "hey there!";
   return (
-    <div className="space-y-3 p-4 pb-24">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">{t("page.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("page.subtitle")}</p>
-      </header>
-
+    <AppPageShell
+      title={t("page.title")}
+      subtitle={t("page.subtitle")}
+      className="space-y-3"
+    >
       <AppearanceCard />
       <LanguageCard />
       <DayResetCard />
@@ -46,6 +46,6 @@ export default function SettingsPage() {
       </div>
 
       <FloatingBackButton to="/" title={tNav("home")} />
-    </div>
+    </AppPageShell>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FormCalendarDateField,
@@ -23,7 +23,11 @@ import {
   toDateString,
 } from "@/lib/time-utils";
 
-import { getEffectiveToday, getDayResetMinutes, formatResetMinutes } from "@/lib/session/day-reset";
+import {
+  getEffectiveToday,
+  getDayResetMinutes,
+  formatResetMinutes,
+} from "@/lib/session/day-reset";
 
 interface ManualTimeEntryDialogProps {
   open: boolean;
@@ -65,19 +69,24 @@ export default function ManualTimeEntryDialog({
       dateString,
       startTime,
       endTime,
-      resetMinutes,
+      resetMinutes
     );
   }, [dateString, startTime, endTime, resetMinutes]);
 
   const spanWarning = useMemo(() => {
-    if (!resolvedPeriod || !spansLogicalDays(resolvedPeriod.startMs, resolvedPeriod.endMs)) {
+    if (
+      !resolvedPeriod ||
+      !spansLogicalDays(resolvedPeriod.startMs, resolvedPeriod.endMs)
+    ) {
       return null;
     }
     const startDay = formatWeekdayShortDate(
-      fromDateString(effectiveDateForMs(resolvedPeriod.startMs)),
+      fromDateString(effectiveDateForMs(resolvedPeriod.startMs))
     );
     const endDay = formatWeekdayShortDate(
-      fromDateString(getLogicalEndDate(resolvedPeriod.startMs, resolvedPeriod.endMs)),
+      fromDateString(
+        getLogicalEndDate(resolvedPeriod.startMs, resolvedPeriod.endMs)
+      )
     );
     return t("manualEntry.spanWarning", {
       startDay,
@@ -86,27 +95,29 @@ export default function ManualTimeEntryDialog({
     });
   }, [resolvedPeriod, resetMinutes, t]);
 
-  useEffect(() => {
-    if (!open) return;
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) {
+      const baseDateString = toDateString(initialDate);
+      const now = new Date();
+      const hasTodayDefaults = baseDateString === getEffectiveToday();
 
-    const baseDateString = toDateString(initialDate);
-    const now = new Date();
-    const hasTodayDefaults = baseDateString === getEffectiveToday();
-
-    setDateString(baseDateString);
-    setStartTime(
-      hasTodayDefaults
-        ? formatTimeInput(
-            new Date(now.getTime() - 5 * 60 * 1000).toISOString()
-          )
-        : "09:00:00"
-    );
-    setEndTime(
-      hasTodayDefaults ? formatTimeInput(now.toISOString()) : "09:05:00"
-    );
-    setSaving(false);
-    setError(null);
-  }, [open, initialDate]);
+      setDateString(baseDateString);
+      setStartTime(
+        hasTodayDefaults
+          ? formatTimeInput(
+              new Date(now.getTime() - 5 * 60 * 1000).toISOString()
+            )
+          : "09:00:00"
+      );
+      setEndTime(
+        hasTodayDefaults ? formatTimeInput(now.toISOString()) : "09:05:00"
+      );
+      setSaving(false);
+      setError(null);
+    }
+  }
 
   const handleSave = async () => {
     if (!activity) return;
@@ -125,7 +136,7 @@ export default function ManualTimeEntryDialog({
       dateString,
       startTime,
       endTime,
-      resetMinutes,
+      resetMinutes
     );
 
     const nowMs = Date.now();

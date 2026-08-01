@@ -1,13 +1,11 @@
 import { useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { AppPageShell } from "@/components/layout/app-page-shell";
+import { SectionLabel } from "@/components/ui/section-label";
 import { FEATURE_RELEASES } from "@/lib/feature-releases";
 import { getActiveLocaleTag } from "@/lib/i18n";
-
-function scrollAppToTop() {
-  window.scrollTo(0, 0);
-  document.querySelector<HTMLElement>("[data-app-scroll]")?.scrollTo(0, 0);
-}
+import { scrollAppToTop } from "@/lib/scroll-app-to-top";
 
 function formatReleaseDate(isoDate: string) {
   const d = new Date(`${isoDate}T12:00:00`);
@@ -26,14 +24,7 @@ export default function WhatsNewPage() {
   }, []);
 
   return (
-    <div className="space-y-6 p-4 pb-24">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">{t("whatsNew")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("whatsNewPage.subtitle")}
-        </p>
-      </header>
-
+    <AppPageShell title={t("whatsNew")} subtitle={t("whatsNewPage.subtitle")}>
       <ol className="space-y-8 border-l border-border pl-4">
         {FEATURE_RELEASES.map((release) => (
           <li key={release.id} className="relative">
@@ -41,9 +32,9 @@ export default function WhatsNewPage() {
               className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"
               aria-hidden
             />
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <SectionLabel className="font-medium">
               {formatReleaseDate(release.date)}
-            </p>
+            </SectionLabel>
             <h2 className="mt-1 text-base font-semibold text-foreground">
               {release.title}
             </h2>
@@ -54,9 +45,7 @@ export default function WhatsNewPage() {
             </ul>
             {release.fixes != null && release.fixes.length > 0 && (
               <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("whatsNewPage.bugFixes")}
-                </p>
+                <SectionLabel>{t("whatsNewPage.bugFixes")}</SectionLabel>
                 <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-muted-foreground">
                   {release.fixes.map((line) => (
                     <li key={line}>{line}</li>
@@ -69,6 +58,6 @@ export default function WhatsNewPage() {
       </ol>
 
       <FloatingBackButton to="/" title={t("home")} />
-    </div>
+    </AppPageShell>
   );
 }

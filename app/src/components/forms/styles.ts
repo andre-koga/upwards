@@ -17,6 +17,10 @@ export const dialogSecondaryActionClassName =
 
 export const dialogSecondaryDestructiveClassName = "hover:text-destructive";
 
+/** Primary confirm action in a destructive dialog (delete permanently, etc.). */
+export const dialogPrimaryDestructiveClassName =
+  "bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive";
+
 export const dialogFieldLabelClassName = "text-xs";
 
 /** Action control in a dialog form: same chrome as {@link dialogFieldClassName} / select triggers (rounded-md, border, h-10). */

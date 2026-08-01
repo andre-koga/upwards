@@ -2,9 +2,7 @@
  * Unified notifications inbox: friend requests (+ legacy activity_complete kind).
  */
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -18,22 +16,11 @@ import {
   isNotificationClearable,
   pruneDismissedNotifications,
 } from "@/lib/notifications/notification-dismissals";
-import { matchesFriendRequestNotification } from "@/lib/notifications/notification-inbox-utils";
-
-export type NotificationKind = "friend_request" | "activity_complete";
-
-export interface InboxNotification {
-  id: string;
-  kind: NotificationKind;
-  actorId: string;
-  actorUsername: string | null;
-  actorDisplayName: string | null;
-  activityName: string | null;
-  actionStatus: "pending" | "accepted" | "declined" | null;
-  createdAt: string;
-  streak?: number;
-  routine?: string | null;
-}
+import { NotificationsContext } from "@/lib/notifications/notifications-context";
+import type {
+  InboxNotification,
+  LoadNotificationsOptions,
+} from "@/lib/notifications/notification-inbox-types";
 
 type ProfileRow = { username: string | null; display_name: string | null };
 
@@ -55,29 +42,6 @@ async function fetchProfiles(
   return map;
 }
 
-export type LoadNotificationsOptions = {
-  silent?: boolean;
-};
-
-interface NotificationsContextValue {
-  notifications: InboxNotification[];
-  loading: boolean;
-  error: string | null;
-  reload: (options?: LoadNotificationsOptions) => Promise<void>;
-  unreadCount: number;
-  clearableCount: number;
-  dismissNotification: (id: string) => void;
-  dismissAllClearable: () => void;
-  removeNotificationsMatching: (
-    match: (notification: InboxNotification) => boolean
-  ) => void;
-  dismissNotificationIds: (ids: string[]) => void;
-}
-
-const NotificationsContext = createContext<NotificationsContextValue | null>(
-  null
-);
-
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { isAuthed } = useAuth();
   const [allNotifications, setAllNotifications] = useState<InboxNotification[]>(
@@ -89,78 +53,95 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const userId = isAuthed ? getCachedUserId() : null;
 
-  useEffect(() => {
+  const [prevUserId, setPrevUserId] = useState(userId);
+  if (prevUserId !== userId) {
+    setPrevUserId(userId);
     setDismissedIds(new Set());
     setSuppressedIds(new Set());
-  }, [userId]);
+  }
 
-  const load = useCallback(async (options?: LoadNotificationsOptions) => {
-    if (!supabase || !userId) {
-      setAllNotifications([]);
-      setDismissedIds(new Set());
-      setLoading(false);
-      return;
-    }
-    const silent = options?.silent ?? false;
-    try {
-      if (!silent) setLoading(true);
-      setError(null);
+  const load = useCallback(
+    async (options?: LoadNotificationsOptions) => {
+      if (!supabase || !userId) {
+        setAllNotifications([]);
+        setDismissedIds(new Set());
+        setLoading(false);
+        return;
+      }
+      const silent = options?.silent ?? false;
+      try {
+        if (!silent) setLoading(true);
+        setError(null);
 
-      const [
-        { data: friendReqs, error: frErr },
-        dismissedSet,
-      ] = await Promise.all([
-        supabase
-          .from("friend_requests")
-          .select("id, from_user_id, status, created_at")
-          .eq("to_user_id", userId)
-          .eq("status", "pending"),
-        fetchDismissedNotificationIds(userId),
-      ]);
+        const [{ data: friendReqs, error: frErr }, dismissedSet] =
+          await Promise.all([
+            supabase
+              .from("friend_requests")
+              .select("id, from_user_id, status, created_at")
+              .eq("to_user_id", userId)
+              .eq("status", "pending"),
+            fetchDismissedNotificationIds(userId),
+          ]);
 
-      if (frErr) throw frErr;
+        if (frErr) throw frErr;
 
-      const actorIds = [
-        ...new Set((friendReqs ?? []).map((r) => r.from_user_id as string)),
-      ];
-      const profiles = await fetchProfiles(actorIds);
+        const actorIds = [
+          ...new Set((friendReqs ?? []).map((r) => r.from_user_id as string)),
+        ];
+        const profiles = await fetchProfiles(actorIds);
 
-      const friendItems: InboxNotification[] = (friendReqs ?? []).map((row) => {
-        const fromId = row.from_user_id as string;
-        const profile = profiles.get(fromId);
-        return {
-          id: `fr-${row.id as string}`,
-          kind: "friend_request",
-          actorId: fromId,
-          actorUsername: profile?.username ?? null,
-          actorDisplayName: profile?.display_name ?? null,
-          activityName: null,
-          actionStatus: "pending",
-          createdAt: row.created_at as string,
-        };
-      });
+        const friendItems: InboxNotification[] = (friendReqs ?? []).map(
+          (row) => {
+            const fromId = row.from_user_id as string;
+            const profile = profiles.get(fromId);
+            return {
+              id: `fr-${row.id as string}`,
+              kind: "friend_request",
+              actorId: fromId,
+              actorUsername: profile?.username ?? null,
+              actorDisplayName: profile?.display_name ?? null,
+              activityName: null,
+              actionStatus: "pending",
+              createdAt: row.created_at as string,
+            };
+          }
+        );
 
-      const merged = [...friendItems].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+        const merged = [...friendItems].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
 
-      setAllNotifications(merged);
-      setDismissedIds(dismissedSet);
-      void pruneDismissedNotifications(
-        userId,
-        merged.map((n) => n.id)
-      );
-    } catch (err) {
-      console.error("[notifications] load failed:", err);
-      setError(err instanceof Error ? err.message : "Failed to load notifications");
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }, [userId]);
+        setAllNotifications(merged);
+        setDismissedIds(dismissedSet);
+        void pruneDismissedNotifications(
+          userId,
+          merged.map((n) => n.id)
+        );
+      } catch (err) {
+        console.error("[notifications] load failed:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load notifications"
+        );
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [userId]
+  );
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => load())
+      .catch(() => {
+        if (!cancelled) {
+          // load() already logs errors
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   const notifications = useMemo(
@@ -185,9 +166,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const dismissAllClearable = useCallback(() => {
     if (!userId) return;
-    const ids = notifications
-      .filter(isNotificationClearable)
-      .map((n) => n.id);
+    const ids = notifications.filter(isNotificationClearable).map((n) => n.id);
     if (ids.length === 0) return;
     setDismissedIds((prev) => {
       const next = new Set(prev);
@@ -255,13 +234,3 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     </NotificationsContext.Provider>
   );
 }
-
-export function useNotifications(): NotificationsContextValue {
-  const ctx = useContext(NotificationsContext);
-  if (!ctx) {
-    throw new Error("useNotifications must be used within NotificationsProvider");
-  }
-  return ctx;
-}
-
-export { matchesFriendRequestNotification };

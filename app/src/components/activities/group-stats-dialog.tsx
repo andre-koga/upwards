@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import { loadGroupStats, type GroupStats } from "@/lib/stats";
+import { loadGroupStats } from "@/lib/stats";
+import { useAsyncData } from "@/hooks/use-async-data";
 import { FormDialog } from "@/components/forms/form-dialog";
 import { GroupStatsCore } from "@/components/stats/group-stats-core";
 import { Button } from "@/components/ui/button";
@@ -18,23 +19,18 @@ export function GroupStatsDialog({
   onOpenChange,
   group,
 }: GroupStatsDialogProps) {
+  const { t } = useTranslation("stats");
   const navigate = useNavigate();
-  const [stats, setStats] = useState<GroupStats | null>(null);
-  const [loading, setLoading] = useState(false);
+  const {
+    data: stats,
+    loading,
+    error,
+  } = useAsyncData(
+    () => (open && group ? loadGroupStats(group.id) : Promise.resolve(null)),
+    [open, group]
+  );
 
   const color = group?.color || DEFAULT_GROUP_COLOR;
-
-  useEffect(() => {
-    if (!open || !group) {
-      setStats(null);
-      return;
-    }
-    setLoading(true);
-    loadGroupStats(group.id)
-      .then(setStats)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [open, group]);
 
   const handleViewFull = () => {
     if (!group) return;
@@ -62,7 +58,15 @@ export function GroupStatsDialog({
       contentClassName="sm:max-w-sm"
     >
       {loading && (
-        <p className="py-6 text-center text-sm text-muted-foreground">Loading stats…</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          Loading stats…
+        </p>
+      )}
+
+      {!loading && error && (
+        <p className="py-6 text-center text-sm text-destructive">
+          {t("loadError")}
+        </p>
       )}
 
       {!loading && stats && (

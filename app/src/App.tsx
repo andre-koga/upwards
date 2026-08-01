@@ -2,7 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import { NotificationsFloatingButton } from "@/components/notifications/notifications-floating-button";
-import { NotificationsProvider } from "@/lib/notifications/use-notifications";
+import { NotificationsProvider } from "@/lib/notifications/notifications-provider";
 import SyncStatus from "@/components/settings/sync-status";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
 import { BrowserChromeThemeSync } from "@/components/layout/browser-chrome-theme-sync";

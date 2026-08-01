@@ -12,6 +12,7 @@
   "habitNotFound": "Hábito não encontrado.",
   "noHabitsInGroup": "Nenhum hábito neste grupo ainda.",
   "createGroupHint": "Crie um grupo em Projetos para começar a acompanhar as estatísticas.",
+  "loadError": "Não foi possível carregar as estatísticas. Tente novamente.",
   "sections": {
     "thisWeek": "Esta semana",
     "completion": "Conclusão",

@@ -75,53 +75,50 @@ export default function JournalEditDialog({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const prevOpenRef = useRef(open);
-  const wasOpenRef = useRef(false);
   const closeReasonRef = useRef<"save" | "cancel" | null>(null);
   /** Journal day this form session is for; used as stash key on dismiss. */
-  const entryDateSessionRef = useRef(entryDate);
+  const [sessionEntryDate, setSessionEntryDate] = useState(entryDate);
   /** Photo paths when this edit session opened; used to detect removals and orphans. */
-  const initialPhotoPathsRef = useRef<string[]>([]);
+  const [initialPhotoPathsSnapshot, setInitialPhotoPathsSnapshot] =
+    useState(initialPhotoPaths);
 
-  useEffect(() => {
+  // Only initialize fields when the dialog transitions from closed → open.
+  // Running this whenever initial* props change would reset whatever the user
+  // has already typed if a background save updates those props mid-session.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (open) {
-      entryDateSessionRef.current = entryDate;
+      setSessionEntryDate(entryDate);
+      const draft = getJournalEditSessionDraft(entryDate);
+      if (draft) {
+        setEmoji(draft.emoji);
+        setTitle(draft.title);
+        setText(draft.text);
+        setVideoPath(draft.videoPath);
+        setPhotoPaths(draft.photoPaths);
+        setInitialPhotoPathsSnapshot(draft.photoPaths);
+      } else {
+        setEmoji(initialEmoji);
+        setTitle(initialTitle);
+        setText(initialText);
+        setVideoPath(initialVideoPath);
+        setPhotoPaths(initialPhotoPaths);
+        setInitialPhotoPathsSnapshot(initialPhotoPaths);
+      }
+      setUploadError(null);
     }
-  }, [open, entryDate]);
-
-  useEffect(() => {
-    // Only initialize fields when the dialog transitions from closed → open.
-    // Running this whenever initial* props change would reset whatever the user
-    // has already typed if a background save updates those props mid-session.
-    const justOpened = open && !wasOpenRef.current;
-    wasOpenRef.current = open;
-    if (!justOpened) return;
-
-    const draft = getJournalEditSessionDraft(entryDate);
-    if (draft) {
-      setEmoji(draft.emoji);
-      setTitle(draft.title);
-      setText(draft.text);
-      setVideoPath(draft.videoPath);
-      setPhotoPaths(draft.photoPaths);
-      initialPhotoPathsRef.current = draft.photoPaths;
-    } else {
-      setEmoji(initialEmoji);
-      setTitle(initialTitle);
-      setText(initialText);
-      setVideoPath(initialVideoPath);
-      setPhotoPaths(initialPhotoPaths);
-      initialPhotoPathsRef.current = initialPhotoPaths;
-    }
-    setUploadError(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, entryDate]);
+  }
 
   useEffect(() => {
     if (prevOpenRef.current && !open) {
-      if (closeReasonRef.current === "save" || closeReasonRef.current === "cancel") {
+      if (
+        closeReasonRef.current === "save" ||
+        closeReasonRef.current === "cancel"
+      ) {
         closeReasonRef.current = null;
       } else {
-        setJournalEditSessionDraft(entryDateSessionRef.current, {
+        setJournalEditSessionDraft(sessionEntryDate, {
           emoji,
           title,
           text,
@@ -131,10 +128,10 @@ export default function JournalEditDialog({
       }
     }
     prevOpenRef.current = open;
-  }, [open, emoji, title, text, videoPath, photoPaths]);
+  }, [open, emoji, title, text, videoPath, photoPaths, sessionEntryDate]);
 
   const deleteRemovedSavedPhotos = (finalPhotoPaths: string[]) => {
-    const removedPaths = initialPhotoPathsRef.current.filter(
+    const removedPaths = initialPhotoPathsSnapshot.filter(
       (path) => !finalPhotoPaths.includes(path)
     );
     if (removedPaths.length === 0) return;
@@ -147,7 +144,7 @@ export default function JournalEditDialog({
 
   const deleteOrphanedUploads = (currentPhotoPaths: string[]) => {
     const orphanedPaths = currentPhotoPaths.filter(
-      (path) => !initialPhotoPathsRef.current.includes(path)
+      (path) => !initialPhotoPathsSnapshot.includes(path)
     );
     if (orphanedPaths.length === 0) return;
     void Promise.all(
@@ -159,7 +156,7 @@ export default function JournalEditDialog({
 
   const handleSave = () => {
     closeReasonRef.current = "save";
-    clearJournalEditSessionDraft(entryDateSessionRef.current);
+    clearJournalEditSessionDraft(sessionEntryDate);
     deleteRemovedSavedPhotos(photoPaths);
     onSave({
       emoji: getFirstEmoji(emoji),
@@ -254,7 +251,7 @@ export default function JournalEditDialog({
     const path = photoPaths[index];
     if (!path) return;
     setPhotoPaths((prev) => prev.filter((_, i) => i !== index));
-    if (!initialPhotoPathsRef.current.includes(path)) {
+    if (!initialPhotoPathsSnapshot.includes(path)) {
       void deleteJournalPhoto(path).catch(() => undefined);
     }
   };
@@ -363,26 +360,36 @@ export default function JournalEditDialog({
                   ) : (
                     <Video aria-hidden />
                   )}
-                  {videoPath.trim().length > 0 ? t("upload.replaceVideo") : t("upload.addVideo")}
+                  {videoPath.trim().length > 0
+                    ? t("upload.replaceVideo")
+                    : t("upload.addVideo")}
                 </FormControlButton>
 
                 <FormControlButton
                   className="w-10 shrink-0 justify-center px-0"
                   onClick={() => photoInputRef.current?.click()}
-                  disabled={uploadingVideo || uploadingPhotos || !canAddMorePhotos}
+                  disabled={
+                    uploadingVideo || uploadingPhotos || !canAddMorePhotos
+                  }
                   title={
                     !canAddMorePhotos
                       ? t("upload.maxPhotosReached", { count: MAX_PHOTOS })
                       : photoCount > 0
-                      ? t("upload.photoCount", { current: photoCount, max: MAX_PHOTOS })
-                      : t("upload.addPhotos")
+                        ? t("upload.photoCount", {
+                            current: photoCount,
+                            max: MAX_PHOTOS,
+                          })
+                        : t("upload.addPhotos")
                   }
                   aria-label={
                     !canAddMorePhotos
                       ? t("upload.maxPhotosReached", { count: MAX_PHOTOS })
                       : photoCount > 0
-                      ? t("upload.photoCount", { current: photoCount, max: MAX_PHOTOS })
-                      : t("upload.addPhotos")
+                        ? t("upload.photoCount", {
+                            current: photoCount,
+                            max: MAX_PHOTOS,
+                          })
+                        : t("upload.addPhotos")
                   }
                 >
                   {uploadingPhotos ? (
@@ -415,7 +422,9 @@ export default function JournalEditDialog({
                           onClick={() => removePhoto(index)}
                           className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow"
                           title={t("upload.removePhoto", { index: index + 1 })}
-                          aria-label={t("upload.removePhoto", { index: index + 1 })}
+                          aria-label={t("upload.removePhoto", {
+                            index: index + 1,
+                          })}
                         >
                           <X className="h-2.5 w-2.5" aria-hidden />
                         </button>
@@ -436,7 +445,7 @@ export default function JournalEditDialog({
           label: tCommon("cancel"),
           onClick: () => {
             closeReasonRef.current = "cancel";
-            clearJournalEditSessionDraft(entryDateSessionRef.current);
+            clearJournalEditSessionDraft(sessionEntryDate);
             deleteOrphanedUploads(photoPaths);
             onOpenChange(false);
           },

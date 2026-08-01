@@ -1,4 +1,4 @@
-import { FormDialog, FormDialogActions } from "@/components/forms";
+import { ConfirmFormDialog } from "@/components/forms";
 import { db, now } from "@/lib/db";
 import { appendGroupStatusEvent, stopCurrentActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
@@ -42,20 +42,14 @@ export function ArchiveGroupDialog({
   const displayName = groupName?.trim() || "this group";
 
   return (
-    <FormDialog
+    <ConfirmFormDialog
       open={open}
       onOpenChange={onOpenChange}
       title="Archive group?"
-      description={`Archive "${displayName}"? Activities in this group will be hidden from For Today until you restore the group.`}
-    >
-      <FormDialogActions
-        onConfirm={handleArchive}
-        confirmLabel={confirmLabel}
-        secondaryAction={{
-          label: cancelLabel,
-          onClick: () => onOpenChange(false),
-        }}
-      />
-    </FormDialog>
+      message={`Archive "${displayName}"? Activities in this group will be hidden from For Today until you restore the group.`}
+      confirmLabel={confirmLabel}
+      cancelLabel={cancelLabel}
+      onConfirm={() => void handleArchive()}
+    />
   );
 }

@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { AppPageShell } from "@/components/layout/app-page-shell";
+import { SectionLabel } from "@/components/ui/section-label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFriends } from "@/lib/friends/use-friends";
@@ -55,15 +57,14 @@ export default function FriendsPage() {
 
   if (!isSupabaseConfigured || !isAuthed) {
     return (
-      <div className="space-y-3 p-4 pb-24">
-        <header className="space-y-1">
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <Users className="h-6 w-6" /> {t("title")}
-          </h1>
-        </header>
+      <AppPageShell
+        title={t("title")}
+        titleIcon={<Users className="h-6 w-6" />}
+        className="space-y-3"
+      >
         <p className="text-sm text-muted-foreground">{t("signInRequired")}</p>
         <FloatingBackButton to="/" title={tNav("home")} />
-      </div>
+      </AppPageShell>
     );
   }
 
@@ -95,14 +96,11 @@ export default function FriendsPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 pb-24">
-      <header className="space-y-1">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Users className="h-6 w-6" /> {t("title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-      </header>
-
+    <AppPageShell
+      title={t("title")}
+      subtitle={t("subtitle")}
+      titleIcon={<Users className="h-6 w-6" />}
+    >
       {!profileLoading && !username && (
         <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
           {t("setUsername")}{" "}
@@ -114,9 +112,9 @@ export default function FriendsPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("addFriend")}
-        </h2>
+        <SectionLabel asChild className="text-sm">
+          <h2>{t("addFriend")}</h2>
+        </SectionLabel>
         <form onSubmit={(e) => void handleInvite(e)} className="flex gap-2">
           <div className="relative flex-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -156,9 +154,9 @@ export default function FriendsPage() {
 
       {incoming.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("incomingRequests")}
-          </h2>
+          <SectionLabel asChild className="text-sm">
+            <h2>{t("incomingRequests")}</h2>
+          </SectionLabel>
           <ul className="space-y-2">
             {incoming.map((req) => (
               <li
@@ -209,9 +207,9 @@ export default function FriendsPage() {
 
       {outgoing.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("sentRequests")}
-          </h2>
+          <SectionLabel asChild className="text-sm">
+            <h2>{t("sentRequests")}</h2>
+          </SectionLabel>
           <ul className="space-y-2">
             {outgoing.map((req) => (
               <li
@@ -236,9 +234,9 @@ export default function FriendsPage() {
       )}
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("friendsList")}
-        </h2>
+        <SectionLabel asChild className="text-sm">
+          <h2>{t("friendsList")}</h2>
+        </SectionLabel>
         {!loading && friends.length === 0 && (
           <p className="text-sm text-muted-foreground">{t("noFriendsYet")}</p>
         )}
@@ -275,6 +273,6 @@ export default function FriendsPage() {
       </section>
 
       <FloatingBackButton to="/" title={tNav("home")} />
-    </div>
+    </AppPageShell>
   );
 }
