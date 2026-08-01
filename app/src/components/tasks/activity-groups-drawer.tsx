@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { ChevronDown, ChevronLeft, Plus, X } from "lucide-react";
@@ -31,6 +30,12 @@ import { ActivityStatsDialog } from "@/components/activities/activity-stats-dial
 import { GroupStatsDialog } from "@/components/activities/group-stats-dialog";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 async function loadActivityGroupLists(): Promise<{
   active: ActivityGroup[];
@@ -81,6 +86,56 @@ function ArchivedPillToggle({
   );
 }
 
+function DrawerActivityRow({
+  activity,
+  group,
+  completed,
+  isRunning,
+  elapsedMs,
+  onToggleCompleted,
+  onEdit,
+  onStats,
+  onActivate,
+  onManualEntry,
+}: {
+  activity: Activity;
+  group: ActivityGroup;
+  completed: boolean;
+  isRunning: boolean;
+  elapsedMs: number;
+  onToggleCompleted: () => void;
+  onEdit: () => void;
+  onStats: () => void;
+  onActivate?: () => void | Promise<void>;
+  onManualEntry?: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <ActivityCompleteToggle
+        isCompleted={completed}
+        onClick={onToggleCompleted}
+      />
+      <div className="min-w-0 flex-1">
+        <ActivityPill
+          name={getActivityDisplayName(activity, group)}
+          color={group.color || DEFAULT_GROUP_COLOR}
+          elapsedMs={elapsedMs}
+          isRunning={!completed && isRunning}
+          onNameClick={onEdit}
+          onSettingsClick={completed ? undefined : onEdit}
+          onStatsClick={onStats}
+          onClick={onActivate}
+          onManualEntry={completed ? undefined : onManualEntry}
+          nameClassName={
+            completed ? "line-through text-muted-foreground" : undefined
+          }
+          readOnly={completed}
+        />
+      </div>
+    </div>
+  );
+}
+
 interface ActivityGroupsDrawerProps {
   currentActivityId?: string | null;
   activities?: Activity[];
@@ -119,7 +174,6 @@ export default function ActivityGroupsDrawer({
   floating = true,
 }: ActivityGroupsDrawerProps) {
   const { t } = useTranslation("projects");
-  const navigate = useNavigate();
   const resolvedTriggerTitle = triggerTitle ?? t("drawer.pickGroupOrActivity");
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"groups" | "activities">("groups");
@@ -148,9 +202,6 @@ export default function ActivityGroupsDrawer({
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
     string | null
   >(null);
-  const pendingContentRef = useRef<
-    { type: "activities"; group: ActivityGroup } | { type: "groups" } | null
-  >(null);
   const { bottomInset } = useVisualViewportLayout();
 
   useEffect(() => {
@@ -167,12 +218,6 @@ export default function ActivityGroupsDrawer({
     return () => {
       cancelled = true;
     };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) {
-      setShowArchivedGroups(false);
-    }
   }, [open]);
 
   // Load all non-deleted activities for the selected group whenever the group changes or a tick fires.
@@ -203,7 +248,11 @@ export default function ActivityGroupsDrawer({
   const handleMarkActivityCompleted = useCallback(
     async (activityId: string, completed: boolean) => {
       try {
-        await setActivityCompleted(activityId, completed, new Date(getEffectiveToday() + "T12:00:00"));
+        await setActivityCompleted(
+          activityId,
+          completed,
+          new Date(getEffectiveToday() + "T12:00:00")
+        );
         reloadGroupActivities();
         onTasksDataChanged?.();
       } catch (error) {
@@ -213,49 +262,32 @@ export default function ActivityGroupsDrawer({
     [onTasksDataChanged]
   );
 
-  const closeDrawer = () => {
+  const resetDrawerView = () => {
     setView("groups");
     setSelectedGroup(null);
-    setOpen(false);
+    setShowArchivedGroups(false);
   };
 
-  const handleBackdropClick = () => {
-    if (view === "activities") {
-      pendingContentRef.current = { type: "groups" };
-      setOpen(false);
-    } else {
-      setView("groups");
-      setOpen(false);
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      resetDrawerView();
     }
+  };
+
+  const closeDrawer = () => {
+    setOpen(false);
+    resetDrawerView();
   };
 
   const handleOpenGroup = (group: ActivityGroup) => {
-    pendingContentRef.current = { type: "activities", group };
-    setOpen(false);
+    setSelectedGroup(group);
+    setView("activities");
   };
 
   const handleBackToGroups = () => {
-    pendingContentRef.current = { type: "groups" };
-    setOpen(false);
-  };
-
-  const handleDrawerTransitionEnd = () => {
-    if (open) return;
-    const pending = pendingContentRef.current;
-    pendingContentRef.current = null;
-    if (pending) {
-      if (pending.type === "activities") {
-        setSelectedGroup(pending.group);
-        setView("activities");
-      } else {
-        setSelectedGroup(null);
-        setView("groups");
-      }
-      setOpen(true);
-    } else {
-      setView("groups");
-      setSelectedGroup(null);
-    }
+    setSelectedGroup(null);
+    setView("groups");
   };
 
   const incompleteActivities = groupActivities.filter((a) => !a.completed_at);
@@ -263,8 +295,8 @@ export default function ActivityGroupsDrawer({
 
   const manualEntryActivity = manualEntryActivityId
     ? (groupActivities.find((item) => item.id === manualEntryActivityId) ??
-        activities.find((item) => item.id === manualEntryActivityId) ??
-        null)
+      activities.find((item) => item.id === manualEntryActivityId) ??
+      null)
     : null;
   const manualEntryGroup = manualEntryActivity
     ? selectedGroup && selectedGroup.id === manualEntryActivity.group_id
@@ -274,40 +306,25 @@ export default function ActivityGroupsDrawer({
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className={cn(
-          "fixed inset-0 z-[60] transition-all duration-300 ease-out",
-          open && "pointer-events-auto bg-black/50 backdrop-blur-sm",
-          !open && "pointer-events-none bg-transparent backdrop-blur-none"
-        )}
-        onClick={handleBackdropClick}
-      />
-
-      {/* Drawer */}
-      <div
-        className={`fixed inset-x-0 z-[70] transition-transform duration-300 ease-out ${
-          open ? "translate-y-0" : "translate-y-full"
-        }`}
-        style={{ bottom: bottomInset }}
-        onTransitionEnd={(e) => {
-          if (e.propertyName === "transform" && !open) {
-            handleDrawerTransitionEnd();
-          }
-        }}
-      >
-        <div className="flex max-h-[70vh] flex-col rounded-t-2xl border-t border-border bg-background shadow-xl">
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        <SheetContent
+          side="bottom"
+          showCloseButton={false}
+          className="flex max-h-[70vh] flex-col gap-0 rounded-t-2xl border-t border-border p-0 shadow-xl"
+          style={{ bottom: bottomInset }}
+        >
           <div
             className="mx-auto mb-1 mt-3 h-1 w-10 shrink-0 rounded-full bg-muted"
             aria-hidden
           />
 
-          {/* Content: groups or activities (switched after close-then-open) */}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {view === "groups" ? (
               <>
                 <div className="shrink-0 px-5 pb-3 pt-2">
-                  <h2 className="text-center text-lg font-semibold">{t("drawer.groups")}</h2>
+                  <SheetTitle className="text-center text-lg">
+                    {t("drawer.groups")}
+                  </SheetTitle>
                 </div>
                 <div className="flex shrink-0 justify-center px-4 pb-6">
                   <Button
@@ -315,7 +332,7 @@ export default function ActivityGroupsDrawer({
                     variant="outlineDashed"
                     className="rounded-full px-4 py-2 text-sm"
                     onClick={() => {
-                      setOpen(false);
+                      closeDrawer();
                       setNewGroupDialogOpen(true);
                     }}
                   >
@@ -352,9 +369,7 @@ export default function ActivityGroupsDrawer({
                         <div className="flex w-full flex-col">
                           <ArchivedPillToggle
                             expanded={showArchivedGroups}
-                            onToggle={() =>
-                              setShowArchivedGroups((v) => !v)
-                            }
+                            onToggle={() => setShowArchivedGroups((v) => !v)}
                             showLabel={t("drawer.showArchivedGroups")}
                             hideLabel={t("drawer.hideArchivedGroups")}
                           />
@@ -366,7 +381,9 @@ export default function ActivityGroupsDrawer({
                                   name={group.name}
                                   color={group.color || DEFAULT_GROUP_COLOR}
                                   nameTitle={t("drawer.restoreOrDeleteGroup")}
-                                  nameAriaLabel={t("drawer.restoreOrDeleteGroup")}
+                                  nameAriaLabel={t(
+                                    "drawer.restoreOrDeleteGroup"
+                                  )}
                                   onNameClick={() =>
                                     setArchivedActionsTarget({
                                       type: "group",
@@ -402,9 +419,9 @@ export default function ActivityGroupsDrawer({
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
-                  <h2 className="flex-1 text-center text-lg font-semibold">
+                  <SheetTitle className="flex-1 text-center text-lg">
                     {selectedGroup?.name ?? ""}
-                  </h2>
+                  </SheetTitle>
                   <div className="w-9" />
                 </div>
                 {selectedGroup && (
@@ -414,8 +431,8 @@ export default function ActivityGroupsDrawer({
                       variant="outlineDashed"
                       className="rounded-full px-4 py-2 text-sm"
                       onClick={() => {
-                        setOpen(false);
                         setNewActivityDialogGroup(selectedGroup);
+                        closeDrawer();
                       }}
                     >
                       <Plus className="h-4 w-4" />
@@ -441,100 +458,63 @@ export default function ActivityGroupsDrawer({
                       ) : (
                         incompleteActivities.map((activity) => {
                           const isRunning = currentActivityId === activity.id;
-                          const groupColor =
-                            selectedGroup.color || DEFAULT_GROUP_COLOR;
                           return (
-                            <div
+                            <DrawerActivityRow
                               key={activity.id}
-                              className="flex items-center gap-2"
-                            >
-                              <ActivityCompleteToggle
-                                isCompleted={false}
-                                onClick={() => {
-                                  void handleMarkActivityCompleted(
-                                    activity.id,
-                                    true
-                                  );
-                                }}
-                              />
-                              <div className="min-w-0 flex-1">
-                              <ActivityPill
-                                name={getActivityDisplayName(
-                                  activity,
-                                  selectedGroup
-                                )}
-                                color={groupColor}
-                                elapsedMs={getActivityDrawerElapsedMs(
-                                  activity.id
-                                )}
-                                isRunning={isRunning}
-                                onNameClick={() => setEditingActivity(activity)}
-                                onSettingsClick={() => setEditingActivity(activity)}
-                                onStatsClick={() => setStatsActivity(activity)}
-                                onClick={async () => {
-                                  if (isRunning) {
-                                    await onStopActivity?.();
-                                  } else {
-                                    await onStartActivity?.(activity.id);
-                                  }
-                                  closeDrawer();
-                                }}
-                                onManualEntry={
-                                  onAddManualEntry
-                                    ? () =>
-                                        setManualEntryActivityId(activity.id)
-                                    : undefined
+                              activity={activity}
+                              group={selectedGroup}
+                              completed={false}
+                              isRunning={isRunning}
+                              elapsedMs={getActivityDrawerElapsedMs(
+                                activity.id
+                              )}
+                              onToggleCompleted={() => {
+                                void handleMarkActivityCompleted(
+                                  activity.id,
+                                  true
+                                );
+                              }}
+                              onEdit={() => setEditingActivity(activity)}
+                              onStats={() => setStatsActivity(activity)}
+                              onActivate={async () => {
+                                if (isRunning) {
+                                  await onStopActivity?.();
+                                } else {
+                                  await onStartActivity?.(activity.id);
                                 }
-                              />
-                              </div>
-                            </div>
+                                closeDrawer();
+                              }}
+                              onManualEntry={
+                                onAddManualEntry
+                                  ? () => setManualEntryActivityId(activity.id)
+                                  : undefined
+                              }
+                            />
                           );
                         })
                       )}
                       {completedActivities.length > 0 ? (
                         <div className="mt-2 space-y-2">
-                          {completedActivities.map((activity) => {
-                            const groupColor =
-                              selectedGroup.color || DEFAULT_GROUP_COLOR;
-                            return (
-                              <div
-                                key={activity.id}
-                                className="flex items-center gap-2"
-                              >
-                                <ActivityCompleteToggle
-                                  isCompleted={true}
-                                  onClick={() => {
-                                    void handleMarkActivityCompleted(
-                                      activity.id,
-                                      false
-                                    );
-                                  }}
-                                />
-                                <div className="min-w-0 flex-1">
-                                  <ActivityPill
-                                    name={getActivityDisplayName(
-                                      activity,
-                                      selectedGroup
-                                    )}
-                                    color={groupColor}
-                                    elapsedMs={getActivityDrawerElapsedMs(
-                                      activity.id
-                                    )}
-                                    isRunning={false}
-                                    onNameClick={() =>
-                                      setEditingActivity(activity)
-                                    }
-                                    onSettingsClick={() =>
-                                      setEditingActivity(activity)
-                                    }
-                                    onStatsClick={() => setStatsActivity(activity)}
-                                    nameClassName="line-through text-muted-foreground"
-                                    readOnly
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })}
+                          {completedActivities.map((activity) => (
+                            <DrawerActivityRow
+                              key={activity.id}
+                              activity={activity}
+                              group={selectedGroup}
+                              completed
+                              isRunning={false}
+                              elapsedMs={getActivityDrawerElapsedMs(
+                                activity.id
+                              )}
+                              onToggleCompleted={() => {
+                                void handleMarkActivityCompleted(
+                                  activity.id,
+                                  false
+                                );
+                              }}
+                              onEdit={() => setEditingActivity(activity)}
+                              onStats={() => setStatsActivity(activity)}
+                            />
+                          ))}
                         </div>
                       ) : null}
                     </>
@@ -543,40 +523,46 @@ export default function ActivityGroupsDrawer({
               </>
             )}
           </div>
-        </div>
-      </div>
+        </SheetContent>
 
-      {/* FAB */}
-      <Button
-        type="button"
-        variant="default"
-        size={triggerLabel ? "default" : "floatingNav"}
-        onClick={() => setOpen((v) => !v)}
-        title={triggerLabel || !open ? resolvedTriggerTitle : t("drawer.closePicker")}
-        aria-label={
-          triggerLabel || !open ? resolvedTriggerTitle : t("drawer.closePicker")
-        }
-        className={[
-          !triggerLabel &&
-            floating &&
-            "fixed bottom-2 right-2 z-[60] gap-0 px-0 shadow-md",
-          triggerLabel && "rounded-full shadow-md",
-          triggerClassName,
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        {triggerLabel ? (
-          <span className="flex items-center justify-center gap-2">
-            <TriggerIcon className="h-5 w-5 shrink-0" aria-hidden />
-            <span className="text-sm font-semibold">{triggerLabel}</span>
-          </span>
-        ) : open ? (
-          <X className="h-5 w-5" aria-hidden />
-        ) : (
-          <TriggerIcon className="h-5 w-5" aria-hidden />
-        )}
-      </Button>
+        <SheetTrigger asChild>
+          <Button
+            type="button"
+            variant="default"
+            size={triggerLabel ? "default" : "floatingNav"}
+            title={
+              triggerLabel || !open
+                ? resolvedTriggerTitle
+                : t("drawer.closePicker")
+            }
+            aria-label={
+              triggerLabel || !open
+                ? resolvedTriggerTitle
+                : t("drawer.closePicker")
+            }
+            className={[
+              !triggerLabel &&
+                floating &&
+                "fixed bottom-2 right-2 z-[60] gap-0 px-0 shadow-md",
+              triggerLabel && "rounded-full shadow-md",
+              triggerClassName,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            {triggerLabel ? (
+              <span className="flex items-center justify-center gap-2">
+                <TriggerIcon className="h-5 w-5 shrink-0" aria-hidden />
+                <span className="text-sm font-semibold">{triggerLabel}</span>
+              </span>
+            ) : open ? (
+              <X className="h-5 w-5" aria-hidden />
+            ) : (
+              <TriggerIcon className="h-5 w-5" aria-hidden />
+            )}
+          </Button>
+        </SheetTrigger>
+      </Sheet>
 
       <NewGroupDialog
         open={newGroupDialogOpen}
@@ -655,9 +641,7 @@ export default function ActivityGroupsDrawer({
                 setArchivedGroups(archived);
               })
               .catch(console.error);
-            setSelectedGroup((prev) =>
-              prev && prev.id === id ? null : prev
-            );
+            setSelectedGroup((prev) => (prev && prev.id === id ? null : prev));
             setView("groups");
             onTasksDataChanged?.();
           }}
@@ -672,9 +656,7 @@ export default function ActivityGroupsDrawer({
         onUnarchived={async (t) => {
           if (t.type === "group") {
             setSelectedGroup((prev) =>
-              prev?.id === t.group.id
-                ? { ...prev, is_archived: false }
-                : prev
+              prev?.id === t.group.id ? { ...prev, is_archived: false } : prev
             );
           }
           try {
@@ -751,9 +733,9 @@ export default function ActivityGroupsDrawer({
         activity={statsActivity}
         group={
           statsActivity
-            ? (selectedGroup?.id === statsActivity.group_id
-                ? selectedGroup
-                : groups.find((g) => g.id === statsActivity.group_id) ?? null)
+            ? selectedGroup?.id === statsActivity.group_id
+              ? selectedGroup
+              : (groups.find((g) => g.id === statsActivity.group_id) ?? null)
             : null
         }
       />
