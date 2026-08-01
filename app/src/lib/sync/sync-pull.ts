@@ -26,7 +26,9 @@ export async function runPull(ctx: PullContext): Promise<string> {
   // will have server_updated_at >= serverNow and will be caught next cycle.
   const { data: nowData, error: nowError } = await client.rpc("now");
   if (nowError || !nowData) {
-    throw new Error(`Failed to fetch server time: ${nowError?.message ?? "no data"}`);
+    throw new Error(
+      `Failed to fetch server time: ${nowError?.message ?? "no data"}`
+    );
   }
   const serverNow: string = nowData;
 
@@ -59,7 +61,6 @@ export async function runPull(ctx: PullContext): Promise<string> {
 
       // LWW: skip rows where the local version is newer than the remote version.
       // This prevents a failed push from being silently overwritten by the pull.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const localRows: Array<{ id: string; updated_at?: string } | undefined> =
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (db[dexieTable] as any).bulkGet(
@@ -74,9 +75,7 @@ export async function runPull(ctx: PullContext): Promise<string> {
       const rowsToApply = notDirty.filter((r) => {
         const local = localById.get(String((r as { id: string }).id));
         if (!local) return true; // new remote row — always apply
-        return (
-          parseTimestamp(r.updated_at) >= parseTimestamp(local.updated_at)
-        );
+        return parseTimestamp(r.updated_at) >= parseTimestamp(local.updated_at);
       });
 
       if (rowsToApply.length === 0) continue;

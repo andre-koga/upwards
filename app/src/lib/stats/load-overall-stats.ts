@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
-import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
+import type { ActivityPeriod } from "@/lib/db/types";
 import { isActiveGroup, isHiddenGroupDefaultActivity } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { loadLoginStreak } from "@/lib/session/last-opened";
-import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
+import { shiftDate, toDateString } from "@/lib/time-utils";
 import {
   buildBreakDaysSet,
   buildEntriesByDateMap,
@@ -23,8 +23,12 @@ import {
   sumTimerMsByDate,
   sumTimerMsInRange,
 } from "./aggregates";
-import { buildSparklineWeeks } from "./compute-activity";
-import type { GroupNavSummary, MonthlyCompletionSeries, OverallStats, SparklineDay } from "./types";
+import type {
+  GroupNavSummary,
+  MonthlyCompletionSeries,
+  OverallStats,
+  SparklineDay,
+} from "./types";
 
 export async function loadOverallStats(): Promise<OverallStats> {
   const today = getToday();
@@ -32,22 +36,32 @@ export async function loadOverallStats(): Promise<OverallStats> {
   const thirtyDaysAgo = shiftDate(today, -29);
   const yearAgo = shiftDate(today, -364);
 
-  const [groups, allActivities, allDailyEntries, allPeriods, allStreakRows, latestJournal] =
-    await Promise.all([
-      db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
-      db.activities.filter((a) => !a.deleted_at).toArray(),
-      db.dailyEntries.filter((e) => !e.deleted_at).toArray(),
-      db.activityPeriods.filter((p) => !p.deleted_at).toArray(),
-      db.activityStreaks.filter((r) => !r.deleted_at).toArray(),
-      db.journalEntries
-        .filter((e) => !e.deleted_at)
-        .toArray()
-        .then((rows) =>
-          rows.sort((a, b) => b.entry_date.localeCompare(a.entry_date))[0] ?? null,
-        ),
-    ]);
+  const [
+    groups,
+    allActivities,
+    allDailyEntries,
+    allPeriods,
+    allStreakRows,
+    latestJournal,
+  ] = await Promise.all([
+    db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
+    db.activities.filter((a) => !a.deleted_at).toArray(),
+    db.dailyEntries.filter((e) => !e.deleted_at).toArray(),
+    db.activityPeriods.filter((p) => !p.deleted_at).toArray(),
+    db.activityStreaks.filter((r) => !r.deleted_at).toArray(),
+    db.journalEntries
+      .filter((e) => !e.deleted_at)
+      .toArray()
+      .then(
+        (rows) =>
+          rows.sort((a, b) => b.entry_date.localeCompare(a.entry_date))[0] ??
+          null
+      ),
+  ]);
 
-  const activities = allActivities.filter((a) => !isHiddenGroupDefaultActivity(a));
+  const activities = allActivities.filter(
+    (a) => !isHiddenGroupDefaultActivity(a)
+  );
   const countable = activities.filter((a) => isCountableRoutine(a));
   const breakDays = buildBreakDaysSet(allDailyEntries);
   const entriesByDate = buildEntriesByDateMap(allDailyEntries);
@@ -57,7 +71,7 @@ export async function loadOverallStats(): Promise<OverallStats> {
     entriesByDate,
     breakDays,
     weekRange.from,
-    weekRange.to,
+    weekRange.to
   );
 
   const allTimerByActivity = new Map<string, Record<string, number>>();
@@ -82,33 +96,42 @@ export async function loadOverallStats(): Promise<OverallStats> {
   }
 
   const latestStreakPerActivity = new Map<string, number>();
-  for (const row of [...allStreakRows].sort((a, b) => b.date.localeCompare(a.date))) {
+  for (const row of [...allStreakRows].sort((a, b) =>
+    b.date.localeCompare(a.date)
+  )) {
     if (!latestStreakPerActivity.has(row.activity_id)) {
       latestStreakPerActivity.set(row.activity_id, row.streak);
     }
   }
-  const bestCurrentHabitStreak = Math.max(0, ...latestStreakPerActivity.values());
+  const bestCurrentHabitStreak = Math.max(
+    0,
+    ...latestStreakPerActivity.values()
+  );
 
   const dailyTotalsYear = buildDailyCompletionTotals(
     countable,
     entriesByDate,
     breakDays,
     yearAgo,
-    today,
+    today
   );
   const monthlyCompletion = buildMonthlyCompletionFromTotals(dailyTotalsYear);
-  const weeklyCompletion = buildWeeklyCompletionFromTotals(dailyTotalsYear, yearAgo, today);
+  const weeklyCompletion = buildWeeklyCompletionFromTotals(
+    dailyTotalsYear,
+    yearAgo,
+    today
+  );
   const monthlyCompletionByGroup: MonthlyCompletionSeries[] = groups
     .map((group) => {
       const groupActivities = activities.filter(
-        (a) => a.group_id === group.id && isCountableRoutine(a),
+        (a) => a.group_id === group.id && isCountableRoutine(a)
       );
       const dailyTotals = buildDailyCompletionTotals(
         groupActivities,
         entriesByDate,
         breakDays,
         yearAgo,
-        today,
+        today
       );
       return {
         id: group.id,
@@ -121,14 +144,14 @@ export async function loadOverallStats(): Promise<OverallStats> {
   const weeklyCompletionByGroup: MonthlyCompletionSeries[] = groups
     .map((group) => {
       const groupActivities = activities.filter(
-        (a) => a.group_id === group.id && isCountableRoutine(a),
+        (a) => a.group_id === group.id && isCountableRoutine(a)
       );
       const dailyTotals = buildDailyCompletionTotals(
         groupActivities,
         entriesByDate,
         breakDays,
         yearAgo,
-        today,
+        today
       );
       return {
         id: group.id,
@@ -138,17 +161,23 @@ export async function loadOverallStats(): Promise<OverallStats> {
       };
     })
     .filter((series) => series.points.some((p) => p.rate !== null));
-  const consistencyHeatmap90 = buildAggregateHeatmap90(countable, entriesByDate, breakDays);
+  const consistencyHeatmap90 = buildAggregateHeatmap90(
+    countable,
+    entriesByDate,
+    breakDays
+  );
 
   const groupSummaries: GroupNavSummary[] = groups.map((group) => {
-    const groupAllActivities = activities.filter((a) => a.group_id === group.id);
+    const groupAllActivities = activities.filter(
+      (a) => a.group_id === group.id
+    );
     const totals30 = computeGroupRoutineCompletionTotals(
       groupAllActivities,
       entriesByDate,
       breakDays,
       thirtyDaysAgo,
       today,
-      { includeCompleted: true },
+      { includeCompleted: true }
     );
 
     let trackedMs30d = 0;
@@ -156,7 +185,7 @@ export async function loadOverallStats(): Promise<OverallStats> {
       trackedMs30d += sumTimerMsInRange(
         allTimerByActivity.get(activity.id) ?? {},
         thirtyDaysAgo,
-        today,
+        today
       );
     }
 
@@ -171,7 +200,7 @@ export async function loadOverallStats(): Promise<OverallStats> {
         breakDays,
         cur,
         cur,
-        { includeCompleted: true },
+        { includeCompleted: true }
       );
       sparklineDays.push({
         rate: completionRate(dayTotals.completed, dayTotals.scheduled) ?? 0,
@@ -196,13 +225,16 @@ export async function loadOverallStats(): Promise<OverallStats> {
       label: group.name,
       color: group.color || DEFAULT_GROUP_COLOR,
       activityIds: new Set(
-        activities.filter((a) => a.group_id === group.id).map((a) => a.id),
+        activities.filter((a) => a.group_id === group.id).map((a) => a.id)
       ),
-    })),
+    }))
   );
 
   return {
-    weekCompletionRate: completionRate(weekTotals.completed, weekTotals.scheduled),
+    weekCompletionRate: completionRate(
+      weekTotals.completed,
+      weekTotals.scheduled
+    ),
     weekWins: weekTotals.completed,
     weekScheduled: weekTotals.scheduled,
     weekTrackedMs,
