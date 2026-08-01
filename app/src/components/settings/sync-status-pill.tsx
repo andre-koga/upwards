@@ -72,8 +72,9 @@ export function SyncStatusPill({
             onClick={onToggleAuth}
             className="h-auto gap-1 bg-transparent px-1 py-0 text-xs text-muted-foreground shadow-none hover:bg-transparent active:bg-transparent"
             title="Sign in to sync"
+            aria-label="Sign in to sync"
           >
-            <LogIn className="h-3 w-3" />
+            <LogIn className="h-3 w-3" aria-hidden />
           </Button>
         )}
       </div>

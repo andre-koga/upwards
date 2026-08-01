@@ -9,9 +9,8 @@ import {
   FormToggleButton,
 } from "@/components/forms";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
-import RoutineSelector, {
-  useMemoRoutineOptions,
-} from "@/components/activities/routine-selector";
+import RoutineSelector from "@/components/activities/routine-selector";
+import { useMemoRoutineOptions } from "@/components/activities/routine-selector-options";
 import {
   buildRoutineString,
   computeRoutineFormFromString,
@@ -47,7 +46,8 @@ export function RecurringMemoEditDialog({
   const isEditing = Boolean(memo);
   const [title, setTitle] = useState("");
   const [isPinned, setIsPinned] = useState(false);
-  const [routineForm, setRoutineForm] = useState<RoutineFormData>(DEFAULT_ROUTINE_FORM);
+  const [routineForm, setRoutineForm] =
+    useState<RoutineFormData>(DEFAULT_ROUTINE_FORM);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -63,7 +63,10 @@ export function RecurringMemoEditDialog({
   const handleConfirm = async () => {
     const trimmed = title.trim();
     if (!trimmed) return;
-    if (routineForm.routine === "weekly" && routineForm.weeklyDays.length === 0) {
+    if (
+      routineForm.routine === "weekly" &&
+      routineForm.weeklyDays.length === 0
+    ) {
       return;
     }
 
@@ -99,7 +102,9 @@ export function RecurringMemoEditDialog({
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={isEditing ? t("recurringMemo.editTitle") : t("recurringMemo.newTitle")}
+      title={
+        isEditing ? t("recurringMemo.editTitle") : t("recurringMemo.newTitle")
+      }
       contentClassName="sm:max-w-md"
     >
       <FormStack className="space-y-2">
@@ -119,7 +124,9 @@ export function RecurringMemoEditDialog({
           }
         />
         <div className="space-y-2">
-          <p className={dialogFieldLabelClassName}>{t("recurringMemo.repeat")}</p>
+          <p className={dialogFieldLabelClassName}>
+            {t("recurringMemo.repeat")}
+          </p>
           <RoutineSelector
             routine={routineForm.routine}
             weeklyDays={routineForm.weeklyDays}
@@ -133,7 +140,9 @@ export function RecurringMemoEditDialog({
                 onToggle={setIsPinned}
                 label={isPinned ? t("memo.unpin") : t("memo.pin")}
               >
-                <Pin className={isPinned ? "h-4 w-4 fill-current" : "h-4 w-4"} />
+                <Pin
+                  className={isPinned ? "h-4 w-4 fill-current" : "h-4 w-4"}
+                />
               </FormToggleButton>
             }
             onRoutineChange={(value) =>
@@ -156,7 +165,13 @@ export function RecurringMemoEditDialog({
       </FormStack>
       <FormDialogActions
         onConfirm={() => void handleConfirm()}
-        confirmLabel={saving ? tCommon("saving") : isEditing ? tCommon("save") : tCommon("add")}
+        confirmLabel={
+          saving
+            ? tCommon("saving")
+            : isEditing
+              ? tCommon("save")
+              : tCommon("add")
+        }
         confirmDisabled={confirmDisabled}
         secondaryAction={
           onDelete

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { getActiveLocaleTag } from "@/lib/i18n";
@@ -22,6 +22,12 @@ import { toDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { JournalDateCalendarDialog } from "@/components/journal/journal-date-calendar-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import AddTaskModal from "./add-task-modal";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
@@ -83,38 +89,23 @@ export default function FooterActionsBar({
     hasUnreadWhatsNewRelease
   );
   const { bottomInset } = useVisualViewportLayout();
-  const isSelectedToday =
-    toDateString(currentDate) === getEffectiveToday();
+  const isSelectedToday = toDateString(currentDate) === getEffectiveToday();
   const shortDate = currentDate.toLocaleDateString(getActiveLocaleTag(), {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
 
-  useEffect(() => {
-    if (pathsDrawerOpen) {
-      setHasUnreadWhatsNew(hasUnreadWhatsNewRelease());
-    }
-  }, [pathsDrawerOpen]);
-
   return (
     <>
-      <div
-        className={cn(
-          "pointer-events-none fixed inset-0 z-[60] transition-all",
-          pathsDrawerOpen && "pointer-events-auto bg-black/50 backdrop-blur-sm",
-          !pathsDrawerOpen && "pointer-events-none bg-transparent backdrop-blur-0"
-        )}
-        onClick={() => setPathsDrawerOpen(false)}
-      />
-
-      <div
-        className={`fixed inset-x-0 z-[70] transition-transform duration-300 ease-out ${
-          pathsDrawerOpen ? "translate-y-0" : "translate-y-full"
-        }`}
-        style={{ bottom: bottomInset }}
-      >
-        <div className="rounded-t-2xl border-t border-border bg-background px-4 pb-8 pt-3 shadow-xl">
+      <Sheet open={pathsDrawerOpen} onOpenChange={setPathsDrawerOpen}>
+        <SheetContent
+          side="bottom"
+          showCloseButton={false}
+          className="gap-0 rounded-t-2xl border-t border-border px-4 pb-8 pt-3 shadow-xl"
+          style={{ bottom: bottomInset }}
+        >
+          <SheetTitle className="sr-only">{t("openMoreActions")}</SheetTitle>
           <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted" />
           <div className="space-y-2">
             <Button
@@ -127,9 +118,7 @@ export default function FooterActionsBar({
                 setPathsDrawerOpen(false);
                 navigate("/whats-new");
               }}
-              title={
-                hasUnreadWhatsNew ? t("whatsNewUnread") : t("whatsNew")
-              }
+              title={hasUnreadWhatsNew ? t("whatsNewUnread") : t("whatsNew")}
               aria-label={
                 hasUnreadWhatsNew ? t("whatsNewUnread") : t("whatsNew")
               }
@@ -247,61 +236,67 @@ export default function FooterActionsBar({
               {t("settings")}
             </Button>
           </div>
+        </SheetContent>
+
+        <div className="fixed bottom-0 left-0 right-0 z-[30] h-12 border-t border-border bg-background"></div>
+        <div className="fixed inset-x-2 bottom-4 z-[40] flex items-center gap-2 pb-2">
+          <SheetTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 rounded-full border-border bg-background shadow-lg"
+              onClick={() => {
+                if (!pathsDrawerOpen) {
+                  setHasUnreadWhatsNew(hasUnreadWhatsNewRelease());
+                }
+              }}
+              title={t("openMoreActions")}
+              aria-label={t("openMoreActions")}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+
+          <div className="mr-auto flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className={cn(
+                "h-10 rounded-full border px-3 shadow-lg",
+                isSelectedToday && ""
+              )}
+              onClick={() => setCalendarOpen(true)}
+              title={t("pickDate")}
+              aria-label={t("pickDate")}
+            >
+              <span className="font-semibold text-foreground">{shortDate}</span>
+            </Button>
+          </div>
+          <ActivityGroupsDrawer
+            currentActivityId={currentActivityId}
+            activities={activities}
+            getActivityDrawerElapsedMs={getActivityDrawerElapsedMs}
+            onStartActivity={onStartActivity}
+            onStopActivity={onStopActivity}
+            initialDate={currentDate}
+            onAddManualEntry={onAddManualActivityPeriod}
+            onTasksDataChanged={onTasksDataChanged}
+            floating={false}
+            triggerTitle={t("openProjects")}
+            triggerIcon={Folder}
+            triggerClassName="z-[60] h-12 w-12 shadow-lg rounded-full px-0"
+          />
+
+          <AddTaskModal
+            onAdd={onAddQuickMemo}
+            icon={CircleCheckBig}
+            triggerTitle={t("addQuickMemo")}
+            floating={false}
+            triggerClassName="z-[60] h-12 w-12 rounded-full px-0 shadow-lg"
+          />
         </div>
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 z-[30] h-12 border-t border-border bg-background"></div>
-      <div className="fixed inset-x-2 bottom-4 z-[40] flex items-center gap-2 pb-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-10 w-10 rounded-full border-border bg-background shadow-lg"
-          onClick={() => setPathsDrawerOpen((v) => !v)}
-          title={t("openMoreActions")}
-          aria-label={t("openMoreActions")}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-
-        <div className="mr-auto flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className={cn(
-              "h-10 rounded-full border px-3 shadow-lg",
-              isSelectedToday && ""
-            )}
-            onClick={() => setCalendarOpen(true)}
-            title={t("pickDate")}
-            aria-label={t("pickDate")}
-          >
-            <span className="font-semibold text-foreground">{shortDate}</span>
-          </Button>
-        </div>
-        <ActivityGroupsDrawer
-          currentActivityId={currentActivityId}
-          activities={activities}
-          getActivityDrawerElapsedMs={getActivityDrawerElapsedMs}
-          onStartActivity={onStartActivity}
-          onStopActivity={onStopActivity}
-          initialDate={currentDate}
-          onAddManualEntry={onAddManualActivityPeriod}
-          onTasksDataChanged={onTasksDataChanged}
-          floating={false}
-          triggerTitle={t("openProjects")}
-          triggerIcon={Folder}
-          triggerClassName="z-[60] h-12 w-12 shadow-lg rounded-full px-0"
-        />
-
-        <AddTaskModal
-          onAdd={onAddQuickMemo}
-          icon={CircleCheckBig}
-          triggerTitle={t("addQuickMemo")}
-          floating={false}
-          triggerClassName="z-[60] h-12 w-12 rounded-full px-0 shadow-lg"
-        />
-      </div>
+      </Sheet>
 
       <JournalDateCalendarDialog
         open={calendarOpen}

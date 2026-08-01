@@ -38,13 +38,18 @@ export function StatsPageShell({
           {icon}
           <span className="min-w-0 truncate">{title}</span>
         </h1>
-        {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
+        {subtitle ? (
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        ) : null}
       </header>
 
       {loading ? (
         <div className="space-y-3 py-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl border bg-muted/40" />
+            <div
+              key={i}
+              className="h-24 animate-pulse rounded-xl border bg-muted/40"
+            />
           ))}
         </div>
       ) : (
@@ -52,7 +57,11 @@ export function StatsPageShell({
       )}
 
       <div className="fixed bottom-3 left-4 z-50 flex items-center gap-2">
-        <FloatingBackButton fixed={false} to={homeTo} title={resolvedHomeTitle} />
+        <FloatingBackButton
+          fixed={false}
+          to={homeTo}
+          title={resolvedHomeTitle}
+        />
         {backTo && backTo !== homeTo ? (
           <FloatingBackButton
             fixed={false}

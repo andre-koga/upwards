@@ -12,6 +12,7 @@
   "habitNotFound": "Habit not found.",
   "noHabitsInGroup": "No habits in this group yet.",
   "createGroupHint": "Create a group in Projects to start tracking stats.",
+  "loadError": "Couldn't load stats. Please try again.",
   "sections": {
     "thisWeek": "This week",
     "completion": "Completion",

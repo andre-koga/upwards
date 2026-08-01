@@ -22,12 +22,6 @@ export function useLocationDetection({
   const hasTriedInitialGeoRef = useRef(false);
   const lastVisibilityDetectRef = useRef(0);
 
-  useEffect(() => {
-    if (!isToday) {
-      setIsDetectingLocation(false);
-    }
-  }, [isToday]);
-
   const runGeolocation = useCallback(
     (onComplete: () => void) => {
       navigator.geolocation.getCurrentPosition(
@@ -55,10 +49,7 @@ export function useLocationDetection({
               data.address.county ||
               null;
             const displayName =
-              city ||
-              data.address.state ||
-              data.address.country ||
-              null;
+              city || data.address.state || data.address.country || null;
             if (displayName) {
               const locationData: LocationData = {
                 displayName,
@@ -132,10 +123,5 @@ export function useLocationDetection({
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [isToday, detectLocation]);
 
-  const resetGeoAttempt = useCallback(() => {
-    hasTriedInitialGeoRef.current = false;
-    lastVisibilityDetectRef.current = 0;
-  }, []);
-
-  return { detectLocation, isDetectingLocation, resetGeoAttempt };
+  return { detectLocation, isDetectingLocation };
 }

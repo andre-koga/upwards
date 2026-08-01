@@ -8,6 +8,7 @@ import {
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
 import { useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useDefaultRoutineOptions } from "@/components/activities/routine-selector-options";
 
 const WEEKDAY_KEYS = [
   "sunday",
@@ -33,43 +34,6 @@ interface RoutineSelectorProps {
   options?: { value: string; label: string }[];
   trailingSlot?: ReactNode;
 }
-
-export function useDefaultRoutineOptions() {
-  const { t } = useTranslation("projects");
-
-  return useMemo(
-    () => [
-      { value: "anytime", label: t("routine.anytime") },
-      { value: "daily", label: t("routine.daily") },
-      { value: "weekly", label: t("routine.weekly") },
-      { value: "custom", label: t("routine.custom") },
-      { value: "never", label: t("routine.never") },
-    ],
-    [t]
-  );
-}
-
-export function useMemoRoutineOptions() {
-  const { t } = useTranslation("projects");
-
-  return useMemo(
-    () => [
-      { value: "daily", label: t("routine.daily") },
-      { value: "weekly", label: t("routine.weekly") },
-      { value: "monthly", label: t("routine.monthly") },
-      { value: "custom", label: t("routine.custom") },
-    ],
-    [t]
-  );
-}
-
-/** @deprecated Use useMemoRoutineOptions() inside a component. */
-export const MEMO_ROUTINE_OPTIONS = [
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "custom", label: "Custom" },
-];
 
 export default function RoutineSelector({
   routine,

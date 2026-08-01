@@ -1,4 +1,4 @@
-import { FormDialog, FormDialogActions } from "@/components/forms";
+import { ConfirmFormDialog } from "@/components/forms";
 import { db, now } from "@/lib/db";
 import {
   appendActivityStatusEvent,
@@ -57,28 +57,21 @@ export function DeleteConfirmDialog({
   const isGroup = type === "group";
 
   return (
-    <FormDialog
+    <ConfirmFormDialog
       open={open}
       onOpenChange={onOpenChange}
       title={`Permanently Delete ${isGroup ? "Group" : "Activity"}?`}
-      description={
+      message={
         <>
           This action cannot be undone. This will permanently delete the{" "}
           {isGroup ? "group and all activities in it" : "activity"}.
         </>
       }
+      confirmLabel="Delete"
+      destructive
+      busy={!id || !type}
+      onConfirm={() => void handleDelete()}
       contentClassName="sm:max-w-md"
-    >
-      <FormDialogActions
-        onConfirm={handleDelete}
-        confirmLabel="Delete"
-        confirmDisabled={!id || !type}
-        confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
-        secondaryAction={{
-          label: "Cancel",
-          onClick: () => onOpenChange(false),
-        }}
-      />
-    </FormDialog>
+    />
   );
 }

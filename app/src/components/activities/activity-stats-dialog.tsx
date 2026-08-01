@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import { loadActivityStats, type ActivityStats } from "@/lib/stats";
+import { loadActivityStats } from "@/lib/stats";
+import { useAsyncData } from "@/hooks/use-async-data";
 import { FormDialog } from "@/components/forms/form-dialog";
 import { ActivityStatsCore } from "@/components/stats/activity-stats-core";
 import { Button } from "@/components/ui/button";
@@ -21,24 +22,20 @@ export function ActivityStatsDialog({
   activity,
   group,
 }: ActivityStatsDialogProps) {
+  const { t } = useTranslation("stats");
   const navigate = useNavigate();
-  const [stats, setStats] = useState<ActivityStats | null>(null);
-  const [loading, setLoading] = useState(false);
+  const {
+    data: stats,
+    loading,
+    error,
+  } = useAsyncData(
+    () =>
+      open && activity ? loadActivityStats(activity.id) : Promise.resolve(null),
+    [open, activity]
+  );
 
   const color = group?.color || DEFAULT_GROUP_COLOR;
   const displayName = getActivityDisplayName(activity, group);
-
-  useEffect(() => {
-    if (!open || !activity) {
-      setStats(null);
-      return;
-    }
-    setLoading(true);
-    loadActivityStats(activity.id)
-      .then(setStats)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [open, activity]);
 
   const handleViewFull = () => {
     if (!activity || !group) return;
@@ -62,7 +59,15 @@ export function ActivityStatsDialog({
       contentClassName="sm:max-w-sm"
     >
       {loading && (
-        <p className="py-6 text-center text-sm text-muted-foreground">Loading stats…</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          Loading stats…
+        </p>
+      )}
+
+      {!loading && error && (
+        <p className="py-6 text-center text-sm text-destructive">
+          {t("loadError")}
+        </p>
       )}
 
       {!loading && stats && (

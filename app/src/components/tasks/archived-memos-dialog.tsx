@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { OneTimeTask } from "@/lib/db/types";
 import { FormDialog, FormDialogActions } from "@/components/forms";
@@ -25,10 +25,13 @@ export function ArchivedMemosDialog({
   const { t: tCommon } = useTranslation("common");
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [archivedMemos, setArchivedMemos] = useState(initialArchivedMemos);
+  const [prevInitialArchivedMemos, setPrevInitialArchivedMemos] =
+    useState(initialArchivedMemos);
 
-  useEffect(() => {
+  if (initialArchivedMemos !== prevInitialArchivedMemos) {
+    setPrevInitialArchivedMemos(initialArchivedMemos);
     setArchivedMemos(initialArchivedMemos);
-  }, [initialArchivedMemos]);
+  }
 
   const handleRestore = async (memoId: string) => {
     setRestoringId(memoId);
@@ -63,15 +66,17 @@ export function ArchivedMemosDialog({
       onOpenChange={onOpenChange}
       title={
         archivedMemos.length > 0
-          ? t("memo.archivedDialog.titleWithCount", { count: archivedMemos.length })
+          ? t("memo.archivedDialog.titleWithCount", {
+              count: archivedMemos.length,
+            })
           : t("memo.archivedDialog.title")
       }
       size="default"
       contentClassName="w-96"
     >
-      <div className="space-y-1 max-h-96 overflow-y-auto">
+      <div className="max-h-96 space-y-1 overflow-y-auto">
         {archivedMemos.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-8">
+          <p className="py-8 text-center text-sm text-muted-foreground">
             {t("memo.archivedDialog.empty")}
           </p>
         ) : (
@@ -81,10 +86,14 @@ export function ArchivedMemosDialog({
               className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
             >
               <div className="min-w-0 flex-1">
-                <p className="font-medium break-words whitespace-pre-wrap">{memo.title}</p>
+                <p className="whitespace-pre-wrap break-words font-medium">
+                  {memo.title}
+                </p>
                 {memo.due_date && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("memo.due", { date: formatDateShort(fromDateString(memo.due_date)) })}
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {t("memo.due", {
+                      date: formatDateShort(fromDateString(memo.due_date)),
+                    })}
                   </p>
                 )}
               </div>

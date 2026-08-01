@@ -1,18 +1,15 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, Heart, MapPin, X } from "lucide-react";
+import { useState } from "react";
+import { Heart, MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { JournalEntry } from "@/lib/db/types";
-import {
-  getJournalPhotoUrl,
-  getJournalVideoPlaybackUrl,
-} from "@/lib/journal";
+import { getJournalPhotoUrl, getJournalVideoPlaybackUrl } from "@/lib/journal";
 import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
 import { fromDateString } from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import JournalVideoSection from "@/components/journal/journal-video-section";
-import { Button } from "@/components/ui/button";
+import MediaLightbox from "@/components/journal/media-lightbox";
 import { cn } from "@/lib/utils";
 
 interface JournalArchiveEntryProps {
@@ -37,69 +34,22 @@ function bookmarkGradientFor(seed: string): string {
   return BOOKMARK_GRADIENTS[Math.abs(hash) % BOOKMARK_GRADIENTS.length];
 }
 
-function MediaLightbox({
-  children,
-  onClose,
-  ariaLabel,
-}: {
-  children: ReactNode;
-  onClose: () => void;
-  ariaLabel: string;
-}) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [onClose]);
-
-  if (typeof document === "undefined") return null;
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-label={ariaLabel}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClose();
-      }}
-    >
-      <Button
-        type="button"
-        variant="ghost"
-        size="smIcon"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-        className="absolute right-4 top-4 z-10 h-7 w-7 rounded-full bg-black/60 text-white hover:bg-black/80 hover:text-white"
-        aria-label="Close"
-      >
-        <X className="h-3.5 w-3.5" />
-      </Button>
-      {children}
-    </div>,
-    document.body
-  );
+interface LightboxState {
+  key: string;
+  index: number;
+  open: boolean;
 }
 
 function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
   const { t } = useTranslation("journal");
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [pathsKey, setPathsKey] = useState(() => photoPaths.join("\0"));
-  const nextPathsKey = photoPaths.join("\0");
-  if (pathsKey !== nextPathsKey) {
-    setPathsKey(nextPathsKey);
-    setLightboxIndex(null);
-  }
+  const pathsKey = photoPaths.join("\0");
+  const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+
+  // Derive closed state when the photo set changes instead of calling
+  // setState during render or in a reset effect.
+  const isStale = lightbox !== null && lightbox.key !== pathsKey;
+  const lightboxOpen = lightbox !== null && !isStale && lightbox.open;
+  const lightboxIndex = lightbox !== null && !isStale ? lightbox.index : 0;
 
   if (photoPaths.length === 0) return null;
 
@@ -109,6 +59,25 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
       : photoPaths.length === 2
         ? "grid-cols-2"
         : "grid-cols-2";
+
+  const showPreviousPhoto = () =>
+    setLightbox((current) =>
+      current
+        ? {
+            ...current,
+            index: (current.index - 1 + photoPaths.length) % photoPaths.length,
+          }
+        : current
+    );
+
+  const showNextPhoto = () =>
+    setLightbox((current) =>
+      current
+        ? { ...current, index: (current.index + 1) % photoPaths.length }
+        : current
+    );
+
+  const lightboxUrl = getJournalPhotoUrl(photoPaths[lightboxIndex]);
 
   return (
     <>
@@ -121,7 +90,7 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setLightboxIndex(index);
+                setLightbox({ key: pathsKey, index, open: true });
               }}
               className={cn(
                 "relative overflow-hidden rounded-lg bg-muted",
@@ -142,72 +111,37 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
         })}
       </div>
 
-      {lightboxIndex !== null ? (
-        <MediaLightbox
-          ariaLabel={t("upload.photoAlt", { index: lightboxIndex + 1 })}
-          onClose={() => setLightboxIndex(null)}
-        >
-          <div
-            className="relative flex max-h-[90dvh] max-w-[90dvw] items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {(() => {
-              const url = getJournalPhotoUrl(photoPaths[lightboxIndex]);
-              return url ? (
-                <img
-                  src={url}
-                  alt={t("upload.photoAlt", { index: lightboxIndex + 1 })}
-                  className="max-h-[90dvh] max-w-[90dvw] rounded-lg object-contain shadow-2xl"
-                  draggable={false}
-                />
-              ) : (
-                <div className="flex h-64 w-64 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                  {t("archive.photoUnavailable")}
-                </div>
-              );
-            })()}
+      <MediaLightbox
+        open={lightboxOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLightbox((current) =>
+              current ? { ...current, open: false } : current
+            );
+          }
+        }}
+        title={t("upload.photoAlt", { index: lightboxIndex + 1 })}
+        index={lightboxIndex}
+        count={photoPaths.length}
+        onPrevious={showPreviousPhoto}
+        onNext={showNextPhoto}
+        previousLabel={t("archive.previousPhoto")}
+        nextLabel={t("archive.nextPhoto")}
+        closeLabel={t("archive.closePhoto")}
+      >
+        {lightboxUrl ? (
+          <img
+            src={lightboxUrl}
+            alt={t("upload.photoAlt", { index: lightboxIndex + 1 })}
+            className="max-h-[90dvh] max-w-[90dvw] rounded-lg object-contain shadow-2xl"
+            draggable={false}
+          />
+        ) : (
+          <div className="flex h-64 w-64 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            {t("archive.photoUnavailable")}
           </div>
-
-          {photoPaths.length > 1 ? (
-            <>
-              <Button
-                type="button"
-                variant="ghost"
-                size="smIcon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex(
-                    (i) =>
-                      ((i ?? 0) - 1 + photoPaths.length) % photoPaths.length
-                  );
-                }}
-                className="absolute left-3 top-1/2 z-10 h-7 w-7 -translate-y-1/2 rounded-full bg-black/60 text-white hover:bg-black/80 hover:text-white"
-                aria-label={t("archive.previousPhoto")}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="smIcon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex(
-                    (i) => ((i ?? 0) + 1) % photoPaths.length
-                  );
-                }}
-                className="absolute right-3 top-1/2 z-10 h-7 w-7 -translate-y-1/2 rounded-full bg-black/60 text-white hover:bg-black/80 hover:text-white"
-                aria-label={t("archive.nextPhoto")}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs tabular-nums text-white">
-                {lightboxIndex + 1} / {photoPaths.length}
-              </span>
-            </>
-          ) : null}
-        </MediaLightbox>
-      ) : null}
+        )}
+      </MediaLightbox>
     </>
   );
 }
@@ -217,19 +151,8 @@ export default function JournalArchiveEntry({
 }: JournalArchiveEntryProps) {
   const { t } = useTranslation("journal");
   const navigate = useNavigate();
-  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const isOnline = useOnlineStatus();
   const [videoOpen, setVideoOpen] = useState(false);
-
-  useEffect(() => {
-    const on = () => setIsOnline(true);
-    const off = () => setIsOnline(false);
-    window.addEventListener("online", on);
-    window.addEventListener("offline", off);
-    return () => {
-      window.removeEventListener("online", on);
-      window.removeEventListener("offline", off);
-    };
-  }, []);
 
   const date = fromDateString(entry.entry_date);
   const dayNumber = date.getDate();
@@ -261,7 +184,7 @@ export default function JournalArchiveEntry({
   return (
     <article
       className={cn(
-        "space-y-4 rounded-2xl p-3 animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both",
+        "space-y-4 rounded-2xl p-3 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both",
         bookmarkGradient
       )}
     >
@@ -294,25 +217,23 @@ export default function JournalArchiveEntry({
         </div>
       )}
 
-      {videoOpen && videoSrc ? (
-        <MediaLightbox
-          ariaLabel={t("archive.openVideo")}
-          onClose={() => setVideoOpen(false)}
-        >
-          <div
-            className="relative w-[min(92vw,40rem)] overflow-hidden rounded-xl bg-black"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <video
-              className="aspect-[2/1] w-full object-contain"
-              src={videoSrc}
-              controls
-              autoPlay
-              playsInline
-            />
-          </div>
-        </MediaLightbox>
-      ) : null}
+      <MediaLightbox
+        open={videoOpen && Boolean(videoSrc)}
+        onOpenChange={(open) => {
+          if (!open) setVideoOpen(false);
+        }}
+        title={t("archive.openVideo")}
+        closeLabel={t("archive.closePhoto")}
+        contentClassName="max-h-full w-full max-w-[min(92vw,40rem)] overflow-hidden rounded-xl bg-black"
+      >
+        <video
+          className="aspect-[2/1] w-full object-contain"
+          src={videoSrc ?? undefined}
+          controls
+          autoPlay
+          playsInline
+        />
+      </MediaLightbox>
 
       <button
         type="button"
@@ -338,10 +259,12 @@ export default function JournalArchiveEntry({
             {entry.day_emoji?.trim() || "🙂"}
           </span>
           {isBookmarked ? (
-            <Heart
-              className="h-3 w-3 fill-red-500 text-red-500"
-              aria-label={t("bookmarkDay")}
-            />
+            <span role="img" aria-label={t("bookmarkDay")}>
+              <Heart
+                className="h-3 w-3 fill-red-500 text-red-500"
+                aria-hidden
+              />
+            </span>
           ) : null}
         </div>
 

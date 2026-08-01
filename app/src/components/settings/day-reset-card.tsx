@@ -10,6 +10,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SectionLabel } from "@/components/ui/section-label";
 import { SettingsSection } from "@/components/ui/settings-section";
 import {
   DAY_RESET_OPTIONS,
@@ -28,7 +29,9 @@ export function DayResetCard() {
     setDayResetMinutes(minutes);
   };
 
-  const selectedLabel = DAY_RESET_OPTIONS.find((o) => o.minutes === selected)?.label;
+  const selectedLabel = DAY_RESET_OPTIONS.find(
+    (o) => o.minutes === selected
+  )?.label;
 
   return (
     <SettingsSection
@@ -38,9 +41,9 @@ export function DayResetCard() {
     >
       <div className="space-y-3">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <SectionLabel className="font-medium">
             {t("dayReset.resetAt")}
-          </p>
+          </SectionLabel>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

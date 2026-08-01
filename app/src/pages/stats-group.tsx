@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
 import { useNavigate, useParams, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { BarChart3, Clock, Layers } from "lucide-react";
 import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import { loadGroupStats, type GroupStats } from "@/lib/stats";
+import { loadGroupStats } from "@/lib/stats";
+import { useAsyncData } from "@/hooks/use-async-data";
 import { StatsPageShell } from "@/components/stats/stats-page-shell";
 import { StatsSectionCard } from "@/components/stats/stats-section-card";
 import { ActivityNavCard } from "@/components/stats/activity-nav-card";
@@ -16,24 +16,14 @@ export default function GroupStatsPage() {
   const { t } = useTranslation("stats");
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
-  const [stats, setStats] = useState<GroupStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    if (!groupId) return;
-    let cancelled = false;
-    setLoading(true);
-    loadGroupStats(groupId)
-      .then((data) => {
-        if (!cancelled) setStats(data);
-      })
-      .catch(console.error)
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [groupId]);
+  const {
+    data: stats,
+    loading,
+    error,
+  } = useAsyncData(
+    () => (groupId ? loadGroupStats(groupId) : Promise.resolve(null)),
+    [groupId]
+  );
 
   if (!groupId) return <Navigate to="/stats" replace />;
 
@@ -65,7 +55,8 @@ export default function GroupStatsPage() {
       backTitle={t("backToStats")}
       loading={loading}
     >
-      {!loading && !stats && (
+      {error && <p className="text-sm text-destructive">{t("loadError")}</p>}
+      {!loading && !error && !stats && (
         <p className="text-sm text-muted-foreground">{t("groupNotFound")}</p>
       )}
 

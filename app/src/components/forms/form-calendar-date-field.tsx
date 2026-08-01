@@ -1,7 +1,8 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronDownIcon, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { FormControlButton } from "@/components/forms/form-control-button";
@@ -59,6 +60,7 @@ export function FormCalendarDateField({
   clearable = false,
   clearLabel = "Clear date",
 }: FormCalendarDateFieldProps) {
+  const { t } = useTranslation("nav");
   const [open, setOpen] = useState(false);
 
   const selectedDate = useMemo(() => {
@@ -111,7 +113,9 @@ export function FormCalendarDateField({
           aria-readonly={readOnly}
           onClick={() => {
             if (readOnly) return;
-            setCalendarMonth(selectedDate ?? fromDateString(getEffectiveToday()));
+            setCalendarMonth(
+              selectedDate ?? fromDateString(getEffectiveToday())
+            );
             setOpen(true);
           }}
           className={cn(
@@ -146,7 +150,9 @@ export function FormCalendarDateField({
             return;
           }
           if (nextOpen) {
-            setCalendarMonth(selectedDate ?? fromDateString(getEffectiveToday()));
+            setCalendarMonth(
+              selectedDate ?? fromDateString(getEffectiveToday())
+            );
           }
           setOpen(nextOpen);
         }}
@@ -155,6 +161,7 @@ export function FormCalendarDateField({
           size="sm"
           className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2"
         >
+          <DialogTitle className="sr-only">{t("pickDate")}</DialogTitle>
           <Calendar
             mode="single"
             selected={selectedDate}

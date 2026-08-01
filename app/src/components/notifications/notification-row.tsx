@@ -3,17 +3,23 @@ import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { ActivityCompletionDetails } from "@/components/notifications/activity-completion-details";
-import type { InboxNotification } from "@/lib/notifications/use-notifications";
+import type { InboxNotification } from "@/lib/notifications/notification-inbox-types";
 import { isNotificationClearable } from "@/lib/notifications/notification-dismissals";
 import { getActiveDateFnsLocale } from "@/lib/i18n";
 import type { TFunction } from "i18next";
 
-function actorDisplayLabel(n: InboxNotification, t: TFunction<"notifications">): string {
+function actorDisplayLabel(
+  n: InboxNotification,
+  t: TFunction<"notifications">
+): string {
   const name = n.actorDisplayName?.trim() || n.actorUsername?.trim();
   return name || t("someone");
 }
 
-function notificationMessage(n: InboxNotification, t: TFunction<"notifications">): string {
+function notificationMessage(
+  n: InboxNotification,
+  t: TFunction<"notifications">
+): string {
   const name = actorDisplayLabel(n, t);
   if (n.kind === "friend_request") {
     return t("friendRequest", { name });

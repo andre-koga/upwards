@@ -1,6 +1,12 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Flame, Sparkles, CalendarDays, TrendingUp, BarChart3 } from "lucide-react";
+import {
+  Flame,
+  Sparkles,
+  CalendarDays,
+  TrendingUp,
+  BarChart3,
+} from "lucide-react";
 import { formatCompoundScore } from "@/lib/activity";
 import type { ActivityStats } from "@/lib/stats";
 import {
@@ -23,10 +29,13 @@ export function ActivityStatsCore({
   const { t } = useTranslation("stats");
   const isCompletion = stats.hasRoutine;
 
-  const weekdayStats = useMemo(() => computeAllTimeWeekdayStats(stats), [stats]);
+  const weekdayStats = useMemo(
+    () => computeAllTimeWeekdayStats(stats),
+    [stats]
+  );
   const monthlyCompletion = useMemo(
     () => (stats.hasRoutine ? computeMonthlyCompletionRates(stats) : null),
-    [stats],
+    [stats]
   );
   const heatmap90 = useMemo(() => buildHeatmap90(stats), [stats]);
 
@@ -37,12 +46,16 @@ export function ActivityStatsCore({
           <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
             <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
-              <span className="text-[11px] font-medium uppercase tracking-wide">{t("labels.score")}</span>
+              <span className="text-[11px] font-medium uppercase tracking-wide">
+                {t("labels.score")}
+              </span>
             </div>
-            <p className="text-xl font-bold leading-none tabular-nums">
+            <p className="text-xl font-bold tabular-nums leading-none">
               {formatCompoundScore(stats.compoundScore ?? 1)}
             </p>
-            <p className="text-[10px] leading-tight text-muted-foreground">{t("labels.scoreHelper")}</p>
+            <p className="text-[10px] leading-tight text-muted-foreground">
+              {t("labels.scoreHelper")}
+            </p>
           </div>
           <div className="mx-3 w-px self-stretch bg-border" />
           <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
@@ -52,12 +65,14 @@ export function ActivityStatsCore({
                 {stats.isNever ? t("labels.cleanStreak") : t("labels.streak")}
               </span>
             </div>
-            <p className="text-xl font-bold leading-none tabular-nums">
+            <p className="text-xl font-bold tabular-nums leading-none">
               {stats.currentStreak}
               <span className="font-medium text-muted-foreground"> / </span>
               {stats.bestStreak}
             </p>
-            <p className="text-[11px] text-muted-foreground">{t("labels.currentBest")}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {t("labels.currentBest")}
+            </p>
           </div>
         </div>
       )}
@@ -74,16 +89,19 @@ export function ActivityStatsCore({
 
       {monthlyCompletion && (
         <StatsSectionCard icon={TrendingUp} label={t("labels.completionRate")}>
-          <MonthlyLineChart points={monthlyCompletion} color={color} isNever={stats.isNever} />
+          <MonthlyLineChart points={monthlyCompletion} color={color} />
         </StatsSectionCard>
       )}
 
       <StatsSectionCard icon={BarChart3} label={t("labels.byDayOfWeek")}>
         <WeekdayBarChart
-          weekdayTimerMs={isCompletion ? undefined : weekdayStats.weekdayTimerAvgMs}
-          weekdayCompletion={isCompletion ? weekdayStats.weekdayCompletion : undefined}
+          weekdayTimerMs={
+            isCompletion ? undefined : weekdayStats.weekdayTimerAvgMs
+          }
+          weekdayCompletion={
+            isCompletion ? weekdayStats.weekdayCompletion : undefined
+          }
           color={color}
-          isNever={stats.isNever}
         />
       </StatsSectionCard>
     </div>

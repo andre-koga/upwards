@@ -92,8 +92,9 @@ export function useDataBackup() {
             // Strip legacy is_archived field — archive is now group-only.
             const normalized = data.activities.map(
               (a: Record<string, unknown>) => {
-                const { is_archived: _, ...rest } = a;
-                return rest;
+                const copy = { ...a };
+                delete copy.is_archived;
+                return copy;
               }
             );
             await db.activities.bulkPut(normalized);

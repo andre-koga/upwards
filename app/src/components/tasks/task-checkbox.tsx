@@ -28,6 +28,8 @@ function TaskCheckbox({
   disabled = false,
 }: TaskCheckboxProps) {
   const isInteractive = isToday && !disabled;
+  const actionLabel =
+    title ?? (isComplete ? "Mark incomplete" : "Mark complete");
 
   return (
     <Button
@@ -37,14 +39,8 @@ function TaskCheckbox({
       onClick={isInteractive ? onClick : undefined}
       disabled={!isInteractive}
       className={cn("disabled:cursor-default", className)}
-      title={
-        title ??
-        (isToday
-          ? isComplete
-            ? "Mark incomplete"
-            : "Mark complete"
-          : undefined)
-      }
+      title={title ?? (isToday ? actionLabel : undefined)}
+      aria-label={actionLabel}
     >
       {isComplete
         ? (completeContent ?? <Check className="h-4 w-4" />)

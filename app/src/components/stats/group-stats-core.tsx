@@ -22,34 +22,46 @@ export function GroupStatsCore({
         <div
           className={cn(
             "grid gap-3 text-center",
-            stats.groupCompoundScore !== null ? "grid-cols-2" : "grid-cols-1",
+            stats.groupCompoundScore !== null ? "grid-cols-2" : "grid-cols-1"
           )}
         >
           <div>
             <p className="text-xl font-bold tabular-nums">
-              {stats.completionRate30d !== null ? `${stats.completionRate30d}%` : "—"}
+              {stats.completionRate30d !== null
+                ? `${stats.completionRate30d}%`
+                : "—"}
             </p>
-            <p className="text-[11px] text-muted-foreground">{t("labels.completion30d")}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {t("labels.completion30d")}
+            </p>
           </div>
           {stats.groupCompoundScore !== null && (
             <div>
               <p className="text-xl font-bold tabular-nums">
                 {formatCompoundScore(stats.groupCompoundScore)}
               </p>
-              <p className="text-[11px] text-muted-foreground">{t("labels.avgScore")}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {t("labels.avgScore")}
+              </p>
             </div>
           )}
         </div>
         <div className="mt-3 flex justify-center gap-6 border-t border-border pt-3 text-center text-sm">
           <div>
-            <p className="font-semibold tabular-nums">{stats.activeHabitCount}</p>
-            <p className="text-[11px] text-muted-foreground">{t("labels.activeHabits")}</p>
+            <p className="font-semibold tabular-nums">
+              {stats.activeHabitCount}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              {t("labels.activeHabits")}
+            </p>
           </div>
           <div>
             <p className="font-semibold tabular-nums">
               {formatDuration(stats.totalTrackedMs)}
             </p>
-            <p className="text-[11px] text-muted-foreground">{t("labels.allTimeTracked")}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {t("labels.allTimeTracked")}
+            </p>
           </div>
         </div>
       </div>

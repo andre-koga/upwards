@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { db, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import {
-  isActiveGroup,
-  formatTimerDisplay,
-} from "@/lib/activity";
+import { isActiveGroup, formatTimerDisplay } from "@/lib/activity";
 import {
   FormDialog,
   FormDialogActions,
@@ -22,13 +19,19 @@ interface AssignActivityDialogProps {
   onSuccess: () => void;
 }
 
-export default function AssignActivityDialog({
+interface AssignActivityDialogContentProps {
+  periodId: string;
+  intervalMs: number;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}
+
+function AssignActivityDialogContent({
   periodId,
   intervalMs,
-  open,
   onOpenChange,
   onSuccess,
-}: AssignActivityDialogProps) {
+}: AssignActivityDialogContentProps) {
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
@@ -36,44 +39,51 @@ export default function AssignActivityDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadGroups = useCallback(async () => {
-    const g = await db.activityGroups
-      .filter((grp) => isActiveGroup(grp))
-      .sortBy("created_at");
-    setGroups(g);
-    if (g.length > 0) {
-      setSelectedGroupId(g[0].id);
-    } else {
-      setSelectedGroupId("");
-    }
-  }, []);
-
   const loadActivities = useCallback(async (groupId: string) => {
     if (!groupId) {
       setActivities([]);
+      setSelectedActivityId("");
       return;
     }
     const a = await db.activities
-      .filter((act) => act.group_id === groupId && !act.completed_at && !act.deleted_at)
+      .filter(
+        (act) =>
+          act.group_id === groupId && !act.completed_at && !act.deleted_at
+      )
       .sortBy("created_at");
     setActivities(a);
     setSelectedActivityId(a.length > 0 ? a[0].id : "");
   }, []);
 
   useEffect(() => {
-    if (open) {
-      setSelectedGroupId("");
-      setSelectedActivityId("");
-      setError(null);
-      void loadGroups();
-    }
-  }, [open, loadGroups]);
+    let cancelled = false;
 
-  useEffect(() => {
-    if (open && selectedGroupId) {
-      void loadActivities(selectedGroupId);
-    }
-  }, [open, selectedGroupId, loadActivities]);
+    Promise.resolve()
+      .then(async () => {
+        const g = await db.activityGroups
+          .filter((grp) => isActiveGroup(grp))
+          .sortBy("created_at");
+        if (cancelled) return;
+        setGroups(g);
+        const firstGroupId = g.length > 0 ? g[0].id : "";
+        setSelectedGroupId(firstGroupId);
+        if (firstGroupId) {
+          await loadActivities(firstGroupId);
+        } else {
+          setActivities([]);
+          setSelectedActivityId("");
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Error loading groups:", err);
+        setError("Failed to load groups. Please try again.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadActivities]);
 
   const handleGroupChange = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -106,6 +116,75 @@ export default function AssignActivityDialog({
   };
 
   return (
+    <FormStack>
+      <FormField
+        id="unknown-session-duration"
+        label="Duration"
+        value={formatTimerDisplay(intervalMs)}
+        readOnly
+        className="font-mono tabular-nums"
+      />
+
+      <FormSelectField
+        id="unknown-session-group"
+        label="Group"
+        value={selectedGroupId}
+        onValueChange={handleGroupChange}
+        disabled={groups.length === 0}
+        options={groups.map((group) => ({
+          value: group.id,
+          label: (
+            <span className="inline-flex items-center gap-2">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{
+                  backgroundColor: group.color || DEFAULT_GROUP_COLOR,
+                }}
+              />
+              {group.name}
+            </span>
+          ),
+        }))}
+        placeholder="Select group"
+      />
+
+      <FormSelectField
+        id="unknown-session-activity"
+        label="Activity"
+        value={selectedActivityId}
+        onValueChange={setSelectedActivityId}
+        disabled={activities.length === 0}
+        options={activities.map((activity) => ({
+          value: activity.id,
+          label: activity.name,
+        }))}
+        placeholder="Select activity"
+      />
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
+
+      <FormDialogActions
+        onConfirm={handleSave}
+        confirmLabel={saving ? "Saving..." : "Assign"}
+        confirmDisabled={saving || !selectedActivityId}
+        secondaryAction={{
+          label: "Cancel",
+          onClick: () => onOpenChange(false),
+          disabled: saving,
+        }}
+      />
+    </FormStack>
+  );
+}
+
+export default function AssignActivityDialog({
+  periodId,
+  intervalMs,
+  open,
+  onOpenChange,
+  onSuccess,
+}: AssignActivityDialogProps) {
+  return (
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
@@ -113,64 +192,15 @@ export default function AssignActivityDialog({
       description="This session has no activity. Choose a group and activity to fix it."
       contentClassName="sm:max-w-md"
     >
-      <FormStack>
-        <FormField
-          id="unknown-session-duration"
-          label="Duration"
-          value={formatTimerDisplay(intervalMs)}
-          readOnly
-          className="font-mono tabular-nums"
+      {open ? (
+        <AssignActivityDialogContent
+          key={periodId}
+          periodId={periodId}
+          intervalMs={intervalMs}
+          onOpenChange={onOpenChange}
+          onSuccess={onSuccess}
         />
-
-        <FormSelectField
-          id="unknown-session-group"
-          label="Group"
-          value={selectedGroupId}
-          onValueChange={handleGroupChange}
-          disabled={groups.length === 0}
-          options={groups.map((group) => ({
-            value: group.id,
-            label: (
-              <span className="inline-flex items-center gap-2">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{
-                    backgroundColor: group.color || DEFAULT_GROUP_COLOR,
-                  }}
-                />
-                {group.name}
-              </span>
-            ),
-          }))}
-          placeholder="Select group"
-        />
-
-        <FormSelectField
-          id="unknown-session-activity"
-          label="Activity"
-          value={selectedActivityId}
-          onValueChange={setSelectedActivityId}
-          disabled={activities.length === 0}
-          options={activities.map((activity) => ({
-            value: activity.id,
-            label: activity.name,
-          }))}
-          placeholder="Select activity"
-        />
-
-        {error && <p className="text-sm text-destructive">{error}</p>}
-
-        <FormDialogActions
-          onConfirm={handleSave}
-          confirmLabel={saving ? "Saving..." : "Assign"}
-          confirmDisabled={saving || !selectedActivityId}
-          secondaryAction={{
-            label: "Cancel",
-            onClick: () => onOpenChange(false),
-            disabled: saving,
-          }}
-        />
-      </FormStack>
+      ) : null}
     </FormDialog>
   );
 }

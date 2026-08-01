@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/use-auth";
 import { useNotifications } from "@/lib/notifications/use-notifications";
 import { NotificationsDrawer } from "@/components/notifications/notifications-drawer";
-import { cn } from "@/lib/utils";
+import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 
 export function NotificationsFloatingButton() {
   const { t } = useTranslation("nav");
@@ -29,7 +29,7 @@ export function NotificationsFloatingButton() {
             type="button"
             variant="outline"
             size="icon"
-            className="h-9 w-9 rounded-full border-border bg-background p-0 shadow-md"
+            className="h-11 w-11 rounded-full border-border bg-background p-0 shadow-md"
             onClick={() => navigate("/settings")}
             title={t("signIn")}
             aria-label={t("signIn")}
@@ -46,20 +46,21 @@ export function NotificationsFloatingButton() {
     : t("notifications");
 
   return (
-    <>
+    <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
       <div className="pointer-events-none fixed inset-x-0 top-3 z-30 flex justify-end px-3">
         <div className="pointer-events-auto relative">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 rounded-full border-border bg-background p-0 shadow-md"
-            onClick={() => setDrawerOpen(true)}
-            title={label}
-            aria-label={label}
-          >
-            <Bell className="h-4 w-4" />
-          </Button>
+          <SheetTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 rounded-full border-border bg-background p-0 shadow-md"
+              title={label}
+              aria-label={label}
+            >
+              <Bell className="h-4 w-4" />
+            </Button>
+          </SheetTrigger>
           {hasUnread && (
             <span
               className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 ring-2 ring-background"
@@ -69,7 +70,10 @@ export function NotificationsFloatingButton() {
         </div>
       </div>
 
-      <NotificationsDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
-    </>
+      <NotificationsDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
+    </Sheet>
   );
 }

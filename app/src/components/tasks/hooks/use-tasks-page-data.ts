@@ -37,13 +37,15 @@ export function useTasksPageData({
   const [activityStatusEvents, setActivityStatusEvents] = useState<
     ActivityStatusEvent[]
   >([]);
-  const [groupStatusEvents, setGroupStatusEvents] = useState<GroupStatusEvent[]>(
-    []
-  );
+  const [groupStatusEvents, setGroupStatusEvents] = useState<
+    GroupStatusEvent[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const prevSyncingRef = useRef(false);
-  const prevLocalDataVersionRef = useRef(syncEngine.getState().localDataVersion);
+  const prevLocalDataVersionRef = useRef(
+    syncEngine.getState().localDataVersion
+  );
 
   const activityEventsById = useMemo(
     () => buildActivityEventsByEntityId(activityStatusEvents),
@@ -65,19 +67,16 @@ export function useTasksPageData({
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [
-        allActivities,
-        allGroups,
-        activeGroups,
-        actEvents,
-        grpEvents,
-      ] = await Promise.all([
-        db.activities.toArray(),
-        db.activityGroups.toArray(),
-        db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
-        loadAllActivityStatusEvents(),
-        loadAllGroupStatusEvents(),
-      ]);
+      const [allActivities, allGroups, activeGroups, actEvents, grpEvents] =
+        await Promise.all([
+          db.activities.toArray(),
+          db.activityGroups.toArray(),
+          db.activityGroups
+            .filter((g) => isActiveGroup(g))
+            .sortBy("created_at"),
+          loadAllActivityStatusEvents(),
+          loadAllGroupStatusEvents(),
+        ]);
       const groupById = buildGroupById(activeGroups);
       setLookupActivities(sortActivitiesByOrder(allActivities));
       setActivities(
@@ -101,19 +100,16 @@ export function useTasksPageData({
 
   const loadDataInBackground = useCallback(async () => {
     try {
-      const [
-        allActivities,
-        allGroups,
-        activeGroups,
-        actEvents,
-        grpEvents,
-      ] = await Promise.all([
-        db.activities.toArray(),
-        db.activityGroups.toArray(),
-        db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
-        loadAllActivityStatusEvents(),
-        loadAllGroupStatusEvents(),
-      ]);
+      const [allActivities, allGroups, activeGroups, actEvents, grpEvents] =
+        await Promise.all([
+          db.activities.toArray(),
+          db.activityGroups.toArray(),
+          db.activityGroups
+            .filter((g) => isActiveGroup(g))
+            .sortBy("created_at"),
+          loadAllActivityStatusEvents(),
+          loadAllGroupStatusEvents(),
+        ]);
       const groupById = buildGroupById(activeGroups);
       setLookupActivities(sortActivitiesByOrder(allActivities));
       setActivities(
@@ -134,7 +130,17 @@ export function useTasksPageData({
   }, []);
 
   useEffect(() => {
-    void loadData();
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => loadData())
+      .catch(() => {
+        if (!cancelled) {
+          // loadData already logs errors
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [loadData]);
 
   useEffect(() => {

@@ -1,7 +1,11 @@
 import { useRef } from "react";
-import type { MonthlyCompletionPoint, MonthlyCompletionSeries } from "@/lib/stats";
+import type {
+  MonthlyCompletionPoint,
+  MonthlyCompletionSeries,
+} from "@/lib/stats";
 import { CHART_POINT_RADIUS } from "./chart-constants";
-import { FloatingTooltip, useFloatingTooltip } from "./use-floating-tooltip";
+import { FloatingTooltip } from "./floating-tooltip";
+import { useFloatingTooltip } from "./use-floating-tooltip";
 
 const MONTHLY_CHART_HEIGHT = 112;
 const MONTHLY_CHART_WIDTH = 300;
@@ -10,7 +14,7 @@ const MONTHLY_PAD = { top: 8, right: 6, bottom: 24, left: 18 };
 function buildLineSegments(
   points: MonthlyCompletionPoint[],
   xAt: (i: number) => number,
-  yAt: (rate: number) => number,
+  yAt: (rate: number) => number
 ): string[] {
   const segments: string[] = [];
   let segment: string[] = [];
@@ -31,7 +35,7 @@ function buildLineSegments(
 
 function formatPointTooltip(
   seriesLabel: string | undefined,
-  p: MonthlyCompletionPoint,
+  p: MonthlyCompletionPoint
 ): string {
   if (p.rate === null) return "";
   if (seriesLabel) return `${seriesLabel} · ${p.rate}%`;
@@ -40,13 +44,15 @@ function formatPointTooltip(
 
 function buildMonthAxisLabels(
   plotPoints: MonthlyCompletionPoint[],
-  monthlyLabels: MonthlyCompletionPoint[],
+  monthlyLabels: MonthlyCompletionPoint[]
 ): { index: number; label: string }[] {
   const labels: { index: number; label: string }[] = [];
   const usedIndices = new Set<number>();
 
   for (const month of monthlyLabels) {
-    let index = plotPoints.findIndex((w) => w.monthKey.slice(0, 7) === month.monthKey);
+    let index = plotPoints.findIndex(
+      (w) => w.monthKey.slice(0, 7) === month.monthKey
+    );
     if (index < 0) {
       index = plotPoints.findIndex((w) => w.monthKey >= `${month.monthKey}-01`);
     }
@@ -64,14 +70,12 @@ export function MonthlyLineChart({
   color,
   series,
   xAxisLabels,
-  isNever,
 }: {
   points?: MonthlyCompletionPoint[];
   color?: string;
   series?: MonthlyCompletionSeries[];
   /** Month labels for the x-axis when plot points are weekly */
   xAxisLabels?: MonthlyCompletionPoint[];
-  isNever?: boolean;
 }) {
   const { tooltip, visible, show } = useFloatingTooltip();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -95,13 +99,15 @@ export function MonthlyLineChart({
 
   const xAt = (i: number) =>
     MONTHLY_PAD.left +
-    (plotPoints.length <= 1 ? plotW / 2 : (i / (plotPoints.length - 1)) * plotW);
+    (plotPoints.length <= 1
+      ? plotW / 2
+      : (i / (plotPoints.length - 1)) * plotW);
   const yAt = (rate: number) => MONTHLY_PAD.top + plotH - (rate / 100) * plotH;
 
   const handlePointClick = (
     e: React.MouseEvent<SVGCircleElement>,
     p: MonthlyCompletionPoint,
-    seriesLabel?: string,
+    seriesLabel?: string
   ) => {
     const text = formatPointTooltip(seriesLabel, p);
     if (!text) return;
@@ -110,7 +116,7 @@ export function MonthlyLineChart({
     show(
       eRect.left - (cRect?.left ?? 0) + eRect.width / 2,
       eRect.top - (cRect?.top ?? 0),
-      text,
+      text
     );
   };
 
@@ -153,7 +159,7 @@ export function MonthlyLineChart({
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-          )),
+          ))
         )}
         {chartSeries.map((s) =>
           s.points.map((p, i) =>
@@ -167,8 +173,8 @@ export function MonthlyLineChart({
                 className="cursor-pointer"
                 onClick={(e) => handlePointClick(e, p, s.label || undefined)}
               />
-            ),
-          ),
+            )
+          )
         )}
         {axisLabels.map(({ index, label }) => (
           <text

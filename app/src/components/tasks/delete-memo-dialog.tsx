@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FormDialog, FormDialogActions } from "@/components/forms";
+import { ConfirmFormDialog } from "@/components/forms";
 import { db, now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
 
@@ -40,21 +40,15 @@ export function DeleteMemoDialog({
   const displayTitle = memoTitle?.trim() || t("memo.thisMemo");
 
   return (
-    <FormDialog
+    <ConfirmFormDialog
       open={open}
       onOpenChange={onOpenChange}
       title={t("memo.deleteConfirm.title")}
-      description={t("memo.deleteConfirm.description", { title: displayTitle })}
-    >
-      <FormDialogActions
-        onConfirm={handleDelete}
-        confirmLabel={confirmLabel ?? tCommon("delete")}
-        confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
-        secondaryAction={{
-          label: cancelLabel ?? tCommon("cancel"),
-          onClick: () => onOpenChange(false),
-        }}
-      />
-    </FormDialog>
+      message={t("memo.deleteConfirm.description", { title: displayTitle })}
+      confirmLabel={confirmLabel ?? tCommon("delete")}
+      cancelLabel={cancelLabel ?? tCommon("cancel")}
+      destructive
+      onConfirm={() => void handleDelete()}
+    />
   );
 }

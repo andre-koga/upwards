@@ -2,7 +2,8 @@ import { useRef } from "react";
 import { formatDuration } from "@/lib/stats/format";
 import type { TimeOfDaySegment } from "@/lib/stats/types";
 import { timeOfDayTotalsFromSegments } from "@/lib/stats/aggregates";
-import { FloatingTooltip, useFloatingTooltip } from "./use-floating-tooltip";
+import { FloatingTooltip } from "./floating-tooltip";
+import { useFloatingTooltip } from "./use-floating-tooltip";
 
 type TimeOfDayChartProps =
   | {
@@ -21,20 +22,25 @@ export function TimeOfDayChart(props: TimeOfDayChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const segments = props.segments;
-  const buckets = segments ? timeOfDayTotalsFromSegments(segments) : props.buckets;
+  const buckets = segments
+    ? timeOfDayTotalsFromSegments(segments)
+    : props.buckets;
   const max = Math.max(...buckets, 1);
   const hasData = buckets.some((v) => v > 0);
 
   if (!hasData) return null;
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>, hourTotal: number) => {
+  const handleClick = (
+    e: React.MouseEvent<HTMLDivElement>,
+    hourTotal: number
+  ) => {
     if (hourTotal <= 0) return;
     const cRect = containerRef.current?.getBoundingClientRect();
     const eRect = e.currentTarget.getBoundingClientRect();
     show(
       eRect.left - (cRect?.left ?? 0) + eRect.width / 2,
       eRect.top - (cRect?.top ?? 0),
-      formatDuration(hourTotal),
+      formatDuration(hourTotal)
     );
   };
 
@@ -46,7 +52,10 @@ export function TimeOfDayChart(props: TimeOfDayChartProps) {
             key={hour}
             className="min-w-0 flex-1 cursor-pointer overflow-hidden rounded-t-sm bg-muted"
             style={{
-              height: hourTotal > 0 ? `${Math.max(8, (hourTotal / max) * 100)}%` : "2px",
+              height:
+                hourTotal > 0
+                  ? `${Math.max(8, (hourTotal / max) * 100)}%`
+                  : "2px",
             }}
             onClick={(e) => hourTotal > 0 && handleClick(e, hourTotal)}
           >
@@ -86,7 +95,10 @@ export function TimeOfDayChart(props: TimeOfDayChartProps) {
       {segments && segments.length > 1 && (
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
           {segments.map((seg) => (
-            <div key={seg.id} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <div
+              key={seg.id}
+              className="flex items-center gap-1.5 text-[10px] text-muted-foreground"
+            >
               <span
                 className="size-2 shrink-0 rounded-sm"
                 style={{

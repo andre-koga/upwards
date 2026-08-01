@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useId } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { getContrastColor, hexToHsl, hslToHex } from "@/lib/color-utils";
 
 interface GroupNameColorFieldsProps {
@@ -22,25 +24,25 @@ export function GroupNameColorFields({
   nameInputAutoFocus = false,
   nameInputMaxLength,
 }: GroupNameColorFieldsProps) {
-  const [hsl, setHsl] = useState<[number, number, number]>(() =>
-    hexToHsl(color)
-  );
-
-  useEffect(() => {
-    setHsl(hexToHsl(color));
-  }, [color]);
+  const fieldId = useId();
+  const nameInputId = `${fieldId}-name`;
+  const hueInputId = `${fieldId}-hue`;
+  const saturationInputId = `${fieldId}-saturation`;
+  const lightnessInputId = `${fieldId}-lightness`;
+  const hsl = hexToHsl(color);
 
   const updateHsl = (h: number, s: number, l: number) => {
-    setHsl([h, s, l]);
     onColorChange(hslToHex(h, s, l));
   };
 
   return (
     <>
       <div className="space-y-3">
-        <p className={sectionLabelClassName}>Name</p>
-        <input
-          id="name"
+        <Label htmlFor={nameInputId} className={sectionLabelClassName}>
+          Name
+        </Label>
+        <Input
+          id={nameInputId}
           type="text"
           value={name}
           onChange={(event) => onNameChange(event.target.value)}
@@ -77,7 +79,12 @@ export function GroupNameColorFields({
         <div className="space-y-3">
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Hue</span>
+              <Label
+                htmlFor={hueInputId}
+                className="text-xs font-normal leading-normal text-muted-foreground"
+              >
+                Hue
+              </Label>
               <span>{hsl[0]}°</span>
             </div>
             <div className="relative flex h-4 items-center">
@@ -89,6 +96,7 @@ export function GroupNameColorFields({
                 }}
               />
               <input
+                id={hueInputId}
                 type="range"
                 min={0}
                 max={360}
@@ -104,7 +112,12 @@ export function GroupNameColorFields({
 
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Saturation</span>
+              <Label
+                htmlFor={saturationInputId}
+                className="text-xs font-normal leading-normal text-muted-foreground"
+              >
+                Saturation
+              </Label>
               <span>{hsl[1]}%</span>
             </div>
             <div className="relative flex h-4 items-center">
@@ -115,6 +128,7 @@ export function GroupNameColorFields({
                 }}
               />
               <input
+                id={saturationInputId}
                 type="range"
                 min={0}
                 max={100}
@@ -130,7 +144,12 @@ export function GroupNameColorFields({
 
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Lightness</span>
+              <Label
+                htmlFor={lightnessInputId}
+                className="text-xs font-normal leading-normal text-muted-foreground"
+              >
+                Lightness
+              </Label>
               <span>{hsl[2]}%</span>
             </div>
             <div className="relative flex h-4 items-center">
@@ -141,6 +160,7 @@ export function GroupNameColorFields({
                 }}
               />
               <input
+                id={lightnessInputId}
                 type="range"
                 min={0}
                 max={100}

@@ -1,4 +1,6 @@
 export interface FeatureRelease {
+  /** Stable identifier used for rendering and read-state references */
+  id: string;
   /** ISO date (YYYY-MM-DD) for sorting and display */
   date: string;
   title: string;
@@ -10,6 +12,7 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-07-17-theme-aware-chrome-journal-polish",
     date: "2026-07-17",
     title: "Theme-aware chrome & journal polish",
     bullets: [
@@ -19,6 +22,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-07-17-journal-archive",
     date: "2026-07-17",
     title: "Journal archive",
     bullets: [
@@ -27,6 +31,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-06-28-recurring-memos",
     date: "2026-06-28",
     title: "Recurring memos",
     bullets: [
@@ -34,6 +39,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-06-27-stats-refined",
     date: "2026-06-27",
     title: "Stats, refined",
     bullets: [
@@ -49,6 +55,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-06-23-habit-stats-rebuilt",
     date: "2026-06-23",
     title: "Habit stats, rebuilt",
     bullets: [
@@ -60,11 +67,10 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
       "Monthly completion trends chart your last year — overall and broken out by group on one view.",
       "The 90-day heatmap is clearer: solid wins, outlined misses, dashed breaks, muted off days.",
     ],
-    fixes: [
-      "Never habits no longer show break days on the heatmap.",
-    ],
+    fixes: ["Never habits no longer show break days on the heatmap."],
   },
   {
+    id: "2026-06-10-activity-stats-smarter-day-boundary",
     date: "2026-06-10",
     title: "Activity stats and a smarter day boundary",
     bullets: [
@@ -84,6 +90,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-06-05-archive-memos-error-logs",
     date: "2026-06-05",
     title: "Archive memos and error logs",
     bullets: [
@@ -100,6 +107,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-06-04-overnight-sessions-smarter-timeline",
     date: "2026-06-04",
     title: "Overnight sessions & smarter timeline",
     bullets: [
@@ -115,6 +123,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-06-02-friends-notifications",
     date: "2026-06-02",
     title: "Friends and notifications",
     bullets: [
@@ -126,6 +135,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-05-15-new-nav-pinned-memos-group-editing",
     date: "2026-05-15",
     title: "New nav, pinned memos, and simpler group editing",
     bullets: [
@@ -140,6 +150,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-05-14-simpler-groups-clearer-sessions-time-edits",
     date: "2026-05-14",
     title: "Simpler groups, clearer sessions, and quicker time edits",
     bullets: [
@@ -157,6 +168,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-04-28-smarter-location-tracking-memo-categories",
     date: "2026-04-28",
     title: "Smarter Location Tracking and Memo Categories",
     bullets: [
@@ -175,6 +187,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
+    id: "2026-04-24-whats-new-feedback",
     date: "2026-04-24",
     title: "What's New and Feedback!",
     bullets: [

@@ -89,7 +89,6 @@ export function useUserProfile() {
         }
       }
 
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setState({
         username: (data?.username as string | null) ?? null,
         displayName: (data?.display_name as string | null) ?? null,
@@ -98,7 +97,6 @@ export function useUserProfile() {
         error: null,
       });
     } catch (err) {
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setState((s) => ({
         ...s,
         loading: false,
@@ -135,7 +133,8 @@ export function useUserProfile() {
         setState((s) => ({ ...s, username, error: null }));
         return { error: null };
       } catch (err) {
-        const msg = err instanceof Error ? err.message : t("profile.usernameSaveFailed");
+        const msg =
+          err instanceof Error ? err.message : t("profile.usernameSaveFailed");
         setState((s) => ({ ...s, error: msg }));
         return { error: msg };
       }
@@ -147,15 +146,20 @@ export function useUserProfile() {
     async (displayName: string): Promise<{ error: string | null }> => {
       if (!supabase || !userId) return { error: t("profile.notSignedIn") };
       try {
-        const { error } = await supabase.from("user_profiles").upsert(
-          { user_id: userId, display_name: displayName, updated_at: now() },
-          { onConflict: "user_id" }
-        );
+        const { error } = await supabase
+          .from("user_profiles")
+          .upsert(
+            { user_id: userId, display_name: displayName, updated_at: now() },
+            { onConflict: "user_id" }
+          );
         if (error) throw error;
         setState((s) => ({ ...s, displayName, error: null }));
         return { error: null };
       } catch (err) {
-        const msg = err instanceof Error ? err.message : t("profile.displayNameSaveFailed");
+        const msg =
+          err instanceof Error
+            ? err.message
+            : t("profile.displayNameSaveFailed");
         return { error: msg };
       }
     },
@@ -192,12 +196,22 @@ export function useUserProfile() {
  *  No prefix search — privacy-preserving. */
 export async function lookupUserByUsername(
   username: string
-): Promise<{ user_id: string; username: string; display_name: string | null } | null> {
+): Promise<{
+  user_id: string;
+  username: string;
+  display_name: string | null;
+} | null> {
   if (!supabase) return null;
   const { data, error } = await supabase.rpc("lookup_user_by_username", {
     exact_username: username,
   });
   if (error || !data || (data as unknown[]).length === 0) return null;
-  const row = (data as Array<{ user_id: string; username: string; display_name: string | null }>)[0];
+  const row = (
+    data as Array<{
+      user_id: string;
+      username: string;
+      display_name: string | null;
+    }>
+  )[0];
   return row ?? null;
 }

@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, Search, Trash2 } from "lucide-react";
 import { FormDialog, FormDialogActions, FormStack } from "@/components/forms";
+import { dialogPrimaryDestructiveClassName } from "@/components/forms/styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { JournalLocationRoute, LocationData } from "@/lib/db/types";
@@ -54,15 +55,17 @@ export default function JournalLocationsDialog({
 
   // Only resync from props when the dialog transitions to open; avoid resetting
   // mid-edit on every parent re-render (route prop is recreated each render).
-  useEffect(() => {
-    if (!open) return;
-    setDraftRoute(normalizeJournalLocationRoute(route));
-    setEditingIndex(null);
-    setEditSearch(EMPTY_SEARCH);
-    setAddSearch(EMPTY_SEARCH);
-    setDeleteConfirmIndex(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only resync when opening
-  }, [open]);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) {
+      setDraftRoute(normalizeJournalLocationRoute(route));
+      setEditingIndex(null);
+      setEditSearch(EMPTY_SEARCH);
+      setAddSearch(EMPTY_SEARCH);
+      setDeleteConfirmIndex(null);
+    }
+  }
 
   useEffect(() => {
     if (!open || editingIndex === null || !canEdit) return;
@@ -338,7 +341,9 @@ export default function JournalLocationsDialog({
                             onChange={(event) =>
                               handleEditQueryChange(event.target.value)
                             }
-                            placeholder={t("locations.searchReplacePlaceholder")}
+                            placeholder={t(
+                              "locations.searchReplacePlaceholder"
+                            )}
                             className="pl-9"
                             disabled={!canEdit}
                           />
@@ -435,7 +440,7 @@ export default function JournalLocationsDialog({
         <FormDialogActions
           onConfirm={handleDeleteConfirm}
           confirmLabel={tCommon("delete")}
-          confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive"
+          confirmClassName={dialogPrimaryDestructiveClassName}
           secondaryAction={{
             label: tCommon("cancel"),
             onClick: () => setDeleteConfirmIndex(null),

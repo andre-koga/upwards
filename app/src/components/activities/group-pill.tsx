@@ -27,7 +27,8 @@ export default function GroupPill({
 }: GroupPillProps) {
   const actionLabel = "Start";
   const handleNameClick = onStatsClick ?? onNameClick;
-  const resolvedNameTitle = nameTitle ?? (onStatsClick ? "View group stats" : "Edit group");
+  const resolvedNameTitle =
+    nameTitle ?? (onStatsClick ? "View group stats" : "Edit group");
   const resolvedNameAriaLabel =
     nameAriaLabel ?? (onStatsClick ? "View group stats" : "Edit group");
 
@@ -38,39 +39,44 @@ export default function GroupPill({
   return (
     <div className={base}>
       <div className="flex w-full gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleNameClick}
-          title={resolvedNameTitle}
-          aria-label={resolvedNameAriaLabel}
-          className="h-full flex-1 justify-start gap-2.5 truncate rounded-full px-4 text-left text-sm font-medium shadow-none"
-        >
-          <span
-            className="h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: color }}
-            aria-hidden
-          />
-          <span className="min-w-0 flex-1 truncate">
-            {name || (
-              <span className="font-normal text-muted-foreground">Name…</span>
-            )}
-          </span>
+        <div className="flex min-w-0 flex-1 items-stretch overflow-hidden rounded-full border border-input bg-background">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleNameClick}
+            title={resolvedNameTitle}
+            aria-label={resolvedNameAriaLabel}
+            className={`h-full min-w-0 flex-1 justify-start gap-2.5 truncate rounded-none py-2 pl-4 text-left text-sm font-medium shadow-none ${
+              onSettingsClick ? "pr-0" : "pr-4"
+            }`}
+          >
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: color }}
+              aria-hidden
+            />
+            <span className="min-w-0 flex-1 truncate">
+              {name || (
+                <span className="font-normal text-muted-foreground">Name…</span>
+              )}
+            </span>
+          </Button>
           {onSettingsClick && (
-            <button
+            <Button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
+              variant="ghost"
+              onClick={(event) => {
+                event.stopPropagation();
                 onSettingsClick();
               }}
               title="Group settings"
               aria-label="Group settings"
-              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+              className="h-full w-10 shrink-0 justify-start rounded-none px-0 pl-2.5 pr-3.5 text-muted-foreground shadow-none hover:text-foreground"
             >
               <Settings className="h-4 w-4" />
-            </button>
+            </Button>
           )}
-        </Button>
+        </div>
         {onActionClick ? (
           <Button
             type="button"

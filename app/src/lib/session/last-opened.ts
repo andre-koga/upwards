@@ -1,4 +1,4 @@
-import { getEffectiveToday, getDayResetMinutes } from "@/lib/session/day-reset";
+import { getDayResetMinutes } from "@/lib/session/day-reset";
 import { toDateString } from "@/lib/time-utils";
 
 const LAST_OPENED_DATE_KEY = "okhabit:last_opened_date";

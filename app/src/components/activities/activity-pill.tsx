@@ -1,6 +1,6 @@
 import { Play, Plus, Square, Settings } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity";
-import { getContrastColor } from "@/lib/color-utils";
+import { DEFAULT_GROUP_COLOR, getContrastColor } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -25,7 +25,7 @@ export interface ActivityPillProps {
 
 export default function ActivityPill({
   name,
-  color = "#3b82f6",
+  color = DEFAULT_GROUP_COLOR,
   elapsedMs = 0,
   isRunning = false,
   onNameClick,
@@ -41,6 +41,7 @@ export default function ActivityPill({
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
   const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
+  const hasSettingsAction = !readOnly && !!onSettingsClick;
   // Stats click takes priority over onNameClick when provided
   const handleNameClick = onStatsClick ?? onNameClick;
 
@@ -48,53 +49,61 @@ export default function ActivityPill({
     <div
       className={cn(
         "relative flex h-10 w-full items-stretch gap-2 overflow-hidden rounded-full",
-        className,
+        className
       )}
     >
       {/* Name / label side */}
-      <Button
-        type="button"
-        variant="outline"
-        onClick={nameInteractive ? handleNameClick : undefined}
+      <div
         className={cn(
-          "h-full min-h-0 flex-1 flex-col items-stretch justify-center gap-0 overflow-hidden rounded-full p-0 text-left text-sm font-medium",
+          "flex min-w-0 flex-1 items-stretch overflow-hidden rounded-full border border-input bg-background",
           readOnly && !allowNameClickWhenReadOnly
             ? "pointer-events-none shadow-sm"
             : readOnly
               ? "shadow-sm"
-              : "shadow-none",
+              : "shadow-none"
         )}
       >
-        <span
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={nameInteractive ? handleNameClick : undefined}
           className={cn(
-            "flex min-h-0 min-w-0 flex-1 items-center gap-2 px-4 py-1",
+            "h-full min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center gap-0 rounded-none p-0 text-left text-sm font-medium shadow-none"
           )}
         >
           <span
-            className="h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: color }}
-          />
-          <span className={cn("min-w-0 flex-1 truncate", nameClassName)}>
-            {name || (
-              <span className="font-normal text-muted-foreground">Name…</span>
+            className={cn(
+              "flex min-h-0 min-w-0 flex-1 items-center gap-2 py-1 pl-4",
+              hasSettingsAction ? "pr-0" : "pr-4"
             )}
+          >
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            <span className={cn("min-w-0 flex-1 truncate", nameClassName)}>
+              {name || (
+                <span className="font-normal text-muted-foreground">Name…</span>
+              )}
+            </span>
           </span>
-          {!readOnly && onSettingsClick && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSettingsClick();
-              }}
-              title="Activity settings"
-              aria-label="Activity settings"
-              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Settings className="h-4 w-4" />
-            </button>
-          )}
-        </span>
-      </Button>
+        </Button>
+        {hasSettingsAction && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={(event) => {
+              event.stopPropagation();
+              onSettingsClick?.();
+            }}
+            title="Activity settings"
+            aria-label="Activity settings"
+            className="h-full w-10 shrink-0 justify-start rounded-none px-0 pl-2 pr-4 text-muted-foreground shadow-none hover:text-foreground"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
       {/* Timer / action side */}
       <div className="flex h-full min-h-0 items-stretch">
@@ -115,17 +124,25 @@ export default function ActivityPill({
           <div
             className={cn(
               "relative flex h-full shrink-0 items-center justify-center gap-1.5 rounded-full border bg-background px-4 text-xs font-semibold",
-              isRunning ? "border-2" : "border-border text-muted-foreground",
+              isRunning ? "border-2" : "border-border text-muted-foreground"
             )}
-            style={isRunning ? { borderColor: color, color: textColor } : undefined}
+            style={
+              isRunning ? { borderColor: color, color: textColor } : undefined
+            }
           >
             {isRunning ? (
-              <Square className="h-3.5 w-3.5 shrink-0" style={{ fill: textColor }} />
+              <Square
+                className="h-3.5 w-3.5 shrink-0"
+                style={{ fill: textColor }}
+              />
             ) : (
               <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-muted-foreground" />
             )}
             <span
-              className={cn("font-mono text-xs", !isRunning && "text-muted-foreground")}
+              className={cn(
+                "font-mono text-xs",
+                !isRunning && "text-muted-foreground"
+              )}
             >
               {timerLabel}
             </span>
@@ -136,10 +153,17 @@ export default function ActivityPill({
             variant="secondary"
             onClick={onClick}
             className="relative h-full shrink-0 gap-1.5 rounded-full px-4 font-semibold shadow-none"
-            style={isRunning ? { backgroundColor: color, color: textColor } : undefined}
+            style={
+              isRunning
+                ? { backgroundColor: color, color: textColor }
+                : undefined
+            }
           >
             {isRunning ? (
-              <Square className="h-3.5 w-3.5 shrink-0" style={{ fill: textColor }} />
+              <Square
+                className="h-3.5 w-3.5 shrink-0"
+                style={{ fill: textColor }}
+              />
             ) : (
               <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-secondary-foreground" />
             )}

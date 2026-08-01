@@ -1,0 +1,27 @@
+---
+description: Required shadcn alignment, accessibility, and adaptive desktop architecture
+alwaysApply: true
+---
+
+# UI System Architecture
+
+Before planning or changing shared primitives, forms, dialogs, sheets,
+drawers, navigation, accessibility behavior, responsive layout, or page-level
+information architecture, read:
+
+- `docs/architecture/ui-system-and-responsive-layout.md`
+
+Treat that document as binding repository guidance. In particular:
+
+- Use shadcn/Radix for generic accessible behavior, but preserve documented
+  Upwards-specific extensions and product components.
+- Do not overwrite customized primitives with registry source without reviewing
+  and preserving their behavior.
+- Do not add raw generic controls when a shared primitive fits.
+- Every touch or pointer interaction needs a keyboard-accessible equivalent.
+- Desktop support requires an adaptive shell and information architecture, not
+  a wider or centered phone frame.
+- Preserve the mobile-first PWA experience while adding desktop behavior.
+
+Any intentional departure must update the architecture document and explain
+the changed product tradeoff before implementation.

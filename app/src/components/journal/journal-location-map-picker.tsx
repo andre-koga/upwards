@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
-import { createPortal } from "react-dom";
-import { Expand, Loader2, MapPin, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Expand, Loader2, MapPin, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import MediaLightbox from "@/components/journal/media-lightbox";
 import type { LocationData } from "@/lib/db/types";
 import { cn } from "@/lib/utils";
 
@@ -117,7 +117,6 @@ interface JournalLocationMapSurfaceProps extends JournalLocationMapPickerProps {
   interactive: boolean;
   fullscreen?: boolean;
   showFullscreenButton?: boolean;
-  onCloseFullscreen?: () => void;
   onOpenFullscreen?: () => void;
 }
 
@@ -134,7 +133,6 @@ function JournalLocationMapSurface({
   interactive,
   fullscreen = false,
   showFullscreenButton = false,
-  onCloseFullscreen,
   onOpenFullscreen,
 }: JournalLocationMapSurfaceProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -351,10 +349,6 @@ function JournalLocationMapSurface({
         dragRef.current = null;
       }}
       onKeyDown={(event) => {
-        if (event.key === "Escape" && fullscreen) {
-          onCloseFullscreen?.();
-          return;
-        }
         if (readOnly || !onMapPick) return;
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
@@ -433,59 +427,40 @@ function JournalLocationMapSurface({
       ) : null}
 
       {fullscreen ? (
-        <>
-          <div className="absolute bottom-3 right-3 z-10 flex flex-col overflow-hidden rounded-md border bg-background shadow-sm">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-none"
-              onPointerDown={stopControlPointer}
-              onPointerUp={stopControlPointer}
-              onPointerCancel={stopControlPointer}
-              onClick={(event) => {
-                event.stopPropagation();
-                zoomBy(1);
-              }}
-              aria-label="Zoom in"
-            >
-              <ZoomIn className="h-4 w-4" aria-hidden />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-none border-t"
-              onPointerDown={stopControlPointer}
-              onPointerUp={stopControlPointer}
-              onPointerCancel={stopControlPointer}
-              onClick={(event) => {
-                event.stopPropagation();
-                zoomBy(-1);
-              }}
-              aria-label="Zoom out"
-            >
-              <ZoomOut className="h-4 w-4" aria-hidden />
-            </Button>
-          </div>
-
+        <div className="absolute bottom-3 right-3 z-10 flex flex-col overflow-hidden rounded-md border bg-background shadow-sm">
           <Button
             type="button"
-            variant="secondary"
+            variant="ghost"
             size="icon"
-            className="absolute bottom-3 left-3 z-10 h-10 w-10 rounded-full bg-background shadow-sm"
+            className="h-11 w-11 rounded-none"
             onPointerDown={stopControlPointer}
             onPointerUp={stopControlPointer}
             onPointerCancel={stopControlPointer}
             onClick={(event) => {
               event.stopPropagation();
-              onCloseFullscreen?.();
+              zoomBy(1);
             }}
-            aria-label="Close fullscreen map"
+            aria-label="Zoom in"
           >
-            <X className="h-5 w-5" aria-hidden />
+            <ZoomIn className="h-4 w-4" aria-hidden />
           </Button>
-        </>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-11 w-11 rounded-none border-t"
+            onPointerDown={stopControlPointer}
+            onPointerUp={stopControlPointer}
+            onPointerCancel={stopControlPointer}
+            onClick={(event) => {
+              event.stopPropagation();
+              zoomBy(-1);
+            }}
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="h-4 w-4" aria-hidden />
+          </Button>
+        </div>
       ) : null}
 
       {resolvedFooterText ? (
@@ -525,41 +500,6 @@ export default function JournalLocationMapPicker({
         .join("|"),
     [locations, selectedLocation]
   );
-  const fullscreenMap =
-    fullscreenOpen && typeof document !== "undefined"
-      ? createPortal(
-          <div
-            className="fixed inset-0 z-[70] flex bg-black/50 p-3 backdrop-blur-sm sm:p-6"
-            style={{ pointerEvents: "auto" }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Expanded locations map"
-            onPointerDown={(event) => event.stopPropagation()}
-            onPointerMove={(event) => event.stopPropagation()}
-            onPointerUp={(event) => event.stopPropagation()}
-            onPointerCancel={(event) => event.stopPropagation()}
-            onWheel={(event) => event.stopPropagation()}
-          >
-            <div className="min-h-0 w-full overflow-hidden rounded-xl border bg-background shadow-2xl">
-              <JournalLocationMapSurface
-                key={`fullscreen-${locationsKey}`}
-                locations={locations}
-                selectedLocation={selectedLocation}
-                readOnly
-                className="h-full rounded-none border-0"
-                footerText={null}
-                ariaLabel="Expanded map of locations visited"
-                fitBounds
-                interactive
-                fullscreen
-                onCloseFullscreen={() => setFullscreenOpen(false)}
-              />
-            </div>
-          </div>,
-          document.body
-        )
-      : null;
-
   return (
     <>
       <JournalLocationMapSurface
@@ -578,7 +518,29 @@ export default function JournalLocationMapPicker({
         onOpenFullscreen={() => setFullscreenOpen(true)}
       />
 
-      {fullscreenMap}
+      <MediaLightbox
+        open={fullscreenOpen}
+        onOpenChange={setFullscreenOpen}
+        title="Expanded locations map"
+        closeLabel="Close fullscreen map"
+        contentClassName="h-full max-h-full w-full max-w-none p-3 sm:p-6"
+        onPointerDownOutside={(event) => event.preventDefault()}
+      >
+        <div className="h-full min-h-0 w-full overflow-hidden rounded-xl border bg-background shadow-2xl">
+          <JournalLocationMapSurface
+            key={`fullscreen-${locationsKey}`}
+            locations={locations}
+            selectedLocation={selectedLocation}
+            readOnly
+            className="h-full rounded-none border-0"
+            footerText={null}
+            ariaLabel="Expanded map of locations visited"
+            fitBounds
+            interactive
+            fullscreen
+          />
+        </div>
+      </MediaLightbox>
     </>
   );
 }

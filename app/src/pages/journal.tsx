@@ -2,17 +2,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BookOpen, Search, X } from "lucide-react";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { AppPageShell } from "@/components/layout/app-page-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useJournalArchive } from "@/hooks/use-journal-archive";
 import JournalArchiveEntry from "@/components/journal/journal-archive-entry";
 import JournalArchiveBanner from "@/components/journal/journal-archive-banner";
 import { formatArchiveMonthLabel } from "@/lib/journal/archive";
-
-function scrollAppToTop() {
-  window.scrollTo(0, 0);
-  document.querySelector<HTMLElement>("[data-app-scroll]")?.scrollTo(0, 0);
-}
+import { scrollAppToTop } from "@/lib/scroll-app-to-top";
 
 export default function JournalPage() {
   const { t } = useTranslation("journal");
@@ -62,15 +59,12 @@ export default function JournalPage() {
   }, [hasMore, loadMore, visibleItems.length]);
 
   return (
-    <div className="space-y-5 p-4 pb-24">
-      <header className="space-y-1">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <BookOpen className="h-6 w-6" />
-          {t("archive.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">{t("archive.subtitle")}</p>
-      </header>
-
+    <AppPageShell
+      title={t("archive.title")}
+      subtitle={t("archive.subtitle")}
+      titleIcon={<BookOpen className="h-6 w-6" />}
+      className="space-y-5"
+    >
       <div className="relative">
         <Search
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -105,7 +99,9 @@ export default function JournalPage() {
         </p>
       ) : totalEntries === 0 ? (
         <div className="space-y-2 py-12 text-center">
-          <p className="font-crimson text-xl font-semibold">{t("archive.empty")}</p>
+          <p className="font-crimson text-xl font-semibold">
+            {t("archive.empty")}
+          </p>
           <p className="text-sm text-muted-foreground">
             {t("archive.emptyHelper")}
           </p>
@@ -148,10 +144,7 @@ export default function JournalPage() {
               );
             }
             return (
-              <JournalArchiveEntry
-                key={item.entry.id}
-                entry={item.entry}
-              />
+              <JournalArchiveEntry key={item.entry.id} entry={item.entry} />
             );
           })}
 
@@ -170,6 +163,6 @@ export default function JournalPage() {
       )}
 
       <FloatingBackButton to="/" title={tNav("home")} />
-    </div>
+    </AppPageShell>
   );
 }

@@ -1,29 +1,42 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import TodayPage from "@/pages/today";
-import StatsPage from "@/pages/stats";
-import GroupStatsPage from "@/pages/stats-group";
-import ActivityStatsPage from "@/pages/stats-activity";
-import SettingsPage from "@/pages/settings";
-import ForgotPasswordPage from "@/pages/forgot-password";
-import ResetPasswordPage from "@/pages/reset-password";
-import TaskOrderPage from "@/pages/task-order";
-import WhatsNewPage from "@/pages/whats-new";
-import FriendsPage from "@/pages/friends";
-import JournalPage from "@/pages/journal";
-import LogsPage from "@/pages/logs";
 import { NotificationsFloatingButton } from "@/components/notifications/notifications-floating-button";
-import { NotificationsProvider } from "@/lib/notifications/use-notifications";
+import { NotificationsProvider } from "@/lib/notifications/notifications-provider";
 import SyncStatus from "@/components/settings/sync-status";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
 import { BrowserChromeThemeSync } from "@/components/layout/browser-chrome-theme-sync";
 import { useAppOpenSession } from "@/lib/session/use-app-open-session";
-import { SpeedInsights } from "@vercel/speed-insights/react"
-import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
+
+const StatsPage = lazy(() => import("@/pages/stats"));
+const GroupStatsPage = lazy(() => import("@/pages/stats-group"));
+const ActivityStatsPage = lazy(() => import("@/pages/stats-activity"));
+const SettingsPage = lazy(() => import("@/pages/settings"));
+const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
+const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
+const TaskOrderPage = lazy(() => import("@/pages/task-order"));
+const WhatsNewPage = lazy(() => import("@/pages/whats-new"));
+const FriendsPage = lazy(() => import("@/pages/friends"));
+const JournalPage = lazy(() => import("@/pages/journal"));
+const LogsPage = lazy(() => import("@/pages/logs"));
 
 function AppSession() {
   useAppOpenSession();
   return null;
+}
+
+function PageLoadingFallback() {
+  return (
+    <div
+      className="flex items-center justify-center py-12"
+      role="status"
+      aria-label="Loading page"
+    >
+      <p className="text-muted-foreground">Loading…</p>
+    </div>
+  );
 }
 
 export default function App() {
@@ -38,6 +51,7 @@ export default function App() {
             type="button"
             className="w-full cursor-pointer rounded-2xl border border-amber-400 bg-amber-50 p-4 text-left text-sm leading-relaxed text-amber-900 transition-opacity hover:opacity-80 dark:border-amber-600 dark:bg-amber-950 dark:text-amber-200"
             onClick={() => setNoticeDismissed(true)}
+            aria-label="Dismiss mobile experience notice"
           >
             <p className="font-semibold">Mobile experience notice</p>
             <p className="mt-1">
@@ -56,37 +70,54 @@ export default function App() {
             <SyncStatus />
             <NotificationsFloatingButton />
             <div data-app-scroll className="md:h-full md:overflow-y-auto">
-              <Routes>
-                <Route path="/" element={<TodayPage />} />
-                <Route path="/stats" element={<StatsPage />} />
-                <Route path="/stats/groups/:groupId" element={<GroupStatsPage />} />
-                <Route
-                  path="/stats/groups/:groupId/activities/:activityId"
-                  element={<ActivityStatsPage />}
-                />
-                <Route
-                  path="/promises"
-                  element={<Navigate to="/" replace />}
-                />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route
-                  path="/settings/forgot-password"
-                  element={<ForgotPasswordPage />}
-                />
-                <Route
-                  path="/settings/reset-password"
-                  element={<ResetPasswordPage />}
-                />
-                <Route path="/settings/task-order" element={<TaskOrderPage />} />
-                <Route path="/whats-new" element={<WhatsNewPage />} />
-                <Route path="/friends" element={<FriendsPage />} />
-                <Route path="/journal" element={<JournalPage />} />
-                <Route path="/logs" element={<LogsPage />} />
-                <Route path="/notifications" element={<Navigate to="/" replace />} />
-                {/* Legacy promise routes → home */}
-                <Route path="/promises/:id" element={<Navigate to="/" replace />} />
-                <Route path="/promises/join/:token" element={<Navigate to="/" replace />} />
-              </Routes>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <Routes>
+                  <Route path="/" element={<TodayPage />} />
+                  <Route path="/stats" element={<StatsPage />} />
+                  <Route
+                    path="/stats/groups/:groupId"
+                    element={<GroupStatsPage />}
+                  />
+                  <Route
+                    path="/stats/groups/:groupId/activities/:activityId"
+                    element={<ActivityStatsPage />}
+                  />
+                  <Route
+                    path="/promises"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route
+                    path="/settings/forgot-password"
+                    element={<ForgotPasswordPage />}
+                  />
+                  <Route
+                    path="/settings/reset-password"
+                    element={<ResetPasswordPage />}
+                  />
+                  <Route
+                    path="/settings/task-order"
+                    element={<TaskOrderPage />}
+                  />
+                  <Route path="/whats-new" element={<WhatsNewPage />} />
+                  <Route path="/friends" element={<FriendsPage />} />
+                  <Route path="/journal" element={<JournalPage />} />
+                  <Route path="/logs" element={<LogsPage />} />
+                  <Route
+                    path="/notifications"
+                    element={<Navigate to="/" replace />}
+                  />
+                  {/* Legacy promise routes → home */}
+                  <Route
+                    path="/promises/:id"
+                    element={<Navigate to="/" replace />}
+                  />
+                  <Route
+                    path="/promises/join/:token"
+                    element={<Navigate to="/" replace />}
+                  />
+                </Routes>
+              </Suspense>
             </div>
           </NotificationsProvider>
         </main>

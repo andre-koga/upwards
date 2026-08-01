@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import { db, now } from "@/lib/db";
 import type { Activity } from "@/lib/db/types";
+import { useAsyncData } from "@/hooks/use-async-data";
 import {
   getActivityDisplayName,
   isActiveGroup,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/activity";
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { AppPageShell } from "@/components/layout/app-page-shell";
 import { SettingsSection } from "@/components/ui/settings-section";
 
 function compareActivities(left: Activity, right: Activity): number {
@@ -38,36 +40,36 @@ export default function TaskOrderPage() {
   const { t } = useTranslation("settings");
   const { t: tNav } = useTranslation("nav");
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const loadActivities = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [allActivities, groups] = await Promise.all([
-        db.activities.filter((a) => !a.completed_at && !a.deleted_at).toArray(),
-        db.activityGroups.filter((g) => isActiveGroup(g)).toArray(),
-      ]);
-      const groupById = buildGroupById(groups);
-      const reorderable = filterActiveActivities(allActivities, groupById)
-        .filter(
-          (activity) =>
-            !isHiddenGroupDefaultActivity(activity) &&
-            isScheduledRoutine(activity.routine ?? "")
-        )
-        .sort(compareActivities);
-
-      setActivities(reorderable);
-    } catch (error) {
-      console.error("Error loading activities for task ordering:", error);
-    } finally {
-      setLoading(false);
-    }
+  const {
+    data: loadedActivities,
+    loading,
+    error,
+    reload,
+  } = useAsyncData(async () => {
+    const [allActivities, groups] = await Promise.all([
+      db.activities.filter((a) => !a.completed_at && !a.deleted_at).toArray(),
+      db.activityGroups.filter((g) => isActiveGroup(g)).toArray(),
+    ]);
+    const groupById = buildGroupById(groups);
+    return filterActiveActivities(allActivities, groupById)
+      .filter(
+        (activity) =>
+          !isHiddenGroupDefaultActivity(activity) &&
+          isScheduledRoutine(activity.routine ?? "")
+      )
+      .sort(compareActivities);
   }, []);
 
-  useEffect(() => {
-    void loadActivities();
-  }, [loadActivities]);
+  // Mirror freshly loaded activities into local reorder state (render-phase
+  // adjustment; reorders mutate `activities` locally before persisting).
+  const [prevLoadedActivities, setPrevLoadedActivities] =
+    useState(loadedActivities);
+  if (prevLoadedActivities !== loadedActivities) {
+    setPrevLoadedActivities(loadedActivities);
+    setActivities(loadedActivities ?? []);
+  }
 
   const canMove = useMemo(
     () => ({
@@ -110,25 +112,20 @@ export default function TaskOrderPage() {
         await persistOrder(next);
       } catch (error) {
         console.error("Error saving task order:", error);
-        await loadActivities();
+        reload();
       } finally {
         setSaving(false);
       }
     },
-    [activities, canMove.hasItems, canMove.isBusy, loadActivities, persistOrder]
+    [activities, canMove.hasItems, canMove.isBusy, reload, persistOrder]
   );
 
   return (
-    <div className="space-y-3 p-4 pb-24">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">
-          {t("taskOrder.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("taskOrder.description")}
-        </p>
-      </header>
-
+    <AppPageShell
+      title={t("taskOrder.title")}
+      subtitle={t("taskOrder.description")}
+      className="space-y-3"
+    >
       <SettingsSection title={t("taskOrder.dailySorting")}>
         <div className="space-y-2">
           {loading && (
@@ -137,7 +134,13 @@ export default function TaskOrderPage() {
             </p>
           )}
 
-          {!loading && activities.length === 0 && (
+          {!loading && error && (
+            <p className="text-sm text-destructive">
+              {t("taskOrder.loadError")}
+            </p>
+          )}
+
+          {!loading && !error && activities.length === 0 && (
             <p className="text-sm text-muted-foreground">
               {t("taskOrder.empty")}
             </p>
@@ -165,6 +168,7 @@ export default function TaskOrderPage() {
                     onClick={() => void moveItem(index, "up")}
                     disabled={saving || index === 0}
                     title={t("taskOrder.moveUp")}
+                    aria-label={t("taskOrder.moveUp")}
                   >
                     <ChevronUp className="h-4 w-4" />
                   </Button>
@@ -176,6 +180,7 @@ export default function TaskOrderPage() {
                     onClick={() => void moveItem(index, "down")}
                     disabled={saving || index === activities.length - 1}
                     title={t("taskOrder.moveDown")}
+                    aria-label={t("taskOrder.moveDown")}
                   >
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -192,6 +197,6 @@ export default function TaskOrderPage() {
       </SettingsSection>
 
       <FloatingBackButton to="/settings" title={tNav("backToSettings")} />
-    </div>
+    </AppPageShell>
   );
 }

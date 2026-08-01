@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { db, now, newId } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type {
@@ -253,47 +253,119 @@ export function useJournalEntry(currentDate: Date) {
     [saveJournalEntry, currentDate]
   );
 
-  const persistedLocationRoute = parseJournalLocationRoute(
-    journalEntry?.location
+  const persistedLocationRoute = useMemo(
+    () => parseJournalLocationRoute(journalEntry?.location),
+    [journalEntry]
   );
   const draftLocations = draftLocationRoute.locations;
-  const setNormalizedDraftLocationRoute = (route: JournalLocationRoute) => {
-    setDraftLocationRoute(normalizeJournalLocationRoute(route));
-  };
 
-  return {
-    // state
-    draftTitle,
-    setDraftTitle,
-    draftText,
-    setDraftText,
-    draftEmoji,
-    setDraftEmoji,
-    draftBookmarked,
-    setDraftBookmarked,
-    draftVideoPath,
-    setDraftVideoPath,
-    draftPhotoPaths,
-    setDraftPhotoPaths,
-    draftRef,
-    canEditJournal,
-    // state
-    draftLocationRoute,
-    draftLocations,
-    setDraftLocationRoute: setNormalizedDraftLocationRoute,
-    journalCompletionStreak: journalEntry?.journal_completion_streak ?? null,
-    journalEntryNumber: journalEntry?.journal_entry_number ?? null,
-    isJournalComplete: !!journalEntry?.is_journal_complete,
-    videoThumbnail: journalEntry?.video_thumbnail ?? null,
-    /** Parsed `journalEntries.location`; updates with `journalEntry` (not one effect behind draft state). */
-    persistedLocationRoute,
-    persistedLocations: persistedLocationRoute.locations,
-    // actions
-    loadJournalEntry,
-    saveDraft,
-    saveBookmark,
-    saveLocationRoute,
-  };
+  /**
+   * Single mutation channel for draft fields: keeps React state and the
+   * save-time ref (draftRef) in sync so callers never write draftRef directly.
+   */
+  const updateDraft = useCallback((patch: Partial<JournalDraft>) => {
+    draftRef.current = { ...draftRef.current, ...patch };
+    if (patch.title !== undefined) setDraftTitle(patch.title);
+    if (patch.text !== undefined) setDraftText(patch.text);
+    if (patch.emoji !== undefined) setDraftEmoji(patch.emoji);
+    if (patch.bookmarked !== undefined) setDraftBookmarked(patch.bookmarked);
+    if (patch.videoPath !== undefined) setDraftVideoPath(patch.videoPath);
+    if (patch.locationRoute !== undefined) {
+      setDraftLocationRoute(normalizeJournalLocationRoute(patch.locationRoute));
+    }
+    if (patch.photoPaths !== undefined) setDraftPhotoPaths(patch.photoPaths);
+  }, []);
+
+  const setDraftTitleSynced = useCallback(
+    (title: string) => updateDraft({ title }),
+    [updateDraft]
+  );
+  const setDraftTextSynced = useCallback(
+    (text: string) => updateDraft({ text }),
+    [updateDraft]
+  );
+  const setDraftEmojiSynced = useCallback(
+    (emoji: string) => updateDraft({ emoji }),
+    [updateDraft]
+  );
+  const setDraftBookmarkedSynced = useCallback(
+    (bookmarked: boolean) => updateDraft({ bookmarked }),
+    [updateDraft]
+  );
+  const setDraftVideoPathSynced = useCallback(
+    (videoPath: string) => updateDraft({ videoPath }),
+    [updateDraft]
+  );
+  const setDraftPhotoPathsSynced = useCallback(
+    (photoPaths: string[]) => updateDraft({ photoPaths }),
+    [updateDraft]
+  );
+  const setDraftLocationRouteSynced = useCallback(
+    (locationRoute: JournalLocationRoute) => updateDraft({ locationRoute }),
+    [updateDraft]
+  );
+
+  return useMemo(
+    () => ({
+      // state
+      draftTitle,
+      setDraftTitle: setDraftTitleSynced,
+      draftText,
+      setDraftText: setDraftTextSynced,
+      draftEmoji,
+      setDraftEmoji: setDraftEmojiSynced,
+      draftBookmarked,
+      setDraftBookmarked: setDraftBookmarkedSynced,
+      draftVideoPath,
+      setDraftVideoPath: setDraftVideoPathSynced,
+      draftPhotoPaths,
+      setDraftPhotoPaths: setDraftPhotoPathsSynced,
+      draftRef,
+      canEditJournal,
+      // state
+      draftLocationRoute,
+      draftLocations,
+      setDraftLocationRoute: setDraftLocationRouteSynced,
+      journalCompletionStreak: journalEntry?.journal_completion_streak ?? null,
+      journalEntryNumber: journalEntry?.journal_entry_number ?? null,
+      isJournalComplete: !!journalEntry?.is_journal_complete,
+      videoThumbnail: journalEntry?.video_thumbnail ?? null,
+      /** Parsed `journalEntries.location`; updates with `journalEntry` (not one effect behind draft state). */
+      persistedLocationRoute,
+      persistedLocations: persistedLocationRoute.locations,
+      // actions
+      loadJournalEntry,
+      saveDraft,
+      saveBookmark,
+      saveLocationRoute,
+      updateDraft,
+    }),
+    [
+      draftTitle,
+      setDraftTitleSynced,
+      draftText,
+      setDraftTextSynced,
+      draftEmoji,
+      setDraftEmojiSynced,
+      draftBookmarked,
+      setDraftBookmarkedSynced,
+      draftVideoPath,
+      setDraftVideoPathSynced,
+      draftPhotoPaths,
+      setDraftPhotoPathsSynced,
+      canEditJournal,
+      draftLocationRoute,
+      draftLocations,
+      setDraftLocationRouteSynced,
+      journalEntry,
+      persistedLocationRoute,
+      loadJournalEntry,
+      saveDraft,
+      saveBookmark,
+      saveLocationRoute,
+      updateDraft,
+    ]
+  );
 }
 
 export type UseJournalEntryReturn = ReturnType<typeof useJournalEntry>;

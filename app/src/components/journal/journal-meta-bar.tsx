@@ -27,7 +27,8 @@ export default function JournalMetaBar({
           journal.saveBookmark(next);
         }}
         className="text-muted-foreground"
-        title={
+        title={journal.draftBookmarked ? t("removeBookmark") : t("bookmarkDay")}
+        aria-label={
           journal.draftBookmarked ? t("removeBookmark") : t("bookmarkDay")
         }
       >
@@ -45,6 +46,7 @@ export default function JournalMetaBar({
           onClick={onEditRequest}
           className="text-muted-foreground"
           title={t("editJournal")}
+          aria-label={t("editJournal")}
         >
           <Pencil className="h-4 w-4" />
         </Button>

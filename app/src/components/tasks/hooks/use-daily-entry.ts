@@ -28,10 +28,9 @@ export function useDailyEntry(dateString: string) {
 
   // Refs let us compute the exact next persisted values without relying on
   // React state updater callbacks having run before awaiting persistence.
+  // They are written inside async/event callbacks only — never during render.
   const taskCountsRef = useRef(taskCounts);
   const pausedTaskIdsRef = useRef(pausedTaskIds);
-  taskCountsRef.current = taskCounts;
-  pausedTaskIdsRef.current = pausedTaskIds;
 
   const loadDailyEntry = useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -44,11 +43,15 @@ export function useDailyEntry(dateString: string) {
           .filter((e) => !e.deleted_at)
           .first();
 
+        const nextCounts = normalizeTaskCounts(entry ?? null);
+        const nextPausedTaskIds = normalizePausedTaskIds(entry ?? null);
         setDailyEntry(entry || null);
-        setTaskCounts(normalizeTaskCounts(entry ?? null));
-        setPausedTaskIds(normalizePausedTaskIds(entry ?? null));
+        setTaskCounts(nextCounts);
+        setPausedTaskIds(nextPausedTaskIds);
         setIsBreakDay(normalizeBreakDay(entry ?? null));
         setCurrentActivityId(entry?.current_activity_id || null);
+        taskCountsRef.current = nextCounts;
+        pausedTaskIdsRef.current = nextPausedTaskIds;
       } catch (error) {
         console.error("Error loading daily entry:", error);
       } finally {
@@ -60,10 +63,14 @@ export function useDailyEntry(dateString: string) {
 
   const getOrCreateDailyEntry = useCallback(async (): Promise<DailyEntry> => {
     const entry = await getOrCreateDailyEntryDb(dateString);
+    const nextCounts = normalizeTaskCounts(entry);
+    const nextPausedTaskIds = normalizePausedTaskIds(entry);
     setDailyEntry(entry);
-    setTaskCounts(normalizeTaskCounts(entry));
-    setPausedTaskIds(normalizePausedTaskIds(entry));
+    setTaskCounts(nextCounts);
+    setPausedTaskIds(nextPausedTaskIds);
     setIsBreakDay(normalizeBreakDay(entry));
+    taskCountsRef.current = nextCounts;
+    pausedTaskIdsRef.current = nextPausedTaskIds;
     return entry;
   }, [dateString]);
 
@@ -248,29 +255,29 @@ export function useDailyEntry(dateString: string) {
           is_break_day: nextIsBreakDay,
           updated_at: now(),
         });
-          setDailyEntry({
-            ...entry,
-            is_break_day: nextIsBreakDay,
-            updated_at: now(),
-          });
-          return;
-        }
-
-        const n = now();
-        const newDbEntry: DailyEntry = {
-          id: newId(),
-          date: dateString,
-          task_counts: {},
-          paused_task_ids: [],
+        setDailyEntry({
+          ...entry,
           is_break_day: nextIsBreakDay,
-          current_activity_id: null,
-          created_at: n,
-          updated_at: n,
-          synced_at: null,
-          deleted_at: null,
-        };
-        await db.dailyEntries.add(newDbEntry);
-        setDailyEntry(newDbEntry);
+          updated_at: now(),
+        });
+        return;
+      }
+
+      const n = now();
+      const newDbEntry: DailyEntry = {
+        id: newId(),
+        date: dateString,
+        task_counts: {},
+        paused_task_ids: [],
+        is_break_day: nextIsBreakDay,
+        current_activity_id: null,
+        created_at: n,
+        updated_at: n,
+        synced_at: null,
+        deleted_at: null,
+      };
+      await db.dailyEntries.add(newDbEntry);
+      setDailyEntry(newDbEntry);
     } catch (error) {
       console.error("Error toggling break day:", error);
       loadDailyEntry();

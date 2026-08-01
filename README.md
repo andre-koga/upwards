@@ -62,3 +62,19 @@ It combines activity tracking, streaks, session timelines, and lightweight journ
 ## Product Focus
 
 Upwards is designed to make consistency visible, reduce friction in daily tracking, and preserve meaningful day-by-day progress over time.
+
+---
+
+## Architecture
+
+Changes to persistence, offline synchronization, historical views, lifecycle
+behavior, or statistics must follow the
+[temporal data and sync architecture](docs/architecture/temporal-data-sync.md).
+It defines the app's append-only history, effective-dated definitions,
+multi-device conflict handling, and in-app recovery requirements.
+
+Changes to shared components, accessibility, navigation, or responsive layouts
+must follow the
+[UI system and responsive layout architecture](docs/architecture/ui-system-and-responsive-layout.md).
+It defines the shadcn/Radix alignment strategy and the adaptive mobile/desktop
+experience.

@@ -40,7 +40,10 @@ async function establishRecoverySession(): Promise<boolean> {
         refresh_token: refreshToken,
       });
       if (error) {
-        console.warn("[auth] setSession from recovery hash failed:", error.message);
+        console.warn(
+          "[auth] setSession from recovery hash failed:",
+          error.message
+        );
         return false;
       }
       window.history.replaceState({}, "", window.location.pathname);
@@ -57,8 +60,11 @@ export default function ResetPasswordPage() {
   const { t: tCommon } = useTranslation("common");
   const { t: tNav } = useTranslation("nav");
   const navigate = useNavigate();
-  const { isSupabaseConfigured, authLoading, authError, updatePassword } = useAuth();
-  const [checkingLink, setCheckingLink] = useState(true);
+  const { isSupabaseConfigured, authLoading, authError, updatePassword } =
+    useAuth();
+  const [checkingLink, setCheckingLink] = useState(() =>
+    Boolean(supabase && isSupabaseConfigured)
+  );
   const [linkValid, setLinkValid] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -67,7 +73,6 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     if (!supabase || !isSupabaseConfigured) {
-      setCheckingLink(false);
       return;
     }
 
