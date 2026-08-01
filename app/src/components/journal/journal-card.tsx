@@ -13,6 +13,7 @@ import {
   mergeJournalLocationRoute,
 } from "@/lib/journal";
 import { useAuth } from "@/lib/use-auth";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { cn } from "@/lib/utils";
 import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
 import { useLocationDetection } from "@/components/journal/hooks/use-location-detection";
@@ -42,7 +43,7 @@ export default function JournalCard({
   const [journalLocationsOpen, setJournalLocationsOpen] = useState(false);
   const [suppressJournalOpenHitArea, setSuppressJournalOpenHitArea] =
     useState(false);
-  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const isOnline = useOnlineStatus();
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
   const suppressNextCardClickRef = useRef(false);
   const journalHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -69,22 +70,24 @@ export default function JournalCard({
 
   const displayLocations = knownLocations;
 
+  const { draftRef, persistedLocationRoute, updateDraft, saveLocationRoute } =
+    journal;
+
   const handleLocationDetected = useCallback(
     (loc: LocationData) => {
       const base =
-        journal.draftRef.current.locationRoute.locations.length > 0
-          ? journal.draftRef.current.locationRoute
-          : journal.persistedLocationRoute;
+        draftRef.current.locationRoute.locations.length > 0
+          ? draftRef.current.locationRoute
+          : persistedLocationRoute;
       const merged = mergeJournalLocationRoute(base, loc);
       if (merged.locations.length === base.locations.length) return;
-      journal.setDraftLocationRoute(merged);
-      journal.draftRef.current.locationRoute = merged;
-      journal.saveLocationRoute(merged);
+      updateDraft({ locationRoute: merged });
+      saveLocationRoute(merged);
     },
-    [journal]
+    [draftRef, persistedLocationRoute, updateDraft, saveLocationRoute]
   );
 
-  const { detectLocation, resetGeoAttempt } = useLocationDetection({
+  const { detectLocation } = useLocationDetection({
     isToday: journal.canEditJournal,
     isJournalLoaded,
     knownLocations,
@@ -93,39 +96,25 @@ export default function JournalCard({
 
   useEffect(() => {
     void loadJournalMeta();
-  }, [loadJournalMeta]);
+  }, [loadJournalMeta, journal.draftBookmarked]);
 
+  // Initial load for this date. The card is keyed by date in today.tsx, so
+  // mount-time state (dialogs closed, not-yet-loaded) needs no reset effect.
+  const { loadJournalEntry } = journal;
   useEffect(() => {
-    void loadJournalMeta();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [journal.draftBookmarked]);
-
-  useEffect(() => {
-    setIsJournalLoaded(false);
-    setJournalEditOpen(false);
-    resetGeoAttempt();
-    void journal.loadJournalEntry().finally(() => {
-      setIsJournalLoaded(true);
+    let cancelled = false;
+    void loadJournalEntry().finally(() => {
+      if (!cancelled) setIsJournalLoaded(true);
     });
-    // journal intentionally omitted — object identity changes every render; loadJournalEntry tracks date.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- omit journal object
-  }, [journal.loadJournalEntry, resetGeoAttempt]);
+    return () => {
+      cancelled = true;
+    };
+  }, [loadJournalEntry]);
 
   useEffect(() => {
     if (!journal.canEditJournal) return;
     detectLocation();
   }, [detectLocation, journal.canEditJournal]);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -232,7 +221,7 @@ export default function JournalCard({
             canPlay={isOnline}
             thumbnail={journalThumbnail}
             onThumbnailGenerated={(thumb) => {
-              journal.draftRef.current.videoThumbnail = thumb;
+              updateDraft({ videoThumbnail: thumb });
               journal.saveDraft();
             }}
           />
@@ -284,19 +273,16 @@ export default function JournalCard({
           canUploadVideo={isSupabaseConfigured && isAuthed}
           onOpenChange={handleJournalEditOpenChange}
           onSave={({ emoji, title, text, videoPath, photoPaths }) => {
-            journal.setDraftEmoji(emoji);
-            journal.setDraftTitle(title);
-            journal.setDraftText(text);
-            journal.setDraftVideoPath(videoPath);
-            journal.setDraftPhotoPaths(photoPaths);
-            journal.draftRef.current.emoji = emoji;
-            journal.draftRef.current.title = title;
-            journal.draftRef.current.text = text;
-            if (journal.draftRef.current.videoPath !== videoPath) {
-              journal.draftRef.current.videoThumbnail = null;
-            }
-            journal.draftRef.current.videoPath = videoPath;
-            journal.draftRef.current.photoPaths = photoPaths;
+            // Clear the stale thumbnail only when the video actually changes.
+            const videoChanged = draftRef.current.videoPath !== videoPath;
+            updateDraft({
+              emoji,
+              title,
+              text,
+              videoPath,
+              photoPaths,
+              ...(videoChanged ? { videoThumbnail: null } : {}),
+            });
             journal.saveDraft();
           }}
         />
@@ -306,9 +292,8 @@ export default function JournalCard({
           route={knownLocationRoute}
           canEdit={journal.canEditJournal}
           onSave={(route) => {
-            journal.setDraftLocationRoute(route);
-            journal.draftRef.current.locationRoute = route;
-            journal.saveLocationRoute(route);
+            updateDraft({ locationRoute: route });
+            saveLocationRoute(route);
           }}
         />
 

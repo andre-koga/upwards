@@ -207,6 +207,7 @@ export default function TodayPage() {
       )}
 
       <JournalCard
+        key={toDateString(currentDate)}
         currentDate={currentDate}
         journal={journal}
         loadJournalMeta={loadJournalMeta}
