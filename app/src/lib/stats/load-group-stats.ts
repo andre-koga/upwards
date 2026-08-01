@@ -29,7 +29,11 @@ import {
   sumTimerMsInRange,
 } from "./aggregates";
 import { buildSparklineWeeks } from "./compute-activity";
-import type { ActivitySparklineDay, GroupStats, HabitComparisonRow } from "./types";
+import type {
+  ActivitySparklineDay,
+  GroupStats,
+  HabitComparisonRow,
+} from "./types";
 
 function buildHabitRow(
   activity: Activity,
@@ -40,6 +44,7 @@ function buildHabitRow(
   today: Date,
   thirtyDaysAgo: Date,
   ninetyDaysAgo: Date,
+  definitionVersions: import("@/lib/db/types").ActivityDefinitionVersion[] = []
 ): HabitComparisonRow {
   const completionByDate = buildActivityCompletionByDate(
     activity,
@@ -47,19 +52,22 @@ function buildHabitRow(
     breakDays,
     createdAt,
     today,
+    { definitionVersions }
   );
   const totals30 = computeActivityCompletionTotals(
     completionByDate,
     thirtyDaysAgo,
-    today,
+    today
   );
   const totals90 = computeActivityCompletionTotals(
     completionByDate,
     ninetyDaysAgo,
-    today,
+    today
   );
   const createdAtStr = toDateString(
-    startOfDay(new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00")),
+    startOfDay(
+      new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00")
+    )
   );
 
   const sparklineFrom = shiftDate(today, -27);
@@ -86,7 +94,7 @@ function buildHabitRow(
       entriesByDate,
       breakDays,
       createdAt,
-      today,
+      today
     );
   }
 
@@ -105,20 +113,32 @@ function buildHabitRow(
   };
 }
 
-export async function loadGroupStats(groupId: string): Promise<GroupStats | null> {
+export async function loadGroupStats(
+  groupId: string
+): Promise<GroupStats | null> {
   const today = getToday();
   const thirtyDaysAgo = shiftDate(today, -29);
   const ninetyDaysAgo = shiftDate(today, -89);
 
-  const [group, allActivities, allDailyEntries, allPeriods] = await Promise.all([
+  const [
+    group,
+    allActivities,
+    allDailyEntries,
+    allPeriods,
+    definitionVersions,
+  ] = await Promise.all([
     db.activityGroups.get(groupId),
     db.activities
       .filter(
-        (a) => a.group_id === groupId && !a.deleted_at && !isHiddenGroupDefaultActivity(a),
+        (a) =>
+          a.group_id === groupId &&
+          !a.deleted_at &&
+          !isHiddenGroupDefaultActivity(a)
       )
       .toArray(),
     db.dailyEntries.filter((e) => !e.deleted_at).toArray(),
     db.activityPeriods.filter((p) => !p.deleted_at).toArray(),
+    db.activityDefinitionVersions.filter((row) => !row.deleted_at).toArray(),
   ]);
 
   if (!group) return null;
@@ -136,10 +156,12 @@ export async function loadGroupStats(groupId: string): Promise<GroupStats | null
     entriesByDate,
     breakDays,
     thirtyDaysAgo,
-    today,
+    today
   );
   const earliestCreated = activities.reduce((min, a) => {
-    const d = startOfDay(new Date(getEffectiveToday(new Date(a.created_at)) + "T00:00:00"));
+    const d = startOfDay(
+      new Date(getEffectiveToday(new Date(a.created_at)) + "T00:00:00")
+    );
     return d < min ? d : min;
   }, today);
   const totalsAll = computeCompletionTotals(
@@ -147,7 +169,7 @@ export async function loadGroupStats(groupId: string): Promise<GroupStats | null
     entriesByDate,
     breakDays,
     earliestCreated,
-    today,
+    today
   );
 
   const activityIds = new Set(activities.map((a) => a.id));
@@ -166,17 +188,29 @@ export async function loadGroupStats(groupId: string): Promise<GroupStats | null
   const compoundScores: number[] = [];
   for (const activity of routineHabits) {
     const createdAt = startOfDay(
-      new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00"),
+      new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00")
     );
     compoundScores.push(
-      computeCompoundScore(activity, entriesByDate, breakDays, createdAt, today),
+      computeCompoundScore(activity, entriesByDate, breakDays, createdAt, today)
     );
   }
   const groupCompoundScore =
     compoundScores.length > 0
-      ? Math.round((compoundScores.reduce((s, v) => s + v, 0) / compoundScores.length) * 1000) /
-        1000
+      ? Math.round(
+          (compoundScores.reduce((s, v) => s + v, 0) / compoundScores.length) *
+            1000
+        ) / 1000
       : null;
+
+  const versionsByActivity = new Map<
+    string,
+    import("@/lib/db/types").ActivityDefinitionVersion[]
+  >();
+  for (const version of definitionVersions) {
+    const list = versionsByActivity.get(version.activity_id) ?? [];
+    list.push(version);
+    versionsByActivity.set(version.activity_id, list);
+  }
 
   const buildRows = (list: Activity[]) =>
     list.map((activity) =>
@@ -185,11 +219,16 @@ export async function loadGroupStats(groupId: string): Promise<GroupStats | null
         entriesByDate,
         breakDays,
         timerByActivity.get(activity.id) ?? {},
-        startOfDay(new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00")),
+        startOfDay(
+          new Date(
+            getEffectiveToday(new Date(activity.created_at)) + "T00:00:00"
+          )
+        ),
         today,
         thirtyDaysAgo,
         ninetyDaysAgo,
-      ),
+        versionsByActivity.get(activity.id) ?? []
+      )
     );
 
   const habitComparison = buildRows(activities);
@@ -202,7 +241,7 @@ export async function loadGroupStats(groupId: string): Promise<GroupStats | null
       label: getActivityDisplayName(activity, group),
       color: groupColor,
       activityIds: new Set([activity.id]),
-    })),
+    }))
   ).map((seg, i, arr) => ({
     ...seg,
     opacity: arr.length > 1 ? 1 - (i / arr.length) * 0.5 : undefined,
@@ -211,11 +250,18 @@ export async function loadGroupStats(groupId: string): Promise<GroupStats | null
   return {
     group,
     completionRate30d: completionRate(totals30.completed, totals30.scheduled),
-    completionRateAllTime: completionRate(totalsAll.completed, totalsAll.scheduled),
+    completionRateAllTime: completionRate(
+      totalsAll.completed,
+      totalsAll.scheduled
+    ),
     totalTrackedMs,
     activeHabitCount: active.length,
     groupCompoundScore,
-    consistencyHeatmap90: buildAggregateHeatmap90(countable, entriesByDate, breakDays),
+    consistencyHeatmap90: buildAggregateHeatmap90(
+      countable,
+      entriesByDate,
+      breakDays
+    ),
     habitComparison,
     timeOfDaySegments,
   };

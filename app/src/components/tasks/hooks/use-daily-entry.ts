@@ -2,6 +2,11 @@ import { useState, useCallback, useRef } from "react";
 import { db, now, newId } from "@/lib/db";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import type { DailyEntry } from "@/lib/db/types";
+import {
+  enqueueActivityCountDelta,
+  enqueueActivityPauseChange,
+  enqueueBreakDayChange,
+} from "@/lib/sync/semantic-operations";
 
 function normalizeTaskCounts(entry: DailyEntry | null): Record<string, number> {
   return (entry?.task_counts as Record<string, number>) || {};
@@ -160,14 +165,26 @@ export function useDailyEntry(dateString: string) {
       setPausedTaskIds(nextPausedTaskIds);
 
       await persistTaskCountsAndPaused(nextCounts, nextPausedTaskIds);
+      void enqueueActivityCountDelta({
+        activityId,
+        date: dateString,
+        previousCount: current,
+        nextCount: nextCounts[activityId] || 0,
+        reason: neverSlip
+          ? "never_slip"
+          : nextCount === 0
+            ? "cycle"
+            : "increment",
+      });
     },
-    [persistTaskCountsAndPaused]
+    [dateString, persistTaskCountsAndPaused]
   );
 
   const resetNeverTaskCount = useCallback(
     async (activityId: string) => {
       const prevCounts = taskCountsRef.current;
       const prevPausedTaskIds = pausedTaskIdsRef.current;
+      const previousCount = prevCounts[activityId] || 0;
 
       const nextCounts: Record<string, number> = { ...prevCounts };
       delete nextCounts[activityId];
@@ -182,14 +199,22 @@ export function useDailyEntry(dateString: string) {
       setPausedTaskIds(nextPausedTaskIds);
 
       await persistTaskCountsAndPaused(nextCounts, nextPausedTaskIds);
+      void enqueueActivityCountDelta({
+        activityId,
+        date: dateString,
+        previousCount,
+        nextCount: 0,
+        reason: "reset",
+      });
     },
-    [persistTaskCountsAndPaused]
+    [dateString, persistTaskCountsAndPaused]
   );
 
   const toggleTaskPaused = useCallback(
     async (activityId: string) => {
       const prevPausedTaskIds = pausedTaskIdsRef.current;
-      const nextPausedTaskIds = prevPausedTaskIds.includes(activityId)
+      const wasPaused = prevPausedTaskIds.includes(activityId);
+      const nextPausedTaskIds = wasPaused
         ? prevPausedTaskIds.filter((id) => id !== activityId)
         : [...prevPausedTaskIds, activityId];
 
@@ -213,6 +238,11 @@ export function useDailyEntry(dateString: string) {
             paused_task_ids: nextPausedTaskIds,
             updated_at: now(),
           });
+          void enqueueActivityPauseChange({
+            activityId,
+            date: dateString,
+            paused: !wasPaused,
+          });
           return;
         }
 
@@ -231,6 +261,11 @@ export function useDailyEntry(dateString: string) {
         };
         await db.dailyEntries.add(newDbEntry);
         setDailyEntry(newDbEntry);
+        void enqueueActivityPauseChange({
+          activityId,
+          date: dateString,
+          paused: !wasPaused,
+        });
       } catch (error) {
         console.error("Error toggling paused task:", error);
         loadDailyEntry();
@@ -260,6 +295,11 @@ export function useDailyEntry(dateString: string) {
           is_break_day: nextIsBreakDay,
           updated_at: now(),
         });
+        void enqueueBreakDayChange({
+          date: dateString,
+          isBreakDay: nextIsBreakDay,
+          dailyEntryId: entry.id,
+        });
         return;
       }
 
@@ -278,6 +318,11 @@ export function useDailyEntry(dateString: string) {
       };
       await db.dailyEntries.add(newDbEntry);
       setDailyEntry(newDbEntry);
+      void enqueueBreakDayChange({
+        date: dateString,
+        isBreakDay: nextIsBreakDay,
+        dailyEntryId: newDbEntry.id,
+      });
     } catch (error) {
       console.error("Error toggling break day:", error);
       loadDailyEntry();

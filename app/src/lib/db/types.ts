@@ -240,3 +240,45 @@ export interface SyncDeviceRecord {
   created_at: string;
   retired_at: string | null;
 }
+
+/**
+ * Immutable activity definition snapshot (authoritative history).
+ * Current `activities` rows remain a disposable projection.
+ */
+export interface ActivityDefinitionVersion {
+  id: string;
+  activity_id: string;
+  parent_version_id: string | null;
+  /** Logical calendar date (YYYY-MM-DD) this version begins applying. */
+  effective_from: string;
+  recorded_at: string;
+  server_sequence: number | null;
+  operation_id: string;
+  device_id: string;
+  name: string | null;
+  routine: string | null;
+  completion_target: number | null;
+  group_id: string;
+  order_index: number | null;
+  schema_version: number;
+  created_at: string;
+  deleted_at: string | null;
+}
+
+/** Immutable group definition snapshot (authoritative history). */
+export interface GroupDefinitionVersion {
+  id: string;
+  group_id: string;
+  parent_version_id: string | null;
+  effective_from: string;
+  recorded_at: string;
+  server_sequence: number | null;
+  operation_id: string;
+  device_id: string;
+  name: string;
+  color: string | null;
+  order_index: number | null;
+  schema_version: number;
+  created_at: string;
+  deleted_at: string | null;
+}

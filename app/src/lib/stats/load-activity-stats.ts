@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
-import { computeCompoundScore, computeCompoundScoreSeries } from "@/lib/activity";
+import {
+  computeCompoundScore,
+  computeCompoundScoreSeries,
+} from "@/lib/activity";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { effectiveDateForMs } from "@/lib/activity/period-day-utils";
 import { isNeverRoutine } from "@/lib/activity/never-task";
@@ -12,7 +15,9 @@ import {
 } from "./completion";
 import type { ActivityStats } from "./types";
 
-export async function loadActivityStats(activityId: string): Promise<ActivityStats> {
+export async function loadActivityStats(
+  activityId: string
+): Promise<ActivityStats> {
   const nowMs = Date.now();
   const todayStr = getEffectiveToday();
   const today = startOfDay(new Date(todayStr + "T00:00:00"));
@@ -42,13 +47,20 @@ export async function loadActivityStats(activityId: string): Promise<ActivitySta
   const isNever = isNeverRoutine(activity);
   const hasRoutine = !!activity && activity.routine !== "anytime";
   const createdAt = activity?.created_at
-    ? startOfDay(new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00"))
+    ? startOfDay(
+        new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00")
+      )
     : today;
   const createdAtStr = toDateString(createdAt);
 
-  const sortedStreakRows = [...streakRows].sort((a, b) => b.date.localeCompare(a.date));
+  const sortedStreakRows = [...streakRows].sort((a, b) =>
+    b.date.localeCompare(a.date)
+  );
   const currentStreak = sortedStreakRows[0]?.streak ?? 0;
-  const bestStreak = streakRows.reduce((best, r) => Math.max(best, r.streak), 0);
+  const bestStreak = streakRows.reduce(
+    (best, r) => Math.max(best, r.streak),
+    0
+  );
 
   const timerByDate: Record<string, number> = {};
   for (const p of allPeriods) {
@@ -64,17 +76,30 @@ export async function loadActivityStats(activityId: string): Promise<ActivitySta
 
   let completionByDate: Record<string, import("./types").DayStatus> = {};
   let compoundScore: number | null = null;
-  let compoundScoreSeries90d: import("@/lib/activity").CompoundScorePoint[] | undefined;
+  let compoundScoreSeries90d:
+    import("@/lib/activity").CompoundScorePoint[] | undefined;
 
   if (activity && hasRoutine) {
+    const definitionVersions = await db.activityDefinitionVersions
+      .where("activity_id")
+      .equals(activityId)
+      .filter((row) => !row.deleted_at)
+      .toArray();
     completionByDate = buildActivityCompletionByDate(
       activity,
       entriesByDate,
       breakDays,
       createdAt,
       today,
+      { definitionVersions }
     );
-    compoundScore = computeCompoundScore(activity, entriesByDate, breakDays, createdAt, today);
+    compoundScore = computeCompoundScore(
+      activity,
+      entriesByDate,
+      breakDays,
+      createdAt,
+      today
+    );
     const ninetyDaysAgo = shiftDate(today, -89);
     compoundScoreSeries90d = computeCompoundScoreSeries(
       activity,
@@ -82,7 +107,7 @@ export async function loadActivityStats(activityId: string): Promise<ActivitySta
       breakDays,
       createdAt,
       ninetyDaysAgo,
-      today,
+      today
     );
   }
 
