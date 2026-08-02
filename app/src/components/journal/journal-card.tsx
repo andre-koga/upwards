@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/lib/use-auth";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { cn } from "@/lib/utils";
+import { getEffectiveToday } from "@/lib/session/day-reset";
 import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
 import { useLocationDetection } from "@/components/journal/hooks/use-location-detection";
 import JournalVideoSection, {
@@ -52,6 +53,7 @@ export default function JournalCard({
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
   const dateString = toDateString(currentDate);
+  const isCurrentDay = dateString === getEffectiveToday();
 
   const videoPlaybackSrc = getJournalVideoPlaybackUrl(journal.draftVideoPath);
 
@@ -88,7 +90,7 @@ export default function JournalCard({
   );
 
   const { detectLocation } = useLocationDetection({
-    isToday: journal.canEditJournal,
+    isToday: isCurrentDay,
     isJournalLoaded,
     knownLocations,
     onLocationDetected: handleLocationDetected,
@@ -112,9 +114,9 @@ export default function JournalCard({
   }, [loadJournalEntry]);
 
   useEffect(() => {
-    if (!journal.canEditJournal) return;
+    if (!isCurrentDay) return;
     detectLocation();
-  }, [detectLocation, journal.canEditJournal]);
+  }, [detectLocation, isCurrentDay]);
 
   useEffect(() => {
     return () => {

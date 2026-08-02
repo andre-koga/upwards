@@ -5,9 +5,10 @@ import type { LocationData } from "@/lib/db/types";
 const VISIBILITY_DETECT_MIN_INTERVAL_MS = 5 * 60 * 1000;
 
 interface UseLocationDetectionParams {
+  /** True only for the effective current day — never backfill GPS onto past days. */
   isToday: boolean;
   isJournalLoaded: boolean;
-  /** Effective stops for today (draft if synced, else persisted). */
+  /** Places already on this day (draft if present, else persisted). */
   knownLocations: LocationData[];
   onLocationDetected: (location: LocationData) => void;
 }

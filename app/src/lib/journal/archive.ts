@@ -14,6 +14,9 @@ export function journalEntryHasContent(entry: JournalEntry): boolean {
   if (entry.text_content?.trim()) return true;
   if (entry.video_path?.trim()) return true;
   if (entry.photo_paths && entry.photo_paths.length > 0) return true;
+  if (entry.location?.locations && entry.location.locations.length > 0) {
+    return true;
+  }
   return false;
 }
 

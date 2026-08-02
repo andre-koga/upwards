@@ -1,4 +1,4 @@
-import { Flame, MapPin } from "lucide-react";
+import { Flame, MapPin, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { LocationData } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 interface JournalTextSectionProps {
   title: string;
   text: string;
-  /** Ordered places visited that day (shown as A → B → C). */
+  /** Distinct places visited that day (unordered). */
   locations?: LocationData[];
   onLocationsClick?: () => void;
   /** Shown next to location when the day’s journal is complete. */
@@ -25,34 +25,70 @@ export default function JournalTextSection({
   const hasLocations = Boolean(locations?.length);
   const canOpenLocations = typeof onLocationsClick === "function";
 
-  const showMetaRow = canOpenLocations || showStreak;
-
-  const locationLabel = locations?.length
-    ? locations.map((l) => l.displayName).join(" → ")
-    : "";
+  const showMetaRow = canOpenLocations || showStreak || hasLocations;
 
   const streakLabel = t("journalStreak", {
     count: journalCompletionStreak ?? 0,
   });
 
+  const chipClassName =
+    "inline-flex h-auto max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-left text-xs font-normal text-muted-foreground shadow-none";
+
   return (
     <>
       {showMetaRow && (
-        <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 text-xs text-muted-foreground">
+          {hasLocations
+            ? locations!.map((loc, index) => {
+                const label = loc.displayName;
+                if (canOpenLocations) {
+                  return (
+                    <Button
+                      key={`${index}-${label}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
+                      type="button"
+                      variant="outline"
+                      onClick={onLocationsClick}
+                      className={chipClassName}
+                      title={label}
+                    >
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="min-w-0 truncate">{label}</span>
+                    </Button>
+                  );
+                }
+                return (
+                  <span
+                    key={`${index}-${label}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
+                    className={`${chipClassName} border border-border`}
+                    title={label}
+                  >
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    <span className="min-w-0 truncate">{label}</span>
+                  </span>
+                );
+              })
+            : null}
+
           {canOpenLocations ? (
             <Button
               type="button"
               variant="outline"
               onClick={onLocationsClick}
-              className="inline-flex h-auto min-w-0 max-w-full items-center gap-1 rounded-full px-2 py-px text-left text-xs font-normal text-muted-foreground shadow-none"
-              title={hasLocations ? locationLabel : t("addLocationsVisited")}
+              className={chipClassName}
+              title={t("addLocationsVisited")}
+              aria-label={t("addLocationsVisited")}
             >
-              <MapPin className="h-3 w-3 shrink-0" />
-              <span className="min-w-0 break-words">
-                {hasLocations ? locationLabel : t("addLocations")}
-              </span>
+              {hasLocations ? (
+                <Plus className="h-3 w-3 shrink-0" />
+              ) : (
+                <>
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span>{t("addLocations")}</span>
+                </>
+              )}
             </Button>
           ) : null}
+
           {showStreak && (
             <span
               className="inline-flex shrink-0 items-center gap-0.5 tabular-nums"

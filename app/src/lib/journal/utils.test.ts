@@ -119,7 +119,7 @@ describe("isSameJournalPlace / mergeJournalLocationRoute", () => {
     expect(
       isSameJournalPlace(
         place({ displayName: "A", lat: 30.0, lon: -97.0 }),
-        place({ displayName: "B", lat: 30.1, lon: -97.1 })
+        place({ displayName: "B", lat: 30.02, lon: -97.02 })
       )
     ).toBe(true);
     expect(
@@ -130,7 +130,7 @@ describe("isSameJournalPlace / mergeJournalLocationRoute", () => {
     ).toBe(false);
   });
 
-  it("appends only when the next stop differs", () => {
+  it("adds a place only when it is not already in the set", () => {
     const austin = place({
       displayName: "Austin",
       city: "Austin",
@@ -145,5 +145,53 @@ describe("isSameJournalPlace / mergeJournalLocationRoute", () => {
     expect(once.locations).toHaveLength(1);
     expect(mergeJournalLocationRoute(once, austin).locations).toHaveLength(1);
     expect(mergeJournalLocationRoute(once, dallas).locations).toHaveLength(2);
+  });
+
+  it("does not re-add a place that already appears earlier in the set", () => {
+    const austin = place({
+      displayName: "Austin",
+      city: "Austin",
+      countryCode: "US",
+    });
+    const dallas = place({
+      displayName: "Dallas",
+      city: "Dallas",
+      countryCode: "US",
+    });
+    const both = mergeJournalLocationRoute(
+      mergeJournalLocationRoute({ locations: [] }, austin),
+      dallas
+    );
+    expect(both.locations).toHaveLength(2);
+    expect(mergeJournalLocationRoute(both, austin).locations).toHaveLength(2);
+  });
+
+  it("respects the daily place cap", () => {
+    let route = { locations: [] as LocationData[] };
+    for (let i = 0; i < 6; i += 1) {
+      route = mergeJournalLocationRoute(
+        route,
+        place({
+          displayName: `City ${i}`,
+          city: `City ${i}`,
+          countryCode: "US",
+        }),
+        { maxLocations: 5 }
+      );
+    }
+    expect(route.locations).toHaveLength(5);
+  });
+
+  it("dedupes duplicates while normalizing", () => {
+    const austin = place({
+      displayName: "Austin",
+      city: "Austin",
+      countryCode: "US",
+    });
+    expect(
+      parseJournalLocationRoute({
+        locations: [austin, { ...austin, displayName: "Austin TX" }],
+      }).locations
+    ).toHaveLength(1);
   });
 });

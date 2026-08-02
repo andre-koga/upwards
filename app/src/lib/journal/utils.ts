@@ -7,7 +7,10 @@ import type {
 import { shiftDate, toDateString } from "@/lib/time-utils";
 
 /** Max great-circle distance (km) to treat two readings as the same place when city data is missing. */
-const SAME_PLACE_DISTANCE_KM = 50;
+const SAME_PLACE_DISTANCE_KM = 10;
+
+/** Cap on distinct places stored for a single journal day. */
+export const MAX_DAILY_LOCATIONS = 5;
 
 function haversineKm(
   lat1: number,
@@ -33,7 +36,7 @@ function norm(s: string | null | undefined): string {
 }
 
 /**
- * Whether two readings are the same place (consecutive duplicates are dropped).
+ * Whether two readings refer to the same place.
  */
 export function isSameJournalPlace(a: LocationData, b: LocationData): boolean {
   const cityA = norm(a.city);
@@ -59,29 +62,48 @@ export function isSameJournalPlace(a: LocationData, b: LocationData): boolean {
   );
 }
 
+/**
+ * Drop empty names and duplicate places. Order is not meaningful — kept only
+ * for stable display of existing entries.
+ */
 export function normalizeJournalLocationRoute(
   route: JournalLocationRoute
 ): JournalLocationRoute {
-  return {
-    locations: route.locations.filter(
-      (loc) => loc.displayName.trim().length > 0
-    ),
-  };
+  const locations: LocationData[] = [];
+  for (const loc of route.locations) {
+    const displayName = loc.displayName.trim();
+    if (!displayName) continue;
+    const cleaned = { ...loc, displayName };
+    if (locations.some((existing) => isSameJournalPlace(existing, cleaned))) {
+      continue;
+    }
+    locations.push(cleaned);
+  }
+  return { locations };
 }
 
 /**
- * Append a new reading only if it differs from the last stop (A -> B -> C).
+ * Add a place if it is not already in the day's set and the cap allows it.
  */
 export function mergeJournalLocationRoute(
   existing: JournalLocationRoute,
-  next: LocationData
+  next: LocationData,
+  options?: { maxLocations?: number }
 ): JournalLocationRoute {
+  const max = options?.maxLocations ?? MAX_DAILY_LOCATIONS;
   const normalized = normalizeJournalLocationRoute(existing);
-  const last = normalized.locations[normalized.locations.length - 1];
-  if (last && isSameJournalPlace(last, next)) return normalized;
-  return normalizeJournalLocationRoute({
-    locations: [...normalized.locations, next],
-  });
+  const cleanedNext = {
+    ...next,
+    displayName: next.displayName.trim(),
+  };
+  if (!cleanedNext.displayName) return normalized;
+  if (normalized.locations.some((loc) => isSameJournalPlace(loc, cleanedNext))) {
+    return normalized;
+  }
+  if (normalized.locations.length >= max) return normalized;
+  return {
+    locations: [...normalized.locations, cleanedNext],
+  };
 }
 
 function rawToLocationData(raw: unknown): LocationData | null {

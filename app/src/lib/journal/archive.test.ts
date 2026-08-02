@@ -61,6 +61,26 @@ describe("journal archive helpers", () => {
         makeEntry({ entry_date: "2026-01-01", title: "Hello" })
       )
     ).toBe(true);
+    expect(
+      journalEntryHasContent(
+        makeEntry({
+          entry_date: "2026-01-01",
+          location: {
+            locations: [
+              {
+                displayName: "Austin",
+                city: "Austin",
+                state: "TX",
+                country: "US",
+                countryCode: "US",
+                lat: 30.27,
+                lon: -97.74,
+              },
+            ],
+          },
+        })
+      )
+    ).toBe(true);
   });
 
   it("matches search terms across title and text", () => {
