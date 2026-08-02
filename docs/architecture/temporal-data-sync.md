@@ -348,8 +348,8 @@ need a repair tool to define older schedule/target periods manually.
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1–4   | Done locally (definition versions, resolver, stats consumers, effective-from UI)                                                                                                                        |
 | 5     | Done for local device id + pending queue; server device registry/labels deferred                                                                                                                        |
-| 6     | Partial: count / pause / break-day / definition ops; journal & sessions still LWW                                                                                                                       |
-| 7     | Partial: ops stream is authoritative for those domains when RPCs are applied; LWW continues for other tables and non-op columns. Clients strip op-owned projection fields once ops RPCs are known live. |
+| 6     | Done: counts/pause/break, definitions, projection upserts (journal, periods, tasks, memos, streaks, status events, activity/group shell) |
+| 7     | Done when RPCs applied: op-managed tables skip LWW; daily_entries partial (current_activity_id only) |
 | 8     | Done for definition conflicts (compare + keep mine/theirs/combine/defer + apply-from date)                                                                                                              |
 | 9–10  | Deferred                                                                                                                                                                                                |
 
