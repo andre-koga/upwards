@@ -126,7 +126,7 @@
       },
       "errors": {
         "title": "Sync errors",
-        "description": "Problems while uploading or downloading your data.",
+        "description": "Problems that need a retry or fix—not everyday fetch noise from leaving the app mid-sync.",
         "empty": "No sync errors right now."
       },
       "resolved": {

@@ -180,12 +180,6 @@ export default function SyncIssuesPage() {
           )}
           {t("syncIssues.actions.retrySync")}
         </Button>
-        {syncState.lastError ? (
-          <p className="flex items-center gap-1.5 text-xs text-red-500">
-            <XCircle className="h-3.5 w-3.5 shrink-0" />
-            {syncState.lastError}
-          </p>
-        ) : null}
       </div>
 
       {loading && !data ? (

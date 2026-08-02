@@ -42,6 +42,9 @@ import {
   countPendingOperations,
   markOperationAcked,
   markOperationFailed,
+  markOperationRetryableError,
+  requeueFailedOperations,
+  acknowledgePendingWhenOpsUnavailable,
   discardPendingOperation,
 } from "./pending-operations";
 
@@ -114,5 +117,53 @@ describe("pending-operations", () => {
 
     await discardPendingOperation(row.id);
     expect(pendingOps[0].status).toBe("discarded");
+  });
+
+  it("markOperationRetryableError keeps status pending", async () => {
+    const row = await enqueuePendingOperation({
+      operation_id: "op-1",
+      device_id: "device-1",
+      entity_type: "activity",
+      operation_type: "increment",
+      payload: {},
+    });
+
+    await markOperationRetryableError(row.id, "Failed to fetch");
+    expect(pendingOps[0].status).toBe("pending");
+    expect(pendingOps[0].last_error).toBe("Failed to fetch");
+  });
+
+  it("requeueFailedOperations moves failed rows back to pending", async () => {
+    const row = await enqueuePendingOperation({
+      operation_id: "op-1",
+      device_id: "device-1",
+      entity_type: "activity",
+      operation_type: "increment",
+      payload: {},
+    });
+    await markOperationFailed(row.id, "boom");
+
+    expect(await requeueFailedOperations()).toBe(1);
+    expect(pendingOps[0].status).toBe("pending");
+  });
+
+  it("acknowledgePendingWhenOpsUnavailable acks all pending", async () => {
+    await enqueuePendingOperation({
+      operation_id: "op-1",
+      device_id: "device-1",
+      entity_type: "activity",
+      operation_type: "projection.upsert",
+      payload: {},
+    });
+    await enqueuePendingOperation({
+      operation_id: "op-2",
+      device_id: "device-1",
+      entity_type: "activity",
+      operation_type: "projection.upsert",
+      payload: {},
+    });
+
+    expect(await acknowledgePendingWhenOpsUnavailable()).toBe(2);
+    expect(pendingOps.every((row) => row.status === "acked")).toBe(true);
   });
 });

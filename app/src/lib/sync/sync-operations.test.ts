@@ -296,6 +296,19 @@ describe("pushPendingOperations", () => {
     expect(pendingOps[0].status).toBe("pending");
   });
 
+  it("keeps ops pending on transient network failure", async () => {
+    pendingOps.push(makePending({ operation_id: "op-1", id: "row-transient" }));
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: { message: "Failed to fetch" },
+    });
+
+    const result = await pushPendingOperations();
+    expect(result).toEqual({ failed: true, transient: true });
+    expect(pendingOps[0].status).toBe("pending");
+    expect(pendingOps[0].last_error).toBe("Failed to fetch");
+  });
+
   it("acks accepted and duplicate results", async () => {
     pendingOps.push(
       makePending({ operation_id: "op-accepted", id: "row-1" }),

@@ -42,6 +42,7 @@ import {
   listSyncIssues,
   countOpenSyncIssues,
   resolveSyncIssue,
+  resolveOpenSyncErrors,
   deferSyncIssue,
 } from "./sync-issues-store";
 
@@ -126,5 +127,22 @@ describe("sync-issues-store", () => {
     expect(syncIssues.find((row) => row.id === deferred.id)?.status).toBe(
       "deferred"
     );
+  });
+
+  it("resolveOpenSyncErrors resolves only open error issues", async () => {
+    await recordSyncIssue({
+      kind: "error",
+      title: "Sync error",
+      detail: "Oops",
+    });
+    await recordSyncIssue({
+      kind: "conflict",
+      title: "Conflict",
+      detail: "Keep me",
+    });
+
+    expect(await resolveOpenSyncErrors()).toBe(1);
+    expect(syncIssues.find((i) => i.kind === "error")?.status).toBe("resolved");
+    expect(syncIssues.find((i) => i.kind === "conflict")?.status).toBe("open");
   });
 });

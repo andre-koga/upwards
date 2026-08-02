@@ -126,7 +126,7 @@
       },
       "errors": {
         "title": "Erros de sincronização",
-        "description": "Problemas ao enviar ou baixar seus dados.",
+        "description": "Problemas que precisam de nova tentativa ou correção—não o ruído comum de fetch ao sair do app no meio da sincronização.",
         "empty": "Sem erros de sincronização no momento."
       },
       "resolved": {

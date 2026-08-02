@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { supabase, getCachedUserId } from "@/lib/supabase";
-import { logError } from "@/lib/error-utils";
+import { isTransientNetworkError, logError } from "@/lib/error-utils";
 import {
   toRemoteRow,
   dedupeRowsForUpsert,
@@ -30,16 +30,39 @@ export async function runPushInternal(
     /** When true, strip op-owned fields so LWW cannot undo sequence merges. */
     opsSyncActive?: boolean;
   }
-): Promise<{ failedTables: string[] }> {
+): Promise<{
+  failedTables: string[];
+  /** At least one failure was abort/offline noise. */
+  hadTransientFailure: boolean;
+  /** At least one failure was durable (auth, schema, validation, etc.). */
+  hadDurableFailure: boolean;
+}> {
   const { opsSyncActive = false } = options;
   const failedTables: string[] = [];
-  if (!supabase) return { failedTables };
+  let hadTransientFailure = false;
+  let hadDurableFailure = false;
+  if (!supabase) {
+    return { failedTables, hadTransientFailure, hadDurableFailure };
+  }
   const userId = getCachedUserId();
-  if (!userId) return { failedTables };
+  if (!userId) {
+    return { failedTables, hadTransientFailure, hadDurableFailure };
+  }
 
   const conflictEntityIds = opsSyncActive
     ? await listOpenConflictEntityIds()
     : new Set<string>();
+
+  const noteFailure = (table: string, err: unknown) => {
+    failedTables.push(table);
+    if (isTransientNetworkError(err)) {
+      hadTransientFailure = true;
+      console.warn(`[sync] transient push failure for ${table}:`, err);
+      return;
+    }
+    hadDurableFailure = true;
+    logError(`Sync push failed for table: ${table}`, err);
+  };
 
   for (const table of SYNC_TABLES) {
     if (opsSyncActive && OPS_MANAGED_SYNC_TABLES.includes(table)) {
@@ -138,11 +161,7 @@ export async function runPushInternal(
       });
 
       if (error) {
-        failedTables.push(table);
-        logError(
-          `Sync push failed for table: ${table}`,
-          new Error(error.message)
-        );
+        noteFailure(table, error);
         continue;
       }
 
@@ -156,10 +175,9 @@ export async function runPushInternal(
         );
       });
     } catch (err) {
-      failedTables.push(table);
-      logError(`Sync push failed for table: ${table}`, err);
+      noteFailure(table, err);
     }
   }
 
-  return { failedTables };
+  return { failedTables, hadTransientFailure, hadDurableFailure };
 }
