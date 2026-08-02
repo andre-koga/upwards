@@ -107,7 +107,7 @@
   "journalStreak": "Sequência no diário: {{count}}",
   "locations": {
     "title": "Lugares",
-    "description": "Lugares onde você esteve hoje — até {{count}}, sem ordem.",
+    "description": "Lugares onde você esteve hoje — até {{count}}.",
     "mapAriaLabel": "Mapa dos lugares deste dia",
     "openFullscreenMap": "Abrir mapa em tela cheia",
     "closeFullscreenMap": "Fechar mapa",

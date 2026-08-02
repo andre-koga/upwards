@@ -25,7 +25,8 @@ function clampLat(lat: number): number {
 }
 
 function clampZoom(zoom: number): number {
-  return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
+  // OSM raster tiles require integer zoom levels in the URL.
+  return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(zoom)));
 }
 
 function lonToTileX(lon: number, zoom: number): number {
@@ -196,11 +197,22 @@ function JournalLocationMapSurface({
     return () => observer.disconnect();
   }, []);
 
-  // Reset pan/zoom when the fitted place set changes.
+  // Reset pan/zoom when the fitted place set changes (stable key, not array identity).
+  const locationsFitKey = useMemo(
+    () =>
+      `${fitBounds}|${locations
+        .map(
+          (loc) =>
+            `${loc.displayName}:${loc.lat ?? ""}:${loc.lon ?? ""}`
+        )
+        .join("|")}`,
+    [fitBounds, locations]
+  );
+
   useEffect(() => {
     setZoomDelta(0);
     setCenterOffsetTile({ x: 0, y: 0 });
-  }, [locations, fitBounds]);
+  }, [locationsFitKey]);
 
   const zoomBy = (delta: number) => {
     const nextZoom = clampZoom(zoom + delta);
@@ -225,13 +237,16 @@ function JournalLocationMapSurface({
   };
 
   const tiles = useMemo(() => {
+    const integerZoom = clampZoom(zoom);
     const baseX = Math.floor(centerTile.x);
     const baseY = Math.floor(centerTile.y);
-    const maxTile = 2 ** zoom;
+    const maxTile = 2 ** integerZoom;
+    const radiusX = Math.max(2, Math.ceil(mapSize.width / TILE_SIZE / 2) + 1);
+    const radiusY = Math.max(2, Math.ceil(mapSize.height / TILE_SIZE / 2) + 1);
     const out: Array<{ x: number; y: number; left: number; top: number }> = [];
 
-    for (let dx = -2; dx <= 2; dx += 1) {
-      for (let dy = -2; dy <= 2; dy += 1) {
+    for (let dx = -radiusX; dx <= radiusX; dx += 1) {
+      for (let dy = -radiusY; dy <= radiusY; dy += 1) {
         const x = baseX + dx;
         const y = baseY + dy;
         if (y < 0 || y >= maxTile) continue;
@@ -246,7 +261,7 @@ function JournalLocationMapSurface({
     }
 
     return out;
-  }, [centerTile, zoom]);
+  }, [centerTile, mapSize.height, mapSize.width, zoom]);
 
   const markers = useMemo(() => {
     return locations
@@ -388,8 +403,8 @@ function JournalLocationMapSurface({
       <div className="absolute left-1/2 top-1/2">
         {tiles.map((tile) => (
           <img
-            key={`${zoom}-${tile.x}-${tile.y}`}
-            src={`https://tile.openstreetmap.org/${zoom}/${tile.x}/${tile.y}.png`}
+            key={`${clampZoom(zoom)}-${tile.x}-${tile.y}`}
+            src={`https://tile.openstreetmap.org/${clampZoom(zoom)}/${tile.x}/${tile.y}.png`}
             alt=""
             draggable={false}
             className="absolute max-w-none select-none"
