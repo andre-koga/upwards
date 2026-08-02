@@ -37,7 +37,8 @@
     "previousPhoto": "Previous photo",
     "nextPhoto": "Next photo",
     "photoUnavailable": "Photo unavailable",
-    "openVideo": "Play video"
+    "openVideo": "Play video",
+    "morePhotos": "{{count}} more photos"
   },
   "untitled": "Untitled",
   "noReflection": "No reflection written.",

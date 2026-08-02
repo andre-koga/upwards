@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { JournalEntry } from "@/lib/db/types";
@@ -53,12 +53,10 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
 
   if (photoPaths.length === 0) return null;
 
-  const cols =
-    photoPaths.length === 1
-      ? "grid-cols-1"
-      : photoPaths.length === 2
-        ? "grid-cols-2"
-        : "grid-cols-2";
+  const previewLimit = 2;
+  const previewPaths = photoPaths.slice(0, previewLimit);
+  const hiddenCount = Math.max(0, photoPaths.length - previewLimit);
+  const singlePreview = previewPaths.length === 1;
 
   const showPreviousPhoto = () =>
     setLightbox((current) =>
@@ -81,22 +79,32 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
 
   return (
     <>
-      <div className={cn("grid gap-2", cols)}>
-        {photoPaths.map((path, index) => {
+      <div
+        className={cn("grid gap-1.5", singlePreview ? "grid-cols-1" : "grid-cols-2")}
+      >
+        {previewPaths.map((path, index) => {
           const url = getJournalPhotoUrl(path);
+          const isOverflowTile =
+            hiddenCount > 0 && index === previewPaths.length - 1;
           return (
             <button
               key={path}
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setLightbox({ key: pathsKey, index, open: true });
+                // Overflow tile jumps to the first hidden photo in the lightbox.
+                const openIndex = isOverflowTile ? previewLimit : index;
+                setLightbox({ key: pathsKey, index: openIndex, open: true });
               }}
               className={cn(
                 "relative overflow-hidden rounded-lg bg-muted",
-                photoPaths.length === 1 ? "aspect-[2/1]" : "aspect-square"
+                singlePreview ? "aspect-[2/1]" : "aspect-square"
               )}
-              aria-label={t("upload.photoAlt", { index: index + 1 })}
+              aria-label={
+                isOverflowTile
+                  ? t("archive.morePhotos", { count: hiddenCount })
+                  : t("upload.photoAlt", { index: index + 1 })
+              }
             >
               {url ? (
                 <img
@@ -105,6 +113,16 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
                   className="h-full w-full object-cover"
                   draggable={false}
                 />
+              ) : null}
+              {isOverflowTile ? (
+                <span
+                  className="absolute inset-0 flex items-center justify-center bg-black/55"
+                  aria-hidden
+                >
+                  <span className="font-crimson text-3xl font-semibold tracking-tight text-white drop-shadow-sm">
+                    +{hiddenCount}
+                  </span>
+                </span>
               ) : null}
             </button>
           );
@@ -182,35 +200,92 @@ export default function JournalArchiveEntry({
   };
 
   return (
-    <article className="space-y-2 py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both">
-      {(hasVideo || photoPaths.length > 0) && (
-        <div className="space-y-1.5">
-          {hasVideo ? (
-            <button
-              type="button"
-              className="relative block w-full overflow-hidden rounded-xl text-left"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!isOnline || !videoSrc) return;
-                setVideoOpen(true);
-              }}
-              aria-label={t("archive.openVideo")}
-            >
-              <div className="pointer-events-none">
-                <JournalVideoSection
-                  videoSrc={videoSrc ?? ""}
-                  canPlay={false}
-                  thumbnail={{
-                    videoSrc: videoSrc,
-                    storedThumbnail: entry.video_thumbnail,
-                  }}
-                />
-              </div>
-            </button>
+    <article className="py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+        <div className="flex w-12 shrink-0 flex-col items-center gap-1 pt-1">
+          <button
+            type="button"
+            onClick={openDay}
+            className="group flex flex-col items-center gap-1 text-left"
+          >
+            <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+              {dayNumber}
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {weekday}
+            </span>
+          </button>
+          <span
+            className={cn(
+              "text-4xl leading-none",
+              !entry.day_emoji && "text-muted-foreground"
+            )}
+            aria-hidden
+          >
+            {entry.day_emoji?.trim() || "🙂"}
+          </span>
+          {isBookmarked ? (
+            <span className="sr-only">{t("bookmarkDay")}</span>
           ) : null}
-          <ArchivePhotoGrid photoPaths={photoPaths} />
         </div>
-      )}
+
+        <div
+          className={cn(
+            "min-w-0 overflow-hidden rounded-xl border border-border/70",
+            bookmarkGradient
+          )}
+        >
+          <button
+            type="button"
+            onClick={openDay}
+            className="group w-full space-y-1 px-3 py-2.5 text-left"
+          >
+            <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
+              {entry.title?.trim() || t("untitled")}
+            </h2>
+            {locations.length > 0 ? (
+              <p className="inline-flex min-w-0 max-w-full items-start gap-1 text-xs text-muted-foreground">
+                <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+                <span className="min-w-0 break-words">{locationLabel}</span>
+              </p>
+            ) : null}
+            {entry.text_content?.trim() ? (
+              <p className="whitespace-pre-wrap font-crimson text-base leading-relaxed text-muted-foreground">
+                {entry.text_content}
+              </p>
+            ) : null}
+          </button>
+
+          {(hasVideo || photoPaths.length > 0) && (
+            <div className="space-y-1.5 px-3 pb-2.5">
+              {hasVideo ? (
+                <button
+                  type="button"
+                  className="relative block w-full overflow-hidden rounded-lg text-left"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isOnline || !videoSrc) return;
+                    setVideoOpen(true);
+                  }}
+                  aria-label={t("archive.openVideo")}
+                >
+                  <div className="pointer-events-none">
+                    <JournalVideoSection
+                      videoSrc={videoSrc ?? ""}
+                      canPlay={isOnline && Boolean(videoSrc)}
+                      thumbnail={{
+                        videoSrc: videoSrc,
+                        storedThumbnail: entry.video_thumbnail,
+                      }}
+                    />
+                  </div>
+                </button>
+              ) : null}
+              <ArchivePhotoGrid photoPaths={photoPaths} />
+            </div>
+          )}
+        </div>
+      </div>
 
       <MediaLightbox
         open={videoOpen && Boolean(videoSrc)}
@@ -229,60 +304,6 @@ export default function JournalArchiveEntry({
           playsInline
         />
       </MediaLightbox>
-
-      <button
-        type="button"
-        onClick={openDay}
-        className="group grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-left"
-      >
-        <div className="flex w-12 shrink-0 flex-col items-center gap-1 pt-1">
-          <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
-            {dayNumber}
-          </span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            {weekday}
-          </span>
-          <span
-            className={cn(
-              "text-4xl leading-none",
-              !entry.day_emoji && "text-muted-foreground"
-            )}
-            aria-hidden
-          >
-            {entry.day_emoji?.trim() || "🙂"}
-          </span>
-          {isBookmarked ? (
-            <span role="img" aria-label={t("bookmarkDay")}>
-              <Heart
-                className="h-3 w-3 fill-red-500 text-red-500"
-                aria-hidden
-              />
-            </span>
-          ) : null}
-        </div>
-
-        <div
-          className={cn(
-            "min-w-0 space-y-1 rounded-xl border border-border/70 px-3 py-2.5",
-            bookmarkGradient
-          )}
-        >
-          <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
-            {entry.title?.trim() || t("untitled")}
-          </h2>
-          {locations.length > 0 ? (
-            <p className="inline-flex min-w-0 max-w-full items-start gap-1 text-xs text-muted-foreground">
-              <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
-              <span className="min-w-0 break-words">{locationLabel}</span>
-            </p>
-          ) : null}
-          {entry.text_content?.trim() ? (
-            <p className="whitespace-pre-wrap font-crimson text-base leading-relaxed text-muted-foreground">
-              {entry.text_content}
-            </p>
-          ) : null}
-        </div>
-      </button>
     </article>
   );
 }
