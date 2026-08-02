@@ -3,7 +3,10 @@ import { getHolidayName } from "@/lib/journal/holidays";
 import {
   buildJournalArchiveFeed,
   collectJournalArchiveMapPins,
+  cycleJournalArchiveTriFilter,
+  DEFAULT_JOURNAL_ARCHIVE_FILTERS,
   journalEntryHasContent,
+  journalEntryMatchesFilters,
   journalEntryMatchesQuery,
 } from "@/lib/journal/archive";
 import type { JournalEntry } from "@/lib/db/types";
@@ -171,5 +174,52 @@ describe("journal archive helpers", () => {
       lat: 30.27,
       lon: -97.74,
     });
+  });
+
+  it("cycles tri-state filters and matches structured filters", () => {
+    expect(cycleJournalArchiveTriFilter("any")).toBe("yes");
+    expect(cycleJournalArchiveTriFilter("yes")).toBe("no");
+    expect(cycleJournalArchiveTriFilter("no")).toBe("any");
+
+    const hearted = makeEntry({
+      entry_date: "2026-01-01",
+      title: "Heart",
+      is_bookmarked: true,
+    });
+    const plain = makeEntry({
+      entry_date: "2026-01-02",
+      title: "Plain",
+      is_bookmarked: false,
+      photo_paths: ["a.jpg"],
+    });
+
+    expect(
+      journalEntryMatchesFilters(
+        hearted,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, bookmarked: "yes" },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      journalEntryMatchesFilters(
+        plain,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, bookmarked: "yes" },
+        "en"
+      )
+    ).toBe(false);
+    expect(
+      journalEntryMatchesFilters(
+        plain,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, hasPhotos: "yes" },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      journalEntryMatchesFilters(
+        hearted,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, hasPhotos: "yes" },
+        "en"
+      )
+    ).toBe(false);
   });
 });

@@ -29,7 +29,7 @@
     "empty": "No journal entries yet",
     "emptyHelper": "Write a reflection on Today and it will show up here.",
     "noResults": "No matching days",
-    "noResultsHelper": "Try different words, an emoji, or a date.",
+    "noResultsHelper": "Try different words, filters, an emoji, or a date.",
     "resultCount": "{{count}} days found",
     "loadingMore": "Loading more…",
     "end": "You've reached the beginning.",
@@ -45,7 +45,38 @@
     "worldMapPreviewAria": "Miniature world map of journal places",
     "worldMapHint": "{{count}} days with places — tap a pin to jump there",
     "worldMapEmpty": "No mapped places yet. Add places on daily entries to see them here.",
-    "mapPinAria": "{{place}} on {{date}}"
+    "mapPinAria": "{{place}} on {{date}}",
+    "filters": {
+      "clear": "Clear",
+      "bookmarked": {
+        "label": "Hearted",
+        "hint": "Filter by hearted days. Tap to cycle: any, only hearted, not hearted.",
+        "any": "Any hearted state",
+        "yes": "Only hearted days",
+        "no": "Exclude hearted days"
+      },
+      "hasPhotos": {
+        "label": "Photos",
+        "hint": "Filter by photos. Tap to cycle: any, with photos, without photos.",
+        "any": "Any photo state",
+        "yes": "Only days with photos",
+        "no": "Exclude days with photos"
+      },
+      "hasVideo": {
+        "label": "Video",
+        "hint": "Filter by video. Tap to cycle: any, with video, without video.",
+        "any": "Any video state",
+        "yes": "Only days with video",
+        "no": "Exclude days with video"
+      },
+      "hasPlaces": {
+        "label": "Places",
+        "hint": "Filter by places. Tap to cycle: any, with places, without places.",
+        "any": "Any places state",
+        "yes": "Only days with places",
+        "no": "Exclude days with places"
+      }
+    }
   },
   "untitled": "Untitled",
   "noReflection": "No reflection written.",

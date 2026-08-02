@@ -9,20 +9,32 @@ import { useJournalArchive } from "@/hooks/use-journal-archive";
 import JournalArchiveEntry from "@/components/journal/journal-archive-entry";
 import JournalArchiveBanner from "@/components/journal/journal-archive-banner";
 import JournalArchiveWorldMap from "@/components/journal/journal-archive-world-map";
-import { formatArchiveMonthLabel } from "@/lib/journal/archive";
+import JournalArchiveSearchFilters from "@/components/journal/journal-archive-search-filters";
+import {
+  DEFAULT_JOURNAL_ARCHIVE_FILTERS,
+  formatArchiveMonthLabel,
+  journalArchiveFiltersAreActive,
+  type JournalArchiveFilters,
+} from "@/lib/journal/archive";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
 
 export default function JournalPage() {
   const { t } = useTranslation("journal");
   const { t: tNav } = useTranslation("nav");
+  const [filters, setFilters] = useState<JournalArchiveFilters>(
+    DEFAULT_JOURNAL_ARCHIVE_FILTERS
+  );
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [mapJumpDate, setMapJumpDate] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
-      setDebouncedQuery(searchInput.trim());
+      setFilters((prev) => {
+        const nextQuery = searchInput.trim();
+        if (prev.query === nextQuery) return prev;
+        return { ...prev, query: nextQuery };
+      });
     }, 250);
     return () => window.clearTimeout(id);
   }, [searchInput]);
@@ -38,7 +50,7 @@ export default function JournalPage() {
     focusEntryDate,
     revealEntryDate,
     clearFocusEntryDate,
-  } = useJournalArchive(debouncedQuery);
+  } = useJournalArchive(filters);
 
   useLayoutEffect(() => {
     scrollAppToTop();
@@ -65,10 +77,11 @@ export default function JournalPage() {
   }, [hasMore, loadMore, visibleItems.length]);
 
   useEffect(() => {
-    if (!mapJumpDate || debouncedQuery) return;
+    if (!mapJumpDate) return;
+    if (journalArchiveFiltersAreActive(filters)) return;
     revealEntryDate(mapJumpDate);
     setMapJumpDate(null);
-  }, [mapJumpDate, debouncedQuery, revealEntryDate]);
+  }, [mapJumpDate, filters, revealEntryDate]);
 
   useEffect(() => {
     if (!focusEntryDate) return;
@@ -86,12 +99,14 @@ export default function JournalPage() {
   }, [focusEntryDate, visibleItems, clearFocusEntryDate]);
 
   const handleWorldMapSelect = (entryDate: string) => {
-    // Clear text search so the chosen day is always in the feed, then reveal
-    // after the filter settles (avoids the filter reset clobbering page).
+    // Reset search/filters so the chosen day is in the feed, then reveal
+    // after filters settle (avoids the filter reset clobbering page).
     setSearchInput("");
-    setDebouncedQuery("");
+    setFilters(DEFAULT_JOURNAL_ARCHIVE_FILTERS);
     setMapJumpDate(entryDate);
   };
+
+  const filtersActive = journalArchiveFiltersAreActive(filters);
 
   return (
     <AppPageShell
@@ -100,39 +115,48 @@ export default function JournalPage() {
       titleIcon={<BookOpen className="h-6 w-6" />}
       className="space-y-3"
     >
-      <div className="flex items-center gap-2">
-        <div className="relative min-w-0 flex-1">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t("archive.searchPlaceholder")}
-            className="h-11 rounded-xl pl-9 pr-10"
-            aria-label={t("archive.searchPlaceholder")}
-          />
-          {searchInput ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full"
-              onClick={() => setSearchInput("")}
-              title={t("archive.clearSearch")}
-              aria-label={t("archive.clearSearch")}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={t("archive.searchPlaceholder")}
+              className="h-11 rounded-xl pl-9 pr-10"
+              aria-label={t("archive.searchPlaceholder")}
+            />
+            {searchInput ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full"
+                onClick={() => setSearchInput("")}
+                title={t("archive.clearSearch")}
+                aria-label={t("archive.clearSearch")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            ) : null}
+          </div>
+
+          {!loading && totalEntries > 0 ? (
+            <JournalArchiveWorldMap
+              pins={mapPins}
+              onSelectEntryDate={handleWorldMapSelect}
+            />
           ) : null}
         </div>
 
         {!loading && totalEntries > 0 ? (
-          <JournalArchiveWorldMap
-            pins={mapPins}
-            onSelectEntryDate={handleWorldMapSelect}
+          <JournalArchiveSearchFilters
+            filters={filters}
+            onChange={setFilters}
           />
         ) : null}
       </div>
@@ -161,7 +185,7 @@ export default function JournalPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {debouncedQuery ? (
+          {filtersActive ? (
             <p className="text-xs text-muted-foreground">
               {t("archive.resultCount", { count: totalMatching })}
             </p>

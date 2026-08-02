@@ -67,6 +67,93 @@ export function journalEntryMatchesQuery(
   return terms.every((term) => haystack.includes(term));
 }
 
+/** Tri-state structured filter: any / require / exclude. */
+export type JournalArchiveTriFilter = "any" | "yes" | "no";
+
+export type JournalArchiveFilterKey =
+  | "bookmarked"
+  | "hasPhotos"
+  | "hasVideo"
+  | "hasPlaces";
+
+/** Free-text query plus optional structured day attributes. */
+export interface JournalArchiveFilters {
+  query: string;
+  bookmarked: JournalArchiveTriFilter;
+  hasPhotos: JournalArchiveTriFilter;
+  hasVideo: JournalArchiveTriFilter;
+  hasPlaces: JournalArchiveTriFilter;
+}
+
+export const DEFAULT_JOURNAL_ARCHIVE_FILTERS: JournalArchiveFilters = {
+  query: "",
+  bookmarked: "any",
+  hasPhotos: "any",
+  hasVideo: "any",
+  hasPlaces: "any",
+};
+
+export function cycleJournalArchiveTriFilter(
+  value: JournalArchiveTriFilter
+): JournalArchiveTriFilter {
+  if (value === "any") return "yes";
+  if (value === "yes") return "no";
+  return "any";
+}
+
+export function journalArchiveFiltersAreActive(
+  filters: JournalArchiveFilters
+): boolean {
+  return (
+    filters.query.trim().length > 0 ||
+    filters.bookmarked !== "any" ||
+    filters.hasPhotos !== "any" ||
+    filters.hasVideo !== "any" ||
+    filters.hasPlaces !== "any"
+  );
+}
+
+export function journalArchiveFiltersKey(filters: JournalArchiveFilters): string {
+  return [
+    filters.query.trim(),
+    filters.bookmarked,
+    filters.hasPhotos,
+    filters.hasVideo,
+    filters.hasPlaces,
+  ].join("\0");
+}
+
+function matchesTriFilter(
+  value: boolean,
+  filter: JournalArchiveTriFilter
+): boolean {
+  if (filter === "any") return true;
+  if (filter === "yes") return value;
+  return !value;
+}
+
+/** Text query + structured filters (hearted, photos, video, places). */
+export function journalEntryMatchesFilters(
+  entry: JournalEntry,
+  filters: JournalArchiveFilters,
+  locale: LocaleValue
+): boolean {
+  if (!journalEntryMatchesQuery(entry, filters.query, locale)) return false;
+
+  const hasPhotos = Boolean(entry.photo_paths && entry.photo_paths.length > 0);
+  const hasVideo = Boolean(
+    entry.video_path?.trim() || entry.video_thumbnail?.trim()
+  );
+  const hasPlaces = Boolean(entry.location?.locations?.length);
+
+  return (
+    matchesTriFilter(Boolean(entry.is_bookmarked), filters.bookmarked) &&
+    matchesTriFilter(hasPhotos, filters.hasPhotos) &&
+    matchesTriFilter(hasVideo, filters.hasVideo) &&
+    matchesTriFilter(hasPlaces, filters.hasPlaces)
+  );
+}
+
 export type JournalArchiveItem =
   | { kind: "month"; key: string; year: number; month: number }
   | { kind: "holiday"; key: string; name: string; date: string }

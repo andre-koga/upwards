@@ -6,15 +6,17 @@ import {
   JOURNAL_ARCHIVE_PAGE_SIZE,
   buildJournalArchiveFeed,
   collectJournalArchiveMapPins,
+  journalArchiveFiltersKey,
   journalEntryHasContent,
-  journalEntryMatchesQuery,
+  journalEntryMatchesFilters,
+  type JournalArchiveFilters,
   type JournalArchiveItem,
   type JournalArchiveMapPin,
 } from "@/lib/journal/archive";
 import type { LocaleValue } from "@/lib/i18n/locale-storage";
 import { logError } from "@/lib/error-utils";
 
-export function useJournalArchive(searchQuery: string) {
+export function useJournalArchive(filters: JournalArchiveFilters) {
   const { i18n } = useTranslation();
   const locale = (i18n.language as LocaleValue) || "en";
 
@@ -22,7 +24,7 @@ export function useJournalArchive(searchQuery: string) {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [focusEntryDate, setFocusEntryDate] = useState<string | null>(null);
-  const filterKey = `${locale}\0${searchQuery}`;
+  const filterKey = `${locale}\0${journalArchiveFiltersKey(filters)}`;
   const [activeFilterKey, setActiveFilterKey] = useState(filterKey);
 
   if (activeFilterKey !== filterKey) {
@@ -51,9 +53,9 @@ export function useJournalArchive(searchQuery: string) {
 
   const filteredEntries = useMemo(() => {
     return allEntries.filter((e) =>
-      journalEntryMatchesQuery(e, searchQuery, locale)
+      journalEntryMatchesFilters(e, filters, locale)
     );
-  }, [allEntries, searchQuery, locale]);
+  }, [allEntries, filters, locale]);
 
   const fullFeed = useMemo(
     () => buildJournalArchiveFeed(filteredEntries, locale),
