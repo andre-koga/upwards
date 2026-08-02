@@ -2,7 +2,18 @@ import { describe, expect, it } from "vitest";
 import { getHolidayName } from "@/lib/journal/holidays";
 import {
   buildJournalArchiveFeed,
+  clusterJournalArchiveMapPins,
+  collectJournalArchiveMapPins,
+  collectJournalArchiveYears,
+  createCustomDateRange,
+  createLastNDaysDateRange,
+  createThisMonthDateRange,
+  createYearDateRange,
+  cycleJournalArchiveTriFilter,
+  DEFAULT_JOURNAL_ARCHIVE_FILTERS,
+  formatJournalArchiveDateRangeLabel,
   journalEntryHasContent,
+  journalEntryMatchesFilters,
   journalEntryMatchesQuery,
 } from "@/lib/journal/archive";
 import type { JournalEntry } from "@/lib/db/types";
@@ -124,5 +135,217 @@ describe("journal archive helpers", () => {
       kind: "holiday",
       name: "Christmas Day",
     });
+  });
+
+  it("collects map pins from geocoded places", () => {
+    const pins = collectJournalArchiveMapPins([
+      makeEntry({
+        entry_date: "2026-01-02",
+        title: "Later",
+        location: {
+          locations: [
+            {
+              displayName: "Austin",
+              city: "Austin",
+              state: null,
+              country: "US",
+              countryCode: "US",
+              lat: 30.27,
+              lon: -97.74,
+            },
+          ],
+        },
+      }),
+      makeEntry({
+        entry_date: "2026-01-01",
+        title: "No coords",
+        location: {
+          locations: [
+            {
+              displayName: "Somewhere",
+              city: null,
+              state: null,
+              country: null,
+              countryCode: null,
+              lat: null,
+              lon: null,
+            },
+          ],
+        },
+      }),
+    ]);
+    expect(pins).toHaveLength(1);
+    expect(pins[0]).toMatchObject({
+      entryDate: "2026-01-02",
+      displayName: "Austin",
+      lat: 30.27,
+      lon: -97.74,
+    });
+  });
+
+  it("cycles tri-state filters and matches structured filters", () => {
+    expect(cycleJournalArchiveTriFilter("any")).toBe("yes");
+    expect(cycleJournalArchiveTriFilter("yes")).toBe("no");
+    expect(cycleJournalArchiveTriFilter("no")).toBe("any");
+
+    const hearted = makeEntry({
+      entry_date: "2026-01-01",
+      title: "Heart",
+      is_bookmarked: true,
+    });
+    const plain = makeEntry({
+      entry_date: "2026-01-02",
+      title: "Plain",
+      is_bookmarked: false,
+      photo_paths: ["a.jpg"],
+    });
+
+    expect(
+      journalEntryMatchesFilters(
+        hearted,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, bookmarked: "yes" },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      journalEntryMatchesFilters(
+        plain,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, bookmarked: "yes" },
+        "en"
+      )
+    ).toBe(false);
+    expect(
+      journalEntryMatchesFilters(
+        plain,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, hasPhotos: "yes" },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      journalEntryMatchesFilters(
+        hearted,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, hasPhotos: "yes" },
+        "en"
+      )
+    ).toBe(false);
+  });
+
+  it("filters to map cluster entry dates", () => {
+    const inCluster = makeEntry({
+      entry_date: "2026-01-01",
+      title: "In",
+    });
+    const outOfCluster = makeEntry({
+      entry_date: "2026-01-02",
+      title: "Out",
+    });
+    const filters = {
+      ...DEFAULT_JOURNAL_ARCHIVE_FILTERS,
+      mapEntryDates: ["2026-01-01"],
+      mapPlaceLabel: "Austin",
+    };
+    expect(journalEntryMatchesFilters(inCluster, filters, "en")).toBe(true);
+    expect(journalEntryMatchesFilters(outOfCluster, filters, "en")).toBe(
+      false
+    );
+  });
+
+  it("clusters nearby pins at low zoom and splits them when zoomed in", () => {
+    const austinA = {
+      entryId: "a",
+      entryDate: "2026-01-02",
+      displayName: "Austin",
+      lat: 30.27,
+      lon: -97.74,
+      dayEmoji: null,
+      title: "A",
+    };
+    const austinB = {
+      entryId: "b",
+      entryDate: "2026-01-01",
+      displayName: "Austin",
+      lat: 30.28,
+      lon: -97.75,
+      dayEmoji: null,
+      title: "B",
+    };
+    const london = {
+      entryId: "c",
+      entryDate: "2025-12-01",
+      displayName: "London",
+      lat: 51.5,
+      lon: -0.12,
+      dayEmoji: null,
+      title: "C",
+    };
+
+    const worldClusters = clusterJournalArchiveMapPins(
+      [austinA, austinB, london],
+      1
+    );
+    expect(worldClusters.length).toBeLessThanOrEqual(2);
+
+    const austinOnly = clusterJournalArchiveMapPins([austinA, austinB], 1);
+    expect(austinOnly).toHaveLength(1);
+    expect(austinOnly[0]?.pins).toHaveLength(2);
+    expect(austinOnly[0]?.placeLabel).toBe("Austin");
+    expect(austinOnly[0]?.pins.map((p) => p.entryDate)).toEqual([
+      "2026-01-02",
+      "2026-01-01",
+    ]);
+
+    const cityZoom = clusterJournalArchiveMapPins([austinA, london], 8);
+    expect(cityZoom).toHaveLength(2);
+  });
+
+  it("builds and matches date range filters", () => {
+    const yearRange = createYearDateRange(2025, "2026-08-02");
+    expect(yearRange).toMatchObject({
+      start: "2025-01-01",
+      end: "2025-12-31",
+      preset: "year",
+      year: 2025,
+    });
+
+    const currentYear = createYearDateRange(2026, "2026-08-02");
+    expect(currentYear.end).toBe("2026-08-02");
+
+    const thisMonth = createThisMonthDateRange("2026-08-02");
+    expect(thisMonth).toMatchObject({
+      start: "2026-08-01",
+      end: "2026-08-02",
+      preset: "thisMonth",
+    });
+
+    const last30 = createLastNDaysDateRange("2026-08-02", 30);
+    expect(last30.start).toBe("2026-07-04");
+    expect(last30.end).toBe("2026-08-02");
+    expect(last30.preset).toBe("last30");
+
+    const custom = createCustomDateRange("2026-03-10", "2026-03-01");
+    expect(custom.start).toBe("2026-03-01");
+    expect(custom.end).toBe("2026-03-10");
+    expect(formatJournalArchiveDateRangeLabel(yearRange)).toBe("2025");
+
+    const inside = makeEntry({ entry_date: "2025-06-01", title: "In" });
+    const outside = makeEntry({ entry_date: "2026-01-01", title: "Out" });
+    expect(
+      journalEntryMatchesFilters(
+        inside,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, dateRange: yearRange },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      journalEntryMatchesFilters(
+        outside,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, dateRange: yearRange },
+        "en"
+      )
+    ).toBe(false);
+
+    expect(
+      collectJournalArchiveYears([inside, outside, inside])
+    ).toEqual([2026, 2025]);
   });
 });

@@ -29,7 +29,7 @@
     "empty": "No journal entries yet",
     "emptyHelper": "Write a reflection on Today and it will show up here.",
     "noResults": "No matching days",
-    "noResultsHelper": "Try different words, an emoji, or a date.",
+    "noResultsHelper": "Try different words, filters, an emoji, or a date.",
     "resultCount": "{{count}} days found",
     "loadingMore": "Loading more…",
     "end": "You've reached the beginning.",
@@ -38,7 +38,67 @@
     "nextPhoto": "Next photo",
     "photoUnavailable": "Photo unavailable",
     "openVideo": "Play video",
-    "morePhotos": "{{count}} more photos"
+    "morePhotos": "{{count}} more photos",
+    "openWorldMap": "Explore places on the map",
+    "closeWorldMap": "Close map",
+    "worldMapTitle": "Where you've written",
+    "worldMapPreviewAria": "Miniature world map of journal places",
+    "worldMapHint": "{{count}} days with places — tap a pin to jump, or a cluster to filter those days",
+    "worldMapEmpty": "No mapped places yet. Add places on daily entries to see them here.",
+    "mapPinAria": "{{place}} on {{date}}",
+    "mapClusterAria": "{{count}} days near {{place}}",
+    "filters": {
+      "clear": "Clear",
+      "dates": {
+        "label": "Dates",
+        "hint": "Filter by year, recent period, or a custom date range.",
+        "openAria": "Open date filters",
+        "activeAria": "Date filter: {{label}}. Open to change.",
+        "title": "Filter by date",
+        "description": "Pick a year, a recent stretch, or tap two days for a custom range.",
+        "years": "Years",
+        "presets": "Quick",
+        "custom": "Custom range",
+        "customHint": "Tap a start day, then an end day.",
+        "thisMonth": "This month",
+        "last30": "Last 30 days",
+        "last90": "Last 90 days",
+        "clear": "Clear dates"
+      },
+      "mapSelection": {
+        "label": "{{place}} · {{count}}",
+        "hint": "Showing days from this map cluster. Tap to clear.",
+        "clearAria": "Clear map filter for {{place}} ({{count}} days)"
+      },
+      "bookmarked": {
+        "label": "Hearted",
+        "hint": "Filter by hearted days. Tap to cycle: any, only hearted, not hearted.",
+        "any": "Any hearted state",
+        "yes": "Only hearted days",
+        "no": "Exclude hearted days"
+      },
+      "hasPhotos": {
+        "label": "Photos",
+        "hint": "Filter by photos. Tap to cycle: any, with photos, without photos.",
+        "any": "Any photo state",
+        "yes": "Only days with photos",
+        "no": "Exclude days with photos"
+      },
+      "hasVideo": {
+        "label": "Video",
+        "hint": "Filter by video. Tap to cycle: any, with video, without video.",
+        "any": "Any video state",
+        "yes": "Only days with video",
+        "no": "Exclude days with video"
+      },
+      "hasPlaces": {
+        "label": "Places",
+        "hint": "Filter by places. Tap to cycle: any, with places, without places.",
+        "any": "Any places state",
+        "yes": "Only days with places",
+        "no": "Exclude days with places"
+      }
+    }
   },
   "untitled": "Untitled",
   "noReflection": "No reflection written.",

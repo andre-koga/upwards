@@ -29,7 +29,7 @@
     "empty": "Nenhuma entrada ainda",
     "emptyHelper": "Escreva uma reflexão em Hoje e ela aparece aqui.",
     "noResults": "Nenhum dia encontrado",
-    "noResultsHelper": "Tente outras palavras, um emoji ou uma data.",
+    "noResultsHelper": "Tente outras palavras, filtros, um emoji ou uma data.",
     "resultCount": "{{count}} dias encontrados",
     "loadingMore": "Carregando mais…",
     "end": "Você chegou ao começo.",
@@ -38,7 +38,67 @@
     "nextPhoto": "Próxima foto",
     "photoUnavailable": "Foto indisponível",
     "openVideo": "Reproduzir vídeo",
-    "morePhotos": "Mais {{count}} fotos"
+    "morePhotos": "Mais {{count}} fotos",
+    "openWorldMap": "Explorar lugares no mapa",
+    "closeWorldMap": "Fechar mapa",
+    "worldMapTitle": "Onde você escreveu",
+    "worldMapPreviewAria": "Miniatura do mapa mundial dos lugares do diário",
+    "worldMapHint": "{{count}} dias com lugares — toque em um pino para ir, ou em um agrupamento para filtrar",
+    "worldMapEmpty": "Nenhum lugar no mapa ainda. Adicione lugares nas entradas diárias para vê-los aqui.",
+    "mapPinAria": "{{place}} em {{date}}",
+    "mapClusterAria": "{{count}} dias perto de {{place}}",
+    "filters": {
+      "clear": "Limpar",
+      "dates": {
+        "label": "Datas",
+        "hint": "Filtrar por ano, período recente ou intervalo personalizado.",
+        "openAria": "Abrir filtros de data",
+        "activeAria": "Filtro de data: {{label}}. Abra para alterar.",
+        "title": "Filtrar por data",
+        "description": "Escolha um ano, um período recente, ou toque em dois dias para um intervalo.",
+        "years": "Anos",
+        "presets": "Rápido",
+        "custom": "Intervalo personalizado",
+        "customHint": "Toque no dia inicial e depois no dia final.",
+        "thisMonth": "Este mês",
+        "last30": "Últimos 30 dias",
+        "last90": "Últimos 90 dias",
+        "clear": "Limpar datas"
+      },
+      "mapSelection": {
+        "label": "{{place}} · {{count}}",
+        "hint": "Mostrando dias deste agrupamento no mapa. Toque para limpar.",
+        "clearAria": "Limpar filtro do mapa para {{place}} ({{count}} dias)"
+      },
+      "bookmarked": {
+        "label": "Favoritos",
+        "hint": "Filtrar por dias favoritos. Toque para alternar: qualquer, só favoritos, sem favoritos.",
+        "any": "Qualquer estado de favorito",
+        "yes": "Só dias favoritos",
+        "no": "Excluir dias favoritos"
+      },
+      "hasPhotos": {
+        "label": "Fotos",
+        "hint": "Filtrar por fotos. Toque para alternar: qualquer, com fotos, sem fotos.",
+        "any": "Qualquer estado de fotos",
+        "yes": "Só dias com fotos",
+        "no": "Excluir dias com fotos"
+      },
+      "hasVideo": {
+        "label": "Vídeo",
+        "hint": "Filtrar por vídeo. Toque para alternar: qualquer, com vídeo, sem vídeo.",
+        "any": "Qualquer estado de vídeo",
+        "yes": "Só dias com vídeo",
+        "no": "Excluir dias com vídeo"
+      },
+      "hasPlaces": {
+        "label": "Lugares",
+        "hint": "Filtrar por lugares. Toque para alternar: qualquer, com lugares, sem lugares.",
+        "any": "Qualquer estado de lugares",
+        "yes": "Só dias com lugares",
+        "no": "Excluir dias com lugares"
+      }
+    }
   },
   "untitled": "Sem título",
   "noReflection": "Nenhuma reflexão escrita ainda.",
