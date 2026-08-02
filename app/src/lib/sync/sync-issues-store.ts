@@ -115,3 +115,21 @@ export async function deferSyncIssue(id: string): Promise<void> {
     updated_at: now(),
   });
 }
+
+/** Entity ids with an open or deferred definition conflict (skip LWW clobber). */
+export async function listOpenConflictEntityIds(): Promise<Set<string>> {
+  const rows = await db.syncIssues
+    .where("kind")
+    .equals("conflict")
+    .filter(
+      (issue) =>
+        (issue.status === "open" || issue.status === "deferred") &&
+        !!issue.entity_id
+    )
+    .toArray();
+  return new Set(
+    rows
+      .map((issue) => issue.entity_id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0)
+  );
+}

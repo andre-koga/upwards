@@ -171,6 +171,7 @@
       "combineWithPreferenceHint": "Fields edited on both sides will keep your value.",
       "unknownRemote": "Unavailable",
       "consequence": "Your choice creates a new version. Earlier versions stay in history and are not deleted.",
+      "applyFromLabel": "Apply from",
       "resolveFailed": "Could not apply that choice. Try again.",
       "columns": {
         "field": "Field",

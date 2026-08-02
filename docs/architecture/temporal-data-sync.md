@@ -195,18 +195,18 @@ explicitly discarded by the user.
 
 Merge behavior is domain-specific:
 
-| Change | Default behavior |
-| --- | --- |
-| Independent creations | Union |
-| Count increments/decrements | Apply each unique operation once |
-| Independent sessions | Union; flag impossible overlaps separately |
-| Append-only lifecycle events | Union using effective and server ordering |
-| Edits to different definition fields | Automatic field merge when bases match |
-| Edits to the same definition field | Preserve both and create a conflict |
-| Concurrent journal text edits | Preserve both; never choose silently |
-| Ordering | Stable fractional keys with deterministic operation-ID tie-break |
-| Edit concurrent with deletion | Keep deletion state and preserve the edit for restore/review |
-| Attachment additions | Union by immutable attachment ID/content hash |
+| Change                               | Default behavior                                                 |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| Independent creations                | Union                                                            |
+| Count increments/decrements          | Apply each unique operation once                                 |
+| Independent sessions                 | Union; flag impossible overlaps separately                       |
+| Append-only lifecycle events         | Union using effective and server ordering                        |
+| Edits to different definition fields | Automatic field merge when bases match                           |
+| Edits to the same definition field   | Preserve both and create a conflict                              |
+| Concurrent journal text edits        | Preserve both; never choose silently                             |
+| Ordering                             | Stable fractional keys with deterministic operation-ID tie-break |
+| Edit concurrent with deletion        | Keep deletion state and preserve the edit for restore/review     |
+| Attachment additions                 | Union by immutable attachment ID/content hash                    |
 
 Automatic merging must be deterministic and covered by multi-device tests.
 
@@ -341,6 +341,24 @@ need a repair tool to define older schedule/target periods manually.
 8. Add conflict persistence and the in-app Issues and Conflicts page.
 9. Make current tables explicitly rebuildable projections.
 10. Add history browsing, restore, snapshots, and historical repair tools.
+
+### Implementation status (core multi-device path)
+
+| Stage | Status                                                                                                                                                                                                  |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1–4   | Done locally (definition versions, resolver, stats consumers, effective-from UI)                                                                                                                        |
+| 5     | Done for local device id + pending queue; server device registry/labels deferred                                                                                                                        |
+| 6     | Partial: count / pause / break-day / definition ops; journal & sessions still LWW                                                                                                                       |
+| 7     | Partial: ops stream is authoritative for those domains when RPCs are applied; LWW continues for other tables and non-op columns. Clients strip op-owned projection fields once ops RPCs are known live. |
+| 8     | Done for definition conflicts (compare + keep mine/theirs/combine/defer + apply-from date)                                                                                                              |
+| 9–10  | Deferred                                                                                                                                                                                                |
+
+**Required Supabase migrations for multi-device ops:**
+
+- `20260801120000_temporal_definition_versions_and_ops.sql`
+- `20260802010000_definition_field_level_merge.sql`
+
+Apply both in the Supabase SQL editor (or CLI) before relying on multi-device conflict/merge behavior. Until they are applied, the client falls back to classic LWW row sync.
 
 Incremental stages may temporarily dual-write, but they must have parity checks
 and a rollback path. Do not switch the source of truth without migration and

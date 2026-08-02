@@ -280,7 +280,7 @@ class SyncEngine {
     }
   }
 
-  async pull(): Promise<void> {
+  async pull(options?: { opsSyncActive?: boolean }): Promise<void> {
     if (!this.canSync() || !supabase) return;
     const userId = getCachedUserId();
     if (!userId) return;
@@ -295,6 +295,7 @@ class SyncEngine {
       setApplyRemoteFromPull: (value) => {
         this.applyRemoteFromPull = value;
       },
+      opsSyncActive: options?.opsSyncActive ?? false,
     });
     this.setState({ lastSyncAt: serverNow });
     void touchLocalDevice(userId);
@@ -311,6 +312,7 @@ class SyncEngine {
     this.setState({ isSyncing: true, lastError: null });
     try {
       const pushOpsResult = await pushPendingOperations();
+      const opsSyncActive = pushOpsResult.skipped !== true;
       if (!pushOpsResult.failed && pushOpsResult.maxSequence != null) {
         saveLastAppliedSequence(pushOpsResult.maxSequence);
       }
@@ -320,20 +322,26 @@ class SyncEngine {
           withLocalSyncMetadataWrites: (op) =>
             this.withLocalSyncMetadataWrites(op),
         },
-        { forceAll: false }
+        { forceAll: false, opsSyncActive }
       );
       if (failedTables.length > 0) {
         const msg = `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`;
         logError("Sync push failed", new Error(msg));
         this.setState({ lastError: msg });
       }
-      await this.pull();
+      await this.pull({ opsSyncActive });
 
       const pullOpsResult = await pullAndApplyOperations(
         loadLastAppliedSequence()
       );
-      if (pullOpsResult.maxSequence != null) {
+      if (pullOpsResult.skipped !== true && pullOpsResult.maxSequence != null) {
         saveLastAppliedSequence(pullOpsResult.maxSequence);
+      } else if (
+        pullOpsResult.skipped !== true &&
+        pushOpsResult.maxSequence != null
+      ) {
+        // Keep cursor at least as high as what we just submitted.
+        saveLastAppliedSequence(pushOpsResult.maxSequence);
       }
     } catch (err) {
       const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
@@ -363,7 +371,19 @@ class SyncEngine {
 
   async pushBeforeSignOut(): Promise<void> {
     try {
-      await this.push();
+      // Flush semantic ops first so sign-out does not drop unacked work.
+      const pushOpsResult = await pushPendingOperations();
+      const opsSyncActive = pushOpsResult.skipped !== true;
+      if (!pushOpsResult.failed && pushOpsResult.maxSequence != null) {
+        saveLastAppliedSequence(pushOpsResult.maxSequence);
+      }
+      await runPushInternal(
+        {
+          withLocalSyncMetadataWrites: (op) =>
+            this.withLocalSyncMetadataWrites(op),
+        },
+        { forceAll: false, opsSyncActive }
+      );
     } catch (err) {
       console.warn("[sync] pushBeforeSignOut failed (non-fatal):", err);
     }

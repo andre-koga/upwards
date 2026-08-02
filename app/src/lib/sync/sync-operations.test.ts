@@ -16,8 +16,34 @@ const activityGroups: Array<{
   updated_at?: string;
 }> = [];
 const syncIssues: import("@/lib/db/types").SyncIssue[] = [];
+const dailyEntries: Array<{
+  id: string;
+  date: string;
+  task_counts: Record<string, number> | null;
+  paused_task_ids: string[] | null;
+  is_break_day: boolean | null;
+  current_activity_id: string | null;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}> = [];
 
 const rpcMock = vi.fn();
+
+const storage = new Map<string, string>();
+vi.stubGlobal("localStorage", {
+  getItem: (key: string) => storage.get(key) ?? null,
+  setItem: (key: string, value: string) => {
+    storage.set(key, value);
+  },
+  removeItem: (key: string) => {
+    storage.delete(key);
+  },
+  clear: () => storage.clear(),
+  key: () => null,
+  length: 0,
+});
 
 vi.mock("@/lib/supabase", () => ({
   supabase: { rpc: (...args: unknown[]) => rpcMock(...args) },
@@ -118,6 +144,24 @@ vi.mock("@/lib/db", () => ({
         if (row) Object.assign(row, patch);
       },
     },
+    dailyEntries: {
+      add: async (row: (typeof dailyEntries)[number]) => {
+        dailyEntries.push(row);
+      },
+      update: async (id: string, patch: Record<string, unknown>) => {
+        const row = dailyEntries.find((entry) => entry.id === id);
+        if (row) Object.assign(row, patch);
+      },
+      where: (index: string) => ({
+        equals: (value: string) => ({
+          first: async () =>
+            dailyEntries.find((entry) => {
+              if (index === "date") return entry.date === value;
+              return false;
+            }),
+        }),
+      }),
+    },
     syncIssues: {
       filter: (
         predicate: (issue: import("@/lib/db/types").SyncIssue) => boolean
@@ -142,6 +186,7 @@ vi.mock("@/lib/session/day-reset", () => ({
 }));
 
 import {
+  applyAcceptedDailyEntryOp,
   buildActivityDefinitionVersionFromOp,
   isSyncOperationsRpcMissing,
   maxServerSequence,
@@ -149,6 +194,7 @@ import {
   pullAndApplyOperations,
   toSubmitSyncOperationInput,
 } from "./sync-operations";
+import { saveOpsRpcAvailable } from "./sync-storage";
 
 function makePending(
   overrides: Partial<SyncPendingOperation> &
@@ -231,6 +277,7 @@ describe("pushPendingOperations", () => {
   beforeEach(() => {
     pendingOps.length = 0;
     syncIssues.length = 0;
+    storage.clear();
     rpcMock.mockReset();
   });
 
@@ -304,6 +351,8 @@ describe("pullAndApplyOperations", () => {
     activities.length = 0;
     activityGroups.length = 0;
     syncIssues.length = 0;
+    dailyEntries.length = 0;
+    storage.clear();
     rpcMock.mockReset();
     activities.push({ id: "activity-1", name: "Old" });
   });
@@ -376,5 +425,103 @@ describe("pullAndApplyOperations", () => {
     expect((syncIssues[0].payload as { kind?: string } | null)?.kind).toBe(
       "definition_conflict"
     );
+  });
+
+  it("applies remote daily_entry count deltas from other devices", async () => {
+    dailyEntries.push({
+      id: "entry-1",
+      date: "2026-08-01",
+      task_counts: { "activity-1": 1 },
+      paused_task_ids: [],
+      is_break_day: false,
+      current_activity_id: null,
+      created_at: "2026-08-01T10:00:00.000Z",
+      updated_at: "2026-08-01T10:00:00.000Z",
+      synced_at: null,
+      deleted_at: null,
+    });
+
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-count-remote",
+          device_id: "other-device",
+          entity_type: "daily_entry",
+          entity_id: "activity-1",
+          operation_type: "count.delta",
+          payload: {
+            activity_id: "activity-1",
+            date: "2026-08-01",
+            delta: 1,
+          },
+          base_revision: null,
+          status: "accepted",
+          server_sequence: 30,
+          created_at: "2026-08-01T11:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+
+    await pullAndApplyOperations(10);
+    expect(dailyEntries[0].task_counts).toEqual({ "activity-1": 2 });
+  });
+});
+
+describe("applyAcceptedDailyEntryOp", () => {
+  beforeEach(() => {
+    dailyEntries.length = 0;
+  });
+
+  it("merges pause and break-day ops into a new local entry", async () => {
+    await applyAcceptedDailyEntryOp({
+      operation_id: "op-pause",
+      device_id: "other-device",
+      entity_type: "daily_entry",
+      entity_id: "activity-1",
+      operation_type: "pause.enable",
+      payload: { activity_id: "activity-1", date: "2026-08-02", paused: true },
+      base_revision: null,
+      status: "accepted",
+      server_sequence: 1,
+      created_at: "2026-08-01T12:00:00.000Z",
+    });
+
+    expect(dailyEntries).toHaveLength(1);
+    expect(dailyEntries[0].paused_task_ids).toEqual(["activity-1"]);
+
+    await applyAcceptedDailyEntryOp({
+      operation_id: "op-break",
+      device_id: "other-device",
+      entity_type: "daily_entry",
+      entity_id: null,
+      operation_type: "break_day.enable",
+      payload: { date: "2026-08-02", is_break_day: true },
+      base_revision: null,
+      status: "accepted",
+      server_sequence: 2,
+      created_at: "2026-08-01T12:01:00.000Z",
+    });
+
+    expect(dailyEntries[0].is_break_day).toBe(true);
+  });
+});
+
+describe("ops rpc availability gating", () => {
+  beforeEach(() => {
+    pendingOps.length = 0;
+    storage.clear();
+    rpcMock.mockReset();
+  });
+
+  it("reports skipped when no pending ops and RPCs are unknown", async () => {
+    const result = await pushPendingOperations();
+    expect(result).toEqual({ failed: false, skipped: true });
+  });
+
+  it("reports active when no pending ops but RPCs were previously available", async () => {
+    saveOpsRpcAvailable(true);
+    const result = await pushPendingOperations();
+    expect(result).toEqual({ failed: false, skipped: false });
   });
 });

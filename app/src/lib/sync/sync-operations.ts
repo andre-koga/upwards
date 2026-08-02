@@ -1,4 +1,4 @@
-import { db, now } from "@/lib/db";
+import { db, now, newId } from "@/lib/db";
 import type {
   ActivityDefinitionVersion,
   GroupDefinitionVersion,
@@ -17,6 +17,7 @@ import {
   buildDefinitionConflictPayload,
   type DefinitionConflictEntityType,
 } from "./conflict-resolution";
+import { saveOpsRpcAvailable, loadOpsRpcAvailable } from "./sync-storage";
 
 export interface SubmitSyncOperationInput {
   operation_id: string;
@@ -358,11 +359,113 @@ async function applyAcceptedDefinitionOp(
   }
 }
 
+function asBoolean(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  return null;
+}
+
+/** Apply a remote daily_entry semantic op to the local projection (mirrors server RPC). */
+export async function applyAcceptedDailyEntryOp(
+  op: RemoteSyncOperation
+): Promise<void> {
+  if (op.entity_type !== "daily_entry") return;
+
+  const payload = op.payload ?? {};
+  const date = asString(payload.date);
+  if (!date) return;
+
+  const activityId = asString(payload.activity_id) ?? asString(op.entity_id);
+  const ts = now();
+
+  let entry = await db.dailyEntries.where("date").equals(date).first();
+  if (entry?.deleted_at) entry = undefined;
+
+  if (!entry) {
+    entry = {
+      id: newId(),
+      date,
+      task_counts: {},
+      paused_task_ids: [],
+      is_break_day: false,
+      current_activity_id: null,
+      created_at: ts,
+      updated_at: ts,
+      synced_at: null,
+      deleted_at: null,
+    };
+    await db.dailyEntries.add(entry);
+  }
+
+  const counts: Record<string, number> = {
+    ...((entry.task_counts as Record<string, number> | null) ?? {}),
+  };
+  const paused = new Set(entry.paused_task_ids ?? []);
+
+  if (op.operation_type === "count.delta" && activityId) {
+    const delta = asNumber(payload.delta) ?? 0;
+    const prev = counts[activityId] ?? 0;
+    const next = Math.max(0, prev + delta);
+    if (next === 0) delete counts[activityId];
+    else counts[activityId] = next;
+    await db.dailyEntries.update(entry.id, {
+      task_counts: counts,
+      updated_at: ts,
+    });
+    return;
+  }
+
+  if (op.operation_type === "pause.enable" && activityId) {
+    paused.add(activityId);
+    await db.dailyEntries.update(entry.id, {
+      paused_task_ids: [...paused],
+      updated_at: ts,
+    });
+    return;
+  }
+
+  if (op.operation_type === "pause.disable" && activityId) {
+    paused.delete(activityId);
+    await db.dailyEntries.update(entry.id, {
+      paused_task_ids: [...paused],
+      updated_at: ts,
+    });
+    return;
+  }
+
+  if (op.operation_type === "break_day.enable") {
+    await db.dailyEntries.update(entry.id, {
+      is_break_day: true,
+      updated_at: ts,
+    });
+    return;
+  }
+
+  if (op.operation_type === "break_day.disable") {
+    await db.dailyEntries.update(entry.id, {
+      is_break_day: false,
+      updated_at: ts,
+    });
+    return;
+  }
+
+  // Ignore unknown daily_entry op types; is_break_day may also arrive via payload.
+  const breakFlag = asBoolean(payload.is_break_day);
+  if (breakFlag != null) {
+    await db.dailyEntries.update(entry.id, {
+      is_break_day: breakFlag,
+      updated_at: ts,
+    });
+  }
+}
+
 export async function pushPendingOperations(): Promise<PushPendingOperationsResult> {
   if (!supabase) return { failed: false, skipped: true };
 
   const pending = await listPendingOperations({ status: "pending" });
-  if (pending.length === 0) return { failed: false };
+  if (pending.length === 0) {
+    // No work to push; still report whether ops mode should govern LWW.
+    return { failed: false, skipped: !loadOpsRpcAvailable() };
+  }
 
   const ops = pending
     .slice()
@@ -378,6 +481,7 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
 
   if (error) {
     if (isSyncOperationsRpcMissing(error)) {
+      saveOpsRpcAvailable(false);
       return { failed: false, skipped: true };
     }
     for (const row of pending) {
@@ -385,6 +489,8 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
     }
     return { failed: true };
   }
+
+  saveOpsRpcAvailable(true);
 
   const results = (data ?? []) as SubmitSyncOperationResult[];
   const pendingByOperationId = new Map(
@@ -457,10 +563,13 @@ export async function pullAndApplyOperations(
 
   if (error) {
     if (isSyncOperationsRpcMissing(error)) {
+      saveOpsRpcAvailable(false);
       return { skipped: true };
     }
     throw new Error(`pull_sync_operations failed: ${error.message}`);
   }
+
+  saveOpsRpcAvailable(true);
 
   const ops = (data ?? []) as RemoteSyncOperation[];
   if (ops.length === 0) {
@@ -483,6 +592,8 @@ export async function pullAndApplyOperations(
       op.entity_type === "group_definition"
     ) {
       await applyAcceptedDefinitionOp(op);
+    } else if (op.entity_type === "daily_entry") {
+      await applyAcceptedDailyEntryOp(op);
     }
   }
 

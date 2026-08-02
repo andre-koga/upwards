@@ -13,6 +13,11 @@ import {
   stripUnknownColumns,
 } from "./sanitizers";
 import { SYNC_TABLES, TABLE_MAP } from "./sync-constants";
+import {
+  isOpOwnedProjectionTable,
+  stripOpOwnedFields,
+} from "./op-owned-fields";
+import { listOpenConflictEntityIds } from "./sync-issues-store";
 
 export interface PushInternalContext {
   withLocalSyncMetadataWrites: <T>(operation: () => Promise<T>) => Promise<T>;
@@ -20,30 +25,52 @@ export interface PushInternalContext {
 
 export async function runPushInternal(
   ctx: PushInternalContext,
-  options: { forceAll: boolean }
+  options: {
+    forceAll: boolean;
+    /** When true, strip op-owned fields so LWW cannot undo sequence merges. */
+    opsSyncActive?: boolean;
+  }
 ): Promise<{ failedTables: string[] }> {
-  const { forceAll } = options;
+  const { forceAll, opsSyncActive = false } = options;
   const failedTables: string[] = [];
   if (!supabase) return { failedTables };
   const userId = getCachedUserId();
   if (!userId) return { failedTables };
 
+  const conflictEntityIds = opsSyncActive
+    ? await listOpenConflictEntityIds()
+    : new Set<string>();
+
   for (const table of SYNC_TABLES) {
     const dexieTable = TABLE_MAP[table];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const records: any[] = await (db[dexieTable] as any)
+    let records: any[] = await (db[dexieTable] as any)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((r: any) =>
         forceAll ? true : !r.synced_at || r.updated_at > r.synced_at
       )
       .toArray();
 
+    if (
+      opsSyncActive &&
+      (table === "activities" || table === "activity_groups") &&
+      conflictEntityIds.size > 0
+    ) {
+      records = records.filter(
+        (r) => !conflictEntityIds.has(String((r as { id: string }).id))
+      );
+    }
+
     if (records.length === 0) continue;
 
-    const rows = records
+    let rows = records
       .map((r) => toRemoteRow(table, r, userId))
       .filter((r): r is NonNullable<typeof r> => r !== null);
+
+    if (opsSyncActive && isOpOwnedProjectionTable(table)) {
+      rows = rows.map((row) => stripOpOwnedFields(table, row));
+    }
 
     const dedupedRows = dedupeRowsForUpsert(table, rows);
     const duplicateCount = rows.length - dedupedRows.length;
@@ -91,12 +118,12 @@ export async function runPushInternal(
     const schemaSafeRows = stripUnknownColumns(table, pushRows);
 
     if (schemaSafeRows.length === 0) {
-      const now = new Date().toISOString();
+      const nowIso = new Date().toISOString();
       await ctx.withLocalSyncMetadataWrites(async () => {
         await Promise.all(
           records.map((r) =>
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (db[dexieTable] as any).update(r.id, { synced_at: now })
+            (db[dexieTable] as any).update(r.id, { synced_at: nowIso })
           )
         );
       });
@@ -117,12 +144,12 @@ export async function runPushInternal(
         continue;
       }
 
-      const now = new Date().toISOString();
+      const nowIso = new Date().toISOString();
       await ctx.withLocalSyncMetadataWrites(async () => {
         await Promise.all(
           records.map((r) =>
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (db[dexieTable] as any).update(r.id, { synced_at: now })
+            (db[dexieTable] as any).update(r.id, { synced_at: nowIso })
           )
         );
       });

@@ -171,6 +171,7 @@
       "combineWithPreferenceHint": "Campos editados nos dois lados manterão o seu valor.",
       "unknownRemote": "Indisponível",
       "consequence": "Sua escolha cria uma nova versão. As versões anteriores permanecem no histórico e não são apagadas.",
+      "applyFromLabel": "Aplicar a partir de",
       "resolveFailed": "Não foi possível aplicar essa escolha. Tente novamente.",
       "columns": {
         "field": "Campo",

@@ -61,6 +61,7 @@ export function ConflictReviewCard({
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [effectiveFrom, setEffectiveFrom] = useState(getEffectiveToday);
   const [payload, setPayload] = useState<DefinitionConflictPayload | null>(
     () => (isDefinitionConflictPayload(issue.payload) ? issue.payload : null)
   );
@@ -86,7 +87,7 @@ export function ConflictReviewCard({
     setError(null);
     try {
       await resolveDefinitionConflict(issue, choice, {
-        effectiveFrom: getEffectiveToday(),
+        effectiveFrom: effectiveFrom || getEffectiveToday(),
       });
       onResolved();
     } catch (err) {
@@ -147,6 +148,8 @@ export function ConflictReviewCard({
       payload={payload}
       busy={busy}
       error={error}
+      effectiveFrom={effectiveFrom}
+      onEffectiveFromChange={setEffectiveFrom}
       onResolve={(choice) => void handleResolve(choice)}
       onDefer={() => void handleDefer()}
     />
@@ -212,6 +215,8 @@ function DefinitionConflictCard({
   payload,
   busy,
   error,
+  effectiveFrom,
+  onEffectiveFromChange,
   onResolve,
   onDefer,
 }: {
@@ -219,6 +224,8 @@ function DefinitionConflictCard({
   payload: DefinitionConflictPayload;
   busy: string | null;
   error: string | null;
+  effectiveFrom: string;
+  onEffectiveFromChange: (value: string) => void;
   onResolve: (choice: ConflictResolutionChoice) => void;
   onDefer: () => void;
 }) {
@@ -331,6 +338,17 @@ function DefinitionConflictCard({
       <p className="text-xs text-muted-foreground">
         {t("syncIssues.conflict.consequence")}
       </p>
+
+      <label className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span>{t("syncIssues.conflict.applyFromLabel")}</span>
+        <input
+          type="date"
+          className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
+          value={effectiveFrom}
+          onChange={(event) => onEffectiveFromChange(event.target.value)}
+          disabled={busy != null}
+        />
+      </label>
 
       {error ? <p className="text-xs text-red-500">{error}</p> : null}
 
