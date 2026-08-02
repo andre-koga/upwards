@@ -10,7 +10,6 @@ import {
   MAX_DAILY_LOCATIONS,
   mergeJournalLocationRoute,
   normalizeJournalLocationRoute,
-  reverseGeocodeLocation,
   searchLocations,
 } from "@/lib/journal";
 import { cn } from "@/lib/utils";
@@ -56,8 +55,6 @@ export default function JournalLocationsDialog({
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(
     null
   );
-  const [mapPicking, setMapPicking] = useState(false);
-  const [mapPickError, setMapPickError] = useState<string | null>(null);
 
   // Only resync from props when the dialog transitions to open; avoid resetting
   // mid-edit on every parent re-render (route prop is recreated each render).
@@ -70,8 +67,6 @@ export default function JournalLocationsDialog({
       setEditSearch(EMPTY_SEARCH);
       setAddSearch(EMPTY_SEARCH);
       setDeleteConfirmIndex(null);
-      setMapPicking(false);
-      setMapPickError(null);
     }
   }
 
@@ -193,25 +188,6 @@ export default function JournalLocationsDialog({
   const applyAddResult = (location: LocationData) => {
     setDraftRoute((prev) => mergeJournalLocationRoute(prev, location));
     setAddSearch(EMPTY_SEARCH);
-    setMapPickError(null);
-  };
-
-  const handleMapPick = async (coords: { lat: number; lon: number }) => {
-    if (!canEdit || draftRoute.locations.length >= MAX_DAILY_LOCATIONS) return;
-    setMapPicking(true);
-    setMapPickError(null);
-    try {
-      const location = await reverseGeocodeLocation(coords.lat, coords.lon);
-      if (!location) {
-        setMapPickError(t("locations.mapPickError"));
-        return;
-      }
-      setDraftRoute((prev) => mergeJournalLocationRoute(prev, location));
-    } catch {
-      setMapPickError(t("locations.mapPickError"));
-    } finally {
-      setMapPicking(false);
-    }
   };
 
   const handleDeleteConfirm = () => {
@@ -295,23 +271,12 @@ export default function JournalLocationsDialog({
         contentClassName="sm:max-w-md"
       >
         <FormStack className="space-y-2">
-          <JournalLocationMapPicker
-            locations={draftRoute.locations}
-            readOnly={!canEdit}
-            picking={mapPicking}
-            onMapPick={canAddLocation ? handleMapPick : undefined}
-            footerText={
-              canAddLocation
-                ? t("locations.tapMapToAdd")
-                : draftRoute.locations.length >= MAX_DAILY_LOCATIONS
-                  ? t("locations.maxLocations", { count: MAX_DAILY_LOCATIONS })
-                  : null
-            }
-            className="h-44"
-            ariaLabel={t("locations.mapAriaLabel")}
-          />
-          {mapPickError ? (
-            <p className="text-xs text-destructive">{mapPickError}</p>
+          {draftRoute.locations.length > 0 ? (
+            <JournalLocationMapPicker
+              locations={draftRoute.locations}
+              className="h-44"
+              ariaLabel={t("locations.mapAriaLabel")}
+            />
           ) : null}
 
           {draftRoute.locations.length > 0 ? (

@@ -8,7 +8,10 @@ interface JournalTextSectionProps {
   text: string;
   /** Distinct places visited that day (unordered). */
   locations?: LocationData[];
-  onLocationsClick?: () => void;
+  /** Opens the places editor (search / manage). */
+  onLocationsEditClick?: () => void;
+  /** Opens the fullscreen places map. */
+  onPlacesMapClick?: () => void;
   /** Shown next to location when the day’s journal is complete. */
   journalCompletionStreak?: number | null;
 }
@@ -17,15 +20,17 @@ export default function JournalTextSection({
   title,
   text,
   locations,
-  onLocationsClick,
+  onLocationsEditClick,
+  onPlacesMapClick,
   journalCompletionStreak,
 }: JournalTextSectionProps) {
   const { t } = useTranslation("journal");
   const showStreak = typeof journalCompletionStreak === "number";
   const hasLocations = Boolean(locations?.length);
-  const canOpenLocations = typeof onLocationsClick === "function";
+  const canEditLocations = typeof onLocationsEditClick === "function";
+  const canOpenMap = typeof onPlacesMapClick === "function" && hasLocations;
 
-  const showMetaRow = canOpenLocations || showStreak || hasLocations;
+  const showMetaRow = canEditLocations || showStreak || hasLocations;
 
   const streakLabel = t("journalStreak", {
     count: journalCompletionStreak ?? 0,
@@ -41,15 +46,16 @@ export default function JournalTextSection({
           {hasLocations
             ? locations!.map((loc, index) => {
                 const label = loc.displayName;
-                if (canOpenLocations) {
+                if (canOpenMap) {
                   return (
                     <Button
                       key={`${index}-${label}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
                       type="button"
                       variant="outline"
-                      onClick={onLocationsClick}
+                      onClick={onPlacesMapClick}
                       className={chipClassName}
-                      title={label}
+                      title={t("locations.openFullscreenMap")}
+                      aria-label={`${label}. ${t("locations.openFullscreenMap")}`}
                     >
                       <MapPin className="h-3 w-3 shrink-0" />
                       <span className="min-w-0 truncate">{label}</span>
@@ -69,11 +75,11 @@ export default function JournalTextSection({
               })
             : null}
 
-          {canOpenLocations ? (
+          {canEditLocations ? (
             <Button
               type="button"
               variant="outline"
-              onClick={onLocationsClick}
+              onClick={onLocationsEditClick}
               className={chipClassName}
               title={t("addLocationsVisited")}
               aria-label={t("addLocationsVisited")}

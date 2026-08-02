@@ -1,8 +1,17 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
-import { Expand, Loader2, MapPin, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
+} from "react";
+import { Expand, MapPin, ZoomIn, ZoomOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import MediaLightbox from "@/components/journal/media-lightbox";
 import type { LocationData } from "@/lib/db/types";
+import { normalizeJournalLocationRoute } from "@/lib/journal";
 import { cn } from "@/lib/utils";
 
 const TILE_SIZE = 256;
@@ -29,15 +38,6 @@ function latToTileY(lat: number, zoom: number): number {
     ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) *
     2 ** zoom
   );
-}
-
-function tileXToLon(x: number, zoom: number): number {
-  return (x / 2 ** zoom) * 360 - 180;
-}
-
-function tileYToLat(y: number, zoom: number): number {
-  const n = Math.PI - (2 * Math.PI * y) / 2 ** zoom;
-  return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 }
 
 function getLocationCenter(locations: LocationData[]): LocationData | null {
@@ -101,18 +101,30 @@ function getMapViewport(
   return { lat: centerLat, lon: centerLon, zoom: MIN_ZOOM };
 }
 
-interface JournalLocationMapPickerProps {
-  locations: LocationData[];
-  selectedLocation?: LocationData | null;
-  picking?: boolean;
-  onMapPick?: (coords: { lat: number; lon: number }) => void;
-  readOnly?: boolean;
-  className?: string;
-  footerText?: string | null;
-  ariaLabel?: string;
+function pointerDistance(
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-interface JournalLocationMapSurfaceProps extends JournalLocationMapPickerProps {
+interface JournalLocationMapPickerProps {
+  locations: LocationData[];
+  className?: string;
+  ariaLabel?: string;
+  /** Inline preview map. Set false when only the fullscreen viewer is needed. */
+  showPreview?: boolean;
+  /** Always show the bottom-left expand control on the preview. */
+  showFullscreenButton?: boolean;
+  /** Controlled fullscreen open state. */
+  fullscreenOpen?: boolean;
+  onFullscreenOpenChange?: (open: boolean) => void;
+}
+
+interface JournalLocationMapSurfaceProps {
+  locations: LocationData[];
+  className?: string;
+  ariaLabel?: string;
   fitBounds: boolean;
   interactive: boolean;
   fullscreen?: boolean;
@@ -122,12 +134,7 @@ interface JournalLocationMapSurfaceProps extends JournalLocationMapPickerProps {
 
 function JournalLocationMapSurface({
   locations,
-  selectedLocation = null,
-  picking = false,
-  onMapPick,
-  readOnly = false,
   className,
-  footerText,
   ariaLabel,
   fitBounds,
   interactive,
@@ -135,6 +142,7 @@ function JournalLocationMapSurface({
   showFullscreenButton = false,
   onOpenFullscreen,
 }: JournalLocationMapSurfaceProps) {
+  const { t } = useTranslation("journal");
   const mapRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{
     pointerId: number;
@@ -142,16 +150,18 @@ function JournalLocationMapSurface({
     startY: number;
     startOffsetX: number;
     startOffsetY: number;
-    moved: boolean;
+  } | null>(null);
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchRef = useRef<{
+    startDistance: number;
+    startZoom: number;
+    startOffsetX: number;
+    startOffsetY: number;
   } | null>(null);
   const [mapSize, setMapSize] = useState(DEFAULT_MAP_SIZE);
-  const mapLocations = useMemo(
-    () => (selectedLocation ? [...locations, selectedLocation] : locations),
-    [locations, selectedLocation]
-  );
   const viewport = useMemo(
-    () => getMapViewport(mapLocations, fitBounds, mapSize),
-    [fitBounds, mapLocations, mapSize]
+    () => getMapViewport(locations, fitBounds, mapSize),
+    [fitBounds, locations, mapSize]
   );
   const [zoomDelta, setZoomDelta] = useState(0);
   const [centerOffsetTile, setCenterOffsetTile] = useState({ x: 0, y: 0 });
@@ -186,8 +196,25 @@ function JournalLocationMapSurface({
     return () => observer.disconnect();
   }, []);
 
+  // Reset pan/zoom when the fitted place set changes.
+  useEffect(() => {
+    setZoomDelta(0);
+    setCenterOffsetTile({ x: 0, y: 0 });
+  }, [locations, fitBounds]);
+
   const zoomBy = (delta: number) => {
     const nextZoom = clampZoom(zoom + delta);
+    if (nextZoom === zoom) return;
+    const scale = 2 ** (nextZoom - zoom);
+    setCenterOffsetTile((currentOffset) => ({
+      x: currentOffset.x * scale,
+      y: currentOffset.y * scale,
+    }));
+    setZoomDelta(nextZoom - viewport.zoom);
+  };
+
+  const setAbsoluteZoom = (nextZoomRaw: number) => {
+    const nextZoom = clampZoom(nextZoomRaw);
     if (nextZoom === zoom) return;
     const scale = 2 ** (nextZoom - zoom);
     setCenterOffsetTile((currentOffset) => ({
@@ -244,125 +271,119 @@ function JournalLocationMapSurface({
       );
   }, [centerTile, locations, zoom]);
 
-  const selectedMarker =
-    selectedLocation?.lat != null && selectedLocation.lon != null
-      ? {
-          left:
-            (lonToTileX(selectedLocation.lon, zoom) - centerTile.x) * TILE_SIZE,
-          top:
-            (latToTileY(selectedLocation.lat, zoom) - centerTile.y) * TILE_SIZE,
-        }
-      : null;
-  const resolvedFooterText =
-    footerText ??
-    (readOnly ? null : "Click the map to add or replace a location");
-
-  const stopControlPointer = (event: PointerEvent<HTMLButtonElement>) => {
+  const stopControlPointer = (event: ReactPointerEvent<HTMLButtonElement>) => {
     event.stopPropagation();
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (fullscreen) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (!interactive) return;
+
+    pointersRef.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+    event.currentTarget.setPointerCapture(event.pointerId);
+
+    if (pointersRef.current.size === 2) {
+      const [a, b] = [...pointersRef.current.values()];
+      pinchRef.current = {
+        startDistance: Math.max(1, pointerDistance(a, b)),
+        startZoom: zoom,
+        startOffsetX: centerOffsetTile.x,
+        startOffsetY: centerOffsetTile.y,
+      };
+      dragRef.current = null;
+      return;
+    }
+
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startOffsetX: centerOffsetTile.x,
+      startOffsetY: centerOffsetTile.y,
+    };
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (fullscreen) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (!interactive) return;
+    if (!pointersRef.current.has(event.pointerId)) return;
+
+    pointersRef.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    if (pointersRef.current.size >= 2 && pinchRef.current) {
+      const [a, b] = [...pointersRef.current.values()];
+      const distance = Math.max(1, pointerDistance(a, b));
+      const scale = distance / pinchRef.current.startDistance;
+      const nextZoom = pinchRef.current.startZoom + Math.log2(scale);
+      setAbsoluteZoom(nextZoom);
+      return;
+    }
+
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - drag.startX;
+    const deltaY = event.clientY - drag.startY;
+    setCenterOffsetTile({
+      x: drag.startOffsetX - deltaX / TILE_SIZE,
+      y: drag.startOffsetY - deltaY / TILE_SIZE,
+    });
+  };
+
+  const endPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (fullscreen) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    pointersRef.current.delete(event.pointerId);
+    if (pointersRef.current.size < 2) {
+      pinchRef.current = null;
+    }
+    if (dragRef.current?.pointerId === event.pointerId) {
+      dragRef.current = null;
+    }
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
+    if (!interactive) return;
+    event.stopPropagation();
+    event.preventDefault();
+    zoomBy(event.deltaY > 0 ? -1 : 1);
   };
 
   return (
     <div
       ref={mapRef}
-      role={readOnly || !onMapPick ? "region" : "button"}
-      tabIndex={readOnly || !onMapPick ? undefined : 0}
-      aria-label={
-        ariaLabel ??
-        (readOnly ? "Map of listed locations" : "Pick a location on the map")
-      }
+      role="region"
+      aria-label={ariaLabel ?? t("locations.mapAriaLabel")}
       className={cn(
         "relative h-56 touch-none overflow-hidden rounded-lg border bg-muted",
-        !interactive
-          ? "cursor-default"
-          : picking
-            ? "cursor-progress"
-            : onMapPick
-              ? "cursor-crosshair"
-              : "cursor-grab active:cursor-grabbing",
+        interactive
+          ? "cursor-grab active:cursor-grabbing"
+          : "cursor-default",
         className
       )}
-      onPointerDown={(event) => {
-        if (fullscreen) {
-          event.stopPropagation();
-          event.preventDefault();
-        }
-        if (!interactive || picking) return;
-        dragRef.current = {
-          pointerId: event.pointerId,
-          startX: event.clientX,
-          startY: event.clientY,
-          startOffsetX: centerOffsetTile.x,
-          startOffsetY: centerOffsetTile.y,
-          moved: false,
-        };
-        event.currentTarget.setPointerCapture(event.pointerId);
-      }}
-      onPointerMove={(event) => {
-        if (fullscreen) {
-          event.stopPropagation();
-          event.preventDefault();
-        }
-        if (!interactive || picking || !dragRef.current) return;
-        const drag = dragRef.current;
-        if (drag.pointerId !== event.pointerId) return;
-        const deltaX = event.clientX - drag.startX;
-        const deltaY = event.clientY - drag.startY;
-        if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-          drag.moved = true;
-        }
-        setCenterOffsetTile({
-          x: drag.startOffsetX - deltaX / TILE_SIZE,
-          y: drag.startOffsetY - deltaY / TILE_SIZE,
-        });
-      }}
-      onPointerUp={(event) => {
-        if (fullscreen) {
-          event.stopPropagation();
-          event.preventDefault();
-        }
-        if (!interactive || picking || !dragRef.current) return;
-        const drag = dragRef.current;
-        if (drag.pointerId !== event.pointerId) return;
-        if (!drag.moved && onMapPick) {
-          const box = event.currentTarget.getBoundingClientRect();
-          const offsetX = event.clientX - box.left - box.width / 2;
-          const offsetY = event.clientY - box.top - box.height / 2;
-          const tileX = centerTile.x + offsetX / TILE_SIZE;
-          const tileY = centerTile.y + offsetY / TILE_SIZE;
-          onMapPick({
-            lat: tileYToLat(tileY, zoom),
-            lon: tileXToLon(tileX, zoom),
-          });
-        }
-        dragRef.current = null;
-        try {
-          event.currentTarget.releasePointerCapture(event.pointerId);
-        } catch {
-          /* ignore */
-        }
-      }}
-      onPointerCancel={(event) => {
-        if (fullscreen) {
-          event.stopPropagation();
-          event.preventDefault();
-        }
-        dragRef.current = null;
-      }}
-      onKeyDown={(event) => {
-        if (readOnly || !onMapPick) return;
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        onMapPick({
-          lat: tileYToLat(centerTile.y, zoom),
-          lon: tileXToLon(centerTile.x, zoom),
-        });
-      }}
-      onWheel={(event) => {
-        if (!interactive || !fullscreen) return;
-        event.stopPropagation();
-        event.preventDefault();
-        zoomBy(event.deltaY > 0 ? -1 : 1);
-      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={endPointer}
+      onPointerCancel={endPointer}
+      onWheel={handleWheel}
     >
       <div className="absolute left-1/2 top-1/2">
         {tiles.map((tile) => (
@@ -383,26 +404,13 @@ function JournalLocationMapSurface({
 
         {markers.map((marker) => (
           <div
-            key={`${marker.index}-${marker.loc.displayName}`}
-            className={cn(
-              "absolute -translate-x-1/2 -translate-y-1/2 rounded-full shadow-sm",
-              readOnly
-                ? "h-3 w-3 border-2 border-background bg-primary"
-                : "h-2.5 w-2.5 border-2 border-primary bg-background"
-            )}
+            key={`${marker.index}-${marker.loc.displayName}-${marker.loc.lat}-${marker.loc.lon}`}
+            className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background bg-primary shadow-sm"
             style={{ left: marker.left, top: marker.top }}
             title={marker.loc.displayName}
             aria-hidden
           />
         ))}
-
-        {selectedMarker ? (
-          <MapPin
-            className="absolute h-7 w-7 -translate-x-1/2 -translate-y-full fill-background text-destructive drop-shadow"
-            style={{ left: selectedMarker.left, top: selectedMarker.top }}
-            aria-hidden
-          />
-        ) : null}
       </div>
 
       {showFullscreenButton ? (
@@ -410,7 +418,7 @@ function JournalLocationMapSurface({
           type="button"
           variant="secondary"
           size="icon"
-          className="absolute right-2 top-2 z-10 h-8 w-8 bg-background shadow-sm"
+          className="absolute bottom-2 left-2 z-10 h-9 w-9 bg-background shadow-sm"
           onPointerDown={stopControlPointer}
           onPointerUp={stopControlPointer}
           onPointerCancel={stopControlPointer}
@@ -418,7 +426,8 @@ function JournalLocationMapSurface({
             event.stopPropagation();
             onOpenFullscreen?.();
           }}
-          aria-label="Open fullscreen map"
+          title={t("locations.openFullscreenMap")}
+          aria-label={t("locations.openFullscreenMap")}
         >
           <Expand className="h-4 w-4" aria-hidden />
         </Button>
@@ -438,7 +447,7 @@ function JournalLocationMapSurface({
               event.stopPropagation();
               zoomBy(1);
             }}
-            aria-label="Zoom in"
+            aria-label={t("locations.zoomIn")}
           >
             <ZoomIn className="h-4 w-4" aria-hidden />
           </Button>
@@ -454,23 +463,24 @@ function JournalLocationMapSurface({
               event.stopPropagation();
               zoomBy(-1);
             }}
-            aria-label="Zoom out"
+            aria-label={t("locations.zoomOut")}
           >
             <ZoomOut className="h-4 w-4" aria-hidden />
           </Button>
         </div>
       ) : null}
 
-      {resolvedFooterText ? (
-        <div className="pointer-events-none absolute inset-x-2 bottom-2 rounded-md bg-background px-2 py-1 text-[11px] text-muted-foreground shadow-sm">
-          {picking ? (
-            <span className="inline-flex items-center gap-1">
-              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-              Resolving location...
+      {fullscreen && locations.length > 0 ? (
+        <div className="pointer-events-none absolute inset-x-2 top-2 flex flex-wrap gap-1.5">
+          {locations.map((loc, index) => (
+            <span
+              key={`${index}-${loc.displayName}`}
+              className="inline-flex max-w-full items-center gap-1 rounded-full border border-border/80 bg-background/90 px-2 py-0.5 text-xs text-muted-foreground shadow-sm"
+            >
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="min-w-0 truncate">{loc.displayName}</span>
             </span>
-          ) : (
-            resolvedFooterText
-          )}
+          ))}
         </div>
       ) : null}
     </div>
@@ -479,60 +489,66 @@ function JournalLocationMapSurface({
 
 export default function JournalLocationMapPicker({
   locations,
-  selectedLocation = null,
-  picking = false,
-  onMapPick,
-  readOnly = false,
   className,
-  footerText,
   ariaLabel,
+  showPreview = true,
+  showFullscreenButton = true,
+  fullscreenOpen: controlledFullscreenOpen,
+  onFullscreenOpenChange,
 }: JournalLocationMapPickerProps) {
-  const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const { t } = useTranslation("journal");
+  const [uncontrolledFullscreenOpen, setUncontrolledFullscreenOpen] =
+    useState(false);
+  const fullscreenOpen =
+    controlledFullscreenOpen ?? uncontrolledFullscreenOpen;
+  const setFullscreenOpen =
+    onFullscreenOpenChange ?? setUncontrolledFullscreenOpen;
+
+  const uniqueLocations = useMemo(
+    () => normalizeJournalLocationRoute({ locations }).locations,
+    [locations]
+  );
+
   const locationsKey = useMemo(
     () =>
-      [...locations, ...(selectedLocation ? [selectedLocation] : [])]
+      uniqueLocations
         .map(
           (loc, index) =>
             `${index}:${loc.displayName}:${loc.lat ?? ""}:${loc.lon ?? ""}`
         )
         .join("|"),
-    [locations, selectedLocation]
+    [uniqueLocations]
   );
+
   return (
     <>
-      <JournalLocationMapSurface
-        key={`inline-${locationsKey}`}
-        locations={locations}
-        selectedLocation={selectedLocation}
-        picking={picking}
-        onMapPick={onMapPick}
-        readOnly={readOnly}
-        className={className}
-        footerText={footerText}
-        ariaLabel={ariaLabel}
-        fitBounds={readOnly}
-        interactive={!readOnly}
-        showFullscreenButton={readOnly}
-        onOpenFullscreen={() => setFullscreenOpen(true)}
-      />
+      {showPreview ? (
+        <JournalLocationMapSurface
+          key={`inline-${locationsKey}`}
+          locations={uniqueLocations}
+          className={className}
+          ariaLabel={ariaLabel}
+          fitBounds
+          interactive
+          showFullscreenButton={showFullscreenButton}
+          onOpenFullscreen={() => setFullscreenOpen(true)}
+        />
+      ) : null}
 
       <MediaLightbox
         open={fullscreenOpen}
         onOpenChange={setFullscreenOpen}
-        title="Expanded locations map"
-        closeLabel="Close fullscreen map"
+        title={t("locations.fullscreenTitle")}
+        closeLabel={t("locations.closeFullscreenMap")}
         contentClassName="h-full max-h-full w-full max-w-none p-3 sm:p-6"
         onPointerDownOutside={(event) => event.preventDefault()}
       >
         <div className="h-full min-h-0 w-full overflow-hidden rounded-xl border bg-background shadow-2xl">
           <JournalLocationMapSurface
             key={`fullscreen-${locationsKey}`}
-            locations={locations}
-            selectedLocation={selectedLocation}
-            readOnly
+            locations={uniqueLocations}
             className="h-full rounded-none border-0"
-            footerText={null}
-            ariaLabel="Expanded map of locations visited"
+            ariaLabel={t("locations.mapAriaLabel")}
             fitBounds
             interactive
             fullscreen
