@@ -47,7 +47,7 @@
   "journalStreak": "Journal streak: {{count}}",
   "locations": {
     "title": "Places",
-    "description": "Places you were today — up to {{count}}, no order.",
+    "description": "Places you were today — up to {{count}}.",
     "mapAriaLabel": "Map of places for this day",
     "openFullscreenMap": "Open full map",
     "closeFullscreenMap": "Close map",

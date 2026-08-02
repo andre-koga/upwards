@@ -37,7 +37,7 @@ export default function JournalTextSection({
   });
 
   const chipClassName =
-    "inline-flex h-auto max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-left text-xs font-normal text-muted-foreground shadow-none";
+    "inline-flex h-6 max-w-full items-center gap-1 rounded-full px-2 text-left text-xs font-normal leading-none text-muted-foreground shadow-none";
 
   return (
     <>
