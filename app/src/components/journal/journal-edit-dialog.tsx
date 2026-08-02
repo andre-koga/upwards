@@ -27,7 +27,7 @@ import {
 
 const TITLE_LIMIT = 30;
 const TEXT_LIMIT = 300;
-const MAX_PHOTOS = 5;
+const MAX_PHOTOS = 8;
 
 interface JournalEditDialogProps {
   open: boolean;
