@@ -4,8 +4,14 @@ import {
   buildJournalArchiveFeed,
   clusterJournalArchiveMapPins,
   collectJournalArchiveMapPins,
+  collectJournalArchiveYears,
+  createCustomDateRange,
+  createLastNDaysDateRange,
+  createThisMonthDateRange,
+  createYearDateRange,
   cycleJournalArchiveTriFilter,
   DEFAULT_JOURNAL_ARCHIVE_FILTERS,
+  formatJournalArchiveDateRangeLabel,
   journalEntryHasContent,
   journalEntryMatchesFilters,
   journalEntryMatchesQuery,
@@ -290,5 +296,56 @@ describe("journal archive helpers", () => {
 
     const cityZoom = clusterJournalArchiveMapPins([austinA, london], 8);
     expect(cityZoom).toHaveLength(2);
+  });
+
+  it("builds and matches date range filters", () => {
+    const yearRange = createYearDateRange(2025, "2026-08-02");
+    expect(yearRange).toMatchObject({
+      start: "2025-01-01",
+      end: "2025-12-31",
+      preset: "year",
+      year: 2025,
+    });
+
+    const currentYear = createYearDateRange(2026, "2026-08-02");
+    expect(currentYear.end).toBe("2026-08-02");
+
+    const thisMonth = createThisMonthDateRange("2026-08-02");
+    expect(thisMonth).toMatchObject({
+      start: "2026-08-01",
+      end: "2026-08-02",
+      preset: "thisMonth",
+    });
+
+    const last30 = createLastNDaysDateRange("2026-08-02", 30);
+    expect(last30.start).toBe("2026-07-04");
+    expect(last30.end).toBe("2026-08-02");
+    expect(last30.preset).toBe("last30");
+
+    const custom = createCustomDateRange("2026-03-10", "2026-03-01");
+    expect(custom.start).toBe("2026-03-01");
+    expect(custom.end).toBe("2026-03-10");
+    expect(formatJournalArchiveDateRangeLabel(yearRange)).toBe("2025");
+
+    const inside = makeEntry({ entry_date: "2025-06-01", title: "In" });
+    const outside = makeEntry({ entry_date: "2026-01-01", title: "Out" });
+    expect(
+      journalEntryMatchesFilters(
+        inside,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, dateRange: yearRange },
+        "en"
+      )
+    ).toBe(true);
+    expect(
+      journalEntryMatchesFilters(
+        outside,
+        { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, dateRange: yearRange },
+        "en"
+      )
+    ).toBe(false);
+
+    expect(
+      collectJournalArchiveYears([inside, outside, inside])
+    ).toEqual([2026, 2025]);
   });
 });

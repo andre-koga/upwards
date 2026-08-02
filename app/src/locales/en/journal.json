@@ -49,6 +49,22 @@
     "mapClusterAria": "{{count}} days near {{place}}",
     "filters": {
       "clear": "Clear",
+      "dates": {
+        "label": "Dates",
+        "hint": "Filter by year, recent period, or a custom date range.",
+        "openAria": "Open date filters",
+        "activeAria": "Date filter: {{label}}. Open to change.",
+        "title": "Filter by date",
+        "description": "Pick a year, a recent stretch, or tap two days for a custom range.",
+        "years": "Years",
+        "presets": "Quick",
+        "custom": "Custom range",
+        "customHint": "Tap a start day, then an end day.",
+        "thisMonth": "This month",
+        "last30": "Last 30 days",
+        "last90": "Last 90 days",
+        "clear": "Clear dates"
+      },
       "mapSelection": {
         "label": "{{place}} · {{count}}",
         "hint": "Showing days from this map cluster. Tap to clear.",

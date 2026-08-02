@@ -6,6 +6,7 @@ import {
   JOURNAL_ARCHIVE_PAGE_SIZE,
   buildJournalArchiveFeed,
   collectJournalArchiveMapPins,
+  collectJournalArchiveYears,
   journalArchiveFiltersKey,
   journalEntryHasContent,
   journalEntryMatchesFilters,
@@ -67,6 +68,27 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
     [allEntries]
   );
 
+  const availableYears = useMemo(
+    () => collectJournalArchiveYears(allEntries),
+    [allEntries]
+  );
+
+  const entryDates = useMemo(() => {
+    const dates = new Set<string>();
+    for (const entry of allEntries) {
+      dates.add(entry.entry_date);
+    }
+    return dates;
+  }, [allEntries]);
+
+  const bookmarkedDates = useMemo(() => {
+    const dates = new Set<string>();
+    for (const entry of allEntries) {
+      if (entry.is_bookmarked) dates.add(entry.entry_date);
+    }
+    return dates;
+  }, [allEntries]);
+
   const visibleCount = page * JOURNAL_ARCHIVE_PAGE_SIZE;
 
   const { visibleItems, hasMore } = useMemo(() => {
@@ -122,6 +144,9 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
     totalMatching: filteredEntries.length,
     totalEntries: allEntries.length,
     mapPins,
+    availableYears,
+    entryDates,
+    bookmarkedDates,
     focusEntryDate,
     revealEntryDate,
     clearFocusEntryDate,

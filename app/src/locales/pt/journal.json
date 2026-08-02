@@ -49,6 +49,22 @@
     "mapClusterAria": "{{count}} dias perto de {{place}}",
     "filters": {
       "clear": "Limpar",
+      "dates": {
+        "label": "Datas",
+        "hint": "Filtrar por ano, período recente ou intervalo personalizado.",
+        "openAria": "Abrir filtros de data",
+        "activeAria": "Filtro de data: {{label}}. Abra para alterar.",
+        "title": "Filtrar por data",
+        "description": "Escolha um ano, um período recente, ou toque em dois dias para um intervalo.",
+        "years": "Anos",
+        "presets": "Rápido",
+        "custom": "Intervalo personalizado",
+        "customHint": "Toque no dia inicial e depois no dia final.",
+        "thisMonth": "Este mês",
+        "last30": "Últimos 30 dias",
+        "last90": "Últimos 90 dias",
+        "clear": "Limpar datas"
+      },
       "mapSelection": {
         "label": "{{place}} · {{count}}",
         "hint": "Mostrando dias deste agrupamento no mapa. Toque para limpar.",

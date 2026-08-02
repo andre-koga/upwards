@@ -1,7 +1,12 @@
 import type { JournalEntry } from "@/lib/db/types";
 import { getHolidayName } from "@/lib/journal/holidays";
 import type { LocaleValue } from "@/lib/i18n/locale-storage";
-import { fromDateString } from "@/lib/time-utils";
+import {
+  formatDateShort,
+  fromDateString,
+  shiftDate,
+  toDateString,
+} from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
 
 /** sessionStorage key used when jumping from the archive feed to a specific day. */
@@ -90,6 +95,24 @@ export interface JournalArchiveFilters {
   mapEntryDates: string[] | null;
   /** Display label for the active map selection (place name). */
   mapPlaceLabel: string | null;
+  /** Inclusive calendar date window (YYYY-MM-DD). */
+  dateRange: JournalArchiveDateRange | null;
+}
+
+/** How a date window was chosen — drives chip labeling. */
+export type JournalArchiveDatePreset =
+  | "year"
+  | "thisMonth"
+  | "last30"
+  | "last90"
+  | "custom";
+
+export interface JournalArchiveDateRange {
+  start: string;
+  end: string;
+  preset: JournalArchiveDatePreset;
+  /** Present when preset is "year". */
+  year?: number;
 }
 
 export const DEFAULT_JOURNAL_ARCHIVE_FILTERS: JournalArchiveFilters = {
@@ -100,6 +123,7 @@ export const DEFAULT_JOURNAL_ARCHIVE_FILTERS: JournalArchiveFilters = {
   hasPlaces: "any",
   mapEntryDates: null,
   mapPlaceLabel: null,
+  dateRange: null,
 };
 
 export function cycleJournalArchiveTriFilter(
@@ -119,13 +143,17 @@ export function journalArchiveFiltersAreActive(
     filters.hasPhotos !== "any" ||
     filters.hasVideo !== "any" ||
     filters.hasPlaces !== "any" ||
-    Boolean(filters.mapEntryDates?.length)
+    Boolean(filters.mapEntryDates?.length) ||
+    Boolean(filters.dateRange)
   );
 }
 
 export function journalArchiveFiltersKey(filters: JournalArchiveFilters): string {
   const mapDates = filters.mapEntryDates
     ? [...filters.mapEntryDates].sort().join(",")
+    : "";
+  const dateRange = filters.dateRange
+    ? `${filters.dateRange.preset}:${filters.dateRange.start}:${filters.dateRange.end}:${filters.dateRange.year ?? ""}`
     : "";
   return [
     filters.query.trim(),
@@ -134,6 +162,7 @@ export function journalArchiveFiltersKey(filters: JournalArchiveFilters): string
     filters.hasVideo,
     filters.hasPlaces,
     mapDates,
+    dateRange,
   ].join("\0");
 }
 
@@ -146,7 +175,7 @@ function matchesTriFilter(
   return !value;
 }
 
-/** Text query + structured filters (hearted, photos, video, places, map). */
+/** Text query + structured filters (hearted, photos, video, places, map, dates). */
 export function journalEntryMatchesFilters(
   entry: JournalEntry,
   filters: JournalArchiveFilters,
@@ -154,6 +183,15 @@ export function journalEntryMatchesFilters(
 ): boolean {
   if (filters.mapEntryDates?.length) {
     if (!filters.mapEntryDates.includes(entry.entry_date)) return false;
+  }
+
+  if (filters.dateRange) {
+    if (
+      entry.entry_date < filters.dateRange.start ||
+      entry.entry_date > filters.dateRange.end
+    ) {
+      return false;
+    }
   }
 
   if (!journalEntryMatchesQuery(entry, filters.query, locale)) return false;
@@ -170,6 +208,92 @@ export function journalEntryMatchesFilters(
     matchesTriFilter(hasVideo, filters.hasVideo) &&
     matchesTriFilter(hasPlaces, filters.hasPlaces)
   );
+}
+
+function clampDateStringToToday(date: string, today: string): string {
+  return date > today ? today : date;
+}
+
+/** Years that appear in the archive, newest first. */
+export function collectJournalArchiveYears(entries: JournalEntry[]): number[] {
+  const years = new Set<number>();
+  for (const entry of entries) {
+    const year = Number(entry.entry_date.slice(0, 4));
+    if (Number.isFinite(year)) years.add(year);
+  }
+  return [...years].sort((a, b) => b - a);
+}
+
+export function createYearDateRange(
+  year: number,
+  today: string
+): JournalArchiveDateRange {
+  return {
+    start: `${year}-01-01`,
+    end: clampDateStringToToday(`${year}-12-31`, today),
+    preset: "year",
+    year,
+  };
+}
+
+export function createThisMonthDateRange(
+  today: string
+): JournalArchiveDateRange {
+  const todayDate = fromDateString(today);
+  const start = toDateString(
+    new Date(todayDate.getFullYear(), todayDate.getMonth(), 1)
+  );
+  return {
+    start,
+    end: today,
+    preset: "thisMonth",
+  };
+}
+
+export function createLastNDaysDateRange(
+  today: string,
+  dayCount: 30 | 90
+): JournalArchiveDateRange {
+  const end = fromDateString(today);
+  const start = shiftDate(end, -(dayCount - 1));
+  return {
+    start: toDateString(start),
+    end: today,
+    preset: dayCount === 30 ? "last30" : "last90",
+  };
+}
+
+export function createCustomDateRange(
+  start: string,
+  end: string
+): JournalArchiveDateRange {
+  const [normalizedStart, normalizedEnd] =
+    start <= end ? [start, end] : [end, start];
+  return {
+    start: normalizedStart,
+    end: normalizedEnd,
+    preset: "custom",
+  };
+}
+
+/** Compact chip label for an active date filter. */
+export function formatJournalArchiveDateRangeLabel(
+  range: JournalArchiveDateRange
+): string {
+  if (range.preset === "year" && range.year != null) {
+    return String(range.year);
+  }
+  if (range.preset === "thisMonth") {
+    const date = fromDateString(range.start);
+    return date.toLocaleDateString(getActiveLocaleTag(), {
+      month: "short",
+      year: "numeric",
+    });
+  }
+  if (range.start === range.end) {
+    return formatDateShort(fromDateString(range.start));
+  }
+  return `${formatDateShort(fromDateString(range.start))} – ${formatDateShort(fromDateString(range.end))}`;
 }
 
 export type JournalArchiveItem =

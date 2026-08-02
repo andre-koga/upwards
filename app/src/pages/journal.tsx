@@ -49,6 +49,9 @@ export default function JournalPage() {
     totalMatching,
     totalEntries,
     mapPins,
+    availableYears,
+    entryDates,
+    bookmarkedDates,
     focusEntryDate,
     revealEntryDate,
     clearFocusEntryDate,
@@ -172,6 +175,9 @@ export default function JournalPage() {
           <JournalArchiveSearchFilters
             filters={filters}
             onChange={setFilters}
+            availableYears={availableYears}
+            entryDates={entryDates}
+            bookmarkedDates={bookmarkedDates}
           />
         ) : null}
       </div>
