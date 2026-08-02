@@ -11,7 +11,9 @@ export type SyncTable =
   | "recurring_memos"
   | "activity_streaks"
   | "activity_status_events"
-  | "group_status_events";
+  | "group_status_events"
+  | "activity_definition_versions"
+  | "group_definition_versions";
 
 export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
   activity_groups: "id",
@@ -24,6 +26,8 @@ export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
   activity_streaks: "user_id,activity_id,date",
   activity_status_events: "id",
   group_status_events: "id",
+  activity_definition_versions: "id",
+  group_definition_versions: "id",
 };
 
 export function isValidUuid(value: unknown): value is string {

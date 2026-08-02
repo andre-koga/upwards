@@ -3,6 +3,7 @@ import { db, newId, now } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type {
   Activity,
+  ActivityDefinitionVersion,
   ActivityGroup,
   ActivityPeriod,
   ActivityStatusEvent,
@@ -16,6 +17,10 @@ import {
   getActivityDisplayName,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
+import {
+  resolveActivityDefinitionsForDate,
+  toSchedulableActivity,
+} from "@/lib/activity/temporal-resolver";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import {
   getOrComputeActivityStreaksForDate,
@@ -74,6 +79,21 @@ export function useDailyTasks({
   const [recalculateStreaksBusy, setRecalculateStreaksBusy] = useState(false);
   const [recalcTrigger, setRecalcTrigger] = useState(0);
   const recalcStreaksInFlightRef = useRef(false);
+  const [activityDefinitionsById, setActivityDefinitionsById] = useState<
+    Map<string, ActivityDefinitionVersion | Activity>
+  >(new Map());
+
+  useEffect(() => {
+    let cancelled = false;
+    void resolveActivityDefinitionsForDate(lookupActivities, dateString).then(
+      (map) => {
+        if (!cancelled) setActivityDefinitionsById(map);
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [lookupActivities, dateString, refreshTrigger]);
 
   const streakVisibilityDeps = useMemo(
     () => ({
@@ -89,8 +109,9 @@ export function useDailyTasks({
       viewDate: currentDate,
       activityEventsById,
       groupEventsById,
+      activityDefinitionsById,
     }),
-    [currentDate, activityEventsById, groupEventsById]
+    [currentDate, activityEventsById, groupEventsById, activityDefinitionsById]
   );
 
   const {
@@ -279,22 +300,36 @@ export function useDailyTasks({
       };
     }
 
-    const nonNever = dailyActivities.filter(
-      (a) => a.routine !== "never" && !pausedTaskIdSet.has(a.id)
-    ).length;
-    const completed = dailyActivities.filter(
-      (a) =>
-        a.routine !== "never" &&
+    const schedulableFor = (activity: Activity) => {
+      const resolved = activityDefinitionsById.get(activity.id);
+      return resolved ? toSchedulableActivity(resolved) : activity;
+    };
+
+    const nonNever = dailyActivities.filter((a) => {
+      const schedulable = schedulableFor(a);
+      return schedulable.routine !== "never" && !pausedTaskIdSet.has(a.id);
+    }).length;
+    const completed = dailyActivities.filter((a) => {
+      const schedulable = schedulableFor(a);
+      return (
+        schedulable.routine !== "never" &&
         !pausedTaskIdSet.has(a.id) &&
-        (taskCounts[a.id] || 0) >= (a.completion_target ?? 1)
-    ).length;
+        (taskCounts[a.id] || 0) >= (schedulable.completion_target ?? 1)
+      );
+    }).length;
     const rate = nonNever === 0 ? 0 : Math.round((completed / nonNever) * 100);
     return {
       nonNeverCount: nonNever,
       completedCount: completed,
       completionRate: rate,
     };
-  }, [dailyActivities, isBreakDay, pausedTaskIdSet, taskCounts]);
+  }, [
+    dailyActivities,
+    isBreakDay,
+    pausedTaskIdSet,
+    taskCounts,
+    activityDefinitionsById,
+  ]);
 
   const totalTimeSpentMs = useMemo(
     () =>
@@ -529,6 +564,7 @@ export function useDailyTasks({
     isToday,
     isEditableDate,
     temporalForViewDate,
+    activityDefinitionsById,
     loading,
     activityStreaks,
     dailyActivities,

@@ -103,7 +103,97 @@
     "title": "Cloud sync",
     "description": "Force push uploads all local data to the cloud, overwriting remote with local. Use when you have local data that is not syncing.",
     "forcePush": "Force push to cloud",
-    "pushing": "Pushing…"
+    "pushing": "Pushing…",
+    "issuesLink": "Sync issues",
+    "issuesBadge": "{{count}} open sync issues"
+  },
+  "syncIssues": {
+    "page": {
+      "title": "Sync issues",
+      "subtitle": "Review conflicts, pending changes, and sync errors"
+    },
+    "loading": "Loading sync status…",
+    "sections": {
+      "review": {
+        "title": "Needs your review",
+        "description": "Changes from different devices that need your decision.",
+        "empty": "Nothing needs your review right now."
+      },
+      "pending": {
+        "title": "Waiting to sync",
+        "description": "Local changes saved on this device that have not reached the cloud yet.",
+        "empty": "All local changes have been sent to the cloud.",
+        "itemTitle": "{{type}} on {{entity}}",
+        "itemDetail": "Operation {{id}}"
+      },
+      "errors": {
+        "title": "Sync errors",
+        "description": "Problems while uploading or downloading your data.",
+        "empty": "No sync errors right now."
+      },
+      "resolved": {
+        "title": "Resolved",
+        "description": "Recently dismissed or fixed issues.",
+        "empty": "No recently resolved issues."
+      },
+      "device": {
+        "title": "This device",
+        "description": "Identity and last successful sync for this installation.",
+        "idLabel": "Device ID",
+        "lastSeenLabel": "Last successful sync",
+        "accountLabel": "Sync account",
+        "empty": "This device has not completed a sync yet."
+      }
+    },
+    "actions": {
+      "retrySync": "Retry sync",
+      "retry": "Retry",
+      "dismiss": "Dismiss",
+      "discard": "Discard"
+    },
+    "discardDialog": {
+      "title": "Discard local change?",
+      "message": "This removes the pending change from this device only. It will not be uploaded, and you cannot undo this from another device.",
+      "confirm": "Discard permanently",
+      "cancel": "Cancel"
+    },
+    "conflict": {
+      "untitled": "Untitled change",
+      "summary": "Two versions of this {{entity}} need a decision.",
+      "entity": {
+        "activity": "activity",
+        "group": "group"
+      },
+      "effectiveFrom": "Applies from {{date}}",
+      "deferredBadge": "Deferred",
+      "bothChangedHint": "Both sides changed some of the same fields. Combine will keep your value for those.",
+      "combinableHint": "These changes touch different fields and can be combined cleanly.",
+      "combineWithPreferenceHint": "Fields edited on both sides will keep your value.",
+      "unknownRemote": "Unavailable",
+      "consequence": "Your choice creates a new version. Earlier versions stay in history and are not deleted.",
+      "applyFromLabel": "Apply from",
+      "resolveFailed": "Could not apply that choice. Try again.",
+      "columns": {
+        "field": "Field",
+        "yours": "Yours",
+        "theirs": "Other device",
+        "base": "Earlier"
+      },
+      "fields": {
+        "name": "Name",
+        "routine": "Schedule",
+        "completion_target": "Target",
+        "group_id": "Group",
+        "order_index": "Order",
+        "color": "Color"
+      },
+      "actions": {
+        "keepMine": "Keep mine",
+        "keepTheirs": "Keep theirs",
+        "combine": "Combine",
+        "defer": "Decide later"
+      }
+    }
   },
   "taskOrder": {
     "title": "Task order",

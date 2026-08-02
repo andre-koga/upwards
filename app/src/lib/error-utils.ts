@@ -18,7 +18,7 @@ export function getErrorMessage(
 export function logError(context: string, err: unknown): void {
   const message = getErrorMessage(err);
   console.error(`${context}:`, err);
-  
+
   // Store in database
   void (async () => {
     try {
@@ -40,7 +40,7 @@ export function logError(context: string, err: unknown): void {
  */
 export function logSuccess(context: string, message: string): void {
   console.log(`${context}: ${message}`);
-  
+
   void (async () => {
     try {
       await db.appLogs.add({
@@ -61,7 +61,7 @@ export function logSuccess(context: string, message: string): void {
  */
 export function logInfo(context: string, message: string): void {
   console.log(`${context}: ${message}`);
-  
+
   void (async () => {
     try {
       await db.appLogs.add({

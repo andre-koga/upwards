@@ -68,7 +68,8 @@ export function formatResetMinutes(minutes: number): string {
 }
 
 /** All valid reset options in 1-hour increments from midnight to 8 AM. */
-export const DAY_RESET_OPTIONS: { minutes: number; label: string }[] = Array.from(
-  { length: 9 },
-  (_, i) => ({ minutes: i * 60, label: formatResetMinutes(i * 60) })
-);
+export const DAY_RESET_OPTIONS: { minutes: number; label: string }[] =
+  Array.from({ length: 9 }, (_, i) => ({
+    minutes: i * 60,
+    label: formatResetMinutes(i * 60),
+  }));

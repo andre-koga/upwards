@@ -58,7 +58,7 @@ export function FormDialog({
             <DialogHeader
               className={cn(
                 headerClassName,
-                "flex-1 min-w-0 text-left sm:text-left"
+                "min-w-0 flex-1 text-left sm:text-left"
               )}
             >
               <DialogTitle className={titleClassName}>{title}</DialogTitle>

@@ -13,6 +13,11 @@ import type {
   GroupStatusEvent,
   UserProfile,
   AppLog,
+  SyncPendingOperation,
+  SyncIssue,
+  SyncDeviceRecord,
+  ActivityDefinitionVersion,
+  GroupDefinitionVersion,
 } from "./types";
 import { shiftDate, startOfDay } from "@/lib/time-utils";
 
@@ -64,7 +69,9 @@ function toLegacyLocationObject(raw: unknown): Record<string, unknown> | null {
   };
 }
 
-function normalizeLegacyLocationRoute(raw: unknown): { locations: unknown[] } | null {
+function normalizeLegacyLocationRoute(
+  raw: unknown
+): { locations: unknown[] } | null {
   if (!raw) return null;
   if (typeof raw === "object" && !Array.isArray(raw)) {
     const route = raw as Record<string, unknown>;
@@ -100,6 +107,11 @@ class UpwardsDB extends Dexie {
   groupStatusEvents!: Table<GroupStatusEvent>;
   userProfiles!: Table<UserProfile>;
   appLogs!: Table<AppLog>;
+  syncPendingOperations!: Table<SyncPendingOperation>;
+  syncIssues!: Table<SyncIssue>;
+  syncDevices!: Table<SyncDeviceRecord>;
+  activityDefinitionVersions!: Table<ActivityDefinitionVersion>;
+  groupDefinitionVersions!: Table<GroupDefinitionVersion>;
 
   constructor() {
     super("okhabit");
@@ -259,7 +271,9 @@ class UpwardsDB extends Dexie {
           .table("journalEntries")
           .toCollection()
           .modify((entry: Record<string, unknown>) => {
-            const normalizedLocation = normalizeLegacyLocationRoute(entry.location);
+            const normalizedLocation = normalizeLegacyLocationRoute(
+              entry.location
+            );
             entry.location = normalizedLocation;
           });
       });
@@ -273,8 +287,7 @@ class UpwardsDB extends Dexie {
         "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
       oneTimeTasks:
         "id, date, is_completed, is_pinned, due_date, category_id, deleted_at, created_at",
-      activityStreaks:
-        "id, activity_id, date, [activity_id+date], deleted_at",
+      activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
       memoCategories: "id, name, deleted_at, created_at",
     });
 
@@ -377,8 +390,7 @@ class UpwardsDB extends Dexie {
       promiseMembers:
         "id, promise_id, user_id, role, invite_status, [promise_id+user_id]",
       promiseProgressEvents: "id, promise_id, user_id, date, kind, created_at",
-      promiseReactions:
-        "id, promise_id, from_user_id, to_user_id, created_at",
+      promiseReactions: "id, promise_id, from_user_id, to_user_id, created_at",
       promiseInvites: "id, promise_id, token, created_at",
       userProfiles: "user_id",
     });
@@ -409,15 +421,15 @@ class UpwardsDB extends Dexie {
     this.version(16)
       .stores({
         activityGroups: "id, name, is_archived, deleted_at, created_at",
-        activities:
-          "id, group_id, completed_at, deleted_at, created_at",
+        activities: "id, group_id, completed_at, deleted_at, created_at",
         dailyEntries: "id, date, is_break_day, deleted_at",
         activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
         journalEntries:
           "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
         oneTimeTasks:
           "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
-        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
         promises: "id, creator_id, status, created_at",
         promiseMembers:
           "id, promise_id, user_id, invite_status, [promise_id+user_id]",
@@ -439,15 +451,15 @@ class UpwardsDB extends Dexie {
     this.version(17)
       .stores({
         activityGroups: "id, name, is_archived, deleted_at, created_at",
-        activities:
-          "id, group_id, completed_at, deleted_at, created_at",
+        activities: "id, group_id, completed_at, deleted_at, created_at",
         dailyEntries: "id, date, is_break_day, deleted_at",
         activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
         journalEntries:
           "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
         oneTimeTasks:
           "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
-        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
         activityStatusEvents:
           "id, entity_id, status_type, effective_at, deleted_at",
         groupStatusEvents:
@@ -540,15 +552,15 @@ class UpwardsDB extends Dexie {
     this.version(18)
       .stores({
         activityGroups: "id, name, is_archived, deleted_at, created_at",
-        activities:
-          "id, group_id, completed_at, deleted_at, created_at",
+        activities: "id, group_id, completed_at, deleted_at, created_at",
         dailyEntries: "id, date, is_break_day, deleted_at",
         activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
         journalEntries:
           "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
         oneTimeTasks:
           "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
-        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
         activityStatusEvents:
           "id, entity_id, status_type, effective_at, deleted_at",
         groupStatusEvents:
@@ -567,9 +579,7 @@ class UpwardsDB extends Dexie {
           activities.map((a: Activity) => [a.id, a])
         );
         const groups = await tx.table("activityGroups").toArray();
-        const groupById = new Map(
-          groups.map((g: ActivityGroup) => [g.id, g])
-        );
+        const groupById = new Map(groups.map((g: ActivityGroup) => [g.id, g]));
 
         await tx
           .table("activityStatusEvents")
@@ -602,15 +612,15 @@ class UpwardsDB extends Dexie {
     this.version(19)
       .stores({
         activityGroups: "id, name, is_archived, deleted_at, created_at",
-        activities:
-          "id, group_id, completed_at, deleted_at, created_at",
+        activities: "id, group_id, completed_at, deleted_at, created_at",
         dailyEntries: "id, date, is_break_day, deleted_at",
         activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
         journalEntries:
           "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
         oneTimeTasks:
           "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
-        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
         activityStatusEvents:
           "id, entity_id, status_type, effective_at, deleted_at",
         groupStatusEvents:
@@ -630,15 +640,15 @@ class UpwardsDB extends Dexie {
     this.version(20)
       .stores({
         activityGroups: "id, name, is_archived, deleted_at, created_at",
-        activities:
-          "id, group_id, completed_at, deleted_at, created_at",
+        activities: "id, group_id, completed_at, deleted_at, created_at",
         dailyEntries: "id, date, is_break_day, deleted_at",
         activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
         journalEntries:
           "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
         oneTimeTasks:
           "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
-        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
         activityStatusEvents:
           "id, entity_id, status_type, effective_at, deleted_at",
         groupStatusEvents:
@@ -659,15 +669,15 @@ class UpwardsDB extends Dexie {
     this.version(21)
       .stores({
         activityGroups: "id, name, is_archived, deleted_at, created_at",
-        activities:
-          "id, group_id, completed_at, deleted_at, created_at",
+        activities: "id, group_id, completed_at, deleted_at, created_at",
         dailyEntries: "id, date, is_break_day, deleted_at",
         activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
         journalEntries:
           "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
         oneTimeTasks:
           "id, date, is_completed, is_pinned, due_date, group_id, deleted_at, created_at",
-        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
         activityStatusEvents:
           "id, entity_id, status_type, effective_at, deleted_at",
         groupStatusEvents:
@@ -695,8 +705,7 @@ class UpwardsDB extends Dexie {
     this.version(22)
       .stores({
         activityGroups: "id, name, is_archived, deleted_at, created_at",
-        activities:
-          "id, group_id, completed_at, deleted_at, created_at",
+        activities: "id, group_id, completed_at, deleted_at, created_at",
         dailyEntries: "id, date, is_break_day, deleted_at",
         activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
         journalEntries:
@@ -704,7 +713,8 @@ class UpwardsDB extends Dexie {
         oneTimeTasks:
           "id, date, is_completed, is_pinned, due_date, group_id, recurring_memo_id, deleted_at, created_at",
         recurringMemos: "id, deleted_at, created_at",
-        activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
         activityStatusEvents:
           "id, entity_id, status_type, effective_at, deleted_at",
         groupStatusEvents:
@@ -721,6 +731,133 @@ class UpwardsDB extends Dexie {
               task.recurring_memo_id = null;
             }
           });
+      });
+
+    // v23: local sync queue, issues, and device registry (not pushed to Supabase yet)
+    this.version(23).stores({
+      activityGroups: "id, name, is_archived, deleted_at, created_at",
+      activities: "id, group_id, completed_at, deleted_at, created_at",
+      dailyEntries: "id, date, is_break_day, deleted_at",
+      activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+      journalEntries:
+        "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+      oneTimeTasks:
+        "id, date, is_completed, is_pinned, due_date, group_id, recurring_memo_id, deleted_at, created_at",
+      recurringMemos: "id, deleted_at, created_at",
+      activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+      activityStatusEvents:
+        "id, entity_id, status_type, effective_at, deleted_at",
+      groupStatusEvents: "id, entity_id, status_type, effective_at, deleted_at",
+      userProfiles: "user_id",
+      appLogs: "id, created_at, level",
+      syncPendingOperations:
+        "id, operation_id, status, account_id, device_id, created_at",
+      syncIssues: "id, kind, status, account_id, created_at",
+      syncDevices: "id, account_id, last_seen_at, retired_at",
+    });
+
+    // v24: immutable activity/group definition versions (local authoritative history)
+    this.version(24)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities: "id, group_id, completed_at, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, recurring_memo_id, deleted_at, created_at",
+        recurringMemos: "id, deleted_at, created_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        groupStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        userProfiles: "user_id",
+        appLogs: "id, created_at, level",
+        syncPendingOperations:
+          "id, operation_id, status, account_id, device_id, created_at",
+        syncIssues: "id, kind, status, account_id, created_at",
+        syncDevices: "id, account_id, last_seen_at, retired_at",
+        activityDefinitionVersions:
+          "id, activity_id, effective_from, recorded_at, operation_id, deleted_at",
+        groupDefinitionVersions:
+          "id, group_id, effective_from, recorded_at, operation_id, deleted_at",
+      })
+      .upgrade(async (tx) => {
+        const deviceIdKey = "okhabit:device_id";
+        let deviceId =
+          typeof localStorage !== "undefined"
+            ? localStorage.getItem(deviceIdKey)
+            : null;
+        if (!deviceId) {
+          deviceId = uuidv4();
+          if (typeof localStorage !== "undefined") {
+            localStorage.setItem(deviceIdKey, deviceId);
+          }
+        }
+
+        const recordedAt = new Date().toISOString();
+        const toLogicalDay = (iso: string) => {
+          const d = new Date(iso);
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        };
+
+        const activities = await tx.table("activities").toArray();
+        for (const activity of activities as Array<Record<string, unknown>>) {
+          if (activity.deleted_at) continue;
+          const createdAt =
+            typeof activity.created_at === "string"
+              ? activity.created_at
+              : recordedAt;
+          await tx.table("activityDefinitionVersions").add({
+            id: uuidv4(),
+            activity_id: activity.id,
+            parent_version_id: null,
+            effective_from: toLogicalDay(createdAt),
+            recorded_at: recordedAt,
+            server_sequence: null,
+            operation_id: uuidv4(),
+            device_id: deviceId,
+            name: activity.name ?? null,
+            routine: activity.routine ?? null,
+            completion_target: activity.completion_target ?? null,
+            group_id: activity.group_id,
+            order_index: activity.order_index ?? null,
+            schema_version: 1,
+            created_at: recordedAt,
+            deleted_at: null,
+          });
+        }
+
+        const groups = await tx.table("activityGroups").toArray();
+        for (const group of groups as Array<Record<string, unknown>>) {
+          if (group.deleted_at) continue;
+          const createdAt =
+            typeof group.created_at === "string"
+              ? group.created_at
+              : recordedAt;
+          await tx.table("groupDefinitionVersions").add({
+            id: uuidv4(),
+            group_id: group.id,
+            parent_version_id: null,
+            effective_from: toLogicalDay(createdAt),
+            recorded_at: recordedAt,
+            server_sequence: null,
+            operation_id: uuidv4(),
+            device_id: deviceId,
+            name: group.name,
+            color: group.color ?? null,
+            order_index: group.order_index ?? null,
+            schema_version: 1,
+            created_at: recordedAt,
+            deleted_at: null,
+          });
+        }
       });
   }
 }

@@ -58,7 +58,10 @@ export function ProfileCard() {
     <SettingsSection title={t("profile.title")}>
       {/* Display name */}
       {editingDisplayName ? (
-        <form onSubmit={(e) => void handleSaveDisplayName(e)} className="space-y-2">
+        <form
+          onSubmit={(e) => void handleSaveDisplayName(e)}
+          className="space-y-2"
+        >
           <Label htmlFor={displayNameInputId}>{t("profile.displayName")}</Label>
           <Input
             id={displayNameInputId}
@@ -92,7 +95,9 @@ export function ProfileCard() {
           <div className="space-y-0.5">
             <p className="text-sm font-medium">
               {displayName ?? (
-                <span className="text-muted-foreground">{t("profile.noDisplayName")}</span>
+                <span className="text-muted-foreground">
+                  {t("profile.noDisplayName")}
+                </span>
               )}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -114,7 +119,10 @@ export function ProfileCard() {
 
       {/* Username */}
       {editingUsername ? (
-        <form onSubmit={(e) => void handleSaveUsername(e)} className="space-y-2 pt-2">
+        <form
+          onSubmit={(e) => void handleSaveUsername(e)}
+          className="space-y-2 pt-2"
+        >
           <Label htmlFor={usernameInputId}>{t("profile.username")}</Label>
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground">@</span>
@@ -160,7 +168,9 @@ export function ProfileCard() {
                 {username ? (
                   <span className="font-mono">@{username}</span>
                 ) : (
-                  <span className="text-muted-foreground">{t("profile.noUsername")}</span>
+                  <span className="text-muted-foreground">
+                    {t("profile.noUsername")}
+                  </span>
                 )}
               </p>
               <p className="text-xs text-muted-foreground">

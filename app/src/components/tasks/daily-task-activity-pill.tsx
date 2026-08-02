@@ -1,8 +1,6 @@
 import ActivityPill from "@/components/activities/activity-pill";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import {
-  getActivityDisplayName,
-} from "@/lib/activity";
+import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import type { DailyTaskInteractionState } from "@/lib/activity";
 
@@ -66,9 +64,7 @@ export default function DailyTaskActivityPill({
           ? () => onManualEntry(activity.id)
           : undefined
       }
-      nameClassName={
-        isDayComplete ? "line-through text-muted-foreground" : ""
-      }
+      nameClassName={isDayComplete ? "line-through text-muted-foreground" : ""}
     />
   );
 }

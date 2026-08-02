@@ -20,6 +20,12 @@ export const SYNC_TABLES: SyncTable[] = [
   "group_status_events",
 ];
 
+/**
+ * When temporal ops RPCs are available, LWW still pushes these tables for
+ * non-op columns (e.g. completed_at), but op-owned fields are stripped.
+ * See `op-owned-fields.ts`.
+ */
+
 export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
   activity_groups: "activityGroups",
   activities: "activities",
@@ -31,4 +37,6 @@ export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
   activity_streaks: "activityStreaks",
   activity_status_events: "activityStatusEvents",
   group_status_events: "groupStatusEvents",
+  activity_definition_versions: "activityDefinitionVersions",
+  group_definition_versions: "groupDefinitionVersions",
 };

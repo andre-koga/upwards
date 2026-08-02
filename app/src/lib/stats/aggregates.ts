@@ -1,4 +1,9 @@
-import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
+import type {
+  Activity,
+  ActivityDefinitionVersion,
+  ActivityGroup,
+  ActivityPeriod,
+} from "@/lib/db/types";
 import { effectiveDateForMs } from "@/lib/activity/period-day-utils";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
@@ -7,11 +12,15 @@ import {
   completionRate,
   getToday,
 } from "./completion";
-import type { HeatmapDay, MonthlyCompletionPoint, TimeOfDaySegment } from "./types";
+import type {
+  HeatmapDay,
+  MonthlyCompletionPoint,
+  TimeOfDaySegment,
+} from "./types";
 
 export function sumTimerMsByDate(
   periods: ActivityPeriod[],
-  nowMs = Date.now(),
+  nowMs = Date.now()
 ): Record<string, number> {
   const timerByDate: Record<string, number> = {};
   for (const p of periods) {
@@ -28,7 +37,7 @@ export function sumTimerMsByDate(
 export function sumTimerMsInRange(
   timerByDate: Record<string, number>,
   fromDate: Date,
-  toDate: Date,
+  toDate: Date
 ): number {
   let total = 0;
   let cur = fromDate;
@@ -60,7 +69,7 @@ function addPeriodMsToHourBuckets(
   startMs: number,
   endMs: number,
   fromMs: number,
-  toMs: number,
+  toMs: number
 ): void {
   let cursor = Math.max(startMs, fromMs);
   const cappedEnd = Math.min(endMs, toMs);
@@ -100,7 +109,7 @@ export type TimeOfDayContributor = {
 /** Per-contributor tracked ms per clock hour over the last 30 days. */
 export function buildTimeOfDaySegments(
   periods: ActivityPeriod[],
-  contributors: TimeOfDayContributor[],
+  contributors: TimeOfDayContributor[]
 ): TimeOfDaySegment[] {
   const { fromMs, toMs } = getTimeOfDayWindow();
   const contributorByActivity = new Map<string, TimeOfDayContributor>();
@@ -110,7 +119,9 @@ export function buildTimeOfDaySegments(
     }
   }
 
-  const bucketMap = new Map(contributors.map((c) => [c.id, emptyHourBuckets()]));
+  const bucketMap = new Map(
+    contributors.map((c) => [c.id, emptyHourBuckets()])
+  );
 
   for (const p of periods) {
     if (p.deleted_at || !p.end_time) continue;
@@ -134,7 +145,8 @@ export function buildTimeOfDaySegments(
     .filter((seg) => seg.buckets.some((v) => v > 0))
     .sort(
       (a, b) =>
-        b.buckets.reduce((s, v) => s + v, 0) - a.buckets.reduce((s, v) => s + v, 0),
+        b.buckets.reduce((s, v) => s + v, 0) -
+        a.buckets.reduce((s, v) => s + v, 0)
     );
 }
 
@@ -142,7 +154,9 @@ export function timeOfDayHasData(segments: TimeOfDaySegment[]): boolean {
   return segments.some((s) => s.buckets.some((v) => v > 0));
 }
 
-export function timeOfDayTotalsFromSegments(segments: TimeOfDaySegment[]): number[] {
+export function timeOfDayTotalsFromSegments(
+  segments: TimeOfDaySegment[]
+): number[] {
   const totals = emptyHourBuckets();
   for (const seg of segments) {
     for (let h = 0; h < HOUR_COUNT; h++) totals[h] += seg.buckets[h];
@@ -155,7 +169,7 @@ export function computeTimeByGroup(
   groupById: Map<string, ActivityGroup>,
   allTimerByActivity: Map<string, Record<string, number>>,
   fromDate: Date,
-  toDate: Date,
+  toDate: Date
 ): { groupId: string; groupName: string; color: string; ms: number }[] {
   const totals = new Map<string, number>();
 
@@ -184,6 +198,9 @@ export function buildAggregateHeatmap90(
   activities: Activity[],
   entriesByDate: Map<string, import("@/lib/db/types").DailyEntry>,
   breakDays: Set<string>,
+  options?: {
+    definitionVersionsByActivityId?: Map<string, ActivityDefinitionVersion[]>;
+  }
 ): HeatmapDay[] {
   const today = getToday();
   const from = shiftDate(today, -89);
@@ -198,7 +215,7 @@ export function buildAggregateHeatmap90(
       breakDays,
       cur,
       cur,
-      { countBreakDayMisses: true },
+      { countBreakDayMisses: true, ...options }
     );
     const rate = completionRate(completed, scheduled);
     days.push({
@@ -208,7 +225,14 @@ export function buildAggregateHeatmap90(
       completionRate: rate ?? undefined,
       habitsCompleted: scheduled > 0 ? completed : undefined,
       habitsScheduled: scheduled > 0 ? scheduled : undefined,
-      status: rate === null ? "not_scheduled" : rate === 100 ? "done" : rate === 0 ? "missed" : undefined,
+      status:
+        rate === null
+          ? "not_scheduled"
+          : rate === 100
+            ? "done"
+            : rate === 0
+              ? "missed"
+              : undefined,
     });
     cur = shiftDate(cur, 1);
   }
@@ -217,7 +241,7 @@ export function buildAggregateHeatmap90(
 }
 
 export function buildMonthlyCompletionFromTotals(
-  dailyTotals: Map<string, { completed: number; scheduled: number }>,
+  dailyTotals: Map<string, { completed: number; scheduled: number }>
 ): MonthlyCompletionPoint[] {
   const today = getToday();
   const months: { year: number; month: number; key: string }[] = [];
@@ -230,7 +254,9 @@ export function buildMonthlyCompletionFromTotals(
     });
   }
 
-  const buckets = new Map(months.map((m) => [m.key, { completed: 0, scheduled: 0 }]));
+  const buckets = new Map(
+    months.map((m) => [m.key, { completed: 0, scheduled: 0 }])
+  );
 
   for (const [dateStr, totals] of dailyTotals) {
     const monthKey = dateStr.slice(0, 7);
@@ -243,7 +269,10 @@ export function buildMonthlyCompletionFromTotals(
 
   return months.map(({ year, month, key }) => {
     const { completed, scheduled } = buckets.get(key)!;
-    const label = new Date(year, month, 1).toLocaleDateString(getActiveLocaleTag(), { month: "short" });
+    const label = new Date(year, month, 1).toLocaleDateString(
+      getActiveLocaleTag(),
+      { month: "short" }
+    );
     return {
       monthKey: key,
       label,
@@ -257,7 +286,7 @@ export function buildMonthlyCompletionFromTotals(
 export function buildWeeklyCompletionFromTotals(
   dailyTotals: Map<string, { completed: number; scheduled: number }>,
   fromDate: Date,
-  toDate: Date,
+  toDate: Date
 ): MonthlyCompletionPoint[] {
   const points: MonthlyCompletionPoint[] = [];
   let weekStart = fromDate;
@@ -296,12 +325,25 @@ export function buildDailyCompletionTotals(
   breakDays: Set<string>,
   fromDate: Date,
   toDate: Date,
+  options?: {
+    definitionVersionsByActivityId?: Map<string, ActivityDefinitionVersion[]>;
+  }
 ): Map<string, { completed: number; scheduled: number }> {
   const map = new Map<string, { completed: number; scheduled: number }>();
   let cur = fromDate;
   while (cur <= toDate) {
     const dateStr = toDateString(cur);
-    map.set(dateStr, computeCompletionTotals(activities, entriesByDate, breakDays, cur, cur));
+    map.set(
+      dateStr,
+      computeCompletionTotals(
+        activities,
+        entriesByDate,
+        breakDays,
+        cur,
+        cur,
+        options
+      )
+    );
     cur = shiftDate(cur, 1);
   }
   return map;

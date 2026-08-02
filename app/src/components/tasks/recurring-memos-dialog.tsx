@@ -80,7 +80,9 @@ export function RecurringMemosDialog({
         onOpenChange={onOpenChange}
         title={
           recurringMemos.length > 0
-            ? t("recurringMemos.titleWithCount", { count: recurringMemos.length })
+            ? t("recurringMemos.titleWithCount", {
+                count: recurringMemos.length,
+              })
             : t("recurringMemos.title")
         }
         size="default"
@@ -99,9 +101,9 @@ export function RecurringMemosDialog({
           </Button>
         }
       >
-        <div className="space-y-1 max-h-96 overflow-y-auto">
+        <div className="max-h-96 space-y-1 overflow-y-auto">
           {recurringMemos.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-8">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               {t("recurringMemos.empty")}
             </p>
           ) : (
@@ -111,12 +113,14 @@ export function RecurringMemosDialog({
                 className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium break-words whitespace-pre-wrap">
+                  <p className="whitespace-pre-wrap break-words font-medium">
                     {memo.title}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {formatRoutineDisplay(memo.routine)}
-                    {memo.is_enabled === false ? ` · ${t("recurringMemo.paused")}` : ""}
+                    {memo.is_enabled === false
+                      ? ` · ${t("recurringMemo.paused")}`
+                      : ""}
                   </p>
                 </div>
                 <Button

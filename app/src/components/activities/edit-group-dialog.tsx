@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Archive } from "lucide-react";
 import { db, now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
+import { appendGroupDefinitionVersion } from "@/lib/activity";
 import { GroupDialogForm } from "@/components/activities/group-dialog-form";
 import { ArchiveGroupDialog } from "@/components/activities/archive-group-dialog";
 import { Button } from "@/components/ui/button";
@@ -52,22 +53,28 @@ export function EditGroupDialog({
             <Archive className="h-4 w-4" aria-hidden />
           </Button>
         }
-        onSubmit={async ({ name, color }) => {
+        onSubmit={async ({ name, color, effectiveFrom }) => {
           const updatedAt = now();
+          const updated: ActivityGroup = {
+            ...group,
+            name,
+            emoji: null,
+            color,
+            updated_at: updatedAt,
+          };
           await db.activityGroups.update(group.id, {
             name,
             emoji: null,
             color,
             updated_at: updatedAt,
           });
-          onUpdated?.({
-            ...group,
-            name,
-            emoji: null,
-            color,
-            updated_at: updatedAt,
+          await appendGroupDefinitionVersion({
+            group: updated,
+            effectiveFrom,
           });
+          onUpdated?.(updated);
         }}
+        definitionEdit={{ createdAt: group.created_at }}
       />
 
       <ArchiveGroupDialog

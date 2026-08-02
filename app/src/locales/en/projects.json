@@ -78,6 +78,15 @@
     "incrementHint": "{{count}} / {{target}} — click to increment",
     "countTarget": "{{count}} / {{target}}"
   },
+  "definitionEffectiveFrom": {
+    "labelSchedule": "Apply schedule/rules from",
+    "labelSettings": "Apply settings from",
+    "today": "Today",
+    "beginning": "From the beginning",
+    "custom": "Custom date",
+    "customDate": "Effective date",
+    "helper": "Past days keep the previous schedule and rules unless you apply this change retroactively."
+  },
   "timeField": {
     "dialDescription": "Drag the dial or tap values to edit time.",
     "subtractFiveMin": "Subtract five minutes",

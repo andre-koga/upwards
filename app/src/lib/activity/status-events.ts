@@ -31,11 +31,15 @@ export function effectiveAtForStatusOn(
   return shiftDate(startOfDay(actionDate), 1).toISOString();
 }
 
-function reduceStatusAsOf<T extends { status_type: string; next_value: boolean; effective_at: string; created_at: string; deleted_at: string | null }>(
-  events: T[],
-  statusType: string,
-  viewDate: Date
-): boolean {
+function reduceStatusAsOf<
+  T extends {
+    status_type: string;
+    next_value: boolean;
+    effective_at: string;
+    created_at: string;
+    deleted_at: string | null;
+  },
+>(events: T[], statusType: string, viewDate: Date): boolean {
   const cutoff = endOfDay(viewDate).toISOString();
   let value = false;
   const relevant = events

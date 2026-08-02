@@ -1,5 +1,8 @@
 import { syncEngine } from "./index";
-import { clearLocalSyncData, hasLocalSyncableData } from "./clear-local-sync-data";
+import {
+  clearLocalSyncData,
+  hasLocalSyncableData,
+} from "./clear-local-sync-data";
 import {
   loadLastSignedInUserId,
   saveLastSignedInUserId,

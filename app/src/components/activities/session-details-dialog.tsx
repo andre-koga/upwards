@@ -130,7 +130,9 @@ export default function SessionDetailsDialog({
             confirmDisabled={saving || isLockedHistoricalSession}
             secondaryAction={{
               label: "Delete",
-              onClick: isLockedHistoricalSession ? () => undefined : handleDelete,
+              onClick: isLockedHistoricalSession
+                ? () => undefined
+                : handleDelete,
               disabled: isLockedHistoricalSession,
               destructive: true,
             }}

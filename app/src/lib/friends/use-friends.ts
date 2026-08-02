@@ -45,12 +45,16 @@ export function useFriends() {
           .or(`user_a.eq.${userId},user_b.eq.${userId}`),
         supabase
           .from("friend_requests")
-          .select("id, from_user_id, to_user_id, status, created_at, responded_at")
+          .select(
+            "id, from_user_id, to_user_id, status, created_at, responded_at"
+          )
           .eq("to_user_id", userId)
           .eq("status", "pending"),
         supabase
           .from("friend_requests")
-          .select("id, from_user_id, to_user_id, status, created_at, responded_at")
+          .select(
+            "id, from_user_id, to_user_id, status, created_at, responded_at"
+          )
           .eq("from_user_id", userId)
           .eq("status", "pending"),
       ]);
@@ -128,7 +132,10 @@ export function useFriends() {
 
   /** Accept or decline an incoming friend request. */
   const respond = useCallback(
-    async (requestId: string, accept: boolean): Promise<{ error: string | null }> => {
+    async (
+      requestId: string,
+      accept: boolean
+    ): Promise<{ error: string | null }> => {
       if (!supabase) return { error: "Not connected" };
       if (accept) {
         const { error } = await supabase.rpc("accept_friend_request", {
@@ -166,7 +173,17 @@ export function useFriends() {
     [userId, load]
   );
 
-  return { friends, incoming, outgoing, loading, error, reload: load, sendInvite, respond, removeFriend };
+  return {
+    friends,
+    incoming,
+    outgoing,
+    loading,
+    error,
+    reload: load,
+    sendInvite,
+    respond,
+    removeFriend,
+  };
 }
 
 export async function fetchUserProfiles(

@@ -30,7 +30,7 @@ function Calendar({
   buttonVariant?: React.ComponentProps<typeof Button>["variant"];
 }) {
   const defaultClassNames = getDefaultClassNames();
-  
+
   // Use effective today if not provided
   const effectiveToday = today ?? fromDateString(getEffectiveToday());
 
@@ -149,23 +149,17 @@ function Calendar({
         Chevron: ({ className, orientation, ...props }) => {
           const iconClass = cn(
             "shrink-0 size-[max(1.125rem,calc(var(--cell-size)*0.5))]",
-            className,
+            className
           );
           if (orientation === "left") {
-            return (
-              <ChevronLeftIcon className={iconClass} {...props} />
-            );
+            return <ChevronLeftIcon className={iconClass} {...props} />;
           }
 
           if (orientation === "right") {
-            return (
-              <ChevronRightIcon className={iconClass} {...props} />
-            );
+            return <ChevronRightIcon className={iconClass} {...props} />;
           }
 
-          return (
-            <ChevronDownIcon className={iconClass} {...props} />
-          );
+          return <ChevronDownIcon className={iconClass} {...props} />;
         },
         DayButton: CalendarDayButton,
         WeekNumber: ({ children, ...props }) => {
@@ -213,7 +207,7 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "min-w-(--cell-size) flex aspect-square size-auto w-full flex-col gap-1 rounded-md font-normal leading-none data-[range-end=true]:rounded-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-start=true]:rounded-l-md data-[range-end=true]:bg-primary data-[range-middle=true]:bg-accent data-[range-start=true]:bg-primary data-[selected-single=true]:rounded-md data-[selected-single=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:text-accent-foreground data-[range-start=true]:text-primary-foreground data-[selected-single=true]:text-primary-foreground group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 dark:hover:text-accent-foreground [&>span]:text-xs [&>span]:opacity-70 aria-disabled:bg-transparent aria-disabled:border-transparent aria-disabled:hover:bg-transparent disabled:bg-transparent disabled:border-transparent disabled:hover:bg-transparent",
+        "min-w-(--cell-size) flex aspect-square size-auto w-full flex-col gap-1 rounded-md font-normal leading-none disabled:border-transparent disabled:bg-transparent disabled:hover:bg-transparent aria-disabled:border-transparent aria-disabled:bg-transparent aria-disabled:hover:bg-transparent data-[range-end=true]:rounded-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[selected-single=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-start=true]:rounded-l-md data-[range-end=true]:bg-primary data-[range-middle=true]:bg-accent data-[range-start=true]:bg-primary data-[selected-single=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:text-accent-foreground data-[range-start=true]:text-primary-foreground data-[selected-single=true]:text-primary-foreground group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 dark:hover:text-accent-foreground [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className
       )}

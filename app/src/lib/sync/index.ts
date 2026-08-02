@@ -8,6 +8,8 @@ import { getErrorMessage, logError, ERROR_MESSAGES } from "@/lib/error-utils";
 import {
   loadLastServerSyncAt,
   clearLastServerSyncAt,
+  loadLastAppliedSequence,
+  saveLastAppliedSequence,
 } from "./sync-storage";
 import type { SyncTable } from "./sync-transformers";
 import {
@@ -19,6 +21,12 @@ import {
 } from "./sync-constants";
 import { runPushInternal } from "./sync-push";
 import { runPull } from "./sync-pull";
+import {
+  pushPendingOperations,
+  pullAndApplyOperations,
+} from "./sync-operations";
+import { recordSyncIssue } from "./sync-issues-store";
+import { touchLocalDevice } from "./device-id";
 
 export interface SyncState {
   isSyncing: boolean;
@@ -72,6 +80,14 @@ class SyncEngine {
   }
 
   private setState(patch: Partial<SyncState>): void {
+    if (patch.lastError && typeof patch.lastError === "string") {
+      void recordSyncIssue({
+        kind: "error",
+        title: "Sync error",
+        detail: patch.lastError,
+        account_id: getCachedUserId(),
+      });
+    }
     this.state = { ...this.state, ...patch };
     this.listeners.forEach((l) => l(this.state));
   }
@@ -264,7 +280,7 @@ class SyncEngine {
     }
   }
 
-  async pull(): Promise<void> {
+  async pull(options?: { opsSyncActive?: boolean }): Promise<void> {
     if (!this.canSync() || !supabase) return;
     const userId = getCachedUserId();
     if (!userId) return;
@@ -279,8 +295,10 @@ class SyncEngine {
       setApplyRemoteFromPull: (value) => {
         this.applyRemoteFromPull = value;
       },
+      opsSyncActive: options?.opsSyncActive ?? false,
     });
     this.setState({ lastSyncAt: serverNow });
+    void touchLocalDevice(userId);
   }
 
   async sync(): Promise<void> {
@@ -293,13 +311,38 @@ class SyncEngine {
     this.clearDirtyIds();
     this.setState({ isSyncing: true, lastError: null });
     try {
-      const { failedTables } = await this.push();
+      const pushOpsResult = await pushPendingOperations();
+      const opsSyncActive = pushOpsResult.skipped !== true;
+      if (!pushOpsResult.failed && pushOpsResult.maxSequence != null) {
+        saveLastAppliedSequence(pushOpsResult.maxSequence);
+      }
+
+      const { failedTables } = await runPushInternal(
+        {
+          withLocalSyncMetadataWrites: (op) =>
+            this.withLocalSyncMetadataWrites(op),
+        },
+        { forceAll: false, opsSyncActive }
+      );
       if (failedTables.length > 0) {
         const msg = `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`;
         logError("Sync push failed", new Error(msg));
         this.setState({ lastError: msg });
       }
-      await this.pull();
+      await this.pull({ opsSyncActive });
+
+      const pullOpsResult = await pullAndApplyOperations(
+        loadLastAppliedSequence()
+      );
+      if (pullOpsResult.skipped !== true && pullOpsResult.maxSequence != null) {
+        saveLastAppliedSequence(pullOpsResult.maxSequence);
+      } else if (
+        pullOpsResult.skipped !== true &&
+        pushOpsResult.maxSequence != null
+      ) {
+        // Keep cursor at least as high as what we just submitted.
+        saveLastAppliedSequence(pushOpsResult.maxSequence);
+      }
     } catch (err) {
       const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
       logError("Sync failed", err);
@@ -328,7 +371,19 @@ class SyncEngine {
 
   async pushBeforeSignOut(): Promise<void> {
     try {
-      await this.push();
+      // Flush semantic ops first so sign-out does not drop unacked work.
+      const pushOpsResult = await pushPendingOperations();
+      const opsSyncActive = pushOpsResult.skipped !== true;
+      if (!pushOpsResult.failed && pushOpsResult.maxSequence != null) {
+        saveLastAppliedSequence(pushOpsResult.maxSequence);
+      }
+      await runPushInternal(
+        {
+          withLocalSyncMetadataWrites: (op) =>
+            this.withLocalSyncMetadataWrites(op),
+        },
+        { forceAll: false, opsSyncActive }
+      );
     } catch (err) {
       console.warn("[sync] pushBeforeSignOut failed (non-fatal):", err);
     }

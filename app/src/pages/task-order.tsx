@@ -12,6 +12,7 @@ import {
   isHiddenGroupDefaultActivity,
   isScheduledRoutine,
 } from "@/lib/activity";
+import { appendActivityDefinitionVersion } from "@/lib/activity/definition-versions";
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppPageShell } from "@/components/layout/app-page-shell";
@@ -92,6 +93,14 @@ export default function TaskOrderPage() {
         )
       );
     });
+
+    await Promise.all(
+      nextActivities.map((activity, index) =>
+        appendActivityDefinitionVersion({
+          activity: { ...activity, order_index: index },
+        })
+      )
+    );
   }, []);
 
   const moveItem = useCallback(

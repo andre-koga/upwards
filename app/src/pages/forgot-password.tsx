@@ -14,8 +14,13 @@ export default function ForgotPasswordPage() {
   const { t } = useTranslation("settings");
   const { t: tCommon } = useTranslation("common");
   const { t: tNav } = useTranslation("nav");
-  const { isSupabaseConfigured, authLoading, authError, setAuthError, resetPassword } =
-    useAuth();
+  const {
+    isSupabaseConfigured,
+    authLoading,
+    authError,
+    setAuthError,
+    resetPassword,
+  } = useAuth();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
 
@@ -68,7 +73,10 @@ export default function ForgotPasswordPage() {
           </Button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border p-4">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-3 rounded-xl border p-4"
+        >
           <div className="space-y-2">
             <Label htmlFor={emailId}>{tCommon("email")}</Label>
             <Input
@@ -82,9 +90,7 @@ export default function ForgotPasswordPage() {
             />
           </div>
 
-          {authError && (
-            <p className="text-xs text-destructive">{authError}</p>
-          )}
+          {authError && <p className="text-xs text-destructive">{authError}</p>}
 
           <Button type="submit" className="w-full" disabled={authLoading}>
             {authLoading

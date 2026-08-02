@@ -17,6 +17,7 @@ const SettingsPage = lazy(() => import("@/pages/settings"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const TaskOrderPage = lazy(() => import("@/pages/task-order"));
+const SyncIssuesPage = lazy(() => import("@/pages/sync-issues"));
 const WhatsNewPage = lazy(() => import("@/pages/whats-new"));
 const FriendsPage = lazy(() => import("@/pages/friends"));
 const JournalPage = lazy(() => import("@/pages/journal"));
@@ -98,6 +99,10 @@ export default function App() {
                   <Route
                     path="/settings/task-order"
                     element={<TaskOrderPage />}
+                  />
+                  <Route
+                    path="/settings/sync-issues"
+                    element={<SyncIssuesPage />}
                   />
                   <Route path="/whats-new" element={<WhatsNewPage />} />
                   <Route path="/friends" element={<FriendsPage />} />

@@ -194,9 +194,7 @@ export function useUserProfile() {
 
 /** Look up a user by exact username. Returns null if not found.
  *  No prefix search — privacy-preserving. */
-export async function lookupUserByUsername(
-  username: string
-): Promise<{
+export async function lookupUserByUsername(username: string): Promise<{
   user_id: string;
   username: string;
   display_name: string | null;

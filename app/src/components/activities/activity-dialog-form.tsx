@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
+  appendActivityDefinitionVersion,
   isScheduledRoutine,
   validateActivityData,
 } from "@/lib/activity";
@@ -20,6 +21,8 @@ import {
   FormDialogActions,
   FormField,
   FormStack,
+  DefinitionEffectiveFromField,
+  useDefinitionEffectiveFromState,
 } from "@/components/forms";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
 
@@ -64,6 +67,10 @@ export function ActivityDialogForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const effectiveFromControl = useDefinitionEffectiveFromState(
+    activity?.created_at ?? "",
+    open && activity ? activity.id : undefined
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -104,14 +111,27 @@ export function ActivityDialogForm({
       setError(null);
 
       if (isEditing && activity) {
-        await db.activities.update(activity.id, {
+        const updated: Activity = {
+          ...activity,
           name: payload.name,
           routine: payload.routine,
           completion_target: payload.completion_target,
           updated_at: now(),
+        };
+        await db.activities.update(activity.id, {
+          name: updated.name,
+          routine: updated.routine,
+          completion_target: updated.completion_target,
+          updated_at: updated.updated_at,
+        });
+        await appendActivityDefinitionVersion({
+          activity: updated,
+          effectiveFrom: effectiveFromControl.effectiveFrom,
         });
       } else {
         const timestamp = now();
+        const activityId = newId();
+        let createdActivity: Activity | null = null;
         await db.transaction("rw", db.activities, async () => {
           const shouldAssignOrderIndex = isScheduledRoutine(payload.routine);
           let nextOrderIndex: number | null = null;
@@ -136,8 +156,8 @@ export function ActivityDialogForm({
             nextOrderIndex = maxOrderIndex + 1;
           }
 
-          await db.activities.add({
-            id: newId(),
+          createdActivity = {
+            id: activityId,
             group_id: group.id,
             name: payload.name,
             routine: payload.routine,
@@ -148,8 +168,15 @@ export function ActivityDialogForm({
             updated_at: timestamp,
             synced_at: null,
             deleted_at: null,
-          });
+          };
+          await db.activities.add(createdActivity);
         });
+        if (createdActivity) {
+          await appendActivityDefinitionVersion({
+            activity: createdActivity,
+            force: true,
+          });
+        }
       }
 
       onSaved?.();
@@ -185,83 +212,98 @@ export function ActivityDialogForm({
         contentClassName="sm:max-w-md"
       >
         <FormStack>
-        <FormField
-          id="activity-name"
-          label="Activity name"
-          value={formData.name}
-          onChange={(event) =>
-            setFormData({ ...formData, name: event.target.value })
-          }
-          placeholder="e.g. Morning Exercise, Read Book"
-          maxLength={80}
-          autoFocus
-        />
-
-        <div className="space-y-2">
-          <p className={dialogFieldLabelClassName}>Routine</p>
-          <RoutineSelector
-            routine={formData.routine}
-            weeklyDays={formData.weeklyDays}
-            monthlyDay={formData.monthlyDay}
-            customInterval={formData.customInterval}
-            customUnit={formData.customUnit}
-            onRoutineChange={(value) =>
-              setFormData({ ...formData, routine: value })
-            }
-            onWeeklyDaysChange={(days) =>
-              setFormData({ ...formData, weeklyDays: days })
-            }
-            onMonthlyDayChange={(day) =>
-              setFormData({ ...formData, monthlyDay: day })
-            }
-            onCustomIntervalChange={(interval) =>
-              setFormData({ ...formData, customInterval: interval })
-            }
-            onCustomUnitChange={(unit) =>
-              setFormData({ ...formData, customUnit: unit })
-            }
-          />
-        </div>
-
-        {isScheduledRoutine(formData.routine) ? (
           <FormField
-            id="activity-completion-target"
-            label="Completion target"
-            type="number"
-            min={1}
-            max={100}
-            value={formData.completion_target}
+            id="activity-name"
+            label="Activity name"
+            value={formData.name}
             onChange={(event) =>
-              setFormData({
-                ...formData,
-                completion_target:
-                  event.target.value === "" ? "" : parseInt(event.target.value),
-              })
+              setFormData({ ...formData, name: event.target.value })
             }
-            message="How many times you need to do this per day. 1 = simple checkbox."
+            placeholder="e.g. Morning Exercise, Read Book"
+            maxLength={80}
+            autoFocus
           />
-        ) : null}
 
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          <div className="space-y-2">
+            <p className={dialogFieldLabelClassName}>Routine</p>
+            <RoutineSelector
+              routine={formData.routine}
+              weeklyDays={formData.weeklyDays}
+              monthlyDay={formData.monthlyDay}
+              customInterval={formData.customInterval}
+              customUnit={formData.customUnit}
+              onRoutineChange={(value) =>
+                setFormData({ ...formData, routine: value })
+              }
+              onWeeklyDaysChange={(days) =>
+                setFormData({ ...formData, weeklyDays: days })
+              }
+              onMonthlyDayChange={(day) =>
+                setFormData({ ...formData, monthlyDay: day })
+              }
+              onCustomIntervalChange={(interval) =>
+                setFormData({ ...formData, customInterval: interval })
+              }
+              onCustomUnitChange={(unit) =>
+                setFormData({ ...formData, customUnit: unit })
+              }
+            />
+          </div>
 
-        <FormDialogActions
-          onConfirm={handleSave}
-          confirmLabel={
-            saving
-              ? isEditing
-                ? "Saving..."
-                : "Creating..."
-              : isEditing
-                ? "Save Changes"
-                : "Create Activity"
-          }
-          confirmDisabled={saving || !formData.name.trim()}
-          secondaryAction={{
-            label: "Cancel",
-            onClick: () => handleOpenChange(false),
-            disabled: saving,
-          }}
-        />
+          {isScheduledRoutine(formData.routine) ? (
+            <FormField
+              id="activity-completion-target"
+              label="Completion target"
+              type="number"
+              min={1}
+              max={100}
+              value={formData.completion_target}
+              onChange={(event) =>
+                setFormData({
+                  ...formData,
+                  completion_target:
+                    event.target.value === ""
+                      ? ""
+                      : parseInt(event.target.value),
+                })
+              }
+              message="How many times you need to do this per day. 1 = simple checkbox."
+            />
+          ) : null}
+
+          {isEditing && activity ? (
+            <DefinitionEffectiveFromField
+              idPrefix="activity-definition"
+              createdAt={activity.created_at}
+              variant="activity"
+              mode={effectiveFromControl.state.mode}
+              onModeChange={effectiveFromControl.setMode}
+              customDate={effectiveFromControl.state.customDate}
+              onCustomDateChange={effectiveFromControl.setCustomDate}
+              disabled={saving}
+            />
+          ) : null}
+
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+          <FormDialogActions
+            onConfirm={handleSave}
+            confirmLabel={
+              saving
+                ? isEditing
+                  ? "Saving..."
+                  : "Creating..."
+                : isEditing
+                  ? "Save Changes"
+                  : "Create Activity"
+            }
+            confirmDisabled={saving || !formData.name.trim()}
+            secondaryAction={{
+              label: "Cancel",
+              onClick: () => handleOpenChange(false),
+              disabled: saving,
+            }}
+          />
         </FormStack>
       </FormDialog>
 
@@ -278,7 +320,6 @@ export function ActivityDialogForm({
           }}
         />
       ) : null}
-
     </>
   );
 }

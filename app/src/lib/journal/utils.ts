@@ -63,7 +63,9 @@ export function normalizeJournalLocationRoute(
   route: JournalLocationRoute
 ): JournalLocationRoute {
   return {
-    locations: route.locations.filter((loc) => loc.displayName.trim().length > 0),
+    locations: route.locations.filter(
+      (loc) => loc.displayName.trim().length > 0
+    ),
   };
 }
 
@@ -106,7 +108,13 @@ function rawToLocationData(raw: unknown): LocationData | null {
   const fromState = typeof o.state === "string" ? o.state.trim() : "";
   const fromCountry = typeof o.country === "string" ? o.country.trim() : "";
   const displayName =
-    fromDisplay || fromName || fromLabel || fromCity || fromState || fromCountry || null;
+    fromDisplay ||
+    fromName ||
+    fromLabel ||
+    fromCity ||
+    fromState ||
+    fromCountry ||
+    null;
   if (!displayName) return null;
   return {
     displayName,

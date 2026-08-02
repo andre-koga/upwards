@@ -16,10 +16,7 @@ export function neverTaskTarget(activity: NeverTaskActivity): number {
 }
 
 /** User logged a slip (failed to avoid the habit today). */
-export function isNeverTaskSlipped(
-  count: number,
-  target: number = 1
-): boolean {
+export function isNeverTaskSlipped(count: number, target: number = 1): boolean {
   return count >= target;
 }
 

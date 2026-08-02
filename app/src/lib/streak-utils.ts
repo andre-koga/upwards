@@ -1,6 +1,7 @@
 import { db, newId, now } from "@/lib/db";
 import type {
   Activity,
+  ActivityDefinitionVersion,
   ActivityGroup,
   ActivityStatusEvent,
   DailyEntry,
@@ -11,7 +12,14 @@ import {
   isNeverTaskSlipRecorded,
   neverTaskTarget,
 } from "@/lib/activity/never-task";
-import { shouldShowActivity, type TemporalVisibilityContext } from "@/lib/activity";
+import {
+  shouldShowActivity,
+  type TemporalVisibilityContext,
+} from "@/lib/activity";
+import {
+  activityLikeFromDefinition,
+  pickDefinitionVersionAsOf,
+} from "@/lib/activity/definition-versions";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 
@@ -24,13 +32,22 @@ export interface StreakVisibilityDeps {
 function shouldShowActivityForStreak(
   activity: Activity,
   day: Date,
-  visibility?: StreakVisibilityDeps
+  visibility?: StreakVisibilityDeps,
+  definitionVersions?: ActivityDefinitionVersion[]
 ): boolean {
+  const resolvedVersion = definitionVersions?.length
+    ? pickDefinitionVersionAsOf(definitionVersions, toDateString(day))
+    : null;
+  const activityDefinitionsById = resolvedVersion
+    ? new Map([[activity.id, resolvedVersion]])
+    : undefined;
+
   if (!visibility) {
     return shouldShowActivity(activity, day, undefined, {
       viewDate: day,
       activityEventsById: new Map(),
       groupEventsById: new Map(),
+      activityDefinitionsById,
     });
   }
   const group = visibility.groupById.get(activity.group_id);
@@ -38,6 +55,7 @@ function shouldShowActivityForStreak(
     viewDate: day,
     activityEventsById: visibility.activityEventsById,
     groupEventsById: visibility.groupEventsById,
+    activityDefinitionsById,
   };
   return shouldShowActivity(activity, day, group, temporal);
 }
@@ -48,34 +66,49 @@ function isStreakEligible(activity: Activity): boolean {
 
 type DayStatus = "done" | "missed" | "skip";
 
-function getDayStatus(activity: Activity, entry: DailyEntry | undefined): DayStatus {
+type SchedulableActivity = Pick<
+  Activity,
+  "id" | "routine" | "created_at" | "completion_target"
+>;
+
+function getDayStatus(
+  activity: Activity,
+  schedulable: SchedulableActivity,
+  entry: DailyEntry | undefined
+): DayStatus {
   if (!entry) {
-    return isNeverRoutine(activity) ? "done" : "missed";
+    return isNeverRoutine(schedulable) ? "done" : "missed";
   }
 
-  const pausedTaskIds = Array.isArray(entry.paused_task_ids) ? entry.paused_task_ids : [];
-  if (!isNeverRoutine(activity) && pausedTaskIds.includes(activity.id)) {
+  const pausedTaskIds = Array.isArray(entry.paused_task_ids)
+    ? entry.paused_task_ids
+    : [];
+  if (!isNeverRoutine(schedulable) && pausedTaskIds.includes(activity.id)) {
     return "skip";
   }
 
-  if (entry.is_break_day && !isNeverRoutine(activity)) {
-    const completed = isCompletedOnEntry(activity, entry);
+  if (entry.is_break_day && !isNeverRoutine(schedulable)) {
+    const completed = isCompletedOnEntry(activity, schedulable, entry);
     return completed ? "done" : "skip";
   }
 
-  const completed = isCompletedOnEntry(activity, entry);
-  if (isNeverRoutine(activity)) {
+  const completed = isCompletedOnEntry(activity, schedulable, entry);
+  if (isNeverRoutine(schedulable)) {
     return completed ? "missed" : "done";
   }
   return completed ? "done" : "missed";
 }
 
-function isCompletedOnEntry(activity: Activity, entry: DailyEntry): boolean {
-  const target = neverTaskTarget(activity);
+function isCompletedOnEntry(
+  activity: Activity,
+  schedulable: SchedulableActivity,
+  entry: DailyEntry
+): boolean {
+  const target = neverTaskTarget(schedulable);
   const taskCounts = (entry.task_counts as Record<string, number>) || {};
   const count = taskCounts[activity.id] || 0;
-  if (isNeverRoutine(activity)) {
-    return isNeverTaskSlipRecorded(activity, count);
+  if (isNeverRoutine(schedulable)) {
+    return isNeverTaskSlipRecorded(schedulable, count);
   }
   return count >= target;
 }
@@ -100,10 +133,41 @@ async function computeStreakBackward(
 ): Promise<number> {
   if (!isStreakEligible(activity)) return 0;
 
+  const definitionVersions = await db.activityDefinitionVersions
+    .where("activity_id")
+    .equals(activity.id)
+    .filter((row) => !row.deleted_at)
+    .toArray();
+
+  const resolveSchedulable = (day: Date): SchedulableActivity => {
+    const version = pickDefinitionVersionAsOf(
+      definitionVersions,
+      toDateString(day)
+    );
+    if (version) {
+      return { ...activityLikeFromDefinition(version), id: activity.id };
+    }
+    return activity;
+  };
+
   const targetDay = startOfDay(targetDate);
-  const creationDay = startOfDay(new Date(getEffectiveToday(new Date(activity.created_at)) + "T00:00:00"));
+  const targetSchedulable = resolveSchedulable(targetDay);
+  const creationDay = startOfDay(
+    new Date(
+      getEffectiveToday(new Date(targetSchedulable.created_at!)) + "T00:00:00"
+    )
+  );
   if (targetDay < creationDay) return 0;
-  if (!shouldShowActivityForStreak(activity, targetDay, visibility)) return 0;
+  if (
+    !shouldShowActivityForStreak(
+      activity,
+      targetDay,
+      visibility,
+      definitionVersions
+    )
+  ) {
+    return 0;
+  }
 
   const startStr = toDateString(creationDay);
   const endStr = toDateString(targetDay);
@@ -118,12 +182,20 @@ async function computeStreakBackward(
   let cursor = targetDay;
 
   while (cursor >= creationDay) {
-    if (!shouldShowActivityForStreak(activity, cursor, visibility)) {
+    if (
+      !shouldShowActivityForStreak(
+        activity,
+        cursor,
+        visibility,
+        definitionVersions
+      )
+    ) {
       cursor = shiftDate(cursor, -1);
       continue;
     }
 
     const dateStr = toDateString(cursor);
+    const schedulable = resolveSchedulable(cursor);
 
     // Use in-memory state for today instead of waiting for the DB write.
     let entryForDay: DailyEntry | undefined;
@@ -144,7 +216,7 @@ async function computeStreakBackward(
       entryForDay = entriesByDate.get(dateStr);
     }
 
-    const status = getDayStatus(activity, entryForDay);
+    const status = getDayStatus(activity, schedulable, entryForDay);
     if (status === "done") {
       streak++;
       cursor = shiftDate(cursor, -1);
@@ -173,7 +245,12 @@ export async function getOrComputeActivityStreaksForDate(
 
   await Promise.all(
     activities.map(async (activity) => {
-      const streak = await computeStreakBackward(activity, date, visibility, todayOverride);
+      const streak = await computeStreakBackward(
+        activity,
+        date,
+        visibility,
+        todayOverride
+      );
       streaks[activity.id] = streak;
 
       // Cache the result
@@ -209,7 +286,6 @@ export async function getOrComputeActivityStreaksForDate(
   return streaks;
 }
 
-
 /**
  * Full recompute from a given date forward. Used by the manual "recalculate" button.
  * Walks forward and writes streak rows for each day.
@@ -229,7 +305,11 @@ export async function recomputeActivityStreaksFromDateForActivities(
     eligible.map(async (activity) => {
       let cursor = fromDay;
       while (cursor <= endDay) {
-        const streak = await computeStreakBackward(activity, cursor, visibility);
+        const streak = await computeStreakBackward(
+          activity,
+          cursor,
+          visibility
+        );
         const dateStr = toDateString(cursor);
 
         const existing = await db.activityStreaks

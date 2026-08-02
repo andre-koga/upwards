@@ -33,8 +33,7 @@ export function getDailyTaskInteractionState(
   // on calendar days before the deletion (e.g. delete today, view yesterday).
   const isDeletedRetired =
     !!activity.deleted_at || isDeletedAsOfActivity(activity, temporal);
-  const isCompletedRetired =
-    !!activity.completed_at && !activity.deleted_at;
+  const isCompletedRetired = !!activity.completed_at && !activity.deleted_at;
 
   if (isDeletedRetired) {
     return {
