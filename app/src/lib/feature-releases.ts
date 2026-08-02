@@ -12,6 +12,23 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-08-02-journal-search-places-icon",
+    date: "2026-08-02",
+    title: "Find days by map, filters, and dates",
+    bullets: [
+      "Open the globe beside Journal search to see where you've written — tap a pin to jump to that day, or a numbered cluster to show only those days.",
+      "Filter the archive with chips for hearted days, photos, video, and places.",
+      "Use the Dates chip for a year, This month, Last 30/90 days, or a custom range on the calendar.",
+      "Attach up to 8 photos on a day (up from 5).",
+      "Places are an unordered set for the day — add by search or auto-detect, then open the fullscreen map to pan and zoom.",
+      "The app icon is the green swoosh on a transparent background — no more black square.",
+    ],
+    fixes: [
+      "Duplicate places on the same day no longer stack.",
+      "Items under Waiting to sync clear after a successful sync.",
+    ],
+  },
+  {
     id: "2026-07-17-theme-aware-chrome-journal-polish",
     date: "2026-07-17",
     title: "Theme-aware chrome & journal polish",
