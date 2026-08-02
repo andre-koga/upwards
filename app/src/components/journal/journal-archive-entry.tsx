@@ -92,7 +92,9 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setLightbox({ key: pathsKey, index, open: true });
+                // Overflow tile jumps to the first hidden photo in the lightbox.
+                const openIndex = isOverflowTile ? previewLimit : index;
+                setLightbox({ key: pathsKey, index: openIndex, open: true });
               }}
               className={cn(
                 "relative overflow-hidden rounded-lg bg-muted",
