@@ -16,14 +16,14 @@ interface JournalArchiveEntryProps {
   entry: JournalEntry;
 }
 
-/** Soft diagonal washes — picked stably per entry so bookmarked days vary. */
+/** Soft washes on the content panel — picked stably per bookmarked entry. */
 const BOOKMARK_GRADIENTS = [
-  "bg-gradient-to-br from-rose-500/10 via-amber-400/5 to-transparent dark:from-rose-400/15 dark:via-amber-300/10",
-  "bg-gradient-to-bl from-sky-500/10 via-teal-400/5 to-transparent dark:from-sky-400/15 dark:via-teal-300/10",
-  "bg-gradient-to-tr from-orange-500/10 via-rose-400/5 to-transparent dark:from-orange-400/15 dark:via-rose-300/10",
-  "bg-gradient-to-tl from-emerald-500/10 via-lime-400/5 to-transparent dark:from-emerald-400/15 dark:via-lime-300/10",
-  "bg-gradient-to-br from-fuchsia-500/10 via-pink-400/5 to-transparent dark:from-fuchsia-400/15 dark:via-pink-300/10",
-  "bg-gradient-to-bl from-cyan-500/10 via-sky-400/5 to-transparent dark:from-cyan-400/15 dark:via-sky-300/10",
+  "bg-gradient-to-br from-rose-500/15 via-amber-400/8 to-transparent dark:from-rose-400/20 dark:via-amber-300/12",
+  "bg-gradient-to-bl from-sky-500/15 via-teal-400/8 to-transparent dark:from-sky-400/20 dark:via-teal-300/12",
+  "bg-gradient-to-tr from-orange-500/15 via-rose-400/8 to-transparent dark:from-orange-400/20 dark:via-rose-300/12",
+  "bg-gradient-to-tl from-emerald-500/15 via-lime-400/8 to-transparent dark:from-emerald-400/20 dark:via-lime-300/12",
+  "bg-gradient-to-br from-fuchsia-500/15 via-pink-400/8 to-transparent dark:from-fuchsia-400/20 dark:via-pink-300/12",
+  "bg-gradient-to-bl from-cyan-500/15 via-sky-400/8 to-transparent dark:from-cyan-400/20 dark:via-sky-300/12",
 ] as const;
 
 function bookmarkGradientFor(seed: string): string {
@@ -182,12 +182,7 @@ export default function JournalArchiveEntry({
   };
 
   return (
-    <article
-      className={cn(
-        "space-y-2 rounded-2xl py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both",
-        bookmarkGradient
-      )}
-    >
+    <article className="space-y-2 py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both">
       {(hasVideo || photoPaths.length > 0) && (
         <div className="space-y-1.5">
           {hasVideo ? (
@@ -240,16 +235,13 @@ export default function JournalArchiveEntry({
         onClick={openDay}
         className="group grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-left"
       >
-        <div className="flex flex-col items-center gap-1 pt-0.5">
-          {/* Fixed size so 1–9 and 10–31 share the same circle border. */}
-          <div className="flex h-[4.75rem] w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-full border border-muted">
-            <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
-              {dayNumber}
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {weekday}
-            </span>
-          </div>
+        <div className="flex w-12 shrink-0 flex-col items-center gap-1 pt-1">
+          <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+            {dayNumber}
+          </span>
+          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            {weekday}
+          </span>
           <span
             className={cn(
               "text-4xl leading-none",
@@ -269,7 +261,12 @@ export default function JournalArchiveEntry({
           ) : null}
         </div>
 
-        <div className="min-w-0 space-y-1">
+        <div
+          className={cn(
+            "min-w-0 space-y-1 rounded-xl border border-border/70 px-3 py-2.5",
+            bookmarkGradient
+          )}
+        >
           <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
             {entry.title?.trim() || t("untitled")}
           </h2>
