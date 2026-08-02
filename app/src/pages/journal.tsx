@@ -63,7 +63,7 @@ export default function JournalPage() {
       title={t("archive.title")}
       subtitle={t("archive.subtitle")}
       titleIcon={<BookOpen className="h-6 w-6" />}
-      className="space-y-5"
+      className="space-y-3"
     >
       <div className="relative">
         <Search
@@ -116,7 +116,7 @@ export default function JournalPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-3">
           {debouncedQuery ? (
             <p className="text-xs text-muted-foreground">
               {t("archive.resultCount", { count: totalMatching })}

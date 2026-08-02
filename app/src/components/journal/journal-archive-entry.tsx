@@ -184,12 +184,12 @@ export default function JournalArchiveEntry({
   return (
     <article
       className={cn(
-        "space-y-4 rounded-2xl p-3 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both",
+        "space-y-2 rounded-2xl py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both",
         bookmarkGradient
       )}
     >
       {(hasVideo || photoPaths.length > 0) && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {hasVideo ? (
             <button
               type="button"
@@ -238,10 +238,11 @@ export default function JournalArchiveEntry({
       <button
         type="button"
         onClick={openDay}
-        className="group grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-left"
+        className="group grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-left"
       >
-        <div className="flex flex-col items-center gap-1.5 pt-0.5">
-          <div className="flex w-fit flex-col items-center gap-1 rounded-full border border-muted px-1.5 py-3">
+        <div className="flex flex-col items-center gap-1 pt-0.5">
+          {/* Fixed size so 1–9 and 10–31 share the same circle border. */}
+          <div className="flex h-[4.75rem] w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-full border border-muted">
             <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
               {dayNumber}
             </span>
@@ -268,7 +269,7 @@ export default function JournalArchiveEntry({
           ) : null}
         </div>
 
-        <div className="min-w-0 space-y-1.5">
+        <div className="min-w-0 space-y-1">
           <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
             {entry.title?.trim() || t("untitled")}
           </h2>
