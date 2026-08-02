@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { JournalEntry } from "@/lib/db/types";
@@ -223,12 +223,7 @@ export default function JournalArchiveEntry({
             {entry.day_emoji?.trim() || "🙂"}
           </span>
           {isBookmarked ? (
-            <span role="img" aria-label={t("bookmarkDay")}>
-              <Heart
-                className="h-3 w-3 fill-red-500 text-red-500"
-                aria-hidden
-              />
-            </span>
+            <span className="sr-only">{t("bookmarkDay")}</span>
           ) : null}
         </div>
 
