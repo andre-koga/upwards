@@ -184,7 +184,6 @@ export default function JournalArchiveEntry({
   const photoPaths = entry.photo_paths ?? [];
   const hasVideo = Boolean(videoSrc || entry.video_thumbnail);
   const locations = entry.location?.locations ?? [];
-  const locationLabel = locations.map((l) => l.displayName).join(" → ");
   const isBookmarked = Boolean(entry.is_bookmarked);
   const bookmarkGradient = isBookmarked
     ? bookmarkGradientFor(entry.id || entry.entry_date)
@@ -244,10 +243,17 @@ export default function JournalArchiveEntry({
               {entry.title?.trim() || t("untitled")}
             </h2>
             {locations.length > 0 ? (
-              <p className="inline-flex min-w-0 max-w-full items-start gap-1 text-xs text-muted-foreground">
-                <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
-                <span className="min-w-0 break-words">{locationLabel}</span>
-              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {locations.map((loc, index) => (
+                  <span
+                    key={`${index}-${loc.displayName}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
+                    className="inline-flex max-w-full items-center gap-1 rounded-full border border-border/80 px-2 py-0.5 text-xs text-muted-foreground"
+                  >
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    <span className="min-w-0 truncate">{loc.displayName}</span>
+                  </span>
+                ))}
+              </div>
             ) : null}
             {entry.text_content?.trim() ? (
               <p className="whitespace-pre-wrap font-crimson text-base leading-relaxed text-muted-foreground">

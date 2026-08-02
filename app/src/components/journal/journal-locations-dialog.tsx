@@ -1,12 +1,18 @@
 import { Fragment, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Search, Trash2 } from "lucide-react";
+import { Loader2, MapPin, Search, Trash2 } from "lucide-react";
 import { FormDialog, FormDialogActions, FormStack } from "@/components/forms";
 import { dialogPrimaryDestructiveClassName } from "@/components/forms/styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { JournalLocationRoute, LocationData } from "@/lib/db/types";
-import { normalizeJournalLocationRoute, searchLocations } from "@/lib/journal";
+import {
+  MAX_DAILY_LOCATIONS,
+  mergeJournalLocationRoute,
+  normalizeJournalLocationRoute,
+  reverseGeocodeLocation,
+  searchLocations,
+} from "@/lib/journal";
 import { cn } from "@/lib/utils";
 import JournalLocationMapPicker from "./journal-location-map-picker";
 
@@ -17,8 +23,6 @@ interface JournalLocationsDialogProps {
   canEdit: boolean;
   onSave: (route: JournalLocationRoute) => void;
 }
-
-const MAX_DAILY_LOCATIONS = 5;
 
 interface SearchState {
   query: string;
@@ -52,6 +56,8 @@ export default function JournalLocationsDialog({
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(
     null
   );
+  const [mapPicking, setMapPicking] = useState(false);
+  const [mapPickError, setMapPickError] = useState<string | null>(null);
 
   // Only resync from props when the dialog transitions to open; avoid resetting
   // mid-edit on every parent re-render (route prop is recreated each render).
@@ -64,6 +70,8 @@ export default function JournalLocationsDialog({
       setEditSearch(EMPTY_SEARCH);
       setAddSearch(EMPTY_SEARCH);
       setDeleteConfirmIndex(null);
+      setMapPicking(false);
+      setMapPickError(null);
     }
   }
 
@@ -99,7 +107,7 @@ export default function JournalLocationsDialog({
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [open, canEdit, editingIndex, editSearch.query]);
+  }, [open, canEdit, editingIndex, editSearch.query, t]);
 
   useEffect(() => {
     if (!open || !canEdit) return;
@@ -133,7 +141,7 @@ export default function JournalLocationsDialog({
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [open, canEdit, addSearch.query]);
+  }, [open, canEdit, addSearch.query, t]);
 
   const toggleEdit = (index: number) => {
     if (!canEdit) return;
@@ -163,14 +171,12 @@ export default function JournalLocationsDialog({
     };
     if (!cleanedLocation.displayName) return;
     const targetIndex = editingIndex;
-    setDraftRoute((prev) =>
-      normalizeJournalLocationRoute({
-        ...prev,
-        locations: prev.locations.map((loc, idx) =>
-          idx === targetIndex ? cleanedLocation : loc
-        ),
-      })
-    );
+    setDraftRoute((prev) => {
+      const without = {
+        locations: prev.locations.filter((_, idx) => idx !== targetIndex),
+      };
+      return mergeJournalLocationRoute(without, cleanedLocation);
+    });
     setEditingIndex(null);
     setEditSearch(EMPTY_SEARCH);
   };
@@ -185,18 +191,27 @@ export default function JournalLocationsDialog({
   };
 
   const applyAddResult = (location: LocationData) => {
-    if (draftRoute.locations.length >= MAX_DAILY_LOCATIONS) return;
-    const cleanedLocation = {
-      ...location,
-      displayName: location.displayName.trim(),
-    };
-    if (!cleanedLocation.displayName) return;
-    setDraftRoute((prev) =>
-      normalizeJournalLocationRoute({
-        locations: [...prev.locations, cleanedLocation],
-      })
-    );
+    setDraftRoute((prev) => mergeJournalLocationRoute(prev, location));
     setAddSearch(EMPTY_SEARCH);
+    setMapPickError(null);
+  };
+
+  const handleMapPick = async (coords: { lat: number; lon: number }) => {
+    if (!canEdit || draftRoute.locations.length >= MAX_DAILY_LOCATIONS) return;
+    setMapPicking(true);
+    setMapPickError(null);
+    try {
+      const location = await reverseGeocodeLocation(coords.lat, coords.lon);
+      if (!location) {
+        setMapPickError(t("locations.mapPickError"));
+        return;
+      }
+      setDraftRoute((prev) => mergeJournalLocationRoute(prev, location));
+    } catch {
+      setMapPickError(t("locations.mapPickError"));
+    } finally {
+      setMapPicking(false);
+    }
   };
 
   const handleDeleteConfirm = () => {
@@ -218,17 +233,7 @@ export default function JournalLocationsDialog({
       onOpenChange(false);
       return;
     }
-    const cleanedLocations = draftRoute.locations
-      .map((loc) => ({
-        ...loc,
-        displayName: loc.displayName.trim(),
-      }))
-      .filter((loc) => loc.displayName.length > 0);
-    onSave(
-      normalizeJournalLocationRoute({
-        locations: cleanedLocations,
-      })
-    );
+    onSave(normalizeJournalLocationRoute(draftRoute));
     onOpenChange(false);
   };
 
@@ -292,10 +297,22 @@ export default function JournalLocationsDialog({
         <FormStack className="space-y-2">
           <JournalLocationMapPicker
             locations={draftRoute.locations}
-            readOnly
+            readOnly={!canEdit}
+            picking={mapPicking}
+            onMapPick={canAddLocation ? handleMapPick : undefined}
+            footerText={
+              canAddLocation
+                ? t("locations.tapMapToAdd")
+                : draftRoute.locations.length >= MAX_DAILY_LOCATIONS
+                  ? t("locations.maxLocations", { count: MAX_DAILY_LOCATIONS })
+                  : null
+            }
             className="h-44"
             ariaLabel={t("locations.mapAriaLabel")}
           />
+          {mapPickError ? (
+            <p className="text-xs text-destructive">{mapPickError}</p>
+          ) : null}
 
           {draftRoute.locations.length > 0 ? (
             <div className="space-y-2">
@@ -310,14 +327,14 @@ export default function JournalLocationsDialog({
                     disabled={!canEdit}
                     aria-pressed={editingIndex === index}
                     className={cn(
-                      "h-auto min-h-0 w-full justify-start gap-2.5 rounded-lg py-1 pl-2 pr-2 text-left font-normal shadow-none",
+                      "h-auto min-h-0 w-full justify-start gap-2.5 rounded-lg py-1.5 pl-2 pr-2 text-left font-normal shadow-none",
                       editingIndex === index
                         ? "border-primary bg-muted"
                         : "border-border"
                     )}
                   >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border text-xs font-semibold text-muted-foreground">
-                      {index + 1}
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">
@@ -325,7 +342,7 @@ export default function JournalLocationsDialog({
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {[loc.state, loc.country].filter(Boolean).join(", ") ||
-                          t("locations.manualStop")}
+                          t("locations.manualPlace")}
                       </span>
                     </span>
                   </Button>
@@ -377,7 +394,15 @@ export default function JournalLocationsDialog({
                 </Fragment>
               ))}
             </div>
-          ) : null}
+          ) : canEdit ? (
+            <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+              {t("locations.emptyHelper")}
+            </p>
+          ) : (
+            <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+              {t("locations.noLocationsYet")}
+            </p>
+          )}
 
           {canAddLocation && editingIndex == null ? (
             <div className="space-y-2">
@@ -402,12 +427,6 @@ export default function JournalLocationsDialog({
                 <p className="text-xs text-destructive">{addSearch.error}</p>
               ) : null}
             </div>
-          ) : null}
-
-          {draftRoute.locations.length === 0 && !canAddLocation ? (
-            <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-              {t("locations.noLocationsYet")}
-            </p>
           ) : null}
         </FormStack>
 

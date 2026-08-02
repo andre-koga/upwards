@@ -80,7 +80,7 @@ export interface JournalEntry {
   journal_entry_number: number | null;
   journal_completion_streak: number | null;
   journal_completed_at: string | null;
-  /** Ordered places visited that day. */
+  /** Distinct places visited that day (unordered set; array order is display-only). */
   location: JournalLocationRoute | null;
   created_at: string;
   updated_at: string;

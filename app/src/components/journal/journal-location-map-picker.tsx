@@ -385,17 +385,15 @@ function JournalLocationMapSurface({
           <div
             key={`${marker.index}-${marker.loc.displayName}`}
             className={cn(
-              "absolute -translate-x-1/2 -translate-y-full rounded-full shadow-sm",
+              "absolute -translate-x-1/2 -translate-y-1/2 rounded-full shadow-sm",
               readOnly
-                ? "flex h-6 w-6 items-center justify-center border-2 border-background bg-primary text-[10px] font-semibold text-primary-foreground"
+                ? "h-3 w-3 border-2 border-background bg-primary"
                 : "h-2.5 w-2.5 border-2 border-primary bg-background"
             )}
             style={{ left: marker.left, top: marker.top }}
             title={marker.loc.displayName}
             aria-hidden
-          >
-            {readOnly ? marker.index + 1 : null}
-          </div>
+          />
         ))}
 
         {selectedMarker ? (
