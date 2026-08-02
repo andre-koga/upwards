@@ -145,7 +145,7 @@ export default function JournalPage() {
       {/* Desktop: compact selectable list */}
       <div className="hidden space-y-1 lg:block">
         {entryItems.map(({ entry }) => {
-          const date = fromDateString(entry.date);
+          const date = fromDateString(entry.entry_date);
           const label = date.toLocaleDateString(getActiveLocaleTag(), {
             weekday: "short",
             month: "short",
