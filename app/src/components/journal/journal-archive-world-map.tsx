@@ -10,7 +10,10 @@ import { Expand, Globe2, ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import MediaLightbox from "@/components/journal/media-lightbox";
-import type { JournalArchiveMapPin } from "@/lib/journal/archive";
+import {
+  clusterJournalArchiveMapPins,
+  type JournalArchiveMapPin,
+} from "@/lib/journal/archive";
 import { cn } from "@/lib/utils";
 
 const TILE_SIZE = 256;
@@ -92,9 +95,14 @@ function pointerDistance(
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+export interface JournalArchiveMapClusterSelection {
+  entryDates: string[];
+  placeLabel: string;
+}
+
 interface JournalArchiveWorldMapProps {
   pins: JournalArchiveMapPin[];
-  onSelectEntryDate: (entryDate: string) => void;
+  onSelectCluster: (selection: JournalArchiveMapClusterSelection) => void;
   className?: string;
 }
 
@@ -107,7 +115,7 @@ interface WorldMapSurfaceProps {
   fullscreen?: boolean;
   showExpandButton?: boolean;
   onOpenFullscreen?: () => void;
-  onSelectEntryDate?: (entryDate: string) => void;
+  onSelectCluster?: (selection: JournalArchiveMapClusterSelection) => void;
 }
 
 function WorldMapSurface({
@@ -119,7 +127,7 @@ function WorldMapSurface({
   fullscreen = false,
   showExpandButton = false,
   onOpenFullscreen,
-  onSelectEntryDate,
+  onSelectCluster,
 }: WorldMapSurfaceProps) {
   const { t } = useTranslation("journal");
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -233,13 +241,18 @@ function WorldMapSurface({
     return out;
   }, [centerTile, mapSize.height, mapSize.width, zoom]);
 
+  const clusters = useMemo(
+    () => clusterJournalArchiveMapPins(pins, zoom),
+    [pins, zoom]
+  );
+
   const markers = useMemo(() => {
-    return pins.map((pin) => ({
-      pin,
-      left: (lonToTileX(pin.lon, zoom) - centerTile.x) * TILE_SIZE,
-      top: (latToTileY(pin.lat, zoom) - centerTile.y) * TILE_SIZE,
+    return clusters.map((cluster) => ({
+      cluster,
+      left: (lonToTileX(cluster.lon, zoom) - centerTile.x) * TILE_SIZE,
+      top: (latToTileY(cluster.lat, zoom) - centerTile.y) * TILE_SIZE,
     }));
-  }, [centerTile, pins, zoom]);
+  }, [centerTile, clusters, zoom]);
 
   const stopControlPointer = (event: ReactPointerEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -371,36 +384,71 @@ function WorldMapSurface({
           />
         ))}
 
-        {markers.map(({ pin, left, top }) => (
-          <button
-            key={pin.entryId}
-            type="button"
-            title={`${pin.displayName} · ${pin.entryDate}`}
-            aria-label={t("archive.mapPinAria", {
-              place: pin.displayName,
-              date: pin.entryDate,
-            })}
-            className={cn(
-              "absolute z-[1] flex -translate-x-1/2 -translate-y-full items-center justify-center rounded-full border-2 border-background bg-primary text-[10px] shadow-sm",
-              fullscreen ? "h-7 w-7" : "h-3 w-3 pointer-events-none"
-            )}
-            style={{ left, top }}
-            onPointerDown={(event) => {
-              event.stopPropagation();
-            }}
-            onClick={(event) => {
-              event.stopPropagation();
-              if (!fullscreen || !onSelectEntryDate) return;
-              onSelectEntryDate(pin.entryDate);
-            }}
-          >
-            {fullscreen ? (
-              <span className="leading-none" aria-hidden>
-                {pin.dayEmoji?.trim() || "📍"}
-              </span>
-            ) : null}
-          </button>
-        ))}
+        {markers.map(({ cluster, left, top }) => {
+          const count = cluster.pins.length;
+          const isCluster = count > 1;
+          const newest = cluster.pins[0];
+          const title = isCluster
+            ? `${cluster.placeLabel} · ${count}`
+            : `${newest?.displayName ?? cluster.placeLabel} · ${newest?.entryDate ?? ""}`;
+
+          return (
+            <button
+              key={cluster.id}
+              type="button"
+              title={title}
+              aria-label={
+                isCluster
+                  ? t("archive.mapClusterAria", {
+                      place: cluster.placeLabel,
+                      count,
+                    })
+                  : t("archive.mapPinAria", {
+                      place: newest?.displayName ?? cluster.placeLabel,
+                      date: newest?.entryDate ?? "",
+                    })
+              }
+              className={cn(
+                "absolute z-[1] flex -translate-x-1/2 -translate-y-full items-center justify-center rounded-full border-2 border-background bg-primary text-[10px] font-semibold text-primary-foreground shadow-sm",
+                fullscreen
+                  ? isCluster
+                    ? "h-8 min-w-8 px-1.5"
+                    : "h-7 w-7"
+                  : isCluster
+                    ? "h-4 min-w-4 px-0.5 pointer-events-none"
+                    : "h-3 w-3 pointer-events-none"
+              )}
+              style={{ left, top }}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+              }}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (!fullscreen || !onSelectCluster) return;
+                onSelectCluster({
+                  entryDates: cluster.pins.map((pin) => pin.entryDate),
+                  placeLabel: cluster.placeLabel,
+                });
+              }}
+            >
+              {fullscreen ? (
+                isCluster ? (
+                  <span className="leading-none tabular-nums" aria-hidden>
+                    {count}
+                  </span>
+                ) : (
+                  <span className="leading-none" aria-hidden>
+                    {newest?.dayEmoji?.trim() || "📍"}
+                  </span>
+                )
+              ) : isCluster ? (
+                <span className="scale-75 leading-none tabular-nums" aria-hidden>
+                  {count}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
 
       {showExpandButton ? (
@@ -473,19 +521,20 @@ function WorldMapSurface({
 
 /**
  * Compact globe control for the journal archive search row.
- * Opens a fullscreen world map of days with places; pin taps jump in-list.
+ * Opens a fullscreen world map of days with places; pin/cluster taps
+ * jump to a day or filter the list to that location.
  */
 export default function JournalArchiveWorldMap({
   pins,
-  onSelectEntryDate,
+  onSelectCluster,
   className,
 }: JournalArchiveWorldMapProps) {
   const { t } = useTranslation("journal");
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
-  const handleSelect = (entryDate: string) => {
+  const handleSelect = (selection: JournalArchiveMapClusterSelection) => {
     setFullscreenOpen(false);
-    onSelectEntryDate(entryDate);
+    onSelectCluster(selection);
   };
 
   return (
@@ -530,7 +579,7 @@ export default function JournalArchiveWorldMap({
             fitBounds={pins.length > 0}
             interactive
             fullscreen
-            onSelectEntryDate={handleSelect}
+            onSelectCluster={handleSelect}
           />
         </div>
       </MediaLightbox>

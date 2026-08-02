@@ -43,11 +43,17 @@
     "closeWorldMap": "Fechar mapa",
     "worldMapTitle": "Onde você escreveu",
     "worldMapPreviewAria": "Miniatura do mapa mundial dos lugares do diário",
-    "worldMapHint": "{{count}} dias com lugares — toque em um pino para ir até lá",
+    "worldMapHint": "{{count}} dias com lugares — toque em um pino para ir, ou em um agrupamento para filtrar",
     "worldMapEmpty": "Nenhum lugar no mapa ainda. Adicione lugares nas entradas diárias para vê-los aqui.",
     "mapPinAria": "{{place}} em {{date}}",
+    "mapClusterAria": "{{count}} dias perto de {{place}}",
     "filters": {
       "clear": "Limpar",
+      "mapSelection": {
+        "label": "{{place}} · {{count}}",
+        "hint": "Mostrando dias deste agrupamento no mapa. Toque para limpar.",
+        "clearAria": "Limpar filtro do mapa para {{place}} ({{count}} dias)"
+      },
       "bookmarked": {
         "label": "Favoritos",
         "hint": "Filtrar por dias favoritos. Toque para alternar: qualquer, só favoritos, sem favoritos.",

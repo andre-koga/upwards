@@ -43,11 +43,17 @@
     "closeWorldMap": "Close map",
     "worldMapTitle": "Where you've written",
     "worldMapPreviewAria": "Miniature world map of journal places",
-    "worldMapHint": "{{count}} days with places — tap a pin to jump there",
+    "worldMapHint": "{{count}} days with places — tap a pin to jump, or a cluster to filter those days",
     "worldMapEmpty": "No mapped places yet. Add places on daily entries to see them here.",
     "mapPinAria": "{{place}} on {{date}}",
+    "mapClusterAria": "{{count}} days near {{place}}",
     "filters": {
       "clear": "Clear",
+      "mapSelection": {
+        "label": "{{place}} · {{count}}",
+        "hint": "Showing days from this map cluster. Tap to clear.",
+        "clearAria": "Clear map filter for {{place}} ({{count}} days)"
+      },
       "bookmarked": {
         "label": "Hearted",
         "hint": "Filter by hearted days. Tap to cycle: any, only hearted, not hearted.",

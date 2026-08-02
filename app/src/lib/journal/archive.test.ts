@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getHolidayName } from "@/lib/journal/holidays";
 import {
   buildJournalArchiveFeed,
+  clusterJournalArchiveMapPins,
   collectJournalArchiveMapPins,
   cycleJournalArchiveTriFilter,
   DEFAULT_JOURNAL_ARCHIVE_FILTERS,
@@ -221,5 +222,73 @@ describe("journal archive helpers", () => {
         "en"
       )
     ).toBe(false);
+  });
+
+  it("filters to map cluster entry dates", () => {
+    const inCluster = makeEntry({
+      entry_date: "2026-01-01",
+      title: "In",
+    });
+    const outOfCluster = makeEntry({
+      entry_date: "2026-01-02",
+      title: "Out",
+    });
+    const filters = {
+      ...DEFAULT_JOURNAL_ARCHIVE_FILTERS,
+      mapEntryDates: ["2026-01-01"],
+      mapPlaceLabel: "Austin",
+    };
+    expect(journalEntryMatchesFilters(inCluster, filters, "en")).toBe(true);
+    expect(journalEntryMatchesFilters(outOfCluster, filters, "en")).toBe(
+      false
+    );
+  });
+
+  it("clusters nearby pins at low zoom and splits them when zoomed in", () => {
+    const austinA = {
+      entryId: "a",
+      entryDate: "2026-01-02",
+      displayName: "Austin",
+      lat: 30.27,
+      lon: -97.74,
+      dayEmoji: null,
+      title: "A",
+    };
+    const austinB = {
+      entryId: "b",
+      entryDate: "2026-01-01",
+      displayName: "Austin",
+      lat: 30.28,
+      lon: -97.75,
+      dayEmoji: null,
+      title: "B",
+    };
+    const london = {
+      entryId: "c",
+      entryDate: "2025-12-01",
+      displayName: "London",
+      lat: 51.5,
+      lon: -0.12,
+      dayEmoji: null,
+      title: "C",
+    };
+
+    const worldClusters = clusterJournalArchiveMapPins(
+      [austinA, austinB, london],
+      1
+    );
+    expect(worldClusters.length).toBeLessThanOrEqual(2);
+
+    const austinOnly = clusterJournalArchiveMapPins([austinA, austinB], 1);
+    expect(austinOnly).toHaveLength(1);
+    expect(austinOnly[0]?.pins).toHaveLength(2);
+    expect(austinOnly[0]?.placeLabel).toBe("Austin");
+    expect(austinOnly[0]?.pins.map((p) => p.entryDate)).toEqual([
+      "2026-01-02",
+      "2026-01-01",
+    ]);
+
+    const cityZoom = clusterJournalArchiveMapPins([austinA, london], 8);
+    expect(cityZoom).toHaveLength(2);
   });
 });

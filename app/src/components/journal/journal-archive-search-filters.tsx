@@ -1,9 +1,8 @@
-import { Heart, Image, MapPin, Video, X } from "lucide-react";
+import { Globe2, Heart, Image, MapPin, Video, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   cycleJournalArchiveTriFilter,
-  journalArchiveFiltersAreActive,
   type JournalArchiveFilterKey,
   type JournalArchiveFilters,
   type JournalArchiveTriFilter,
@@ -54,16 +53,20 @@ function chipClassName(value: JournalArchiveTriFilter): string {
 /**
  * Compact structured filters under archive search.
  * Each chip cycles any → yes → no → any.
+ * Map cluster selection appears as a clearable chip when active.
  */
 export default function JournalArchiveSearchFilters({
   filters,
   onChange,
 }: JournalArchiveSearchFiltersProps) {
   const { t } = useTranslation("journal");
-  const hasActiveFilters = journalArchiveFiltersAreActive({
-    ...filters,
-    query: "",
-  });
+  const hasStructuredFilters =
+    filters.bookmarked !== "any" ||
+    filters.hasPhotos !== "any" ||
+    filters.hasVideo !== "any" ||
+    filters.hasPlaces !== "any";
+  const mapSelectionCount = filters.mapEntryDates?.length ?? 0;
+  const hasMapSelection = mapSelectionCount > 0;
 
   const cycle = (key: JournalArchiveFilterKey) => {
     onChange({
@@ -82,8 +85,40 @@ export default function JournalArchiveSearchFilters({
     });
   };
 
+  const clearMapSelection = () => {
+    onChange({
+      ...filters,
+      mapEntryDates: null,
+      mapPlaceLabel: null,
+    });
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      {hasMapSelection ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={clearMapSelection}
+          className="h-7 gap-1 rounded-full border-primary bg-primary/10 px-2.5 text-xs font-medium text-primary shadow-none"
+          title={t("archive.filters.mapSelection.hint")}
+          aria-label={t("archive.filters.mapSelection.clearAria", {
+            place: filters.mapPlaceLabel ?? "",
+            count: mapSelectionCount,
+          })}
+        >
+          <Globe2 className="h-3 w-3 shrink-0" aria-hidden />
+          <span>
+            {t("archive.filters.mapSelection.label", {
+              place: filters.mapPlaceLabel ?? "",
+              count: mapSelectionCount,
+            })}
+          </span>
+          <X className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+        </Button>
+      ) : null}
+
       {FILTER_KEYS.map((key) => {
         const value = filters[key];
         const label = t(`archive.filters.${key}.${value}`);
@@ -114,7 +149,7 @@ export default function JournalArchiveSearchFilters({
         );
       })}
 
-      {hasActiveFilters ? (
+      {hasStructuredFilters ? (
         <Button
           type="button"
           variant="ghost"

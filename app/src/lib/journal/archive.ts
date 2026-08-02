@@ -83,6 +83,13 @@ export interface JournalArchiveFilters {
   hasPhotos: JournalArchiveTriFilter;
   hasVideo: JournalArchiveTriFilter;
   hasPlaces: JournalArchiveTriFilter;
+  /**
+   * Exact set of entry dates selected from a map cluster.
+   * When set, the archive list is limited to these days.
+   */
+  mapEntryDates: string[] | null;
+  /** Display label for the active map selection (place name). */
+  mapPlaceLabel: string | null;
 }
 
 export const DEFAULT_JOURNAL_ARCHIVE_FILTERS: JournalArchiveFilters = {
@@ -91,6 +98,8 @@ export const DEFAULT_JOURNAL_ARCHIVE_FILTERS: JournalArchiveFilters = {
   hasPhotos: "any",
   hasVideo: "any",
   hasPlaces: "any",
+  mapEntryDates: null,
+  mapPlaceLabel: null,
 };
 
 export function cycleJournalArchiveTriFilter(
@@ -109,17 +118,22 @@ export function journalArchiveFiltersAreActive(
     filters.bookmarked !== "any" ||
     filters.hasPhotos !== "any" ||
     filters.hasVideo !== "any" ||
-    filters.hasPlaces !== "any"
+    filters.hasPlaces !== "any" ||
+    Boolean(filters.mapEntryDates?.length)
   );
 }
 
 export function journalArchiveFiltersKey(filters: JournalArchiveFilters): string {
+  const mapDates = filters.mapEntryDates
+    ? [...filters.mapEntryDates].sort().join(",")
+    : "";
   return [
     filters.query.trim(),
     filters.bookmarked,
     filters.hasPhotos,
     filters.hasVideo,
     filters.hasPlaces,
+    mapDates,
   ].join("\0");
 }
 
@@ -132,12 +146,16 @@ function matchesTriFilter(
   return !value;
 }
 
-/** Text query + structured filters (hearted, photos, video, places). */
+/** Text query + structured filters (hearted, photos, video, places, map). */
 export function journalEntryMatchesFilters(
   entry: JournalEntry,
   filters: JournalArchiveFilters,
   locale: LocaleValue
 ): boolean {
+  if (filters.mapEntryDates?.length) {
+    if (!filters.mapEntryDates.includes(entry.entry_date)) return false;
+  }
+
   if (!journalEntryMatchesQuery(entry, filters.query, locale)) return false;
 
   const hasPhotos = Boolean(entry.photo_paths && entry.photo_paths.length > 0);
@@ -257,4 +275,96 @@ export function collectJournalArchiveMapPins(
   }
 
   return pins;
+}
+
+const MAP_TILE_SIZE = 256;
+/** Pixel cell size for zoom-aware pin clustering on the archive map. */
+export const JOURNAL_ARCHIVE_MAP_CLUSTER_CELL_PX = 52;
+
+function clampMapLat(lat: number): number {
+  return Math.max(-85.0511, Math.min(85.0511, lat));
+}
+
+function lonToMapTileX(lon: number, zoom: number): number {
+  return ((lon + 180) / 360) * 2 ** zoom;
+}
+
+function latToMapTileY(lat: number, zoom: number): number {
+  const rad = (clampMapLat(lat) * Math.PI) / 180;
+  return (
+    ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) *
+    2 ** zoom
+  );
+}
+
+/** One clustered marker on the archive world map (1+ journal days). */
+export interface JournalArchiveMapCluster {
+  id: string;
+  lat: number;
+  lon: number;
+  pins: JournalArchiveMapPin[];
+  placeLabel: string;
+}
+
+function pickClusterPlaceLabel(pins: JournalArchiveMapPin[]): string {
+  const counts = new Map<string, number>();
+  for (const pin of pins) {
+    const name = pin.displayName.trim() || pin.entryDate;
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  let best = pins[0]?.displayName?.trim() || pins[0]?.entryDate || "";
+  let bestCount = 0;
+  for (const [name, count] of counts) {
+    if (count > bestCount) {
+      best = name;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
+/**
+ * Group nearby archive map pins into zoom-aware clusters.
+ * Pins that share a screen cell (or identical coordinates) merge into one marker.
+ */
+export function clusterJournalArchiveMapPins(
+  pins: JournalArchiveMapPin[],
+  zoom: number,
+  cellSizePx = JOURNAL_ARCHIVE_MAP_CLUSTER_CELL_PX
+): JournalArchiveMapCluster[] {
+  if (pins.length === 0) return [];
+
+  const integerZoom = Math.max(0, Math.round(zoom));
+  const cellInTiles = Math.max(0.01, cellSizePx / MAP_TILE_SIZE);
+  const buckets = new Map<string, JournalArchiveMapPin[]>();
+
+  for (const pin of pins) {
+    const x = lonToMapTileX(pin.lon, integerZoom);
+    const y = latToMapTileY(pin.lat, integerZoom);
+    const key = `${Math.floor(x / cellInTiles)}:${Math.floor(y / cellInTiles)}`;
+    const existing = buckets.get(key);
+    if (existing) {
+      existing.push(pin);
+    } else {
+      buckets.set(key, [pin]);
+    }
+  }
+
+  const clusters: JournalArchiveMapCluster[] = [];
+  for (const [key, group] of buckets) {
+    const sorted = [...group].sort((a, b) =>
+      b.entryDate.localeCompare(a.entryDate)
+    );
+    const lat = sorted.reduce((sum, pin) => sum + pin.lat, 0) / sorted.length;
+    const lon = sorted.reduce((sum, pin) => sum + pin.lon, 0) / sorted.length;
+    clusters.push({
+      id: key,
+      lat,
+      lon,
+      pins: sorted,
+      placeLabel: pickClusterPlaceLabel(sorted),
+    });
+  }
+
+  return clusters;
 }

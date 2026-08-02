@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { useJournalArchive } from "@/hooks/use-journal-archive";
 import JournalArchiveEntry from "@/components/journal/journal-archive-entry";
 import JournalArchiveBanner from "@/components/journal/journal-archive-banner";
-import JournalArchiveWorldMap from "@/components/journal/journal-archive-world-map";
+import JournalArchiveWorldMap, {
+  type JournalArchiveMapClusterSelection,
+} from "@/components/journal/journal-archive-world-map";
 import JournalArchiveSearchFilters from "@/components/journal/journal-archive-search-filters";
 import {
   DEFAULT_JOURNAL_ARCHIVE_FILTERS,
@@ -98,12 +100,25 @@ export default function JournalPage() {
     return () => window.cancelAnimationFrame(frame);
   }, [focusEntryDate, visibleItems, clearFocusEntryDate]);
 
-  const handleWorldMapSelect = (entryDate: string) => {
-    // Reset search/filters so the chosen day is in the feed, then reveal
-    // after filters settle (avoids the filter reset clobbering page).
+  const handleWorldMapSelect = (
+    selection: JournalArchiveMapClusterSelection
+  ) => {
     setSearchInput("");
-    setFilters(DEFAULT_JOURNAL_ARCHIVE_FILTERS);
-    setMapJumpDate(entryDate);
+    if (selection.entryDates.length <= 1) {
+      // Single pin: clear filters and scroll to that day in the full feed.
+      setFilters(DEFAULT_JOURNAL_ARCHIVE_FILTERS);
+      setMapJumpDate(selection.entryDates[0] ?? null);
+      return;
+    }
+
+    // Cluster: filter the journal list to exactly those location days.
+    setMapJumpDate(null);
+    setFilters({
+      ...DEFAULT_JOURNAL_ARCHIVE_FILTERS,
+      mapEntryDates: selection.entryDates,
+      mapPlaceLabel: selection.placeLabel,
+    });
+    scrollAppToTop();
   };
 
   const filtersActive = journalArchiveFiltersAreActive(filters);
@@ -148,7 +163,7 @@ export default function JournalPage() {
           {!loading && totalEntries > 0 ? (
             <JournalArchiveWorldMap
               pins={mapPins}
-              onSelectEntryDate={handleWorldMapSelect}
+              onSelectCluster={handleWorldMapSelect}
             />
           ) : null}
         </div>
