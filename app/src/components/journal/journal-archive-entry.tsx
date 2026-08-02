@@ -200,38 +200,44 @@ export default function JournalArchiveEntry({
   };
 
   return (
-    <article className="space-y-2 py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both">
-      <button
-        type="button"
-        onClick={openDay}
-        className="group grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-left"
-      >
-        <div className="flex w-12 shrink-0 flex-col items-center gap-1 pt-1">
+    <article className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both">
+      <div className="flex w-12 shrink-0 flex-col items-center gap-1 pt-1">
+        <button
+          type="button"
+          onClick={openDay}
+          className="group flex flex-col items-center gap-1 text-left"
+        >
           <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
             {dayNumber}
           </span>
           <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             {weekday}
           </span>
-          <span
-            className={cn(
-              "text-4xl leading-none",
-              !entry.day_emoji && "text-muted-foreground"
-            )}
-            aria-hidden
-          >
-            {entry.day_emoji?.trim() || "🙂"}
-          </span>
-          {isBookmarked ? (
-            <span className="sr-only">{t("bookmarkDay")}</span>
-          ) : null}
-        </div>
-
-        <div
+        </button>
+        <span
           className={cn(
-            "min-w-0 space-y-1 rounded-xl border border-border/70 px-3 py-2.5",
-            bookmarkGradient
+            "text-4xl leading-none",
+            !entry.day_emoji && "text-muted-foreground"
           )}
+          aria-hidden
+        >
+          {entry.day_emoji?.trim() || "🙂"}
+        </span>
+        {isBookmarked ? (
+          <span className="sr-only">{t("bookmarkDay")}</span>
+        ) : null}
+      </div>
+
+      <div
+        className={cn(
+          "min-w-0 overflow-hidden rounded-xl border border-border/70",
+          bookmarkGradient
+        )}
+      >
+        <button
+          type="button"
+          onClick={openDay}
+          className="group w-full space-y-1 px-3 py-2.5 text-left"
         >
           <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
             {entry.title?.trim() || t("untitled")}
@@ -247,37 +253,37 @@ export default function JournalArchiveEntry({
               {entry.text_content}
             </p>
           ) : null}
-        </div>
-      </button>
+        </button>
 
-      {(hasVideo || photoPaths.length > 0) && (
-        <div className="space-y-1.5">
-          {hasVideo ? (
-            <button
-              type="button"
-              className="relative block w-full overflow-hidden rounded-xl text-left"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!isOnline || !videoSrc) return;
-                setVideoOpen(true);
-              }}
-              aria-label={t("archive.openVideo")}
-            >
-              <div className="pointer-events-none">
-                <JournalVideoSection
-                  videoSrc={videoSrc ?? ""}
-                  canPlay={isOnline && Boolean(videoSrc)}
-                  thumbnail={{
-                    videoSrc: videoSrc,
-                    storedThumbnail: entry.video_thumbnail,
-                  }}
-                />
-              </div>
-            </button>
-          ) : null}
-          <ArchivePhotoGrid photoPaths={photoPaths} />
-        </div>
-      )}
+        {(hasVideo || photoPaths.length > 0) && (
+          <div className="space-y-1.5 px-3 pb-2.5">
+            {hasVideo ? (
+              <button
+                type="button"
+                className="relative block w-full overflow-hidden rounded-lg text-left"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isOnline || !videoSrc) return;
+                  setVideoOpen(true);
+                }}
+                aria-label={t("archive.openVideo")}
+              >
+                <div className="pointer-events-none">
+                  <JournalVideoSection
+                    videoSrc={videoSrc ?? ""}
+                    canPlay={isOnline && Boolean(videoSrc)}
+                    thumbnail={{
+                      videoSrc: videoSrc,
+                      storedThumbnail: entry.video_thumbnail,
+                    }}
+                  />
+                </div>
+              </button>
+            ) : null}
+            <ArchivePhotoGrid photoPaths={photoPaths} />
+          </div>
+        )}
+      </div>
 
       <MediaLightbox
         open={videoOpen && Boolean(videoSrc)}
