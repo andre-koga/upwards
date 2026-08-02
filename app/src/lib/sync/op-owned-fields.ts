@@ -27,10 +27,10 @@ export const TEMPORAL_LOCAL_TABLES = [
   "syncDevices",
 ] as const;
 
-export function stripOpOwnedFields(
+export function stripOpOwnedFields<T extends Record<string, unknown>>(
   table: string,
-  row: Record<string, unknown>
-): Record<string, unknown> {
+  row: T
+): T {
   const next = { ...row };
   if (table === "activities") {
     for (const key of OP_OWNED_ACTIVITY_FIELDS) delete next[key];

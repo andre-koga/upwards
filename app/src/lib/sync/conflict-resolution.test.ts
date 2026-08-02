@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SyncIssue } from "@/lib/db/types";
 
+const { appendActivityMock, appendGroupMock } = vi.hoisted(() => ({
+  appendActivityMock: vi.fn(async () => ({ id: "resolved-v1" })),
+  appendGroupMock: vi.fn(async () => ({ id: "resolved-g1" })),
+}));
+
 const activities = new Map<
   string,
   {
@@ -38,9 +43,6 @@ const activityVersions: Array<{
   deleted_at: string | null;
 }> = [];
 const syncIssues: SyncIssue[] = [];
-
-const appendActivityMock = vi.fn(async () => ({ id: "resolved-v1" }));
-const appendGroupMock = vi.fn(async () => ({ id: "resolved-g1" }));
 
 vi.mock("@/lib/db", () => ({
   db: {
@@ -102,10 +104,8 @@ vi.mock("@/lib/db", () => ({
 }));
 
 vi.mock("@/lib/activity/definition-versions", () => ({
-  appendActivityDefinitionVersion: (...args: unknown[]) =>
-    appendActivityMock(...args),
-  appendGroupDefinitionVersion: (...args: unknown[]) =>
-    appendGroupMock(...args),
+  appendActivityDefinitionVersion: appendActivityMock,
+  appendGroupDefinitionVersion: appendGroupMock,
   getLatestActivityDefinitionVersion: async (activityId: string) => {
     const rows = activityVersions
       .filter((row) => row.activity_id === activityId && !row.deleted_at)
