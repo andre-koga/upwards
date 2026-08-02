@@ -37,7 +37,8 @@
     "previousPhoto": "Foto anterior",
     "nextPhoto": "Próxima foto",
     "photoUnavailable": "Foto indisponível",
-    "openVideo": "Reproduzir vídeo"
+    "openVideo": "Reproduzir vídeo",
+    "morePhotos": "Mais {{count}} fotos"
   },
   "untitled": "Sem título",
   "noReflection": "Nenhuma reflexão escrita ainda.",

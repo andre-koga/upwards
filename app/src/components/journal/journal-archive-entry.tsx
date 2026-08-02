@@ -53,12 +53,10 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
 
   if (photoPaths.length === 0) return null;
 
-  const cols =
-    photoPaths.length === 1
-      ? "grid-cols-1"
-      : photoPaths.length === 2
-        ? "grid-cols-2"
-        : "grid-cols-2";
+  const previewLimit = 2;
+  const previewPaths = photoPaths.slice(0, previewLimit);
+  const hiddenCount = Math.max(0, photoPaths.length - previewLimit);
+  const singlePreview = previewPaths.length === 1;
 
   const showPreviousPhoto = () =>
     setLightbox((current) =>
@@ -81,9 +79,13 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
 
   return (
     <>
-      <div className={cn("grid gap-2", cols)}>
-        {photoPaths.map((path, index) => {
+      <div
+        className={cn("grid gap-1.5", singlePreview ? "grid-cols-1" : "grid-cols-2")}
+      >
+        {previewPaths.map((path, index) => {
           const url = getJournalPhotoUrl(path);
+          const isOverflowTile =
+            hiddenCount > 0 && index === previewPaths.length - 1;
           return (
             <button
               key={path}
@@ -94,9 +96,13 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
               }}
               className={cn(
                 "relative overflow-hidden rounded-lg bg-muted",
-                photoPaths.length === 1 ? "aspect-[2/1]" : "aspect-square"
+                singlePreview ? "aspect-[2/1]" : "aspect-square"
               )}
-              aria-label={t("upload.photoAlt", { index: index + 1 })}
+              aria-label={
+                isOverflowTile
+                  ? t("archive.morePhotos", { count: hiddenCount })
+                  : t("upload.photoAlt", { index: index + 1 })
+              }
             >
               {url ? (
                 <img
@@ -105,6 +111,16 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
                   className="h-full w-full object-cover"
                   draggable={false}
                 />
+              ) : null}
+              {isOverflowTile ? (
+                <span
+                  className="absolute inset-0 flex items-center justify-center bg-black/55"
+                  aria-hidden
+                >
+                  <span className="font-crimson text-3xl font-semibold tracking-tight text-white drop-shadow-sm">
+                    +{hiddenCount}
+                  </span>
+                </span>
               ) : null}
             </button>
           );
@@ -183,53 +199,6 @@ export default function JournalArchiveEntry({
 
   return (
     <article className="space-y-2 py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both">
-      {(hasVideo || photoPaths.length > 0) && (
-        <div className="space-y-1.5">
-          {hasVideo ? (
-            <button
-              type="button"
-              className="relative block w-full overflow-hidden rounded-xl text-left"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!isOnline || !videoSrc) return;
-                setVideoOpen(true);
-              }}
-              aria-label={t("archive.openVideo")}
-            >
-              <div className="pointer-events-none">
-                <JournalVideoSection
-                  videoSrc={videoSrc ?? ""}
-                  canPlay={false}
-                  thumbnail={{
-                    videoSrc: videoSrc,
-                    storedThumbnail: entry.video_thumbnail,
-                  }}
-                />
-              </div>
-            </button>
-          ) : null}
-          <ArchivePhotoGrid photoPaths={photoPaths} />
-        </div>
-      )}
-
-      <MediaLightbox
-        open={videoOpen && Boolean(videoSrc)}
-        onOpenChange={(open) => {
-          if (!open) setVideoOpen(false);
-        }}
-        title={t("archive.openVideo")}
-        closeLabel={t("archive.closePhoto")}
-        contentClassName="max-h-full w-full max-w-[min(92vw,40rem)] overflow-hidden rounded-xl bg-black"
-      >
-        <video
-          className="aspect-[2/1] w-full object-contain"
-          src={videoSrc ?? undefined}
-          controls
-          autoPlay
-          playsInline
-        />
-      </MediaLightbox>
-
       <button
         type="button"
         onClick={openDay}
@@ -283,6 +252,53 @@ export default function JournalArchiveEntry({
           ) : null}
         </div>
       </button>
+
+      {(hasVideo || photoPaths.length > 0) && (
+        <div className="space-y-1.5">
+          {hasVideo ? (
+            <button
+              type="button"
+              className="relative block w-full overflow-hidden rounded-xl text-left"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isOnline || !videoSrc) return;
+                setVideoOpen(true);
+              }}
+              aria-label={t("archive.openVideo")}
+            >
+              <div className="pointer-events-none">
+                <JournalVideoSection
+                  videoSrc={videoSrc ?? ""}
+                  canPlay={isOnline && Boolean(videoSrc)}
+                  thumbnail={{
+                    videoSrc: videoSrc,
+                    storedThumbnail: entry.video_thumbnail,
+                  }}
+                />
+              </div>
+            </button>
+          ) : null}
+          <ArchivePhotoGrid photoPaths={photoPaths} />
+        </div>
+      )}
+
+      <MediaLightbox
+        open={videoOpen && Boolean(videoSrc)}
+        onOpenChange={(open) => {
+          if (!open) setVideoOpen(false);
+        }}
+        title={t("archive.openVideo")}
+        closeLabel={t("archive.closePhoto")}
+        contentClassName="max-h-full w-full max-w-[min(92vw,40rem)] overflow-hidden rounded-xl bg-black"
+      >
+        <video
+          className="aspect-[2/1] w-full object-contain"
+          src={videoSrc ?? undefined}
+          controls
+          autoPlay
+          playsInline
+        />
+      </MediaLightbox>
     </article>
   );
 }
