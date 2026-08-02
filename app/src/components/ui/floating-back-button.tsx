@@ -29,7 +29,10 @@ export function FloatingBackButton({
   const Icon = icon === "settings" ? Settings : icon === "undo" ? Undo2 : X;
   const merged = cn(
     FLOATING_BACK_BUTTON_BASE,
-    fixed && "fixed bottom-3 left-4 z-50",
+    fixed &&
+      "fixed bottom-3 left-4 z-50 md:bottom-auto md:left-auto md:right-4 md:top-3",
+    // Primary destinations live in the desktop sidebar — hide home backs there.
+    to === "/" && "md:hidden",
     className
   );
 

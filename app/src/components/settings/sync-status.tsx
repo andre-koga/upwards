@@ -83,7 +83,7 @@ export default function SyncStatus() {
   return (
     <div
       className={cn(
-        "fixed left-3 top-3 z-50 transition-[visibility] duration-300",
+        "fixed left-3 top-3 z-50 transition-[visibility] duration-300 md:left-[calc(13rem+0.75rem)]",
         isVisible
           ? "pointer-events-auto visible"
           : "pointer-events-none invisible"

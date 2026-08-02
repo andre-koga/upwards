@@ -49,40 +49,55 @@ customizations are:
 - `calendar.tsx`: locale, logical-day, journal, and focus behavior
 - `settings-section.tsx`: product-specific settings composition
 - `floating-back-button.tsx`: product-specific mobile navigation
+- `sheet.tsx`: shared bottom/side overlay primitive for menu, notifications, and
+  projects
 
 The `app/src/components/forms/` layer composes these primitives into reusable
 Upwards form behavior. It protects feature code from primitive details and is
 used broadly across activity, task, journal, and settings dialogs.
 
-These are assets to preserve, not boilerplate to delete.
+`app/components.json` records the Vite-compatible shadcn registry configuration
+for this tree. These are assets to preserve, not boilerplate to delete.
 
 ### Inconsistencies
 
 The system is only partially standardized:
 
-- No `components.json` records the shadcn registry configuration.
 - Radix imports mix the unified `radix-ui` package with individual
   `@radix-ui/react-*` packages.
-- Several drawers and lightboxes implement overlay, dismissal, and positioning
-  manually.
 - Some forms bypass shared Input and Label primitives.
 - Focus-ring styles and control sizes vary.
 - Destructive button styles are repeated at feature call sites.
 - Chart tooltips are pointer-oriented and lack a complete keyboard/screen-reader
   path.
+- AlertDialog, Tooltip, Alert, Separator, and Skeleton primitives are not yet
+  added.
+- Confirmations still use Dialog via `ConfirmFormDialog` rather than AlertDialog.
+- There is no shared ResponsivePanel yet; Sheets still present the same surface
+  at every breakpoint.
 
 ### Desktop behavior
 
-At `md`, `app/src/App.tsx` currently:
+At `md` and above, `AppShell` provides:
 
-- Displays a "mobile experience" notice.
-- Limits the entire app to `430px`.
-- Centers the phone-shaped frame in the viewport.
-- Keeps mobile drawers, floating controls, and navigation unchanged.
+- A persistent sidebar/navigation rail (`DesktopNav`)
+- One main content scroll owner (`#app-main` / `data-app-scroll`)
+- A fluid content column (page shells use readable `max-w-3xl` where helpful)
+- Mobile bottom menu chrome hidden; Today date/projects/add actions move to a
+  top toolbar on desktop
+- Floating back-to-home controls hidden when the sidebar covers primary routes
+- Arrow-key and button day navigation on Today (swipe remains on touch)
 
-There is no wide-screen information architecture, persistent desktop
-navigation, or `lg`/`xl` page layout. This is a viewport simulation, not desktop
-support.
+Still incomplete relative to the target:
+
+- Wide `lg+` master-detail layouts for Today, Journal, Stats, Settings, Friends,
+  Logs, and Sync issues
+- Breadcrumbs / dedicated page headers for nested settings routes
+- Desktop promotion of Sheets into inline or anchored panels
+- Full keyboard/tooltip parity for charts and remaining overlays
+
+Mobile below `md` keeps the bottom action bar, Sheets, swipe, and PWA-oriented
+behavior.
 
 ## Component ownership model
 
@@ -390,11 +405,15 @@ shared primitives.
    as required.
 6. Migrate simple drawers and confirmations, then the projects drawer.
 7. Introduce the adaptive AppShell while keeping mobile behavior unchanged.
+   **Started:** `AppShell` + `DesktopNav` replace the phone frame at `md+`.
 8. Add persistent desktop navigation and one scroll owner.
+   **Started:** sidebar rail and `#app-main` scroll owner are in place.
 9. Adapt pages incrementally, beginning with Settings and Stats before the more
    interaction-heavy Today and Journal surfaces.
 10. Remove the desktop notice and phone-frame constraint only after navigation,
     overlays, and critical routes work at desktop widths.
+    **Started:** notice and `430px` phone frame removed with the AppShell; wide
+    multi-column page layouts and ResponsivePanel overlays remain.
 
 Do not combine primitive upgrades, Tailwind major-version upgrades, and the
 desktop redesign into one unreviewable change.

@@ -23,7 +23,7 @@ export function NotificationsFloatingButton() {
 
   if (!isAuthed) {
     return (
-      <div className="pointer-events-none fixed inset-x-0 top-3 z-30 flex justify-end px-3">
+      <div className="pointer-events-none fixed inset-x-0 top-3 z-30 flex justify-end px-3 md:left-52">
         <div className="pointer-events-auto">
           <Button
             type="button"
@@ -47,7 +47,7 @@ export function NotificationsFloatingButton() {
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-      <div className="pointer-events-none fixed inset-x-0 top-3 z-30 flex justify-end px-3">
+      <div className="pointer-events-none fixed inset-x-0 top-3 z-30 flex justify-end px-3 md:left-52">
         <div className="pointer-events-auto relative">
           <SheetTrigger asChild>
             <Button

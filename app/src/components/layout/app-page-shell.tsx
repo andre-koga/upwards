@@ -20,7 +20,12 @@ export function AppPageShell({
   children,
 }: AppPageShellProps) {
   return (
-    <div className={cn("space-y-6 p-4 pb-24", className)}>
+    <div
+      className={cn(
+        "space-y-6 p-4 pb-24 md:mx-auto md:max-w-3xl md:pb-8",
+        className
+      )}
+    >
       <header className="space-y-1">
         <h1
           className={cn(
