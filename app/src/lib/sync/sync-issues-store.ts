@@ -109,6 +109,23 @@ export async function resolveSyncIssue(id: string): Promise<void> {
   });
 }
 
+/** Clear open sync-error cards after a clean successful sync. */
+export async function resolveOpenSyncErrors(): Promise<number> {
+  const openErrors = await listSyncIssues({ kind: "error", status: "open" });
+  if (openErrors.length === 0) return 0;
+  const ts = now();
+  await Promise.all(
+    openErrors.map((issue) =>
+      db.syncIssues.update(issue.id, {
+        status: "resolved",
+        resolved_at: ts,
+        updated_at: ts,
+      })
+    )
+  );
+  return openErrors.length;
+}
+
 export async function deferSyncIssue(id: string): Promise<void> {
   await db.syncIssues.update(id, {
     status: "deferred",

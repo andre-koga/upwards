@@ -4,7 +4,12 @@ import {
   getCachedUserId,
   isSupabaseConfigured,
 } from "@/lib/supabase";
-import { getErrorMessage, logError, ERROR_MESSAGES } from "@/lib/error-utils";
+import {
+  getErrorMessage,
+  logError,
+  ERROR_MESSAGES,
+  isTransientNetworkError,
+} from "@/lib/error-utils";
 import {
   loadLastServerSyncAt,
   clearLastServerSyncAt,
@@ -25,12 +30,13 @@ import {
   pushPendingOperations,
   pullAndApplyOperations,
 } from "./sync-operations";
-import { recordSyncIssue } from "./sync-issues-store";
+import { recordSyncIssue, resolveOpenSyncErrors } from "./sync-issues-store";
 import { touchLocalDevice } from "./device-id";
 import {
   enqueueProjectionUpsertForTable,
   OPS_MANAGED_SYNC_TABLES,
 } from "./projection-sync";
+import { acknowledgePendingWhenOpsUnavailable } from "./pending-operations";
 
 export interface SyncState {
   isSyncing: boolean;
@@ -85,12 +91,14 @@ class SyncEngine {
 
   private setState(patch: Partial<SyncState>): void {
     if (patch.lastError && typeof patch.lastError === "string") {
-      void recordSyncIssue({
-        kind: "error",
-        title: "Sync error",
-        detail: patch.lastError,
-        account_id: getCachedUserId(),
-      });
+      if (!isTransientNetworkError(patch.lastError)) {
+        void recordSyncIssue({
+          kind: "error",
+          title: "Sync error",
+          detail: patch.lastError,
+          account_id: getCachedUserId(),
+        });
+      }
     }
     this.state = { ...this.state, ...patch };
     this.listeners.forEach((l) => l(this.state));
@@ -322,30 +330,51 @@ class SyncEngine {
 
     this.clearDirtyIds();
     this.setState({ isSyncing: true, lastError: null });
+    let opsSkipped = false;
+    let interruptedTransiently = false;
     try {
       const pushOpsResult = await pushPendingOperations();
+      opsSkipped = pushOpsResult.skipped === true;
       const opsSyncActive = pushOpsResult.skipped !== true;
       if (!pushOpsResult.failed && pushOpsResult.maxSequence != null) {
         saveLastAppliedSequence(pushOpsResult.maxSequence);
       }
 
-      const { failedTables } = await runPushInternal(
-        {
-          withLocalSyncMetadataWrites: (op) =>
-            this.withLocalSyncMetadataWrites(op),
-        },
-        { opsSyncActive }
-      );
-      if (failedTables.length > 0) {
-        const msg = `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`;
-        logError("Sync push failed", new Error(msg));
+      // Transient ops push failure should not become a durable Sync error card.
+      if (pushOpsResult.failed && pushOpsResult.transient) {
+        interruptedTransiently = true;
+      } else if (pushOpsResult.failed) {
+        const msg =
+          "Some pending changes could not be uploaded. Try syncing again.";
+        logError("Sync ops push failed", new Error(msg));
         this.setState({ lastError: msg });
+      }
+
+      const { failedTables, hadTransientFailure, hadDurableFailure } =
+        await runPushInternal(
+          {
+            withLocalSyncMetadataWrites: (op) =>
+              this.withLocalSyncMetadataWrites(op),
+          },
+          { opsSyncActive }
+        );
+      if (failedTables.length > 0) {
+        if (hadDurableFailure) {
+          const msg = `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`;
+          logError("Sync push failed", new Error(msg));
+          this.setState({ lastError: msg });
+        } else if (hadTransientFailure) {
+          interruptedTransiently = true;
+        }
       }
       await this.pull({ opsSyncActive });
 
       const pullOpsResult = await pullAndApplyOperations(
         loadLastAppliedSequence()
       );
+      if (pullOpsResult.skipped === true) {
+        opsSkipped = true;
+      }
       if (pullOpsResult.skipped !== true && pullOpsResult.maxSequence != null) {
         saveLastAppliedSequence(pullOpsResult.maxSequence);
       } else if (
@@ -356,11 +385,32 @@ class SyncEngine {
         saveLastAppliedSequence(pushOpsResult.maxSequence);
       }
     } catch (err) {
-      const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
-      logError("Sync failed", err);
-      this.setState({ lastError: msg });
+      if (isTransientNetworkError(err)) {
+        interruptedTransiently = true;
+        console.warn("[sync] interrupted (transient):", err);
+      } else {
+        const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
+        logError("Sync failed", err);
+        this.setState({ lastError: msg });
+      }
     } finally {
       this.setState({ isSyncing: false });
+
+      const cleanSync =
+        !this.state.lastError && !interruptedTransiently && this.canSync();
+      if (cleanSync) {
+        try {
+          // LWW covered cloud sync while temporal RPCs are offline — clear Waiting.
+          if (opsSkipped) {
+            await acknowledgePendingWhenOpsUnavailable();
+          }
+          // Sync errors are actionable while open; clear them after a clean run.
+          await resolveOpenSyncErrors();
+          this.listeners.forEach((l) => l(this.state));
+        } catch (cleanupErr) {
+          console.warn("[sync] post-sync cleanup failed:", cleanupErr);
+        }
+      }
 
       const needsAnother = this.pendingResync || this.hasDirtyIds();
       this.pendingResync = false;

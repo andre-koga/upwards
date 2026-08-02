@@ -90,6 +90,45 @@ export async function markOperationFailed(
   });
 }
 
+/** Keep the op in Waiting to sync, but surface the latest transport error. */
+export async function markOperationRetryableError(
+  id: string,
+  error: string
+): Promise<void> {
+  await db.syncPendingOperations.update(id, {
+    status: "pending",
+    last_error: error,
+    updated_at: now(),
+  });
+}
+
+/** Move previously failed ops back to pending so the next sync retries them. */
+export async function requeueFailedOperations(): Promise<number> {
+  const failed = await listPendingOperations({ status: "failed" });
+  if (failed.length === 0) return 0;
+  const ts = now();
+  await Promise.all(
+    failed.map((row) =>
+      db.syncPendingOperations.update(row.id, {
+        status: "pending",
+        updated_at: ts,
+      })
+    )
+  );
+  return failed.length;
+}
+
+/**
+ * When temporal ops RPCs are unavailable, LWW push/pull owns cloud sync.
+ * Ack local pending ops so "Waiting to sync" clears after a successful sync.
+ */
+export async function acknowledgePendingWhenOpsUnavailable(): Promise<number> {
+  const pending = await listPendingOperations({ status: "pending" });
+  if (pending.length === 0) return 0;
+  await Promise.all(pending.map((row) => markOperationAcked(row.id)));
+  return pending.length;
+}
+
 export async function discardPendingOperation(id: string): Promise<void> {
   await db.syncPendingOperations.update(id, {
     status: "discarded",

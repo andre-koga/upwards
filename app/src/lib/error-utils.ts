@@ -9,14 +9,60 @@ export function getErrorMessage(
 ): string {
   if (err instanceof Error) return err.message;
   if (typeof err === "string") return err;
+  if (
+    err &&
+    typeof err === "object" &&
+    "message" in err &&
+    typeof (err as { message: unknown }).message === "string"
+  ) {
+    return (err as { message: string }).message;
+  }
   return fallback;
 }
 
 /**
+ * True for common abort / background-tab / brief-connectivity failures.
+ * These happen when the app is opened and left before a fetch finishes, so
+ * they should not clutter Error Logs or Sync issues.
+ */
+export function isTransientNetworkError(err: unknown): boolean {
+  if (err == null) return false;
+
+  if (typeof DOMException !== "undefined" && err instanceof DOMException) {
+    if (err.name === "AbortError" || err.name === "TimeoutError") return true;
+  }
+
+  if (err instanceof Error) {
+    if (err.name === "AbortError" || err.name === "TimeoutError") return true;
+  }
+
+  const message = getErrorMessage(err).toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("networkerror") ||
+    message.includes("network request failed") ||
+    message.includes("load failed") ||
+    message.includes("the operation was aborted") ||
+    message.includes("aborted") ||
+    message.includes("aborterror") ||
+    message.includes("cors request did not succeed") ||
+    message.includes("fetch failed")
+  );
+}
+
+/**
  * Log an error with context and store it in the database.
+ * Transient network/abort errors are console-only so leaving the app mid-fetch
+ * does not fill Error Logs.
  */
 export function logError(context: string, err: unknown): void {
   const message = getErrorMessage(err);
+
+  if (isTransientNetworkError(err)) {
+    console.warn(`${context} (transient):`, err);
+    return;
+  }
+
   console.error(`${context}:`, err);
 
   // Store in database

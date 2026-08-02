@@ -11,8 +11,11 @@ import {
   listPendingOperations,
   markOperationAcked,
   markOperationFailed,
+  markOperationRetryableError,
+  requeueFailedOperations,
 } from "./pending-operations";
 import { recordSyncIssue } from "./sync-issues-store";
+import { isTransientNetworkError } from "@/lib/error-utils";
 import {
   buildDefinitionConflictPayload,
   type DefinitionConflictEntityType,
@@ -58,6 +61,8 @@ export interface PushPendingOperationsResult {
   failed: boolean;
   maxSequence?: number;
   skipped?: boolean;
+  /** True when failure was abort/offline noise and ops stayed pending. */
+  transient?: boolean;
 }
 
 export interface PullAndApplyOperationsResult {
@@ -490,6 +495,8 @@ export async function applyAcceptedDailyEntryOp(
 export async function pushPendingOperations(): Promise<PushPendingOperationsResult> {
   if (!supabase) return { failed: false, skipped: true };
 
+  await requeueFailedOperations();
+
   const pending = await listPendingOperations({ status: "pending" });
   if (pending.length === 0) {
     // No work to push; still report whether ops mode should govern LWW.
@@ -512,6 +519,13 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
     if (isSyncOperationsRpcMissing(error)) {
       saveOpsRpcAvailable(false);
       return { failed: false, skipped: true };
+    }
+    // Transient fetch/abort: keep Waiting items pending for the next retry.
+    if (isTransientNetworkError(error)) {
+      for (const row of pending) {
+        await markOperationRetryableError(row.id, error.message);
+      }
+      return { failed: true, transient: true };
     }
     for (const row of pending) {
       await markOperationFailed(row.id, error.message);
