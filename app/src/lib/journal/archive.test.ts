@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getHolidayName } from "@/lib/journal/holidays";
 import {
   buildJournalArchiveFeed,
+  collectJournalArchiveMapPins,
   journalEntryHasContent,
   journalEntryMatchesQuery,
 } from "@/lib/journal/archive";
@@ -123,6 +124,52 @@ describe("journal archive helpers", () => {
     expect(feed[6]).toMatchObject({
       kind: "holiday",
       name: "Christmas Day",
+    });
+  });
+
+  it("collects map pins from geocoded places", () => {
+    const pins = collectJournalArchiveMapPins([
+      makeEntry({
+        entry_date: "2026-01-02",
+        title: "Later",
+        location: {
+          locations: [
+            {
+              displayName: "Austin",
+              city: "Austin",
+              state: null,
+              country: "US",
+              countryCode: "US",
+              lat: 30.27,
+              lon: -97.74,
+            },
+          ],
+        },
+      }),
+      makeEntry({
+        entry_date: "2026-01-01",
+        title: "No coords",
+        location: {
+          locations: [
+            {
+              displayName: "Somewhere",
+              city: null,
+              state: null,
+              country: null,
+              countryCode: null,
+              lat: null,
+              lon: null,
+            },
+          ],
+        },
+      }),
+    ]);
+    expect(pins).toHaveLength(1);
+    expect(pins[0]).toMatchObject({
+      entryDate: "2026-01-02",
+      displayName: "Austin",
+      lat: 30.27,
+      lon: -97.74,
     });
   });
 });

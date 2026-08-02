@@ -124,3 +124,50 @@ export function formatArchiveMonthLabel(year: number, month: number): string {
     year: "numeric",
   });
 }
+
+/** One map pin per journal day that has at least one geocoded place. */
+export interface JournalArchiveMapPin {
+  entryId: string;
+  entryDate: string;
+  displayName: string;
+  lat: number;
+  lon: number;
+  dayEmoji: string | null;
+  title: string | null;
+}
+
+/**
+ * Collect pins for the archive world map (newest entries first).
+ * Uses the first place with coordinates on each day.
+ */
+export function collectJournalArchiveMapPins(
+  entries: JournalEntry[]
+): JournalArchiveMapPin[] {
+  const pins: JournalArchiveMapPin[] = [];
+  const sorted = [...entries].sort((a, b) =>
+    b.entry_date.localeCompare(a.entry_date)
+  );
+
+  for (const entry of sorted) {
+    const places = entry.location?.locations ?? [];
+    const place = places.find(
+      (loc) =>
+        loc.lat != null &&
+        loc.lon != null &&
+        Number.isFinite(loc.lat) &&
+        Number.isFinite(loc.lon)
+    );
+    if (!place || place.lat == null || place.lon == null) continue;
+    pins.push({
+      entryId: entry.id,
+      entryDate: entry.entry_date,
+      displayName: place.displayName,
+      lat: place.lat,
+      lon: place.lon,
+      dayEmoji: entry.day_emoji,
+      title: entry.title,
+    });
+  }
+
+  return pins;
+}

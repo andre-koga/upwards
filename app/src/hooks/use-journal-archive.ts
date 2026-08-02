@@ -5,9 +5,11 @@ import type { JournalEntry } from "@/lib/db/types";
 import {
   JOURNAL_ARCHIVE_PAGE_SIZE,
   buildJournalArchiveFeed,
+  collectJournalArchiveMapPins,
   journalEntryHasContent,
   journalEntryMatchesQuery,
   type JournalArchiveItem,
+  type JournalArchiveMapPin,
 } from "@/lib/journal/archive";
 import type { LocaleValue } from "@/lib/i18n/locale-storage";
 import { logError } from "@/lib/error-utils";
@@ -19,6 +21,7 @@ export function useJournalArchive(searchQuery: string) {
   const [allEntries, setAllEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [focusEntryDate, setFocusEntryDate] = useState<string | null>(null);
   const filterKey = `${locale}\0${searchQuery}`;
   const [activeFilterKey, setActiveFilterKey] = useState(filterKey);
 
@@ -57,6 +60,11 @@ export function useJournalArchive(searchQuery: string) {
     [filteredEntries, locale]
   );
 
+  const mapPins: JournalArchiveMapPin[] = useMemo(
+    () => collectJournalArchiveMapPins(allEntries),
+    [allEntries]
+  );
+
   const visibleCount = page * JOURNAL_ARCHIVE_PAGE_SIZE;
 
   const { visibleItems, hasMore } = useMemo(() => {
@@ -85,6 +93,25 @@ export function useJournalArchive(searchQuery: string) {
     setPage((n) => n + 1);
   }, []);
 
+  const revealEntryDate = useCallback(
+    (entryDate: string) => {
+      const dates = [...allEntries]
+        .sort((a, b) => b.entry_date.localeCompare(a.entry_date))
+        .map((entry) => entry.entry_date);
+      const index = dates.indexOf(entryDate);
+      if (index >= 0) {
+        const neededPage = Math.floor(index / JOURNAL_ARCHIVE_PAGE_SIZE) + 1;
+        setPage((current) => Math.max(current, neededPage));
+      }
+      setFocusEntryDate(entryDate);
+    },
+    [allEntries]
+  );
+
+  const clearFocusEntryDate = useCallback(() => {
+    setFocusEntryDate(null);
+  }, []);
+
   return {
     loading,
     visibleItems,
@@ -92,6 +119,10 @@ export function useJournalArchive(searchQuery: string) {
     loadMore,
     totalMatching: filteredEntries.length,
     totalEntries: allEntries.length,
+    mapPins,
+    focusEntryDate,
+    revealEntryDate,
+    clearFocusEntryDate,
     reload: loadEntries,
   };
 }

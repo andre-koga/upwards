@@ -20,6 +20,8 @@ import { cn } from "@/lib/utils";
 
 interface JournalArchiveEntryProps {
   entry: JournalEntry;
+  /** Briefly emphasize the entry after jumping from the world map. */
+  highlighted?: boolean;
 }
 
 /** Soft washes on the content panel — picked stably per bookmarked entry. */
@@ -172,6 +174,7 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
 
 export default function JournalArchiveEntry({
   entry,
+  highlighted = false,
 }: JournalArchiveEntryProps) {
   const { t } = useTranslation("journal");
   const navigate = useNavigate();
@@ -208,7 +211,13 @@ export default function JournalArchiveEntry({
   };
 
   return (
-    <article className="py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both">
+    <article
+      data-journal-entry-date={entry.entry_date}
+      className={cn(
+        "py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both",
+        highlighted && "rounded-xl ring-2 ring-primary/40"
+      )}
+    >
       <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
         <div className="flex w-12 shrink-0 flex-col items-center gap-1 pt-1">
           <button

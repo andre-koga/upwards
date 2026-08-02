@@ -38,7 +38,14 @@
     "nextPhoto": "Next photo",
     "photoUnavailable": "Photo unavailable",
     "openVideo": "Play video",
-    "morePhotos": "{{count}} more photos"
+    "morePhotos": "{{count}} more photos",
+    "openWorldMap": "Explore places on the map",
+    "closeWorldMap": "Close map",
+    "worldMapTitle": "Where you've written",
+    "worldMapPreviewAria": "Miniature world map of journal places",
+    "worldMapHint": "{{count}} days with places — tap a pin to jump there",
+    "worldMapEmpty": "No mapped places yet. Add places on daily entries to see them here.",
+    "mapPinAria": "{{place}} on {{date}}"
   },
   "untitled": "Untitled",
   "noReflection": "No reflection written.",
