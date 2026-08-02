@@ -48,6 +48,30 @@ vi.mock("@/lib/db", () => ({
         if (idx >= 0) activityVersions[idx] = row;
         else activityVersions.push(row);
       },
+      get: async (id: string) =>
+        activityVersions.find((row) => row.id === id) ?? undefined,
+      where: (index: string) => ({
+        equals: (value: string) => ({
+          filter: (
+            predicate: (
+              row: import("@/lib/db/types").ActivityDefinitionVersion
+            ) => boolean
+          ) => ({
+            toArray: async () =>
+              activityVersions.filter((row) => {
+                if (index === "activity_id" && row.activity_id !== value) {
+                  return false;
+                }
+                return predicate(row);
+              }),
+          }),
+          toArray: async () =>
+            activityVersions.filter((row) => {
+              if (index === "activity_id") return row.activity_id === value;
+              return true;
+            }),
+        }),
+      }),
     },
     groupDefinitionVersions: {
       put: async (row: import("@/lib/db/types").GroupDefinitionVersion) => {
@@ -55,14 +79,40 @@ vi.mock("@/lib/db", () => ({
         if (idx >= 0) groupVersions[idx] = row;
         else groupVersions.push(row);
       },
+      get: async (id: string) =>
+        groupVersions.find((row) => row.id === id) ?? undefined,
+      where: (index: string) => ({
+        equals: (value: string) => ({
+          filter: (
+            predicate: (
+              row: import("@/lib/db/types").GroupDefinitionVersion
+            ) => boolean
+          ) => ({
+            toArray: async () =>
+              groupVersions.filter((row) => {
+                if (index === "group_id" && row.group_id !== value) {
+                  return false;
+                }
+                return predicate(row);
+              }),
+          }),
+          toArray: async () =>
+            groupVersions.filter((row) => {
+              if (index === "group_id") return row.group_id === value;
+              return true;
+            }),
+        }),
+      }),
     },
     activities: {
+      get: async (id: string) => activities.find((row) => row.id === id),
       update: async (id: string, patch: Record<string, unknown>) => {
         const row = activities.find((a) => a.id === id);
         if (row) Object.assign(row, patch);
       },
     },
     activityGroups: {
+      get: async (id: string) => activityGroups.find((row) => row.id === id),
       update: async (id: string, patch: Record<string, unknown>) => {
         const row = activityGroups.find((g) => g.id === id);
         if (row) Object.assign(row, patch);
@@ -241,6 +291,9 @@ describe("pushPendingOperations", () => {
     expect(syncIssues).toHaveLength(1);
     expect(syncIssues[0].kind).toBe("conflict");
     expect(syncIssues[0].operation_id).toBe("op-conflict");
+    expect((syncIssues[0].payload as { kind?: string } | null)?.kind).toBe(
+      "definition_conflict"
+    );
   });
 });
 
@@ -320,5 +373,8 @@ describe("pullAndApplyOperations", () => {
     await pullAndApplyOperations(10);
     expect(syncIssues).toHaveLength(1);
     expect(syncIssues[0].operation_id).toBe("op-conflict-remote");
+    expect((syncIssues[0].payload as { kind?: string } | null)?.kind).toBe(
+      "definition_conflict"
+    );
   });
 });

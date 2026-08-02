@@ -156,6 +156,42 @@
       "message": "This removes the pending change from this device only. It will not be uploaded, and you cannot undo this from another device.",
       "confirm": "Discard permanently",
       "cancel": "Cancel"
+    },
+    "conflict": {
+      "untitled": "Untitled change",
+      "summary": "Two versions of this {{entity}} need a decision.",
+      "entity": {
+        "activity": "activity",
+        "group": "group"
+      },
+      "effectiveFrom": "Applies from {{date}}",
+      "deferredBadge": "Deferred",
+      "bothChangedHint": "Both sides changed some of the same fields. Combine will keep your value for those.",
+      "combinableHint": "These changes touch different fields and can be combined cleanly.",
+      "combineWithPreferenceHint": "Fields edited on both sides will keep your value.",
+      "unknownRemote": "Unavailable",
+      "consequence": "Your choice creates a new version. Earlier versions stay in history and are not deleted.",
+      "resolveFailed": "Could not apply that choice. Try again.",
+      "columns": {
+        "field": "Field",
+        "yours": "Yours",
+        "theirs": "Other device",
+        "base": "Earlier"
+      },
+      "fields": {
+        "name": "Name",
+        "routine": "Schedule",
+        "completion_target": "Target",
+        "group_id": "Group",
+        "order_index": "Order",
+        "color": "Color"
+      },
+      "actions": {
+        "keepMine": "Keep mine",
+        "keepTheirs": "Keep theirs",
+        "combine": "Combine",
+        "defer": "Decide later"
+      }
     }
   },
   "taskOrder": {

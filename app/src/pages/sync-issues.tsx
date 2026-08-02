@@ -12,6 +12,7 @@ import {
 
 import { ConfirmFormDialog } from "@/components/forms";
 import { AppPageShell } from "@/components/layout/app-page-shell";
+import { ConflictReviewCard } from "@/components/settings/conflict-review-card";
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { SettingsSection } from "@/components/ui/settings-section";
@@ -40,14 +41,26 @@ interface SyncIssuesData {
 
 async function loadSyncIssuesData(): Promise<SyncIssuesData> {
   const deviceId = getOrCreateDeviceId();
-  const [conflicts, pendingOps, errors, resolved, localDevice] =
-    await Promise.all([
-      listSyncIssues({ kind: "conflict", status: "open" }),
-      listPendingOperations({ status: "pending" }),
-      listSyncIssues({ kind: "error", status: "open" }),
-      listSyncIssues({ status: "resolved", limit: 20 }),
-      db.syncDevices.get(deviceId).then((device) => device ?? null),
-    ]);
+  const [
+    openConflicts,
+    deferredConflicts,
+    pendingOps,
+    errors,
+    resolved,
+    localDevice,
+  ] = await Promise.all([
+    listSyncIssues({ kind: "conflict", status: "open" }),
+    listSyncIssues({ kind: "conflict", status: "deferred" }),
+    listPendingOperations({ status: "pending" }),
+    listSyncIssues({ kind: "error", status: "open" }),
+    listSyncIssues({ status: "resolved", limit: 20 }),
+    db.syncDevices.get(deviceId).then((device) => device ?? null),
+  ]);
+
+  const conflicts = [...openConflicts, ...deferredConflicts].sort(
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
 
   return { conflicts, pendingOps, errors, resolved, localDevice };
 }
@@ -193,13 +206,12 @@ export default function SyncIssuesPage() {
             {t("syncIssues.sections.review.empty")}
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {conflicts.map((issue) => (
-              <IssueCard
+              <ConflictReviewCard
                 key={issue.id}
-                title={issue.title}
-                detail={issue.detail}
-                when={formatWhen(issue.updated_at)}
+                issue={issue}
+                onResolved={reload}
               />
             ))}
           </div>

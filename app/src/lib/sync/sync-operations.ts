@@ -13,6 +13,10 @@ import {
   markOperationFailed,
 } from "./pending-operations";
 import { recordSyncIssue } from "./sync-issues-store";
+import {
+  buildDefinitionConflictPayload,
+  type DefinitionConflictEntityType,
+} from "./conflict-resolution";
 
 export interface SubmitSyncOperationInput {
   operation_id: string;
@@ -269,14 +273,39 @@ async function ensureConflictIssueForRemoteOp(
 
   if (existing) return;
 
+  const entityType =
+    op.entity_type === "group_definition"
+      ? "group_definition"
+      : "activity_definition";
+  const entityId = op.entity_id;
+  let payload: unknown = op.payload;
+
+  if (
+    entityId &&
+    (op.entity_type === "activity_definition" ||
+      op.entity_type === "group_definition")
+  ) {
+    try {
+      // Remote conflicted op is "theirs"; local tip is "yours".
+      payload = await buildDefinitionConflictPayload({
+        entity_type: entityType as DefinitionConflictEntityType,
+        entity_id: entityId,
+        remotePayload: op.payload,
+        remoteDeviceId: op.device_id,
+      });
+    } catch (err) {
+      console.warn("[sync] failed to enrich remote conflict payload", err);
+    }
+  }
+
   await recordSyncIssue({
     kind: "conflict",
     title: "Sync conflict",
-    detail: `Remote ${op.entity_type} operation conflicted on another device.`,
+    detail: `A change to this ${entityType === "group_definition" ? "group" : "activity"} conflicted with another version.`,
     entity_type: op.entity_type,
     entity_id: op.entity_id,
     operation_id: op.operation_id,
-    payload: op.payload,
+    payload,
     account_id: getCachedUserId(),
   });
 }
@@ -372,14 +401,33 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
     }
 
     if (result.status === "conflict") {
+      let conflictPayload: unknown = local.payload;
+      if (
+        local.entity_id &&
+        (local.entity_type === "activity_definition" ||
+          local.entity_type === "group_definition")
+      ) {
+        try {
+          conflictPayload = await buildDefinitionConflictPayload({
+            entity_type: local.entity_type as DefinitionConflictEntityType,
+            entity_id: local.entity_id,
+            localPayload: local.payload,
+            localDeviceId: local.device_id,
+          });
+        } catch (err) {
+          console.warn("[sync] failed to enrich local conflict payload", err);
+        }
+      }
+
       await recordSyncIssue({
         kind: "conflict",
         title: "Definition update conflict",
-        detail: "Your change conflicted with a newer definition on the server.",
+        detail:
+          "Your change conflicted with a newer definition on another device.",
         entity_type: local.entity_type,
         entity_id: local.entity_id,
         operation_id: local.operation_id,
-        payload: local.payload,
+        payload: conflictPayload,
         account_id: getCachedUserId(),
       });
       await markOperationAcked(local.id);

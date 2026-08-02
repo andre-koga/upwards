@@ -9,10 +9,13 @@ export interface SyncIssuesSummary {
 }
 
 export async function getSyncIssuesSummary(): Promise<SyncIssuesSummary> {
-  const openIssues = await listSyncIssues({ status: "open" });
-  const conflicts = openIssues.filter(
-    (issue) => issue.kind === "conflict"
-  ).length;
+  const [openIssues, deferredConflicts] = await Promise.all([
+    listSyncIssues({ status: "open" }),
+    listSyncIssues({ kind: "conflict", status: "deferred" }),
+  ]);
+  const conflicts =
+    openIssues.filter((issue) => issue.kind === "conflict").length +
+    deferredConflicts.length;
   const errors = openIssues.filter((issue) => issue.kind === "error").length;
   const pendingIssueCount = openIssues.filter(
     (issue) => issue.kind === "pending"
