@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import {
+  PageBreadcrumbs,
+  type BreadcrumbItem,
+} from "@/components/layout/page-breadcrumbs";
 import { cn } from "@/lib/utils";
 
 export function StatsPageShell({
@@ -14,6 +18,7 @@ export function StatsPageShell({
   loading,
   children,
   className,
+  breadcrumbs,
 }: {
   title: ReactNode;
   icon?: ReactNode;
@@ -25,6 +30,7 @@ export function StatsPageShell({
   loading?: boolean;
   children?: ReactNode;
   className?: string;
+  breadcrumbs?: BreadcrumbItem[];
 }) {
   const { t: tStats } = useTranslation("stats");
   const { t: tNav } = useTranslation("nav");
@@ -32,7 +38,15 @@ export function StatsPageShell({
   const resolvedHomeTitle = homeTitle ?? tNav("home");
 
   return (
-    <div className={cn("space-y-3 p-4 pb-24", className)}>
+    <div
+      className={cn(
+        "space-y-3 p-4 pb-24 md:mx-auto md:max-w-3xl md:pb-8",
+        className
+      )}
+    >
+      {breadcrumbs && breadcrumbs.length > 0 ? (
+        <PageBreadcrumbs items={breadcrumbs} className="mb-0" />
+      ) : null}
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
           {icon}
@@ -56,11 +70,12 @@ export function StatsPageShell({
         children
       )}
 
-      <div className="fixed bottom-3 left-4 z-50 flex items-center gap-2">
+      <div className="fixed bottom-3 left-4 z-50 flex items-center gap-2 md:bottom-auto md:left-auto md:right-4 md:top-3">
         <FloatingBackButton
           fixed={false}
           to={homeTo}
           title={resolvedHomeTitle}
+          className={homeTo === "/" ? "md:hidden" : undefined}
         />
         {backTo && backTo !== homeTo ? (
           <FloatingBackButton

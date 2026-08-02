@@ -64,6 +64,15 @@ export default function ActivityStatsPage() {
       backTo={`/stats/groups/${groupId}`}
       backTitle={t("backToGroup")}
       loading={loading}
+      className="md:max-w-5xl"
+      breadcrumbs={[
+        { label: t("title"), to: "/stats" },
+        {
+          label: group?.name ?? t("group"),
+          to: `/stats/groups/${groupId}`,
+        },
+        { label: activityName },
+      ]}
     >
       {error && <p className="text-sm text-destructive">{t("loadError")}</p>}
       {!loading && !error && !stats && (

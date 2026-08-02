@@ -163,7 +163,12 @@ export default function SyncIssuesPage() {
     <AppPageShell
       title={t("syncIssues.page.title")}
       subtitle={t("syncIssues.page.subtitle")}
-      className="space-y-3"
+      className="space-y-3 md:max-w-5xl"
+      breadcrumbs={[
+        { label: tNav("today"), to: "/" },
+        { label: t("page.title"), to: "/settings" },
+        { label: t("syncIssues.page.title") },
+      ]}
     >
       <div className="flex flex-wrap gap-2">
         <Button

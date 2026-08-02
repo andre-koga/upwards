@@ -49,40 +49,65 @@ customizations are:
 - `calendar.tsx`: locale, logical-day, journal, and focus behavior
 - `settings-section.tsx`: product-specific settings composition
 - `floating-back-button.tsx`: product-specific mobile navigation
+- `sheet.tsx`: shared bottom/side overlay primitive for menu, notifications, and
+  projects
 
 The `app/src/components/forms/` layer composes these primitives into reusable
 Upwards form behavior. It protects feature code from primitive details and is
 used broadly across activity, task, journal, and settings dialogs.
 
-These are assets to preserve, not boilerplate to delete.
+`app/components.json` records the Vite-compatible shadcn registry configuration
+for this tree. These are assets to preserve, not boilerplate to delete.
 
 ### Inconsistencies
 
 The system is only partially standardized:
 
-- No `components.json` records the shadcn registry configuration.
 - Radix imports mix the unified `radix-ui` package with individual
   `@radix-ui/react-*` packages.
-- Several drawers and lightboxes implement overlay, dismissal, and positioning
-  manually.
 - Some forms bypass shared Input and Label primitives.
 - Focus-ring styles and control sizes vary.
 - Destructive button styles are repeated at feature call sites.
 - Chart tooltips are pointer-oriented and lack a complete keyboard/screen-reader
   path.
+- AlertDialog, Tooltip, Alert, and Separator are available; Skeleton / Badge /
+  Popover / Tabs / Table remain unadded until a product surface needs them.
+- `ConfirmFormDialog` uses AlertDialog.
+- `ResponsivePanel` exists; not every drawer has adopted it yet (notifications
+  and projects still use Sheet directly).
 
 ### Desktop behavior
 
-At `md`, `app/src/App.tsx` currently:
+At `md` and above, `AppShell` provides:
 
-- Displays a "mobile experience" notice.
-- Limits the entire app to `430px`.
-- Centers the phone-shaped frame in the viewport.
-- Keeps mobile drawers, floating controls, and navigation unchanged.
+- A persistent sidebar/navigation rail (`DesktopNav`)
+- One main content scroll owner (`#app-main` / `data-app-scroll`)
+- A fluid content column (page shells use readable `max-w-3xl` / `max-w-5xl`
+  where helpful)
+- Mobile bottom menu chrome hidden; Today date/projects/add actions move to a
+  top toolbar on desktop
+- Floating back-to-home controls hidden when the sidebar covers primary routes
+- Arrow-key and button day navigation on Today (swipe remains on touch)
+- Desktop breadcrumbs on secondary pages
+- Settings section nav beside content at `lg+`
+- Stats groups column beside charts at `lg+`
+- Journal list + selected-entry reader at `lg+`
+- Wider Friends / Logs presentation; Logs use a table-like desktop layout
 
-There is no wide-screen information architecture, persistent desktop
-navigation, or `lg`/`xl` page layout. This is a viewport simulation, not desktop
-support.
+Shared primitives now also include AlertDialog, Tooltip, Alert, and Separator.
+`ConfirmFormDialog` uses AlertDialog. `ResponsivePanel` presents Sheet on mobile
+and Dialog on desktop for shared overlay content.
+
+Still incomplete relative to the target:
+
+- Promoting notifications / projects Sheets into anchored desktop panels via
+  ResponsivePanel adoption across every drawer
+- Full keyboard/tooltip parity for every chart (weekday bars now have focus and
+  an accessible summary; others remain partial)
+- Formal screenshot / axe / Playwright verification harness
+
+Mobile below `md` keeps the bottom action bar, Sheets, swipe, and PWA-oriented
+behavior.
 
 ## Component ownership model
 
@@ -288,15 +313,15 @@ maximums. Do not impose one global `430px` limit.
 
 Pages may use master-detail and multi-column layouts:
 
-| Area | Desktop behavior |
-| --- | --- |
-| Today | Journal/day context and tasks/timeline in coordinated columns |
-| Journal | Search/entry list plus selected-entry reader |
-| Stats | Group/activity navigation beside wider charts and details |
-| Settings | Settings navigation beside the selected panel |
-| Friends | Wider request/friend lists with clear row actions |
-| Logs | Filterable, selectable table-like presentation |
-| Conflicts | Issue list beside conflict details and resolution controls |
+| Area      | Desktop behavior                                              |
+| --------- | ------------------------------------------------------------- |
+| Today     | Journal/day context and tasks/timeline in coordinated columns |
+| Journal   | Search/entry list plus selected-entry reader                  |
+| Stats     | Group/activity navigation beside wider charts and details     |
+| Settings  | Settings navigation beside the selected panel                 |
+| Friends   | Wider request/friend lists with clear row actions             |
+| Logs      | Filterable, selectable table-like presentation                |
+| Conflicts | Issue list beside conflict details and resolution controls    |
 
 Multi-column layout must collapse cleanly when resized. Component behavior
 should depend on the space it receives; container queries may be used for
@@ -304,15 +329,15 @@ chart/card density where viewport breakpoints are insufficient.
 
 ### Navigation parity
 
-| Mobile | Desktop |
-| --- | --- |
-| Menu sheet | Persistent sidebar |
-| Projects sheet | Inline/collapsible projects panel |
-| Notifications drawer | Header/sidebar panel |
-| Floating back button | Breadcrumbs or page back action |
-| Swipe day change | Header controls plus arrow keys |
-| Long press | Explicit action or context menu |
-| Tap chart point | Hover/focus plus click-to-pin |
+| Mobile               | Desktop                           |
+| -------------------- | --------------------------------- |
+| Menu sheet           | Persistent sidebar                |
+| Projects sheet       | Inline/collapsible projects panel |
+| Notifications drawer | Header/sidebar panel              |
+| Floating back button | Breadcrumbs or page back action   |
+| Swipe day change     | Header controls plus arrow keys   |
+| Long press           | Explicit action or context menu   |
+| Tap chart point      | Hover/focus plus click-to-pin     |
 
 Desktop adaptation must not create a second set of routes or divergent product
 logic. Shared route and feature state should feed both presentations.
@@ -388,13 +413,21 @@ shared primitives.
 4. Fix known labeling, focus, nested-control, tooltip, and target-size issues.
 5. Add Sheet, AlertDialog, Alert, Tooltip, Separator, and other primitives only
    as required.
+   **Done** for Sheet / AlertDialog / Alert / Tooltip / Separator.
 6. Migrate simple drawers and confirmations, then the projects drawer.
+   **Partial:** confirmations use AlertDialog; projects/notifications still Sheet.
 7. Introduce the adaptive AppShell while keeping mobile behavior unchanged.
+   **Done:** `AppShell` + `DesktopNav` replace the phone frame at `md+`.
 8. Add persistent desktop navigation and one scroll owner.
+   **Done:** sidebar rail and `#app-main` scroll owner are in place.
 9. Adapt pages incrementally, beginning with Settings and Stats before the more
    interaction-heavy Today and Journal surfaces.
+   **Started:** Settings / Stats / Journal `lg+` layouts; Friends / Logs wider;
+   breadcrumbs on secondary routes. Today multi-column still pending.
 10. Remove the desktop notice and phone-frame constraint only after navigation,
     overlays, and critical routes work at desktop widths.
+    **Done** for notice/phone frame; remaining work is overlay adoption and
+    deeper master-detail density.
 
 Do not combine primitive upgrades, Tailwind major-version upgrades, and the
 desktop redesign into one unreviewable change.

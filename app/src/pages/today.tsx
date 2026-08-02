@@ -1,4 +1,10 @@
-import { useState, useRef, type TouchEvent, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  type TouchEvent,
+  useCallback,
+  useEffect,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toDateString, fromDateString } from "@/lib/time-utils";
@@ -9,6 +15,8 @@ import { useTodayPage } from "@/hooks/use-today-page";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
 import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function consumeJournalJumpDate(): Date | null {
   try {
@@ -67,6 +75,56 @@ export default function TodayPage() {
     dailyTasks,
     refreshTasksData,
   } = useTodayPage(currentDate, dayResetTick);
+
+  const goToPreviousDay = useCallback(() => {
+    setCurrentDate((prev) => {
+      const next = new Date(prev);
+      next.setDate(next.getDate() - 1);
+      return next;
+    });
+  }, []);
+
+  const goToNextDay = useCallback(() => {
+    setCurrentDate((prev) => {
+      if (toDateString(prev) === getEffectiveToday()) return prev;
+      const next = new Date(prev);
+      next.setDate(next.getDate() + 1);
+      return next;
+    });
+  }, []);
+
+  // Desktop/keyboard equivalent of swipe day navigation.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey
+      ) {
+        return;
+      }
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.closest(
+            "input, textarea, select, [contenteditable='true'], [role='textbox']"
+          ))
+      ) {
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        goToPreviousDay();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        goToNextDay();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [goToPreviousDay, goToNextDay]);
 
   if (loading) {
     return (
@@ -155,25 +213,18 @@ export default function TodayPage() {
     if (absX < absY * SWIPE_DIRECTION_RATIO) return;
 
     if (deltaX > 0) {
-      setCurrentDate((prev) => {
-        const next = new Date(prev);
-        next.setDate(next.getDate() - 1);
-        return next;
-      });
+      goToPreviousDay();
       return;
     }
 
-    setCurrentDate((prev) => {
-      if (toDateString(prev) === getEffectiveToday()) return prev;
-      const next = new Date(prev);
-      next.setDate(next.getDate() + 1);
-      return next;
-    });
+    goToNextDay();
   };
+
+  const isToday = toDateString(currentDate) === getEffectiveToday();
 
   return (
     <div
-      className="pb-36"
+      className="pb-36 md:pb-8 md:pt-14"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -182,8 +233,35 @@ export default function TodayPage() {
         setSwipeFeedback(null);
       }}
     >
+      {/* Desktop day controls — visible keyboard/button equivalent of swipe. */}
+      <div className="mb-2 hidden items-center justify-center gap-2 px-3 md:flex">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 rounded-full"
+          onClick={goToPreviousDay}
+          aria-label={t("swipe.previousDay")}
+          title={t("swipe.previousDay")}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 rounded-full"
+          onClick={goToNextDay}
+          disabled={isToday}
+          aria-label={t("swipe.nextDay")}
+          title={t("swipe.nextDay")}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
       {swipeFeedback && (
-        <div className="pointer-events-none fixed inset-x-0 top-3 z-50 flex justify-center px-3">
+        <div className="pointer-events-none fixed inset-x-0 top-3 z-50 flex justify-center px-3 md:left-52">
           <div
             className="flex h-8 items-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs font-medium shadow-sm backdrop-blur-sm"
             style={{
@@ -206,32 +284,34 @@ export default function TodayPage() {
         </div>
       )}
 
-      <JournalCard
-        key={toDateString(currentDate)}
-        currentDate={currentDate}
-        journal={journal}
-        loadJournalMeta={loadJournalMeta}
-      />
-
-      <div className="p-3">
-        <DailyTasksList
-          activities={activities}
-          lookupActivities={lookupActivities}
-          lookupGroups={lookupGroups}
-          daily={dailyTasks}
+      <div className={cn("md:mx-auto md:max-w-3xl")}>
+        <JournalCard
+          key={toDateString(currentDate)}
           currentDate={currentDate}
-          onDateChange={setCurrentDate}
-          entryDates={entryDates}
-          bookmarkedDates={bookmarkedDates}
+          journal={journal}
           loadJournalMeta={loadJournalMeta}
-          onTasksDataChanged={() => {
-            void refreshTasksData();
-          }}
         />
 
-        <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground">
-          {quote}
-        </blockquote>
+        <div className="p-3">
+          <DailyTasksList
+            activities={activities}
+            lookupActivities={lookupActivities}
+            lookupGroups={lookupGroups}
+            daily={dailyTasks}
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            entryDates={entryDates}
+            bookmarkedDates={bookmarkedDates}
+            loadJournalMeta={loadJournalMeta}
+            onTasksDataChanged={() => {
+              void refreshTasksData();
+            }}
+          />
+
+          <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground md:pb-4">
+            {quote}
+          </blockquote>
+        </div>
       </div>
     </div>
   );

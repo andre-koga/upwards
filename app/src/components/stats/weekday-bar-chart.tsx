@@ -17,10 +17,19 @@ export function WeekdayBarChart({
   const { tooltip, visible, show } = useFloatingTooltip();
   const containerRef = useRef<HTMLDivElement>(null);
   const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>, text: string) => {
+  const reveal = (el: HTMLElement, text: string) => {
     const cRect = containerRef.current?.getBoundingClientRect();
-    const eRect = e.currentTarget.getBoundingClientRect();
+    const eRect = el.getBoundingClientRect();
     show(
       eRect.left - (cRect?.left ?? 0) + eRect.width / 2,
       eRect.top - (cRect?.top ?? 0),
@@ -30,11 +39,26 @@ export function WeekdayBarChart({
 
   const maxMs = weekdayTimerMs ? Math.max(...weekdayTimerMs, 1) : 1;
 
+  const summary = weekdayTimerMs
+    ? dayNames
+        .map((name, i) => `${name}: ${formatDuration(weekdayTimerMs[i])}`)
+        .join(". ")
+    : dayNames
+        .map((name, i) => {
+          const [done, scheduled] = weekdayCompletion![i];
+          const pct = scheduled > 0 ? Math.round((done / scheduled) * 100) : 0;
+          return `${name}: ${pct}%`;
+        })
+        .join(". ");
+
   return (
     <div ref={containerRef} className="relative">
+      <p className="sr-only">{summary}</p>
       <div
         className="flex w-full items-end gap-1.5"
         style={{ height: MAX_BAR_HEIGHT_PX + 20 }}
+        role="list"
+        aria-label="Weekday chart"
       >
         {Array.from({ length: 7 }).map((_, i) => {
           let barHeight: number;
@@ -65,13 +89,25 @@ export function WeekdayBarChart({
           }
 
           return (
-            <div key={i} className="flex flex-1 flex-col items-center gap-1">
-              <div
-                className={`w-full cursor-pointer rounded-sm ${bgClass}`}
+            <div
+              key={i}
+              className="flex flex-1 flex-col items-center gap-1"
+              role="listitem"
+            >
+              <button
+                type="button"
+                className={`w-full cursor-pointer rounded-sm ${bgClass} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
                 style={{ height: barHeight, backgroundColor: customColor }}
-                onClick={(e) => handleClick(e, tooltipText)}
+                aria-label={`${dayNames[i]}: ${tooltipText}`}
+                onClick={(e) => reveal(e.currentTarget, tooltipText)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    reveal(e.currentTarget, tooltipText);
+                  }
+                }}
               />
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[10px] text-muted-foreground" aria-hidden>
                 {dayLabels[i]}
               </span>
             </div>

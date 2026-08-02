@@ -54,6 +54,11 @@ export default function GroupStatsPage() {
       backTo="/stats"
       backTitle={t("backToStats")}
       loading={loading}
+      className="md:max-w-5xl"
+      breadcrumbs={[
+        { label: t("title"), to: "/stats" },
+        { label: stats?.group.name ?? t("group") },
+      ]}
     >
       {error && <p className="text-sm text-destructive">{t("loadError")}</p>}
       {!loading && !error && !stats && (

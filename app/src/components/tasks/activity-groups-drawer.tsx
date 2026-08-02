@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { ChevronDown, ChevronLeft, Plus, X } from "lucide-react";
@@ -36,6 +36,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+
+/** Matches SheetContent `data-[state=closed]:duration-300`. */
+const SHEET_CLOSE_MS = 300;
+
+type PendingDrawerContent =
+  | { type: "groups" }
+  | { type: "activities"; group: ActivityGroup };
 
 async function loadActivityGroupLists(): Promise<{
   active: ActivityGroup[];
@@ -268,27 +275,61 @@ export default function ActivityGroupsDrawer({
     setShowArchivedGroups(false);
   };
 
+  const pendingContentRef = useRef<PendingDrawerContent | null>(null);
+
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
-    if (!nextOpen) {
+    // Keep current view while a close→reopen handoff is pending.
+    if (!nextOpen && !pendingContentRef.current) {
       resetDrawerView();
     }
   };
 
   const closeDrawer = () => {
+    pendingContentRef.current = null;
     setOpen(false);
     resetDrawerView();
   };
 
   const handleOpenGroup = (group: ActivityGroup) => {
-    setSelectedGroup(group);
-    setView("activities");
+    pendingContentRef.current = { type: "activities", group };
+    setOpen(false);
   };
 
   const handleBackToGroups = () => {
-    setSelectedGroup(null);
-    setView("groups");
+    pendingContentRef.current = { type: "groups" };
+    setOpen(false);
   };
+
+  // After the sheet finishes closing, swap content and reopen so groups ↔
+  // activities get the same slide-out / slide-in handoff as before Sheets.
+  useEffect(() => {
+    if (open) return;
+    const pending = pendingContentRef.current;
+    if (!pending) return;
+
+    const closeMs =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? 0
+        : SHEET_CLOSE_MS;
+
+    const timeoutId = window.setTimeout(() => {
+      if (pendingContentRef.current !== pending) return;
+      pendingContentRef.current = null;
+      if (pending.type === "activities") {
+        setSelectedGroup(pending.group);
+        setView("activities");
+      } else {
+        setSelectedGroup(null);
+        setView("groups");
+        setShowArchivedGroups(false);
+      }
+      setOpen(true);
+    }, closeMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [open]);
 
   const incompleteActivities = groupActivities.filter((a) => !a.completed_at);
   const completedActivities = groupActivities.filter((a) => !!a.completed_at);

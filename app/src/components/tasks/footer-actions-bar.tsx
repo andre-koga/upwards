@@ -238,14 +238,15 @@ export default function FooterActionsBar({
           </div>
         </SheetContent>
 
-        <div className="fixed bottom-0 left-0 right-0 z-[30] h-12 border-t border-border bg-background"></div>
-        <div className="fixed inset-x-2 bottom-4 z-[40] flex items-center gap-2 pb-2">
+        {/* Mobile bottom chrome — hidden on desktop where AppShell owns navigation. */}
+        <div className="fixed bottom-0 left-0 right-0 z-[30] h-12 border-t border-border bg-background md:hidden" />
+        <div className="fixed inset-x-2 bottom-4 z-[40] flex items-center gap-2 pb-2 md:bottom-auto md:left-[calc(13rem+0.5rem)] md:right-4 md:top-3 md:pb-0">
           <SheetTrigger asChild>
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="h-10 w-10 rounded-full border-border bg-background shadow-lg"
+              className="h-10 w-10 rounded-full border-border bg-background shadow-lg md:hidden"
               onClick={() => {
                 if (!pathsDrawerOpen) {
                   setHasUnreadWhatsNew(hasUnreadWhatsNewRelease());

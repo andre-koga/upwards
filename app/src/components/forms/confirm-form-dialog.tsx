@@ -1,7 +1,16 @@
 import type { ReactNode } from "react";
-import { FormDialog } from "@/components/forms/form-dialog";
-import { FormDialogActions } from "@/components/forms/form-dialog-actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { dialogPrimaryDestructiveClassName } from "@/components/forms/styles";
+import { cn } from "@/lib/utils";
 
 interface ConfirmFormDialogProps {
   open: boolean;
@@ -21,7 +30,7 @@ interface ConfirmFormDialogProps {
   contentClassName?: string;
 }
 
-/** Shared shell for simple confirm/cancel dialogs: message plus two actions. */
+/** Shared shell for simple confirm/cancel dialogs via AlertDialog. */
 export function ConfirmFormDialog({
   open,
   onOpenChange,
@@ -35,26 +44,34 @@ export function ConfirmFormDialog({
   busy = false,
   contentClassName,
 }: ConfirmFormDialogProps) {
+  const body = description ?? message;
+
   return (
-    <FormDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={title}
-      description={description ?? message}
-      contentClassName={contentClassName}
-    >
-      <FormDialogActions
-        onConfirm={onConfirm}
-        confirmLabel={confirmLabel}
-        confirmDisabled={busy}
-        confirmClassName={
-          destructive ? dialogPrimaryDestructiveClassName : undefined
-        }
-        secondaryAction={{
-          label: cancelLabel,
-          onClick: () => onOpenChange(false),
-        }}
-      />
-    </FormDialog>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className={contentClassName}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div>{body}</div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={busy}
+            className={cn(
+              destructive ? dialogPrimaryDestructiveClassName : undefined
+            )}
+            onClick={(event) => {
+              // Keep dialog open until the caller finishes (busy) or closes.
+              event.preventDefault();
+              onConfirm();
+            }}
+          >
+            {confirmLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
