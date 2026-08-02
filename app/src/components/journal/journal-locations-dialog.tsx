@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, MapPin, Search, Trash2 } from "lucide-react";
 import { FormDialog, FormDialogActions, FormStack } from "@/components/forms";
@@ -12,7 +12,6 @@ import {
   normalizeJournalLocationRoute,
   searchLocations,
 } from "@/lib/journal";
-import { cn } from "@/lib/utils";
 import JournalLocationMapPicker from "./journal-location-map-picker";
 
 interface JournalLocationsDialogProps {
@@ -49,8 +48,6 @@ export default function JournalLocationsDialog({
   const [draftRoute, setDraftRoute] = useState<JournalLocationRoute>(() =>
     normalizeJournalLocationRoute(route)
   );
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editSearch, setEditSearch] = useState<SearchState>(EMPTY_SEARCH);
   const [addSearch, setAddSearch] = useState<SearchState>(EMPTY_SEARCH);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(
     null
@@ -63,46 +60,10 @@ export default function JournalLocationsDialog({
     setPrevOpen(open);
     if (open) {
       setDraftRoute(normalizeJournalLocationRoute(route));
-      setEditingIndex(null);
-      setEditSearch(EMPTY_SEARCH);
       setAddSearch(EMPTY_SEARCH);
       setDeleteConfirmIndex(null);
     }
   }
-
-  useEffect(() => {
-    if (!open || editingIndex === null || !canEdit) return;
-    const trimmed = editSearch.query.trim();
-    if (trimmed.length < 2) return;
-
-    let cancelled = false;
-    const timeout = window.setTimeout(() => {
-      setEditSearch((prev) => ({ ...prev, searching: true }));
-      searchLocations(trimmed)
-        .then((matches) => {
-          if (cancelled) return;
-          setEditSearch((prev) => ({ ...prev, results: matches, error: null }));
-        })
-        .catch(() => {
-          if (cancelled) return;
-          setEditSearch((prev) => ({
-            ...prev,
-            results: [],
-            error: t("locations.searchError"),
-          }));
-        })
-        .finally(() => {
-          if (!cancelled) {
-            setEditSearch((prev) => ({ ...prev, searching: false }));
-          }
-        });
-    }, 350);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-    };
-  }, [open, canEdit, editingIndex, editSearch.query, t]);
 
   useEffect(() => {
     if (!open || !canEdit) return;
@@ -138,44 +99,6 @@ export default function JournalLocationsDialog({
     };
   }, [open, canEdit, addSearch.query, t]);
 
-  const toggleEdit = (index: number) => {
-    if (!canEdit) return;
-    if (editingIndex === index) {
-      setEditingIndex(null);
-      setEditSearch(EMPTY_SEARCH);
-      return;
-    }
-    setEditingIndex(index);
-    setEditSearch(EMPTY_SEARCH);
-  };
-
-  const handleEditQueryChange = (value: string) => {
-    setEditSearch((prev) => ({
-      ...prev,
-      query: value,
-      results: value.trim().length < 2 ? [] : prev.results,
-      searching: value.trim().length < 2 ? false : prev.searching,
-    }));
-  };
-
-  const applyEditResult = (location: LocationData) => {
-    if (editingIndex === null) return;
-    const cleanedLocation = {
-      ...location,
-      displayName: location.displayName.trim(),
-    };
-    if (!cleanedLocation.displayName) return;
-    const targetIndex = editingIndex;
-    setDraftRoute((prev) => {
-      const without = {
-        locations: prev.locations.filter((_, idx) => idx !== targetIndex),
-      };
-      return mergeJournalLocationRoute(without, cleanedLocation);
-    });
-    setEditingIndex(null);
-    setEditSearch(EMPTY_SEARCH);
-  };
-
   const handleAddQueryChange = (value: string) => {
     setAddSearch((prev) => ({
       ...prev,
@@ -200,8 +123,6 @@ export default function JournalLocationsDialog({
       return normalizeJournalLocationRoute({ locations });
     });
     setDeleteConfirmIndex(null);
-    setEditingIndex(null);
-    setEditSearch(EMPTY_SEARCH);
   };
 
   const handleSave = () => {
@@ -226,41 +147,6 @@ export default function JournalLocationsDialog({
         t("locations.thisLocation")
       : t("locations.thisLocation");
 
-  const renderResults = (
-    state: SearchState,
-    onPick: (loc: LocationData) => void
-  ) => {
-    if (state.query.trim().length < 2) return null;
-    return (
-      <div className="max-h-36 space-y-1 overflow-y-auto">
-        {state.results.length > 0 ? (
-          state.results.map((result) => (
-            <Button
-              key={`${result.displayName}-${result.lat}-${result.lon}`}
-              type="button"
-              variant="ghost"
-              onClick={() => onPick(result)}
-              className="h-auto w-full flex-col items-stretch justify-center gap-0.5 rounded-md px-2 py-2 text-left font-normal shadow-none"
-            >
-              <span className="truncate font-medium">{result.displayName}</span>
-              <span className="truncate text-xs text-muted-foreground">
-                {[result.state, result.country].filter(Boolean).join(", ")}
-              </span>
-            </Button>
-          ))
-        ) : state.searching ? (
-          <p className="px-2 py-1 text-xs text-muted-foreground">
-            {t("locations.searching")}
-          </p>
-        ) : (
-          <p className="px-2 py-1 text-xs text-muted-foreground">
-            {t("locations.noMatches")}
-          </p>
-        )}
-      </div>
-    );
-  };
-
   return (
     <>
       <FormDialog
@@ -282,81 +168,36 @@ export default function JournalLocationsDialog({
           {draftRoute.locations.length > 0 ? (
             <div className="space-y-2">
               {draftRoute.locations.map((loc, index) => (
-                <Fragment
+                <div
                   key={`${index}-${loc.displayName}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
+                  className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5"
                 >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => toggleEdit(index)}
-                    disabled={!canEdit}
-                    aria-pressed={editingIndex === index}
-                    className={cn(
-                      "h-auto min-h-0 w-full justify-start gap-2.5 rounded-lg py-1.5 pl-2 pr-2 text-left font-normal shadow-none",
-                      editingIndex === index
-                        ? "border-primary bg-muted"
-                        : "border-border"
-                    )}
-                  >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5" aria-hidden />
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5" aria-hidden />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">
+                      {loc.displayName}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">
-                        {loc.displayName}
-                      </span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {[loc.state, loc.country].filter(Boolean).join(", ") ||
-                          t("locations.manualPlace")}
-                      </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {[loc.state, loc.country].filter(Boolean).join(", ") ||
+                        t("locations.manualPlace")}
                     </span>
-                  </Button>
-
-                  {editingIndex === index ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className="relative flex-1">
-                          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                          <Input
-                            autoFocus
-                            value={editSearch.query}
-                            onChange={(event) =>
-                              handleEditQueryChange(event.target.value)
-                            }
-                            placeholder={t(
-                              "locations.searchReplacePlaceholder"
-                            )}
-                            className="pl-9"
-                            disabled={!canEdit}
-                          />
-                          {editSearch.searching ? (
-                            <Loader2
-                              className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground"
-                              aria-hidden
-                            />
-                          ) : null}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-9 w-9 shrink-0 border-destructive text-destructive"
-                          onClick={() => setDeleteConfirmIndex(index)}
-                          title={t("locations.deleteLocation")}
-                          aria-label={t("locations.deleteLocation")}
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                        </Button>
-                      </div>
-                      {renderResults(editSearch, applyEditResult)}
-                      {editSearch.error ? (
-                        <p className="text-xs text-destructive">
-                          {editSearch.error}
-                        </p>
-                      ) : null}
-                    </div>
+                  </span>
+                  {canEdit ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 border-destructive text-destructive"
+                      onClick={() => setDeleteConfirmIndex(index)}
+                      title={t("locations.deleteLocation")}
+                      aria-label={t("locations.deleteLocation")}
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden />
+                    </Button>
                   ) : null}
-                </Fragment>
+                </div>
               ))}
             </div>
           ) : canEdit ? (
@@ -369,7 +210,7 @@ export default function JournalLocationsDialog({
             </p>
           )}
 
-          {canAddLocation && editingIndex == null ? (
+          {canAddLocation ? (
             <div className="space-y-2">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -387,7 +228,38 @@ export default function JournalLocationsDialog({
                   />
                 ) : null}
               </div>
-              {renderResults(addSearch, applyAddResult)}
+              {addSearch.query.trim().length >= 2 ? (
+                <div className="max-h-36 space-y-1 overflow-y-auto">
+                  {addSearch.results.length > 0 ? (
+                    addSearch.results.map((result) => (
+                      <Button
+                        key={`${result.displayName}-${result.lat}-${result.lon}`}
+                        type="button"
+                        variant="ghost"
+                        onClick={() => applyAddResult(result)}
+                        className="h-auto w-full flex-col items-stretch justify-center gap-0.5 rounded-md px-2 py-2 text-left font-normal shadow-none"
+                      >
+                        <span className="truncate font-medium">
+                          {result.displayName}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {[result.state, result.country]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </span>
+                      </Button>
+                    ))
+                  ) : addSearch.searching ? (
+                    <p className="px-2 py-1 text-xs text-muted-foreground">
+                      {t("locations.searching")}
+                    </p>
+                  ) : (
+                    <p className="px-2 py-1 text-xs text-muted-foreground">
+                      {t("locations.noMatches")}
+                    </p>
+                  )}
+                </div>
+              ) : null}
               {addSearch.error ? (
                 <p className="text-xs text-destructive">{addSearch.error}</p>
               ) : null}
