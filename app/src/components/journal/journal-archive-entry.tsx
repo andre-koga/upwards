@@ -3,13 +3,19 @@ import { MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { JournalEntry } from "@/lib/db/types";
-import { getJournalPhotoUrl, getJournalVideoPlaybackUrl } from "@/lib/journal";
+import {
+  getJournalPhotoUrl,
+  getJournalVideoPlaybackUrl,
+  normalizeJournalLocationRoute,
+} from "@/lib/journal";
 import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
 import { fromDateString } from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import JournalVideoSection from "@/components/journal/journal-video-section";
+import JournalLocationMapPicker from "@/components/journal/journal-location-map-picker";
 import MediaLightbox from "@/components/journal/media-lightbox";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface JournalArchiveEntryProps {
@@ -171,6 +177,7 @@ export default function JournalArchiveEntry({
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
   const [videoOpen, setVideoOpen] = useState(false);
+  const [placesMapOpen, setPlacesMapOpen] = useState(false);
 
   const date = fromDateString(entry.entry_date);
   const dayNumber = date.getDate();
@@ -183,7 +190,9 @@ export default function JournalArchiveEntry({
     : null;
   const photoPaths = entry.photo_paths ?? [];
   const hasVideo = Boolean(videoSrc || entry.video_thumbnail);
-  const locations = entry.location?.locations ?? [];
+  const locations = normalizeJournalLocationRoute(
+    entry.location ?? { locations: [] }
+  ).locations;
   const isBookmarked = Boolean(entry.is_bookmarked);
   const bookmarkGradient = isBookmarked
     ? bookmarkGradientFor(entry.id || entry.entry_date)
@@ -242,25 +251,34 @@ export default function JournalArchiveEntry({
             <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
               {entry.title?.trim() || t("untitled")}
             </h2>
-            {locations.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {locations.map((loc, index) => (
-                  <span
-                    key={`${index}-${loc.displayName}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
-                    className="inline-flex max-w-full items-center gap-1 rounded-full border border-border/80 px-2 py-0.5 text-xs text-muted-foreground"
-                  >
-                    <MapPin className="h-3 w-3 shrink-0" />
-                    <span className="min-w-0 truncate">{loc.displayName}</span>
-                  </span>
-                ))}
-              </div>
-            ) : null}
             {entry.text_content?.trim() ? (
               <p className="whitespace-pre-wrap font-crimson text-base leading-relaxed text-muted-foreground">
                 {entry.text_content}
               </p>
             ) : null}
           </button>
+
+          {locations.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5 px-3 pb-2.5">
+              {locations.map((loc, index) => (
+                <Button
+                  key={`${index}-${loc.displayName}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
+                  type="button"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPlacesMapOpen(true);
+                  }}
+                  className="inline-flex h-auto max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-left text-xs font-normal text-muted-foreground shadow-none"
+                  title={t("locations.openFullscreenMap")}
+                  aria-label={`${loc.displayName}. ${t("locations.openFullscreenMap")}`}
+                >
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span className="min-w-0 truncate">{loc.displayName}</span>
+                </Button>
+              ))}
+            </div>
+          ) : null}
 
           {(hasVideo || photoPaths.length > 0) && (
             <div className="space-y-1.5 px-3 pb-2.5">
@@ -310,6 +328,15 @@ export default function JournalArchiveEntry({
           playsInline
         />
       </MediaLightbox>
+
+      {locations.length > 0 ? (
+        <JournalLocationMapPicker
+          locations={locations}
+          showPreview={false}
+          fullscreenOpen={placesMapOpen}
+          onFullscreenOpenChange={setPlacesMapOpen}
+        />
+      ) : null}
     </article>
   );
 }

@@ -11,6 +11,7 @@ import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import {
   getJournalVideoPlaybackUrl,
   mergeJournalLocationRoute,
+  normalizeJournalLocationRoute,
 } from "@/lib/journal";
 import { useAuth } from "@/lib/use-auth";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -24,6 +25,7 @@ import JournalVideoSection, {
 import JournalTextSection from "@/components/journal/journal-text-section";
 import JournalEditDialog from "@/components/journal/journal-edit-dialog";
 import JournalLocationsDialog from "@/components/journal/journal-locations-dialog";
+import JournalLocationMapPicker from "@/components/journal/journal-location-map-picker";
 import JournalMetaBar from "@/components/journal/journal-meta-bar";
 import JournalPhotoStack from "@/components/journal/journal-photo-stack";
 import type { LocationData } from "@/lib/db/types";
@@ -42,6 +44,7 @@ export default function JournalCard({
 }: JournalCardProps) {
   const [journalEditOpen, setJournalEditOpen] = useState(false);
   const [journalLocationsOpen, setJournalLocationsOpen] = useState(false);
+  const [placesMapOpen, setPlacesMapOpen] = useState(false);
   const [suppressJournalOpenHitArea, setSuppressJournalOpenHitArea] =
     useState(false);
   const isOnline = useOnlineStatus();
@@ -68,7 +71,9 @@ export default function JournalCard({
     journal.draftLocations.length > 0
       ? journal.draftLocationRoute
       : journal.persistedLocationRoute;
-  const knownLocations = knownLocationRoute.locations;
+  const knownLocations = normalizeJournalLocationRoute(
+    knownLocationRoute
+  ).locations;
 
   const displayLocations = knownLocations;
 
@@ -252,7 +257,12 @@ export default function JournalCard({
               locations={
                 displayLocations.length > 0 ? displayLocations : undefined
               }
-              onLocationsClick={() => handleLocationsOpenChange(true)}
+              onLocationsEditClick={() => handleLocationsOpenChange(true)}
+              onPlacesMapClick={
+                displayLocations.length > 0
+                  ? () => setPlacesMapOpen(true)
+                  : undefined
+              }
               journalCompletionStreak={
                 journal.isJournalComplete &&
                 typeof journal.journalCompletionStreak === "number"
@@ -298,6 +308,14 @@ export default function JournalCard({
             saveLocationRoute(route);
           }}
         />
+        {displayLocations.length > 0 ? (
+          <JournalLocationMapPicker
+            locations={displayLocations}
+            showPreview={false}
+            fullscreenOpen={placesMapOpen}
+            onFullscreenOpenChange={setPlacesMapOpen}
+          />
+        ) : null}
 
         <JournalMetaBar journal={journal} onEditRequest={openJournalEditor} />
       </div>
