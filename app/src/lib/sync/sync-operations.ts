@@ -18,6 +18,11 @@ import {
   type DefinitionConflictEntityType,
 } from "./conflict-resolution";
 import { saveOpsRpcAvailable, loadOpsRpcAvailable } from "./sync-storage";
+import {
+  applyAcceptedProjectionOp,
+  isProjectionUpsertEntityType,
+  withSuppressedProjectionEnqueue,
+} from "./projection-sync";
 
 export interface SubmitSyncOperationInput {
   operation_id: string;
@@ -508,11 +513,17 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
 
     if (result.status === "conflict") {
       let conflictPayload: unknown = local.payload;
+      let title = "Sync conflict";
+      let detail = "Your change conflicted with a newer version on another device.";
+
       if (
         local.entity_id &&
         (local.entity_type === "activity_definition" ||
           local.entity_type === "group_definition")
       ) {
+        title = "Definition update conflict";
+        detail =
+          "Your change conflicted with a newer definition on another device.";
         try {
           conflictPayload = await buildDefinitionConflictPayload({
             entity_type: local.entity_type as DefinitionConflictEntityType,
@@ -523,13 +534,16 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
         } catch (err) {
           console.warn("[sync] failed to enrich local conflict payload", err);
         }
+      } else if (local.entity_type === "journal_entry") {
+        title = "Journal entry conflict";
+        detail =
+          "This journal entry was edited on another device. Open Sync issues to choose which version to keep.";
       }
 
       await recordSyncIssue({
         kind: "conflict",
-        title: "Definition update conflict",
-        detail:
-          "Your change conflicted with a newer definition on another device.",
+        title,
+        detail,
         entity_type: local.entity_type,
         entity_id: local.entity_id,
         operation_id: local.operation_id,
@@ -591,9 +605,20 @@ export async function pullAndApplyOperations(
       op.entity_type === "activity_definition" ||
       op.entity_type === "group_definition"
     ) {
-      await applyAcceptedDefinitionOp(op);
+      await withSuppressedProjectionEnqueue(() =>
+        applyAcceptedDefinitionOp(op)
+      );
     } else if (op.entity_type === "daily_entry") {
-      await applyAcceptedDailyEntryOp(op);
+      await withSuppressedProjectionEnqueue(() =>
+        applyAcceptedDailyEntryOp(op)
+      );
+    } else if (
+      isProjectionUpsertEntityType(op.entity_type) &&
+      op.operation_type === "projection.upsert"
+    ) {
+      await withSuppressedProjectionEnqueue(() =>
+        applyAcceptedProjectionOp(op)
+      );
     }
   }
 

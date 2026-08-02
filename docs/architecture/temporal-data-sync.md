@@ -357,6 +357,7 @@ need a repair tool to define older schedule/target periods manually.
 
 - `20260801120000_temporal_definition_versions_and_ops.sql`
 - `20260802010000_definition_field_level_merge.sql`
+- `20260802120000_projection_row_ops.sql`
 
 Apply both in the Supabase SQL editor (or CLI) before relying on multi-device conflict/merge behavior. Until they are applied, the client falls back to classic LWW row sync.
 

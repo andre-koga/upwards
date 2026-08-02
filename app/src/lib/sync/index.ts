@@ -27,6 +27,10 @@ import {
 } from "./sync-operations";
 import { recordSyncIssue } from "./sync-issues-store";
 import { touchLocalDevice } from "./device-id";
+import {
+  enqueueProjectionUpsertForTable,
+  OPS_MANAGED_SYNC_TABLES,
+} from "./projection-sync";
 
 export interface SyncState {
   isSyncing: boolean;
@@ -227,6 +231,48 @@ class SyncEngine {
     }
 
     this.hasMutationHooks = true;
+
+    for (const table of OPS_MANAGED_SYNC_TABLES) {
+      const dexieTable = TABLE_MAP[table];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const localTable = db[dexieTable] as any;
+
+      localTable.hook(
+        "creating",
+        (primKey: unknown, obj: Record<string, unknown>) => {
+          const id =
+            primKey !== undefined && primKey !== null
+              ? String(primKey)
+              : obj?.id !== undefined
+                ? String(obj.id)
+                : undefined;
+          if (!id) return;
+          void enqueueProjectionUpsertForTable(table, { ...obj, id });
+        }
+      );
+
+      localTable.hook(
+        "updating",
+        (
+          mods: Record<string, unknown>,
+          primKey: unknown,
+          obj: Record<string, unknown>
+        ) => {
+          const id =
+            primKey !== undefined && primKey !== null
+              ? String(primKey)
+              : undefined;
+          if (!id) return;
+          const baseRevision =
+            typeof obj.updated_at === "string" ? obj.updated_at : null;
+          void enqueueProjectionUpsertForTable(
+            table,
+            { ...obj, ...mods, id },
+            baseRevision
+          );
+        }
+      );
+    }
   }
 
   private canSync(): boolean {
@@ -242,42 +288,8 @@ class SyncEngine {
         withLocalSyncMetadataWrites: (op) =>
           this.withLocalSyncMetadataWrites(op),
       },
-      { forceAll: false }
+      { opsSyncActive: false }
     );
-  }
-
-  /**
-   * Force push: push ALL local Dexie data to Supabase, ignoring synced_at.
-   * Use when local data exists but wasn't pushed (e.g. pre-sync data).
-   * Call from Settings when user wants to force cloud to match local.
-   */
-  async forcePushToCloud(): Promise<void> {
-    if (!this.canSync() || !supabase) return;
-    this.clearDirtyIds();
-    this.setState({ isSyncing: true, lastError: null });
-    try {
-      const { failedTables } = await runPushInternal(
-        {
-          withLocalSyncMetadataWrites: (op) =>
-            this.withLocalSyncMetadataWrites(op),
-        },
-        { forceAll: true }
-      );
-      if (failedTables.length > 0) {
-        const msg = `Upload failed for: ${failedTables.join(", ")}. Try again.`;
-        logError("Force push to cloud failed", new Error(msg));
-        this.setState({ lastError: msg });
-      }
-    } catch (err) {
-      const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
-      logError("Force push to cloud failed", err);
-      this.setState({ lastError: msg });
-    } finally {
-      this.setState({ isSyncing: false });
-      if (this.hasDirtyIds() && this.canSync()) {
-        void this.sync();
-      }
-    }
   }
 
   async pull(options?: { opsSyncActive?: boolean }): Promise<void> {
@@ -322,7 +334,7 @@ class SyncEngine {
           withLocalSyncMetadataWrites: (op) =>
             this.withLocalSyncMetadataWrites(op),
         },
-        { forceAll: false, opsSyncActive }
+        { opsSyncActive }
       );
       if (failedTables.length > 0) {
         const msg = `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`;
@@ -382,7 +394,7 @@ class SyncEngine {
           withLocalSyncMetadataWrites: (op) =>
             this.withLocalSyncMetadataWrites(op),
         },
-        { forceAll: false, opsSyncActive }
+        { opsSyncActive }
       );
     } catch (err) {
       console.warn("[sync] pushBeforeSignOut failed (non-fatal):", err);

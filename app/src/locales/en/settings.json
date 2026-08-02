@@ -101,9 +101,7 @@
   },
   "sync": {
     "title": "Cloud sync",
-    "description": "Force push uploads all local data to the cloud, overwriting remote with local. Use when you have local data that is not syncing.",
-    "forcePush": "Force push to cloud",
-    "pushing": "Pushing…",
+    "description": "Your data syncs automatically. Open Sync issues to review conflicts or errors.",
     "issuesLink": "Sync issues",
     "issuesBadge": "{{count}} open sync issues"
   },

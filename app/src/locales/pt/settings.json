@@ -101,9 +101,7 @@
   },
   "sync": {
     "title": "Sincronização na nuvem",
-    "description": "O envio forçado manda todos os dados locais para a nuvem e substitui os dados remotos pelos dados deste dispositivo. Use se tiver dados locais que não estão sincronizando.",
-    "forcePush": "Forçar envio para a nuvem",
-    "pushing": "Enviando…",
+    "description": "Seus dados são sincronizados automaticamente. Abra Problemas de sincronização para revisar conflitos ou erros.",
     "issuesLink": "Problemas de sincronização",
     "issuesBadge": "{{count}} problemas de sincronização abertos"
   },
