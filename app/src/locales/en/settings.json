@@ -101,9 +101,7 @@
   },
   "sync": {
     "title": "Cloud sync",
-    "description": "Force push uploads all local data to the cloud, overwriting remote with local. Use when you have local data that is not syncing.",
-    "forcePush": "Force push to cloud",
-    "pushing": "Pushing…",
+    "description": "Your data syncs automatically. Open Sync issues to review conflicts or errors.",
     "issuesLink": "Sync issues",
     "issuesBadge": "{{count}} open sync issues"
   },
@@ -192,6 +190,29 @@
         "keepTheirs": "Keep theirs",
         "combine": "Combine",
         "defer": "Decide later"
+      },
+      "journal": {
+        "summary": "Two versions of this journal entry need a decision.",
+        "untitled": "Journal entry",
+        "untitledWithDate": "Journal for {{date}}",
+        "entryDate": "Date: {{date}}",
+        "consequence": "Your choice updates this journal entry and syncs it to your other devices.",
+        "fields": {
+          "entry_date": "Date",
+          "title": "Title",
+          "text_content": "Text",
+          "day_emoji": "Emoji",
+          "is_bookmarked": "Bookmarked",
+          "video_path": "Video",
+          "video_thumbnail": "Video thumbnail",
+          "photo_paths": "Photos",
+          "is_journal_complete": "Complete",
+          "journal_entry_number": "Entry number",
+          "journal_completion_streak": "Completion streak",
+          "journal_completed_at": "Completed at",
+          "location": "Places",
+          "deleted_at": "Deleted"
+        }
       }
     }
   },

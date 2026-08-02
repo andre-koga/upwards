@@ -17,6 +17,7 @@ import {
   isOpOwnedProjectionTable,
   stripOpOwnedFields,
 } from "./op-owned-fields";
+import { OPS_MANAGED_SYNC_TABLES } from "./projection-sync";
 import { listOpenConflictEntityIds } from "./sync-issues-store";
 
 export interface PushInternalContext {
@@ -26,12 +27,11 @@ export interface PushInternalContext {
 export async function runPushInternal(
   ctx: PushInternalContext,
   options: {
-    forceAll: boolean;
     /** When true, strip op-owned fields so LWW cannot undo sequence merges. */
     opsSyncActive?: boolean;
   }
 ): Promise<{ failedTables: string[] }> {
-  const { forceAll, opsSyncActive = false } = options;
+  const { opsSyncActive = false } = options;
   const failedTables: string[] = [];
   if (!supabase) return { failedTables };
   const userId = getCachedUserId();
@@ -42,14 +42,16 @@ export async function runPushInternal(
     : new Set<string>();
 
   for (const table of SYNC_TABLES) {
+    if (opsSyncActive && OPS_MANAGED_SYNC_TABLES.includes(table)) {
+      continue;
+    }
+
     const dexieTable = TABLE_MAP[table];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let records: any[] = await (db[dexieTable] as any)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((r: any) =>
-        forceAll ? true : !r.synced_at || r.updated_at > r.synced_at
-      )
+      .filter((r: any) => !r.synced_at || r.updated_at > r.synced_at)
       .toArray();
 
     if (

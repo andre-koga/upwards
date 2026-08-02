@@ -12,6 +12,7 @@ import {
   OP_OWNED_DAILY_ENTRY_FIELDS,
   OP_OWNED_GROUP_FIELDS,
 } from "./op-owned-fields";
+import { OPS_MANAGED_SYNC_TABLES } from "./projection-sync";
 import { listOpenConflictEntityIds } from "./sync-issues-store";
 
 export interface PullContext {
@@ -75,6 +76,10 @@ export async function runPull(ctx: PullContext): Promise<string> {
 
   await ctx.withSuppressedMutationSignals(async () => {
     for (const table of SYNC_TABLES) {
+      if (opsSyncActive && OPS_MANAGED_SYNC_TABLES.includes(table)) {
+        continue;
+      }
+
       const dexieTable = TABLE_MAP[table];
 
       const { data, error } = await client
