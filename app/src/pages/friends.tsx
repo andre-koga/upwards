@@ -100,6 +100,8 @@ export default function FriendsPage() {
       title={t("title")}
       subtitle={t("subtitle")}
       titleIcon={<Users className="h-6 w-6" />}
+      className="md:max-w-4xl"
+      breadcrumbs={[{ label: tNav("today"), to: "/" }, { label: t("title") }]}
     >
       {!profileLoading && !username && (
         <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">

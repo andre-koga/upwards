@@ -17,32 +17,44 @@ interface LogItemProps {
 function LogItem({ log, getIcon, getTimestamp }: LogItemProps) {
   const [copied, setCopied] = useState(false);
 
-  const handleClick = () => {
+  const handleActivate = () => {
     const logText = `${log.context}: ${log.message}`;
-    navigator.clipboard.writeText(logText);
+    void navigator.clipboard.writeText(logText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <div
-      onClick={handleClick}
-      className="relative flex cursor-pointer gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors hover:bg-muted/50"
+      role="button"
+      tabIndex={0}
+      onClick={handleActivate}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handleActivate();
+        }
+      }}
+      className="relative flex cursor-pointer gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:grid md:grid-cols-[7rem_minmax(0,1fr)_9rem] md:items-start md:gap-3 md:border-0 md:bg-transparent md:px-2.5 md:py-2 md:hover:bg-muted/40"
     >
-      <div className="mt-0.5 shrink-0">{getIcon(log.level)}</div>
+      <div className="mt-0.5 flex shrink-0 items-center gap-1.5 md:mt-0">
+        {getIcon(log.level)}
+        <span className="hidden text-xs capitalize text-muted-foreground md:inline">
+          {log.level}
+        </span>
+      </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-foreground">{log.context}</p>
-            <p className="break-words text-xs text-muted-foreground">
-              {log.message}
-            </p>
-          </div>
-        </div>
-        <p className="mt-0.5 text-xs text-muted-foreground/70">
+        <p className="text-xs font-medium text-foreground">{log.context}</p>
+        <p className="break-words text-xs text-muted-foreground">
+          {log.message}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground/70 md:hidden">
           {getTimestamp(log.created_at)}
         </p>
       </div>
+      <p className="hidden text-right text-xs text-muted-foreground md:block">
+        {getTimestamp(log.created_at)}
+      </p>
       {copied && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 text-xs font-medium text-white">
           Copied!
@@ -133,6 +145,8 @@ export default function ErrorLogsPage() {
     <AppPageShell
       title="Error Logs"
       subtitle={`${logs.length} ${logs.length === 1 ? "entry" : "entries"} (last 24 hours)`}
+      className="md:max-w-4xl"
+      breadcrumbs={[{ label: "Today", to: "/" }, { label: "Error Logs" }]}
     >
       {loading ? (
         <div className="flex items-center justify-center p-8">
@@ -143,7 +157,12 @@ export default function ErrorLogsPage() {
           <p className="text-muted-foreground">No logs yet</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 md:rounded-xl md:border md:border-border md:p-2">
+          <div className="mb-1 hidden grid-cols-[7rem_minmax(0,1fr)_9rem] gap-3 px-2.5 text-xs font-medium text-muted-foreground md:grid">
+            <span>Level</span>
+            <span>Message</span>
+            <span className="text-right">When</span>
+          </div>
           {logs.map((log) => (
             <LogItem
               key={log.id}

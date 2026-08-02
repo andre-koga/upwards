@@ -134,6 +134,11 @@ export default function TaskOrderPage() {
       title={t("taskOrder.title")}
       subtitle={t("taskOrder.description")}
       className="space-y-3"
+      breadcrumbs={[
+        { label: tNav("today"), to: "/" },
+        { label: t("page.title"), to: "/settings" },
+        { label: t("taskOrder.title") },
+      ]}
     >
       <SettingsSection title={t("taskOrder.dailySorting")}>
         <div className="space-y-2">

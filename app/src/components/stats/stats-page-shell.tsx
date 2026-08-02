@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import {
+  PageBreadcrumbs,
+  type BreadcrumbItem,
+} from "@/components/layout/page-breadcrumbs";
 import { cn } from "@/lib/utils";
 
 export function StatsPageShell({
@@ -14,6 +18,7 @@ export function StatsPageShell({
   loading,
   children,
   className,
+  breadcrumbs,
 }: {
   title: ReactNode;
   icon?: ReactNode;
@@ -25,6 +30,7 @@ export function StatsPageShell({
   loading?: boolean;
   children?: ReactNode;
   className?: string;
+  breadcrumbs?: BreadcrumbItem[];
 }) {
   const { t: tStats } = useTranslation("stats");
   const { t: tNav } = useTranslation("nav");
@@ -38,6 +44,9 @@ export function StatsPageShell({
         className
       )}
     >
+      {breadcrumbs && breadcrumbs.length > 0 ? (
+        <PageBreadcrumbs items={breadcrumbs} className="mb-0" />
+      ) : null}
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
           {icon}

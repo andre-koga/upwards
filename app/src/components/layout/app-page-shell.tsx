@@ -1,11 +1,17 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import {
+  PageBreadcrumbs,
+  type BreadcrumbItem,
+} from "@/components/layout/page-breadcrumbs";
 
 interface AppPageShellProps {
   title: ReactNode;
   subtitle?: ReactNode;
   /** Icon rendered inline before the title (e.g. a page-level Lucide icon). */
   titleIcon?: ReactNode;
+  /** Desktop breadcrumbs shown above the title. */
+  breadcrumbs?: BreadcrumbItem[];
   /** Overrides the default vertical rhythm (`space-y-6 p-4 pb-24`). */
   className?: string;
   children: ReactNode;
@@ -16,6 +22,7 @@ export function AppPageShell({
   title,
   subtitle,
   titleIcon,
+  breadcrumbs,
   className,
   children,
 }: AppPageShellProps) {
@@ -26,6 +33,9 @@ export function AppPageShell({
         className
       )}
     >
+      {breadcrumbs && breadcrumbs.length > 0 ? (
+        <PageBreadcrumbs items={breadcrumbs} className="mb-0" />
+      ) : null}
       <header className="space-y-1">
         <h1
           className={cn(
