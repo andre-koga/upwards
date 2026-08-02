@@ -190,6 +190,29 @@
         "keepTheirs": "Manter o deles",
         "combine": "Combinar",
         "defer": "Decidir depois"
+      },
+      "journal": {
+        "summary": "Duas versões desta entrada de diário precisam de uma decisão.",
+        "untitled": "Entrada de diário",
+        "untitledWithDate": "Diário de {{date}}",
+        "entryDate": "Data: {{date}}",
+        "consequence": "Sua escolha atualiza esta entrada e sincroniza com seus outros dispositivos.",
+        "fields": {
+          "entry_date": "Data",
+          "title": "Título",
+          "text_content": "Texto",
+          "day_emoji": "Emoji",
+          "is_bookmarked": "Favorito",
+          "video_path": "Vídeo",
+          "video_thumbnail": "Miniatura do vídeo",
+          "photo_paths": "Fotos",
+          "is_journal_complete": "Concluído",
+          "journal_entry_number": "Número da entrada",
+          "journal_completion_streak": "Sequência de conclusão",
+          "journal_completed_at": "Concluído em",
+          "location": "Lugares",
+          "deleted_at": "Excluído"
+        }
       }
     }
   },

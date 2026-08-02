@@ -15,6 +15,14 @@ import {
   type ConflictResolutionChoice,
   type DefinitionConflictPayload,
 } from "@/lib/sync/conflict-resolution";
+import {
+  deferJournalConflict,
+  formatJournalConflictFieldValue,
+  isJournalConflictPayload,
+  refreshJournalConflictPayload,
+  resolveJournalConflict,
+  type JournalConflictPayload,
+} from "@/lib/sync/journal-conflict-resolution";
 import { deferSyncIssue, resolveSyncIssue } from "@/lib/sync/sync-issues-store";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +35,7 @@ function formatWhen(iso: string | null | undefined): string {
   }
 }
 
-function displayFieldValue(field: string, value: unknown): string {
+function displayDefinitionFieldValue(field: string, value: unknown): string {
   if (field === "routine" && typeof value === "string") {
     try {
       return formatRoutineDisplay(value);
@@ -40,9 +48,14 @@ function displayFieldValue(field: string, value: unknown): string {
 
 function fieldLabel(
   field: string,
-  t: (key: string, options?: Record<string, unknown>) => string
+  t: (key: string, options?: Record<string, unknown>) => string,
+  namespace: "definition" | "journal" = "definition"
 ): string {
-  return t(`syncIssues.conflict.fields.${field}`, {
+  const prefix =
+    namespace === "journal"
+      ? "syncIssues.conflict.journal.fields"
+      : "syncIssues.conflict.fields";
+  return t(`${prefix}.${field}`, {
     defaultValue: field,
   });
 }
@@ -62,27 +75,47 @@ export function ConflictReviewCard({
   );
   const [error, setError] = useState<string | null>(null);
   const [effectiveFrom, setEffectiveFrom] = useState(getEffectiveToday);
-  const [payload, setPayload] = useState<DefinitionConflictPayload | null>(
-    () => (isDefinitionConflictPayload(issue.payload) ? issue.payload : null)
-  );
+  const [definitionPayload, setDefinitionPayload] =
+    useState<DefinitionConflictPayload | null>(() =>
+      isDefinitionConflictPayload(issue.payload) ? issue.payload : null
+    );
+  const [journalPayload, setJournalPayload] =
+    useState<JournalConflictPayload | null>(() =>
+      isJournalConflictPayload(issue.payload) ? issue.payload : null
+    );
 
   useEffect(() => {
-    if (!isDefinitionConflictPayload(issue.payload)) {
-      setPayload(null);
-      return;
+    if (isDefinitionConflictPayload(issue.payload)) {
+      setJournalPayload(null);
+      let cancelled = false;
+      const initial = issue.payload;
+      setDefinitionPayload(initial);
+      void refreshDefinitionConflictPayload(initial).then((next) => {
+        if (!cancelled) setDefinitionPayload(next);
+      });
+      return () => {
+        cancelled = true;
+      };
     }
-    let cancelled = false;
-    const initial = issue.payload;
-    setPayload(initial);
-    void refreshDefinitionConflictPayload(initial).then((next) => {
-      if (!cancelled) setPayload(next);
-    });
-    return () => {
-      cancelled = true;
-    };
+
+    if (isJournalConflictPayload(issue.payload)) {
+      setDefinitionPayload(null);
+      let cancelled = false;
+      const initial = issue.payload;
+      setJournalPayload(initial);
+      void refreshJournalConflictPayload(initial).then((next) => {
+        if (!cancelled) setJournalPayload(next);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setDefinitionPayload(null);
+    setJournalPayload(null);
   }, [issue]);
 
-  const handleResolve = async (choice: ConflictResolutionChoice) => {
+  const handleResolveDefinition = async (choice: ConflictResolutionChoice) => {
     setBusy(choice);
     setError(null);
     try {
@@ -98,12 +131,28 @@ export function ConflictReviewCard({
     }
   };
 
+  const handleResolveJournal = async (choice: ConflictResolutionChoice) => {
+    setBusy(choice);
+    setError(null);
+    try {
+      await resolveJournalConflict(issue, choice);
+      onResolved();
+    } catch (err) {
+      console.error("Journal conflict resolution failed", err);
+      setError(t("syncIssues.conflict.resolveFailed"));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const handleDefer = async () => {
     setBusy("defer");
     setError(null);
     try {
-      if (payload) {
-        await deferDefinitionConflict({ ...issue, payload });
+      if (definitionPayload) {
+        await deferDefinitionConflict({ ...issue, payload: definitionPayload });
+      } else if (journalPayload) {
+        await deferJournalConflict({ ...issue, payload: journalPayload });
       } else {
         await deferSyncIssue(issue.id);
       }
@@ -130,7 +179,20 @@ export function ConflictReviewCard({
     }
   };
 
-  if (!payload) {
+  if (journalPayload) {
+    return (
+      <JournalConflictCard
+        issue={issue}
+        payload={journalPayload}
+        busy={busy}
+        error={error}
+        onResolve={(choice) => void handleResolveJournal(choice)}
+        onDefer={() => void handleDefer()}
+      />
+    );
+  }
+
+  if (!definitionPayload) {
     return (
       <GenericConflictCard
         issue={issue}
@@ -145,12 +207,12 @@ export function ConflictReviewCard({
   return (
     <DefinitionConflictCard
       issue={issue}
-      payload={payload}
+      payload={definitionPayload}
       busy={busy}
       error={error}
       effectiveFrom={effectiveFrom}
       onEffectiveFromChange={setEffectiveFrom}
-      onResolve={(choice) => void handleResolve(choice)}
+      onResolve={(choice) => void handleResolveDefinition(choice)}
       onDefer={() => void handleDefer()}
     />
   );
@@ -199,6 +261,181 @@ function GenericConflictCard({
         </Button>
         <Button
           variant="outline"
+          size="sm"
+          disabled={busy != null}
+          onClick={onDefer}
+        >
+          {t("syncIssues.conflict.actions.defer")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function JournalConflictCard({
+  issue,
+  payload,
+  busy,
+  error,
+  onResolve,
+  onDefer,
+}: {
+  issue: SyncIssue;
+  payload: JournalConflictPayload;
+  busy: string | null;
+  error: string | null;
+  onResolve: (choice: ConflictResolutionChoice) => void;
+  onDefer: () => void;
+}) {
+  const { t } = useTranslation("settings");
+  const title =
+    payload.entity_label?.trim() ||
+    (payload.entry_date
+      ? t("syncIssues.conflict.journal.untitledWithDate", {
+          date: payload.entry_date,
+        })
+      : issue.title) ||
+    t("syncIssues.conflict.journal.untitled");
+  const fieldsToShow =
+    payload.differing_fields.length > 0
+      ? payload.differing_fields
+      : Object.keys(payload.local.fields);
+  const canCombine =
+    payload.remote != null && payload.both_changed_fields.length === 0;
+  const hasBothChanged = payload.both_changed_fields.length > 0;
+  const isDeferred = issue.status === "deferred";
+
+  return (
+    <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
+      <div className="flex items-start gap-2">
+        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="text-sm font-medium">{title}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("syncIssues.conflict.journal.summary")}
+          </p>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            {payload.entry_date ? (
+              <span>
+                {t("syncIssues.conflict.journal.entryDate", {
+                  date: payload.entry_date,
+                })}
+              </span>
+            ) : null}
+            {isDeferred ? (
+              <span>{t("syncIssues.conflict.deferredBadge")}</span>
+            ) : null}
+            <span>{formatWhen(issue.updated_at)}</span>
+          </div>
+          {hasBothChanged ? (
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              {t("syncIssues.conflict.bothChangedHint")}
+            </p>
+          ) : canCombine ? (
+            <p className="text-xs text-muted-foreground">
+              {t("syncIssues.conflict.combinableHint")}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-md border border-border">
+        <table className="w-full min-w-[20rem] text-left text-xs">
+          <thead className="bg-muted/50 text-muted-foreground">
+            <tr>
+              <th className="px-2 py-1.5 font-medium">
+                {t("syncIssues.conflict.columns.field")}
+              </th>
+              <th className="px-2 py-1.5 font-medium">
+                {t("syncIssues.conflict.columns.yours")}
+              </th>
+              <th className="px-2 py-1.5 font-medium">
+                {t("syncIssues.conflict.columns.theirs")}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {fieldsToShow.map((field) => {
+              const isHot = payload.both_changed_fields.includes(field);
+              return (
+                <tr
+                  key={field}
+                  className={cn(
+                    "border-t border-border",
+                    isHot && "bg-amber-500/10"
+                  )}
+                >
+                  <td className="px-2 py-1.5 font-medium">
+                    {fieldLabel(field, t, "journal")}
+                  </td>
+                  <td className="px-2 py-1.5 whitespace-pre-wrap">
+                    {formatJournalConflictFieldValue(
+                      field,
+                      payload.local.fields[field]
+                    )}
+                  </td>
+                  <td className="px-2 py-1.5 whitespace-pre-wrap">
+                    {payload.remote
+                      ? formatJournalConflictFieldValue(
+                          field,
+                          payload.remote.fields[field]
+                        )
+                      : t("syncIssues.conflict.unknownRemote")}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        {t("syncIssues.conflict.journal.consequence")}
+      </p>
+
+      {error ? <p className="text-xs text-red-500">{error}</p> : null}
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="default"
+          size="sm"
+          disabled={busy != null}
+          onClick={() => onResolve("keep_local")}
+        >
+          {busy === "keep_local" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : null}
+          {t("syncIssues.conflict.actions.keepMine")}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy != null || !payload.remote}
+          onClick={() => onResolve("keep_remote")}
+        >
+          {busy === "keep_remote" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : null}
+          {t("syncIssues.conflict.actions.keepTheirs")}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy != null || !payload.remote}
+          onClick={() => onResolve("combine")}
+          title={
+            hasBothChanged
+              ? t("syncIssues.conflict.combineWithPreferenceHint")
+              : undefined
+          }
+        >
+          {busy === "combine" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : null}
+          {t("syncIssues.conflict.actions.combine")}
+        </Button>
+        <Button
+          variant="ghost"
           size="sm"
           disabled={busy != null}
           onClick={onDefer}
@@ -313,19 +550,25 @@ function DefinitionConflictCard({
                   )}
                 >
                   <td className="px-2 py-1.5 font-medium">
-                    {fieldLabel(field, t)}
+                    {fieldLabel(field, t, "definition")}
                   </td>
                   <td className="px-2 py-1.5">
-                    {displayFieldValue(field, payload.local.fields[field])}
+                    {displayDefinitionFieldValue(field, payload.local.fields[field])}
                   </td>
                   <td className="px-2 py-1.5">
                     {payload.remote
-                      ? displayFieldValue(field, payload.remote.fields[field])
+                      ? displayDefinitionFieldValue(
+                          field,
+                          payload.remote.fields[field]
+                        )
                       : t("syncIssues.conflict.unknownRemote")}
                   </td>
                   {payload.base ? (
                     <td className="px-2 py-1.5 text-muted-foreground">
-                      {displayFieldValue(field, payload.base.fields[field])}
+                      {displayDefinitionFieldValue(
+                        field,
+                        payload.base.fields[field]
+                      )}
                     </td>
                   ) : null}
                 </tr>

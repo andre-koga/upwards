@@ -17,6 +17,7 @@ import {
   buildDefinitionConflictPayload,
   type DefinitionConflictEntityType,
 } from "./conflict-resolution";
+import { buildJournalConflictPayload } from "./journal-conflict-resolution";
 import { saveOpsRpcAvailable, loadOpsRpcAvailable } from "./sync-storage";
 import {
   applyAcceptedProjectionOp,
@@ -279,18 +280,22 @@ async function ensureConflictIssueForRemoteOp(
 
   if (existing) return;
 
-  const entityType =
-    op.entity_type === "group_definition"
-      ? "group_definition"
-      : "activity_definition";
   const entityId = op.entity_id;
   let payload: unknown = op.payload;
+  let title = "Sync conflict";
+  let detail = "Your change conflicted with a newer version on another device.";
 
   if (
     entityId &&
     (op.entity_type === "activity_definition" ||
       op.entity_type === "group_definition")
   ) {
+    const entityType =
+      op.entity_type === "group_definition"
+        ? "group_definition"
+        : "activity_definition";
+    title = "Definition update conflict";
+    detail = `A change to this ${entityType === "group_definition" ? "group" : "activity"} conflicted with another version.`;
     try {
       // Remote conflicted op is "theirs"; local tip is "yours".
       payload = await buildDefinitionConflictPayload({
@@ -302,12 +307,26 @@ async function ensureConflictIssueForRemoteOp(
     } catch (err) {
       console.warn("[sync] failed to enrich remote conflict payload", err);
     }
+  } else if (entityId && op.entity_type === "journal_entry") {
+    title = "Journal entry conflict";
+    detail =
+      "This journal entry was edited on another device. Choose which version to keep.";
+    try {
+      const opRow = asRecord(op.payload).row;
+      payload = await buildJournalConflictPayload({
+        entity_id: entityId,
+        remoteRow: opRow,
+        remoteDeviceId: op.device_id,
+      });
+    } catch (err) {
+      console.warn("[sync] failed to enrich journal conflict payload", err);
+    }
   }
 
   await recordSyncIssue({
     kind: "conflict",
-    title: "Sync conflict",
-    detail: `A change to this ${entityType === "group_definition" ? "group" : "activity"} conflicted with another version.`,
+    title,
+    detail,
     entity_type: op.entity_type,
     entity_id: op.entity_id,
     operation_id: op.operation_id,
@@ -367,6 +386,11 @@ async function applyAcceptedDefinitionOp(
 function asBoolean(value: unknown): boolean | null {
   if (typeof value === "boolean") return value;
   return null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
 }
 
 /** Apply a remote daily_entry semantic op to the local projection (mirrors server RPC). */
@@ -514,7 +538,8 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
     if (result.status === "conflict") {
       let conflictPayload: unknown = local.payload;
       let title = "Sync conflict";
-      let detail = "Your change conflicted with a newer version on another device.";
+      let detail =
+        "Your change conflicted with a newer version on another device.";
 
       if (
         local.entity_id &&
@@ -534,10 +559,21 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
         } catch (err) {
           console.warn("[sync] failed to enrich local conflict payload", err);
         }
-      } else if (local.entity_type === "journal_entry") {
+      } else if (local.entity_type === "journal_entry" && local.entity_id) {
         title = "Journal entry conflict";
         detail =
-          "This journal entry was edited on another device. Open Sync issues to choose which version to keep.";
+          "This journal entry was edited on another device. Choose which version to keep.";
+        try {
+          const opRow = asRecord(local.payload).row;
+          conflictPayload = await buildJournalConflictPayload({
+            entity_id: local.entity_id,
+            localRow: opRow,
+            localDeviceId: local.device_id,
+            baseRevision: local.base_revision,
+          });
+        } catch (err) {
+          console.warn("[sync] failed to enrich journal conflict payload", err);
+        }
       }
 
       await recordSyncIssue({
