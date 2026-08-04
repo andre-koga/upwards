@@ -9,6 +9,9 @@ import { effectiveDateForMs } from "@/lib/activity/period-day-utils";
 import { isNeverRoutine } from "@/lib/activity/never-task";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 import {
+  computeActivityStreakStats,
+} from "@/lib/streak-utils";
+import {
   buildActivityCompletionByDate,
   buildBreakDaysSet,
   buildEntriesByDateMap,
@@ -22,26 +25,20 @@ export async function loadActivityStats(
   const todayStr = getEffectiveToday();
   const today = startOfDay(new Date(todayStr + "T00:00:00"));
 
-  const [activity, periods, openPeriods, streakRows, allDailyEntries] =
-    await Promise.all([
-      db.activities.get(activityId),
-      db.activityPeriods
-        .where("activity_id")
-        .equals(activityId)
-        .filter((p) => !p.deleted_at && !!p.end_time)
-        .toArray() as Promise<ActivityPeriod[]>,
-      db.activityPeriods
-        .where("activity_id")
-        .equals(activityId)
-        .filter((p) => !p.deleted_at && !p.end_time)
-        .toArray() as Promise<ActivityPeriod[]>,
-      db.activityStreaks
-        .where("activity_id")
-        .equals(activityId)
-        .filter((r) => !r.deleted_at)
-        .toArray(),
-      db.dailyEntries.filter((e) => !e.deleted_at).toArray(),
-    ]);
+  const [activity, periods, openPeriods, allDailyEntries] = await Promise.all([
+    db.activities.get(activityId),
+    db.activityPeriods
+      .where("activity_id")
+      .equals(activityId)
+      .filter((p) => !p.deleted_at && !!p.end_time)
+      .toArray() as Promise<ActivityPeriod[]>,
+    db.activityPeriods
+      .where("activity_id")
+      .equals(activityId)
+      .filter((p) => !p.deleted_at && !p.end_time)
+      .toArray() as Promise<ActivityPeriod[]>,
+    db.dailyEntries.filter((e) => !e.deleted_at).toArray(),
+  ]);
 
   const allPeriods = [...periods, ...openPeriods];
   const isNever = isNeverRoutine(activity);
@@ -53,14 +50,8 @@ export async function loadActivityStats(
     : today;
   const createdAtStr = toDateString(createdAt);
 
-  const sortedStreakRows = [...streakRows].sort((a, b) =>
-    b.date.localeCompare(a.date)
-  );
-  const currentStreak = sortedStreakRows[0]?.streak ?? 0;
-  const bestStreak = streakRows.reduce(
-    (best, r) => Math.max(best, r.streak),
-    0
-  );
+  let currentStreak = 0;
+  let bestStreak = 0;
 
   const timerByDate: Record<string, number> = {};
   for (const p of allPeriods) {
@@ -111,6 +102,11 @@ export async function loadActivityStats(
       today,
       definitionVersions
     );
+
+    const { currentStreak: computedCurrent, bestStreak: computedBest } =
+      await computeActivityStreakStats(activity, today);
+    currentStreak = computedCurrent;
+    bestStreak = computedBest;
   }
 
   return {

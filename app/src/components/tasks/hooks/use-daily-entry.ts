@@ -3,6 +3,10 @@ import { db, now, newId } from "@/lib/db";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import type { DailyEntry } from "@/lib/db/types";
 import {
+  refreshActivityStreakProjectionForActivity,
+  refreshActivityStreakProjectionFromDate,
+} from "@/lib/streak-utils";
+import {
   enqueueActivityCountDelta,
   enqueueActivityPauseChange,
   enqueueBreakDayChange,
@@ -36,6 +40,37 @@ export function useDailyEntry(dateString: string) {
   // They are written inside async/event callbacks only — never during render.
   const taskCountsRef = useRef(taskCounts);
   const pausedTaskIdsRef = useRef(pausedTaskIds);
+
+  const bumpStreakDbVersion = useCallback(() => {
+    setStreakDbVersion((v) => v + 1);
+  }, []);
+
+  const refreshStreakProjection = useCallback(
+    (activityId: string) => {
+      void refreshActivityStreakProjectionForActivity(
+        activityId,
+        new Date(dateString + "T00:00:00")
+      ).then(() => {
+        bumpStreakDbVersion();
+      });
+    },
+    [bumpStreakDbVersion, dateString]
+  );
+
+  const refreshAllStreakProjections = useCallback(() => {
+    void db.activities
+      .filter((activity) => !activity.deleted_at && activity.routine !== "anytime")
+      .toArray()
+      .then((activities) =>
+        refreshActivityStreakProjectionFromDate(
+          activities,
+          new Date(dateString + "T00:00:00")
+        )
+      )
+      .then(() => {
+        bumpStreakDbVersion();
+      });
+  }, [bumpStreakDbVersion, dateString]);
 
   const loadDailyEntry = useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -176,8 +211,9 @@ export function useDailyEntry(dateString: string) {
             ? "cycle"
             : "increment",
       });
+      refreshStreakProjection(activityId);
     },
-    [dateString, persistTaskCountsAndPaused]
+    [dateString, persistTaskCountsAndPaused, refreshStreakProjection]
   );
 
   const resetNeverTaskCount = useCallback(
@@ -206,8 +242,9 @@ export function useDailyEntry(dateString: string) {
         nextCount: 0,
         reason: "reset",
       });
+      refreshStreakProjection(activityId);
     },
-    [dateString, persistTaskCountsAndPaused]
+    [dateString, persistTaskCountsAndPaused, refreshStreakProjection]
   );
 
   const toggleTaskPaused = useCallback(
@@ -243,6 +280,7 @@ export function useDailyEntry(dateString: string) {
             date: dateString,
             paused: !wasPaused,
           });
+          refreshStreakProjection(activityId);
           return;
         }
 
@@ -266,12 +304,13 @@ export function useDailyEntry(dateString: string) {
           date: dateString,
           paused: !wasPaused,
         });
+        refreshStreakProjection(activityId);
       } catch (error) {
         console.error("Error toggling paused task:", error);
         loadDailyEntry();
       }
     },
-    [dateString, loadDailyEntry]
+    [dateString, loadDailyEntry, refreshStreakProjection]
   );
 
   const toggleBreakDay = useCallback(async () => {
@@ -300,6 +339,7 @@ export function useDailyEntry(dateString: string) {
           isBreakDay: nextIsBreakDay,
           dailyEntryId: entry.id,
         });
+        refreshAllStreakProjections();
         return;
       }
 
@@ -323,15 +363,12 @@ export function useDailyEntry(dateString: string) {
         isBreakDay: nextIsBreakDay,
         dailyEntryId: newDbEntry.id,
       });
+      refreshAllStreakProjections();
     } catch (error) {
       console.error("Error toggling break day:", error);
       loadDailyEntry();
     }
-  }, [dateString, isBreakDay, loadDailyEntry]);
-
-  const bumpStreakDbVersion = useCallback(() => {
-    setStreakDbVersion((v) => v + 1);
-  }, []);
+  }, [dateString, isBreakDay, loadDailyEntry, refreshAllStreakProjections]);
 
   return {
     dailyEntry,
