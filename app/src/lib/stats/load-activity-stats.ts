@@ -9,8 +9,7 @@ import { effectiveDateForMs } from "@/lib/activity/period-day-utils";
 import { isNeverRoutine } from "@/lib/activity/never-task";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 import {
-  computeBestActivityStreak,
-  getOrComputeActivityStreaksForDate,
+  computeActivityStreakStats,
 } from "@/lib/streak-utils";
 import {
   buildActivityCompletionByDate,
@@ -104,9 +103,10 @@ export async function loadActivityStats(
       definitionVersions
     );
 
-    const streaks = await getOrComputeActivityStreaksForDate([activity], today);
-    currentStreak = streaks[activityId] ?? 0;
-    bestStreak = await computeBestActivityStreak(activity, createdAt, today);
+    const { currentStreak: computedCurrent, bestStreak: computedBest } =
+      await computeActivityStreakStats(activity, today);
+    currentStreak = computedCurrent;
+    bestStreak = computedBest;
   }
 
   return {

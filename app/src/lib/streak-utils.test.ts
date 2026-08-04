@@ -61,6 +61,19 @@ vi.mock("@/lib/db", () => ({
               ),
           }),
         }),
+        anyOf: (activityIds: string[]) => ({
+          filter: (
+            predicate: (
+              row: import("@/lib/db/types").ActivityDefinitionVersion
+            ) => boolean
+          ) => ({
+            toArray: async () =>
+              activityDefinitionVersions.filter(
+                (row) =>
+                  activityIds.includes(row.activity_id) && predicate(row)
+              ),
+          }),
+        }),
       }),
     },
     activityStreaks: {

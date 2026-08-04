@@ -1,5 +1,6 @@
 export * from "./types";
 export * from "./completion";
+export * from "./streak-projection";
 export * from "./compute-activity";
 export * from "./aggregates";
 export { loadActivityStats } from "./load-activity-stats";

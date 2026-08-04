@@ -127,6 +127,7 @@ export function useDailyTasks({
     resetNeverTaskCount,
     toggleTaskPaused,
     toggleBreakDay,
+    streakDbVersion,
   } = useDailyEntry(dateString);
 
   const incrementTaskWithProgress = useCallback(
@@ -269,6 +270,7 @@ export function useDailyTasks({
     isBreakDay,
     recalcTrigger,
     streakVisibilityDeps,
+    streakDbVersion,
   ]);
 
   const dailyActivities = useMemo(
