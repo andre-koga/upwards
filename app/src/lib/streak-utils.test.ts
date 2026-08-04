@@ -219,6 +219,63 @@ describe("getOrComputeActivityStreaksForDate", () => {
     expect(streaks["act-1"]).toBe(0);
   });
 
+  it("preserves streak across definition version changes", async () => {
+    const activity = makeActivity({
+      created_at: "2026-06-01T12:00:00.000Z",
+      routine: "daily",
+    });
+    activityDefinitionVersions.push(
+      {
+        id: "v1",
+        activity_id: "act-1",
+        parent_version_id: null,
+        effective_from: "2026-06-01",
+        recorded_at: "2026-06-01T12:00:00.000Z",
+        server_sequence: null,
+        operation_id: "op-v1",
+        device_id: "device-1",
+        name: "Read",
+        routine: "daily",
+        completion_target: 1,
+        group_id: "group-1",
+        order_index: 0,
+        schema_version: 1,
+        created_at: "2026-06-01T12:00:00.000Z",
+        deleted_at: null,
+      },
+      {
+        id: "v2",
+        activity_id: "act-1",
+        parent_version_id: "v1",
+        effective_from: "2026-06-15",
+        recorded_at: "2026-06-15T12:00:00.000Z",
+        server_sequence: null,
+        operation_id: "op-v2",
+        device_id: "device-1",
+        name: "Read",
+        routine: "daily",
+        completion_target: 2,
+        group_id: "group-1",
+        order_index: 0,
+        schema_version: 1,
+        created_at: "2026-06-15T12:00:00.000Z",
+        deleted_at: null,
+      }
+    );
+    addEntry("2026-06-13", { task_counts: { "act-1": 1 } });
+    addEntry("2026-06-14", { task_counts: { "act-1": 1 } });
+    addEntry("2026-06-15", { task_counts: { "act-1": 2 } });
+    addEntry("2026-06-16", { task_counts: { "act-1": 2 } });
+    addEntry("2026-06-17", { task_counts: { "act-1": 2 } });
+    addEntry("2026-06-18", { task_counts: { "act-1": 2 } });
+
+    const streaks = await getOrComputeActivityStreaksForDate(
+      [activity],
+      new Date(2026, 5, 18)
+    );
+    expect(streaks["act-1"]).toBe(6);
+  });
+
   it("preserves historical weekend streak after routine changes to weekdays", async () => {
     const activity = makeActivity({ routine: "weekly:1,2,3,4,5" });
     activityDefinitionVersions.push(

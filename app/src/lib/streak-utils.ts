@@ -8,11 +8,6 @@ import type {
   GroupStatusEvent,
 } from "@/lib/db/types";
 import {
-  isNeverRoutine,
-  isNeverTaskSlipRecorded,
-  neverTaskTarget,
-} from "@/lib/activity/never-task";
-import {
   shouldShowActivity,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
@@ -20,6 +15,7 @@ import {
   activityLikeFromDefinition,
   pickDefinitionVersionAsOf,
 } from "@/lib/activity/definition-versions";
+import { getScheduledDayOutcome } from "@/lib/activity/compound-score";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 
@@ -64,53 +60,26 @@ function isStreakEligible(activity: Activity): boolean {
   return activity.routine !== "anytime";
 }
 
-type DayStatus = "done" | "missed" | "skip";
-
 type SchedulableActivity = Pick<
   Activity,
   "id" | "routine" | "created_at" | "completion_target"
 >;
 
-function getDayStatus(
-  activity: Activity,
-  schedulable: SchedulableActivity,
-  entry: DailyEntry | undefined
-): DayStatus {
-  if (!entry) {
-    return isNeverRoutine(schedulable) ? "done" : "missed";
-  }
-
-  const pausedTaskIds = Array.isArray(entry.paused_task_ids)
-    ? entry.paused_task_ids
-    : [];
-  if (!isNeverRoutine(schedulable) && pausedTaskIds.includes(activity.id)) {
-    return "skip";
-  }
-
-  if (entry.is_break_day && !isNeverRoutine(schedulable)) {
-    const completed = isCompletedOnEntry(activity, schedulable, entry);
-    return completed ? "done" : "skip";
-  }
-
-  const completed = isCompletedOnEntry(activity, schedulable, entry);
-  if (isNeverRoutine(schedulable)) {
-    return completed ? "missed" : "done";
-  }
-  return completed ? "done" : "missed";
+/** Logical first day an activity can contribute to streak history. */
+export function getActivityOriginDay(activity: Activity): Date {
+  return startOfDay(
+    new Date(
+      getEffectiveToday(new Date(activity.created_at!)) + "T00:00:00"
+    )
+  );
 }
 
-function isCompletedOnEntry(
-  activity: Activity,
-  schedulable: SchedulableActivity,
-  entry: DailyEntry
-): boolean {
-  const target = neverTaskTarget(schedulable);
-  const taskCounts = (entry.task_counts as Record<string, number>) || {};
-  const count = taskCounts[activity.id] || 0;
-  if (isNeverRoutine(schedulable)) {
-    return isNeverTaskSlipRecorded(schedulable, count);
+function buildBreakDaysFromEntries(entries: DailyEntry[]): Set<string> {
+  const breakDays = new Set<string>();
+  for (const entry of entries) {
+    if (entry.is_break_day) breakDays.add(entry.date);
   }
-  return count >= target;
+  return breakDays;
 }
 
 export interface TodayOverride {
@@ -151,12 +120,7 @@ async function computeStreakBackward(
   };
 
   const targetDay = startOfDay(targetDate);
-  const targetSchedulable = resolveSchedulable(targetDay);
-  const creationDay = startOfDay(
-    new Date(
-      getEffectiveToday(new Date(targetSchedulable.created_at!)) + "T00:00:00"
-    )
-  );
+  const creationDay = getActivityOriginDay(activity);
   if (targetDay < creationDay) return 0;
   if (
     !shouldShowActivityForStreak(
@@ -177,6 +141,7 @@ async function computeStreakBackward(
     .filter((e) => !e.deleted_at)
     .toArray();
   const entriesByDate = new Map(entries.map((e) => [e.date, e]));
+  const breakDays = buildBreakDaysFromEntries(entries);
 
   let streak = 0;
   let cursor = targetDay;
@@ -216,11 +181,21 @@ async function computeStreakBackward(
       entryForDay = entriesByDate.get(dateStr);
     }
 
-    const status = getDayStatus(activity, schedulable, entryForDay);
-    if (status === "done") {
+    const outcome = getScheduledDayOutcome(
+      activity,
+      cursor,
+      entryForDay,
+      breakDays,
+      {
+        definitionVersions,
+        schedulable,
+      }
+    );
+
+    if (outcome === "win") {
       streak++;
       cursor = shiftDate(cursor, -1);
-    } else if (status === "skip") {
+    } else if (outcome === "skip") {
       cursor = shiftDate(cursor, -1);
     } else {
       break;
@@ -228,6 +203,91 @@ async function computeStreakBackward(
   }
 
   return streak;
+}
+
+/**
+ * Walk forward from origin to target and return the longest consecutive win streak.
+ * Uses the same temporal day outcomes as current streak computation.
+ */
+export async function computeBestActivityStreak(
+  activity: Activity,
+  fromDate: Date,
+  toDate: Date,
+  options?: { visibility?: StreakVisibilityDeps }
+): Promise<number> {
+  if (!isStreakEligible(activity)) return 0;
+
+  const visibility = options?.visibility;
+  const definitionVersions = await db.activityDefinitionVersions
+    .where("activity_id")
+    .equals(activity.id)
+    .filter((row) => !row.deleted_at)
+    .toArray();
+
+  const resolveSchedulable = (day: Date): SchedulableActivity => {
+    const version = pickDefinitionVersionAsOf(
+      definitionVersions,
+      toDateString(day)
+    );
+    if (version) {
+      return { ...activityLikeFromDefinition(version), id: activity.id };
+    }
+    return activity;
+  };
+
+  const originDay = getActivityOriginDay(activity);
+  const startDay = fromDate > originDay ? startOfDay(fromDate) : originDay;
+  const endDay = startOfDay(toDate);
+  if (endDay < startDay) return 0;
+
+  const entries = await db.dailyEntries
+    .where("date")
+    .between(toDateString(startDay), toDateString(endDay), true, true)
+    .filter((e) => !e.deleted_at)
+    .toArray();
+  const entriesByDate = new Map(entries.map((e) => [e.date, e]));
+  const breakDays = buildBreakDaysFromEntries(entries);
+
+  let running = 0;
+  let best = 0;
+  let cursor = startDay;
+
+  while (cursor <= endDay) {
+    if (
+      !shouldShowActivityForStreak(
+        activity,
+        cursor,
+        visibility,
+        definitionVersions
+      )
+    ) {
+      cursor = shiftDate(cursor, 1);
+      continue;
+    }
+
+    const schedulable = resolveSchedulable(cursor);
+    const outcome = getScheduledDayOutcome(
+      activity,
+      cursor,
+      entriesByDate.get(toDateString(cursor)),
+      breakDays,
+      {
+        definitionVersions,
+        schedulable,
+      }
+    );
+
+    if (outcome === "win") {
+      running++;
+      best = Math.max(best, running);
+    } else if (outcome === "loss") {
+      running = 0;
+    }
+
+    cursor = shiftDate(cursor, 1);
+  }
+
+  return best;
 }
 
 export async function getOrComputeActivityStreaksForDate(
