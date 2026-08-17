@@ -78,27 +78,6 @@
       "saveNewPassword": "Save new password"
     }
   },
-  "profile": {
-    "title": "Profile",
-    "displayName": "Display name",
-    "noDisplayName": "No display name",
-    "displayNameHelper": "Shown when friends see your shared habit completions",
-    "namePlaceholder": "Your name",
-    "setName": "Set name",
-    "username": "Username",
-    "noUsername": "No username",
-    "usernameHelper": "Friends can find you by exact username",
-    "usernamePlaceholder": "your_username",
-    "usernamePatternTitle": "3–20 characters: a-z, 0-9, underscore",
-    "usernameFormatHelper": "Letters, numbers, underscore. 3–20 characters.",
-    "setUsername": "Set username",
-    "notSignedIn": "Not signed in",
-    "usernameInvalid": "Username must be 3–20 characters: a-z, 0-9, underscore only.",
-    "usernameTaken": "That username is already taken.",
-    "usernameSaveFailed": "Failed to save username",
-    "loadFailed": "Failed to load profile",
-    "displayNameSaveFailed": "Failed to save display name"
-  },
   "sync": {
     "title": "Cloud sync",
     "description": "Your data syncs automatically. Open Sync issues to review conflicts or errors.",

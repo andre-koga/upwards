@@ -4,11 +4,7 @@ import type {
   ActivityDefinitionVersion,
   DailyEntry,
 } from "@/lib/db/types";
-import {
-  computeCompoundScore,
-  formatCompoundScore,
-  getScheduledDayOutcome,
-} from "./compound-score";
+import { getScheduledDayOutcome } from "./day-outcome";
 
 const storage = new Map<string, string>();
 
@@ -199,47 +195,5 @@ describe("getScheduledDayOutcome", () => {
         { definitionVersions: versions }
       )
     ).toBe("loss");
-  });
-});
-
-describe("computeCompoundScore", () => {
-  beforeEach(() => {
-    storage.clear();
-    mockLocalStorage();
-    localStorage.setItem("okhabit:day_reset_minutes", "0");
-  });
-
-  it("compounds wins and losses from 1.000", () => {
-    const activity = makeActivity();
-    const entries = new Map<string, DailyEntry>([
-      ["2026-06-15", makeEntry("2026-06-15", { task_counts: { "act-1": 1 } })],
-      ["2026-06-16", makeEntry("2026-06-16", { task_counts: {} })],
-    ]);
-    const score = computeCompoundScore(
-      activity,
-      entries,
-      new Set(),
-      new Date(2026, 5, 15),
-      new Date(2026, 5, 16)
-    );
-    // 1 * 1.01 * 0.99 = 0.9999 → 1.000 rounded to 3 decimals
-    expect(score).toBe(1);
-    expect(formatCompoundScore(score)).toBe("1.000");
-  });
-
-  it("increases after consecutive wins", () => {
-    const activity = makeActivity();
-    const entries = new Map<string, DailyEntry>([
-      ["2026-06-15", makeEntry("2026-06-15", { task_counts: { "act-1": 1 } })],
-      ["2026-06-16", makeEntry("2026-06-16", { task_counts: { "act-1": 1 } })],
-    ]);
-    const score = computeCompoundScore(
-      activity,
-      entries,
-      new Set(),
-      new Date(2026, 5, 15),
-      new Date(2026, 5, 16)
-    );
-    expect(score).toBe(1.02);
   });
 });

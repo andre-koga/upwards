@@ -12,6 +12,15 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-08-16-simpler-home",
+    date: "2026-08-16",
+    title: "A simpler home",
+    bullets: [
+      "Stats, friends, and the notification bell are gone — the app is just your day, journal, and settings.",
+      "Tap a habit name to edit it. Completing a habit still shows its streak on the checkmark.",
+    ],
+  },
+  {
     id: "2026-08-02-journal-search-places-icon",
     date: "2026-08-02",
     title: "Find days by map, filters, and dates",

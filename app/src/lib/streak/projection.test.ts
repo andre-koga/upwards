@@ -2,11 +2,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { Activity, DailyEntry } from "@/lib/db/types";
 import {
   buildActivityStreakOutcomesByDate,
-  deriveBestStreakFromOutcomes,
   deriveCurrentStreakFromOutcomes,
   deriveStreakSeriesFromOutcomes,
-} from "./streak-projection";
-import { buildBreakDaysSet, buildEntriesByDateMap } from "./completion";
+} from "./projection";
+import { buildBreakDaysSet, buildEntriesByDateMap } from "./entry-maps";
 
 const storage = new Map<string, string>();
 
@@ -99,24 +98,6 @@ describe("streak projection", () => {
     ).toBe(2);
   });
 
-  it("derives best streak in a single forward pass", () => {
-    const outcomes = {
-      "2026-06-15": "win",
-      "2026-06-16": "loss",
-      "2026-06-17": "win",
-      "2026-06-18": "win",
-    } as const;
-
-    expect(
-      deriveBestStreakFromOutcomes(
-        outcomes,
-        new Date(2026, 5, 15),
-        new Date(2026, 5, 18),
-        new Date(2026, 5, 10)
-      )
-    ).toBe(2);
-  });
-
   it("builds outcomes and streak series from daily entries", () => {
     const activity = makeActivity();
     const entries = [
@@ -157,11 +138,7 @@ describe("streak projection", () => {
     expect(series["2026-06-18"]).toBe(2);
 
     expect(
-      deriveCurrentStreakFromOutcomes(
-        outcomes,
-        to,
-        new Date(2026, 5, 10)
-      )
+      deriveCurrentStreakFromOutcomes(outcomes, to, new Date(2026, 5, 10))
     ).toBe(2);
   });
 });

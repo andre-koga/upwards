@@ -1,5 +1,5 @@
 export * from "./never-task";
-export * from "./compound-score";
+export * from "./day-outcome";
 export * from "./archived-actions";
 export * from "./completed-actions";
 export * from "./daily-task-interaction";

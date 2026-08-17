@@ -36,8 +36,8 @@ interface ActivityTaskItemProps {
   onStartActivity: (activityId: string) => void;
   onStopActivity: () => void;
   onManualEntry?: (activityId: string) => void;
-  /** Opens the shared stats dialog hosted by the task list. */
-  onShowStats: (activity: Activity) => void;
+  /** Opens the activity edit dialog hosted by the task list. */
+  onEdit: (activity: Activity) => void;
   /** Opens the shared retired-info dialog hosted by the task list. */
   onShowRetiredInfo: (kind: ActivityRetiredKind, activityName: string) => void;
 }
@@ -60,7 +60,7 @@ function ActivityTaskItem({
   onStartActivity,
   onStopActivity,
   onManualEntry,
-  onShowStats,
+  onEdit,
   onShowRetiredInfo,
 }: ActivityTaskItemProps) {
   const { t } = useTranslation("projects");
@@ -91,6 +91,7 @@ function ActivityTaskItem({
       onShowRetiredInfo("completed", activityDisplayName);
       return;
     }
+    onEdit(activity);
   };
 
   const clearNeverPressTimeout = () => {
@@ -240,7 +241,6 @@ function ActivityTaskItem({
           interaction={interaction}
           isDayComplete={isComplete}
           onNameClick={handleNameClick}
-          onStatsClick={() => onShowStats(activity)}
           onStartActivity={onStartActivity}
           onStopActivity={onStopActivity}
           onManualEntry={onManualEntry}

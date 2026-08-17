@@ -1,32 +1,20 @@
 import { lazy, Suspense, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import TodayPage from "@/pages/today";
-import { NotificationsFloatingButton } from "@/components/notifications/notifications-floating-button";
-import { NotificationsProvider } from "@/lib/notifications/notifications-provider";
 import SyncStatus from "@/components/settings/sync-status";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
 import { BrowserChromeThemeSync } from "@/components/layout/browser-chrome-theme-sync";
-import { useAppOpenSession } from "@/lib/session/use-app-open-session";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
-const StatsPage = lazy(() => import("@/pages/stats"));
-const GroupStatsPage = lazy(() => import("@/pages/stats-group"));
-const ActivityStatsPage = lazy(() => import("@/pages/stats-activity"));
 const SettingsPage = lazy(() => import("@/pages/settings"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const TaskOrderPage = lazy(() => import("@/pages/task-order"));
 const SyncIssuesPage = lazy(() => import("@/pages/sync-issues"));
 const WhatsNewPage = lazy(() => import("@/pages/whats-new"));
-const FriendsPage = lazy(() => import("@/pages/friends"));
 const JournalPage = lazy(() => import("@/pages/journal"));
 const LogsPage = lazy(() => import("@/pages/logs"));
-
-function AppSession() {
-  useAppOpenSession();
-  return null;
-}
 
 function PageLoadingFallback() {
   return (
@@ -66,65 +54,34 @@ export default function App() {
       )}
       <div className="min-h-screen md:flex md:h-screen md:items-stretch md:justify-center md:gap-10 md:px-6 md:py-6">
         <main className="relative w-full bg-background md:h-full md:max-w-[430px] md:overflow-hidden md:rounded-2xl md:border md:border-border md:shadow-2xl md:[transform:translateZ(0)]">
-          <NotificationsProvider>
-            <AppSession />
-            <SyncStatus />
-            <NotificationsFloatingButton />
-            <div data-app-scroll className="md:h-full md:overflow-y-auto">
-              <Suspense fallback={<PageLoadingFallback />}>
-                <Routes>
-                  <Route path="/" element={<TodayPage />} />
-                  <Route path="/stats" element={<StatsPage />} />
-                  <Route
-                    path="/stats/groups/:groupId"
-                    element={<GroupStatsPage />}
-                  />
-                  <Route
-                    path="/stats/groups/:groupId/activities/:activityId"
-                    element={<ActivityStatsPage />}
-                  />
-                  <Route
-                    path="/promises"
-                    element={<Navigate to="/" replace />}
-                  />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route
-                    path="/settings/forgot-password"
-                    element={<ForgotPasswordPage />}
-                  />
-                  <Route
-                    path="/settings/reset-password"
-                    element={<ResetPasswordPage />}
-                  />
-                  <Route
-                    path="/settings/task-order"
-                    element={<TaskOrderPage />}
-                  />
-                  <Route
-                    path="/settings/sync-issues"
-                    element={<SyncIssuesPage />}
-                  />
-                  <Route path="/whats-new" element={<WhatsNewPage />} />
-                  <Route path="/friends" element={<FriendsPage />} />
-                  <Route path="/journal" element={<JournalPage />} />
-                  <Route path="/logs" element={<LogsPage />} />
-                  <Route
-                    path="/notifications"
-                    element={<Navigate to="/" replace />}
-                  />
-                  {/* Legacy promise routes → home */}
-                  <Route
-                    path="/promises/:id"
-                    element={<Navigate to="/" replace />}
-                  />
-                  <Route
-                    path="/promises/join/:token"
-                    element={<Navigate to="/" replace />}
-                  />
-                </Routes>
-              </Suspense>
-            </div>
-          </NotificationsProvider>
+          <SyncStatus />
+          <div data-app-scroll className="md:h-full md:overflow-y-auto">
+            <Suspense fallback={<PageLoadingFallback />}>
+              <Routes>
+                <Route path="/" element={<TodayPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route
+                  path="/settings/forgot-password"
+                  element={<ForgotPasswordPage />}
+                />
+                <Route
+                  path="/settings/reset-password"
+                  element={<ResetPasswordPage />}
+                />
+                <Route
+                  path="/settings/task-order"
+                  element={<TaskOrderPage />}
+                />
+                <Route
+                  path="/settings/sync-issues"
+                  element={<SyncIssuesPage />}
+                />
+                <Route path="/whats-new" element={<WhatsNewPage />} />
+                <Route path="/journal" element={<JournalPage />} />
+                <Route path="/logs" element={<LogsPage />} />
+              </Routes>
+            </Suspense>
+          </div>
         </main>
       </div>
       <AuthDataHandoffDialog />

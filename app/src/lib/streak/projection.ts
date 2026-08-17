@@ -6,7 +6,7 @@ import type {
 import {
   getScheduledDayOutcome,
   type ScheduledDayOutcome,
-} from "@/lib/activity/compound-score";
+} from "@/lib/activity/day-outcome";
 import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 
 /** Streak interpretation of a logical day (includes lifecycle visibility). */
@@ -21,9 +21,7 @@ export interface StreakEntryOverride {
 
 export type StreakVisibilityChecker = (day: Date) => boolean;
 
-function syntheticEntryFromOverride(
-  override: StreakEntryOverride
-): DailyEntry {
+function syntheticEntryFromOverride(override: StreakEntryOverride): DailyEntry {
   return {
     id: "",
     date: override.date,
@@ -125,45 +123,6 @@ export function deriveCurrentStreakFromOutcomes(
   }
 
   return streak;
-}
-
-/** Longest consecutive win streak across the range (single forward pass). */
-export function deriveBestStreakFromOutcomes(
-  outcomesByDate: Record<string, StreakDayOutcome>,
-  fromDate: Date,
-  toDate: Date,
-  originDate: Date
-): number {
-  const startDay = startOfDay(fromDate);
-  const endDay = startOfDay(toDate);
-  const originDay = startOfDay(originDate);
-  if (endDay < startDay) return 0;
-
-  let running = 0;
-  let best = 0;
-  let cursor = startDay;
-
-  while (cursor <= endDay) {
-    if (cursor < originDay) {
-      cursor = shiftDate(cursor, 1);
-      continue;
-    }
-
-    const outcome = outcomesByDate[toDateString(cursor)];
-    if (!outcome || outcome === "hidden") {
-      cursor = shiftDate(cursor, 1);
-      continue;
-    }
-    if (outcome === "win") {
-      running++;
-      best = Math.max(best, running);
-    } else if (outcome === "loss") {
-      running = 0;
-    }
-    cursor = shiftDate(cursor, 1);
-  }
-
-  return best;
 }
 
 /**

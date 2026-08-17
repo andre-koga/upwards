@@ -79,7 +79,7 @@ export async function isActivityScheduledOnLogicalDate(
 
 /**
  * Build a map of activity_id → definition version (or projection fallback)
- * for each activity on a single logical date. Used by stats/completion paths.
+ * for each activity on a single logical date. Used by streak and today views.
  */
 export async function resolveActivityDefinitionsForDate(
   activities: Activity[],
