@@ -1,4 +1,4 @@
-import { ChevronRight, Settings } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface GroupPillProps {
@@ -6,9 +6,6 @@ export interface GroupPillProps {
   color: string;
   onActionClick?: () => void;
   onNameClick?: () => void;
-  /** Opens group stats when clicking the pill name area. */
-  onStatsClick?: () => void;
-  onSettingsClick?: () => void;
   nameTitle?: string;
   nameAriaLabel?: string;
   className?: string;
@@ -19,18 +16,13 @@ export default function GroupPill({
   color,
   onActionClick,
   onNameClick,
-  onStatsClick,
-  onSettingsClick,
   nameTitle,
   nameAriaLabel,
   className = "",
 }: GroupPillProps) {
   const actionLabel = "Start";
-  const handleNameClick = onStatsClick ?? onNameClick;
-  const resolvedNameTitle =
-    nameTitle ?? (onStatsClick ? "View group stats" : "Edit group");
-  const resolvedNameAriaLabel =
-    nameAriaLabel ?? (onStatsClick ? "View group stats" : "Edit group");
+  const resolvedNameTitle = nameTitle ?? "Edit group";
+  const resolvedNameAriaLabel = nameAriaLabel ?? "Edit group";
 
   const base =
     "relative flex items-stretch gap-2 rounded-full overflow-hidden h-10 " +
@@ -43,12 +35,10 @@ export default function GroupPill({
           <Button
             type="button"
             variant="ghost"
-            onClick={handleNameClick}
+            onClick={onNameClick}
             title={resolvedNameTitle}
             aria-label={resolvedNameAriaLabel}
-            className={`h-full min-w-0 flex-1 justify-start gap-2.5 truncate rounded-none py-2 pl-4 text-left text-sm font-medium shadow-none ${
-              onSettingsClick ? "pr-0" : "pr-4"
-            }`}
+            className="h-full min-w-0 flex-1 justify-start gap-2.5 truncate rounded-none py-2 pl-4 pr-4 text-left text-sm font-medium shadow-none"
           >
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -61,21 +51,6 @@ export default function GroupPill({
               )}
             </span>
           </Button>
-          {onSettingsClick && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={(event) => {
-                event.stopPropagation();
-                onSettingsClick();
-              }}
-              title="Group settings"
-              aria-label="Group settings"
-              className="h-full w-10 shrink-0 justify-start rounded-none px-0 pl-2.5 pr-3.5 text-muted-foreground shadow-none hover:text-foreground"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-          )}
         </div>
         {onActionClick ? (
           <Button

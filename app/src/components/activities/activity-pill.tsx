@@ -1,4 +1,4 @@
-import { Play, Plus, Square, Settings } from "lucide-react";
+import { Play, Plus, Square } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR, getContrastColor } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
@@ -10,11 +10,8 @@ export interface ActivityPillProps {
   elapsedMs?: number;
   isRunning?: boolean;
   onNameClick?: () => void;
-  /** Opens the activity stats dialog when clicking the pill name area. */
-  onStatsClick?: () => void;
   onClick?: () => void;
   onManualEntry?: () => void;
-  onSettingsClick?: () => void;
   nameClassName?: string;
   /** When true, renders timer/play as non-interactive display instead of buttons. */
   readOnly?: boolean;
@@ -29,10 +26,8 @@ export default function ActivityPill({
   elapsedMs = 0,
   isRunning = false,
   onNameClick,
-  onStatsClick,
   onClick,
   onManualEntry,
-  onSettingsClick,
   nameClassName = "",
   readOnly = false,
   allowNameClickWhenReadOnly = false,
@@ -41,9 +36,6 @@ export default function ActivityPill({
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
   const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
-  const hasSettingsAction = !readOnly && !!onSettingsClick;
-  // Stats click takes priority over onNameClick when provided
-  const handleNameClick = onStatsClick ?? onNameClick;
 
   return (
     <div
@@ -66,17 +58,10 @@ export default function ActivityPill({
         <Button
           type="button"
           variant="ghost"
-          onClick={nameInteractive ? handleNameClick : undefined}
-          className={cn(
-            "h-full min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center gap-0 rounded-none p-0 text-left text-sm font-medium shadow-none"
-          )}
+          onClick={nameInteractive ? onNameClick : undefined}
+          className="h-full min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center gap-0 rounded-none p-0 text-left text-sm font-medium shadow-none"
         >
-          <span
-            className={cn(
-              "flex min-h-0 min-w-0 flex-1 items-center gap-2 py-1 pl-4",
-              hasSettingsAction ? "pr-0" : "pr-4"
-            )}
-          >
+          <span className="flex min-h-0 min-w-0 flex-1 items-center gap-2 py-1 pl-4 pr-4">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: color }}
@@ -88,21 +73,6 @@ export default function ActivityPill({
             </span>
           </span>
         </Button>
-        {hasSettingsAction && (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={(event) => {
-              event.stopPropagation();
-              onSettingsClick?.();
-            }}
-            title="Activity settings"
-            aria-label="Activity settings"
-            className="h-full w-10 shrink-0 justify-start rounded-none px-0 pl-2 pr-4 text-muted-foreground shadow-none hover:text-foreground"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        )}
       </div>
 
       {/* Timer / action side */}

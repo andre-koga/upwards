@@ -8,9 +8,6 @@ import enSettings from "@/locales/en/settings.json";
 import enTasks from "@/locales/en/tasks.json";
 import enToday from "@/locales/en/today.json";
 import enJournal from "@/locales/en/journal.json";
-import enStats from "@/locales/en/stats.json";
-import enFriends from "@/locales/en/friends.json";
-import enNotifications from "@/locales/en/notifications.json";
 import enProjects from "@/locales/en/projects.json";
 import ptCommon from "@/locales/pt/common.json";
 import ptNav from "@/locales/pt/nav.json";
@@ -18,9 +15,6 @@ import ptSettings from "@/locales/pt/settings.json";
 import ptTasks from "@/locales/pt/tasks.json";
 import ptToday from "@/locales/pt/today.json";
 import ptJournal from "@/locales/pt/journal.json";
-import ptStats from "@/locales/pt/stats.json";
-import ptFriends from "@/locales/pt/friends.json";
-import ptNotifications from "@/locales/pt/notifications.json";
 import ptProjects from "@/locales/pt/projects.json";
 import {
   LOCALE_HTML_TAGS,
@@ -36,9 +30,6 @@ const resources = {
     tasks: enTasks,
     today: enToday,
     journal: enJournal,
-    stats: enStats,
-    friends: enFriends,
-    notifications: enNotifications,
     projects: enProjects,
   },
   pt: {
@@ -48,9 +39,6 @@ const resources = {
     tasks: ptTasks,
     today: ptToday,
     journal: ptJournal,
-    stats: ptStats,
-    friends: ptFriends,
-    notifications: ptNotifications,
     projects: ptProjects,
   },
 } as const;

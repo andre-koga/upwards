@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { db, newId, now } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type {
@@ -22,10 +22,7 @@ import {
   toSchedulableActivity,
 } from "@/lib/activity/temporal-resolver";
 import { getEffectiveToday } from "@/lib/session/day-reset";
-import {
-  getOrComputeActivityStreaksForDate,
-  recomputeActivityStreaksFromDateForActivities,
-} from "@/lib/streak-utils";
+import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
 import {
   clipPeriodToDay,
   effectiveDateForMs,
@@ -76,9 +73,6 @@ export function useDailyTasks({
     ActivityPeriod[]
   >([]);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [recalculateStreaksBusy, setRecalculateStreaksBusy] = useState(false);
-  const [recalcTrigger, setRecalcTrigger] = useState(0);
-  const recalcStreaksInFlightRef = useRef(false);
   const [activityDefinitionsById, setActivityDefinitionsById] = useState<
     Map<string, ActivityDefinitionVersion | Activity>
   >(new Map());
@@ -268,7 +262,6 @@ export function useDailyTasks({
     taskCounts,
     pausedTaskIds,
     isBreakDay,
-    recalcTrigger,
     streakVisibilityDeps,
     streakDbVersion,
   ]);
@@ -523,25 +516,6 @@ export function useDailyTasks({
     return { sessionId: openPeriod.id, groupId };
   }, [resolvedCurrentActivityId, activityPeriods, lookupActivityById]);
 
-  const recalculateStreaksFromViewedDate = useCallback(async () => {
-    if (recalcStreaksInFlightRef.current) return;
-    recalcStreaksInFlightRef.current = true;
-    setRecalculateStreaksBusy(true);
-    try {
-      await recomputeActivityStreaksFromDateForActivities(
-        lookupActivities,
-        currentDate,
-        { visibility: streakVisibilityDeps }
-      );
-      setRecalcTrigger((t) => t + 1);
-    } catch (err) {
-      console.error("Error recalculating activity streaks:", err);
-    } finally {
-      recalcStreaksInFlightRef.current = false;
-      setRecalculateStreaksBusy(false);
-    }
-  }, [lookupActivities, currentDate, streakVisibilityDeps]);
-
   const currentActivityElapsedMs = useMemo(() => {
     if (!resolvedCurrentActivityId) return 0;
 
@@ -604,7 +578,5 @@ export function useDailyTasks({
     calculateActivityTotalTime,
     addManualActivityPeriod,
     formatTimerDisplay,
-    recalculateStreaksFromViewedDate,
-    recalculateStreaksBusy,
   };
 }

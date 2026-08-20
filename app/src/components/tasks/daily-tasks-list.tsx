@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
-import { ActivityStatsDialog } from "@/components/activities/activity-stats-dialog";
+import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
 import {
   ActivityRetiredInfoDialog,
   type ActivityRetiredKind,
@@ -75,7 +75,7 @@ export default function DailyTasksList({
   const [activityToStartOnToday, setActivityToStartOnToday] = useState<
     string | null
   >(null);
-  const [statsActivity, setStatsActivity] = useState<Activity | null>(null);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [retiredInfo, setRetiredInfo] = useState<{
     kind: ActivityRetiredKind;
     activityName: string;
@@ -135,6 +135,7 @@ export default function DailyTasksList({
   const manualEntryGroup = manualEntryActivity
     ? getGroup(manualEntryActivity)
     : undefined;
+  const editingGroup = editingActivity ? getGroup(editingActivity) : undefined;
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
     setAssignPeriodId(periodId);
@@ -279,7 +280,7 @@ export default function DailyTasksList({
                   onStartActivity={handleStartActivity}
                   onStopActivity={handleStopActivity}
                   onManualEntry={setManualEntryActivityId}
-                  onShowStats={setStatsActivity}
+                  onEdit={setEditingActivity}
                   onShowRetiredInfo={(kind, activityName) =>
                     setRetiredInfo({ kind, activityName })
                   }
@@ -453,14 +454,24 @@ export default function DailyTasksList({
         }}
       />
 
-      <ActivityStatsDialog
-        open={statsActivity !== null}
-        onOpenChange={(open) => {
-          if (!open) setStatsActivity(null);
-        }}
-        activity={statsActivity}
-        group={statsActivity ? getGroup(statsActivity) : undefined}
-      />
+      {editingActivity && editingGroup ? (
+        <ActivityDialogForm
+          open={editingActivity !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditingActivity(null);
+          }}
+          group={editingGroup}
+          activity={editingActivity}
+          onSaved={() => {
+            setEditingActivity(null);
+            onTasksDataChanged?.();
+          }}
+          onDeleted={() => {
+            setEditingActivity(null);
+            onTasksDataChanged?.();
+          }}
+        />
+      ) : null}
 
       <ActivityRetiredInfoDialog
         open={retiredInfo !== null}

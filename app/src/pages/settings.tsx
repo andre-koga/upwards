@@ -4,7 +4,6 @@ import { AppPageShell } from "@/components/layout/app-page-shell";
 import { AppearanceCard } from "@/components/settings/appearance-card";
 import { LanguageCard } from "@/components/settings/language-card";
 import { AuthCard } from "@/components/settings/auth-card";
-import { ProfileCard } from "@/components/settings/profile-card";
 import { SyncCard } from "@/components/settings/sync-card";
 // import { BackupCard } from "@/components/settings/backup-card";
 import { TaskOrderCard } from "@/components/settings/navigation-cards";
@@ -14,7 +13,7 @@ import { useAuth } from "@/lib/use-auth";
 export default function SettingsPage() {
   const { t } = useTranslation("settings");
   const { t: tNav } = useTranslation("nav");
-  const { isSupabaseConfigured, isAuthed } = useAuth();
+  const { isSupabaseConfigured } = useAuth();
   const buildLabel = import.meta.env.VITE_APP_BUILD_TIMESTAMP ?? "dev";
   const randomPhrase = import.meta.env.VITE_APP_RANDOM_PHRASE ?? "hey there!";
   return (
@@ -30,7 +29,6 @@ export default function SettingsPage() {
       {isSupabaseConfigured && (
         <>
           <AuthCard />
-          {isAuthed && <ProfileCard />}
           <SyncCard />
         </>
       )}

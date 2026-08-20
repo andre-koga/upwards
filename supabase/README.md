@@ -46,17 +46,26 @@ This starts the local stack and applies migrations. You'll get:
 
 ## Test users (local seed)
 
-After `pnpm supabase db reset` (or first `start` with seed), two accounts are available for testing friends and goals:
+After `pnpm supabase db reset` (or first `start` with seed), a local account is available:
 
-| Email | Password | Username | Display name |
-|-------|----------|----------|--------------|
-| `test@test.com` | `password` | `testuser` | Test User |
-| `friend@test.com` | `password` | `frienduser` | Friend User |
+| Email | Password |
+|-------|----------|
+| `test@test.com` | `password` |
 
-**Try the friends flow:** sign in as `test@test.com`, open Friends, send a request to `frienduser`. Sign out, sign in as `friend@test.com`, accept the request.
+The seed fills that account with about 45 days of history (dates relative to reset day):
 
-To add only the friend account without resetting your DB, run `supabase/scripts/seed-test-friend.sql` in Studio SQL Editor or via `psql` against your local database.
+- **Projects:** Health, Work, Home, plus an archived Old project
+- **Habits:** daily, weekday, weekend, anytime, never, custom, monthly, a group-default timer, a completed habit, and one routine change (Deep work weekdays → daily)
+- **Today:** left incomplete so there is still work to do; older days mix wins, misses, two break days, and a gym pause
+- **Timers:** closed activity periods on recent days
+- **Memos:** pinned, due today, open, completed, archived, plus daily/weekly recurring presets
+- **Journal:** about 15 entries (text/emoji/bookmarks/locations; no photos or videos)
 
+Streaks are not stored as seed rows. Today recomputes them from the daily entries.
+
+The app is local-first. After a reset, **sign out** (or use a fresh browser profile) then sign in as `test@test.com` so IndexedDB is empty and pull hydrates this seed. Resetting Postgres while the same browser still holds old Dexie data will merge leftover local rows.
+
+Seed files: [`seed.sql`](seed.sql) (auth + profile) then [`seeds/test-account.sql`](seeds/test-account.sql).
 ## Migrations
 
 ### Creating a new migration

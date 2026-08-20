@@ -26,8 +26,6 @@ import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dial
 import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
 import ManualTimeEntryDialog from "@/components/tasks/manual-time-entry-dialog";
-import { ActivityStatsDialog } from "@/components/activities/activity-stats-dialog";
-import { GroupStatsDialog } from "@/components/activities/group-stats-dialog";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { Button } from "@/components/ui/button";
 import {
@@ -94,7 +92,6 @@ function DrawerActivityRow({
   elapsedMs,
   onToggleCompleted,
   onEdit,
-  onStats,
   onActivate,
   onManualEntry,
 }: {
@@ -105,7 +102,6 @@ function DrawerActivityRow({
   elapsedMs: number;
   onToggleCompleted: () => void;
   onEdit: () => void;
-  onStats: () => void;
   onActivate?: () => void | Promise<void>;
   onManualEntry?: () => void;
 }) {
@@ -122,8 +118,7 @@ function DrawerActivityRow({
           elapsedMs={elapsedMs}
           isRunning={!completed && isRunning}
           onNameClick={onEdit}
-          onSettingsClick={completed ? undefined : onEdit}
-          onStatsClick={onStats}
+          allowNameClickWhenReadOnly={completed}
           onClick={onActivate}
           onManualEntry={completed ? undefined : onManualEntry}
           nameClassName={
@@ -197,8 +192,6 @@ export default function ActivityGroupsDrawer({
     useState<ActivityGroup | null>(null);
   const [editingGroup, setEditingGroup] = useState<ActivityGroup | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
-  const [statsActivity, setStatsActivity] = useState<Activity | null>(null);
-  const [statsGroup, setStatsGroup] = useState<ActivityGroup | null>(null);
   const [manualEntryActivityId, setManualEntryActivityId] = useState<
     string | null
   >(null);
@@ -358,8 +351,7 @@ export default function ActivityGroupsDrawer({
                               key={group.id}
                               name={group.name}
                               color={group.color || DEFAULT_GROUP_COLOR}
-                              onStatsClick={() => setStatsGroup(group)}
-                              onSettingsClick={() => setEditingGroup(group)}
+                              onNameClick={() => setEditingGroup(group)}
                               onActionClick={() => handleOpenGroup(group)}
                             />
                           );
@@ -385,12 +377,6 @@ export default function ActivityGroupsDrawer({
                                     "drawer.restoreOrDeleteGroup"
                                   )}
                                   onNameClick={() =>
-                                    setArchivedActionsTarget({
-                                      type: "group",
-                                      group,
-                                    })
-                                  }
-                                  onSettingsClick={() =>
                                     setArchivedActionsTarget({
                                       type: "group",
                                       group,
@@ -475,7 +461,6 @@ export default function ActivityGroupsDrawer({
                                 );
                               }}
                               onEdit={() => setEditingActivity(activity)}
-                              onStats={() => setStatsActivity(activity)}
                               onActivate={async () => {
                                 if (isRunning) {
                                   await onStopActivity?.();
@@ -512,7 +497,6 @@ export default function ActivityGroupsDrawer({
                                 );
                               }}
                               onEdit={() => setEditingActivity(activity)}
-                              onStats={() => setStatsActivity(activity)}
                             />
                           ))}
                         </div>
@@ -715,29 +699,6 @@ export default function ActivityGroupsDrawer({
           if (!onAddManualEntry) return;
           await onAddManualEntry(payload);
         }}
-      />
-
-      <GroupStatsDialog
-        open={statsGroup !== null}
-        onOpenChange={(next) => {
-          if (!next) setStatsGroup(null);
-        }}
-        group={statsGroup}
-      />
-
-      <ActivityStatsDialog
-        open={statsActivity !== null}
-        onOpenChange={(next) => {
-          if (!next) setStatsActivity(null);
-        }}
-        activity={statsActivity}
-        group={
-          statsActivity
-            ? selectedGroup?.id === statsActivity.group_id
-              ? selectedGroup
-              : (groups.find((g) => g.id === statsActivity.group_id) ?? null)
-            : null
-        }
       />
     </>
   );

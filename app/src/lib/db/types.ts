@@ -162,31 +162,6 @@ export interface GroupStatusEvent {
   deleted_at: string | null;
 }
 
-/** User profile — username used for friend invites; display_name shown in UI. */
-export interface UserProfile {
-  user_id: string;
-  username: string | null;
-  display_name: string | null;
-  updated_at: string;
-}
-
-/** A friend request (pending / accepted / declined). */
-export interface FriendRequest {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  status: "pending" | "accepted" | "declined";
-  created_at: string;
-  responded_at: string | null;
-}
-
-/** An accepted friendship (ordered pair). */
-export interface Friendship {
-  user_a: string;
-  user_b: string;
-  created_at: string;
-}
-
 /** Application log entry for errors and important events. */
 export interface AppLog {
   id: string;

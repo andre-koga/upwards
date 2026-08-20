@@ -78,27 +78,6 @@
       "saveNewPassword": "Salvar nova senha"
     }
   },
-  "profile": {
-    "title": "Perfil",
-    "displayName": "Nome de exibição",
-    "noDisplayName": "Sem nome de exibição",
-    "displayNameHelper": "Aparece quando amigos veem hábitos que você concluiu e compartilhou",
-    "namePlaceholder": "Seu nome",
-    "setName": "Definir nome",
-    "username": "Nome de usuário",
-    "noUsername": "Sem nome de usuário",
-    "usernameHelper": "Seus amigos podem encontrar você pelo nome de usuário exato",
-    "usernamePlaceholder": "seu_usuario",
-    "usernamePatternTitle": "3–20 caracteres: a-z, 0-9 e traço baixo",
-    "usernameFormatHelper": "Letras, números e traço baixo. 3–20 caracteres.",
-    "setUsername": "Definir nome de usuário",
-    "notSignedIn": "Você não está conectado",
-    "usernameInvalid": "O nome de usuário deve ter 3–20 caracteres: apenas a-z, 0-9 e traço baixo.",
-    "usernameTaken": "Este nome de usuário já está em uso.",
-    "usernameSaveFailed": "Não foi possível salvar o nome de usuário",
-    "loadFailed": "Não foi possível carregar o perfil",
-    "displayNameSaveFailed": "Não foi possível salvar o nome de exibição"
-  },
   "sync": {
     "title": "Sincronização na nuvem",
     "description": "Seus dados são sincronizados automaticamente. Abra Problemas de sincronização para revisar conflitos ou erros.",

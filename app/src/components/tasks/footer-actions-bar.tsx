@@ -10,11 +10,10 @@ import {
   Folder,
   Github,
   History,
+  LogIn,
   Menu,
   MessageSquare,
   Settings,
-  Sparkles,
-  Users,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Activity } from "@/lib/db/types";
@@ -36,6 +35,7 @@ import {
   hasUnreadWhatsNewRelease,
   markWhatsNewSeen,
 } from "@/lib/whats-new-read";
+import { useAuth } from "@/lib/use-auth";
 
 interface FooterActionsBarProps {
   currentDate: Date;
@@ -82,6 +82,7 @@ export default function FooterActionsBar({
 }: FooterActionsBarProps) {
   const { t } = useTranslation("nav");
   const navigate = useNavigate();
+  const { isAuthed, isSupabaseConfigured } = useAuth();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pathsDrawerOpen, setPathsDrawerOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
@@ -182,6 +183,22 @@ export default function FooterActionsBar({
                 />
               </a>
             </Button>
+            {isSupabaseConfigured && !isAuthed ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 w-full justify-start rounded-xl"
+                onClick={() => {
+                  setPathsDrawerOpen(false);
+                  navigate("/settings");
+                }}
+                title={t("signIn")}
+                aria-label={t("signIn")}
+              >
+                <LogIn className="h-4 w-4" />
+                {t("signIn")}
+              </Button>
+            ) : null}
           </div>
 
           <div className="my-2" role="separator" aria-hidden />
@@ -198,30 +215,6 @@ export default function FooterActionsBar({
             >
               <BookOpen className="h-5 w-5 shrink-0 text-rose-500" />
               {t("journal")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
-              onClick={() => {
-                setPathsDrawerOpen(false);
-                navigate("/stats");
-              }}
-            >
-              <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
-              {t("stats")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
-              onClick={() => {
-                setPathsDrawerOpen(false);
-                navigate("/friends");
-              }}
-            >
-              <Users className="h-5 w-5 shrink-0 text-blue-500" />
-              {t("friends")}
             </Button>
             <Button
               type="button"

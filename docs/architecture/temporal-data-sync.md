@@ -55,7 +55,7 @@ using Git as the datastore:
 8. **Preserve offline-first behavior.**
    Local changes apply immediately and synchronize later.
 9. **Use one temporal resolver across the product.**
-   Daily views, streaks, heatmaps, and all statistics must share the same
+   Daily views and streaks must share the same
    interpretation of a day.
 10. **Privacy deletion remains possible.**
     Immutability is a product-history rule, not a reason to deny permanent
@@ -140,9 +140,8 @@ A shared temporal resolver computes state for a logical date:
 5. Apply the completion target effective on that date.
 6. Produce the display and statistical outcome.
 
-Past-day UI, streaks, completion rates, heatmaps, compound scores, activity
-statistics, group statistics, and overall statistics must use this resolver.
-Derived statistics are caches, not sources of truth.
+Past-day UI and streaks must use this resolver.
+Derived streak caches are not sources of truth.
 
 ## Effective time and recorded time
 
@@ -333,7 +332,7 @@ need a repair tool to define older schedule/target periods manually.
 
 1. Add immutable activity/group definition versions.
 2. Implement and test one shared temporal resolver.
-3. Route historical views and every statistics calculation through it.
+3. Route historical views and streak calculations through it.
 4. Add effective-date controls for definition edits.
 5. Add durable operation IDs, device identity, and a pending queue.
 6. Convert compound mutable facts to semantic append-only operations.
@@ -374,7 +373,7 @@ Infrastructure changes in this area must test at least:
 - Two devices edit different fields of one activity definition.
 - Two devices edit the same field or journal text.
 - One device edits while another deletes.
-- Routine and completion-target changes preserve earlier statistics.
+- Routine and completion-target changes preserve earlier streak outcomes.
 - Deleted/retired activities remain correct on earlier dates.
 - A request succeeds but its response is lost and then retried.
 - Synchronization stops midway and later resumes.
@@ -394,7 +393,7 @@ Before changing related infrastructure:
    or a cache.
 3. State the effective-time, recorded-time, idempotency, conflict, deletion, and
    migration behavior.
-4. Trace all historical and statistics consumers affected by the change.
+4. Trace all historical and streak consumers affected by the change.
 5. Include offline, retry, account-switch, and multi-device tests.
 6. Do not introduce client-clock last-write-wins as a conflict policy.
 7. Do not hard-delete accepted history during ordinary product operations.

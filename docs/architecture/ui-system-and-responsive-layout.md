@@ -68,8 +68,6 @@ The system is only partially standardized:
 - Some forms bypass shared Input and Label primitives.
 - Focus-ring styles and control sizes vary.
 - Destructive button styles are repeated at feature call sites.
-- Chart tooltips are pointer-oriented and lack a complete keyboard/screen-reader
-  path.
 
 ### Desktop behavior
 
@@ -292,9 +290,7 @@ Pages may use master-detail and multi-column layouts:
 | --- | --- |
 | Today | Journal/day context and tasks/timeline in coordinated columns |
 | Journal | Search/entry list plus selected-entry reader |
-| Stats | Group/activity navigation beside wider charts and details |
 | Settings | Settings navigation beside the selected panel |
-| Friends | Wider request/friend lists with clear row actions |
 | Logs | Filterable, selectable table-like presentation |
 | Conflicts | Issue list beside conflict details and resolution controls |
 
@@ -308,11 +304,9 @@ chart/card density where viewport breakpoints are insufficient.
 | --- | --- |
 | Menu sheet | Persistent sidebar |
 | Projects sheet | Inline/collapsible projects panel |
-| Notifications drawer | Header/sidebar panel |
 | Floating back button | Breadcrumbs or page back action |
 | Swipe day change | Header controls plus arrow keys |
 | Long press | Explicit action or context menu |
-| Tap chart point | Hover/focus plus click-to-pin |
 
 Desktop adaptation must not create a second set of routes or divergent product
 logic. Shared route and feature state should feed both presentations.
@@ -361,7 +355,7 @@ behavior and therefore require interaction tests.
 - Migrate the activity/projects drawer.
 - Replace the phone-frame shell with adaptive navigation and scrolling.
 - Add desktop page headers, breadcrumbs, and keyboard interaction parity.
-- Adapt Today, Stats, Journal, and Settings into wide layouts.
+- Adapt Today, Journal, and Settings into wide layouts.
 
 These are cross-cutting layout and information-architecture changes. They
 should use feature flags or incremental route-by-route delivery.
@@ -373,7 +367,6 @@ Do not force registry replacements for:
 - FormTimeField's custom dial
 - Journal map and media workflows
 - Task completion controls
-- Stats charts and heatmaps
 - Upwards-specific routine and date behavior
 
 Improve their accessibility and responsiveness in place or wrap them with
@@ -391,7 +384,7 @@ shared primitives.
 6. Migrate simple drawers and confirmations, then the projects drawer.
 7. Introduce the adaptive AppShell while keeping mobile behavior unchanged.
 8. Add persistent desktop navigation and one scroll owner.
-9. Adapt pages incrementally, beginning with Settings and Stats before the more
+9. Adapt pages incrementally, beginning with Settings before the more
    interaction-heavy Today and Journal surfaces.
 10. Remove the desktop notice and phone-frame constraint only after navigation,
     overlays, and critical routes work at desktop widths.
