@@ -8,6 +8,7 @@ import type {
 } from "@/lib/db/types";
 import {
   isActiveGroup,
+  isActivityArchived,
   sortActivitiesByOrder,
   buildGroupById,
   filterActiveActivities,
@@ -30,7 +31,7 @@ export function useTasksPageData({
 }: UseTasksPageDataOptions) {
   /** Active habits for picker / new tracking (current state). */
   const [activities, setActivities] = useState<Activity[]>([]);
-  /** All habits including soft-deleted/completed — for historical timeline labels. */
+  /** All habits including soft-deleted/archived — for historical timeline labels. */
   const [lookupActivities, setLookupActivities] = useState<Activity[]>([]);
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [lookupGroups, setLookupGroups] = useState<ActivityGroup[]>([]);
@@ -82,7 +83,7 @@ export function useTasksPageData({
       setActivities(
         sortActivitiesByOrder(
           filterActiveActivities(
-            allActivities.filter((a) => !a.deleted_at && !a.completed_at),
+            allActivities.filter((a) => !a.deleted_at && !isActivityArchived(a)),
             groupById
           )
         )
@@ -115,7 +116,7 @@ export function useTasksPageData({
       setActivities(
         sortActivitiesByOrder(
           filterActiveActivities(
-            allActivities.filter((a) => !a.deleted_at && !a.completed_at),
+            allActivities.filter((a) => !a.deleted_at && !isActivityArchived(a)),
             groupById
           )
         )

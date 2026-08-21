@@ -1,7 +1,6 @@
 import { db, newId, now } from "@/lib/db";
 import type {
   Activity,
-  ActivityDefinitionVersion,
   ActivityGroup,
   ActivityStatusEvent,
   DailyEntry,
@@ -11,7 +10,6 @@ import {
   shouldShowActivity,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
-import { pickDefinitionVersionAsOf } from "@/lib/activity/definition-versions";
 import { startOfDay, toDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import {
@@ -47,23 +45,14 @@ function getActivityOriginDay(activity: Activity): Date {
 
 function createVisibilityChecker(
   activity: Activity,
-  definitionVersions: ActivityDefinitionVersion[],
   visibility?: StreakVisibilityDeps
 ): StreakVisibilityChecker {
   return (day: Date) => {
-    const resolvedVersion = definitionVersions.length
-      ? pickDefinitionVersionAsOf(definitionVersions, toDateString(day))
-      : null;
-    const activityDefinitionsById = resolvedVersion
-      ? new Map([[activity.id, resolvedVersion]])
-      : undefined;
-
     if (!visibility) {
       return shouldShowActivity(activity, day, undefined, {
         viewDate: day,
         activityEventsById: new Map(),
         groupEventsById: new Map(),
-        activityDefinitionsById,
       });
     }
 
@@ -72,7 +61,6 @@ function createVisibilityChecker(
       viewDate: day,
       activityEventsById: visibility.activityEventsById,
       groupEventsById: visibility.groupEventsById,
-      activityDefinitionsById,
     };
     return shouldShowActivity(activity, day, group, temporal);
   };
@@ -81,47 +69,24 @@ function createVisibilityChecker(
 interface SharedStreakData {
   entriesByDate: Map<string, DailyEntry>;
   breakDays: Set<string>;
-  definitionVersionsByActivityId: Map<string, ActivityDefinitionVersion[]>;
 }
 
 async function loadSharedStreakData(
-  activities: Activity[],
   fromDate: Date,
   toDate: Date
 ): Promise<SharedStreakData> {
   const startStr = toDateString(startOfDay(fromDate));
   const endStr = toDateString(startOfDay(toDate));
-  const activityIds = activities.map((activity) => activity.id);
 
-  const [entries, definitionVersions] = await Promise.all([
-    db.dailyEntries
-      .where("date")
-      .between(startStr, endStr, true, true)
-      .filter((entry) => !entry.deleted_at)
-      .toArray(),
-    activityIds.length === 0
-      ? Promise.resolve([])
-      : db.activityDefinitionVersions
-          .where("activity_id")
-          .anyOf(activityIds)
-          .filter((row) => !row.deleted_at)
-          .toArray(),
-  ]);
-
-  const definitionVersionsByActivityId = new Map<
-    string,
-    ActivityDefinitionVersion[]
-  >();
-  for (const version of definitionVersions) {
-    const list = definitionVersionsByActivityId.get(version.activity_id) ?? [];
-    list.push(version);
-    definitionVersionsByActivityId.set(version.activity_id, list);
-  }
+  const entries = await db.dailyEntries
+    .where("date")
+    .between(startStr, endStr, true, true)
+    .filter((entry) => !entry.deleted_at)
+    .toArray();
 
   return {
     entriesByDate: buildEntriesByDateMap(entries),
     breakDays: buildBreakDaysSet(entries),
-    definitionVersionsByActivityId,
   };
 }
 
@@ -135,9 +100,6 @@ function buildOutcomesForActivity(
     entryOverride?: StreakEntryOverride;
   }
 ): ReturnType<typeof buildActivityStreakOutcomesByDate> {
-  const definitionVersions =
-    shared.definitionVersionsByActivityId.get(activity.id) ?? [];
-
   return buildActivityStreakOutcomesByDate(
     activity,
     shared.entriesByDate,
@@ -145,12 +107,7 @@ function buildOutcomesForActivity(
     fromDate,
     toDate,
     {
-      definitionVersions,
-      isVisibleOnDay: createVisibilityChecker(
-        activity,
-        definitionVersions,
-        options?.visibility
-      ),
+      isVisibleOnDay: createVisibilityChecker(activity, options?.visibility),
       entryOverride: options?.entryOverride,
     }
   );
@@ -234,11 +191,7 @@ export async function getOrComputeActivityStreaksForDate(
     return origin < earliest ? origin : earliest;
   }, getActivityOriginDay(eligible[0]!));
 
-  const shared = await loadSharedStreakData(
-    eligible,
-    earliestOrigin,
-    targetDay
-  );
+  const shared = await loadSharedStreakData(earliestOrigin, targetDay);
 
   await Promise.all(
     eligible.map(async (activity) => {
@@ -293,7 +246,7 @@ export async function refreshActivityStreakProjectionFromDate(
   }, getActivityOriginDay(eligible[0]!));
   const rangeStart = fromDay < earliestOrigin ? earliestOrigin : fromDay;
 
-  const shared = await loadSharedStreakData(eligible, rangeStart, endDay);
+  const shared = await loadSharedStreakData(rangeStart, endDay);
 
   await Promise.all(
     eligible.map(async (activity) => {

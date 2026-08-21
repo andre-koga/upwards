@@ -87,8 +87,8 @@ function ActivityTaskItem({
       onShowRetiredInfo("deleted", activityDisplayName);
       return;
     }
-    if (interaction.retiredKind === "completed") {
-      onShowRetiredInfo("completed", activityDisplayName);
+    if (interaction.retiredKind === "archived") {
+      onShowRetiredInfo("archived", activityDisplayName);
       return;
     }
     onEdit(activity);

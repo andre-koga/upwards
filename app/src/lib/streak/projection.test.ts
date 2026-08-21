@@ -39,6 +39,7 @@ function makeActivity(overrides: Partial<Activity> = {}): Activity {
     name: "Read",
     routine: "daily",
     completion_target: 1,
+    is_archived: false,
     completed_at: null,
     order_index: 0,
     created_at: "2026-06-10T12:00:00.000Z",

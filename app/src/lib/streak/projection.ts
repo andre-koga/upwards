@@ -1,8 +1,4 @@
-import type {
-  Activity,
-  ActivityDefinitionVersion,
-  DailyEntry,
-} from "@/lib/db/types";
+import type { Activity, DailyEntry } from "@/lib/db/types";
 import {
   getScheduledDayOutcome,
   type ScheduledDayOutcome,
@@ -47,13 +43,11 @@ export function buildActivityStreakOutcomesByDate(
   fromDate: Date,
   toDate: Date,
   options: {
-    definitionVersions?: ActivityDefinitionVersion[];
     isVisibleOnDay: StreakVisibilityChecker;
     entryOverride?: StreakEntryOverride;
   }
 ): Record<string, StreakDayOutcome> {
   const outcomes: Record<string, StreakDayOutcome> = {};
-  const versions = options.definitionVersions ?? [];
   const fromStr = toDateString(startOfDay(fromDate));
   let cursor = startOfDay(fromDate);
   const end = startOfDay(toDate);
@@ -80,8 +74,7 @@ export function buildActivityStreakOutcomesByDate(
       activity,
       cursor,
       entry,
-      breakDays,
-      { definitionVersions: versions }
+      breakDays
     );
 
     cursor = shiftDate(cursor, 1);

@@ -14,11 +14,11 @@ conflict handling, read the complete architecture decision:
 
 Treat that document as binding repository guidance. Do not introduce:
 
-- Current mutable definitions as the source of historical truth
-- Client-clock last-write-wins conflict resolution
+- Effective-dated definition versions or apply-from schedule UI
 - Ordinary hard deletion of accepted user history
 - Non-idempotent synchronization operations
 - Conflicts or pending-data failures without an in-app review/recovery path
+- Silent last-write-wins for journal text or other reviewable conflicts
 
 Any intentional departure must update the architecture document and explain
 the changed product tradeoff before implementation.

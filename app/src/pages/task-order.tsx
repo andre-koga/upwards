@@ -12,7 +12,6 @@ import {
   isHiddenGroupDefaultActivity,
   isScheduledRoutine,
 } from "@/lib/activity";
-import { appendActivityDefinitionVersion } from "@/lib/activity/definition-versions";
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppPageShell } from "@/components/layout/app-page-shell";
@@ -50,7 +49,9 @@ export default function TaskOrderPage() {
     reload,
   } = useAsyncData(async () => {
     const [allActivities, groups] = await Promise.all([
-      db.activities.filter((a) => !a.completed_at && !a.deleted_at).toArray(),
+      db.activities
+        .filter((a) => !a.is_archived && !a.completed_at && !a.deleted_at)
+        .toArray(),
       db.activityGroups.filter((g) => isActiveGroup(g)).toArray(),
     ]);
     const groupById = buildGroupById(groups);
@@ -93,14 +94,6 @@ export default function TaskOrderPage() {
         )
       );
     });
-
-    await Promise.all(
-      nextActivities.map((activity, index) =>
-        appendActivityDefinitionVersion({
-          activity: { ...activity, order_index: index },
-        })
-      )
-    );
   }, []);
 
   const moveItem = useCallback(

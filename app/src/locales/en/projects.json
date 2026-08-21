@@ -9,6 +9,9 @@
     "showArchivedGroups": "Show archived groups",
     "hideArchivedGroups": "Hide archived groups",
     "restoreOrDeleteGroup": "Restore or delete archived group",
+    "showArchivedActivities": "Show archived activities",
+    "hideArchivedActivities": "Hide archived activities",
+    "restoreOrDeleteActivity": "Restore or delete archived activity",
     "backToGroups": "Back to groups",
     "newActivity": "New Activity",
     "noGroupSelected": "No group selected.",
@@ -77,15 +80,6 @@
     "pausedForDay": "Task paused for this day",
     "incrementHint": "{{count}} / {{target}} — click to increment",
     "countTarget": "{{count}} / {{target}}"
-  },
-  "definitionEffectiveFrom": {
-    "labelSchedule": "Apply schedule/rules from",
-    "labelSettings": "Apply settings from",
-    "today": "Today",
-    "beginning": "From the beginning",
-    "custom": "Custom date",
-    "customDate": "Effective date",
-    "helper": "Past days keep the previous schedule and rules unless you apply this change retroactively."
   },
   "timeField": {
     "dialDescription": "Drag the dial or tap values to edit time.",

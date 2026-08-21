@@ -9,6 +9,9 @@
     "showArchivedGroups": "Mostrar grupos arquivados",
     "hideArchivedGroups": "Ocultar grupos arquivados",
     "restoreOrDeleteGroup": "Restaurar ou excluir grupo arquivado",
+    "showArchivedActivities": "Mostrar atividades arquivadas",
+    "hideArchivedActivities": "Ocultar atividades arquivadas",
+    "restoreOrDeleteActivity": "Restaurar ou excluir atividade arquivada",
     "backToGroups": "Voltar aos grupos",
     "newActivity": "Nova atividade",
     "noGroupSelected": "Nenhum grupo selecionado.",
@@ -77,15 +80,6 @@
     "pausedForDay": "Tarefa pausada para este dia",
     "incrementHint": "{{count}} / {{target}} — toque para aumentar",
     "countTarget": "{{count}} / {{target}}"
-  },
-  "definitionEffectiveFrom": {
-    "labelSchedule": "Aplicar agenda/regras a partir de",
-    "labelSettings": "Aplicar configurações a partir de",
-    "today": "Hoje",
-    "beginning": "Desde o início",
-    "custom": "Data personalizada",
-    "customDate": "Data de vigência",
-    "helper": "Dias passados mantêm a agenda e as regras anteriores, a menos que você aplique esta alteração retroativamente."
   },
   "timeField": {
     "dialDescription": "Arraste o controle circular ou toque nos valores para editar o horário.",

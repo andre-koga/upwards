@@ -28,6 +28,7 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "name",
     "routine",
     "completion_target",
+    "is_archived",
     "completed_at",
     "order_index",
     "created_at",

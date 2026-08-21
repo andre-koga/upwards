@@ -1,6 +1,5 @@
 import { db, newId, now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
-import { appendGroupDefinitionVersion } from "@/lib/activity";
 import { GroupDialogForm } from "@/components/activities/group-dialog-form";
 
 interface NewGroupDialogProps {
@@ -35,10 +34,6 @@ export function NewGroupDialog({
           deleted_at: null,
         };
         await db.activityGroups.add(createdGroup);
-        await appendGroupDefinitionVersion({
-          group: createdGroup,
-          force: true,
-        });
         onCreated?.(createdGroup);
       }}
     />

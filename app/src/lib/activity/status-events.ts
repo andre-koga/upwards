@@ -11,9 +11,14 @@ import { endOfDay, shiftDate, startOfDay } from "@/lib/time-utils";
 
 export type { ActivityStatusType, GroupStatusType };
 
+const ACTIVITY_ARCHIVE_STATUS_TYPES: ReadonlySet<string> = new Set([
+  "archived",
+  "completed",
+]);
+
 /**
  * When a status starts applying for calendar-day visibility.
- * - completed / archived (enter): hide from the *next* day (action day still visible).
+ * - archived / completed (enter): hide from the *next* day (action day still visible).
  * - deleted (enter): hide from the *action day* onward (today inclusive).
  * - leaving any status: applies from the action day.
  */
@@ -31,6 +36,13 @@ export function effectiveAtForStatusOn(
   return shiftDate(startOfDay(actionDate), 1).toISOString();
 }
 
+function statusTypesMatch(eventType: string, requestedType: string): boolean {
+  if (requestedType === "archived" || requestedType === "completed") {
+    return ACTIVITY_ARCHIVE_STATUS_TYPES.has(eventType);
+  }
+  return eventType === requestedType;
+}
+
 function reduceStatusAsOf<
   T extends {
     status_type: string;
@@ -46,7 +58,7 @@ function reduceStatusAsOf<
     .filter(
       (e) =>
         !e.deleted_at &&
-        e.status_type === statusType &&
+        statusTypesMatch(e.status_type, statusType) &&
         e.effective_at <= cutoff
     )
     // Sort by when the event was actually written so that the most recently
@@ -75,11 +87,15 @@ export function isActivityStatusAsOf(
     return reduceStatusAsOf(events, statusType, viewDate);
   }
   if (!legacyFallback) return false;
-  if (statusType === "completed" && legacyFallback.completed_at) {
-    const hideFrom = shiftDate(
-      startOfDay(new Date(legacyFallback.completed_at)),
-      1
-    );
+  if (
+    (statusType === "archived" || statusType === "completed") &&
+    (legacyFallback.is_archived || legacyFallback.completed_at)
+  ) {
+    const ref =
+      legacyFallback.completed_at ||
+      legacyFallback.updated_at ||
+      legacyFallback.created_at;
+    const hideFrom = shiftDate(startOfDay(new Date(ref)), 1);
     return endOfDay(viewDate).getTime() >= hideFrom.getTime();
   }
   if (statusType === "deleted" && legacyFallback.deleted_at) {

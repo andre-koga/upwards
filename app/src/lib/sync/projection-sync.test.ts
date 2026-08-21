@@ -12,17 +12,14 @@ describe("projection-sync mappings", () => {
     expect(syncTableToEntityType("activity_periods")).toBe("activity_period");
   });
 
-  it("strips definition fields from activity projection payloads", () => {
-    const stripped = stripOpOwnedFields("activities", {
+  it("does not strip current activity fields from projection payloads", () => {
+    const row = {
       id: "a1",
       name: "Run",
       completed_at: "2026-08-01T12:00:00.000Z",
+      is_archived: true,
       deleted_at: null,
-    });
-    expect(stripped).toEqual({
-      id: "a1",
-      completed_at: "2026-08-01T12:00:00.000Z",
-      deleted_at: null,
-    });
+    };
+    expect(stripOpOwnedFields("activities", row)).toEqual(row);
   });
 });

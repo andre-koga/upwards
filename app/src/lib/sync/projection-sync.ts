@@ -5,11 +5,7 @@ import { getOrCreateDeviceId } from "@/lib/sync/device-id";
 import { enqueuePendingOperation } from "@/lib/sync/pending-operations";
 import { getCachedUserId } from "@/lib/supabase";
 import { newId } from "@/lib/db";
-import {
-  OP_OWNED_ACTIVITY_FIELDS,
-  OP_OWNED_GROUP_FIELDS,
-  stripOpOwnedFields,
-} from "@/lib/sync/op-owned-fields";
+import { stripOpOwnedFields } from "@/lib/sync/op-owned-fields";
 import type { RemoteSyncOperation } from "./sync-operations";
 
 /** Tables whose rows sync exclusively via the operation stream when RPCs are live. */
@@ -96,7 +92,7 @@ function rowForProjectionPayload(
 ): Record<string, unknown> {
   const copy = { ...row };
   delete copy.synced_at;
-  if (table === "activities" || table === "activity_groups") {
+  if (table === "daily_entries") {
     return stripOpOwnedFields(table, copy);
   }
   return copy;
@@ -137,8 +133,9 @@ export async function enqueueProjectionUpsertForTable(
     entity_id: id,
     operation_type: "projection.upsert",
     payload: { row: payloadRow },
-    base_revision:
-      APPEND_ONLY_ENTITY_TYPES.has(entityType) ? null : (baseRevision ?? null),
+    base_revision: APPEND_ONLY_ENTITY_TYPES.has(entityType)
+      ? null
+      : (baseRevision ?? null),
   });
 }
 

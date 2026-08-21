@@ -7,11 +7,7 @@ import {
   parseTimestamp,
 } from "./sync-transformers";
 import { EPOCH, SYNC_TABLES, TABLE_MAP } from "./sync-constants";
-import {
-  OP_OWNED_ACTIVITY_FIELDS,
-  OP_OWNED_DAILY_ENTRY_FIELDS,
-  OP_OWNED_GROUP_FIELDS,
-} from "./op-owned-fields";
+import { OP_OWNED_DAILY_ENTRY_FIELDS } from "./op-owned-fields";
 import { OPS_MANAGED_SYNC_TABLES } from "./projection-sync";
 import { listOpenConflictEntityIds } from "./sync-issues-store";
 
@@ -39,9 +35,15 @@ function preserveLocalDefinitionFields(
   const next = { ...remote };
   const keys =
     table === "activities"
-      ? OP_OWNED_ACTIVITY_FIELDS
+      ? ([
+          "name",
+          "routine",
+          "completion_target",
+          "group_id",
+          "order_index",
+        ] as const)
       : table === "activity_groups"
-        ? OP_OWNED_GROUP_FIELDS
+        ? (["name", "color", "order_index"] as const)
         : [];
   for (const key of keys) {
     if (key in local) next[key] = local[key];

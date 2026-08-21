@@ -28,8 +28,6 @@ function mockLocalStorage() {
 
 const dailyEntries: DailyEntry[] = [];
 const activityStreaks: ActivityStreak[] = [];
-const activityDefinitionVersions: import("@/lib/db/types").ActivityDefinitionVersion[] =
-  [];
 let idCounter = 0;
 
 vi.mock("@/lib/db", () => ({
@@ -42,35 +40,6 @@ vi.mock("@/lib/db", () => ({
               dailyEntries.filter(
                 (entry) =>
                   entry.date >= start && entry.date <= end && predicate(entry)
-              ),
-          }),
-        }),
-      }),
-    },
-    activityDefinitionVersions: {
-      where: (_index: string) => ({
-        equals: (activityId: string) => ({
-          filter: (
-            predicate: (
-              row: import("@/lib/db/types").ActivityDefinitionVersion
-            ) => boolean
-          ) => ({
-            toArray: async () =>
-              activityDefinitionVersions.filter(
-                (row) => row.activity_id === activityId && predicate(row)
-              ),
-          }),
-        }),
-        anyOf: (activityIds: string[]) => ({
-          filter: (
-            predicate: (
-              row: import("@/lib/db/types").ActivityDefinitionVersion
-            ) => boolean
-          ) => ({
-            toArray: async () =>
-              activityDefinitionVersions.filter(
-                (row) =>
-                  activityIds.includes(row.activity_id) && predicate(row)
               ),
           }),
         }),
@@ -112,6 +81,7 @@ function makeActivity(overrides: Partial<Activity> = {}): Activity {
     name: "Read",
     routine: "daily",
     completion_target: 1,
+    is_archived: false,
     completed_at: null,
     order_index: 0,
     created_at: "2026-06-10T12:00:00.000Z",
@@ -149,7 +119,6 @@ describe("getOrComputeActivityStreaksForDate", () => {
     localStorage.setItem("okhabit:day_reset_minutes", "0");
     dailyEntries.length = 0;
     activityStreaks.length = 0;
-    activityDefinitionVersions.length = 0;
     idCounter = 0;
   });
 
@@ -232,49 +201,12 @@ describe("getOrComputeActivityStreaksForDate", () => {
     expect(streaks["act-1"]).toBe(0);
   });
 
-  it("preserves streak across definition version changes", async () => {
+  it("scores past days with the current target", async () => {
     const activity = makeActivity({
       created_at: "2026-06-01T12:00:00.000Z",
       routine: "daily",
+      completion_target: 2,
     });
-    activityDefinitionVersions.push(
-      {
-        id: "v1",
-        activity_id: "act-1",
-        parent_version_id: null,
-        effective_from: "2026-06-01",
-        recorded_at: "2026-06-01T12:00:00.000Z",
-        server_sequence: null,
-        operation_id: "op-v1",
-        device_id: "device-1",
-        name: "Read",
-        routine: "daily",
-        completion_target: 1,
-        group_id: "group-1",
-        order_index: 0,
-        schema_version: 1,
-        created_at: "2026-06-01T12:00:00.000Z",
-        deleted_at: null,
-      },
-      {
-        id: "v2",
-        activity_id: "act-1",
-        parent_version_id: "v1",
-        effective_from: "2026-06-15",
-        recorded_at: "2026-06-15T12:00:00.000Z",
-        server_sequence: null,
-        operation_id: "op-v2",
-        device_id: "device-1",
-        name: "Read",
-        routine: "daily",
-        completion_target: 2,
-        group_id: "group-1",
-        order_index: 0,
-        schema_version: 1,
-        created_at: "2026-06-15T12:00:00.000Z",
-        deleted_at: null,
-      }
-    );
     addEntry("2026-06-13", { task_counts: { "act-1": 1 } });
     addEntry("2026-06-14", { task_counts: { "act-1": 1 } });
     addEntry("2026-06-15", { task_counts: { "act-1": 2 } });
@@ -286,56 +218,18 @@ describe("getOrComputeActivityStreaksForDate", () => {
       [activity],
       new Date(2026, 5, 18)
     );
-    expect(streaks["act-1"]).toBe(6);
+    expect(streaks["act-1"]).toBe(4);
   });
 
-  it("preserves historical weekend streak after routine changes to weekdays", async () => {
+  it("scores past days with the current routine", async () => {
     const activity = makeActivity({ routine: "weekly:1,2,3,4,5" });
-    activityDefinitionVersions.push(
-      {
-        id: "v1",
-        activity_id: "act-1",
-        parent_version_id: null,
-        effective_from: "2026-06-01",
-        recorded_at: "2026-06-01T12:00:00.000Z",
-        server_sequence: null,
-        operation_id: "op-v1",
-        device_id: "device-1",
-        name: "Read",
-        routine: "weekly:0,6",
-        completion_target: 1,
-        group_id: "group-1",
-        order_index: 0,
-        schema_version: 1,
-        created_at: "2026-06-01T12:00:00.000Z",
-        deleted_at: null,
-      },
-      {
-        id: "v2",
-        activity_id: "act-1",
-        parent_version_id: "v1",
-        effective_from: "2026-06-15",
-        recorded_at: "2026-06-15T12:00:00.000Z",
-        server_sequence: null,
-        operation_id: "op-v2",
-        device_id: "device-1",
-        name: "Read",
-        routine: "weekly:1,2,3,4,5",
-        completion_target: 1,
-        group_id: "group-1",
-        order_index: 0,
-        schema_version: 1,
-        created_at: "2026-06-15T12:00:00.000Z",
-        deleted_at: null,
-      }
-    );
-    addEntry("2026-06-13", { task_counts: { "act-1": 1 } }); // Saturday under weekend schedule
-    addEntry("2026-06-14", { task_counts: { "act-1": 1 } }); // Sunday under weekend schedule
+    addEntry("2026-06-13", { task_counts: { "act-1": 1 } }); // Saturday
+    addEntry("2026-06-14", { task_counts: { "act-1": 1 } }); // Sunday
 
     const streaks = await getOrComputeActivityStreaksForDate(
       [activity],
       new Date(2026, 5, 14)
     );
-    expect(streaks["act-1"]).toBe(2);
+    expect(streaks["act-1"]).toBe(0);
   });
 });

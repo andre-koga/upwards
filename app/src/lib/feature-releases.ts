@@ -12,6 +12,15 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-08-21-simpler-habits",
+    date: "2026-08-21",
+    title: "Simpler habit edits and archive",
+    bullets: [
+      'Change a habit\'s schedule or rules and it applies right away — no "from today" setting.',
+      "Archive a habit from its edit screen. Archived habits sit at the bottom of the group, and you can unarchive or delete them from there.",
+    ],
+  },
+  {
     id: "2026-08-16-simpler-home",
     date: "2026-08-16",
     title: "A simpler home",

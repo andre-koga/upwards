@@ -147,7 +147,7 @@
       "combinableHint": "Essas alterações tocam campos diferentes e podem ser combinadas sem conflito.",
       "combineWithPreferenceHint": "Campos editados nos dois lados manterão o seu valor.",
       "unknownRemote": "Indisponível",
-      "consequence": "Sua escolha cria uma nova versão. As versões anteriores permanecem no histórico e não são apagadas.",
+      "consequence": "Sua escolha atualiza a atividade ou o grupo atual. Contagens do dia e entradas do diário não mudam.",
       "applyFromLabel": "Aplicar a partir de",
       "resolveFailed": "Não foi possível aplicar essa escolha. Tente novamente.",
       "columns": {

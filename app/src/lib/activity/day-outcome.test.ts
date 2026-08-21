@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type {
-  Activity,
-  ActivityDefinitionVersion,
-  DailyEntry,
-} from "@/lib/db/types";
+import type { Activity, DailyEntry } from "@/lib/db/types";
 import { getScheduledDayOutcome } from "./day-outcome";
 
 const storage = new Map<string, string>();
@@ -38,6 +34,7 @@ function makeActivity(overrides: Partial<Activity> = {}): Activity {
     name: "Read",
     routine: "daily",
     completion_target: 1,
+    is_archived: false,
     completed_at: null,
     order_index: 0,
     created_at: "2026-06-01T12:00:00.000Z",
@@ -134,55 +131,12 @@ describe("getScheduledDayOutcome", () => {
     ).toBe("loss");
   });
 
-  it("uses definition version effective on the viewed date", () => {
+  it("uses the current activity row, not a stored definition history", () => {
     const activity = makeActivity({ routine: "weekly:1,2,3,4,5" });
-    const versions: ActivityDefinitionVersion[] = [
-      {
-        id: "v1",
-        activity_id: "act-1",
-        parent_version_id: null,
-        effective_from: "2026-06-01",
-        recorded_at: "2026-06-01T12:00:00.000Z",
-        server_sequence: null,
-        operation_id: "op-v1",
-        device_id: "device-1",
-        name: "Read",
-        routine: "weekly:0,6",
-        completion_target: 1,
-        group_id: "group-1",
-        order_index: 0,
-        schema_version: 1,
-        created_at: "2026-06-01T12:00:00.000Z",
-        deleted_at: null,
-      },
-      {
-        id: "v2",
-        activity_id: "act-1",
-        parent_version_id: "v1",
-        effective_from: "2026-06-15",
-        recorded_at: "2026-06-15T12:00:00.000Z",
-        server_sequence: null,
-        operation_id: "op-v2",
-        device_id: "device-1",
-        name: "Read",
-        routine: "weekly:1,2,3,4,5",
-        completion_target: 1,
-        group_id: "group-1",
-        order_index: 0,
-        schema_version: 1,
-        created_at: "2026-06-15T12:00:00.000Z",
-        deleted_at: null,
-      },
-    ];
     const saturday = new Date(2026, 5, 13);
     const monday = new Date(2026, 5, 15);
     const done = makeEntry("2026-06-13", { task_counts: { "act-1": 1 } });
 
-    expect(
-      getScheduledDayOutcome(activity, saturday, done, new Set(), {
-        definitionVersions: versions,
-      })
-    ).toBe("win");
     expect(getScheduledDayOutcome(activity, saturday, done, new Set())).toBe(
       "skip"
     );
@@ -191,8 +145,7 @@ describe("getScheduledDayOutcome", () => {
         activity,
         monday,
         makeEntry("2026-06-15"),
-        new Set(),
-        { definitionVersions: versions }
+        new Set()
       )
     ).toBe("loss");
   });

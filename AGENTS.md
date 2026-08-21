@@ -13,19 +13,18 @@ media persistence, account switching, or conflict handling, read:
 
 That document is the required architectural direction. In particular:
 
-- Authoritative user history is append-only.
-- Definitions are immutable, effective-dated versions.
-- Current rows and statistics are rebuildable projections.
-- Sync uses idempotent operations, entity revisions, and server sequences.
-- Valid concurrent changes are never silently discarded.
-- Every unresolved conflict or unsynced-data problem has an in-app review and
-  recovery path.
-- Historical screens and statistics use the definition effective on the
-  requested date, not the latest definition.
+- Activity and group definitions are current-state rows. Edits overwrite the
+  latest name, schedule, target, and related fields.
+- Historical days and streaks use the current definition, not an effective-dated
+  version history.
+- Daily facts (counts, sessions, journal) remain recorded per day.
+- Archive and delete are lifecycle events with an in-app restore/delete path.
+- Sync uses idempotent operations. Unresolved conflicts stay reviewable in the
+  app.
 
-Do not introduce current-row-only historical behavior, client-clock
-last-write-wins conflict resolution, ordinary hard deletion of accepted
-history, or background conflict handling that users cannot inspect.
+Do not reintroduce apply-from / effective-from definition UI, definition-version
+lineage for schedule edits, ordinary hard deletion of accepted history, or
+background conflict handling that users cannot inspect.
 
 When a requested change contradicts the architecture document, call out the
 conflict before implementation and update the decision record deliberately if
