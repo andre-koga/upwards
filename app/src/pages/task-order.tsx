@@ -7,6 +7,7 @@ import { useAsyncData } from "@/hooks/use-async-data";
 import {
   getActivityDisplayName,
   isActiveGroup,
+  isActivityArchived,
   buildGroupById,
   filterActiveActivities,
   isHiddenGroupDefaultActivity,
@@ -50,7 +51,7 @@ export default function TaskOrderPage() {
   } = useAsyncData(async () => {
     const [allActivities, groups] = await Promise.all([
       db.activities
-        .filter((a) => !a.is_archived && !a.completed_at && !a.deleted_at)
+        .filter((a) => !isActivityArchived(a) && !a.deleted_at)
         .toArray(),
       db.activityGroups.filter((g) => isActiveGroup(g)).toArray(),
     ]);

@@ -33,7 +33,7 @@ let idCounter = 0;
 vi.mock("@/lib/db", () => ({
   db: {
     dailyEntries: {
-      where: (_index: string) => ({
+      where: () => ({
         between: (start: string, end: string) => ({
           filter: (predicate: (entry: DailyEntry) => boolean) => ({
             toArray: async () =>
@@ -46,7 +46,7 @@ vi.mock("@/lib/db", () => ({
       }),
     },
     activityStreaks: {
-      where: (_index: string) => ({
+      where: () => ({
         equals: ([activityId, date]: [string, string]) => ({
           filter: (predicate: (row: ActivityStreak) => boolean) => ({
             first: async () =>

@@ -160,7 +160,7 @@ export default function ActivityGroupsDrawer({
   const [archivedGroups, setArchivedGroups] = useState<ActivityGroup[]>([]);
   const [showArchivedGroups, setShowArchivedGroups] = useState(false);
   const [showArchivedActivities, setShowArchivedActivities] = useState(false);
-  // All non-deleted activities for the selected group (including completed).
+  // All non-deleted activities for the selected group (including archived).
   const [groupActivities, setGroupActivities] = useState<Activity[]>([]);
   const [groupActivitiesTick, setGroupActivitiesTick] = useState(0);
   const [archivedActionsTarget, setArchivedActionsTarget] =
@@ -469,6 +469,12 @@ export default function ActivityGroupsDrawer({
                                   )}
                                   readOnly
                                   allowNameClickWhenReadOnly
+                                  nameTitle={t(
+                                    "drawer.restoreOrDeleteActivity"
+                                  )}
+                                  nameAriaLabel={t(
+                                    "drawer.restoreOrDeleteActivity"
+                                  )}
                                   onNameClick={() =>
                                     setArchivedActionsTarget({
                                       type: "activity",

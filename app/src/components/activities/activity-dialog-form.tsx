@@ -4,7 +4,11 @@ import { ArchiveActivityDialog } from "@/components/activities/archive-activity-
 import { Button } from "@/components/ui/button";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { isActivityArchived, isScheduledRoutine, validateActivityData } from "@/lib/activity";
+import {
+  isActivityArchived,
+  isScheduledRoutine,
+  validateActivityData,
+} from "@/lib/activity";
 import {
   buildRoutineString,
   computeRoutineFormFromString,
@@ -260,7 +264,7 @@ export function ActivityDialogForm({
             confirmDisabled={saving || !formData.name.trim()}
             secondaryAction={{
               label: "Cancel",
-              onClick={() => handleOpenChange(false)},
+              onClick: () => handleOpenChange(false),
               disabled: saving,
             }}
           />
