@@ -417,16 +417,14 @@ async function applyResolvedActivityFields(
     updated_at: now(),
   };
 
-  if (effectiveFrom <= getEffectiveToday()) {
-    await db.activities.update(entityId, {
-      name: next.name,
-      routine: next.routine,
-      completion_target: next.completion_target,
-      group_id: next.group_id,
-      order_index: next.order_index,
-      updated_at: next.updated_at,
-    });
-  }
+  await db.activities.update(entityId, {
+    name: next.name,
+    routine: next.routine,
+    completion_target: next.completion_target,
+    group_id: next.group_id,
+    order_index: next.order_index,
+    updated_at: next.updated_at,
+  });
 
   const version = await appendActivityDefinitionVersion({
     activity: next,
@@ -464,14 +462,12 @@ async function applyResolvedGroupFields(
     updated_at: now(),
   };
 
-  if (effectiveFrom <= getEffectiveToday()) {
-    await db.activityGroups.update(entityId, {
-      name: next.name,
-      color: next.color,
-      order_index: next.order_index,
-      updated_at: next.updated_at,
-    });
-  }
+  await db.activityGroups.update(entityId, {
+    name: next.name,
+    color: next.color,
+    order_index: next.order_index,
+    updated_at: next.updated_at,
+  });
 
   const version = await appendGroupDefinitionVersion({
     group: next,

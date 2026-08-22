@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { ChevronDown, ChevronLeft, Plus, X } from "lucide-react";
@@ -10,13 +10,12 @@ import { cn } from "@/lib/utils";
 import {
   getActivityDisplayName,
   isActiveGroup,
+  isActivityArchived,
   isHiddenGroupDefaultActivity,
   sortActivitiesByOrder,
-  setActivityCompleted,
 } from "@/lib/activity";
 import GroupPill from "@/components/activities/group-pill";
 import ActivityPill from "@/components/activities/activity-pill";
-import ActivityCompleteToggle from "@/components/activities/activity-complete-toggle";
 import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
 import {
   ArchivedItemActionsDialog,
@@ -26,7 +25,6 @@ import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dial
 import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
 import ManualTimeEntryDialog from "@/components/tasks/manual-time-entry-dialog";
-import { getEffectiveToday } from "@/lib/session/day-reset";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -87,47 +85,30 @@ function ArchivedPillToggle({
 function DrawerActivityRow({
   activity,
   group,
-  completed,
   isRunning,
   elapsedMs,
-  onToggleCompleted,
   onEdit,
   onActivate,
   onManualEntry,
 }: {
   activity: Activity;
   group: ActivityGroup;
-  completed: boolean;
   isRunning: boolean;
   elapsedMs: number;
-  onToggleCompleted: () => void;
   onEdit: () => void;
   onActivate?: () => void | Promise<void>;
   onManualEntry?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <ActivityCompleteToggle
-        isCompleted={completed}
-        onClick={onToggleCompleted}
-      />
-      <div className="min-w-0 flex-1">
-        <ActivityPill
-          name={getActivityDisplayName(activity, group)}
-          color={group.color || DEFAULT_GROUP_COLOR}
-          elapsedMs={elapsedMs}
-          isRunning={!completed && isRunning}
-          onNameClick={onEdit}
-          allowNameClickWhenReadOnly={completed}
-          onClick={onActivate}
-          onManualEntry={completed ? undefined : onManualEntry}
-          nameClassName={
-            completed ? "line-through text-muted-foreground" : undefined
-          }
-          readOnly={completed}
-        />
-      </div>
-    </div>
+    <ActivityPill
+      name={getActivityDisplayName(activity, group)}
+      color={group.color || DEFAULT_GROUP_COLOR}
+      elapsedMs={elapsedMs}
+      isRunning={isRunning}
+      onNameClick={onEdit}
+      onClick={onActivate}
+      onManualEntry={onManualEntry}
+    />
   );
 }
 
@@ -178,7 +159,8 @@ export default function ActivityGroupsDrawer({
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [archivedGroups, setArchivedGroups] = useState<ActivityGroup[]>([]);
   const [showArchivedGroups, setShowArchivedGroups] = useState(false);
-  // All non-deleted activities for the selected group (including completed).
+  const [showArchivedActivities, setShowArchivedActivities] = useState(false);
+  // All non-deleted activities for the selected group (including archived).
   const [groupActivities, setGroupActivities] = useState<Activity[]>([]);
   const [groupActivitiesTick, setGroupActivitiesTick] = useState(0);
   const [archivedActionsTarget, setArchivedActionsTarget] =
@@ -238,27 +220,11 @@ export default function ActivityGroupsDrawer({
 
   const reloadGroupActivities = () => setGroupActivitiesTick((t) => t + 1);
 
-  const handleMarkActivityCompleted = useCallback(
-    async (activityId: string, completed: boolean) => {
-      try {
-        await setActivityCompleted(
-          activityId,
-          completed,
-          new Date(getEffectiveToday() + "T12:00:00")
-        );
-        reloadGroupActivities();
-        onTasksDataChanged?.();
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    [onTasksDataChanged]
-  );
-
   const resetDrawerView = () => {
     setView("groups");
     setSelectedGroup(null);
     setShowArchivedGroups(false);
+    setShowArchivedActivities(false);
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -281,10 +247,15 @@ export default function ActivityGroupsDrawer({
   const handleBackToGroups = () => {
     setSelectedGroup(null);
     setView("groups");
+    setShowArchivedActivities(false);
   };
 
-  const incompleteActivities = groupActivities.filter((a) => !a.completed_at);
-  const completedActivities = groupActivities.filter((a) => !!a.completed_at);
+  const activeActivities = groupActivities.filter(
+    (a) => !isActivityArchived(a)
+  );
+  const archivedActivities = groupActivities.filter((a) =>
+    isActivityArchived(a)
+  );
 
   const manualEntryActivity = manualEntryActivityId
     ? (groupActivities.find((item) => item.id === manualEntryActivityId) ??
@@ -437,29 +408,22 @@ export default function ActivityGroupsDrawer({
                     </p>
                   ) : (
                     <>
-                      {incompleteActivities.length === 0 ? (
+                      {activeActivities.length === 0 ? (
                         <p className="py-2 text-center text-sm text-muted-foreground">
                           {t("drawer.noActiveActivities")}
                         </p>
                       ) : (
-                        incompleteActivities.map((activity) => {
+                        activeActivities.map((activity) => {
                           const isRunning = currentActivityId === activity.id;
                           return (
                             <DrawerActivityRow
                               key={activity.id}
                               activity={activity}
                               group={selectedGroup}
-                              completed={false}
                               isRunning={isRunning}
                               elapsedMs={getActivityDrawerElapsedMs(
                                 activity.id
                               )}
-                              onToggleCompleted={() => {
-                                void handleMarkActivityCompleted(
-                                  activity.id,
-                                  true
-                                );
-                              }}
                               onEdit={() => setEditingActivity(activity)}
                               onActivate={async () => {
                                 if (isRunning) {
@@ -478,27 +442,50 @@ export default function ActivityGroupsDrawer({
                           );
                         })
                       )}
-                      {completedActivities.length > 0 ? (
-                        <div className="mt-2 space-y-2">
-                          {completedActivities.map((activity) => (
-                            <DrawerActivityRow
-                              key={activity.id}
-                              activity={activity}
-                              group={selectedGroup}
-                              completed
-                              isRunning={false}
-                              elapsedMs={getActivityDrawerElapsedMs(
-                                activity.id
-                              )}
-                              onToggleCompleted={() => {
-                                void handleMarkActivityCompleted(
-                                  activity.id,
-                                  false
-                                );
-                              }}
-                              onEdit={() => setEditingActivity(activity)}
-                            />
-                          ))}
+                      {archivedActivities.length > 0 ? (
+                        <div className="flex w-full flex-col">
+                          <ArchivedPillToggle
+                            expanded={showArchivedActivities}
+                            onToggle={() =>
+                              setShowArchivedActivities((v) => !v)
+                            }
+                            showLabel={t("drawer.showArchivedActivities")}
+                            hideLabel={t("drawer.hideArchivedActivities")}
+                          />
+                          {showArchivedActivities ? (
+                            <div className="mt-2 w-full space-y-2">
+                              {archivedActivities.map((activity) => (
+                                <ActivityPill
+                                  key={activity.id}
+                                  name={getActivityDisplayName(
+                                    activity,
+                                    selectedGroup
+                                  )}
+                                  color={
+                                    selectedGroup.color || DEFAULT_GROUP_COLOR
+                                  }
+                                  elapsedMs={getActivityDrawerElapsedMs(
+                                    activity.id
+                                  )}
+                                  readOnly
+                                  allowNameClickWhenReadOnly
+                                  nameTitle={t(
+                                    "drawer.restoreOrDeleteActivity"
+                                  )}
+                                  nameAriaLabel={t(
+                                    "drawer.restoreOrDeleteActivity"
+                                  )}
+                                  onNameClick={() =>
+                                    setArchivedActionsTarget({
+                                      type: "activity",
+                                      activity,
+                                      group: selectedGroup,
+                                    })
+                                  }
+                                />
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                       ) : null}
                     </>
@@ -577,7 +564,9 @@ export default function ActivityGroupsDrawer({
         />
       ) : null}
 
-      {editingActivity && selectedGroup ? (
+      {editingActivity &&
+      selectedGroup &&
+      !isActivityArchived(editingActivity) ? (
         <ActivityDialogForm
           open={editingActivity !== null}
           onOpenChange={(nextOpen) => {
@@ -589,7 +578,7 @@ export default function ActivityGroupsDrawer({
             setEditingActivity(null);
             reloadGroupActivities();
           }}
-          onDeleted={() => {
+          onArchived={() => {
             setEditingActivity(null);
             reloadGroupActivities();
             onTasksDataChanged?.();
@@ -650,6 +639,7 @@ export default function ActivityGroupsDrawer({
           } catch (e) {
             console.error(e);
           }
+          reloadGroupActivities();
           onTasksDataChanged?.();
         }}
         onDeleteRequested={({ type, id }) => {
@@ -681,6 +671,7 @@ export default function ActivityGroupsDrawer({
               setArchivedGroups(archived);
             })
             .catch(console.error);
+          reloadGroupActivities();
           onTasksDataChanged?.();
         }}
       />

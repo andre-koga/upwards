@@ -141,14 +141,12 @@
         "activity": "activity",
         "group": "group"
       },
-      "effectiveFrom": "Applies from {{date}}",
       "deferredBadge": "Deferred",
       "bothChangedHint": "Both sides changed some of the same fields. Combine will keep your value for those.",
       "combinableHint": "These changes touch different fields and can be combined cleanly.",
       "combineWithPreferenceHint": "Fields edited on both sides will keep your value.",
       "unknownRemote": "Unavailable",
-      "consequence": "Your choice creates a new version. Earlier versions stay in history and are not deleted.",
-      "applyFromLabel": "Apply from",
+      "consequence": "Your choice updates the current activity or group. Daily counts and journal entries are not changed.",
       "resolveFailed": "Could not apply that choice. Try again.",
       "columns": {
         "field": "Field",

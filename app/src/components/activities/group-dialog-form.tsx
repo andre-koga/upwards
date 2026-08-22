@@ -1,10 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { FormDialog, FormDialogActions, FormStack } from "@/components/forms";
 import {
-  DefinitionEffectiveFromField,
-  useDefinitionEffectiveFromState,
-} from "@/components/forms/definition-effective-from-field";
-import {
   dialogFieldClassName,
   dialogFieldLabelClassName,
 } from "@/components/forms/styles";
@@ -18,22 +14,14 @@ interface GroupDialogFormData {
   color: string;
 }
 
-interface GroupDialogFormSubmitData extends GroupDialogFormData {
-  effectiveFrom?: string;
-}
-
 interface GroupDialogFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   confirmLabel: string;
   initialData?: Partial<GroupDialogFormData>;
-  onSubmit: (data: GroupDialogFormSubmitData) => Promise<void>;
+  onSubmit: (data: GroupDialogFormData) => Promise<void>;
   headerEnd?: ReactNode;
-  /** When set, shows effective-date controls for definition edits. */
-  definitionEdit?: {
-    createdAt: string;
-  };
 }
 
 export function GroupDialogForm({
@@ -44,16 +32,11 @@ export function GroupDialogForm({
   initialData,
   onSubmit,
   headerEnd,
-  definitionEdit,
 }: GroupDialogFormProps) {
   const [name, setName] = useState(initialData?.name ?? "");
   const [color, setColor] = useState(initialData?.color ?? DEFAULT_COLOR);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const effectiveFromControl = useDefinitionEffectiveFromState(
-    definitionEdit?.createdAt ?? "",
-    definitionEdit && open ? definitionEdit.createdAt : undefined
-  );
 
   useEffect(() => {
     if (!open) return;
@@ -86,9 +69,6 @@ export function GroupDialogForm({
       await onSubmit({
         name: trimmedName,
         color,
-        ...(definitionEdit
-          ? { effectiveFrom: effectiveFromControl.effectiveFrom }
-          : {}),
       });
       handleOpenChange(false);
     } catch {
@@ -116,19 +96,6 @@ export function GroupDialogForm({
           nameInputAutoFocus
           nameInputMaxLength={60}
         />
-
-        {definitionEdit ? (
-          <DefinitionEffectiveFromField
-            idPrefix="group-definition"
-            createdAt={definitionEdit.createdAt}
-            variant="group"
-            mode={effectiveFromControl.state.mode}
-            onModeChange={effectiveFromControl.setMode}
-            customDate={effectiveFromControl.state.customDate}
-            onCustomDateChange={effectiveFromControl.setCustomDate}
-            disabled={saving}
-          />
-        ) : null}
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

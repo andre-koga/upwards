@@ -1,6 +1,6 @@
 import { FormDialog, FormDialogActions } from "@/components/forms";
 
-export type ActivityRetiredKind = "deleted" | "completed";
+export type ActivityRetiredKind = "deleted" | "archived";
 
 interface ActivityRetiredInfoDialogProps {
   open: boolean;
@@ -22,7 +22,7 @@ export function ActivityRetiredInfoDialog({
     <FormDialog
       open={open && kind !== null}
       onOpenChange={onOpenChange}
-      title={isDeleted ? "Activity deleted" : "Activity completed"}
+      title={isDeleted ? "Activity deleted" : "Activity archived"}
       description={
         isDeleted ? (
           <>
@@ -31,9 +31,9 @@ export function ActivityRetiredInfoDialog({
           </>
         ) : (
           <>
-            &quot;{displayName}&quot; has been marked as completed. You can
-            still see it on past days where you tracked it, but editing is no
-            longer available.
+            &quot;{displayName}&quot; has been archived. You can still see it on
+            past days where you tracked it. Restore it from the archived list in
+            the group drawer.
           </>
         )
       }

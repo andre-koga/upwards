@@ -1,13 +1,5 @@
-import type {
-  Activity,
-  ActivityDefinitionVersion,
-  DailyEntry,
-} from "@/lib/db/types";
+import type { Activity, DailyEntry } from "@/lib/db/types";
 import { toDateString } from "@/lib/time-utils";
-import {
-  activityLikeFromDefinition,
-  pickDefinitionVersionAsOf,
-} from "./definition-versions";
 import { isNeverRoutine, isNeverTaskSlipRecorded } from "./never-task";
 import { isRoutineDueOnDate } from "./utils";
 
@@ -47,25 +39,6 @@ function isSuccessfulCompletion(
   return count >= (schedulable.completion_target ?? 1);
 }
 
-function resolveSchedulableForDate(
-  activity: Activity,
-  date: Date,
-  options?: {
-    schedulable?: SchedulableActivity;
-    definitionVersions?: ActivityDefinitionVersion[];
-  }
-): SchedulableActivity {
-  if (options?.schedulable) return options.schedulable;
-  if (options?.definitionVersions?.length) {
-    const version = pickDefinitionVersionAsOf(
-      options.definitionVersions,
-      toDateString(date)
-    );
-    if (version) return activityLikeFromDefinition(version);
-  }
-  return activity;
-}
-
 /** Classify a single scheduled day as win, loss, or skip. */
 export function getScheduledDayOutcome(
   activity: Activity,
@@ -75,11 +48,10 @@ export function getScheduledDayOutcome(
   options?: {
     countBreakDayMisses?: boolean;
     schedulable?: SchedulableActivity;
-    definitionVersions?: ActivityDefinitionVersion[];
   }
 ): ScheduledDayOutcome {
   const dateStr = toDateString(date);
-  const schedulable = resolveSchedulableForDate(activity, date, options);
+  const schedulable = options?.schedulable ?? activity;
   const isNever = isNeverRoutine(schedulable);
 
   if (breakDays.has(dateStr) && !isNever && !options?.countBreakDayMisses) {

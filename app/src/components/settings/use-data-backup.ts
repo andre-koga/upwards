@@ -89,11 +89,23 @@ export function useDataBackup() {
           if (data.activityGroups?.length)
             await db.activityGroups.bulkPut(data.activityGroups);
           if (data.activities?.length) {
-            // Strip legacy is_archived field — archive is now group-only.
+            // Normalize archive: restore is_archived, dual-write completed_at.
             const normalized = data.activities.map(
               (a: Record<string, unknown>) => {
                 const copy = { ...a };
-                delete copy.is_archived;
+                const completedAt =
+                  typeof copy.completed_at === "string"
+                    ? copy.completed_at
+                    : null;
+                const archived =
+                  copy.is_archived === true || Boolean(completedAt);
+                copy.is_archived = archived;
+                copy.completed_at = archived
+                  ? (completedAt ??
+                    (typeof copy.updated_at === "string"
+                      ? copy.updated_at
+                      : new Date().toISOString()))
+                  : null;
                 return copy;
               }
             );

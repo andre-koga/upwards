@@ -5,24 +5,19 @@ import {
 } from "./op-owned-fields";
 
 describe("op-owned-fields", () => {
-  it("strips definition fields from activities", () => {
-    const stripped = stripOpOwnedFields("activities", {
+  it("keeps current activity definition fields on the row", () => {
+    const row = {
       id: "a1",
       name: "Run",
       routine: "daily",
       completion_target: 1,
       group_id: "g1",
       order_index: 0,
+      is_archived: false,
       completed_at: null,
       deleted_at: null,
-    });
-
-    expect(stripped).toEqual({
-      id: "a1",
-      completed_at: null,
-      deleted_at: null,
-    });
-    expect(stripped).not.toHaveProperty("name");
+    };
+    expect(stripOpOwnedFields("activities", row)).toEqual(row);
   });
 
   it("strips count fields from daily_entries", () => {
@@ -44,6 +39,7 @@ describe("op-owned-fields", () => {
 
   it("identifies op-owned projection tables", () => {
     expect(isOpOwnedProjectionTable("daily_entries")).toBe(true);
+    expect(isOpOwnedProjectionTable("activities")).toBe(false);
     expect(isOpOwnedProjectionTable("journal_entries")).toBe(false);
   });
 });

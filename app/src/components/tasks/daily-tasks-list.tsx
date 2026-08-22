@@ -26,7 +26,6 @@ import {
   formatResetMinutes,
   getEffectiveToday,
 } from "@/lib/session/day-reset";
-import { toSchedulableActivity } from "@/lib/activity/temporal-resolver";
 import { getActiveLocaleTag } from "@/lib/i18n";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
@@ -85,7 +84,6 @@ export default function DailyTasksList({
     isToday,
     isEditableDate,
     temporalForViewDate,
-    activityDefinitionsById,
     loading,
     activityStreaks,
     dailyActivities,
@@ -267,13 +265,6 @@ export default function DailyTasksList({
                   isCurrentActivity={currentActivityId === activity.id}
                   isEditableDate={isEditableDate}
                   temporal={temporalForViewDate}
-                  schedulable={
-                    activityDefinitionsById.has(activity.id)
-                      ? toSchedulableActivity(
-                          activityDefinitionsById.get(activity.id)!
-                        )
-                      : undefined
-                  }
                   onIncrement={incrementTask}
                   onNeverIncrement={incrementNeverSlip}
                   onNeverReset={resetNeverTaskCount}
@@ -466,7 +457,7 @@ export default function DailyTasksList({
             setEditingActivity(null);
             onTasksDataChanged?.();
           }}
-          onDeleted={() => {
+          onArchived={() => {
             setEditingActivity(null);
             onTasksDataChanged?.();
           }}

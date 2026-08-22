@@ -22,7 +22,7 @@ export const SYNC_TABLES: SyncTable[] = [
 
 /**
  * When temporal ops RPCs are available, LWW still pushes these tables for
- * non-op columns (e.g. completed_at), but op-owned fields are stripped.
+ * non-op columns, but daily-entry count/pause/break fields are stripped.
  * See `op-owned-fields.ts`.
  */
 

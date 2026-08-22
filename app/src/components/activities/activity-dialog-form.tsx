@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
-import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dialog";
+import { Archive } from "lucide-react";
+import { ArchiveActivityDialog } from "@/components/activities/archive-activity-dialog";
 import { Button } from "@/components/ui/button";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
-  appendActivityDefinitionVersion,
+  isActivityArchived,
   isScheduledRoutine,
   validateActivityData,
 } from "@/lib/activity";
@@ -21,8 +21,6 @@ import {
   FormDialogActions,
   FormField,
   FormStack,
-  DefinitionEffectiveFromField,
-  useDefinitionEffectiveFromState,
 } from "@/components/forms";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
 
@@ -32,8 +30,8 @@ interface ActivityDialogFormProps {
   group: ActivityGroup;
   activity?: Activity;
   onSaved?: () => void;
-  /** Called after the activity is permanently deleted. */
-  onDeleted?: () => void;
+  /** Called after the activity is archived. */
+  onArchived?: () => void;
 }
 
 interface ActivityFormData extends RoutineFormData {
@@ -58,7 +56,7 @@ export function ActivityDialogForm({
   group,
   activity,
   onSaved,
-  onDeleted,
+  onArchived,
 }: ActivityDialogFormProps) {
   const isEditing = Boolean(activity);
   const [formData, setFormData] = useState<ActivityFormData>(() =>
@@ -66,11 +64,7 @@ export function ActivityDialogForm({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const effectiveFromControl = useDefinitionEffectiveFromState(
-    activity?.created_at ?? "",
-    open && activity ? activity.id : undefined
-  );
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -78,11 +72,12 @@ export function ActivityDialogForm({
     setFormData(computeFormDataFromInitial(activity));
     setError(null);
     setSaving(false);
-    setDeleteConfirmOpen(false);
+    setArchiveConfirmOpen(false);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, activity]);
 
   const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) setArchiveConfirmOpen(false);
     if (!nextOpen) {
       setError(null);
       setSaving(false);
@@ -111,27 +106,15 @@ export function ActivityDialogForm({
       setError(null);
 
       if (isEditing && activity) {
-        const updated: Activity = {
-          ...activity,
+        await db.activities.update(activity.id, {
           name: payload.name,
           routine: payload.routine,
           completion_target: payload.completion_target,
           updated_at: now(),
-        };
-        await db.activities.update(activity.id, {
-          name: updated.name,
-          routine: updated.routine,
-          completion_target: updated.completion_target,
-          updated_at: updated.updated_at,
-        });
-        await appendActivityDefinitionVersion({
-          activity: updated,
-          effectiveFrom: effectiveFromControl.effectiveFrom,
         });
       } else {
         const timestamp = now();
         const activityId = newId();
-        let createdActivity: Activity | null = null;
         await db.transaction("rw", db.activities, async () => {
           const shouldAssignOrderIndex = isScheduledRoutine(payload.routine);
           let nextOrderIndex: number | null = null;
@@ -140,7 +123,7 @@ export function ActivityDialogForm({
             const scheduledActivities = await db.activities
               .filter(
                 (item) =>
-                  !item.completed_at &&
+                  !isActivityArchived(item) &&
                   !item.deleted_at &&
                   isScheduledRoutine(item.routine ?? "")
               )
@@ -156,27 +139,21 @@ export function ActivityDialogForm({
             nextOrderIndex = maxOrderIndex + 1;
           }
 
-          createdActivity = {
+          await db.activities.add({
             id: activityId,
             group_id: group.id,
             name: payload.name,
             routine: payload.routine,
             completion_target: payload.completion_target,
+            is_archived: false,
             completed_at: null,
             order_index: nextOrderIndex,
             created_at: timestamp,
             updated_at: timestamp,
             synced_at: null,
             deleted_at: null,
-          };
-          await db.activities.add(createdActivity);
-        });
-        if (createdActivity) {
-          await appendActivityDefinitionVersion({
-            activity: createdActivity,
-            force: true,
           });
-        }
+        });
       }
 
       onSaved?.();
@@ -201,11 +178,11 @@ export function ActivityDialogForm({
               size="icon"
               className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
               disabled={saving}
-              onClick={() => setDeleteConfirmOpen(true)}
-              title="Delete activity"
-              aria-label="Delete activity"
+              onClick={() => setArchiveConfirmOpen(true)}
+              title="Archive activity"
+              aria-label="Archive activity"
             >
-              <Trash2 className="h-4 w-4" aria-hidden />
+              <Archive className="h-4 w-4" aria-hidden />
             </Button>
           ) : undefined
         }
@@ -271,19 +248,6 @@ export function ActivityDialogForm({
             />
           ) : null}
 
-          {isEditing && activity ? (
-            <DefinitionEffectiveFromField
-              idPrefix="activity-definition"
-              createdAt={activity.created_at}
-              variant="activity"
-              mode={effectiveFromControl.state.mode}
-              onModeChange={effectiveFromControl.setMode}
-              customDate={effectiveFromControl.state.customDate}
-              onCustomDateChange={effectiveFromControl.setCustomDate}
-              disabled={saving}
-            />
-          ) : null}
-
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
           <FormDialogActions
@@ -308,14 +272,16 @@ export function ActivityDialogForm({
       </FormDialog>
 
       {isEditing && activity ? (
-        <DeleteConfirmDialog
-          open={open && deleteConfirmOpen}
-          type="activity"
-          id={activity.id}
-          onOpenChange={setDeleteConfirmOpen}
-          onDeleted={() => {
-            setDeleteConfirmOpen(false);
-            onDeleted?.();
+        <ArchiveActivityDialog
+          open={open && archiveConfirmOpen}
+          activityId={activity.id}
+          activityName={activity.name}
+          onOpenChange={setArchiveConfirmOpen}
+          cancelLabel="No"
+          confirmLabel="Yes"
+          onArchived={() => {
+            setArchiveConfirmOpen(false);
+            onArchived?.();
             handleOpenChange(false);
           }}
         />

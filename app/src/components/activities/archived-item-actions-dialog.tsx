@@ -2,17 +2,22 @@ import { useState } from "react";
 import { ArchiveRestore } from "lucide-react";
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { dialogPrimaryDestructiveClassName } from "@/components/forms/styles";
-import type { ActivityGroup } from "@/lib/db/types";
+import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { logError } from "@/lib/error-utils";
-import { unarchiveGroupById } from "@/lib/activity";
+import { unarchiveActivityById, unarchiveGroupById } from "@/lib/activity";
 
-export type ArchivedItemActionsTarget = { type: "group"; group: ActivityGroup };
+export type ArchivedItemActionsTarget =
+  | { type: "group"; group: ActivityGroup }
+  | { type: "activity"; activity: Activity; group: ActivityGroup };
 
 interface ArchivedItemActionsDialogProps {
   target: ArchivedItemActionsTarget | null;
   onOpenChange: (open: boolean) => void;
   onUnarchived: (target: ArchivedItemActionsTarget) => void | Promise<void>;
-  onDeleteRequested: (payload: { type: "group"; id: string }) => void;
+  onDeleteRequested: (payload: {
+    type: "group" | "activity";
+    id: string;
+  }) => void;
 }
 
 export function ArchivedItemActionsDialog({
@@ -24,13 +29,18 @@ export function ArchivedItemActionsDialog({
   const [busy, setBusy] = useState(false);
 
   const open = target !== null;
+  const isGroup = target?.type === "group";
 
   const handleUnarchive = async () => {
     if (!target) return;
     const current = target;
     setBusy(true);
     try {
-      await unarchiveGroupById(current.group.id);
+      if (current.type === "group") {
+        await unarchiveGroupById(current.group.id);
+      } else {
+        await unarchiveActivityById(current.activity.id);
+      }
       await Promise.resolve(onUnarchived(current));
       onOpenChange(false);
     } catch (error) {
@@ -43,7 +53,11 @@ export function ArchivedItemActionsDialog({
   const handleDeleteClick = () => {
     if (!target) return;
     onOpenChange(false);
-    onDeleteRequested({ type: "group", id: target.group.id });
+    if (target.type === "group") {
+      onDeleteRequested({ type: "group", id: target.group.id });
+    } else {
+      onDeleteRequested({ type: "activity", id: target.activity.id });
+    }
   };
 
   return (
@@ -53,8 +67,12 @@ export function ArchivedItemActionsDialog({
         if (!next && busy) return;
         if (!next) onOpenChange(false);
       }}
-      title="Archived group"
-      description="Unarchive to use it again, or delete the group and all its activities permanently."
+      title={isGroup ? "Archived group" : "Archived activity"}
+      description={
+        isGroup
+          ? "Unarchive to use it again, or delete the group and all its activities permanently."
+          : "Unarchive to use it again, or delete this activity permanently."
+      }
       contentClassName="sm:max-w-md"
     >
       <FormDialogActions

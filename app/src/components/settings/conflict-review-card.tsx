@@ -5,7 +5,6 @@ import { GitMerge, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { SyncIssue } from "@/lib/db/types";
 import { formatRoutineDisplay } from "@/lib/activity/utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
 import {
   deferDefinitionConflict,
   formatConflictFieldValue,
@@ -74,7 +73,6 @@ export function ConflictReviewCard({
     null
   );
   const [error, setError] = useState<string | null>(null);
-  const [effectiveFrom, setEffectiveFrom] = useState(getEffectiveToday);
   const [definitionPayload, setDefinitionPayload] =
     useState<DefinitionConflictPayload | null>(() =>
       isDefinitionConflictPayload(issue.payload) ? issue.payload : null
@@ -119,9 +117,7 @@ export function ConflictReviewCard({
     setBusy(choice);
     setError(null);
     try {
-      await resolveDefinitionConflict(issue, choice, {
-        effectiveFrom: effectiveFrom || getEffectiveToday(),
-      });
+      await resolveDefinitionConflict(issue, choice);
       onResolved();
     } catch (err) {
       console.error("Conflict resolution failed", err);
@@ -210,8 +206,6 @@ export function ConflictReviewCard({
       payload={definitionPayload}
       busy={busy}
       error={error}
-      effectiveFrom={effectiveFrom}
-      onEffectiveFromChange={setEffectiveFrom}
       onResolve={(choice) => void handleResolveDefinition(choice)}
       onDefer={() => void handleDefer()}
     />
@@ -452,8 +446,6 @@ function DefinitionConflictCard({
   payload,
   busy,
   error,
-  effectiveFrom,
-  onEffectiveFromChange,
   onResolve,
   onDefer,
 }: {
@@ -461,8 +453,6 @@ function DefinitionConflictCard({
   payload: DefinitionConflictPayload;
   busy: string | null;
   error: string | null;
-  effectiveFrom: string;
-  onEffectiveFromChange: (value: string) => void;
   onResolve: (choice: ConflictResolutionChoice) => void;
   onDefer: () => void;
 }) {
@@ -494,13 +484,6 @@ function DefinitionConflictCard({
             {t("syncIssues.conflict.summary", { entity: entityKind })}
           </p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {payload.local.effective_from ? (
-              <span>
-                {t("syncIssues.conflict.effectiveFrom", {
-                  date: payload.local.effective_from,
-                })}
-              </span>
-            ) : null}
             {isDeferred ? (
               <span>{t("syncIssues.conflict.deferredBadge")}</span>
             ) : null}
@@ -581,17 +564,6 @@ function DefinitionConflictCard({
       <p className="text-xs text-muted-foreground">
         {t("syncIssues.conflict.consequence")}
       </p>
-
-      <label className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span>{t("syncIssues.conflict.applyFromLabel")}</span>
-        <input
-          type="date"
-          className="rounded-md border border-border bg-background px-2 py-1 text-foreground"
-          value={effectiveFrom}
-          onChange={(event) => onEffectiveFromChange(event.target.value)}
-          disabled={busy != null}
-        />
-      </label>
 
       {error ? <p className="text-xs text-red-500">{error}</p> : null}
 

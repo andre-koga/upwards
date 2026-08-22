@@ -18,7 +18,12 @@ export interface Activity {
   name: string | null; // null = group-default (timing the group without a specific activity)
   routine: string | null;
   completion_target: number | null;
-  /** Set when the user marks the habit as done; hides it from For Today. Clear to reactivate. */
+  /** True when the habit is archived; hides it from For Today until restored. */
+  is_archived: boolean | null;
+  /**
+   * Legacy dual-write for archive. Set when `is_archived` is true so older
+   * sync paths that only know `completed_at` still hide the habit.
+   */
   completed_at: string | null;
   order_index: number | null;
   created_at: string;
@@ -130,8 +135,8 @@ export interface ActivityStreak {
   deleted_at: string | null;
 }
 
-/** Append-only status change for an activity (completed / deleted). */
-export type ActivityStatusType = "completed" | "deleted";
+/** Append-only status change for an activity (archived / deleted). `completed` is legacy. */
+export type ActivityStatusType = "archived" | "deleted" | "completed";
 
 export interface ActivityStatusEvent {
   id: string;

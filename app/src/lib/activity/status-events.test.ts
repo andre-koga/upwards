@@ -79,6 +79,23 @@ describe("isActivityStatusAsOf", () => {
     ).toBe(false);
   });
 
+  it("treats archived events like completed for visibility", () => {
+    const day = localDay(2026, 6, 15);
+    const archived = activityEvent({
+      id: "archived",
+      status_type: "archived",
+      next_value: true,
+      effective_at: effectiveAtForStatusOn(day, true, "archived"),
+      created_at: "2026-06-15T10:00:00.000Z",
+    });
+    expect(isActivityStatusAsOf([archived], "archived", day)).toBe(false);
+    expect(
+      isActivityStatusAsOf([archived], "archived", localDay(2026, 6, 16))
+    ).toBe(true);
+    expect(
+      isActivityStatusAsOf([archived], "completed", localDay(2026, 6, 16))
+    ).toBe(true);
+  });
   it("falls back to legacy completed_at / deleted_at columns", () => {
     const legacy: Activity = {
       id: "act-1",
@@ -86,6 +103,7 @@ describe("isActivityStatusAsOf", () => {
       name: "Read",
       routine: "daily",
       completion_target: 1,
+      is_archived: false,
       completed_at: "2026-06-15T18:00:00.000Z",
       order_index: 0,
       created_at: "2026-01-01T00:00:00.000Z",

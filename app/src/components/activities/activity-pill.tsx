@@ -12,6 +12,8 @@ export interface ActivityPillProps {
   onNameClick?: () => void;
   onClick?: () => void;
   onManualEntry?: () => void;
+  nameTitle?: string;
+  nameAriaLabel?: string;
   nameClassName?: string;
   /** When true, renders timer/play as non-interactive display instead of buttons. */
   readOnly?: boolean;
@@ -28,6 +30,8 @@ export default function ActivityPill({
   onNameClick,
   onClick,
   onManualEntry,
+  nameTitle,
+  nameAriaLabel,
   nameClassName = "",
   readOnly = false,
   allowNameClickWhenReadOnly = false,
@@ -59,6 +63,8 @@ export default function ActivityPill({
           type="button"
           variant="ghost"
           onClick={nameInteractive ? onNameClick : undefined}
+          title={nameTitle}
+          aria-label={nameAriaLabel}
           className="h-full min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center gap-0 rounded-none p-0 text-left text-sm font-medium shadow-none"
         >
           <span className="flex min-h-0 min-w-0 flex-1 items-center gap-2 py-1 pl-4 pr-4">

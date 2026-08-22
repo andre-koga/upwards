@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { db, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import { isActiveGroup, formatTimerDisplay } from "@/lib/activity";
+import { isActiveGroup, isActivityArchived, formatTimerDisplay } from "@/lib/activity";
 import {
   FormDialog,
   FormDialogActions,
@@ -48,7 +48,9 @@ function AssignActivityDialogContent({
     const a = await db.activities
       .filter(
         (act) =>
-          act.group_id === groupId && !act.completed_at && !act.deleted_at
+          act.group_id === groupId &&
+          !isActivityArchived(act) &&
+          !act.deleted_at
       )
       .sortBy("created_at");
     setActivities(a);
