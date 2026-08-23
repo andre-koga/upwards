@@ -26,6 +26,7 @@ import {
 } from "@/lib/time-utils";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
+import { normalizeSessionNote } from "@/lib/activity/session-note";
 import {
   getEffectiveToday,
   getDayResetMinutes,
@@ -69,6 +70,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   );
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [note, setNote] = useState("");
 
   const onDoneRef = useRef(onDone);
   const onUpdatedRef = useRef(onUpdated);
@@ -144,6 +146,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       setSelectedDate(fromDateString(logicalDateStr));
       setStartTime(formatTimeInput(period.start_time));
       setEndTime(formatTimeInput(period.end_time));
+      setNote(period.note ?? "");
       setLoading(false);
     };
 
@@ -227,6 +230,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         daily_entry_id: entry.id,
         start_time: nextStartIso,
         end_time: nextEndIso,
+        note: normalizeSessionNote(note),
         updated_at: n,
       });
 
@@ -256,6 +260,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     details,
     startTime,
     endTime,
+    note,
     selectedDate,
     selectedActivityId,
     finish,
@@ -307,6 +312,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     setStartTime,
     endTime,
     setEndTime,
+    note,
+    setNote,
     handleDelete,
     handleSave,
     today: useMemo(() => fromDateString(getEffectiveToday()), []),

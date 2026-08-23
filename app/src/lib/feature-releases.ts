@@ -12,6 +12,15 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-08-23-session-notes",
+    date: "2026-08-23",
+    title: "Notes on time entries",
+    bullets: [
+      "Start and end times sit side by side when you add or edit a session.",
+      "Add a short note (up to 200 characters). It shows as small text under that session on the timeline.",
+    ],
+  },
+  {
     id: "2026-08-21-simpler-habits",
     date: "2026-08-21",
     title: "Simpler habit edits and archive",

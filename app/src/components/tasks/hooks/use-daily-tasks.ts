@@ -25,6 +25,7 @@ import {
 } from "@/lib/activity/period-day-utils";
 import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
+import { normalizeSessionNote } from "@/lib/activity/session-note";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
@@ -290,12 +291,7 @@ export function useDailyTasks({
       completedCount: completed,
       completionRate: rate,
     };
-  }, [
-    dailyActivities,
-    isBreakDay,
-    pausedTaskIdSet,
-    taskCounts,
-  ]);
+  }, [dailyActivities, isBreakDay, pausedTaskIdSet, taskCounts]);
 
   const totalTimeSpentMs = useMemo(
     () =>
@@ -410,8 +406,9 @@ export function useDailyTasks({
       dateString: string;
       startIso: string;
       endIso: string;
+      note?: string | null;
     }) => {
-      const { activityId, startIso, endIso } = params;
+      const { activityId, startIso, endIso, note } = params;
       const createdAt = now();
       const entryDateString = effectiveDateForMs(new Date(startIso).getTime());
       const dailyEntry = await getOrCreateDailyEntryDb(entryDateString);
@@ -422,6 +419,7 @@ export function useDailyTasks({
         activity_id: activityId,
         start_time: startIso,
         end_time: endIso,
+        note: normalizeSessionNote(note),
         created_at: createdAt,
         updated_at: createdAt,
         synced_at: null,
@@ -468,6 +466,7 @@ export function useDailyTasks({
             : DEFAULT_GROUP_COLOR,
           intervalMs: Math.max(0, clippedInterval),
           startTime: clippedStartMs,
+          note: period.note,
         };
       })
       .filter((s) => s.intervalMs > 0);

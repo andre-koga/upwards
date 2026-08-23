@@ -54,6 +54,7 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "activity_id",
     "start_time",
     "end_time",
+    "note",
     "created_at",
     "updated_at",
     "deleted_at",

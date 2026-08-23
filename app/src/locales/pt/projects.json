@@ -68,6 +68,8 @@
     "date": "Data",
     "startTime": "Horário de início",
     "endTime": "Horário de fim",
+    "note": "Nota",
+    "notePlaceholder": "O que você fez?",
     "spanWarning": "Esta sessão vai de {{startDay}} a {{endDay}} (passa da virada do dia às {{resetTime}}).",
     "errorBothTimes": "Informe os horários de início e fim.",
     "errorSameTime": "O horário de fim deve ser diferente do horário de início.",

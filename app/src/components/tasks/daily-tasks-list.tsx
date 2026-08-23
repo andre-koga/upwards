@@ -352,6 +352,7 @@ export default function DailyTasksList({
                 groupColor={session.groupColor}
                 intervalMs={session.intervalMs}
                 activityId={session.activityId || ""}
+                note={session.note}
                 onClick={
                   isUnknown
                     ? () => openAssignDialog(session.id, session.intervalMs)

@@ -924,6 +924,49 @@ class UpwardsDB extends Dexie {
             row.is_archived = row.is_archived === true || !!completedAt;
           });
       });
+
+    // v27: optional 200-character note on activity periods
+    this.version(27)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities: "id, group_id, is_archived, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, group_id, recurring_memo_id, deleted_at, created_at",
+        recurringMemos: "id, deleted_at, created_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
+        activityStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        groupStatusEvents:
+          "id, entity_id, status_type, effective_at, deleted_at",
+        userProfiles: null,
+        appLogs: "id, created_at, level",
+        syncPendingOperations:
+          "id, operation_id, status, account_id, device_id, created_at",
+        syncIssues: "id, kind, status, account_id, created_at",
+        syncDevices: "id, account_id, last_seen_at, retired_at",
+        activityDefinitionVersions:
+          "id, activity_id, effective_from, recorded_at, operation_id, deleted_at",
+        groupDefinitionVersions:
+          "id, group_id, effective_from, recorded_at, operation_id, deleted_at",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("activityPeriods")
+          .toCollection()
+          .modify((row: Record<string, unknown>) => {
+            if (typeof row.note !== "string") {
+              row.note = null;
+              return;
+            }
+            const trimmed = row.note.trim();
+            row.note = trimmed ? trimmed.slice(0, 200) : null;
+          });
+      });
   }
 }
 

@@ -51,6 +51,8 @@ export interface ActivityPeriod {
   activity_id: string;
   start_time: string; // ISO string
   end_time: string | null; // ISO string
+  /** Optional caption on the session. Empty notes are stored as null. */
+  note: string | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;

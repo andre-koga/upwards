@@ -5,9 +5,9 @@ import {
   FormDialog,
   FormDialogActions,
   FormStack,
-  FormTimeField,
 } from "@/components/forms";
-import { getActivityDisplayName } from "@/lib/activity";
+import { SessionTimeNoteFields } from "@/components/activities/session-time-note-fields";
+import { getActivityDisplayName, normalizeSessionNote } from "@/lib/activity";
 import {
   effectiveDateForMs,
   getLogicalEndDate,
@@ -29,18 +29,21 @@ import {
   formatResetMinutes,
 } from "@/lib/session/day-reset";
 
+export interface ManualTimeEntryPayload {
+  activityId: string;
+  dateString: string;
+  startIso: string;
+  endIso: string;
+  note: string | null;
+}
+
 interface ManualTimeEntryDialogProps {
   open: boolean;
   activity: Activity | null;
   group: ActivityGroup | undefined;
   initialDate: Date;
   onOpenChange: (open: boolean) => void;
-  onSave: (payload: {
-    activityId: string;
-    dateString: string;
-    startIso: string;
-    endIso: string;
-  }) => Promise<void>;
+  onSave: (payload: ManualTimeEntryPayload) => Promise<void>;
 }
 
 export default function ManualTimeEntryDialog({
@@ -56,6 +59,7 @@ export default function ManualTimeEntryDialog({
   const [dateString, setDateString] = useState(() => toDateString(initialDate));
   const [startTime, setStartTime] = useState("09:00:00");
   const [endTime, setEndTime] = useState("09:30:00");
+  const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,6 +118,7 @@ export default function ManualTimeEntryDialog({
       setEndTime(
         hasTodayDefaults ? formatTimeInput(now.toISOString()) : "09:05:00"
       );
+      setNote("");
       setSaving(false);
       setError(null);
     }
@@ -158,6 +163,7 @@ export default function ManualTimeEntryDialog({
         dateString: effectiveDateForMs(startMs),
         startIso,
         endIso,
+        note: normalizeSessionNote(note),
       });
 
       onOpenChange(false);
@@ -181,7 +187,7 @@ export default function ManualTimeEntryDialog({
             })
           : undefined
       }
-      contentClassName="sm:max-w-md"
+      contentClassName="sm:max-w-xl"
     >
       <FormStack>
         <FormCalendarDateField
@@ -195,18 +201,20 @@ export default function ManualTimeEntryDialog({
           }}
         />
 
-        <FormTimeField
-          id="manual-entry-start"
-          label={t("manualEntry.startTime")}
-          value={startTime}
-          onValueChange={setStartTime}
-        />
-
-        <FormTimeField
-          id="manual-entry-end"
-          label={t("manualEntry.endTime")}
-          value={endTime}
-          onValueChange={setEndTime}
+        <SessionTimeNoteFields
+          startId="manual-entry-start"
+          endId="manual-entry-end"
+          noteId="manual-entry-note"
+          startLabel={t("manualEntry.startTime")}
+          endLabel={t("manualEntry.endTime")}
+          noteLabel={t("manualEntry.note")}
+          notePlaceholder={t("manualEntry.notePlaceholder")}
+          startTime={startTime}
+          endTime={endTime}
+          onStartTimeChange={setStartTime}
+          onEndTimeChange={setEndTime}
+          note={note}
+          onNoteChange={setNote}
         />
 
         {spanWarning && (

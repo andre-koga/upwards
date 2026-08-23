@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { db } from "@/lib/db";
+import { normalizeSessionNote } from "@/lib/activity";
 import { getErrorMessage, logError, ERROR_MESSAGES } from "@/lib/error-utils";
 
 type BackupStatus = "idle" | "success" | "error";
@@ -113,8 +114,18 @@ export function useDataBackup() {
           }
           if (data.dailyEntries?.length)
             await db.dailyEntries.bulkPut(data.dailyEntries);
-          if (data.activityPeriods?.length)
-            await db.activityPeriods.bulkPut(data.activityPeriods);
+          if (data.activityPeriods?.length) {
+            const normalized = data.activityPeriods.map(
+              (period: Record<string, unknown>) => {
+                const copy = { ...period };
+                copy.note = normalizeSessionNote(
+                  typeof copy.note === "string" ? copy.note : null
+                );
+                return copy;
+              }
+            );
+            await db.activityPeriods.bulkPut(normalized);
+          }
           if (data.journalEntries?.length)
             await db.journalEntries.bulkPut(data.journalEntries);
           if (data.oneTimeTasks?.length)

@@ -1,11 +1,10 @@
 import {
   FormDialog,
   FormDialogActions,
-  FormField,
   FormSelectField,
   FormStack,
-  FormTimeField,
 } from "@/components/forms";
+import { SessionTimeNoteFields } from "@/components/activities/session-time-note-fields";
 import { getActivityDisplayName } from "@/lib/activity";
 import { toDateString } from "@/lib/time-utils";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
@@ -47,6 +46,8 @@ export default function SessionDetailsDialog({
     setStartTime,
     endTime,
     setEndTime,
+    note,
+    setNote,
     handleDelete,
     handleSave,
   } = useSessionDetails({
@@ -89,29 +90,23 @@ export default function SessionDetailsDialog({
             ]}
             disabled={isLockedHistoricalSession}
           />
-          <FormTimeField
-            id="session-start-time"
-            label="Start time"
-            value={startTime}
-            onValueChange={setStartTime}
+          <SessionTimeNoteFields
+            startId="session-start-time"
+            endId="session-end-time"
+            noteId="session-note"
+            startLabel="Start time"
+            endLabel="End time"
+            noteLabel="Note"
+            notePlaceholder="What did you do?"
+            startTime={startTime}
+            endTime={endTime}
+            onStartTimeChange={setStartTime}
+            onEndTimeChange={setEndTime}
+            note={note}
+            onNoteChange={setNote}
+            endReadOnlyValue={isRunningSession ? "Still running" : undefined}
             disabled={isLockedHistoricalSession}
           />
-          {isRunningSession ? (
-            <FormField
-              id="session-end-time-running"
-              label="End time"
-              value="Still running"
-              readOnly
-            />
-          ) : (
-            <FormTimeField
-              id="session-end-time"
-              label="End time"
-              value={endTime}
-              onValueChange={setEndTime}
-              disabled={isLockedHistoricalSession}
-            />
-          )}
           {spanWarning && (
             <p className="text-sm text-amber-600 dark:text-amber-400">
               {spanWarning}
