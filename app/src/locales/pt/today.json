@@ -11,6 +11,9 @@
     "timeline": "Linha do tempo",
     "timelineBoundary": "(o dia começa e termina às {{time}})"
   },
+  "timelineItem": {
+    "completedAt": "Concluído às {{time}}"
+  },
   "recurringMemosButton": "Recorrentes",
   "manageRecurringMemos": "Gerenciar memos recorrentes",
   "archiveButton": "Arquivo",

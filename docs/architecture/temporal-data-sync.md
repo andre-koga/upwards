@@ -91,7 +91,10 @@ Actions and facts that accumulate over time remain recorded:
 - Activity count incremented or decremented
 - Activity paused or resumed for a day
 - Break day enabled or disabled
-- Session started or stopped (optional 200-character note lives on the period row)
+- Session started or stopped, or a habit checked complete without a time span
+  (optional 200-character note lives on the period row). Counts remain the
+  streak fact; a zero-duration period is only so the timeline and notes have
+  a row.
 - One-time task completed or reopened
 - Habit or group archived or restored
 - Habit or group deleted

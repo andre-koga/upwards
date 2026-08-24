@@ -132,6 +132,22 @@ interface FormTimeFieldProps {
   triggerClassName?: string;
   message?: ReactNode;
   messageClassName?: string;
+  /** Show a clear action that sets the value to empty. */
+  allowClear?: boolean;
+}
+
+function currentTimeValue(): string {
+  const date = new Date();
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
+}
+
+function draftFromTimeValue(value: string): TimeDraft {
+  const [hours24, minutes, seconds] = splitTime(value || currentTimeValue());
+  const { hour12, meridiem } = toTwelveHourDisplay(hours24);
+  return { hour12, minutes, seconds, meridiem };
 }
 
 export function FormTimeField({
@@ -145,10 +161,15 @@ export function FormTimeField({
   triggerClassName,
   message,
   messageClassName,
+  allowClear = false,
 }: FormTimeFieldProps) {
   const { t } = useTranslation("projects");
   const { t: tCommon } = useTranslation("common");
-  const [hours24, minutes, seconds] = useMemo(() => splitTime(value), [value]);
+  const isEmpty = !value;
+  const [hours24, minutes, seconds] = useMemo(
+    () => splitTime(value || "00:00:00"),
+    [value]
+  );
   const { hour12, meridiem } = useMemo(
     () => toTwelveHourDisplay(hours24),
     [hours24]
@@ -244,6 +265,12 @@ export function FormTimeField({
   const handEnd = polarPoint(center, handLength, handAngle);
   const handTip = polarPoint(center, radius, handAngle);
 
+  const openDial = () => {
+    setDraft(draftFromTimeValue(value));
+    setActiveUnit("hour");
+    setOpen(true);
+  };
+
   return (
     <div className={cn("space-y-1", containerClassName)}>
       <Label
@@ -257,18 +284,18 @@ export function FormTimeField({
         type="button"
         variant="outline"
         disabled={disabled}
-        onClick={() => {
-          setDraft({ hour12, minutes, seconds, meridiem });
-          setActiveUnit("hour");
-          setOpen(true);
-        }}
+        onClick={openDial}
         className={cn(
           dialogFormControlButtonClassName,
           "justify-between font-mono",
           triggerClassName
         )}
       >
-        <span>{formatTimeDisplay({ hour12, minutes, seconds, meridiem })}</span>
+        <span className={cn(isEmpty && "font-sans text-muted-foreground")}>
+          {isEmpty
+            ? t("timeField.notSet")
+            : formatTimeDisplay({ hour12, minutes, seconds, meridiem })}
+        </span>
       </Button>
       {message ? (
         <p className={cn("text-xs text-muted-foreground", messageClassName)}>
@@ -279,7 +306,7 @@ export function FormTimeField({
         open={open}
         onOpenChange={(nextOpen) => {
           if (nextOpen) {
-            setDraft({ hour12, minutes, seconds, meridiem });
+            setDraft(draftFromTimeValue(value));
             setActiveUnit("hour");
           }
           setOpen(nextOpen);
@@ -477,6 +504,20 @@ export function FormTimeField({
                 {t("timeField.addFiveMinShort")}
               </Button>
             </div>
+
+            {allowClear ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-sm font-medium text-muted-foreground"
+                onClick={() => {
+                  onValueChange("");
+                  setOpen(false);
+                }}
+              >
+                {t("timeField.clear")}
+              </Button>
+            ) : null}
 
             <FormDialogActions
               onConfirm={commitDraft}

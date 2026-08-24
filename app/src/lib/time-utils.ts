@@ -40,6 +40,18 @@ export function formatWeekdayShortDate(date: Date): string {
 }
 
 /**
+ * Format an ISO instant as a compact clock time (e.g. "8:32 AM").
+ */
+export function formatClockTime(isoTime: string): string {
+  const date = new Date(isoTime);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString(getActiveLocaleTag(), {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/**
  * Format ISO time string to HH:MM:SS for time input.
  */
 export function formatTimeInput(isoTime: string | null): string {

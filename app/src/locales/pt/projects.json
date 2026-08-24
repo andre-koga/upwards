@@ -88,6 +88,14 @@
     "subtractFiveMin": "Subtrair cinco minutos",
     "addFiveMin": "Adicionar cinco minutos",
     "subtractFiveMinShort": "-5 min",
-    "addFiveMinShort": "+5 min"
+    "addFiveMinShort": "+5 min",
+    "notSet": "Não definido",
+    "clear": "Limpar"
+  },
+  "sessionDetails": {
+    "timesOptional": "Os horários de início e fim são opcionais. Deixe em branco se você não precisa registrar quanto tempo levou.",
+    "errorOneTime": "Informe o início e o fim, ou deixe os dois em branco.",
+    "errorStartRequired": "Informe um horário de início.",
+    "errorSameTime": "O horário de fim deve ser diferente do horário de início."
   }
 }

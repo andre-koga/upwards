@@ -12,6 +12,17 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-08-24-untimed-completions",
+    date: "2026-08-24",
+    title: "Completions on the timeline",
+    bullets: [
+      "Checking off a habit adds it to the timeline even if you didn't time it.",
+      "Leave start and end times blank when a duration doesn't matter — you can still add a note.",
+      "Timeline notes wrap so you can read everything you wrote.",
+    ],
+    fixes: ["Session notes on the timeline were cut off."],
+  },
+  {
     id: "2026-08-23-session-notes",
     date: "2026-08-23",
     title: "Notes on time entries",

@@ -11,6 +11,9 @@
     "timeline": "Timeline",
     "timelineBoundary": "(starts and ends at {{time}})"
   },
+  "timelineItem": {
+    "completedAt": "Completed at {{time}}"
+  },
   "recurringMemosButton": "Recurring",
   "manageRecurringMemos": "Manage recurring memos",
   "archiveButton": "Archive",

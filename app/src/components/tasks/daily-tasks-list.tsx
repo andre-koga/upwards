@@ -353,6 +353,8 @@ export default function DailyTasksList({
                 intervalMs={session.intervalMs}
                 activityId={session.activityId || ""}
                 note={session.note}
+                untimed={session.untimed}
+                completedAtIso={session.completedAtIso}
                 onClick={
                   isUnknown
                     ? () => openAssignDialog(session.id, session.intervalMs)
@@ -363,7 +365,9 @@ export default function DailyTasksList({
                         })
                 }
                 onStartActivity={
-                  !isUnknown ? handleStartActivityFromPastDay : undefined
+                  !isUnknown && !session.untimed
+                    ? handleStartActivityFromPastDay
+                    : undefined
                 }
               />
             );
