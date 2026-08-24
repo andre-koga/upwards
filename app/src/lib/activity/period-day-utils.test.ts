@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   effectiveDateForMs,
   getLogicalEndDate,
+  periodBelongsToDay,
   resolvePeriodFromLogicalDay,
   spansLogicalDays,
 } from "./period-day-utils";
@@ -128,5 +129,34 @@ describe("resolvePeriodFromLogicalDay", () => {
     expect(spansLogicalDays(result.startMs, result.endMs)).toBe(true);
     expect(effectiveDateForMs(result.startMs)).toBe("2026-06-26");
     expect(getLogicalEndDate(result.startMs, result.endMs)).toBe("2026-06-27");
+  });
+});
+
+describe("periodBelongsToDay", () => {
+  beforeEach(() => {
+    storage.clear();
+    mockLocalStorage();
+    setResetMinutes(0);
+  });
+
+  it("includes a zero-duration completion at day start", () => {
+    const startMs = localMs(2026, 6, 26, 0, 0);
+    expect(periodBelongsToDay(startMs, startMs, "2026-06-26", startMs)).toBe(
+      true
+    );
+  });
+
+  it("excludes a zero-duration completion at the next day start", () => {
+    const nextStart = localMs(2026, 6, 27, 0, 0);
+    expect(
+      periodBelongsToDay(nextStart, nextStart, "2026-06-26", nextStart)
+    ).toBe(false);
+  });
+
+  it("still matches timed sessions by interval overlap", () => {
+    const startMs = localMs(2026, 6, 26, 23, 0);
+    const endMs = localMs(2026, 6, 27, 1, 0);
+    expect(periodBelongsToDay(startMs, endMs, "2026-06-26", endMs)).toBe(true);
+    expect(periodBelongsToDay(startMs, endMs, "2026-06-27", endMs)).toBe(true);
   });
 });

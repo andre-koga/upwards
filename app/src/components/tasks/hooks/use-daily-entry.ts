@@ -59,7 +59,9 @@ export function useDailyEntry(dateString: string) {
 
   const refreshAllStreakProjections = useCallback(() => {
     void db.activities
-      .filter((activity) => !activity.deleted_at && activity.routine !== "anytime")
+      .filter(
+        (activity) => !activity.deleted_at && activity.routine !== "anytime"
+      )
       .toArray()
       .then((activities) =>
         refreshActivityStreakProjectionFromDate(
@@ -212,6 +214,7 @@ export function useDailyEntry(dateString: string) {
             : "increment",
       });
       refreshStreakProjection(activityId);
+      return { previousCount: current, nextCount: nextCounts[activityId] || 0 };
     },
     [dateString, persistTaskCountsAndPaused, refreshStreakProjection]
   );

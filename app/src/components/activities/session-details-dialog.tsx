@@ -10,6 +10,7 @@ import { toDateString } from "@/lib/time-utils";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
 import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 interface SessionDetailsDialogProps {
   groupId: string;
@@ -26,6 +27,7 @@ export default function SessionDetailsDialog({
   onOpenChange,
   onSessionUpdated,
 }: SessionDetailsDialogProps) {
+  const { t } = useTranslation("projects");
   const handleDone = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);
@@ -106,6 +108,10 @@ export default function SessionDetailsDialog({
             onNoteChange={setNote}
             endReadOnlyValue={isRunningSession ? "Still running" : undefined}
             disabled={isLockedHistoricalSession}
+            allowClearTimes={!isRunningSession}
+            timesHelper={
+              isRunningSession ? undefined : t("sessionDetails.timesOptional")
+            }
           />
           {spanWarning && (
             <p className="text-sm text-amber-600 dark:text-amber-400">

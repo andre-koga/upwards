@@ -28,10 +28,15 @@ import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
 import {
+  isUntimedPeriod,
+  resolveClosedSessionTimes,
+} from "@/lib/activity/untimed-period";
+import {
   getEffectiveToday,
   getDayResetMinutes,
   formatResetMinutes,
 } from "@/lib/session/day-reset";
+import { useTranslation } from "react-i18next";
 
 const NONE_ACTIVITY_VALUE = "__none__";
 
@@ -50,6 +55,7 @@ interface UseSessionDetailsOptions {
 }
 
 export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
+  const { t } = useTranslation("projects");
   const {
     groupId: groupIdOption,
     sessionId: sessionIdOption,
@@ -144,8 +150,13 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           : NONE_ACTIVITY_VALUE
       );
       setSelectedDate(fromDateString(logicalDateStr));
-      setStartTime(formatTimeInput(period.start_time));
-      setEndTime(formatTimeInput(period.end_time));
+      if (isUntimedPeriod(period.start_time, period.end_time)) {
+        setStartTime("");
+        setEndTime("");
+      } else {
+        setStartTime(formatTimeInput(period.start_time));
+        setEndTime(formatTimeInput(period.end_time));
+      }
       setNote(period.note ?? "");
       setLoading(false);
     };
@@ -170,11 +181,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const handleSave = useCallback(async () => {
     if (!sessionId || !details) return;
 
-    if (!startTime) {
-      setError("Please set a start time.");
-      return;
-    }
-
     const isRunning = details.period.end_time === null;
     const logicalDateStr = toDateString(selectedDate);
     const resetMinutes = getDayResetMinutes();
@@ -183,6 +189,10 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     let nextEndIso: string | null;
 
     if (isRunning) {
+      if (!startTime) {
+        setError(t("sessionDetails.errorStartRequired"));
+        return;
+      }
       const startMs = timestampForLogicalDayTime(
         logicalDateStr,
         startTime,
@@ -191,21 +201,23 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       nextStartIso = new Date(startMs).toISOString();
       nextEndIso = null;
     } else {
-      if (!endTime) {
-        setError("Please set an end time.");
-        return;
-      }
-      if (timeToSeconds(endTime) === timeToSeconds(startTime)) {
-        setError("End time must be different from start time.");
-        return;
-      }
-
-      const resolved = resolvePeriodFromLogicalDay(
-        logicalDateStr,
+      const resolved = resolveClosedSessionTimes({
         startTime,
         endTime,
-        resetMinutes
-      );
+        logicalDateStr,
+        resetMinutes,
+        existingStartIso: details.period.start_time,
+        existingEndIso: details.period.end_time,
+        createdAt: details.period.created_at,
+      });
+      if (!resolved.ok) {
+        setError(
+          resolved.error === "one_time"
+            ? t("sessionDetails.errorOneTime")
+            : t("sessionDetails.errorSameTime")
+        );
+        return;
+      }
       nextStartIso = resolved.startIso;
       nextEndIso = resolved.endIso;
     }
@@ -264,6 +276,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     selectedDate,
     selectedActivityId,
     finish,
+    t,
   ]);
 
   const isRunningSession =

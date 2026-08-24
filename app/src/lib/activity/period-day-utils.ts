@@ -55,8 +55,32 @@ export function clipPeriodToDay(
 }
 
 /**
+ * Whether a period should appear on the given effective day.
+ *
+ * Timed and running sessions use interval overlap. Zero-duration (untimed)
+ * completions belong to the day when the instant is in `[dayStart, dayEnd)`.
+ */
+export function periodBelongsToDay(
+  startMs: number,
+  endMs: number | null,
+  dateStr: string,
+  nowMs: number
+): boolean {
+  const dayStart = effectiveDayStartMs(dateStr);
+  const dayEnd = effectiveDayEndMs(dateStr);
+
+  if (endMs != null && startMs === endMs) {
+    return startMs >= dayStart && startMs < dayEnd;
+  }
+
+  const periodEnd = endMs ?? nowMs;
+  return startMs < dayEnd && periodEnd > dayStart;
+}
+
+/**
  * Returns true if a period [startMs, endMs) overlaps the effective day for
  * dateStr.  endMs === null means still running (use nowMs as end).
+ * Untimed (zero-duration) completions belong to the day of their instant.
  */
 export function periodOverlapsDay(
   startMs: number,
@@ -64,7 +88,7 @@ export function periodOverlapsDay(
   dateStr: string,
   nowMs: number
 ): boolean {
-  return clipPeriodToDay(startMs, endMs, dateStr, nowMs) > 0;
+  return periodBelongsToDay(startMs, endMs, dateStr, nowMs);
 }
 
 /**

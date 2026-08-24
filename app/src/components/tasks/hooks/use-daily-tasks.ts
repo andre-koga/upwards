@@ -8,12 +8,10 @@ import type {
   ActivityStatusEvent,
   GroupStatusEvent,
 } from "@/lib/db/types";
-import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import {
   shouldShowActivity,
   formatTimerDisplay,
   getGroup,
-  getActivityDisplayName,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
 import { getEffectiveToday } from "@/lib/session/day-reset";
@@ -21,11 +19,18 @@ import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
 import {
   clipPeriodToDay,
   effectiveDateForMs,
-  effectiveDayStartMs,
 } from "@/lib/activity/period-day-utils";
 import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
+import {
+  adoptUntimedPeriodForSession,
+  backfillUntimedCompletionsForDay,
+  ensureUntimedCompletionPeriod,
+  tombstoneUntimedPeriodsForActivityOnDay,
+  untimedCompletionAction,
+} from "@/lib/activity/untimed-period";
+import { buildTimelineSessions } from "@/lib/activity/timeline-sessions";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
@@ -103,24 +108,6 @@ export function useDailyTasks({
     toggleBreakDay,
     streakDbVersion,
   } = useDailyEntry(dateString);
-
-  const incrementTaskWithProgress = useCallback(
-    async (
-      activityId: string,
-      target: number,
-      options?: { neverSlip?: boolean }
-    ) => {
-      await incrementTask(activityId, target, options);
-    },
-    [incrementTask]
-  );
-
-  const incrementNeverSlip = useCallback(
-    async (activityId: string) => {
-      await incrementTaskWithProgress(activityId, 1, { neverSlip: true });
-    },
-    [incrementTaskWithProgress]
-  );
 
   const {
     oneTimeTasks,
@@ -254,6 +241,73 @@ export function useDailyTasks({
       }),
     [lookupActivities, lookupGroupById, currentDate, temporalForViewDate]
   );
+
+  const incrementTaskWithProgress = useCallback(
+    async (
+      activityId: string,
+      target: number,
+      options?: { neverSlip?: boolean }
+    ) => {
+      const { previousCount, nextCount } = await incrementTask(
+        activityId,
+        target,
+        options
+      );
+      const action = untimedCompletionAction({
+        previousCount,
+        nextCount,
+        target,
+        neverSlip: options?.neverSlip,
+      });
+      if (action === "create") {
+        await ensureUntimedCompletionPeriod({ activityId, dateString });
+        await loadActivityPeriods();
+        await loadAllActivityPeriods();
+      } else if (action === "tombstone") {
+        await tombstoneUntimedPeriodsForActivityOnDay({
+          activityId,
+          dateString,
+        });
+        await loadActivityPeriods();
+        await loadAllActivityPeriods();
+      }
+    },
+    [incrementTask, dateString, loadActivityPeriods, loadAllActivityPeriods]
+  );
+
+  const incrementNeverSlip = useCallback(
+    async (activityId: string) => {
+      await incrementTaskWithProgress(activityId, 1, { neverSlip: true });
+    },
+    [incrementTaskWithProgress]
+  );
+
+  useEffect(() => {
+    if (!isEditableDate || loading) return;
+    let cancelled = false;
+    void (async () => {
+      const created = await backfillUntimedCompletionsForDay({
+        dateString,
+        activities: dailyActivities,
+        taskCounts,
+      });
+      if (cancelled || created === 0) return;
+      await loadActivityPeriods();
+      await loadAllActivityPeriods();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    dateString,
+    isEditableDate,
+    loading,
+    dailyActivities,
+    taskCounts,
+    loadActivityPeriods,
+    loadAllActivityPeriods,
+  ]);
+
   const pausedTaskIdSet = useMemo(
     () => new Set(pausedTaskIds),
     [pausedTaskIds]
@@ -413,66 +467,47 @@ export function useDailyTasks({
       const entryDateString = effectiveDateForMs(new Date(startIso).getTime());
       const dailyEntry = await getOrCreateDailyEntryDb(entryDateString);
 
-      const period: ActivityPeriod = {
-        id: newId(),
-        daily_entry_id: dailyEntry.id,
-        activity_id: activityId,
-        start_time: startIso,
-        end_time: endIso,
-        note: normalizeSessionNote(note),
-        created_at: createdAt,
-        updated_at: createdAt,
-        synced_at: null,
-        deleted_at: null,
-      };
+      const adopted = await adoptUntimedPeriodForSession({
+        activityId,
+        dateString: entryDateString,
+        dailyEntryId: dailyEntry.id,
+        startIso,
+        endIso,
+        note,
+      });
+      if (!adopted) {
+        const period: ActivityPeriod = {
+          id: newId(),
+          daily_entry_id: dailyEntry.id,
+          activity_id: activityId,
+          start_time: startIso,
+          end_time: endIso,
+          note: normalizeSessionNote(note),
+          created_at: createdAt,
+          updated_at: createdAt,
+          synced_at: null,
+          deleted_at: null,
+        };
+        await db.activityPeriods.add(period);
+      }
 
-      await db.activityPeriods.add(period);
       await loadActivityPeriods();
       await loadAllActivityPeriods();
     },
     [loadActivityPeriods, loadAllActivityPeriods]
   );
 
-  const timelineSessions = useMemo(() => {
-    const dayStartMs = effectiveDayStartMs(dateString);
-    const activitySessions = activityPeriods
-      .filter((period) => !!period.end_time)
-      .map((period) => {
-        const activity = lookupActivityById.get(period.activity_id);
-        const group = activity
-          ? lookupGroupById.get(activity.group_id)
-          : undefined;
-        const startMs = new Date(period.start_time).getTime();
-        const endMs = new Date(period.end_time!).getTime();
-        // Clip the displayed duration to this effective day.
-        const clippedInterval = clipPeriodToDay(
-          startMs,
-          endMs,
-          dateString,
-          nowMs
-        );
-        // Sort by where the session starts within this day (not the raw start_time,
-        // which may be yesterday for cross-boundary periods).
-        const clippedStartMs = Math.max(startMs, dayStartMs);
-        return {
-          id: period.id,
-          activityId: period.activity_id,
-          groupId: activity?.group_id || "",
-          name: activity
-            ? getActivityDisplayName(activity, group)
-            : "Unknown activity",
-          groupColor: activity
-            ? (group?.color ?? DEFAULT_GROUP_COLOR)
-            : DEFAULT_GROUP_COLOR,
-          intervalMs: Math.max(0, clippedInterval),
-          startTime: clippedStartMs,
-          note: period.note,
-        };
-      })
-      .filter((s) => s.intervalMs > 0);
-
-    return activitySessions.sort((a, b) => b.startTime - a.startTime);
-  }, [activityPeriods, lookupActivityById, lookupGroupById, dateString, nowMs]);
+  const timelineSessions = useMemo(
+    () =>
+      buildTimelineSessions({
+        periods: activityPeriods,
+        dateString,
+        nowMs,
+        lookupActivityById,
+        lookupGroupById,
+      }),
+    [activityPeriods, lookupActivityById, lookupGroupById, dateString, nowMs]
+  );
 
   const runningSession = useMemo(() => {
     if (!resolvedCurrentActivityId) return null;

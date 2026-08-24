@@ -4,10 +4,10 @@ import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 import { closeOpenPeriods } from "@/lib/activity";
 import {
   calendarDatesOverlappingEffectiveDay,
-  effectiveDayStartMs,
-  effectiveDayEndMs,
   clipPeriodToDay,
+  periodBelongsToDay,
 } from "@/lib/activity/period-day-utils";
+import { adoptUntimedPeriodForSession } from "@/lib/activity/untimed-period";
 
 export function useActivityTracking(
   dateString: string,
@@ -19,9 +19,6 @@ export function useActivityTracking(
 
   const loadActivityPeriods = useCallback(async () => {
     try {
-      const dayStartMs = effectiveDayStartMs(dateString);
-      const dayEndMs = effectiveDayEndMs(dateString);
-
       const datesToQuery = calendarDatesOverlappingEffectiveDay(dateString);
 
       const entries = await db.dailyEntries
@@ -45,15 +42,16 @@ export function useActivityTracking(
         )
         .toArray();
 
-      // Keep only periods that actually overlap this effective day's window.
+      // Keep periods that overlap this effective day, including untimed
+      // point-in-time completions (zero duration).
       const nowMs = Date.now();
       const periods = candidates
         .filter((period) => {
           const startMs = new Date(period.start_time).getTime();
           const endMs = period.end_time
             ? new Date(period.end_time).getTime()
-            : nowMs;
-          return startMs < dayEndMs && endMs > dayStartMs;
+            : null;
+          return periodBelongsToDay(startMs, endMs, dateString, nowMs);
         })
         .sort(
           (left, right) =>
@@ -118,19 +116,28 @@ export function useActivityTracking(
 
         await closeOpenPeriods(entry.id);
 
-        const newPeriod: ActivityPeriod = {
-          id: newId(),
-          daily_entry_id: entry.id,
-          activity_id: activityId,
-          start_time: n,
-          end_time: null,
-          note: null,
-          created_at: n,
-          updated_at: n,
-          synced_at: null,
-          deleted_at: null,
-        };
-        await db.activityPeriods.add(newPeriod);
+        const adopted = await adoptUntimedPeriodForSession({
+          activityId,
+          dateString,
+          dailyEntryId: entry.id,
+          startIso: n,
+          endIso: null,
+        });
+        if (!adopted) {
+          const newPeriod: ActivityPeriod = {
+            id: newId(),
+            daily_entry_id: entry.id,
+            activity_id: activityId,
+            start_time: n,
+            end_time: null,
+            note: null,
+            created_at: n,
+            updated_at: n,
+            synced_at: null,
+            deleted_at: null,
+          };
+          await db.activityPeriods.add(newPeriod);
+        }
         await db.dailyEntries.update(entry.id, {
           current_activity_id: activityId,
           updated_at: n,
@@ -144,6 +151,7 @@ export function useActivityTracking(
     },
     [
       currentActivityId,
+      dateString,
       getOrCreateDailyEntry,
       setCurrentActivityId,
       loadActivityPeriods,

@@ -25,6 +25,8 @@ interface SessionTimeNoteFieldsProps {
   /** When set, the end field is a read-only display (e.g. a running session). */
   endReadOnlyValue?: string;
   disabled?: boolean;
+  allowClearTimes?: boolean;
+  timesHelper?: ReactNode;
 }
 
 export function SessionTimeNoteFields({
@@ -43,6 +45,8 @@ export function SessionTimeNoteFields({
   onNoteChange,
   endReadOnlyValue,
   disabled = false,
+  allowClearTimes = false,
+  timesHelper,
 }: SessionTimeNoteFieldsProps) {
   return (
     <>
@@ -53,6 +57,7 @@ export function SessionTimeNoteFields({
           value={startTime}
           onValueChange={onStartTimeChange}
           disabled={disabled}
+          allowClear={allowClearTimes}
           containerClassName="min-w-0 flex-1"
         />
         {endReadOnlyValue != null ? (
@@ -70,10 +75,14 @@ export function SessionTimeNoteFields({
             value={endTime}
             onValueChange={onEndTimeChange}
             disabled={disabled}
+            allowClear={allowClearTimes}
             containerClassName="min-w-0 flex-1"
           />
         )}
       </FormRow>
+      {timesHelper ? (
+        <p className="text-xs text-muted-foreground">{timesHelper}</p>
+      ) : null}
       <FormTextareaField
         id={noteId}
         label={noteLabel}
