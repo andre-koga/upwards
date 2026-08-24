@@ -124,6 +124,7 @@ export function useActivityTracking(
           activity_id: activityId,
           start_time: n,
           end_time: null,
+          note: null,
           created_at: n,
           updated_at: n,
           synced_at: null,

@@ -68,6 +68,8 @@
     "date": "Date",
     "startTime": "Start time",
     "endTime": "End time",
+    "note": "Note",
+    "notePlaceholder": "What did you do?",
     "spanWarning": "This session spans {{startDay}} and {{endDay}} (crosses your {{resetTime}} day boundary).",
     "errorBothTimes": "Please set both start and end times.",
     "errorSameTime": "End time must be different from start time.",

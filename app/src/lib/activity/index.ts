@@ -6,4 +6,5 @@ export * from "./status-events";
 export * from "./utils";
 export * from "./validation";
 export * from "./periods";
+export * from "./session-note";
 export * from "./definition-versions";

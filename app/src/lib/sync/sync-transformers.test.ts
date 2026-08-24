@@ -114,4 +114,27 @@ describe("stripUnknownColumns", () => {
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });
+
+  it("keeps activity period notes and drops unknown columns", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const stripped = stripUnknownColumns("activity_periods", [
+      {
+        id: VALID_UUID,
+        user_id: "u1",
+        start_time: "2026-08-23T12:00:00.000Z",
+        end_time: "2026-08-23T12:30:00.000Z",
+        note: "walked the dog",
+        leftover: true,
+      },
+    ]);
+    expect(stripped[0]).toEqual({
+      id: VALID_UUID,
+      user_id: "u1",
+      start_time: "2026-08-23T12:00:00.000Z",
+      end_time: "2026-08-23T12:30:00.000Z",
+      note: "walked the dog",
+    });
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
 });

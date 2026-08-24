@@ -125,6 +125,7 @@ interface ActivityGroupsDrawerProps {
     dateString: string;
     startIso: string;
     endIso: string;
+    note: string | null;
   }) => Promise<void>;
   onTasksDataChanged?: () => void;
   triggerClassName?: string;
