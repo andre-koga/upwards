@@ -114,7 +114,9 @@ Add these GitHub Actions secrets (Settings → Secrets and variables → Actions
 | `SUPABASE_ACCESS_TOKEN` | Personal or CI access token from [Supabase access tokens](https://supabase.com/dashboard/account/tokens) |
 | `SUPABASE_PROJECT_REF` | Project id from [General settings](https://app.supabase.com/project/_/settings/general) |
 
-The token only needs permission to link the project and push migrations. After
+The token needs permission to link the project and push migrations (a personal
+access token from Account → Access Tokens with project access, not a scoped
+token that cannot call the Management API).
 adding secrets, either merge to `main` or run **Supabase migrate** →
 **Run workflow**. The first push no-ops if remote history already matches git,
 or applies any migrations that are not on the hosted project yet.
