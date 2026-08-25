@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FormDialog, FormDialogActions } from "@/components/forms";
+import { dialogPrimaryDestructiveClassName } from "@/components/forms/styles";
 
 interface SignOutConfirmDialogProps {
   open: boolean;
@@ -54,7 +55,9 @@ export function SignOutConfirmDialog({
             : t("auth.signOutBlocked.retrySync")
         }
         confirmDisabled={busy}
-        confirmDestructive={confirmDiscard}
+        confirmClassName={
+          confirmDiscard ? dialogPrimaryDestructiveClassName : undefined
+        }
         secondaryAction={{
           label: confirmDiscard
             ? t("auth.signOutBlocked.staySignedIn")

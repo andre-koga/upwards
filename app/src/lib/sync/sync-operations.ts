@@ -318,7 +318,10 @@ async function ensureConflictIssueForRemoteOp(
     detail =
       "This journal entry was edited on another device. Choose which version to keep.";
     try {
-      const opRow = asRecord(op.payload).row;
+      const opRow = asRecord(asRecord(op.payload).row) as Record<
+        string,
+        unknown
+      >;
       payload = await buildJournalConflictPayload({
         entity_id: entityId,
         remoteRow: opRow,
@@ -332,7 +335,10 @@ async function ensureConflictIssueForRemoteOp(
     detail =
       "This item was edited on another device. Choose which version to keep.";
     try {
-      const opRow = asRecord(op.payload).row;
+      const opRow = asRecord(asRecord(op.payload).row) as Record<
+        string,
+        unknown
+      >;
       payload = await buildProjectionConflictPayload({
         entity_type: op.entity_type,
         entity_id: entityId,
@@ -595,7 +601,10 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
         detail =
           "This journal entry was edited on another device. Choose which version to keep.";
         try {
-          const opRow = asRecord(local.payload).row;
+          const opRow = asRecord(asRecord(local.payload).row) as Record<
+            string,
+            unknown
+          >;
           conflictPayload = await buildJournalConflictPayload({
             entity_id: local.entity_id,
             localRow: opRow,
@@ -613,7 +622,10 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
         detail =
           "This item was edited on another device. Choose which version to keep.";
         try {
-          const opRow = asRecord(local.payload).row;
+          const opRow = asRecord(asRecord(local.payload).row) as Record<
+            string,
+            unknown
+          >;
           conflictPayload = await buildProjectionConflictPayload({
             entity_type: local.entity_type,
             entity_id: local.entity_id,

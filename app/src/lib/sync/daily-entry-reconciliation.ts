@@ -164,7 +164,11 @@ export async function deferDailyEntryCountReconciliation(
 }
 
 export function snapshotDailyEntryCounts(
-  entry: DailyEntry | null | undefined
+  entry:
+    | DailyEntry
+    | { task_counts?: Record<string, number> | null }
+    | null
+    | undefined
 ): Record<string, number> {
   return normalizeCounts(entry?.task_counts ?? null);
 }

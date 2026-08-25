@@ -90,6 +90,14 @@ export function entityTypeToSyncTable(entityType: string): SyncTable | null {
   return ENTITY_TYPE_TO_SYNC_TABLE[entityType] ?? null;
 }
 
+export function dexieTableForSyncTable(
+  table: SyncTable
+): keyof typeof db | null {
+  const entityType = syncTableToEntityType(table);
+  if (!entityType) return null;
+  return ENTITY_TYPE_TO_DEXIE_TABLE[entityType] ?? null;
+}
+
 function rowForProjectionPayload(
   table: SyncTable,
   row: Record<string, unknown>
@@ -182,7 +190,7 @@ export async function applyAcceptedProjectionOp(
   const row = payload.row;
   if (!row || typeof row !== "object" || Array.isArray(row)) return false;
 
-  const normalized = {
+  const normalized: Record<string, unknown> & { synced_at: string | null } = {
     ...normalizeSyncRow(table, row as Record<string, unknown>),
     synced_at: (row as { updated_at?: string }).updated_at ?? null,
   };

@@ -36,16 +36,13 @@ import {
   enqueueProjectionUpsertForTable,
   OPS_MANAGED_SYNC_TABLES,
 } from "./projection-sync";
-import { reportOpsUnavailablePending } from "./pending-operations";
+import { reportOpsUnavailablePending, countPendingOperations } from "./pending-operations";
 import {
   subscribeToRemoteSyncOperations,
   unsubscribeFromRemoteSyncOperations,
 } from "./realtime-sync";
 import { syncDeviceRegistry } from "./remote-device-sync";
-import {
-  countPendingOperations,
-  countUnsyncedRows,
-} from "./unsynced-data";
+import { countUnsyncedRows } from "./unsynced-data";
 
 export interface PushBeforeSignOutResult {
   success: boolean;

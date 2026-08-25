@@ -10,6 +10,7 @@ import { getOrCreateDeviceId } from "@/lib/sync/device-id";
 import {
   enqueueProjectionUpsertForTable,
   entityTypeToSyncTable,
+  dexieTableForSyncTable,
   withSuppressedProjectionEnqueue,
 } from "@/lib/sync/projection-sync";
 import { deferSyncIssue } from "@/lib/sync/sync-issues-store";
@@ -162,15 +163,7 @@ async function loadLocalProjectionRow(
 ): Promise<Record<string, unknown> | null> {
   const table = entityTypeToSyncTable(entityType);
   if (!table) return null;
-  const dexieKey = {
-    journal_entries: "journalEntries",
-    activity_periods: "activityPeriods",
-    one_time_tasks: "oneTimeTasks",
-    recurring_memos: "recurringMemos",
-    activity_streaks: "activityStreaks",
-    activities: "activities",
-    activity_groups: "activityGroups",
-  }[table];
+  const dexieKey = dexieTableForSyncTable(table);
   if (!dexieKey) return null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const row = await (db as any)[dexieKey].get(entityId);
@@ -266,15 +259,7 @@ async function applyResolvedProjectionFields(
   const table = entityTypeToSyncTable(entityType);
   if (!table) throw new Error(`Unknown projection entity type: ${entityType}`);
 
-  const dexieKey = {
-    journal_entries: "journalEntries",
-    activity_periods: "activityPeriods",
-    one_time_tasks: "oneTimeTasks",
-    recurring_memos: "recurringMemos",
-    activity_streaks: "activityStreaks",
-    activities: "activities",
-    activity_groups: "activityGroups",
-  }[table];
+  const dexieKey = dexieTableForSyncTable(table);
   if (!dexieKey) throw new Error(`Missing Dexie table for ${entityType}`);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

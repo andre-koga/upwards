@@ -162,14 +162,8 @@ export async function runPull(ctx: PullContext): Promise<string> {
 
           if (opsSyncActive && table === "daily_entries") {
             const local = localById.get(id);
-            const beforeCounts = snapshotDailyEntryCounts(
-              local as { task_counts?: Record<string, number> } | undefined
-            );
-            const afterCounts = snapshotDailyEntryCounts({
-              task_counts: normalized.task_counts as
-                | Record<string, number>
-                | undefined,
-            });
+            const beforeCounts = snapshotDailyEntryCounts(local);
+            const afterCounts = snapshotDailyEntryCounts(normalized);
             if (local && Object.keys(beforeCounts).length > 0) {
               void maybeRecordDailyEntryCountReconciliation({
                 entryId: id,

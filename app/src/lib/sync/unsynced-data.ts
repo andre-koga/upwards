@@ -20,7 +20,9 @@ export async function countUnsyncedRows(): Promise<number> {
     const count = await (db[dexieTable] as any)
       .filter(
         (row: { synced_at?: string | null; updated_at?: string }) =>
-          !row.synced_at || row.updated_at > row.synced_at
+          !row.synced_at ||
+          (typeof row.updated_at === "string" &&
+            row.updated_at > row.synced_at)
       )
       .count();
     total += count;
