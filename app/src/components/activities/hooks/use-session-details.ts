@@ -27,10 +27,7 @@ import {
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
-import {
-  isUntimedPeriod,
-  resolveClosedSessionTimes,
-} from "@/lib/activity/untimed-period";
+import { resolveClosedSessionTimes } from "@/lib/activity/untimed-period";
 import {
   getEffectiveToday,
   getDayResetMinutes,
@@ -150,13 +147,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           : NONE_ACTIVITY_VALUE
       );
       setSelectedDate(fromDateString(logicalDateStr));
-      if (isUntimedPeriod(period.start_time, period.end_time)) {
-        setStartTime("");
-        setEndTime("");
-      } else {
-        setStartTime(formatTimeInput(period.start_time));
-        setEndTime(formatTimeInput(period.end_time));
-      }
+      setStartTime(formatTimeInput(period.start_time));
+      setEndTime(formatTimeInput(period.end_time));
       setNote(period.note ?? "");
       setLoading(false);
     };
@@ -211,11 +203,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         createdAt: details.period.created_at,
       });
       if (!resolved.ok) {
-        setError(
-          resolved.error === "one_time"
-            ? t("sessionDetails.errorOneTime")
-            : t("sessionDetails.errorSameTime")
-        );
+        setError(t("sessionDetails.errorOneTime"));
         return;
       }
       nextStartIso = resolved.startIso;

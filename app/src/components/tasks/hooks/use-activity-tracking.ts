@@ -2,12 +2,12 @@ import { useState, useCallback } from "react";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 import { closeOpenPeriods } from "@/lib/activity";
+import { clipPeriodToDay } from "@/lib/activity/period-day-utils";
 import {
-  calendarDatesOverlappingEffectiveDay,
-  clipPeriodToDay,
-  periodBelongsToDay,
-} from "@/lib/activity/period-day-utils";
-import { adoptUntimedPeriodForSession } from "@/lib/activity/untimed-period";
+  adoptUntimedPeriodForSession,
+  dedupeUntimedCompletionsForDay,
+  fetchActivityPeriodsForDay,
+} from "@/lib/activity/untimed-period";
 
 export function useActivityTracking(
   dateString: string,
@@ -19,46 +19,8 @@ export function useActivityTracking(
 
   const loadActivityPeriods = useCallback(async () => {
     try {
-      const datesToQuery = calendarDatesOverlappingEffectiveDay(dateString);
-
-      const entries = await db.dailyEntries
-        .where("date")
-        .anyOf(datesToQuery)
-        .filter((e) => !e.deleted_at)
-        .toArray();
-
-      if (entries.length === 0) {
-        setActivityPeriods([]);
-        return;
-      }
-
-      const entryIds = new Set(entries.map((entry) => entry.id));
-      const candidates = await db.activityPeriods
-        .filter(
-          (period) =>
-            !period.deleted_at &&
-            !!period.daily_entry_id &&
-            entryIds.has(period.daily_entry_id)
-        )
-        .toArray();
-
-      // Keep periods that overlap this effective day, including untimed
-      // point-in-time completions (zero duration).
-      const nowMs = Date.now();
-      const periods = candidates
-        .filter((period) => {
-          const startMs = new Date(period.start_time).getTime();
-          const endMs = period.end_time
-            ? new Date(period.end_time).getTime()
-            : null;
-          return periodBelongsToDay(startMs, endMs, dateString, nowMs);
-        })
-        .sort(
-          (left, right) =>
-            new Date(left.start_time).getTime() -
-            new Date(right.start_time).getTime()
-        );
-
+      await dedupeUntimedCompletionsForDay(dateString);
+      const periods = await fetchActivityPeriodsForDay(dateString);
       setActivityPeriods(periods);
     } catch (error) {
       console.error("Error loading activity periods:", error);

@@ -5,7 +5,10 @@ import {
   clipPeriodToDay,
   effectiveDayStartMs,
 } from "@/lib/activity/period-day-utils";
-import { isUntimedPeriod } from "@/lib/activity/untimed-period";
+import {
+  extraUntimedPeriodIdsToTombstone,
+  isUntimedPeriod,
+} from "@/lib/activity/untimed-period";
 
 export interface TimelineSession {
   id: string;
@@ -30,9 +33,15 @@ export function buildTimelineSessions(params: {
   const { periods, dateString, nowMs, lookupActivityById, lookupGroupById } =
     params;
   const dayStartMs = effectiveDayStartMs(dateString);
+  const extraUntimedIds = new Set(extraUntimedPeriodIdsToTombstone(periods));
 
   const sessions = periods
-    .filter((period) => !!period.end_time && !period.deleted_at)
+    .filter(
+      (period) =>
+        !!period.end_time &&
+        !period.deleted_at &&
+        !extraUntimedIds.has(period.id)
+    )
     .map((period) => {
       const activity = lookupActivityById.get(period.activity_id);
       const group = activity

@@ -140,4 +140,31 @@ describe("buildTimelineSessions", () => {
     });
     expect(sessions).toEqual([]);
   });
+
+  it("collapses duplicate untimed completions for the same activity", () => {
+    const first = new Date(2026, 5, 26, 8, 0, 0, 0).toISOString();
+    const second = new Date(2026, 5, 26, 8, 5, 0, 0).toISOString();
+    const sessions = buildTimelineSessions({
+      periods: [
+        makePeriod({
+          id: "copy-2",
+          created_at: second,
+          start_time: second,
+          end_time: second,
+        }),
+        makePeriod({
+          id: "copy-1",
+          created_at: first,
+          start_time: first,
+          end_time: first,
+        }),
+      ],
+      dateString: "2026-06-26",
+      nowMs: new Date(2026, 5, 26, 12, 0, 0, 0).getTime(),
+      lookupActivityById: new Map([["act-1", makeActivity()]]),
+      lookupGroupById: new Map([["group-1", makeGroup()]]),
+    });
+
+    expect(sessions.map((session) => session.id)).toEqual(["copy-1"]);
+  });
 });
