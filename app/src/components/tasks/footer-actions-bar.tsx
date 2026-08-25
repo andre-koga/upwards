@@ -10,7 +10,6 @@ import {
   Folder,
   Github,
   History,
-  LogIn,
   Menu,
   MessageSquare,
   Settings,
@@ -35,7 +34,6 @@ import {
   hasUnreadWhatsNewRelease,
   markWhatsNewSeen,
 } from "@/lib/whats-new-read";
-import { useAuth } from "@/lib/use-auth";
 
 interface FooterActionsBarProps {
   currentDate: Date;
@@ -83,7 +81,6 @@ export default function FooterActionsBar({
 }: FooterActionsBarProps) {
   const { t } = useTranslation("nav");
   const navigate = useNavigate();
-  const { isAuthed, isSupabaseConfigured } = useAuth();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pathsDrawerOpen, setPathsDrawerOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
@@ -184,22 +181,6 @@ export default function FooterActionsBar({
                 />
               </a>
             </Button>
-            {isSupabaseConfigured && !isAuthed ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 w-full justify-start rounded-xl"
-                onClick={() => {
-                  setPathsDrawerOpen(false);
-                  navigate("/settings");
-                }}
-                title={t("signIn")}
-                aria-label={t("signIn")}
-              >
-                <LogIn className="h-4 w-4" />
-                {t("signIn")}
-              </Button>
-            ) : null}
           </div>
 
           <div className="my-2" role="separator" aria-hidden />
