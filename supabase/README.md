@@ -66,6 +66,27 @@ Streaks are not stored as seed rows. Today recomputes them from the daily entrie
 The app is local-first. After a reset, **sign out** (or use a fresh browser profile) then sign in as `test@test.com` so IndexedDB is empty and pull hydrates this seed. Resetting Postgres while the same browser still holds old Dexie data will merge leftover local rows.
 
 Seed files: [`seed.sql`](seed.sql) (auth + profile) then [`seeds/test-account.sql`](seeds/test-account.sql).
+
+## Tests
+
+App unit tests live in `app/` and mock Dexie/Supabase:
+
+```bash
+pnpm test                 # from repo root, or: cd app && pnpm test
+```
+
+Sync RPC and Realtime integration tests talk to the **local** stack with a
+real authenticated user (never `service_role` for the RPCs under test):
+
+```bash
+pnpm supabase start
+pnpm test:integration
+```
+
+`pnpm test:integration` will also read credentials from `supabase status` if
+`SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` are unset.
+GitHub Actions runs the same command after `supabase start` and `db reset`.
+
 ## Migrations
 
 ### Creating a new migration
@@ -82,11 +103,38 @@ pnpm supabase db reset   # Apply locally
 
 ### Pushing to cloud
 
-After linking (see below):
+**Production schema applies on merge to `main`.** The workflow
+[`.github/workflows/supabase-migrate.yml`](../.github/workflows/supabase-migrate.yml)
+runs `supabase db push --project-ref`. Vercel never touches Postgres.
+
+Add these GitHub Actions secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|--------|--------|
+| `SUPABASE_ACCESS_TOKEN` | Personal or CI access token from [Supabase access tokens](https://supabase.com/dashboard/account/tokens) |
+| `SUPABASE_PROJECT_REF` | Project id from [General settings](https://app.supabase.com/project/_/settings/general) |
+
+The token needs permission to link the project and push migrations (a personal
+access token from Account → Access Tokens with project access, not a scoped
+token that cannot call the Management API).
+adding secrets, either merge to `main` or run **Supabase migrate** →
+**Run workflow**. The first push no-ops if remote history already matches git,
+or applies any migrations that are not on the hosted project yet.
+
+Do **not** run `pnpm supabase db reset` against the linked cloud project.
+
+Same-repo pull requests also dry-run `db push` when those secrets exist. Fork
+PRs cannot use production secrets; local `supabase start` / `db reset` still
+proves the SQL.
+
+Manual push still works after linking (see below):
 
 ```bash
 pnpm supabase db push
 ```
+
+Prefer **one** production apply path. This repo uses GitHub Actions, not the
+Supabase GitHub Integration, so migration history stays reviewable in git.
 
 ### Syncing from cloud (first-time or schema drift)
 
@@ -122,7 +170,8 @@ Get `<project-id>` from: https://app.supabase.com/project/_/settings/general
 | Stop local stack | `pnpm supabase stop` |
 | Reset DB (apply migrations + seed) | `pnpm supabase db reset` |
 | New migration | `pnpm supabase migration new <name>` |
-| Push migrations to cloud | `pnpm supabase db push` |
+| Push migrations to cloud | `pnpm supabase db push` (CI does this on merge to `main`) |
+| RPC / Realtime integration tests | `pnpm test:integration` |
 | Pull schema from cloud | `pnpm supabase db pull` |
 | Diff local vs remote | `pnpm supabase db diff` |
 

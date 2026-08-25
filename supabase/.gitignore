@@ -6,3 +6,6 @@
 .env.keys
 .env.local
 .env.*.local
+
+# Vitest cache from integration tests
+tests/**/node_modules/
