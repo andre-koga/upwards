@@ -7,6 +7,10 @@ import { getCachedUserId } from "@/lib/supabase";
 import { newId } from "@/lib/db";
 import { stripOpOwnedFields } from "@/lib/sync/op-owned-fields";
 import type { RemoteSyncOperation } from "./sync-operations";
+import { listOpenConflictEntityIds, recordSyncIssue } from "./sync-issues-store";
+import { hasPendingOperationForEntity } from "./unsynced-data";
+import { buildProjectionConflictPayloadFromOp } from "./projection-conflict-resolution";
+import { maybeRecordTimelineOverlapInfo } from "./timeline-overlap";
 
 /** Tables whose rows sync exclusively via the operation stream when RPCs are live. */
 export const OPS_MANAGED_SYNC_TABLES: SyncTable[] = [
@@ -86,6 +90,14 @@ export function entityTypeToSyncTable(entityType: string): SyncTable | null {
   return ENTITY_TYPE_TO_SYNC_TABLE[entityType] ?? null;
 }
 
+export function dexieTableForSyncTable(
+  table: SyncTable
+): keyof typeof db | null {
+  const entityType = syncTableToEntityType(table);
+  if (!entityType) return null;
+  return ENTITY_TYPE_TO_DEXIE_TABLE[entityType] ?? null;
+}
+
 function rowForProjectionPayload(
   table: SyncTable,
   row: Record<string, unknown>
@@ -141,22 +153,63 @@ export async function enqueueProjectionUpsertForTable(
 
 export async function applyAcceptedProjectionOp(
   op: RemoteSyncOperation
-): Promise<void> {
+): Promise<boolean> {
   const table = entityTypeToSyncTable(op.entity_type);
   const dexieKey = ENTITY_TYPE_TO_DEXIE_TABLE[op.entity_type];
-  if (!table || !dexieKey) return;
+  if (!table || !dexieKey) return false;
+
+  const entityId = op.entity_id;
+  if (!entityId) return false;
+
+  const openConflicts = await listOpenConflictEntityIds();
+  if (openConflicts.has(entityId)) {
+    return false;
+  }
+
+  if (await hasPendingOperationForEntity(entityId)) {
+    try {
+      const payload = await buildProjectionConflictPayloadFromOp(op);
+      await recordSyncIssue({
+        kind: "conflict",
+        title: "Unsent local edits",
+        detail:
+          "Another device changed this item while you still have unsent edits on this device.",
+        entity_type: op.entity_type,
+        entity_id: entityId,
+        operation_id: op.operation_id,
+        payload,
+        account_id: getCachedUserId(),
+      });
+    } catch (err) {
+      console.warn("[sync] failed to record pending-entity conflict", err);
+    }
+    return false;
+  }
 
   const payload = op.payload ?? {};
   const row = payload.row;
-  if (!row || typeof row !== "object" || Array.isArray(row)) return;
+  if (!row || typeof row !== "object" || Array.isArray(row)) return false;
 
-  const normalized = {
+  const normalized: Record<string, unknown> & { synced_at: string | null } = {
     ...normalizeSyncRow(table, row as Record<string, unknown>),
     synced_at: (row as { updated_at?: string }).updated_at ?? null,
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db[dexieKey] as any).put(normalized);
+
+  if (
+    op.entity_type === "activity_period" &&
+    typeof normalized.daily_entry_id === "string" &&
+    typeof normalized.activity_id === "string"
+  ) {
+    void maybeRecordTimelineOverlapInfo(
+      normalized.daily_entry_id,
+      normalized.activity_id
+    );
+  }
+
+  return true;
 }
 
 export function isProjectionUpsertEntityType(entityType: string): boolean {

@@ -1,5 +1,7 @@
 import { db, now, newId } from "@/lib/db";
 import type { SyncPendingOperation, SyncPendingStatus } from "@/lib/db/types";
+import { getCachedUserId } from "@/lib/supabase";
+import { recordSyncIssue } from "./sync-issues-store";
 
 export interface EnqueuePendingOperationInput {
   operation_id: string;
@@ -119,14 +121,25 @@ export async function requeueFailedOperations(): Promise<number> {
 }
 
 /**
- * When temporal ops RPCs are unavailable, LWW push/pull owns cloud sync.
- * Ack local pending ops so "Waiting to sync" clears after a successful sync.
+ * When temporal ops RPCs are unavailable, leave pending ops in place and surface
+ * a sync error so merges are not silently dropped.
  */
-export async function acknowledgePendingWhenOpsUnavailable(): Promise<number> {
+export async function reportOpsUnavailablePending(): Promise<number> {
   const pending = await listPendingOperations({ status: "pending" });
   if (pending.length === 0) return 0;
-  await Promise.all(pending.map((row) => markOperationAcked(row.id)));
+  await recordSyncIssue({
+    kind: "error",
+    title: "Sync upgrade required",
+    detail:
+      "Habit counts and timeline merges need the sync operations service. Your pending changes stay on this device until it is available.",
+    account_id: getCachedUserId(),
+  });
   return pending.length;
+}
+
+/** @deprecated Use reportOpsUnavailablePending — kept for tests importing the old name. */
+export async function acknowledgePendingWhenOpsUnavailable(): Promise<number> {
+  return reportOpsUnavailablePending();
 }
 
 export async function discardPendingOperation(id: string): Promise<void> {

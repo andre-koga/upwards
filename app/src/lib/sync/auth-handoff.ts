@@ -27,6 +27,7 @@ export async function prepareSignedInSession(
 
   if (lastUserId && lastUserId !== userId) {
     // Different account on this device — wipe the previous user's local data.
+    // Caller should have pushed the previous account via sign-out or sign-in guard.
     await clearLocalSyncData();
     clearLastSignedInUserId();
     saveLastSignedInUserId(userId);

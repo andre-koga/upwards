@@ -36,7 +36,20 @@ import {
   enqueueProjectionUpsertForTable,
   OPS_MANAGED_SYNC_TABLES,
 } from "./projection-sync";
-import { acknowledgePendingWhenOpsUnavailable } from "./pending-operations";
+import { reportOpsUnavailablePending, countPendingOperations } from "./pending-operations";
+import {
+  subscribeToRemoteSyncOperations,
+  unsubscribeFromRemoteSyncOperations,
+} from "./realtime-sync";
+import { syncDeviceRegistry } from "./remote-device-sync";
+import { countUnsyncedRows } from "./unsynced-data";
+
+export interface PushBeforeSignOutResult {
+  success: boolean;
+  pendingCount: number;
+  unsyncedRowCount: number;
+  pushFailed: boolean;
+}
 
 export interface SyncState {
   isSyncing: boolean;
@@ -61,6 +74,7 @@ class SyncEngine {
   private onlineHandler: (() => void) | null = null;
   private visibilityHandler: (() => void) | null = null;
   private pageShowHandler: (() => void) | null = null;
+  private realtimeUnsubscribe: (() => void) | null = null;
   private periodicIntervalMs = DEFAULT_PERIODIC_SYNC_MS;
   private isAutoSyncEnabled = false;
   private hasMutationHooks = false;
@@ -319,6 +333,7 @@ class SyncEngine {
     });
     this.setState({ lastSyncAt: serverNow });
     void touchLocalDevice(userId);
+    void syncDeviceRegistry(userId);
   }
 
   async sync(): Promise<void> {
@@ -400,12 +415,13 @@ class SyncEngine {
         !this.state.lastError && !interruptedTransiently && this.canSync();
       if (cleanSync) {
         try {
-          // LWW covered cloud sync while temporal RPCs are offline — clear Waiting.
           if (opsSkipped) {
-            await acknowledgePendingWhenOpsUnavailable();
+            await reportOpsUnavailablePending();
           }
-          // Sync errors are actionable while open; clear them after a clean run.
           await resolveOpenSyncErrors();
+          this.setState({
+            localDataVersion: this.state.localDataVersion + 1,
+          });
           this.listeners.forEach((l) => l(this.state));
         } catch (cleanupErr) {
           console.warn("[sync] post-sync cleanup failed:", cleanupErr);
@@ -431,24 +447,44 @@ class SyncEngine {
     }
   }
 
-  async pushBeforeSignOut(): Promise<void> {
+  async pushBeforeSignOut(): Promise<PushBeforeSignOutResult> {
+    let pushFailed = false;
     try {
-      // Flush semantic ops first so sign-out does not drop unacked work.
       const pushOpsResult = await pushPendingOperations();
       const opsSyncActive = pushOpsResult.skipped !== true;
+      if (pushOpsResult.failed) {
+        pushFailed = true;
+      }
       if (!pushOpsResult.failed && pushOpsResult.maxSequence != null) {
         saveLastAppliedSequence(pushOpsResult.maxSequence);
       }
-      await runPushInternal(
+      const { hadDurableFailure } = await runPushInternal(
         {
           withLocalSyncMetadataWrites: (op) =>
             this.withLocalSyncMetadataWrites(op),
         },
         { opsSyncActive }
       );
+      if (hadDurableFailure) {
+        pushFailed = true;
+      }
     } catch (err) {
-      console.warn("[sync] pushBeforeSignOut failed (non-fatal):", err);
+      pushFailed = true;
+      console.warn("[sync] pushBeforeSignOut failed:", err);
     }
+
+    const [pendingCount, unsyncedRowCount] = await Promise.all([
+      countPendingOperations({ status: "pending" }),
+      countUnsyncedRows(),
+    ]);
+
+    return {
+      success:
+        !pushFailed && pendingCount === 0 && unsyncedRowCount === 0,
+      pendingCount,
+      unsyncedRowCount,
+      pushFailed,
+    };
   }
 
   /**
@@ -479,6 +515,11 @@ class SyncEngine {
 
     this.resetPeriodicInterval();
 
+    this.realtimeUnsubscribe = subscribeToRemoteSyncOperations({
+      onRemoteChange: () => this.scheduleDebouncedSync(),
+      onResubscribe: () => this.runThrottledSync(),
+    });
+
     this.onlineHandler = () => this.runThrottledSync();
     window.addEventListener("online", this.onlineHandler);
 
@@ -495,6 +536,11 @@ class SyncEngine {
     this.isAutoSyncEnabled = false;
 
     this.clearDebounceTimer();
+    if (this.realtimeUnsubscribe) {
+      this.realtimeUnsubscribe();
+      this.realtimeUnsubscribe = null;
+    }
+    unsubscribeFromRemoteSyncOperations();
 
     if (this.syncInterval) {
       clearInterval(this.syncInterval);

@@ -18,7 +18,10 @@ import {
   stripOpOwnedFields,
 } from "./op-owned-fields";
 import { OPS_MANAGED_SYNC_TABLES } from "./projection-sync";
-import { listOpenConflictEntityIds } from "./sync-issues-store";
+import {
+  listOpenConflictEntityIds,
+  recordSyncIssue,
+} from "./sync-issues-store";
 
 export interface PushInternalContext {
   withLocalSyncMetadataWrites: <T>(operation: () => Promise<T>) => Promise<T>;
@@ -105,12 +108,24 @@ export async function runPushInternal(
       );
     }
 
-    const sanitizedRows = await sanitizeForeignKeyRefsBeforeUpsert(
-      supabase,
-      table,
-      dedupedRows,
-      userId
-    );
+    const { rows: sanitizedRows, rejected } =
+      await sanitizeForeignKeyRefsBeforeUpsert(
+        supabase,
+        table,
+        dedupedRows,
+        userId
+      );
+
+    for (const item of rejected) {
+      await recordSyncIssue({
+        kind: "error",
+        title: "Could not upload timeline data",
+        detail: `${table} row ${item.id}: ${item.reason}. It stays on this device until related data syncs.`,
+        entity_type: table,
+        entity_id: item.id,
+        account_id: userId,
+      });
+    }
 
     const normalizedRows = await normalizeActivityStreakIdsBeforeUpsert(
       supabase,

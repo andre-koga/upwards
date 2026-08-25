@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   supabase,
@@ -6,9 +6,28 @@ import {
   getCachedSession,
 } from "@/lib/supabase";
 import { getAuthRedirectUrl } from "@/lib/auth-redirect";
-import { syncEngine } from "@/lib/sync";
+import {
+  syncEngine,
+  type PushBeforeSignOutResult,
+} from "@/lib/sync";
 import { clearLocalSyncData } from "@/lib/sync/clear-local-sync-data";
 import { clearLastSignedInUserId } from "@/lib/sync/sync-storage";
+
+export class SignOutBlockedError extends Error {
+  readonly result: PushBeforeSignOutResult;
+
+  constructor(result: PushBeforeSignOutResult) {
+    super("SIGN_OUT_BLOCKED");
+    this.name = "SignOutBlockedError";
+    this.result = result;
+  }
+}
+
+export function isSignOutBlockedError(
+  error: unknown
+): error is SignOutBlockedError {
+  return error instanceof SignOutBlockedError;
+}
 
 export function useAuth() {
   const { t } = useTranslation("settings");
@@ -42,12 +61,23 @@ export function useAuth() {
     setAuthLoading(true);
     setAuthError(null);
     try {
+      if (isAuthed) {
+        const result = await syncEngine.pushBeforeSignOut();
+        if (!result.success) {
+          throw new SignOutBlockedError(result);
+        }
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
     } catch (error) {
+      if (isSignOutBlockedError(error)) {
+        setAuthError(t("auth.signOutBlocked.inline"));
+        throw error;
+      }
       setAuthError(
         error instanceof Error ? error.message : t("auth.signInFailed")
       );
@@ -112,17 +142,25 @@ export function useAuth() {
     }
   };
 
-  const signOut = async () => {
+  const completeSignOut = useCallback(async () => {
     if (!supabase) return;
-    await syncEngine.pushBeforeSignOut();
     await clearLocalSyncData();
     clearLastSignedInUserId();
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      console.error("Sign out failed:", error);
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  }, []);
+
+  const signOut = async (options?: { forceDiscard?: boolean }) => {
+    if (!supabase) return;
+
+    if (!options?.forceDiscard) {
+      const result = await syncEngine.pushBeforeSignOut();
+      if (!result.success) {
+        throw new SignOutBlockedError(result);
+      }
     }
+
+    await completeSignOut();
   };
 
   return {
@@ -137,5 +175,6 @@ export function useAuth() {
     resetPassword,
     updatePassword,
     signOut,
+    completeSignOut,
   };
 }

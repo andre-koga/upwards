@@ -55,6 +55,15 @@
     "resetEmailFailed": "Could not send reset email",
     "updatePasswordFailed": "Could not update password",
     "syncNotConfigured": "Sync is not configured for this build.",
+    "signOutBlocked": {
+      "title": "Unsynced changes",
+      "description": "You have {{total}} change(s) that have not reached the cloud yet ({{pending}} pending operations, {{unsynced}} unsynced rows). Try syncing again or discard local changes before signing out.",
+      "retrySync": "Try sync again",
+      "discard": "Discard local changes",
+      "discardConfirm": "Sign out and discard",
+      "staySignedIn": "Stay signed in",
+      "inline": "Sync your local changes before signing in with a different account."
+    },
     "forgotPasswordPage": {
       "title": "Reset password",
       "description": "Enter the email for your sync account. We will send a link to choose a new password.",
@@ -114,12 +123,19 @@
         "empty": "No recently resolved issues."
       },
       "device": {
-        "title": "This device",
-        "description": "Identity and last successful sync for this installation.",
+        "title": "Devices",
+        "description": "Installations signed in to your sync account.",
         "idLabel": "Device ID",
         "lastSeenLabel": "Last successful sync",
         "accountLabel": "Sync account",
-        "empty": "This device has not completed a sync yet."
+        "empty": "No devices have synced yet.",
+        "thisDevice": "This device",
+        "otherDevice": "Other device",
+        "currentBadge": "Current"
+      },
+      "info": {
+        "title": "Notes",
+        "description": "Non-blocking sync notices that may need a quick look."
       }
     },
     "actions": {
@@ -189,6 +205,49 @@
           "journal_completed_at": "Completed at",
           "location": "Places",
           "deleted_at": "Deleted"
+        }
+      },
+      "projection": {
+        "summary": "Two versions of this {{entity}} need a decision.",
+        "consequence": "Your choice updates this item and syncs it to your other devices.",
+        "entity": {
+          "activity_period": "timeline session",
+          "one_time_task": "memo",
+          "recurring_memo": "recurring memo",
+          "activity": "activity",
+          "activity_group": "group",
+          "activity_streak": "streak"
+        },
+        "fields": {
+          "activity_id": "Activity",
+          "daily_entry_id": "Day",
+          "start_time": "Start time",
+          "end_time": "End time",
+          "note": "Note",
+          "title": "Title",
+          "date": "Date",
+          "due_date": "Due date",
+          "is_completed": "Completed",
+          "is_pinned": "Pinned",
+          "is_archived": "Archived",
+          "order_index": "Order",
+          "routine": "Schedule",
+          "is_enabled": "Enabled",
+          "name": "Name",
+          "completion_target": "Target",
+          "group_id": "Group",
+          "color": "Color",
+          "streak": "Streak",
+          "deleted_at": "Deleted"
+        }
+      },
+      "dailyCounts": {
+        "summary": "Habit counts for {{date}} differ between this device and the cloud.",
+        "consequence": "Your choice updates today's counts on this device and syncs them.",
+        "useSuggested": "Use suggested merge",
+        "columns": {
+          "habit": "Habit",
+          "suggested": "Suggested"
         }
       }
     }

@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SyncPendingOperation } from "@/lib/db/types";
 
-const pendingOps: SyncPendingOperation[] = [];
-let idCounter = 0;
-
 vi.mock("@/lib/db", () => ({
   db: {
     syncPendingOperations: {
@@ -36,6 +33,13 @@ vi.mock("@/lib/db", () => ({
   now: () => "2026-08-01T12:00:00.000Z",
 }));
 
+vi.mock("./sync-issues-store", () => ({
+  recordSyncIssue: vi.fn(async () => ({ id: "issue-1" })),
+}));
+
+const pendingOps: SyncPendingOperation[] = [];
+let idCounter = 0;
+
 import {
   enqueuePendingOperation,
   listPendingOperations,
@@ -44,7 +48,6 @@ import {
   markOperationFailed,
   markOperationRetryableError,
   requeueFailedOperations,
-  acknowledgePendingWhenOpsUnavailable,
   discardPendingOperation,
 } from "./pending-operations";
 
@@ -147,7 +150,9 @@ describe("pending-operations", () => {
     expect(pendingOps[0].status).toBe("pending");
   });
 
-  it("acknowledgePendingWhenOpsUnavailable acks all pending", async () => {
+  it("reportOpsUnavailablePending leaves pending ops and records an issue", async () => {
+    const { reportOpsUnavailablePending } = await import("./pending-operations");
+
     await enqueuePendingOperation({
       operation_id: "op-1",
       device_id: "device-1",
@@ -155,15 +160,9 @@ describe("pending-operations", () => {
       operation_type: "projection.upsert",
       payload: {},
     });
-    await enqueuePendingOperation({
-      operation_id: "op-2",
-      device_id: "device-1",
-      entity_type: "activity",
-      operation_type: "projection.upsert",
-      payload: {},
-    });
 
-    expect(await acknowledgePendingWhenOpsUnavailable()).toBe(2);
-    expect(pendingOps.every((row) => row.status === "acked")).toBe(true);
+    const count = await reportOpsUnavailablePending();
+    expect(count).toBe(1);
+    expect(pendingOps.every((row) => row.status === "pending")).toBe(true);
   });
 });
