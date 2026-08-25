@@ -34,6 +34,12 @@ export function saveLastAppliedSequence(sequence: number): void {
   localStorage.setItem(LAST_APPLIED_SEQUENCE_KEY, String(Math.floor(sequence)));
 }
 
+/** Never skip unpulled ops: the cursor may only move forward from a pull. */
+export function advanceLastAppliedSequence(sequence: number): void {
+  const current = loadLastAppliedSequence();
+  if (sequence > current) saveLastAppliedSequence(sequence);
+}
+
 export function clearLastAppliedSequence(): void {
   localStorage.removeItem(LAST_APPLIED_SEQUENCE_KEY);
 }

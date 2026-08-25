@@ -82,10 +82,20 @@ this document:
 5. **Tombstones are intentional deletes only.** `deleted_at` syncs when the user
    explicitly archived or deleted; missing remote fields are not treated as
    deletion.
+6. **Advance the ops pull cursor only from pulled operations.** A device's own
+   push can receive a higher `server_sequence` than ops it has not pulled yet.
+   Saving that as `lastAppliedSequence` skips the other device's period
+   tombstones and similar projection ops. Counts can still arrive via daily
+   entry last-write-wins, which is how a checkmark can update while a timeline
+   session remains.
+7. **Untimed completion pills follow the count.** If a day's count is below
+   target, leftover untimed timeline rows for that habit are tombstoned locally
+   even when the remote period id was missed.
 
-Live updates use Supabase Realtime on `sync_operations` INSERT events, filtered
-by account, ignoring the local `device_id`. A debounced full `sync()` pipeline
-reuses push-before-pull, dirty-id protection, and conflict recording.
+Live updates use Supabase Realtime on `sync_operations` INSERT events. The
+client does not filter on `user_id` in `postgres_changes` (RLS already scopes
+rows; that column is not the primary key). Own `device_id` events are ignored.
+A short debounce then runs the full `sync()` pipeline (push before pull).
 
 Do not reintroduce effective-dated definition versions, an "apply from"
 editor control, or operation-order tracking for schedule/rule edits unless

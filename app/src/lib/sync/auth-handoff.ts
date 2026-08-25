@@ -62,5 +62,5 @@ export async function completeGuestHandoff(
     await clearLocalSyncData();
   }
   saveLastSignedInUserId(userId);
-  syncEngine.startAutoSync(60_000);
+  syncEngine.startAutoSync(60_000, userId);
 }

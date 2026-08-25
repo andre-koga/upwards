@@ -14,11 +14,12 @@ import {
   loadLastServerSyncAt,
   clearLastServerSyncAt,
   loadLastAppliedSequence,
-  saveLastAppliedSequence,
+  advanceLastAppliedSequence,
 } from "./sync-storage";
 import type { SyncTable } from "./sync-transformers";
 import {
   DEBOUNCE_SYNC_MS,
+  REMOTE_DEBOUNCE_SYNC_MS,
   DEFAULT_PERIODIC_SYNC_MS,
   MAX_CHAINED_SYNCS,
   SYNC_TABLES,
@@ -183,6 +184,14 @@ class SyncEngine {
   }
 
   private scheduleDebouncedSync(): void {
+    this.scheduleDebouncedSyncIn(DEBOUNCE_SYNC_MS);
+  }
+
+  private scheduleRemoteDebouncedSync(): void {
+    this.scheduleDebouncedSyncIn(REMOTE_DEBOUNCE_SYNC_MS);
+  }
+
+  private scheduleDebouncedSyncIn(delayMs: number): void {
     if (!this.isAutoSyncEnabled) return;
 
     this.clearDebounceTimer();
@@ -190,7 +199,7 @@ class SyncEngine {
     this.debounceTimer = setTimeout(() => {
       this.debounceTimer = null;
       this.runTriggeredSync();
-    }, DEBOUNCE_SYNC_MS);
+    }, delayMs);
   }
 
   private resetPeriodicInterval(): void {
@@ -351,9 +360,9 @@ class SyncEngine {
       const pushOpsResult = await pushPendingOperations();
       opsSkipped = pushOpsResult.skipped === true;
       const opsSyncActive = pushOpsResult.skipped !== true;
-      if (!pushOpsResult.failed && pushOpsResult.maxSequence != null) {
-        saveLastAppliedSequence(pushOpsResult.maxSequence);
-      }
+      // Do not advance the pull cursor from a push. Submitted sequences can be
+      // higher than ops we have not pulled yet (other devices), which would
+      // skip remote period tombstones and similar projection ops.
 
       // Transient ops push failure should not become a durable Sync error card.
       if (pushOpsResult.failed && pushOpsResult.transient) {
@@ -391,13 +400,7 @@ class SyncEngine {
         opsSkipped = true;
       }
       if (pullOpsResult.skipped !== true && pullOpsResult.maxSequence != null) {
-        saveLastAppliedSequence(pullOpsResult.maxSequence);
-      } else if (
-        pullOpsResult.skipped !== true &&
-        pushOpsResult.maxSequence != null
-      ) {
-        // Keep cursor at least as high as what we just submitted.
-        saveLastAppliedSequence(pushOpsResult.maxSequence);
+        advanceLastAppliedSequence(pullOpsResult.maxSequence);
       }
     } catch (err) {
       if (isTransientNetworkError(err)) {
@@ -451,9 +454,6 @@ class SyncEngine {
       if (pushOpsResult.failed) {
         pushFailed = true;
       }
-      if (!pushOpsResult.failed && pushOpsResult.maxSequence != null) {
-        saveLastAppliedSequence(pushOpsResult.maxSequence);
-      }
       const { hadDurableFailure } = await runPushInternal(
         {
           withLocalSyncMetadataWrites: (op) =>
@@ -499,7 +499,10 @@ class SyncEngine {
     });
   }
 
-  startAutoSync(intervalMs = DEFAULT_PERIODIC_SYNC_MS): void {
+  startAutoSync(
+    intervalMs = DEFAULT_PERIODIC_SYNC_MS,
+    userId?: string | null
+  ): void {
     this.stopAutoSync();
 
     this.isAutoSyncEnabled = true;
@@ -512,7 +515,8 @@ class SyncEngine {
     this.resetPeriodicInterval();
 
     this.realtimeUnsubscribe = subscribeToRemoteSyncOperations({
-      onRemoteChange: () => this.scheduleDebouncedSync(),
+      userId: userId ?? getCachedUserId(),
+      onRemoteChange: () => this.scheduleRemoteDebouncedSync(),
       onResubscribe: () => this.runThrottledSync(),
     });
 

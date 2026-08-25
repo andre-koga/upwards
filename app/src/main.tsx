@@ -32,7 +32,7 @@ if (isSupabaseConfigured && supabase) {
       const userId = session?.user?.id;
       if (!userId) return;
       void prepareSignedInSession(userId).then((result) => {
-        if (result === "ready") syncEngine.startAutoSync(60000);
+        if (result === "ready") syncEngine.startAutoSync(60000, userId);
         else emitGuestHandoffNeeded(userId);
       });
     } else if (event === "SIGNED_OUT") {

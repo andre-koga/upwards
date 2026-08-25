@@ -342,20 +342,26 @@ export async function backfillUntimedCompletionsForDay(params: {
   taskCounts: Record<string, number>;
 }): Promise<number> {
   const removed = await dedupeUntimedCompletionsForDay(params.dateString);
-  let created = 0;
+  let changed = removed;
   for (const activity of params.activities) {
     if (activity.routine === "never") continue;
     if (isHiddenGroupDefaultActivity(activity)) continue;
     const target = activity.completion_target ?? 1;
     const count = params.taskCounts[activity.id] || 0;
-    if (count < target) continue;
+    if (count < target) {
+      changed += await tombstoneUntimedPeriodsForActivityOnDay({
+        activityId: activity.id,
+        dateString: params.dateString,
+      });
+      continue;
+    }
     const didCreate = await ensureUntimedCompletionPeriod({
       activityId: activity.id,
       dateString: params.dateString,
     });
-    if (didCreate) created += 1;
+    if (didCreate) changed += 1;
   }
-  return created + removed;
+  return changed;
 }
 
 /** Convert an untimed completion into a running or timed session, keeping the note. */
