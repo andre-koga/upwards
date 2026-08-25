@@ -44,9 +44,6 @@ export function useTasksPageData({
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const prevSyncingRef = useRef(false);
-  const prevLocalDataVersionRef = useRef(
-    syncEngine.getState().localDataVersion
-  );
 
   const activityEventsById = useMemo(
     () => buildActivityEventsByEntityId(activityStatusEvents),
@@ -148,17 +145,6 @@ export function useTasksPageData({
     const unsubscribe = syncEngine.subscribe((state) => {
       const wasSyncing = prevSyncingRef.current;
       prevSyncingRef.current = state.isSyncing;
-
-      if (state.localDataVersion !== prevLocalDataVersionRef.current) {
-        prevLocalDataVersionRef.current = state.localDataVersion;
-        void (async () => {
-          await loadData();
-          await loadJournalEntry({ background: true });
-          await loadJournalMeta();
-          setRefreshTrigger((t) => t + 1);
-        })();
-        return;
-      }
 
       if (wasSyncing && !state.isSyncing) {
         void (async () => {

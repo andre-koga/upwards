@@ -419,10 +419,6 @@ class SyncEngine {
             await reportOpsUnavailablePending();
           }
           await resolveOpenSyncErrors();
-          this.setState({
-            localDataVersion: this.state.localDataVersion + 1,
-          });
-          this.listeners.forEach((l) => l(this.state));
         } catch (cleanupErr) {
           console.warn("[sync] post-sync cleanup failed:", cleanupErr);
         }
