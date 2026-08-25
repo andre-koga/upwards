@@ -2,13 +2,15 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { formatTimerDisplay } from "@/lib/activity";
 import { formatClockTime } from "@/lib/time-utils";
-import { Play } from "lucide-react";
+import { Clock, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const TIMELINE_ITEM_NAME_CLASS =
   "block whitespace-normal break-words text-sm";
 export const TIMELINE_ITEM_NOTE_CLASS =
   "mt-0.5 block whitespace-pre-wrap break-words text-xs text-muted-foreground";
+export const TIMELINE_TIME_PILL_CLASS =
+  "flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-xs text-muted-foreground";
 
 interface ActivityTimelineItemProps {
   activityName: string;
@@ -61,15 +63,16 @@ function ActivityTimelineItem({
   const trailingDisplay = untimed ? (
     clockTime ? (
       <span
-        className="shrink-0 px-2 py-0.5 text-xs text-muted-foreground"
+        className={TIMELINE_TIME_PILL_CLASS}
         title={completedLabel}
         aria-label={completedLabel}
       >
+        <Clock className="h-2.5 w-2.5" aria-hidden />
         {clockTime}
       </span>
     ) : null
   ) : (
-    <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-xs text-muted-foreground">
+    <span className={TIMELINE_TIME_PILL_CLASS}>
       <Play className="h-2.5 w-2.5" aria-hidden />
       {formatTimerDisplay(intervalMs)}
     </span>

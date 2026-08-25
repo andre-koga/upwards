@@ -3,6 +3,7 @@ import type { ActivityPeriod } from "@/lib/db/types";
 import { effectiveDayStartMs } from "./period-day-utils";
 import {
   buildUntimedPeriod,
+  extraUntimedPeriodIdsToTombstone,
   findUntimedAmong,
   isUntimedPeriod,
   periodsBelongingToDay,
@@ -241,18 +242,21 @@ describe("resolveClosedSessionTimes", () => {
     ).toEqual({ ok: false, error: "one_time" });
   });
 
-  it("rejects equal filled times", () => {
-    expect(
-      resolveClosedSessionTimes({
-        startTime: "09:00:00",
-        endTime: "09:00:00",
-        logicalDateStr: "2026-06-26",
-        resetMinutes: RESET_MIDNIGHT,
-        existingStartIso: localIso(2026, 6, 26, 8, 0),
-        existingEndIso: localIso(2026, 6, 26, 8, 0),
-        createdAt: localIso(2026, 6, 26, 8, 0),
-      })
-    ).toEqual({ ok: false, error: "same_time" });
+  it("resolves equal filled times as an untimed completion", () => {
+    const result = resolveClosedSessionTimes({
+      startTime: "09:00:00",
+      endTime: "09:00:00",
+      logicalDateStr: "2026-06-26",
+      resetMinutes: RESET_MIDNIGHT,
+      existingStartIso: localIso(2026, 6, 26, 8, 0),
+      existingEndIso: localIso(2026, 6, 26, 8, 0),
+      createdAt: localIso(2026, 6, 26, 8, 0),
+    });
+    expect(result).toEqual({
+      ok: true,
+      startIso: localIso(2026, 6, 26, 9, 0),
+      endIso: localIso(2026, 6, 26, 9, 0),
+    });
   });
 
   it("resolves a timed span when both times are set", () => {
@@ -270,5 +274,32 @@ describe("resolveClosedSessionTimes", () => {
     expect(new Date(result.endIso).getTime()).toBeGreaterThan(
       new Date(result.startIso).getTime()
     );
+  });
+
+  it("keeps the earliest untimed row and tombstones later copies", () => {
+    const first = localIso(2026, 6, 26, 8, 0);
+    const second = localIso(2026, 6, 26, 8, 5);
+    expect(
+      extraUntimedPeriodIdsToTombstone([
+        makePeriod({
+          id: "copy-2",
+          created_at: second,
+          start_time: second,
+          end_time: second,
+        }),
+        makePeriod({
+          id: "copy-1",
+          created_at: first,
+          start_time: first,
+          end_time: first,
+        }),
+        makePeriod({
+          id: "timed",
+          activity_id: "act-2",
+          start_time: first,
+          end_time: second,
+        }),
+      ])
+    ).toEqual(["copy-2"]);
   });
 });

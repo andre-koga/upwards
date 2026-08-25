@@ -93,8 +93,8 @@
     "clear": "Clear"
   },
   "sessionDetails": {
-    "timesOptional": "Start and end times are optional. Leave them blank if you don't track how long this took.",
-    "errorOneTime": "Set both start and end times, or leave both blank.",
+    "timesOptional": "Use the same start and end for a completion without a duration. Use different times if you tracked how long it took.",
+    "errorOneTime": "Set both start and end times.",
     "errorStartRequired": "Please set a start time.",
     "errorSameTime": "End time must be different from start time."
   }

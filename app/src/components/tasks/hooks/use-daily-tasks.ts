@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { db, newId, now } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type {
@@ -282,16 +282,25 @@ export function useDailyTasks({
     [incrementTaskWithProgress]
   );
 
+  const backfillSignatureRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!isEditableDate || loading) return;
+    const signature = `${dateString}:${dailyActivities
+      .map((activity) => `${activity.id}:${taskCounts[activity.id] || 0}`)
+      .join(",")}`;
+    if (backfillSignatureRef.current === signature) return;
+
     let cancelled = false;
     void (async () => {
-      const created = await backfillUntimedCompletionsForDay({
+      const changed = await backfillUntimedCompletionsForDay({
         dateString,
         activities: dailyActivities,
         taskCounts,
       });
-      if (cancelled || created === 0) return;
+      if (cancelled) return;
+      backfillSignatureRef.current = signature;
+      if (changed === 0) return;
       await loadActivityPeriods();
       await loadAllActivityPeriods();
     })();

@@ -93,8 +93,8 @@
     "clear": "Limpar"
   },
   "sessionDetails": {
-    "timesOptional": "Os horários de início e fim são opcionais. Deixe em branco se você não precisa registrar quanto tempo levou.",
-    "errorOneTime": "Informe o início e o fim, ou deixe os dois em branco.",
+    "timesOptional": "Use o mesmo horário de início e fim para uma conclusão sem duração. Use horários diferentes se você registrou quanto tempo levou.",
+    "errorOneTime": "Informe o horário de início e o de fim.",
     "errorStartRequired": "Informe um horário de início.",
     "errorSameTime": "O horário de fim deve ser diferente do horário de início."
   }

@@ -8,6 +8,7 @@ import {
   effectiveDayStartMs,
   periodBelongsToDay,
   resolvePeriodFromLogicalDay,
+  timestampForLogicalDayTime,
 } from "@/lib/activity/period-day-utils";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
 import { timeToSeconds } from "@/lib/time-utils";
@@ -99,11 +100,13 @@ export function findUntimedAmong(
 
 export type ClosedSessionTimesResult =
   | { ok: true; startIso: string; endIso: string }
-  | { ok: false; error: "one_time" | "same_time" };
+  | { ok: false; error: "one_time" };
 
 /**
- * Resolve start/end for a closed session. Both empty → untimed (keep the
- * existing completion instant, or created_at). Both set → a timed span.
+ * Resolve start/end for a closed session.
+ * Both empty → keep the existing completion instant (or created_at).
+ * Same start and end → untimed completion at that clock time.
+ * Different times → a timed span.
  */
 export function resolveClosedSessionTimes(params: {
   startTime: string;
@@ -132,7 +135,13 @@ export function resolveClosedSessionTimes(params: {
   }
 
   if (timeToSeconds(params.endTime) === timeToSeconds(params.startTime)) {
-    return { ok: false, error: "same_time" };
+    const completionMs = timestampForLogicalDayTime(
+      params.logicalDateStr,
+      params.startTime,
+      params.resetMinutes
+    );
+    const completionIso = new Date(completionMs).toISOString();
+    return { ok: true, startIso: completionIso, endIso: completionIso };
   }
 
   const resolved = resolvePeriodFromLogicalDay(
@@ -144,8 +153,32 @@ export function resolveClosedSessionTimes(params: {
   return { ok: true, startIso: resolved.startIso, endIso: resolved.endIso };
 }
 
-export async function listPeriodsForActivityOnDay(
-  activityId: string,
+/** Extra untimed rows for the same activity (keep the earliest). */
+export function extraUntimedPeriodIdsToTombstone(
+  periods: ActivityPeriod[]
+): string[] {
+  const groups = new Map<string, ActivityPeriod[]>();
+  for (const period of periods) {
+    if (period.deleted_at) continue;
+    if (!isUntimedPeriod(period.start_time, period.end_time)) continue;
+    const list = groups.get(period.activity_id) ?? [];
+    list.push(period);
+    groups.set(period.activity_id, list);
+  }
+
+  const extraIds: string[] = [];
+  for (const list of groups.values()) {
+    if (list.length <= 1) continue;
+    const sorted = [...list].sort((left, right) => {
+      const created = left.created_at.localeCompare(right.created_at);
+      return created !== 0 ? created : left.id.localeCompare(right.id);
+    });
+    for (const extra of sorted.slice(1)) extraIds.push(extra.id);
+  }
+  return extraIds;
+}
+
+export async function fetchActivityPeriodsForDay(
   dateString: string
 ): Promise<ActivityPeriod[]> {
   const datesToQuery = calendarDatesOverlappingEffectiveDay(dateString);
@@ -157,10 +190,13 @@ export async function listPeriodsForActivityOnDay(
   if (entries.length === 0) return [];
 
   const entryIds = new Set(entries.map((entry) => entry.id));
+  const dateEntryIds = new Set(
+    entries
+      .filter((entry) => entry.date === dateString)
+      .map((entry) => entry.id)
+  );
   const nowMs = Date.now();
   const candidates = await db.activityPeriods
-    .where("activity_id")
-    .equals(activityId)
     .filter(
       (period) =>
         !period.deleted_at &&
@@ -169,7 +205,30 @@ export async function listPeriodsForActivityOnDay(
     )
     .toArray();
 
-  return periodsBelongingToDay(candidates, dateString, nowMs);
+  const byId = new Map<string, ActivityPeriod>();
+  for (const period of periodsBelongingToDay(candidates, dateString, nowMs)) {
+    byId.set(period.id, period);
+  }
+  // Untimed rows can miss interval overlap when stamped with `now()` on a
+  // past day. Still include them when they belong to that day's entry.
+  for (const period of candidates) {
+    if (!isUntimedPeriod(period.start_time, period.end_time)) continue;
+    if (!dateEntryIds.has(period.daily_entry_id)) continue;
+    byId.set(period.id, period);
+  }
+
+  return [...byId.values()].sort(
+    (left, right) =>
+      new Date(left.start_time).getTime() - new Date(right.start_time).getTime()
+  );
+}
+
+export async function listPeriodsForActivityOnDay(
+  activityId: string,
+  dateString: string
+): Promise<ActivityPeriod[]> {
+  const periods = await fetchActivityPeriodsForDay(dateString);
+  return periods.filter((period) => period.activity_id === activityId);
 }
 
 export async function findUntimedPeriodForActivityOnDay(
@@ -180,6 +239,32 @@ export async function findUntimedPeriodForActivityOnDay(
   return findUntimedAmong(periods, activityId);
 }
 
+export async function dedupeUntimedCompletionsForDay(
+  dateString: string
+): Promise<number> {
+  const periods = await fetchActivityPeriodsForDay(dateString);
+  const extraIds = extraUntimedPeriodIdsToTombstone(periods);
+  if (extraIds.length === 0) return 0;
+  const n = now();
+  await Promise.all(
+    extraIds.map((id) =>
+      db.activityPeriods.update(id, {
+        deleted_at: n,
+        updated_at: n,
+      })
+    )
+  );
+  return extraIds.length;
+}
+
+function completionIsoForLogicalDay(dateString: string): string {
+  const completedAt = now();
+  if (untimedPeriodBelongsToDay(new Date(completedAt).getTime(), dateString)) {
+    return completedAt;
+  }
+  return new Date(effectiveDayStartMs(dateString)).toISOString();
+}
+
 async function ensureUntimedCompletionPeriodImpl(
   activityId: string,
   dateString: string
@@ -188,7 +273,7 @@ async function ensureUntimedCompletionPeriodImpl(
   if (existing.length > 0) return false;
 
   const entry = await getOrCreateDailyEntry(dateString);
-  const completedAt = now();
+  const completedAt = completionIsoForLogicalDay(dateString);
   await db.activityPeriods.add(
     buildUntimedPeriod({
       id: newId(),
@@ -246,6 +331,7 @@ export async function backfillUntimedCompletionsForDay(params: {
   activities: Activity[];
   taskCounts: Record<string, number>;
 }): Promise<number> {
+  const removed = await dedupeUntimedCompletionsForDay(params.dateString);
   let created = 0;
   for (const activity of params.activities) {
     if (activity.routine === "never") continue;
@@ -259,7 +345,7 @@ export async function backfillUntimedCompletionsForDay(params: {
     });
     if (didCreate) created += 1;
   }
-  return created;
+  return created + removed;
 }
 
 /** Convert an untimed completion into a running or timed session, keeping the note. */

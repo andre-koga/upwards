@@ -12,6 +12,18 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-08-25-untimed-completion-time",
+    date: "2026-08-25",
+    title: "Completion time on the timeline",
+    bullets: [
+      "Untimed completions show the time of day in a clock pill, with AM or PM so it isn't mistaken for a duration.",
+      "Opening a session fills start and end with the completion time so you can edit them.",
+    ],
+    fixes: [
+      "Checking off a habit no longer adds a duplicate timeline row every time you reload.",
+    ],
+  },
+  {
     id: "2026-08-24-untimed-completions",
     date: "2026-08-24",
     title: "Completions on the timeline",

@@ -94,7 +94,8 @@ Actions and facts that accumulate over time remain recorded:
 - Session started or stopped, or a habit checked complete without a time span
   (optional 200-character note lives on the period row). Counts remain the
   streak fact; a zero-duration period is only so the timeline and notes have
-  a row.
+  a row. Keep one untimed completion per activity per day; extra copies are
+  tombstoned.
 - One-time task completed or reopened
 - Habit or group archived or restored
 - Habit or group deleted
