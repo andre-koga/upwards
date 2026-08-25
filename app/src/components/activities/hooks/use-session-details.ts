@@ -27,7 +27,7 @@ import {
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
-import { resolveClosedSessionTimes } from "@/lib/activity/untimed-period";
+import { resolveClosedSessionTimes, isUntimedPeriod } from "@/lib/activity/untimed-period";
 import {
   getEffectiveToday,
   getDayResetMinutes,
@@ -147,8 +147,9 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           : NONE_ACTIVITY_VALUE
       );
       setSelectedDate(fromDateString(logicalDateStr));
+      const untimed = isUntimedPeriod(period.start_time, period.end_time);
       setStartTime(formatTimeInput(period.start_time));
-      setEndTime(formatTimeInput(period.end_time));
+      setEndTime(untimed ? "" : formatTimeInput(period.end_time));
       setNote(period.note ?? "");
       setLoading(false);
     };
@@ -295,6 +296,27 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     return `This session spans ${startDay} and ${endDay} (crosses your ${formatResetMinutes(resetMinutes)} day boundary).`;
   }, [isRunningSession, startTime, endTime, selectedDate, resetMinutes]);
 
+  const handleStartTimeChange = useCallback((value: string) => {
+    setStartTime(value);
+  }, []);
+
+  const handleEndTimeChange = useCallback(
+    (value: string) => {
+      if (!value) {
+        setEndTime("");
+        return;
+      }
+      if (startTime && timeToSeconds(value) === timeToSeconds(startTime)) {
+        setEndTime("");
+        return;
+      }
+      setEndTime(value);
+    },
+    [startTime]
+  );
+
+  const showUntimedEnd = !isRunningSession && !endTime;
+
   return {
     NONE_ACTIVITY_VALUE,
     loading,
@@ -310,9 +332,10 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     selectedDate,
     setSelectedDate,
     startTime,
-    setStartTime,
+    setStartTime: handleStartTimeChange,
     endTime,
-    setEndTime,
+    setEndTime: handleEndTimeChange,
+    showUntimedEnd,
     note,
     setNote,
     handleDelete,

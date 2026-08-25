@@ -134,6 +134,8 @@ interface FormTimeFieldProps {
   messageClassName?: string;
   /** Show a clear action that sets the value to empty. */
   allowClear?: boolean;
+  /** Custom label when value is empty (defaults to the translated "Not set"). */
+  emptyDisplay?: string;
 }
 
 function currentTimeValue(): string {
@@ -162,10 +164,12 @@ export function FormTimeField({
   message,
   messageClassName,
   allowClear = false,
+  emptyDisplay,
 }: FormTimeFieldProps) {
   const { t } = useTranslation("projects");
   const { t: tCommon } = useTranslation("common");
   const isEmpty = !value;
+  const emptyLabel = emptyDisplay ?? t("timeField.notSet");
   const [hours24, minutes, seconds] = useMemo(
     () => splitTime(value || "00:00:00"),
     [value]
@@ -293,7 +297,7 @@ export function FormTimeField({
       >
         <span className={cn(isEmpty && "font-sans text-muted-foreground")}>
           {isEmpty
-            ? t("timeField.notSet")
+            ? emptyLabel
             : formatTimeDisplay({ hour12, minutes, seconds, meridiem })}
         </span>
       </Button>
