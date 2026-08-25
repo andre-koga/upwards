@@ -14,6 +14,7 @@ import {
   resolvePeriodFromLogicalDay,
   spansLogicalDays,
 } from "@/lib/activity/period-day-utils";
+import { resolveClosedSessionTimes } from "@/lib/activity/untimed-period";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
   formatTimeInput,
@@ -57,14 +58,15 @@ export default function ManualTimeEntryDialog({
   const { t } = useTranslation("projects");
   const { t: tCommon } = useTranslation("common");
   const [dateString, setDateString] = useState(() => toDateString(initialDate));
-  const [startTime, setStartTime] = useState("09:00:00");
-  const [endTime, setEndTime] = useState("09:30:00");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const todayString = useMemo(() => getEffectiveToday(), []);
   const resetMinutes = useMemo(() => getDayResetMinutes(), []);
+  const isPastDay = dateString !== todayString;
 
   const resolvedPeriod = useMemo(() => {
     if (!startTime || !endTime) return null;
@@ -103,55 +105,80 @@ export default function ManualTimeEntryDialog({
   if (prevOpen !== open) {
     setPrevOpen(open);
     if (open) {
-      const baseDateString = toDateString(initialDate);
       const now = new Date();
-      const hasTodayDefaults = baseDateString === getEffectiveToday();
-
-      setDateString(baseDateString);
-      setStartTime(
-        hasTodayDefaults
-          ? formatTimeInput(
-              new Date(now.getTime() - 5 * 60 * 1000).toISOString()
-            )
-          : "09:00:00"
-      );
-      setEndTime(
-        hasTodayDefaults ? formatTimeInput(now.toISOString()) : "09:05:00"
-      );
+      setDateString(toDateString(initialDate));
+      setStartTime(formatTimeInput(now.toISOString()));
+      setEndTime("");
       setNote("");
       setSaving(false);
       setError(null);
     }
   }
 
+  const handleEndTimeChange = (value: string) => {
+    if (!value) {
+      setEndTime("");
+      return;
+    }
+    if (startTime && timeToSeconds(value) === timeToSeconds(startTime)) {
+      setEndTime("");
+      return;
+    }
+    setEndTime(value);
+  };
+
   const handleSave = async () => {
     if (!activity) return;
 
-    if (!startTime || !endTime) {
-      setError(t("manualEntry.errorBothTimes"));
+    if (!startTime) {
+      setError(t("manualEntry.errorStartRequired"));
       return;
     }
-
-    if (timeToSeconds(endTime) === timeToSeconds(startTime)) {
-      setError(t("manualEntry.errorSameTime"));
-      return;
-    }
-
-    const { startIso, endIso, startMs, endMs } = resolvePeriodFromLogicalDay(
-      dateString,
-      startTime,
-      endTime,
-      resetMinutes
-    );
 
     const nowMs = Date.now();
-    if (endMs > nowMs) {
-      setError(t("manualEntry.errorEndFuture"));
-      return;
-    }
-    if (startMs > nowMs) {
-      setError(t("manualEntry.errorStartFuture"));
-      return;
+    let startIso: string;
+    let endIso: string;
+
+    if (!endTime || timeToSeconds(endTime) === timeToSeconds(startTime)) {
+      const resolved = resolveClosedSessionTimes({
+        startTime,
+        endTime: endTime || "",
+        logicalDateStr: dateString,
+        resetMinutes,
+        existingStartIso: new Date(nowMs).toISOString(),
+        existingEndIso: new Date(nowMs).toISOString(),
+        createdAt: new Date(nowMs).toISOString(),
+      });
+      if (!resolved.ok) {
+        setError(t("manualEntry.errorStartRequired"));
+        return;
+      }
+      startIso = resolved.startIso;
+      endIso = resolved.endIso;
+      if (new Date(startIso).getTime() > nowMs) {
+        setError(t("manualEntry.errorStartFuture"));
+        return;
+      }
+    } else {
+      const { startIso: nextStartIso, endIso: nextEndIso, startMs, endMs } =
+        resolvePeriodFromLogicalDay(
+          dateString,
+          startTime,
+          endTime,
+          resetMinutes
+        );
+
+      if (endMs > nowMs) {
+        setError(t("manualEntry.errorEndFuture"));
+        return;
+      }
+      if (startMs > nowMs) {
+        setError(t("manualEntry.errorStartFuture"));
+        return;
+      }
+
+      startIso = nextStartIso;
+      endIso = nextEndIso;
     }
 
     try {
@@ -160,7 +187,7 @@ export default function ManualTimeEntryDialog({
 
       await onSave({
         activityId: activity.id,
-        dateString: effectiveDateForMs(startMs),
+        dateString: effectiveDateForMs(new Date(startIso).getTime()),
         startIso,
         endIso,
         note: normalizeSessionNote(note),
@@ -190,6 +217,12 @@ export default function ManualTimeEntryDialog({
       contentClassName="sm:max-w-xl"
     >
       <FormStack>
+        {isPastDay ? (
+          <p className="text-sm text-amber-600 dark:text-amber-400">
+            {t("manualEntry.pastDayWarning")}
+          </p>
+        ) : null}
+
         <FormCalendarDateField
           id="manual-entry-date"
           label={t("manualEntry.date")}
@@ -212,9 +245,10 @@ export default function ManualTimeEntryDialog({
           startTime={startTime}
           endTime={endTime}
           onStartTimeChange={setStartTime}
-          onEndTimeChange={setEndTime}
+          onEndTimeChange={handleEndTimeChange}
           note={note}
           onNoteChange={setNote}
+          untimedEndDisplay={!endTime}
         />
 
         {spanWarning && (

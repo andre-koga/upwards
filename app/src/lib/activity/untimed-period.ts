@@ -105,7 +105,7 @@ export type ClosedSessionTimesResult =
 /**
  * Resolve start/end for a closed session.
  * Both empty → keep the existing completion instant (or created_at).
- * Same start and end → untimed completion at that clock time.
+ * Start only, or same start and end → untimed completion at that clock time.
  * Different times → a timed span.
  */
 export function resolveClosedSessionTimes(params: {
@@ -130,8 +130,18 @@ export function resolveClosedSessionTimes(params: {
     return { ok: true, startIso: completionIso, endIso: completionIso };
   }
 
-  if (startEmpty || endEmpty) {
+  if (startEmpty) {
     return { ok: false, error: "one_time" };
+  }
+
+  if (endEmpty) {
+    const completionMs = timestampForLogicalDayTime(
+      params.logicalDateStr,
+      params.startTime,
+      params.resetMinutes
+    );
+    const completionIso = new Date(completionMs).toISOString();
+    return { ok: true, startIso: completionIso, endIso: completionIso };
   }
 
   if (timeToSeconds(params.endTime) === timeToSeconds(params.startTime)) {

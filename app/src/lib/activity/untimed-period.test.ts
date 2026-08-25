@@ -228,11 +228,11 @@ describe("resolveClosedSessionTimes", () => {
     });
   });
 
-  it("rejects only one time filled", () => {
+  it("rejects only an end time without a start time", () => {
     expect(
       resolveClosedSessionTimes({
-        startTime: "09:00:00",
-        endTime: "",
+        startTime: "",
+        endTime: "09:00:00",
         logicalDateStr: "2026-06-26",
         resetMinutes: RESET_MIDNIGHT,
         existingStartIso: localIso(2026, 6, 26, 8, 0),
@@ -240,6 +240,23 @@ describe("resolveClosedSessionTimes", () => {
         createdAt: localIso(2026, 6, 26, 8, 0),
       })
     ).toEqual({ ok: false, error: "one_time" });
+  });
+
+  it("resolves a start time without an end time as an untimed completion", () => {
+    const result = resolveClosedSessionTimes({
+      startTime: "09:00:00",
+      endTime: "",
+      logicalDateStr: "2026-06-26",
+      resetMinutes: RESET_MIDNIGHT,
+      existingStartIso: localIso(2026, 6, 26, 8, 0),
+      existingEndIso: localIso(2026, 6, 26, 8, 0),
+      createdAt: localIso(2026, 6, 26, 8, 0),
+    });
+    expect(result).toEqual({
+      ok: true,
+      startIso: localIso(2026, 6, 26, 9, 0),
+      endIso: localIso(2026, 6, 26, 9, 0),
+    });
   });
 
   it("resolves equal filled times as an untimed completion", () => {

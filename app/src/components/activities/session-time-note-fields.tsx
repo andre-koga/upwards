@@ -26,7 +26,8 @@ interface SessionTimeNoteFieldsProps {
   endReadOnlyValue?: string;
   disabled?: boolean;
   allowClearTimes?: boolean;
-  timesHelper?: ReactNode;
+  /** When true, an empty end time shows a dash instead of "Not set". */
+  untimedEndDisplay?: boolean;
 }
 
 export function SessionTimeNoteFields({
@@ -46,8 +47,10 @@ export function SessionTimeNoteFields({
   endReadOnlyValue,
   disabled = false,
   allowClearTimes = false,
-  timesHelper,
+  untimedEndDisplay = false,
 }: SessionTimeNoteFieldsProps) {
+  const showUntimedEnd = untimedEndDisplay && !endTime;
+
   return (
     <>
       <FormRow className="items-end gap-3">
@@ -76,13 +79,11 @@ export function SessionTimeNoteFields({
             onValueChange={onEndTimeChange}
             disabled={disabled}
             allowClear={allowClearTimes}
+            emptyDisplay={showUntimedEnd ? "—" : undefined}
             containerClassName="min-w-0 flex-1"
           />
         )}
       </FormRow>
-      {timesHelper ? (
-        <p className="text-xs text-muted-foreground">{timesHelper}</p>
-      ) : null}
       <FormTextareaField
         id={noteId}
         label={noteLabel}
