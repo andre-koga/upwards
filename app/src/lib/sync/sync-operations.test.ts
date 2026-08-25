@@ -50,6 +50,10 @@ vi.mock("@/lib/supabase", () => ({
   getCachedUserId: () => "user-1",
 }));
 
+vi.mock("@/lib/activity/untimed-period", () => ({
+  tombstoneUntimedPeriodsForActivityOnDay: vi.fn(async () => 0),
+}));
+
 vi.mock("@/lib/db", () => ({
   db: {
     syncPendingOperations: {

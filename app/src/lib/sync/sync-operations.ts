@@ -28,6 +28,7 @@ import {
   isProjectionUpsertEntityType,
   withSuppressedProjectionEnqueue,
 } from "./projection-sync";
+import { tombstoneUntimedPeriodsForActivityOnDay } from "@/lib/activity/untimed-period";
 
 export interface SubmitSyncOperationInput {
   operation_id: string;
@@ -468,6 +469,17 @@ export async function applyAcceptedDailyEntryOp(
       task_counts: counts,
       updated_at: ts,
     });
+    const activity = await db.activities.get(activityId);
+    const target =
+      typeof activity?.completion_target === "number"
+        ? activity.completion_target
+        : 1;
+    if ((counts[activityId] ?? 0) < target) {
+      await tombstoneUntimedPeriodsForActivityOnDay({
+        activityId,
+        dateString: date,
+      });
+    }
     return;
   }
 

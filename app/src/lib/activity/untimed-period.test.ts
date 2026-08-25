@@ -157,6 +157,16 @@ describe("untimed period helpers", () => {
     ).toBe("none");
   });
 
+  it("treats a synced incomplete count as a tombstone, not a keep", () => {
+    expect(
+      untimedCompletionAction({
+        previousCount: 1,
+        nextCount: 0,
+        target: 1,
+      })
+    ).toBe("tombstone");
+  });
+
   it("keeps zero-duration completions when filtering periods for a day", () => {
     const instant = new Date(2026, 5, 26, 8, 32, 0, 0).toISOString();
     const untimed = makePeriod({
