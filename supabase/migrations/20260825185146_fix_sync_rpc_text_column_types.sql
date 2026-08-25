@@ -3,20 +3,6 @@
 -- or inserting DATE values caused "operator does not exist: text = date" and
 -- photo_paths jsonb coercion errors.
 
-ALTER TABLE activity_periods
-  ADD COLUMN IF NOT EXISTS note TEXT;
-
-ALTER TABLE activity_periods
-  DROP CONSTRAINT IF EXISTS activity_periods_note_length;
-
-ALTER TABLE activity_periods
-  ADD CONSTRAINT activity_periods_note_length
-  CHECK (note IS NULL OR char_length(note) <= 200);
-
--- Projection row upserts for journal, timers, memos, streaks, status events,
--- and non-definition activity/group fields. Append-only status events always accept.
--- Journal and other row entities conflict when base_revision is stale.
-
 CREATE OR REPLACE FUNCTION submit_sync_operations(ops JSONB)
 RETURNS JSONB
 LANGUAGE plpgsql
