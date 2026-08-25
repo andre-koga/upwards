@@ -10,6 +10,10 @@ import { EPOCH, SYNC_TABLES, TABLE_MAP } from "./sync-constants";
 import { OP_OWNED_DAILY_ENTRY_FIELDS } from "./op-owned-fields";
 import { OPS_MANAGED_SYNC_TABLES } from "./projection-sync";
 import { listOpenConflictEntityIds } from "./sync-issues-store";
+import {
+  maybeRecordDailyEntryCountReconciliation,
+  snapshotDailyEntryCounts,
+} from "./daily-entry-reconciliation";
 
 export interface PullContext {
   supabase: SupabaseClient;
@@ -156,9 +160,28 @@ export async function runPull(ctx: PullContext): Promise<string> {
             );
           }
 
-          // Prefer server op-owned daily fields; keep local only if somehow missing.
           if (opsSyncActive && table === "daily_entries") {
             const local = localById.get(id);
+            const beforeCounts = snapshotDailyEntryCounts(
+              local as { task_counts?: Record<string, number> } | undefined
+            );
+            const afterCounts = snapshotDailyEntryCounts({
+              task_counts: normalized.task_counts as
+                | Record<string, number>
+                | undefined,
+            });
+            if (local && Object.keys(beforeCounts).length > 0) {
+              void maybeRecordDailyEntryCountReconciliation({
+                entryId: id,
+                date: String(
+                  (normalized as { date?: string }).date ??
+                    (local as { date?: string }).date ??
+                    ""
+                ),
+                beforeCounts,
+                afterCounts,
+              });
+            }
             if (local) {
               for (const key of OP_OWNED_DAILY_ENTRY_FIELDS) {
                 if (normalized[key] == null && local[key] != null) {

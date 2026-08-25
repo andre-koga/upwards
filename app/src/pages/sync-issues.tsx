@@ -36,25 +36,29 @@ interface SyncIssuesData {
   pendingOps: SyncPendingOperation[];
   errors: SyncIssue[];
   resolved: SyncIssue[];
-  localDevice: SyncDeviceRecord | null;
+  info: SyncIssue[];
+  devices: SyncDeviceRecord[];
+  localDeviceId: string;
 }
 
 async function loadSyncIssuesData(): Promise<SyncIssuesData> {
-  const deviceId = getOrCreateDeviceId();
+  const localDeviceId = getOrCreateDeviceId();
   const [
     openConflicts,
     deferredConflicts,
     pendingOps,
     errors,
     resolved,
-    localDevice,
+    info,
+    devices,
   ] = await Promise.all([
     listSyncIssues({ kind: "conflict", status: "open" }),
     listSyncIssues({ kind: "conflict", status: "deferred" }),
     listPendingOperations({ status: "pending" }),
     listSyncIssues({ kind: "error", status: "open" }),
     listSyncIssues({ status: "resolved", limit: 20 }),
-    db.syncDevices.get(deviceId).then((device) => device ?? null),
+    listSyncIssues({ kind: "info", status: "open" }),
+    db.syncDevices.toArray(),
   ]);
 
   const conflicts = [...openConflicts, ...deferredConflicts].sort(
@@ -62,7 +66,20 @@ async function loadSyncIssuesData(): Promise<SyncIssuesData> {
       new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
   );
 
-  return { conflicts, pendingOps, errors, resolved, localDevice };
+  const sortedDevices = devices.sort(
+    (a, b) =>
+      new Date(b.last_seen_at).getTime() - new Date(a.last_seen_at).getTime()
+  );
+
+  return {
+    conflicts,
+    pendingOps,
+    errors,
+    resolved,
+    info,
+    devices: sortedDevices,
+    localDeviceId,
+  };
 }
 
 function formatWhen(iso: string): string {
@@ -157,7 +174,9 @@ export default function SyncIssuesPage() {
   const pendingOps = data?.pendingOps ?? [];
   const errors = data?.errors ?? [];
   const resolved = data?.resolved ?? [];
-  const localDevice = data?.localDevice;
+  const info = data?.info ?? [];
+  const devices = data?.devices ?? [];
+  const localDeviceId = data?.localDeviceId ?? getOrCreateDeviceId();
 
   return (
     <AppPageShell
@@ -320,38 +339,80 @@ export default function SyncIssuesPage() {
         )}
       </SettingsSection>
 
+      {info.length > 0 ? (
+        <SettingsSection
+          title={t("syncIssues.sections.info.title")}
+          icon={AlertTriangle}
+          description={t("syncIssues.sections.info.description")}
+        >
+          <div className="space-y-2">
+            {info.map((issue) => (
+              <IssueCard
+                key={issue.id}
+                title={issue.title}
+                detail={issue.detail}
+                when={formatWhen(issue.updated_at)}
+                actions={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleResolveIssue(issue.id)}
+                  >
+                    {t("syncIssues.actions.dismiss")}
+                  </Button>
+                }
+              />
+            ))}
+          </div>
+        </SettingsSection>
+      ) : null}
+
       <SettingsSection
         title={t("syncIssues.sections.device.title")}
         icon={Smartphone}
         description={t("syncIssues.sections.device.description")}
       >
-        {localDevice ? (
-          <dl className="space-y-2 text-sm">
-            <div>
-              <dt className="text-muted-foreground">
-                {t("syncIssues.sections.device.idLabel")}
-              </dt>
-              <dd className="font-mono text-xs">{localDevice.id}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">
-                {t("syncIssues.sections.device.lastSeenLabel")}
-              </dt>
-              <dd>{formatWhen(localDevice.last_seen_at)}</dd>
-            </div>
-            {localDevice.account_id ? (
-              <div>
-                <dt className="text-muted-foreground">
-                  {t("syncIssues.sections.device.accountLabel")}
-                </dt>
-                <dd className="font-mono text-xs">{localDevice.account_id}</dd>
-              </div>
-            ) : null}
-          </dl>
-        ) : (
+        {devices.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("syncIssues.sections.device.empty")}
           </p>
+        ) : (
+          <div className="space-y-3">
+            {devices.map((device) => (
+              <div
+                key={device.id}
+                className="rounded-lg border border-border bg-background p-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">
+                    {device.label?.trim() ||
+                      (device.id === localDeviceId
+                        ? t("syncIssues.sections.device.thisDevice")
+                        : t("syncIssues.sections.device.otherDevice"))}
+                  </p>
+                  {device.id === localDeviceId ? (
+                    <span className="text-xs text-muted-foreground">
+                      {t("syncIssues.sections.device.currentBadge")}
+                    </span>
+                  ) : null}
+                </div>
+                <dl className="mt-2 space-y-1 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">
+                      {t("syncIssues.sections.device.idLabel")}
+                    </dt>
+                    <dd className="font-mono text-xs">{device.id}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">
+                      {t("syncIssues.sections.device.lastSeenLabel")}
+                    </dt>
+                    <dd>{formatWhen(device.last_seen_at)}</dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
+          </div>
         )}
       </SettingsSection>
 

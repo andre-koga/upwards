@@ -212,16 +212,22 @@ export function stripUnknownColumns(
   return result;
 }
 
+export interface ForeignKeySanitizeResult {
+  rows: Array<Record<string, unknown>>;
+  rejected: Array<{ id: string; reason: string }>;
+}
+
 export async function sanitizeForeignKeyRefsBeforeUpsert(
   supabaseClient: SupabaseClient | null,
   table: SyncTable,
   rows: Array<Record<string, unknown>>,
   userId: string
-): Promise<Array<Record<string, unknown>>> {
-  if (rows.length === 0) return rows;
-  if (!supabaseClient) return rows;
+): Promise<ForeignKeySanitizeResult> {
+  if (rows.length === 0) return { rows, rejected: [] };
+  if (!supabaseClient) return { rows, rejected: [] };
 
   let result = rows;
+  const rejected: Array<{ id: string; reason: string }> = [];
 
   if (table === "activity_periods" || table === "activity_streaks") {
     // Soft-deleted activities still exist locally/remotely; streaks and periods
@@ -235,20 +241,27 @@ export async function sanitizeForeignKeyRefsBeforeUpsert(
     );
 
     let missingActivityRefCount = 0;
-    result = result.map((row) => {
+    const kept: Array<Record<string, unknown>> = [];
+    for (const row of result) {
       if (!row.activity_id || !isValidUuid(row.activity_id)) {
-        return row;
+        kept.push(row);
+        continue;
       }
       if (validActivityIds.has(row.activity_id)) {
-        return row;
+        kept.push(row);
+        continue;
       }
       missingActivityRefCount += 1;
-      return { ...row, activity_id: null };
-    });
+      rejected.push({
+        id: String(row.id),
+        reason: `Missing local activity ${row.activity_id}`,
+      });
+    }
+    result = kept;
 
     if (missingActivityRefCount > 0) {
       console.warn(
-        `[sync] nulled ${missingActivityRefCount} missing activity_id reference(s) on ${table}`
+        `[sync] rejected ${missingActivityRefCount} ${table} row(s) with missing local activity references`
       );
     }
 
@@ -276,20 +289,27 @@ export async function sanitizeForeignKeyRefsBeforeUpsert(
           );
 
           let missingRemoteActivityRefCount = 0;
-          result = result.map((row) => {
+          const remoteKept: Array<Record<string, unknown>> = [];
+          for (const row of result) {
             if (!row.activity_id || !isValidUuid(row.activity_id)) {
-              return row;
+              remoteKept.push(row);
+              continue;
             }
             if (remoteActivityIds.has(row.activity_id)) {
-              return row;
+              remoteKept.push(row);
+              continue;
             }
             missingRemoteActivityRefCount += 1;
-            return { ...row, activity_id: null };
-          });
+            rejected.push({
+              id: String(row.id),
+              reason: `Missing remote activity ${row.activity_id}`,
+            });
+          }
+          result = remoteKept;
 
           if (missingRemoteActivityRefCount > 0) {
             console.warn(
-              `[sync] nulled ${missingRemoteActivityRefCount} non-existent remote activity_id reference(s) on ${table}`
+              `[sync] rejected ${missingRemoteActivityRefCount} ${table} row(s) with missing remote activity references`
             );
           }
         }
@@ -308,20 +328,27 @@ export async function sanitizeForeignKeyRefsBeforeUpsert(
     );
 
     let missingDailyEntryRefCount = 0;
-    result = result.map((row) => {
+    const keptDaily: Array<Record<string, unknown>> = [];
+    for (const row of result) {
       if (!row.daily_entry_id || !isValidUuid(row.daily_entry_id)) {
-        return row;
+        keptDaily.push(row);
+        continue;
       }
       if (validDailyEntryIds.has(row.daily_entry_id)) {
-        return row;
+        keptDaily.push(row);
+        continue;
       }
       missingDailyEntryRefCount += 1;
-      return { ...row, daily_entry_id: null };
-    });
+      rejected.push({
+        id: String(row.id),
+        reason: `Missing local daily entry ${row.daily_entry_id}`,
+      });
+    }
+    result = keptDaily;
 
     if (missingDailyEntryRefCount > 0) {
       console.warn(
-        `[sync] nulled ${missingDailyEntryRefCount} missing daily_entry_id reference(s) on ${table}`
+        `[sync] rejected ${missingDailyEntryRefCount} activity_period row(s) with missing local daily_entry references`
       );
     }
 
@@ -347,27 +374,34 @@ export async function sanitizeForeignKeyRefsBeforeUpsert(
         );
 
         let missingRemoteDailyEntryRefCount = 0;
-        result = result.map((row) => {
+        const remoteDailyKept: Array<Record<string, unknown>> = [];
+        for (const row of result) {
           if (!row.daily_entry_id || !isValidUuid(row.daily_entry_id)) {
-            return row;
+            remoteDailyKept.push(row);
+            continue;
           }
           if (remoteDailyEntryIds.has(row.daily_entry_id)) {
-            return row;
+            remoteDailyKept.push(row);
+            continue;
           }
           missingRemoteDailyEntryRefCount += 1;
-          return { ...row, daily_entry_id: null };
-        });
+          rejected.push({
+            id: String(row.id),
+            reason: `Missing remote daily entry ${row.daily_entry_id}`,
+          });
+        }
+        result = remoteDailyKept;
 
         if (missingRemoteDailyEntryRefCount > 0) {
           console.warn(
-            `[sync] nulled ${missingRemoteDailyEntryRefCount} non-existent remote daily_entry_id reference(s) on ${table}`
+            `[sync] rejected ${missingRemoteDailyEntryRefCount} activity_period row(s) with missing remote daily_entry references`
           );
         }
       }
     }
   }
 
-  return result;
+  return { rows: result, rejected };
 }
 
 export async function normalizeActivityStreakIdsBeforeUpsert(

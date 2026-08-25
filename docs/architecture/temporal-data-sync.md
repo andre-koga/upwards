@@ -65,6 +65,28 @@ state, and facts remain on the days they were recorded.
 8. **Preserve offline-first behavior.**
    Local changes apply immediately and synchronize later.
 
+### Multi-device merge safety (2026-08-25)
+
+These rules govern cross-device sync and must not be weakened without updating
+this document:
+
+1. **Additive unions; same-row edits need review.** New sessions, memos, status
+   events, and count deltas merge by stable IDs. Concurrent edits to the same
+   row never silently last-write-wins.
+2. **Push before pull.** Realtime wakes, focus, and timer sync all push pending
+   local work before applying remote changes.
+3. **No local wipe without confirmed server ack.** Sign-out, account switch, and
+   guest `use_cloud` must not delete unpushed work without an explicit discard.
+4. **Conflicts stay open until resolved.** Dismissing an issue must apply an
+   explicit user choice or re-enqueue local state — never just hide the problem.
+5. **Tombstones are intentional deletes only.** `deleted_at` syncs when the user
+   explicitly archived or deleted; missing remote fields are not treated as
+   deletion.
+
+Live updates use Supabase Realtime on `sync_operations` INSERT events, filtered
+by account, ignoring the local `device_id`. A debounced full `sync()` pipeline
+reuses push-before-pull, dirty-id protection, and conflict recording.
+
 Do not reintroduce effective-dated definition versions, an "apply from"
 editor control, or operation-order tracking for schedule/rule edits unless
 this document is updated again with a new product tradeoff.

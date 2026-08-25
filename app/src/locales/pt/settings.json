@@ -55,6 +55,15 @@
     "resetEmailFailed": "Não foi possível enviar o e-mail de redefinição",
     "updatePasswordFailed": "Não foi possível atualizar a senha",
     "syncNotConfigured": "A sincronização não está configurada nesta versão.",
+    "signOutBlocked": {
+      "title": "Alterações não sincronizadas",
+      "description": "Você tem {{total}} alteração(ões) que ainda não chegaram à nuvem ({{pending}} operações pendentes, {{unsynced}} linhas não sincronizadas). Tente sincronizar novamente ou descarte as alterações locais antes de sair.",
+      "retrySync": "Tentar sincronizar",
+      "discard": "Descartar alterações locais",
+      "discardConfirm": "Sair e descartar",
+      "staySignedIn": "Permanecer conectado",
+      "inline": "Sincronize suas alterações locais antes de entrar com outra conta."
+    },
     "forgotPasswordPage": {
       "title": "Redefinir senha",
       "description": "Digite o e-mail da sua conta de sincronização. Vamos enviar um link para você escolher uma nova senha.",
@@ -114,12 +123,19 @@
         "empty": "Nenhum problema resolvido recentemente."
       },
       "device": {
-        "title": "Este dispositivo",
-        "description": "Identidade e última sincronização bem-sucedida desta instalação.",
+        "title": "Dispositivos",
+        "description": "Instalações conectadas à sua conta de sincronização.",
         "idLabel": "ID do dispositivo",
         "lastSeenLabel": "Última sincronização bem-sucedida",
         "accountLabel": "Conta de sincronização",
-        "empty": "Este dispositivo ainda não completou uma sincronização."
+        "empty": "Nenhum dispositivo sincronizou ainda.",
+        "thisDevice": "Este dispositivo",
+        "otherDevice": "Outro dispositivo",
+        "currentBadge": "Atual"
+      },
+      "info": {
+        "title": "Avisos",
+        "description": "Avisos de sincronização que não bloqueiam, mas podem precisar de atenção."
       }
     },
     "actions": {
@@ -189,6 +205,49 @@
           "journal_completed_at": "Concluído em",
           "location": "Lugares",
           "deleted_at": "Excluído"
+        }
+      },
+      "projection": {
+        "summary": "Duas versões deste(a) {{entity}} precisam de uma decisão.",
+        "consequence": "Sua escolha atualiza este item e sincroniza com seus outros dispositivos.",
+        "entity": {
+          "activity_period": "sessão da linha do tempo",
+          "one_time_task": "memo",
+          "recurring_memo": "memo recorrente",
+          "activity": "atividade",
+          "activity_group": "grupo",
+          "activity_streak": "sequência"
+        },
+        "fields": {
+          "activity_id": "Atividade",
+          "daily_entry_id": "Dia",
+          "start_time": "Hora de início",
+          "end_time": "Hora de término",
+          "note": "Nota",
+          "title": "Título",
+          "date": "Data",
+          "due_date": "Vencimento",
+          "is_completed": "Concluído",
+          "is_pinned": "Fixado",
+          "is_archived": "Arquivado",
+          "order_index": "Ordem",
+          "routine": "Agenda",
+          "is_enabled": "Ativo",
+          "name": "Nome",
+          "completion_target": "Meta",
+          "group_id": "Grupo",
+          "color": "Cor",
+          "streak": "Sequência",
+          "deleted_at": "Excluído"
+        }
+      },
+      "dailyCounts": {
+        "summary": "As contagens de hábitos de {{date}} diferem entre este dispositivo e a nuvem.",
+        "consequence": "Sua escolha atualiza as contagens de hoje neste dispositivo e as sincroniza.",
+        "useSuggested": "Usar mesclagem sugerida",
+        "columns": {
+          "habit": "Hábito",
+          "suggested": "Sugerido"
         }
       }
     }

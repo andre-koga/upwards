@@ -21,6 +21,7 @@ import {
   type DefinitionConflictEntityType,
 } from "./conflict-resolution";
 import { buildJournalConflictPayload } from "./journal-conflict-resolution";
+import { buildProjectionConflictPayload } from "./projection-conflict-resolution";
 import { saveOpsRpcAvailable, loadOpsRpcAvailable } from "./sync-storage";
 import {
   applyAcceptedProjectionOp,
@@ -326,6 +327,22 @@ async function ensureConflictIssueForRemoteOp(
     } catch (err) {
       console.warn("[sync] failed to enrich journal conflict payload", err);
     }
+  } else if (entityId && isProjectionUpsertEntityType(op.entity_type)) {
+    title = "Item conflict";
+    detail =
+      "This item was edited on another device. Choose which version to keep.";
+    try {
+      const opRow = asRecord(op.payload).row;
+      payload = await buildProjectionConflictPayload({
+        entity_type: op.entity_type,
+        entity_id: entityId,
+        remoteRow: opRow,
+        remoteDeviceId: op.device_id,
+        baseRevision: op.base_revision,
+      });
+    } catch (err) {
+      console.warn("[sync] failed to enrich remote projection conflict", err);
+    }
   }
 
   await recordSyncIssue({
@@ -587,6 +604,28 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
           });
         } catch (err) {
           console.warn("[sync] failed to enrich journal conflict payload", err);
+        }
+      } else if (
+        local.entity_id &&
+        isProjectionUpsertEntityType(local.entity_type)
+      ) {
+        title = "Item conflict";
+        detail =
+          "This item was edited on another device. Choose which version to keep.";
+        try {
+          const opRow = asRecord(local.payload).row;
+          conflictPayload = await buildProjectionConflictPayload({
+            entity_type: local.entity_type,
+            entity_id: local.entity_id,
+            localRow: opRow,
+            localDeviceId: local.device_id,
+            baseRevision: local.base_revision,
+          });
+        } catch (err) {
+          console.warn(
+            "[sync] failed to enrich projection conflict payload",
+            err
+          );
         }
       }
 

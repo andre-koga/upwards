@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SettingsSection } from "@/components/ui/settings-section";
-import { useAuth } from "@/lib/use-auth";
+import { SignOutConfirmDialog } from "@/components/settings/sign-out-confirm-dialog";
+import { isSignOutBlockedError, useAuth } from "@/lib/use-auth";
+import { syncEngine } from "@/lib/sync";
 
 const emailId = "settings-sync-email";
 const passwordId = "settings-sync-password";
@@ -27,6 +29,10 @@ export function AuthCard() {
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [signOutBlockedOpen, setSignOutBlockedOpen] = useState(false);
+  const [signOutBlockedPending, setSignOutBlockedPending] = useState(0);
+  const [signOutBlockedUnsynced, setSignOutBlockedUnsynced] = useState(0);
+  const [signOutBusy, setSignOutBusy] = useState(false);
 
   useEffect(() => {
     if (isAuthed) {
@@ -56,6 +62,53 @@ export function AuthCard() {
     }
   };
 
+  const handleSignOut = async () => {
+    setSignOutBusy(true);
+    try {
+      await signOut();
+    } catch (error) {
+      if (isSignOutBlockedError(error)) {
+        setSignOutBlockedPending(error.result.pendingCount);
+        setSignOutBlockedUnsynced(error.result.unsyncedRowCount);
+        setSignOutBlockedOpen(true);
+        return;
+      }
+      console.error("Sign out failed", error);
+    } finally {
+      setSignOutBusy(false);
+    }
+  };
+
+  const handleRetrySyncBeforeSignOut = async () => {
+    setSignOutBusy(true);
+    try {
+      await syncEngine.sync();
+      await signOut();
+      setSignOutBlockedOpen(false);
+    } catch (error) {
+      if (isSignOutBlockedError(error)) {
+        setSignOutBlockedPending(error.result.pendingCount);
+        setSignOutBlockedUnsynced(error.result.unsyncedRowCount);
+        return;
+      }
+      console.error("Sign out after retry failed", error);
+    } finally {
+      setSignOutBusy(false);
+    }
+  };
+
+  const handleDiscardAndSignOut = async () => {
+    setSignOutBusy(true);
+    try {
+      await signOut({ forceDiscard: true });
+      setSignOutBlockedOpen(false);
+    } catch (error) {
+      console.error("Discard and sign out failed", error);
+    } finally {
+      setSignOutBusy(false);
+    }
+  };
+
   return (
     <SettingsSection title={t("auth.title")}>
       {isAuthed ? (
@@ -69,11 +122,21 @@ export function AuthCard() {
           <Button
             variant="outline"
             className="flex w-full items-center gap-2"
-            onClick={signOut}
+            disabled={signOutBusy}
+            onClick={() => void handleSignOut()}
           >
             <LogOut className="h-4 w-4" />
             {t("auth.signOut")}
           </Button>
+          <SignOutConfirmDialog
+            open={signOutBlockedOpen}
+            pendingOpCount={signOutBlockedPending}
+            unsyncedRowCount={signOutBlockedUnsynced}
+            busy={signOutBusy}
+            onOpenChange={setSignOutBlockedOpen}
+            onRetrySync={() => void handleRetrySyncBeforeSignOut()}
+            onDiscardAndSignOut={() => void handleDiscardAndSignOut()}
+          />
         </>
       ) : (
         <>
