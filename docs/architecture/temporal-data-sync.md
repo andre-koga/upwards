@@ -234,6 +234,33 @@ and op-owned definition fields. That path is retired for product behavior:
 Leftover local version tables and server definition-op handlers may remain
 until a dedicated cleanup. They must not drive new UI or scoring.
 
+## CI, tests, and production schema
+
+Vercel builds the app with `pnpm run build` (`tsc -b && vite build`). It does
+**not** run tests and it does **not** apply Postgres migrations.
+
+GitHub Actions owns those two jobs:
+
+1. **PR and `main` CI** (`.github/workflows/ci.yml`)
+   - App Vitest (`pnpm test` / `pnpm --dir app test`). These tests mock Dexie
+     and Supabase. They are the fast regression net, not a two-device proof.
+   - `tsc -b` in `app/`, the same typecheck Vercel uses.
+   - Integration tests against **local** `supabase start` + `db reset`
+     (`pnpm test:integration`). They call `submit_sync_operations` and
+     `pull_sync_operations` with a real user JWT (not `service_role`), cover
+     two-device count increments, journal conflicts, lost-response retries,
+     count-down + period tombstones, and a Realtime INSERT on
+     `sync_operations`.
+2. **Merge to `main`** (`.github/workflows/supabase-migrate.yml`)
+   - `supabase db push --project-ref` using repository secrets
+     `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`.
+   - Same-repo PRs that can see those secrets also dry-run `db push`.
+   - Never `db reset` production. Review migration SQL in the PR; CI applies
+     whatever lands on `main`.
+
+Local integration loop: `pnpm supabase start && pnpm test:integration`.
+Details and secret setup live in [`supabase/README.md`](../../supabase/README.md).
+
 ## Required verification
 
 Changes in this area must test at least:
@@ -242,10 +269,17 @@ Changes in this area must test at least:
 - Archiving a habit hides it from For Today and lists it under Archived.
 - Unarchive restores it; delete from the archived actions confirms permanently.
 - Groups keep the same archive / unarchive / delete drawer pattern.
-- Two devices increment the same activity without dropping either increment.
-- Concurrent journal text edits remain reviewable.
-- A request succeeds but its response is lost and then retried.
-- Sign-out/account switching occurs with pending operations.
+- Two devices increment the same activity without dropping either increment
+  (RPC integration test).
+- Concurrent journal text edits remain reviewable (RPC integration test;
+  conflicts stay on Sync issues in the app).
+- A request succeeds but its response is lost and then retried (RPC
+  integration test: same `operation_id` returns `duplicate`, count stays 1).
+- Count-down plus an untimed period tombstone are both in the other device's
+  pull stream (RPC integration test).
+- A `sync_operations` INSERT wakes Realtime (integration test).
+- Sign-out/account switching occurs with pending operations (client unit
+  tests; Dexie is mocked).
 
 ## Rules for AI agents and contributors
 

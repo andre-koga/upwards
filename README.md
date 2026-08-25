@@ -78,3 +78,17 @@ must follow the
 [UI system and responsive layout architecture](docs/architecture/ui-system-and-responsive-layout.md).
 It defines the shadcn/Radix alignment strategy and the adaptive mobile/desktop
 experience.
+
+## Testing and schema deploy
+
+| Path | What it does |
+|------|----------------|
+| Vercel | `pnpm run build` in `app/` (`tsc -b && vite build`). No tests. No SQL. |
+| GitHub Actions CI | App Vitest + `tsc -b`, then local Supabase integration tests. |
+| Merge to `main` | `supabase db push` to the hosted project (see [supabase/README.md](supabase/README.md)). |
+
+```bash
+pnpm test                 # app unit tests
+pnpm typecheck            # app tsc -b
+pnpm supabase start && pnpm test:integration
+```

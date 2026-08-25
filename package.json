@@ -3,6 +3,9 @@
   "private": true,
   "scripts": {
     "strip-scaffolding": "node scripts/strip-context-and-srp.mjs",
+    "test": "pnpm --dir app test",
+    "typecheck": "pnpm --dir app exec tsc -b --pretty false",
+    "test:integration": "vitest run --config supabase/tests/integration/vitest.config.ts",
     "supabase": "supabase",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
@@ -12,7 +15,9 @@
     "supabase:status": "supabase status"
   },
   "devDependencies": {
-    "supabase": "^2.114.0"
+    "@supabase/supabase-js": "^2.112.4",
+    "supabase": "^2.114.0",
+    "vitest": "^3.2.7"
   },
   "packageManager": "pnpm@11.21.0+sha512.521705bce689924eac72f5a3587122f362689ef6571e55ba80076fd637c11132ecffada26fad4ea79c485bfddbfd3d5a2a5b05805a77e893de71ec8a6cca3bb1"
 }
