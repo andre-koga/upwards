@@ -352,7 +352,9 @@ GitHub Actions owns those two jobs:
    - `supabase db push --project-ref --include-all` using repository secrets
      `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`. `--include-all` is
      required when a historical local migration is missing from remote
-     history; without it later migrations never apply.
+     history; without it later migrations never apply. The job retries
+     transient CLI login-role timeouts. Optional `SUPABASE_DB_PASSWORD`
+     avoids the temporary `cli_login_postgres` role.
    - Same-repo PRs that can see those secrets also dry-run `db push --include-all`.
    - Never `db reset` production. Review migration SQL in the PR; CI applies
      whatever lands on `main`.
