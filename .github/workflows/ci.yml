@@ -116,7 +116,7 @@ jobs:
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ]; then
             exit 0
           fi
-          if ! pnpm exec supabase db push --project-ref "$SUPABASE_PROJECT_REF" --dry-run --yes; then
+          if ! pnpm exec supabase db push --project-ref "$SUPABASE_PROJECT_REF" --dry-run --yes --include-all; then
             echo "::warning::Migration dry-run failed. Check token privileges or run db push manually after merge."
             exit 0
           fi

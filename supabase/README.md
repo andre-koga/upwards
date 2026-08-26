@@ -105,7 +105,10 @@ pnpm supabase db reset   # Apply locally
 
 **Production schema applies on merge to `main`.** The workflow
 [`.github/workflows/supabase-migrate.yml`](../.github/workflows/supabase-migrate.yml)
-runs `supabase db push --project-ref`. Vercel never touches Postgres.
+runs `supabase db push --project-ref --include-all`. `--include-all` is
+required when a historical local migration was never recorded on the remote
+(out-of-order history); without it later migrations never apply. Vercel never
+touches Postgres.
 
 Add these GitHub Actions secrets (Settings → Secrets and variables → Actions):
 

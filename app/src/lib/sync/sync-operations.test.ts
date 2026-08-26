@@ -377,6 +377,76 @@ describe("pushPendingOperations", () => {
       "definition_conflict"
     );
   });
+
+  it("collapses duplicate projection upserts before submit", async () => {
+    pendingOps.push(
+      makePending({
+        operation_id: "op-old",
+        id: "row-old",
+        entity_type: "activity",
+        entity_id: "act-1",
+        operation_type: "projection.upsert",
+        created_at: "2026-08-01T10:00:00.000Z",
+      }),
+      makePending({
+        operation_id: "op-new",
+        id: "row-new",
+        entity_type: "activity",
+        entity_id: "act-1",
+        operation_type: "projection.upsert",
+        created_at: "2026-08-01T11:00:00.000Z",
+      })
+    );
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-new",
+          status: "accepted",
+          server_sequence: 1,
+        },
+      ],
+      error: null,
+    });
+
+    const result = await pushPendingOperations();
+    expect(result).toEqual({ failed: false, maxSequence: 1 });
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(rpcMock.mock.calls[0][1]).toMatchObject({
+      ops: [{ operation_id: "op-new" }],
+    });
+    expect(pendingOps.find((row) => row.id === "row-old")?.status).toBe(
+      "discarded"
+    );
+    expect(pendingOps.find((row) => row.id === "row-new")?.status).toBe("acked");
+  });
+
+  it("submits pending ops in bounded batches", async () => {
+    for (let i = 0; i < 51; i += 1) {
+      pendingOps.push(
+        makePending({
+          operation_id: `op-${i}`,
+          id: `row-${i}`,
+          created_at: `2026-08-01T10:00:${String(i).padStart(2, "0")}.000Z`,
+        })
+      );
+    }
+    let sequence = 0;
+    rpcMock.mockImplementation(async (_fn: string, args: { ops: Array<{ operation_id: string }> }) => ({
+      data: args.ops.map((op) => ({
+        operation_id: op.operation_id,
+        status: "accepted",
+        server_sequence: ++sequence,
+      })),
+      error: null,
+    }));
+
+    const result = await pushPendingOperations();
+    expect(result).toEqual({ failed: false, maxSequence: 51 });
+    expect(rpcMock).toHaveBeenCalledTimes(2);
+    expect(rpcMock.mock.calls[0][1].ops).toHaveLength(50);
+    expect(rpcMock.mock.calls[1][1].ops).toHaveLength(1);
+    expect(pendingOps.every((row) => row.status === "acked")).toBe(true);
+  });
 });
 
 describe("pullAndApplyOperations", () => {

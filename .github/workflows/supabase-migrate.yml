@@ -52,4 +52,7 @@ jobs:
             echo "Vercel does not apply Postgres migrations."
             exit 1
           fi
-          pnpm exec supabase db push --project-ref "$SUPABASE_PROJECT_REF" --yes
+          # --include-all is required when a historical local migration was never
+          # recorded on this remote (out-of-order history). Without it, later
+          # migrations such as ops-only snapshot never apply.
+          pnpm exec supabase db push --project-ref "$SUPABASE_PROJECT_REF" --yes --include-all
