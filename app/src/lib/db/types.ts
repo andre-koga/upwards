@@ -39,6 +39,8 @@ export interface DailyEntry {
   paused_task_ids: string[] | null;
   is_break_day: boolean | null;
   current_activity_id: string | null;
+  /** Notes on derived untimed completions, keyed by activity id. Not a period row. */
+  completion_notes: Record<string, string> | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;

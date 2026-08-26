@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import {
   supabase,
   getCachedUserId,
@@ -15,35 +14,35 @@ import {
   clearLastServerSyncAt,
   loadLastAppliedSequence,
   advanceLastAppliedSequence,
+  loadSyncProtocolV2,
+  saveSyncProtocolV2,
+  saveLastServerSyncAt,
+  clearSyncProtocolV2,
 } from "./sync-storage";
-import type { SyncTable } from "./sync-transformers";
 import {
   DEBOUNCE_SYNC_MS,
   REMOTE_DEBOUNCE_SYNC_MS,
   DEFAULT_PERIODIC_SYNC_MS,
   MAX_CHAINED_SYNCS,
-  SYNC_TABLES,
-  TABLE_MAP,
 } from "./sync-constants";
-import { runPushInternal } from "./sync-push";
-import { runPull } from "./sync-pull";
 import {
   pushPendingOperations,
   pullAndApplyOperations,
 } from "./sync-operations";
 import { recordSyncIssue, resolveOpenSyncErrors } from "./sync-issues-store";
 import { touchLocalDevice } from "./device-id";
-import {
-  enqueueProjectionUpsertForTable,
-  OPS_MANAGED_SYNC_TABLES,
-} from "./projection-sync";
-import { reportOpsUnavailablePending, countPendingOperations } from "./pending-operations";
+import { countPendingOperations } from "./pending-operations";
 import {
   subscribeToRemoteSyncOperations,
   unsubscribeFromRemoteSyncOperations,
 } from "./realtime-sync";
 import { syncDeviceRegistry } from "./remote-device-sync";
-import { countUnsyncedRows } from "./unsynced-data";
+import { registerSyncScheduler, clearSyncScheduler } from "./sync-scheduler";
+import {
+  enqueueUnsyncedCurrentStateRows,
+  repairNaturalIdentity,
+} from "./identity-repair";
+import { pullAndApplySnapshot } from "./snapshot-sync";
 
 export interface PushBeforeSignOutResult {
   success: boolean;
@@ -78,21 +77,9 @@ class SyncEngine {
   private realtimeUnsubscribe: (() => void) | null = null;
   private periodicIntervalMs = DEFAULT_PERIODIC_SYNC_MS;
   private isAutoSyncEnabled = false;
-  private hasMutationHooks = false;
-  private suppressMutationSignals = 0;
-  /** True only while applying remote rows from pull (bulkPut). */
-  private applyRemoteFromPull = false;
-  /** True while writing synced_at after a successful push (not user data). */
-  private applyLocalSyncMetadata = false;
-  /** Row ids touched by the user (or app) while a sync was in progress; pull skips these. */
-  private dirtyIdsByTable = new Map<SyncTable, Set<string>>();
-  /** Another sync was requested while one was already running. */
   private pendingResync = false;
-  /** Counts follow-up syncs scheduled from `sync()`'s finally (dirty / pending); resets when a run finishes with nothing left to do. */
   private followUpSyncChain = 0;
-  /** Timestamp of the last time a triggered sync actually ran (ms). Used to throttle focus/online triggers. */
   private lastTriggeredSyncMs = 0;
-  /** Minimum ms between focus/online-triggered syncs to avoid redundant pulls on rapid tab switches. */
   private static readonly FOCUS_SYNC_THROTTLE_MS = 60_000;
 
   getState(): SyncState {
@@ -119,50 +106,6 @@ class SyncEngine {
     this.listeners.forEach((l) => l(this.state));
   }
 
-  private withSuppressedMutationSignals<T>(
-    operation: () => Promise<T>
-  ): Promise<T> {
-    this.suppressMutationSignals += 1;
-    return operation().finally(() => {
-      this.suppressMutationSignals -= 1;
-    });
-  }
-
-  private withLocalSyncMetadataWrites<T>(
-    operation: () => Promise<T>
-  ): Promise<T> {
-    this.applyLocalSyncMetadata = true;
-    return this.withSuppressedMutationSignals(operation).finally(() => {
-      this.applyLocalSyncMetadata = false;
-    });
-  }
-
-  private markDirtyIfUserMutationDuringSync(
-    table: SyncTable,
-    rowId: string | undefined
-  ): void {
-    if (!rowId) return;
-    if (!this.state.isSyncing) return;
-    if (this.applyRemoteFromPull || this.applyLocalSyncMetadata) return;
-    let set = this.dirtyIdsByTable.get(table);
-    if (!set) {
-      set = new Set<string>();
-      this.dirtyIdsByTable.set(table, set);
-    }
-    set.add(rowId);
-  }
-
-  private hasDirtyIds(): boolean {
-    for (const set of this.dirtyIdsByTable.values()) {
-      if (set.size > 0) return true;
-    }
-    return false;
-  }
-
-  private clearDirtyIds(): void {
-    this.dirtyIdsByTable.clear();
-  }
-
   private clearDebounceTimer(): void {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
@@ -183,7 +126,7 @@ class SyncEngine {
     this.runTriggeredSync();
   }
 
-  private scheduleDebouncedSync(): void {
+  scheduleDebouncedSync(): void {
     this.scheduleDebouncedSyncIn(DEBOUNCE_SYNC_MS);
   }
 
@@ -216,96 +159,6 @@ class SyncEngine {
     );
   }
 
-  private registerMutationHooks(): void {
-    if (this.hasMutationHooks) return;
-
-    for (const table of SYNC_TABLES) {
-      const dexieTable = TABLE_MAP[table];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const localTable = db[dexieTable] as any;
-
-      localTable.hook("creating", (primKey: unknown, obj: { id?: string }) => {
-        const id =
-          primKey !== undefined && primKey !== null
-            ? String(primKey)
-            : obj?.id !== undefined
-              ? String(obj.id)
-              : undefined;
-        this.markDirtyIfUserMutationDuringSync(table, id);
-        if (this.suppressMutationSignals > 0) return;
-        this.scheduleDebouncedSync();
-      });
-
-      localTable.hook(
-        "updating",
-        (_modifications: unknown, primKey: unknown) => {
-          const id =
-            primKey !== undefined && primKey !== null
-              ? String(primKey)
-              : undefined;
-          this.markDirtyIfUserMutationDuringSync(table, id);
-          if (this.suppressMutationSignals > 0) return;
-          this.scheduleDebouncedSync();
-          return undefined;
-        }
-      );
-
-      localTable.hook("deleting", (primKey: unknown) => {
-        const id =
-          primKey !== undefined && primKey !== null
-            ? String(primKey)
-            : undefined;
-        this.markDirtyIfUserMutationDuringSync(table, id);
-        if (this.suppressMutationSignals > 0) return;
-        this.scheduleDebouncedSync();
-      });
-    }
-
-    this.hasMutationHooks = true;
-
-    for (const table of OPS_MANAGED_SYNC_TABLES) {
-      const dexieTable = TABLE_MAP[table];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const localTable = db[dexieTable] as any;
-
-      localTable.hook(
-        "creating",
-        (primKey: unknown, obj: Record<string, unknown>) => {
-          const id =
-            primKey !== undefined && primKey !== null
-              ? String(primKey)
-              : obj?.id !== undefined
-                ? String(obj.id)
-                : undefined;
-          if (!id) return;
-          void enqueueProjectionUpsertForTable(table, { ...obj, id });
-        }
-      );
-
-      localTable.hook(
-        "updating",
-        (
-          mods: Record<string, unknown>,
-          primKey: unknown,
-          obj: Record<string, unknown>
-        ) => {
-          const id =
-            primKey !== undefined && primKey !== null
-              ? String(primKey)
-              : undefined;
-          if (!id) return;
-          const baseRevision =
-            typeof obj.updated_at === "string" ? obj.updated_at : null;
-          void enqueueProjectionUpsertForTable(
-            table,
-            { ...obj, ...mods, id },
-            baseRevision
-          );
-        }
-      );
-    }
-  }
-
   private canSync(): boolean {
     if (!isSupabaseConfigured || !supabase) return false;
     if (!getCachedUserId()) return false;
@@ -313,36 +166,44 @@ class SyncEngine {
   }
 
   async push(): Promise<{ failedTables: string[] }> {
-    if (!this.canSync() || !supabase) return { failedTables: [] };
-    return runPushInternal(
-      {
-        withLocalSyncMetadataWrites: (op) =>
-          this.withLocalSyncMetadataWrites(op),
-      },
-      { opsSyncActive: false }
-    );
+    if (!this.canSync()) return { failedTables: [] };
+    const result = await pushPendingOperations();
+    return { failedTables: result.failed ? ["sync_operations"] : [] };
   }
 
-  async pull(options?: { opsSyncActive?: boolean }): Promise<void> {
-    if (!this.canSync() || !supabase) return;
+  async pull(): Promise<void> {
+    if (!this.canSync()) return;
+    const pullOpsResult = await pullAndApplyOperations(
+      loadLastAppliedSequence()
+    );
+    if (pullOpsResult.skipped !== true && pullOpsResult.maxSequence != null) {
+      advanceLastAppliedSequence(pullOpsResult.maxSequence);
+    }
     const userId = getCachedUserId();
-    if (!userId) return;
+    if (userId) {
+      void touchLocalDevice(userId);
+      void syncDeviceRegistry(userId);
+    }
+  }
 
-    const serverNow = await runPull({
-      supabase,
-      userId,
-      lastServerSyncAt: this.state.lastSyncAt ?? null,
-      dirtyIdsByTable: this.dirtyIdsByTable,
-      withSuppressedMutationSignals: (op) =>
-        this.withSuppressedMutationSignals(op),
-      setApplyRemoteFromPull: (value) => {
-        this.applyRemoteFromPull = value;
-      },
-      opsSyncActive: options?.opsSyncActive ?? false,
-    });
-    this.setState({ lastSyncAt: serverNow });
-    void touchLocalDevice(userId);
-    void syncDeviceRegistry(userId);
+  private async bootstrapProtocolV2(): Promise<boolean> {
+    if (loadSyncProtocolV2()) return true;
+    await repairNaturalIdentity();
+    await enqueueUnsyncedCurrentStateRows();
+    const pushResult = await pushPendingOperations();
+    if (pushResult.skipped) return false;
+    if (pushResult.failed) return false;
+    const pending = await countPendingOperations({ status: "pending" });
+    if (pending > 0) return false;
+    const snapshot = await pullAndApplySnapshot();
+    if (snapshot.skipped) return false;
+    if (snapshot.sequence != null) {
+      advanceLastAppliedSequence(snapshot.sequence);
+    }
+    saveSyncProtocolV2();
+    saveLastServerSyncAt(new Date().toISOString());
+    this.setState({ lastSyncAt: new Date().toISOString() });
+    return true;
   }
 
   async sync(): Promise<void> {
@@ -352,19 +213,20 @@ class SyncEngine {
       return;
     }
 
-    this.clearDirtyIds();
     this.setState({ isSyncing: true, lastError: null });
-    let opsSkipped = false;
     let interruptedTransiently = false;
     try {
+      const alreadyV2 = loadSyncProtocolV2();
+      const bootstrapped = await this.bootstrapProtocolV2();
       const pushOpsResult = await pushPendingOperations();
-      opsSkipped = pushOpsResult.skipped === true;
-      const opsSyncActive = pushOpsResult.skipped !== true;
-      // Do not advance the pull cursor from a push. Submitted sequences can be
-      // higher than ops we have not pulled yet (other devices), which would
-      // skip remote period tombstones and similar projection ops.
+      if (pushOpsResult.skipped === true) {
+        const msg =
+          "Cloud sync is unavailable. Update the app or try again later.";
+        logError("Sync ops RPC missing", new Error(msg));
+        this.setState({ lastError: msg });
+        return;
+      }
 
-      // Transient ops push failure should not become a durable Sync error card.
       if (pushOpsResult.failed && pushOpsResult.transient) {
         interruptedTransiently = true;
       } else if (pushOpsResult.failed) {
@@ -374,33 +236,32 @@ class SyncEngine {
         this.setState({ lastError: msg });
       }
 
-      const { failedTables, hadTransientFailure, hadDurableFailure } =
-        await runPushInternal(
-          {
-            withLocalSyncMetadataWrites: (op) =>
-              this.withLocalSyncMetadataWrites(op),
-          },
-          { opsSyncActive }
+      const shouldPullIncrementally = alreadyV2 || !bootstrapped;
+      if (shouldPullIncrementally) {
+        const pullOpsResult = await pullAndApplyOperations(
+          loadLastAppliedSequence()
         );
-      if (failedTables.length > 0) {
-        if (hadDurableFailure) {
-          const msg = `Some data couldn't be uploaded (${failedTables.join(", ")}). Try syncing again.`;
-          logError("Sync push failed", new Error(msg));
+        if (pullOpsResult.skipped === true) {
+          const msg =
+            "Cloud sync is unavailable. Update the app or try again later.";
+          logError("Sync ops RPC missing", new Error(msg));
           this.setState({ lastError: msg });
-        } else if (hadTransientFailure) {
-          interruptedTransiently = true;
+          return;
+        }
+        if (pullOpsResult.maxSequence != null) {
+          advanceLastAppliedSequence(pullOpsResult.maxSequence);
         }
       }
-      await this.pull({ opsSyncActive });
 
-      const pullOpsResult = await pullAndApplyOperations(
-        loadLastAppliedSequence()
-      );
-      if (pullOpsResult.skipped === true) {
-        opsSkipped = true;
+      const userId = getCachedUserId();
+      if (userId) {
+        void touchLocalDevice(userId);
+        void syncDeviceRegistry(userId);
       }
-      if (pullOpsResult.skipped !== true && pullOpsResult.maxSequence != null) {
-        advanceLastAppliedSequence(pullOpsResult.maxSequence);
+      this.setState({ lastSyncAt: new Date().toISOString() });
+      saveLastServerSyncAt(this.state.lastSyncAt ?? new Date().toISOString());
+      if (!bootstrapped && !loadSyncProtocolV2()) {
+        this.pendingResync = true;
       }
     } catch (err) {
       if (isTransientNetworkError(err)) {
@@ -418,16 +279,13 @@ class SyncEngine {
         !this.state.lastError && !interruptedTransiently && this.canSync();
       if (cleanSync) {
         try {
-          if (opsSkipped) {
-            await reportOpsUnavailablePending();
-          }
           await resolveOpenSyncErrors();
         } catch (cleanupErr) {
           console.warn("[sync] post-sync cleanup failed:", cleanupErr);
         }
       }
 
-      const needsAnother = this.pendingResync || this.hasDirtyIds();
+      const needsAnother = this.pendingResync;
       this.pendingResync = false;
 
       if (needsAnother && this.canSync()) {
@@ -450,18 +308,7 @@ class SyncEngine {
     let pushFailed = false;
     try {
       const pushOpsResult = await pushPendingOperations();
-      const opsSyncActive = pushOpsResult.skipped !== true;
-      if (pushOpsResult.failed) {
-        pushFailed = true;
-      }
-      const { hadDurableFailure } = await runPushInternal(
-        {
-          withLocalSyncMetadataWrites: (op) =>
-            this.withLocalSyncMetadataWrites(op),
-        },
-        { opsSyncActive }
-      );
-      if (hadDurableFailure) {
+      if (pushOpsResult.failed || pushOpsResult.skipped) {
         pushFailed = true;
       }
     } catch (err) {
@@ -469,29 +316,22 @@ class SyncEngine {
       console.warn("[sync] pushBeforeSignOut failed:", err);
     }
 
-    const [pendingCount, unsyncedRowCount] = await Promise.all([
-      countPendingOperations({ status: "pending" }),
-      countUnsyncedRows(),
-    ]);
+    const pendingCount = await countPendingOperations({ status: "pending" });
 
     return {
-      success:
-        !pushFailed && pendingCount === 0 && unsyncedRowCount === 0,
+      success: !pushFailed && pendingCount === 0,
       pendingCount,
-      unsyncedRowCount,
+      unsyncedRowCount: pendingCount,
       pushFailed,
     };
   }
 
-  /**
-   * Called after local Dexie tables have been wiped (sign-out or account switch).
-   * Resets in-memory sync state so the next sign-in starts from a clean slate.
-   */
   resetAfterLocalClear(): void {
-    this.clearDirtyIds();
     this.pendingResync = false;
     this.followUpSyncChain = 0;
     clearLastServerSyncAt();
+    clearSyncProtocolV2();
+    localStorage.removeItem("okhabit_natural_identity_repaired_v1");
     this.setState({
       lastSyncAt: null,
       lastError: null,
@@ -507,9 +347,8 @@ class SyncEngine {
 
     this.isAutoSyncEnabled = true;
     this.periodicIntervalMs = intervalMs;
-    this.registerMutationHooks();
+    registerSyncScheduler(() => this.scheduleDebouncedSync());
 
-    // Full sync on app start / page reload once auth is ready.
     void this.sync();
 
     this.resetPeriodicInterval();
@@ -534,6 +373,7 @@ class SyncEngine {
 
   stopAutoSync(): void {
     this.isAutoSyncEnabled = false;
+    clearSyncScheduler();
 
     this.clearDebounceTimer();
     if (this.realtimeUnsubscribe) {

@@ -13,13 +13,12 @@ import { buildProjectionConflictPayloadFromOp } from "./projection-conflict-reso
 import { maybeRecordTimelineOverlapInfo } from "./timeline-overlap";
 import { reconcileJournalDuplicatesForDate } from "@/lib/journal/dedupe-by-date";
 
-/** Tables whose rows sync exclusively via the operation stream when RPCs are live. */
+/** Current-state rows that sync via projection.upsert. Streaks are local-only. */
 export const OPS_MANAGED_SYNC_TABLES: SyncTable[] = [
   "journal_entries",
   "activity_periods",
   "one_time_tasks",
   "recurring_memos",
-  "activity_streaks",
   "activity_status_events",
   "group_status_events",
   "activities",
@@ -127,12 +126,19 @@ export async function enqueueProjectionUpsertForTable(
 ): Promise<void> {
   if (isProjectionEnqueueSuppressed()) return;
   if (!getCachedUserId()) return;
+  if (table === "activity_streaks" || table === "daily_entries") return;
 
   const entityType = syncTableToEntityType(table);
   if (!entityType) return;
 
   const id = typeof row.id === "string" ? row.id : null;
   if (!id) return;
+
+  if (table === "activity_periods") {
+    const start = typeof row.start_time === "string" ? row.start_time : "";
+    const end = typeof row.end_time === "string" ? row.end_time : null;
+    if (end && start === end) return;
+  }
 
   if (!hasMeaningfulProjectionPayload(table, row)) return;
 
@@ -187,6 +193,8 @@ export async function applyAcceptedProjectionOp(
     return false;
   }
 
+  if (op.entity_type === "activity_streak") return false;
+
   const payload = op.payload ?? {};
   const row = payload.row;
   if (!row || typeof row !== "object" || Array.isArray(row)) return false;
@@ -195,6 +203,14 @@ export async function applyAcceptedProjectionOp(
     ...normalizeSyncRow(table, row as Record<string, unknown>),
     synced_at: (row as { updated_at?: string }).updated_at ?? null,
   };
+
+  if (op.entity_type === "activity_period") {
+    const start =
+      typeof normalized.start_time === "string" ? normalized.start_time : "";
+    const end =
+      typeof normalized.end_time === "string" ? normalized.end_time : null;
+    if (end && start === end) return false;
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db[dexieKey] as any).put(normalized);

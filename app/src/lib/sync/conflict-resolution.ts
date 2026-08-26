@@ -5,14 +5,13 @@ import type {
   SyncIssue,
 } from "@/lib/db/types";
 import {
-  appendActivityDefinitionVersion,
-  appendGroupDefinitionVersion,
   getLatestActivityDefinitionVersion,
   getLatestGroupDefinitionVersion,
 } from "@/lib/activity/definition-versions";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { getOrCreateDeviceId } from "@/lib/sync/device-id";
 import { deferSyncIssue } from "@/lib/sync/sync-issues-store";
+import { saveActivity, saveActivityGroup } from "@/lib/sync/mutate-synced";
 
 export type DefinitionConflictEntityType =
   "activity_definition" | "group_definition";
@@ -387,7 +386,7 @@ export async function refreshDefinitionConflictPayload(
 async function applyResolvedActivityFields(
   entityId: string,
   fields: Record<string, unknown>,
-  effectiveFrom: string
+  _effectiveFrom: string
 ): Promise<string> {
   const activity = await db.activities.get(entityId);
   if (!activity) {
@@ -417,28 +416,14 @@ async function applyResolvedActivityFields(
     updated_at: now(),
   };
 
-  await db.activities.update(entityId, {
-    name: next.name,
-    routine: next.routine,
-    completion_target: next.completion_target,
-    group_id: next.group_id,
-    order_index: next.order_index,
-    updated_at: next.updated_at,
-  });
-
-  const version = await appendActivityDefinitionVersion({
-    activity: next,
-    effectiveFrom,
-    force: true,
-  });
-
-  return version?.id ?? next.id;
+  await saveActivity(next, activity.updated_at);
+  return next.id;
 }
 
 async function applyResolvedGroupFields(
   entityId: string,
   fields: Record<string, unknown>,
-  effectiveFrom: string
+  _effectiveFrom: string
 ): Promise<string> {
   const group = await db.activityGroups.get(entityId);
   if (!group) {
@@ -462,20 +447,8 @@ async function applyResolvedGroupFields(
     updated_at: now(),
   };
 
-  await db.activityGroups.update(entityId, {
-    name: next.name,
-    color: next.color,
-    order_index: next.order_index,
-    updated_at: next.updated_at,
-  });
-
-  const version = await appendGroupDefinitionVersion({
-    group: next,
-    effectiveFrom,
-    force: true,
-  });
-
-  return version?.id ?? next.id;
+  await saveActivityGroup(next, group.updated_at);
+  return next.id;
 }
 
 export type ConflictResolutionChoice = "keep_local" | "keep_remote" | "combine";

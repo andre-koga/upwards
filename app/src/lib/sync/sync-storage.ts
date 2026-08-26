@@ -2,6 +2,7 @@ const LAST_SERVER_SYNC_KEY = "okhabit_last_server_sync_at";
 const LAST_APPLIED_SEQUENCE_KEY = "okhabit_last_applied_sync_sequence";
 const LAST_USER_KEY = "okhabit_last_signed_in_user_id";
 const OPS_RPC_AVAILABLE_KEY = "okhabit_ops_rpc_available";
+const PROTOCOL_V2_KEY = "okhabit_sync_protocol_v2";
 
 /**
  * The server-side `now()` timestamp captured at the start of the last
@@ -55,6 +56,18 @@ export function saveOpsRpcAvailable(available: boolean): void {
 
 export function clearOpsRpcAvailable(): void {
   localStorage.removeItem(OPS_RPC_AVAILABLE_KEY);
+}
+
+export function loadSyncProtocolV2(): boolean {
+  return localStorage.getItem(PROTOCOL_V2_KEY) === "1";
+}
+
+export function saveSyncProtocolV2(): void {
+  localStorage.setItem(PROTOCOL_V2_KEY, "1");
+}
+
+export function clearSyncProtocolV2(): void {
+  localStorage.removeItem(PROTOCOL_V2_KEY);
 }
 
 export function loadLastSignedInUserId(): string | null {

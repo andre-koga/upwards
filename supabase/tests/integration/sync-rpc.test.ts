@@ -6,6 +6,7 @@ import {
   newId,
   projectionUpsertOp,
   pullOps,
+  pullSnapshot,
   submitOps,
   type IsolatedUser,
 } from "./helpers";
@@ -152,124 +153,161 @@ describe("sync RPC integration", () => {
     expect(payloads).toContain(textB);
   });
 
-  it("exposes count-down and period tombstone ops to the other device", async () => {
+  it("applies complete then uncomplete through count ops only", async () => {
     const activityId = newId();
-    const periodId = newId();
-
-    const activity = projectionUpsertOp({
-      deviceId: DEVICE_A,
-      entityType: "activity",
-      entityId: activityId,
-      row: {
-        name: "Integration habit",
-        routine: "daily",
-        completion_target: 1,
-        created_at: "2026-08-25T10:00:00.000Z",
-        updated_at: "2026-08-25T10:00:00.000Z",
-      },
-    });
-    const createdActivity = await submitOps(user.deviceA, [activity]);
-    expect(createdActivity[0]?.status).toBe("accepted");
+    const date = "2026-08-26";
 
     const increment = countDeltaOp({
       deviceId: DEVICE_A,
       activityId,
-      date: DATE,
+      date,
       delta: 1,
       previousCount: 0,
       nextCount: 1,
     });
-    const incremented = await submitOps(user.deviceA, [increment]);
-    expect(incremented[0]?.status).toBe("accepted");
-
-    const { data: entry, error: entryError } = await user.deviceA
-      .from("daily_entries")
-      .select("id, task_counts")
-      .eq("date", DATE)
-      .is("deleted_at", null)
-      .maybeSingle();
-    if (entryError) throw entryError;
-    expect(entry?.id).toBeTruthy();
-    expect(entry?.task_counts?.[activityId]).toBe(1);
-
-    const periodCreate = projectionUpsertOp({
-      deviceId: DEVICE_A,
-      entityType: "activity_period",
-      entityId: periodId,
-      row: {
-        daily_entry_id: entry!.id,
-        activity_id: activityId,
-        start_time: "2026-08-25T15:00:00.000Z",
-        end_time: "2026-08-25T15:00:00.000Z",
-        created_at: "2026-08-25T15:00:00.000Z",
-        updated_at: "2026-08-25T15:00:00.000Z",
-      },
-    });
-    const createdPeriod = await submitOps(user.deviceA, [periodCreate]);
-    expect(createdPeriod[0]?.status).toBe("accepted");
-
     const decrement = countDeltaOp({
       deviceId: DEVICE_A,
       activityId,
-      date: DATE,
+      date,
       delta: -1,
       previousCount: 1,
       nextCount: 0,
     });
-    const tombstone = projectionUpsertOp({
-      deviceId: DEVICE_A,
-      entityType: "activity_period",
-      entityId: periodId,
-      row: {
-        daily_entry_id: entry!.id,
-        activity_id: activityId,
-        start_time: "2026-08-25T15:00:00.000Z",
-        end_time: "2026-08-25T15:00:00.000Z",
-        deleted_at: "2026-08-25T15:01:00.000Z",
-        updated_at: "2026-08-25T15:01:00.000Z",
-      },
-    });
-    const afterDown = await submitOps(user.deviceA, [decrement, tombstone]);
-    expect(afterDown.map((row) => row.status)).toEqual(["accepted", "accepted"]);
 
-    const pulled = await pullOps(user.deviceB, 0);
-    const relevant = pulled.filter(
-      (op) =>
-        op.entity_id === activityId ||
-        op.entity_id === periodId ||
-        (op.payload as { activity_id?: string }).activity_id === activityId
+    expect((await submitOps(user.deviceA, [increment]))[0]?.status).toBe(
+      "accepted"
     );
-    const types = relevant.map((op) => `${op.entity_type}:${op.operation_type}`);
-    expect(types).toContain("daily_entry:count.delta");
-    expect(types.filter((type) => type === "daily_entry:count.delta")).toHaveLength(
-      2
+    expect((await submitOps(user.deviceA, [decrement]))[0]?.status).toBe(
+      "accepted"
     );
-    expect(types).toContain("activity_period:projection.upsert");
 
-    const tombstoneOp = relevant.find(
-      (op) =>
-        op.entity_type === "activity_period" &&
-        op.entity_id === periodId &&
-        Boolean(
-          (op.payload as { row?: { deleted_at?: string } }).row?.deleted_at
-        )
-    );
-    expect(tombstoneOp).toBeTruthy();
-
-    const { data: after, error: afterError } = await user.deviceB
+    const { data: after, error } = await user.deviceB
       .from("daily_entries")
       .select("task_counts")
-      .eq("id", entry!.id)
+      .eq("date", date)
+      .is("deleted_at", null)
       .maybeSingle();
-    if (afterError) throw afterError;
+    if (error) throw error;
     expect(after?.task_counts?.[activityId] ?? 0).toBe(0);
 
-    const { data: period, error: periodError } = await user.deviceB
+    const pulled = await pullOps(user.deviceB, 0);
+    const countOps = pulled.filter(
+      (op) =>
+        op.operation_type === "count.delta" &&
+        (op.payload as { activity_id?: string }).activity_id === activityId
+    );
+    expect(countOps).toHaveLength(2);
+    expect(
+      pulled.some(
+        (op) =>
+          op.entity_type === "activity_period" &&
+          (op.payload as { row?: { activity_id?: string } }).row
+            ?.activity_id === activityId
+      )
+    ).toBe(false);
+  });
+
+  it("collapses two journal ids for the same date onto one row", async () => {
+    const date = "2026-08-27";
+    const idA = newId();
+    const idB = newId();
+
+    const createdA = await submitOps(user.deviceA, [
+      projectionUpsertOp({
+        deviceId: DEVICE_A,
+        entityType: "journal_entry",
+        entityId: idA,
+        row: {
+          entry_date: date,
+          title: "A",
+          text_content: "First device",
+          created_at: "2026-08-27T12:00:00.000Z",
+          updated_at: "2026-08-27T12:00:00.000Z",
+        },
+      }),
+    ]);
+    expect(createdA[0]?.status).toBe("accepted");
+
+    const createdB = await submitOps(user.deviceB, [
+      projectionUpsertOp({
+        deviceId: DEVICE_B,
+        entityType: "journal_entry",
+        entityId: idB,
+        row: {
+          entry_date: date,
+          title: "A",
+          text_content: "First device",
+          created_at: "2026-08-27T12:00:00.000Z",
+          updated_at: "2026-08-27T12:00:00.000Z",
+        },
+      }),
+    ]);
+    expect(createdB[0]?.status).toBe("accepted");
+
+    const { data: rows, error } = await user.deviceA
+      .from("journal_entries")
+      .select("id, text_content")
+      .eq("entry_date", date);
+    if (error) throw error;
+    expect(rows).toHaveLength(1);
+    expect(rows?.[0]?.text_content).toBe("First device");
+  });
+
+  it("ignores untimed period upserts so they cannot re-enter as facts", async () => {
+    const periodId = newId();
+    const activityId = newId();
+    const dailyId = newId();
+
+    const result = await submitOps(user.deviceA, [
+      projectionUpsertOp({
+        deviceId: DEVICE_A,
+        entityType: "activity_period",
+        entityId: periodId,
+        row: {
+          daily_entry_id: dailyId,
+          activity_id: activityId,
+          start_time: "2026-08-25T15:00:00.000Z",
+          end_time: "2026-08-25T15:00:00.000Z",
+          created_at: "2026-08-25T15:00:00.000Z",
+          updated_at: "2026-08-25T15:00:00.000Z",
+        },
+      }),
+    ]);
+    expect(result[0]?.status).toBe("accepted");
+
+    const { data: period, error } = await user.deviceA
       .from("activity_periods")
-      .select("deleted_at")
+      .select("id")
       .eq("id", periodId)
       .maybeSingle();
-    if (periodError) throw periodError;
-    expect(period?.deleted_at).toBeTruthy();
+    if (error) throw error;
+    expect(period).toBeNull();
+  });
+
+  it("returns a snapshot of current projections for bootstrap", async () => {
+    const activityId = newId();
+    const accepted = await submitOps(user.deviceA, [
+      projectionUpsertOp({
+        deviceId: DEVICE_A,
+        entityType: "activity",
+        entityId: activityId,
+        row: {
+          name: "Snapshot habit",
+          routine: "daily",
+          completion_target: 1,
+          created_at: "2026-08-25T10:00:00.000Z",
+          updated_at: "2026-08-25T10:00:00.000Z",
+        },
+      }),
+    ]);
+    expect(accepted[0]?.status).toBe("accepted");
+
+    const snapshot = await pullSnapshot(user.deviceB);
+    expect(typeof snapshot.server_sequence).toBe("number");
+    expect(snapshot.server_sequence).toBeGreaterThan(0);
+    const activities = snapshot.activities as Array<{ id: string; name: string }>;
+    expect(activities.some((row) => row.id === activityId)).toBe(true);
+    expect(Array.isArray(snapshot.daily_entries)).toBe(true);
+    expect(Array.isArray(snapshot.activity_periods)).toBe(true);
   });
 });

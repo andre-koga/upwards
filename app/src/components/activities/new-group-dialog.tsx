@@ -1,6 +1,7 @@
-import { db, newId, now } from "@/lib/db";
+import { newId, now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
 import { GroupDialogForm } from "@/components/activities/group-dialog-form";
+import { saveActivityGroup } from "@/lib/sync/mutate-synced";
 
 interface NewGroupDialogProps {
   open: boolean;
@@ -33,7 +34,7 @@ export function NewGroupDialog({
           synced_at: null,
           deleted_at: null,
         };
-        await db.activityGroups.add(createdGroup);
+        await saveActivityGroup(createdGroup);
         onCreated?.(createdGroup);
       }}
     />

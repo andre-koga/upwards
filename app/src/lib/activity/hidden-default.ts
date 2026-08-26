@@ -15,6 +15,8 @@ export function isHiddenGroupDefaultActivity(activity: Activity): boolean {
 export async function getOrCreateHiddenGroupDefaultActivity(
   group: ActivityGroup
 ): Promise<Activity> {
+  const { patchActivity, saveActivity } =
+    await import("@/lib/sync/mutate-synced");
   const existing = await db.activities
     .filter(
       (activity) =>
@@ -35,7 +37,7 @@ export async function getOrCreateHiddenGroupDefaultActivity(
       updates.name = null;
       updates.routine = null;
     }
-    await db.activities.update(existing.id, updates);
+    await patchActivity(existing.id, updates);
     return { ...existing, ...updates };
   }
 
@@ -54,6 +56,6 @@ export async function getOrCreateHiddenGroupDefaultActivity(
     deleted_at: null,
   };
 
-  await db.activities.add(groupDefaultActivity);
+  await saveActivity(groupDefaultActivity);
   return groupDefaultActivity;
 }

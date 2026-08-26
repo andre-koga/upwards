@@ -17,7 +17,7 @@ export interface RecordCountDeltaInput {
  * full task_counts map; this dual-writes an append-only op for future sequence sync.
  */
 export async function enqueueActivityCountDelta(
-  input: RecordCountDeltaInput
+  input: RecordCountDeltaInput & { dailyEntryId?: string | null }
 ): Promise<void> {
   const delta = input.nextCount - input.previousCount;
   if (delta === 0) return;
@@ -36,6 +36,7 @@ export async function enqueueActivityCountDelta(
       previous_count: input.previousCount,
       next_count: input.nextCount,
       reason: input.reason ?? (delta > 0 ? "increment" : "cycle"),
+      daily_entry_id: input.dailyEntryId ?? null,
     },
   });
 }
@@ -44,6 +45,7 @@ export async function enqueueActivityPauseChange(input: {
   activityId: string;
   date: string;
   paused: boolean;
+  dailyEntryId?: string | null;
 }): Promise<void> {
   await enqueuePendingOperation({
     operation_id: newId(),
@@ -56,6 +58,7 @@ export async function enqueueActivityPauseChange(input: {
       activity_id: input.activityId,
       date: input.date,
       paused: input.paused,
+      daily_entry_id: input.dailyEntryId ?? null,
     },
   });
 }

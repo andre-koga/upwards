@@ -1,7 +1,18 @@
 import { useRef, useState } from "react";
 import { db } from "@/lib/db";
+import type {
+  Activity,
+  ActivityGroup,
+  ActivityPeriod,
+  ActivityStatusEvent,
+  DailyEntry,
+  GroupStatusEvent,
+  JournalEntry,
+  OneTimeTask,
+} from "@/lib/db/types";
 import { normalizeSessionNote } from "@/lib/activity";
 import { getErrorMessage, logError, ERROR_MESSAGES } from "@/lib/error-utils";
+import { importBackup } from "@/lib/sync/mutate-synced";
 
 type BackupStatus = "idle" | "success" | "error";
 
@@ -74,68 +85,49 @@ export function useDataBackup() {
         throw new Error("Invalid backup file format");
       }
 
-      await db.transaction(
-        "rw",
-        [
-          db.activityGroups,
-          db.activities,
-          db.dailyEntries,
-          db.activityPeriods,
-          db.journalEntries,
-          db.oneTimeTasks,
-          db.activityStatusEvents,
-          db.groupStatusEvents,
-        ],
-        async () => {
-          if (data.activityGroups?.length)
-            await db.activityGroups.bulkPut(data.activityGroups);
-          if (data.activities?.length) {
-            // Normalize archive: restore is_archived, dual-write completed_at.
-            const normalized = data.activities.map(
-              (a: Record<string, unknown>) => {
-                const copy = { ...a };
-                const completedAt =
-                  typeof copy.completed_at === "string"
-                    ? copy.completed_at
-                    : null;
-                const archived =
-                  copy.is_archived === true || Boolean(completedAt);
-                copy.is_archived = archived;
-                copy.completed_at = archived
-                  ? (completedAt ??
-                    (typeof copy.updated_at === "string"
-                      ? copy.updated_at
-                      : new Date().toISOString()))
-                  : null;
-                return copy;
-              }
+      const normalizedActivities: Activity[] | undefined = data.activities
+        ?.length
+        ? data.activities.map((a: Record<string, unknown>) => {
+            const copy = { ...a };
+            const completedAt =
+              typeof copy.completed_at === "string" ? copy.completed_at : null;
+            const archived = copy.is_archived === true || Boolean(completedAt);
+            copy.is_archived = archived;
+            copy.completed_at = archived
+              ? (completedAt ??
+                (typeof copy.updated_at === "string"
+                  ? copy.updated_at
+                  : new Date().toISOString()))
+              : null;
+            return copy;
+          })
+        : undefined;
+
+      const normalizedPeriods: ActivityPeriod[] | undefined = data
+        .activityPeriods?.length
+        ? data.activityPeriods.map((period: Record<string, unknown>) => {
+            const copy = { ...period };
+            copy.note = normalizeSessionNote(
+              typeof copy.note === "string" ? copy.note : null
             );
-            await db.activities.bulkPut(normalized);
-          }
-          if (data.dailyEntries?.length)
-            await db.dailyEntries.bulkPut(data.dailyEntries);
-          if (data.activityPeriods?.length) {
-            const normalized = data.activityPeriods.map(
-              (period: Record<string, unknown>) => {
-                const copy = { ...period };
-                copy.note = normalizeSessionNote(
-                  typeof copy.note === "string" ? copy.note : null
-                );
-                return copy;
-              }
-            );
-            await db.activityPeriods.bulkPut(normalized);
-          }
-          if (data.journalEntries?.length)
-            await db.journalEntries.bulkPut(data.journalEntries);
-          if (data.oneTimeTasks?.length)
-            await db.oneTimeTasks.bulkPut(data.oneTimeTasks);
-          if (data.activityStatusEvents?.length)
-            await db.activityStatusEvents.bulkPut(data.activityStatusEvents);
-          if (data.groupStatusEvents?.length)
-            await db.groupStatusEvents.bulkPut(data.groupStatusEvents);
-        }
-      );
+            return copy;
+          })
+        : undefined;
+
+      await importBackup({
+        activityGroups: data.activityGroups as ActivityGroup[] | undefined,
+        activities: normalizedActivities,
+        dailyEntries: data.dailyEntries as DailyEntry[] | undefined,
+        activityPeriods: normalizedPeriods,
+        journalEntries: data.journalEntries as JournalEntry[] | undefined,
+        oneTimeTasks: data.oneTimeTasks as OneTimeTask[] | undefined,
+        activityStatusEvents: data.activityStatusEvents as
+          | ActivityStatusEvent[]
+          | undefined,
+        groupStatusEvents: data.groupStatusEvents as
+          | GroupStatusEvent[]
+          | undefined,
+      });
 
       setImportMessage("Backup imported successfully!");
       setImportStatus("success");

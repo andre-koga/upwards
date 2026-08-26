@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { ConfirmFormDialog } from "@/components/forms";
-import { db, now } from "@/lib/db";
+import { now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
+import { patchOneTimeTask } from "@/lib/sync/mutate-synced";
 
 interface DeleteMemoDialogProps {
   open: boolean;
@@ -29,7 +30,7 @@ export function DeleteMemoDialog({
     try {
       const n = now();
       // Soft delete so recurring spawn idempotency still sees today's instance.
-      await db.oneTimeTasks.update(memoId, { deleted_at: n, updated_at: n });
+      await patchOneTimeTask(memoId, { deleted_at: n, updated_at: n });
       onOpenChange(false);
       onDeleted();
     } catch (error) {

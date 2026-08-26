@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { db, newId, now } from "@/lib/db";
+import { newId, now } from "@/lib/db";
 import type { RecurringMemo } from "@/lib/db/types";
 import { normalizeMemoTitle } from "@/components/tasks/memo-title";
 import {
@@ -10,6 +10,10 @@ import {
   loadActiveRecurringMemos,
   spawnRecurringMemosForToday,
 } from "@/lib/memos/spawn-recurring-memos";
+import {
+  patchRecurringMemo,
+  saveRecurringMemo,
+} from "@/lib/sync/mutate-synced";
 
 export function useRecurringMemos() {
   const [recurringMemos, setRecurringMemos] = useState<RecurringMemo[]>([]);
@@ -46,7 +50,7 @@ export function useRecurringMemos() {
           synced_at: null,
           deleted_at: null,
         };
-        await db.recurringMemos.add(preset);
+        await saveRecurringMemo(preset);
         await spawnRecurringMemosForToday();
         await loadRecurringMemos();
         return true;
@@ -77,7 +81,7 @@ export function useRecurringMemos() {
         if (patch.title !== undefined) {
           updates.title = normalizeMemoTitle(patch.title);
         }
-        await db.recurringMemos.update(id, updates);
+        await patchRecurringMemo(id, updates);
         await loadRecurringMemos();
         return true;
       } catch (error) {
@@ -91,7 +95,7 @@ export function useRecurringMemos() {
   const deleteRecurringMemo = useCallback(
     async (id: string): Promise<void> => {
       const n = now();
-      await db.recurringMemos.update(id, { deleted_at: n, updated_at: n });
+      await patchRecurringMemo(id, { deleted_at: n, updated_at: n });
       await loadRecurringMemos();
     },
     [loadRecurringMemos]

@@ -23,6 +23,7 @@ const dailyEntries: Array<{
   paused_task_ids: string[] | null;
   is_break_day: boolean | null;
   current_activity_id: string | null;
+  completion_notes: Record<string, string> | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;
@@ -53,6 +54,8 @@ vi.mock("@/lib/supabase", () => ({
 
 vi.mock("@/lib/activity/untimed-period", () => ({
   tombstoneUntimedPeriodsForActivityOnDay: vi.fn(async () => 0),
+  isUntimedPeriod: (start: string, end: string | null) =>
+    Boolean(end && start === end),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -153,18 +156,25 @@ vi.mock("@/lib/db", () => ({
       add: async (row: (typeof dailyEntries)[number]) => {
         dailyEntries.push(row);
       },
+      get: async (id: string) =>
+        dailyEntries.find((entry) => entry.id === id) ?? undefined,
       update: async (id: string, patch: Record<string, unknown>) => {
         const row = dailyEntries.find((entry) => entry.id === id);
         if (row) Object.assign(row, patch);
       },
       where: (index: string) => ({
-        equals: (value: string) => ({
-          first: async () =>
-            dailyEntries.find((entry) => {
-              if (index === "date") return entry.date === value;
-              return false;
+        equals: (value: string) => {
+          const matches = dailyEntries.filter((entry) => {
+            if (index === "date") return entry.date === value;
+            return false;
+          });
+          return {
+            filter: (predicate: (entry: (typeof dailyEntries)[number]) => boolean) => ({
+              first: async () => matches.find(predicate),
             }),
-        }),
+            first: async () => matches[0],
+          };
+        },
       }),
     },
     journalEntries: {
@@ -420,8 +430,7 @@ describe("pullAndApplyOperations", () => {
 
     const result = await pullAndApplyOperations(5);
     expect(result.maxSequence).toBe(20);
-    expect(activityVersions).toHaveLength(1);
-    expect(activityVersions[0].name).toBe("Yoga");
+    expect(activityVersions).toHaveLength(0);
     expect(activities[0].name).toBe("Yoga");
   });
 
@@ -460,6 +469,7 @@ describe("pullAndApplyOperations", () => {
       paused_task_ids: [],
       is_break_day: false,
       current_activity_id: null,
+      completion_notes: {},
       created_at: "2026-08-01T10:00:00.000Z",
       updated_at: "2026-08-01T10:00:00.000Z",
       synced_at: null,
@@ -539,14 +549,14 @@ describe("ops rpc availability gating", () => {
     rpcMock.mockReset();
   });
 
-  it("reports skipped when no pending ops and RPCs are unknown", async () => {
+  it("reports skipped only when the client is unavailable", async () => {
     const result = await pushPendingOperations();
-    expect(result).toEqual({ failed: false, skipped: true });
+    expect(result).toEqual({ failed: false });
   });
 
   it("reports active when no pending ops but RPCs were previously available", async () => {
     saveOpsRpcAvailable(true);
     const result = await pushPendingOperations();
-    expect(result).toEqual({ failed: false, skipped: false });
+    expect(result).toEqual({ failed: false });
   });
 });

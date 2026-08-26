@@ -6,6 +6,7 @@ import {
   stopCurrentActivity,
 } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
+import { patchActivity, patchActivityGroup } from "@/lib/sync/mutate-synced";
 
 interface DeleteConfirmDialogProps {
   open: boolean;
@@ -38,14 +39,16 @@ export function DeleteConfirmDialog({
             appendActivityStatusEvent(a.id, "deleted", true, actionDate)
           )
         );
-        await db.activities.bulkPut(
-          activities.map((a) => ({ ...a, deleted_at: n, updated_at: n }))
+        await Promise.all(
+          activities.map((a) =>
+            patchActivity(a.id, { deleted_at: n, updated_at: n })
+          )
         );
-        await db.activityGroups.update(id, { deleted_at: n, updated_at: n });
+        await patchActivityGroup(id, { deleted_at: n, updated_at: n });
       } else {
         await stopCurrentActivity({ activityId: id });
         await appendActivityStatusEvent(id, "deleted", true, actionDate);
-        await db.activities.update(id, { deleted_at: n, updated_at: n });
+        await patchActivity(id, { deleted_at: n, updated_at: n });
       }
       onOpenChange(false);
       onDeleted({ type, id });

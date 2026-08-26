@@ -4,6 +4,7 @@ import { isRoutineDueOnDate } from "@/lib/activity/utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { fromDateString } from "@/lib/time-utils";
 import { normalizeMemoTitle } from "@/components/tasks/memo-title";
+import { saveOneTimeTask } from "@/lib/sync/mutate-synced";
 
 async function hasInstanceForToday(
   recurringMemoId: string,
@@ -50,7 +51,7 @@ async function spawnRecurringMemosForTodayInternal(
     if (!title) continue;
 
     const n = now();
-    await db.oneTimeTasks.add({
+    await saveOneTimeTask({
       id: newId(),
       date: null,
       title,

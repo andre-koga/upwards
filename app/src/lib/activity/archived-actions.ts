@@ -1,10 +1,11 @@
-import { db, now } from "@/lib/db";
+import { now } from "@/lib/db";
 import {
   appendActivityStatusEvent,
   appendGroupStatusEvent,
 } from "./status-events";
 import { stopCurrentActivity } from "./utils";
 import { logError } from "@/lib/error-utils";
+import { patchActivity, patchActivityGroup } from "@/lib/sync/mutate-synced";
 
 export function activityArchiveFields(
   archived: boolean,
@@ -40,7 +41,7 @@ export async function setActivityArchived(
       archived,
       actionDate
     );
-    await db.activities.update(activityId, activityArchiveFields(archived, n));
+    await patchActivity(activityId, activityArchiveFields(archived, n));
   } catch (error) {
     logError("Error updating activity archive", error);
     throw error;
@@ -70,7 +71,7 @@ export async function unarchiveGroupById(
 ): Promise<void> {
   const n = now();
   await appendGroupStatusEvent(groupId, "archived", false, actionDate);
-  await db.activityGroups.update(groupId, {
+  await patchActivityGroup(groupId, {
     is_archived: false,
     updated_at: n,
   });

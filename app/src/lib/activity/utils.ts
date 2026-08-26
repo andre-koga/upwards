@@ -14,6 +14,10 @@ import {
   isHiddenGroupDefaultActivity,
   getOrCreateHiddenGroupDefaultActivity,
 } from "./hidden-default";
+import {
+  patchTimedPeriod,
+  setCurrentActivityLocal,
+} from "@/lib/sync/mutate-synced";
 
 export { isHiddenGroupDefaultActivity, getOrCreateHiddenGroupDefaultActivity };
 
@@ -296,15 +300,12 @@ export async function stopCurrentActivity(options: {
       .first();
 
     if (currentPeriod) {
-      await db.activityPeriods.update(currentPeriod.id, {
+      await patchTimedPeriod(currentPeriod.id, {
         end_time: n,
         updated_at: n,
       });
     }
-    await db.dailyEntries.update(dailyEntry.id, {
-      current_activity_id: null,
-      updated_at: n,
-    });
+    await setCurrentActivityLocal(today, null);
   } catch (error) {
     console.error("Error stopping current activity:", error);
   }

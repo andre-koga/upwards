@@ -3,10 +3,11 @@ import { useTranslation } from "react-i18next";
 import type { OneTimeTask } from "@/lib/db/types";
 import { FormDialog, FormDialogActions } from "@/components/forms";
 import { Button } from "@/components/ui/button";
-import { db, now } from "@/lib/db";
+import { now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
 import { formatDateShort, fromDateString } from "@/lib/time-utils";
 import { Undo2, Trash2 } from "lucide-react";
+import { patchOneTimeTask } from "@/lib/sync/mutate-synced";
 
 interface ArchivedMemosDialogProps {
   open: boolean;
@@ -37,7 +38,7 @@ export function ArchivedMemosDialog({
     setRestoringId(memoId);
     try {
       const n = now();
-      await db.oneTimeTasks.update(memoId, {
+      await patchOneTimeTask(memoId, {
         is_archived: false,
         updated_at: n,
       });
@@ -52,7 +53,8 @@ export function ArchivedMemosDialog({
 
   const handleDelete = async (memoId: string) => {
     try {
-      await db.oneTimeTasks.delete(memoId);
+      const n = now();
+      await patchOneTimeTask(memoId, { deleted_at: n, updated_at: n });
       setArchivedMemos((prev) => prev.filter((m) => m.id !== memoId));
       onMemoRestored?.();
     } catch (error) {
