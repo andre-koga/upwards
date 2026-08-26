@@ -28,6 +28,7 @@ const dailyEntries: Array<{
   synced_at: string | null;
   deleted_at: string | null;
 }> = [];
+const journalEntries: import("@/lib/db/types").JournalEntry[] = [];
 
 const rpcMock = vi.fn();
 
@@ -164,6 +165,13 @@ vi.mock("@/lib/db", () => ({
               return false;
             }),
         }),
+      }),
+    },
+    journalEntries: {
+      filter: (
+        predicate: (entry: import("@/lib/db/types").JournalEntry) => boolean
+      ) => ({
+        toArray: async () => journalEntries.filter(predicate),
       }),
     },
     syncIssues: {
