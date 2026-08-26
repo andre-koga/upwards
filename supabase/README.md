@@ -119,7 +119,13 @@ Add these GitHub Actions secrets (Settings → Secrets and variables → Actions
 
 The token needs permission to link the project and push migrations (a personal
 access token from Account → Access Tokens with project access, not a scoped
-token that cannot call the Management API).
+token that cannot call the Management API). Optional: add `SUPABASE_DB_PASSWORD`
+so the CLI authenticates as `postgres` instead of a temporary login role.
+The migrate workflow retries `db push` a few times because the CLI often
+fails once with login-role status 544 / connection timeout before any SQL
+runs.
+
+After
 adding secrets, either merge to `main` or run **Supabase migrate** →
 **Run workflow**. The first push no-ops if remote history already matches git,
 or applies any migrations that are not on the hosted project yet.
