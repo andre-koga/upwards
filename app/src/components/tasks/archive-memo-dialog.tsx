@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { ConfirmFormDialog } from "@/components/forms";
-import { db, now } from "@/lib/db";
+import { now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
+import { patchOneTimeTask } from "@/lib/sync/mutate-synced";
 
 interface ArchiveMemoDialogProps {
   open: boolean;
@@ -28,7 +29,7 @@ export function ArchiveMemoDialog({
     if (!memoId) return;
     try {
       const n = now();
-      await db.oneTimeTasks.update(memoId, {
+      await patchOneTimeTask(memoId, {
         is_archived: true,
         updated_at: n,
       });

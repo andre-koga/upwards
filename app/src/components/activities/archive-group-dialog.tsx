@@ -1,7 +1,7 @@
 import { ConfirmFormDialog } from "@/components/forms";
-import { db, now } from "@/lib/db";
 import { appendGroupStatusEvent, stopCurrentActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
+import { patchActivityGroup } from "@/lib/sync/mutate-synced";
 
 interface ArchiveGroupDialogProps {
   open: boolean;
@@ -26,11 +26,9 @@ export function ArchiveGroupDialog({
     if (!groupId) return;
     try {
       await stopCurrentActivity({ groupId });
-      const n = now();
       await appendGroupStatusEvent(groupId, "archived", true);
-      await db.activityGroups.update(groupId, {
+      await patchActivityGroup(groupId, {
         is_archived: true,
-        updated_at: n,
       });
       onOpenChange(false);
       onArchived();

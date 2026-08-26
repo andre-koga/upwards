@@ -5,6 +5,7 @@ import type {
   LocationData,
 } from "@/lib/db/types";
 import { shiftDate, toDateString } from "@/lib/time-utils";
+import { saveJournalEntry } from "@/lib/sync/mutate-synced";
 
 /** Max great-circle distance (km) to treat two readings as the same place when city data is missing. */
 const SAME_PLACE_DISTANCE_KM = 10;
@@ -97,7 +98,9 @@ export function mergeJournalLocationRoute(
     displayName: next.displayName.trim(),
   };
   if (!cleanedNext.displayName) return normalized;
-  if (normalized.locations.some((loc) => isSameJournalPlace(loc, cleanedNext))) {
+  if (
+    normalized.locations.some((loc) => isSameJournalPlace(loc, cleanedNext))
+  ) {
     return normalized;
   }
   if (normalized.locations.length >= max) return normalized;
@@ -320,10 +323,14 @@ export async function propagateJournalCompletionStreaksAfterSave(
     const newStreak = previousStreak + 1;
 
     if (entry.journal_completion_streak !== newStreak) {
-      await db.journalEntries.update(entry.id, {
-        journal_completion_streak: newStreak,
-        updated_at: timestamp,
-      });
+      await saveJournalEntry(
+        {
+          ...entry,
+          journal_completion_streak: newStreak,
+          updated_at: timestamp,
+        },
+        entry.updated_at
+      );
     }
 
     cursor = toDateString(shiftDate(new Date(`${cursor}T00:00:00`), 1));

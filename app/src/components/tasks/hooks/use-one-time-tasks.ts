@@ -3,6 +3,7 @@ import { db, now, newId } from "@/lib/db";
 import { todayDateString } from "@/lib/time-utils";
 import type { OneTimeTask } from "@/lib/db/types";
 import { normalizeMemoTitle } from "@/components/tasks/memo-title";
+import { patchOneTimeTask, saveOneTimeTask } from "@/lib/sync/mutate-synced";
 
 function sortMemos(tasks: OneTimeTask[]): OneTimeTask[] {
   return [...tasks].sort((a, b) => {
@@ -101,7 +102,7 @@ export function useOneTimeTasks(dateString: string) {
           synced_at: null,
           deleted_at: null,
         };
-        await db.oneTimeTasks.add(task);
+        await saveOneTimeTask(task);
         setOneTimeTasks((prev) => sortMemos([...prev, task]));
         return true;
       } catch (error) {
@@ -124,7 +125,7 @@ export function useOneTimeTasks(dateString: string) {
         )
       )
     );
-    await db.oneTimeTasks.update(task.id, {
+    await patchOneTimeTask(task.id, {
       is_completed: newVal,
       date: completedDate,
       updated_at: now(),
@@ -137,7 +138,7 @@ export function useOneTimeTasks(dateString: string) {
     setArchivedMemos((prev) => prev.filter((t) => t.id !== taskId));
     // Soft delete so the next push can sync deletion to Supabase; a hard delete
     // leaves the row on the server and full pull brings it back.
-    await db.oneTimeTasks.update(taskId, { deleted_at: n, updated_at: n });
+    await patchOneTimeTask(taskId, { deleted_at: n, updated_at: n });
   }, []);
 
   const updateOneTimeTask = useCallback(
@@ -162,7 +163,7 @@ export function useOneTimeTasks(dateString: string) {
             prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t))
           )
         );
-        await db.oneTimeTasks.update(taskId, updates);
+        await patchOneTimeTask(taskId, updates);
         return true;
       } catch (error) {
         console.error("Error updating one-time task:", error);

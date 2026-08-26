@@ -23,6 +23,7 @@ import {
   FormStack,
 } from "@/components/forms";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
+import { patchActivity, saveActivity } from "@/lib/sync/mutate-synced";
 
 interface ActivityDialogFormProps {
   open: boolean;
@@ -106,7 +107,7 @@ export function ActivityDialogForm({
       setError(null);
 
       if (isEditing && activity) {
-        await db.activities.update(activity.id, {
+        await patchActivity(activity.id, {
           name: payload.name,
           routine: payload.routine,
           completion_target: payload.completion_target,
@@ -115,44 +116,42 @@ export function ActivityDialogForm({
       } else {
         const timestamp = now();
         const activityId = newId();
-        await db.transaction("rw", db.activities, async () => {
-          const shouldAssignOrderIndex = isScheduledRoutine(payload.routine);
-          let nextOrderIndex: number | null = null;
+        const shouldAssignOrderIndex = isScheduledRoutine(payload.routine);
+        let nextOrderIndex: number | null = null;
 
-          if (shouldAssignOrderIndex) {
-            const scheduledActivities = await db.activities
-              .filter(
-                (item) =>
-                  !isActivityArchived(item) &&
-                  !item.deleted_at &&
-                  isScheduledRoutine(item.routine ?? "")
-              )
-              .toArray();
+        if (shouldAssignOrderIndex) {
+          const scheduledActivities = await db.activities
+            .filter(
+              (item) =>
+                !isActivityArchived(item) &&
+                !item.deleted_at &&
+                isScheduledRoutine(item.routine ?? "")
+            )
+            .toArray();
 
-            const maxOrderIndex = scheduledActivities.reduce(
-              (max, item) =>
-                typeof item.order_index === "number"
-                  ? Math.max(max, item.order_index)
-                  : max,
-              -1
-            );
-            nextOrderIndex = maxOrderIndex + 1;
-          }
+          const maxOrderIndex = scheduledActivities.reduce(
+            (max, item) =>
+              typeof item.order_index === "number"
+                ? Math.max(max, item.order_index)
+                : max,
+            -1
+          );
+          nextOrderIndex = maxOrderIndex + 1;
+        }
 
-          await db.activities.add({
-            id: activityId,
-            group_id: group.id,
-            name: payload.name,
-            routine: payload.routine,
-            completion_target: payload.completion_target,
-            is_archived: false,
-            completed_at: null,
-            order_index: nextOrderIndex,
-            created_at: timestamp,
-            updated_at: timestamp,
-            synced_at: null,
-            deleted_at: null,
-          });
+        await saveActivity({
+          id: activityId,
+          group_id: group.id,
+          name: payload.name,
+          routine: payload.routine,
+          completion_target: payload.completion_target,
+          is_archived: false,
+          completed_at: null,
+          order_index: nextOrderIndex,
+          created_at: timestamp,
+          updated_at: timestamp,
+          synced_at: null,
+          deleted_at: null,
         });
       }
 

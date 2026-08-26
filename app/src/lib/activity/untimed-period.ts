@@ -1,7 +1,8 @@
-import { db, now, newId } from "@/lib/db";
+import { db, now } from "@/lib/db";
 import type { Activity, ActivityPeriod } from "@/lib/db/types";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { isHiddenGroupDefaultActivity } from "@/lib/activity/hidden-default";
+import { naturalUntimedPeriodIdForDay } from "@/lib/sync/natural-ids";
 import {
   calendarDatesOverlappingEffectiveDay,
   effectiveDayEndMs,
@@ -286,7 +287,7 @@ async function ensureUntimedCompletionPeriodImpl(
   const completedAt = completionIsoForLogicalDay(dateString);
   await db.activityPeriods.add(
     buildUntimedPeriod({
-      id: newId(),
+      id: naturalUntimedPeriodIdForDay(dateString, activityId),
       dailyEntryId: entry.id,
       activityId,
       completedAt,

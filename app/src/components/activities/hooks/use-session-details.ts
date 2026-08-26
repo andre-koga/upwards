@@ -24,16 +24,23 @@ import {
   timeToSeconds,
   fromDateString,
 } from "@/lib/time-utils";
-import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
-import { resolveClosedSessionTimes, isUntimedPeriod } from "@/lib/activity/untimed-period";
+import {
+  resolveClosedSessionTimes,
+  isUntimedPeriod,
+} from "@/lib/activity/untimed-period";
 import {
   getEffectiveToday,
   getDayResetMinutes,
   formatResetMinutes,
 } from "@/lib/session/day-reset";
 import { useTranslation } from "react-i18next";
+import {
+  getOrCreateDailyEntryProjection,
+  patchTimedPeriod,
+  setCurrentActivityLocal,
+} from "@/lib/sync/mutate-synced";
 
 const NONE_ACTIVITY_VALUE = "__none__";
 
@@ -160,7 +167,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const handleDelete = useCallback(async () => {
     if (!sessionId) return;
     try {
-      await db.activityPeriods.update(sessionId, {
+      await patchTimedPeriod(sessionId, {
         deleted_at: now(),
         updated_at: now(),
       });
@@ -223,10 +230,10 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       const entryDateString = effectiveDateForMs(
         new Date(nextStartIso).getTime()
       );
-      const entry = await getOrCreateDailyEntry(entryDateString);
+      const entry = await getOrCreateDailyEntryProjection(entryDateString);
       const n = now();
 
-      await db.activityPeriods.update(sessionId, {
+      await patchTimedPeriod(sessionId, {
         activity_id: nextActivityId,
         daily_entry_id: entry.id,
         start_time: nextStartIso,
@@ -236,15 +243,14 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       });
 
       if (isRunning) {
-        await db.dailyEntries.update(entry.id, {
-          current_activity_id: nextActivityId,
-          updated_at: n,
-        });
+        await setCurrentActivityLocal(entryDateString, nextActivityId);
         if (details.period.daily_entry_id !== entry.id) {
-          await db.dailyEntries.update(details.period.daily_entry_id, {
-            current_activity_id: null,
-            updated_at: n,
-          });
+          const oldEntry =
+            details.entry ??
+            (await db.dailyEntries.get(details.period.daily_entry_id));
+          if (oldEntry) {
+            await setCurrentActivityLocal(oldEntry.date, null);
+          }
         }
       }
 

@@ -21,7 +21,10 @@ import {
   effectiveDateForMs,
 } from "@/lib/activity/period-day-utils";
 import { isActivityDateEditable } from "@/lib/journal/editable-window";
-import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
+import {
+  getOrCreateDailyEntryProjection,
+  saveTimedPeriod,
+} from "@/lib/sync/mutate-synced";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
 import {
   adoptUntimedPeriodForSession,
@@ -474,7 +477,7 @@ export function useDailyTasks({
       const { activityId, startIso, endIso, note } = params;
       const createdAt = now();
       const entryDateString = effectiveDateForMs(new Date(startIso).getTime());
-      const dailyEntry = await getOrCreateDailyEntryDb(entryDateString);
+      const dailyEntry = await getOrCreateDailyEntryProjection(entryDateString);
 
       const adopted = await adoptUntimedPeriodForSession({
         activityId,
@@ -497,7 +500,7 @@ export function useDailyTasks({
           synced_at: null,
           deleted_at: null,
         };
-        await db.activityPeriods.add(period);
+        await saveTimedPeriod(period);
       }
 
       await loadActivityPeriods();

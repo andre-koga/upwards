@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { db, now, newId } from "@/lib/db";
+import { db, now } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type {
   JournalEntry,
@@ -18,6 +18,8 @@ import {
   toJournalVideoPath,
   type JournalFields,
 } from "@/lib/journal";
+import { saveJournalEntry as persistSyncedJournal } from "@/lib/sync/mutate-synced";
+import { naturalJournalIdForDate } from "@/lib/sync/natural-ids";
 
 export type { JournalLocationRoute, LocationData, JournalFields };
 
@@ -181,17 +183,13 @@ export function useJournalEntry(currentDate: Date) {
             updated_at: n,
           };
 
-          await db.journalEntries.update(existing.id, {
-            ...fields,
-            ...completionMeta,
-            updated_at: n,
-          });
+          await persistSyncedJournal(updatedEntry, existing.updated_at);
 
           setJournalEntry(updatedEntry);
           await propagateJournalCompletionStreaksAfterSave(dateStr);
         } else {
           const entry: JournalEntry = {
-            id: newId(),
+            id: naturalJournalIdForDate(dateStr),
             entry_date: dateStr,
             ...fields,
             ...completionMeta,
@@ -200,7 +198,7 @@ export function useJournalEntry(currentDate: Date) {
             synced_at: null,
             deleted_at: null,
           };
-          await db.journalEntries.add(entry);
+          await persistSyncedJournal(entry);
           setJournalEntry(entry);
           await propagateJournalCompletionStreaksAfterSave(dateStr);
         }

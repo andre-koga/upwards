@@ -8,6 +8,10 @@ import type {
   GroupStatusType,
 } from "@/lib/db/types";
 import { endOfDay, shiftDate, startOfDay } from "@/lib/time-utils";
+import {
+  saveActivityStatusEvent,
+  saveGroupStatusEvent,
+} from "@/lib/sync/mutate-synced";
 
 export type { ActivityStatusType, GroupStatusType };
 
@@ -145,7 +149,7 @@ export async function appendActivityStatusEvent(
     synced_at: null,
     deleted_at: null,
   };
-  await db.activityStatusEvents.add(event);
+  await saveActivityStatusEvent(event);
 }
 
 export async function appendGroupStatusEvent(
@@ -166,7 +170,7 @@ export async function appendGroupStatusEvent(
     synced_at: null,
     deleted_at: null,
   };
-  await db.groupStatusEvents.add(event);
+  await saveGroupStatusEvent(event);
 }
 
 export async function loadAllActivityStatusEvents(): Promise<

@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { db, now } from "@/lib/db";
+import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import { isActiveGroup, isActivityArchived, formatTimerDisplay } from "@/lib/activity";
+import {
+  isActiveGroup,
+  isActivityArchived,
+  formatTimerDisplay,
+} from "@/lib/activity";
 import {
   FormDialog,
   FormDialogActions,
@@ -10,6 +14,7 @@ import {
   FormSelectField,
   FormStack,
 } from "@/components/forms";
+import { patchTimedPeriod } from "@/lib/sync/mutate-synced";
 
 interface AssignActivityDialogProps {
   periodId: string;
@@ -101,10 +106,8 @@ function AssignActivityDialogContent({
     try {
       setSaving(true);
       setError(null);
-      const timestamp = now();
-      await db.activityPeriods.update(periodId, {
+      await patchTimedPeriod(periodId, {
         activity_id: selectedActivityId,
-        updated_at: timestamp,
         synced_at: null, // Force re-push so assignment persists after sync
       });
       onSuccess();

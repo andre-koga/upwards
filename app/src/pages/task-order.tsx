@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { SettingsSection } from "@/components/ui/settings-section";
+import { patchActivity } from "@/lib/sync/mutate-synced";
 
 function compareActivities(left: Activity, right: Activity): number {
   const leftOrder =
@@ -85,16 +86,14 @@ export default function TaskOrderPage() {
   const persistOrder = useCallback(async (nextActivities: Activity[]) => {
     const updatedAt = now();
 
-    await db.transaction("rw", db.activities, async () => {
-      await Promise.all(
-        nextActivities.map((activity, index) =>
-          db.activities.update(activity.id, {
-            order_index: index,
-            updated_at: updatedAt,
-          })
-        )
-      );
-    });
+    await Promise.all(
+      nextActivities.map((activity, index) =>
+        patchActivity(activity.id, {
+          order_index: index,
+          updated_at: updatedAt,
+        })
+      )
+    );
   }, []);
 
   const moveItem = useCallback(

@@ -43,13 +43,16 @@ vi.mock("@/lib/db", () => ({
         first: async () => oneTimeTasks.find(predicate),
         toArray: async () => oneTimeTasks.filter(predicate),
       }),
-      add: async (task: OneTimeTask) => {
-        oneTimeTasks.push(task);
-      },
     },
   },
   newId: () => `task-${++idCounter}`,
   now: () => "2026-06-28T12:00:00.000Z",
+}));
+
+vi.mock("@/lib/sync/mutate-synced", () => ({
+  saveOneTimeTask: async (task: OneTimeTask) => {
+    oneTimeTasks.push(task);
+  },
 }));
 
 import { spawnRecurringMemosForToday } from "./spawn-recurring-memos";

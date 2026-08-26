@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Archive } from "lucide-react";
-import { db, now } from "@/lib/db";
+import { now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
 import { GroupDialogForm } from "@/components/activities/group-dialog-form";
 import { ArchiveGroupDialog } from "@/components/activities/archive-group-dialog";
 import { Button } from "@/components/ui/button";
+import { patchActivityGroup } from "@/lib/sync/mutate-synced";
 
 interface EditGroupDialogProps {
   open: boolean;
@@ -61,7 +62,7 @@ export function EditGroupDialog({
             color,
             updated_at: updatedAt,
           };
-          await db.activityGroups.update(group.id, {
+          await patchActivityGroup(group.id, {
             name,
             emoji: null,
             color,

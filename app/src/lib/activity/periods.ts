@@ -1,4 +1,5 @@
 import { db, now } from "@/lib/db";
+import { patchTimedPeriod } from "@/lib/sync/mutate-synced";
 
 const MIN_SESSION_DURATION_MS = 5000;
 
@@ -26,20 +27,20 @@ export async function closeOpenPeriods(entryId: string): Promise<void> {
         const convertedFromUntimed =
           !!period.note || period.created_at !== period.start_time;
         if (convertedFromUntimed) {
-          return db.activityPeriods.update(period.id, {
+          return patchTimedPeriod(period.id, {
             start_time: period.created_at,
             end_time: period.created_at,
             updated_at: n,
           });
         }
-        return db.activityPeriods.update(period.id, {
+        return patchTimedPeriod(period.id, {
           end_time: n,
           updated_at: n,
           deleted_at: n,
         });
       }
 
-      return db.activityPeriods.update(period.id, {
+      return patchTimedPeriod(period.id, {
         end_time: n,
         updated_at: n,
       });

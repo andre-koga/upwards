@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { db, now, newId } from "@/lib/db";
+import { now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 import { closeOpenPeriods } from "@/lib/activity";
 import { clipPeriodToDay } from "@/lib/activity/period-day-utils";
@@ -8,6 +8,10 @@ import {
   dedupeUntimedCompletionsForDay,
   fetchActivityPeriodsForDay,
 } from "@/lib/activity/untimed-period";
+import {
+  saveTimedPeriod,
+  setCurrentActivityLocal,
+} from "@/lib/sync/mutate-synced";
 
 export function useActivityTracking(
   dateString: string,
@@ -98,12 +102,9 @@ export function useActivityTracking(
             synced_at: null,
             deleted_at: null,
           };
-          await db.activityPeriods.add(newPeriod);
+          await saveTimedPeriod(newPeriod);
         }
-        await db.dailyEntries.update(entry.id, {
-          current_activity_id: activityId,
-          updated_at: n,
-        });
+        await setCurrentActivityLocal(dateString, activityId);
 
         setCurrentActivityId(activityId);
         await loadActivityPeriods();
@@ -122,22 +123,23 @@ export function useActivityTracking(
 
   const handleStopActivity = useCallback(async () => {
     try {
-      const n = now();
       const entry = await getOrCreateDailyEntry();
 
       await closeOpenPeriods(entry.id);
 
-      await db.dailyEntries.update(entry.id, {
-        current_activity_id: null,
-        updated_at: n,
-      });
+      await setCurrentActivityLocal(dateString, null);
 
       setCurrentActivityId(null);
       await loadActivityPeriods();
     } catch (error) {
       console.error("Error stopping activity:", error);
     }
-  }, [getOrCreateDailyEntry, setCurrentActivityId, loadActivityPeriods]);
+  }, [
+    getOrCreateDailyEntry,
+    setCurrentActivityId,
+    loadActivityPeriods,
+    dateString,
+  ]);
 
   return {
     activityPeriods,
