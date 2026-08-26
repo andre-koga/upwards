@@ -223,7 +223,9 @@ pending queue), submit those ops in bounded batches, then snapshot. That
 enqueue is one-shot. Repeating it every cycle mints new `operation_id`s for
 the same rows and grows the Waiting to sync list without bound. Duplicate
 pending `projection.upsert`s for the same entity are collapsed to the newest
-row before submit.
+row before submit. Submit applies each op in its own subtransaction so one
+foreign-key or cast error cannot abort the rest of the batch. Timed period
+upserts create a `daily_entries` shell when the parent row is missing.
 
 Local mutations:
 

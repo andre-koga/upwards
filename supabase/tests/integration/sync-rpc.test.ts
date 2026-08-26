@@ -284,6 +284,89 @@ describe("sync RPC integration", () => {
     expect(period).toBeNull();
   });
 
+  it("applies a timed period by creating missing daily_entry and activity shells", async () => {
+    const periodId = newId();
+    const activityId = newId();
+    const dailyId = newId();
+
+    const result = await submitOps(user.deviceA, [
+      projectionUpsertOp({
+        deviceId: DEVICE_A,
+        entityType: "activity_period",
+        entityId: periodId,
+        row: {
+          daily_entry_id: dailyId,
+          activity_id: activityId,
+          start_time: "2026-08-25T15:00:00.000Z",
+          end_time: "2026-08-25T15:30:00.000Z",
+          created_at: "2026-08-25T15:00:00.000Z",
+          updated_at: "2026-08-25T15:30:00.000Z",
+        },
+      }),
+    ]);
+    expect(result[0]?.status).toBe("accepted");
+
+    const { data: period, error: periodError } = await user.deviceA
+      .from("activity_periods")
+      .select("id, daily_entry_id, activity_id")
+      .eq("id", periodId)
+      .maybeSingle();
+    if (periodError) throw periodError;
+    expect(period?.activity_id).toBe(activityId);
+
+    const { data: daily, error: dailyError } = await user.deviceA
+      .from("daily_entries")
+      .select("id, date")
+      .eq("id", period?.daily_entry_id)
+      .maybeSingle();
+    if (dailyError) throw dailyError;
+    expect(daily).not.toBeNull();
+  });
+
+  it("returns error for a bad op without aborting the rest of the batch", async () => {
+    const goodId = newId();
+    const badPeriodId = newId();
+    const results = await submitOps(user.deviceA, [
+      projectionUpsertOp({
+        deviceId: DEVICE_A,
+        entityType: "activity",
+        entityId: goodId,
+        row: {
+          name: "Keep me",
+          routine: "daily",
+          created_at: "2026-08-25T10:00:00.000Z",
+          updated_at: "2026-08-25T10:00:00.000Z",
+        },
+      }),
+      {
+        operation_id: newId(),
+        device_id: DEVICE_A,
+        entity_type: "activity_period",
+        entity_id: badPeriodId,
+        operation_type: "projection.upsert",
+        payload: {
+          row: {
+            daily_entry_id: "not-a-uuid",
+            activity_id: goodId,
+            start_time: "2026-08-25T15:00:00.000Z",
+            end_time: "2026-08-25T15:30:00.000Z",
+          },
+        },
+      },
+    ]);
+    expect(results.map((row) => row.status).sort()).toEqual([
+      "accepted",
+      "error",
+    ]);
+    const { data: activity, error } = await user.deviceA
+      .from("activities")
+      .select("id")
+      .eq("id", goodId)
+      .maybeSingle();
+    if (error) throw error;
+    expect(activity?.id).toBe(goodId);
+  });
+
   it("returns a snapshot of current projections for bootstrap", async () => {
     const activityId = newId();
     const accepted = await submitOps(user.deviceA, [

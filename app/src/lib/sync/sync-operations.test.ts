@@ -378,6 +378,126 @@ describe("pushPendingOperations", () => {
     );
   });
 
+  it("marks apply errors failed without aborting other ops in the batch", async () => {
+    pendingOps.push(
+      makePending({ operation_id: "op-ok", id: "row-ok" }),
+      makePending({
+        operation_id: "op-bad",
+        id: "row-bad",
+        entity_type: "activity_period",
+        operation_type: "projection.upsert",
+      })
+    );
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-ok",
+          status: "accepted",
+          server_sequence: 20,
+        },
+        {
+          operation_id: "op-bad",
+          status: "error",
+          server_sequence: 0,
+          detail:
+            'insert or update on table "activity_periods" violates foreign key constraint',
+        },
+      ],
+      error: null,
+    });
+
+    const result = await pushPendingOperations();
+    expect(result).toEqual({ failed: false, maxSequence: 20 });
+    expect(pendingOps.find((row) => row.id === "row-ok")?.status).toBe("acked");
+    expect(pendingOps.find((row) => row.id === "row-bad")?.status).toBe(
+      "failed"
+    );
+    expect(pendingOps.find((row) => row.id === "row-bad")?.last_error).toMatch(
+      /foreign key/
+    );
+  });
+
+  it("submits parent entities before activity periods", async () => {
+    pendingOps.push(
+      makePending({
+        operation_id: "op-period",
+        id: "row-period",
+        entity_type: "activity_period",
+        operation_type: "projection.upsert",
+        created_at: "2026-08-01T10:00:00.000Z",
+      }),
+      makePending({
+        operation_id: "op-activity",
+        id: "row-activity",
+        entity_type: "activity",
+        operation_type: "projection.upsert",
+        created_at: "2026-08-01T11:00:00.000Z",
+      })
+    );
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-activity",
+          status: "accepted",
+          server_sequence: 1,
+        },
+        {
+          operation_id: "op-period",
+          status: "accepted",
+          server_sequence: 2,
+        },
+      ],
+      error: null,
+    });
+
+    await pushPendingOperations();
+    expect(
+      rpcMock.mock.calls[0][1].ops.map(
+        (op: { operation_id: string }) => op.operation_id
+      )
+    ).toEqual(["op-activity", "op-period"]);
+  });
+
+  it("retries a failed batch one op at a time", async () => {
+    pendingOps.push(
+      makePending({ operation_id: "op-a", id: "row-a" }),
+      makePending({ operation_id: "op-b", id: "row-b" })
+    );
+    rpcMock
+      .mockResolvedValueOnce({
+        data: null,
+        error: {
+          message:
+            "insert or update on table activity_periods violates foreign key constraint",
+        },
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            operation_id: "op-a",
+            status: "accepted",
+            server_sequence: 1,
+          },
+        ],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            operation_id: "op-b",
+            status: "accepted",
+            server_sequence: 2,
+          },
+        ],
+        error: null,
+      });
+
+    const result = await pushPendingOperations();
+    expect(result).toEqual({ failed: false, maxSequence: 2 });
+    expect(rpcMock).toHaveBeenCalledTimes(3);
+    expect(pendingOps.every((row) => row.status === "acked")).toBe(true);
+  });
+
   it("collapses duplicate projection upserts before submit", async () => {
     pendingOps.push(
       makePending({
