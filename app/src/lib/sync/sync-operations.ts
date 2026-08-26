@@ -45,8 +45,9 @@ export interface SubmitSyncOperationInput {
 
 export interface SubmitSyncOperationResult {
   operation_id: string;
-  status: "accepted" | "duplicate" | "conflict" | string;
+  status: "accepted" | "duplicate" | "conflict" | "error" | string;
   server_sequence: number;
+  detail?: string;
 }
 
 export interface RemoteSyncOperation {
@@ -543,6 +544,17 @@ async function submitPendingOperationBatch(
       continue;
     }
 
+    if (result.status === "error") {
+      await markOperationFailed(
+        local.id,
+        result.detail && result.detail.length > 0
+          ? result.detail
+          : "Server rejected this change"
+      );
+      settled += 1;
+      continue;
+    }
+
     if (result.status === "conflict") {
       let conflictPayload: unknown = local.payload;
       let title = "Sync conflict";
@@ -644,6 +656,28 @@ async function submitPendingOperationBatch(
   };
 }
 
+/** Parents before children so a cutover batch does not FK-fail periods first. */
+const SUBMIT_ENTITY_PRIORITY: Record<string, number> = {
+  activity_group: 0,
+  activity: 1,
+  recurring_memo: 2,
+  journal_entry: 3,
+  one_time_task: 4,
+  activity_status_event: 5,
+  group_status_event: 6,
+  activity_period: 7,
+};
+
+export function comparePendingForSubmit(
+  a: { entity_type: string; created_at: string },
+  b: { entity_type: string; created_at: string }
+): number {
+  const ao = SUBMIT_ENTITY_PRIORITY[a.entity_type] ?? 40;
+  const bo = SUBMIT_ENTITY_PRIORITY[b.entity_type] ?? 40;
+  if (ao !== bo) return ao - bo;
+  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+}
+
 export async function pushPendingOperations(): Promise<PushPendingOperationsResult> {
   if (!supabase) return { failed: false, skipped: true };
 
@@ -662,18 +696,45 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
 
     const batch = pending
       .slice()
-      .sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      )
+      .sort(comparePendingForSubmit)
       .slice(0, SUBMIT_SYNC_BATCH_SIZE);
 
     const result = await submitPendingOperationBatch(batch);
     if (result.skipped) return { failed: false, skipped: true };
+    if (result.failed && result.transient) {
+      return {
+        failed: true,
+        transient: true,
+        ...(maxSequence != null ? { maxSequence } : {}),
+      };
+    }
+    if (result.failed && batch.length > 1) {
+      let anyAcked = false;
+      for (const row of batch) {
+        const one = await submitPendingOperationBatch([row]);
+        if (one.skipped) return { failed: false, skipped: true };
+        if (one.failed && one.transient) {
+          return {
+            failed: true,
+            transient: true,
+            ...(maxSequence != null ? { maxSequence } : {}),
+          };
+        }
+        if (one.failed) continue;
+        anyAcked = true;
+        maxSequence = maxServerSequence([maxSequence, one.maxSequence]);
+      }
+      if (!anyAcked) {
+        return {
+          failed: true,
+          ...(maxSequence != null ? { maxSequence } : {}),
+        };
+      }
+      continue;
+    }
     if (result.failed) {
       return {
         failed: true,
-        transient: result.transient,
         ...(maxSequence != null ? { maxSequence } : {}),
       };
     }
