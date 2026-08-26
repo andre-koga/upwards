@@ -14,6 +14,7 @@ import {
   type JournalArchiveItem,
   type JournalArchiveMapPin,
 } from "@/lib/journal/archive";
+import { reconcileAllJournalDuplicates } from "@/lib/journal/dedupe-by-date";
 import type { LocaleValue } from "@/lib/i18n/locale-storage";
 import { logError } from "@/lib/error-utils";
 
@@ -35,6 +36,7 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
 
   const loadEntries = useCallback(async () => {
     try {
+      await reconcileAllJournalDuplicates();
       const rows = await db.journalEntries
         .filter((e) => journalEntryHasContent(e))
         .toArray();

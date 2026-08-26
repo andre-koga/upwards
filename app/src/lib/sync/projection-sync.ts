@@ -11,6 +11,7 @@ import { listOpenConflictEntityIds, recordSyncIssue } from "./sync-issues-store"
 import { hasPendingOperationForEntity } from "./unsynced-data";
 import { buildProjectionConflictPayloadFromOp } from "./projection-conflict-resolution";
 import { maybeRecordTimelineOverlapInfo } from "./timeline-overlap";
+import { reconcileJournalDuplicatesForDate } from "@/lib/journal/dedupe-by-date";
 
 /** Tables whose rows sync exclusively via the operation stream when RPCs are live. */
 export const OPS_MANAGED_SYNC_TABLES: SyncTable[] = [
@@ -197,6 +198,15 @@ export async function applyAcceptedProjectionOp(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db[dexieKey] as any).put(normalized);
+
+  if (op.entity_type === "journal_entry") {
+    const entryDate = normalized.entry_date;
+    if (typeof entryDate === "string") {
+      await reconcileJournalDuplicatesForDate(entryDate, {
+        preferredId: entityId,
+      });
+    }
+  }
 
   if (
     op.entity_type === "activity_period" &&

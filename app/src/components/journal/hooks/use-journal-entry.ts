@@ -9,9 +9,11 @@ import type {
 import {
   getCompletionMetadata,
   isJournalCalendarDateEditable,
+  journalEntryFieldsHaveContent,
   normalizeJournalLocationRoute,
   parseJournalLocationRoute,
   propagateJournalCompletionStreaksAfterSave,
+  reconcileJournalDuplicatesForDate,
   serializeJournalLocationRoute,
   toJournalVideoPath,
   type JournalFields,
@@ -87,12 +89,18 @@ export function useJournalEntry(currentDate: Date) {
           };
         }
 
-        const entry = await db.journalEntries
+        const entries = await db.journalEntries
           .where("entry_date")
           .equals(dateStr)
           .filter((e) => !e.deleted_at)
-          .first();
-        setJournalEntry(entry ?? null);
+          .toArray();
+        const entry =
+          entries.length > 1
+            ? await reconcileJournalDuplicatesForDate(dateStr, {
+                suppressSync: true,
+              })
+            : (entries[0] ?? null);
+        setJournalEntry(entry);
       } catch (error) {
         console.error("Error loading journal entry:", error);
       }
@@ -138,11 +146,25 @@ export function useJournalEntry(currentDate: Date) {
       const dateStr = toDateString(currentDate);
       const n = now();
       try {
-        const existing = await db.journalEntries
-          .where("entry_date")
-          .equals(dateStr)
-          .filter((e) => !e.deleted_at)
-          .first();
+        let existing =
+          (await reconcileJournalDuplicatesForDate(dateStr, {
+            suppressSync: true,
+          })) ?? undefined;
+
+        if (
+          !existing &&
+          !journalEntryFieldsHaveContent({
+            title: fields.title,
+            text_content: fields.text_content,
+            day_emoji: fields.day_emoji,
+            video_path: fields.video_path,
+            photo_paths: fields.photo_paths,
+            location: fields.location,
+            is_bookmarked: fields.is_bookmarked,
+          })
+        ) {
+          return;
+        }
 
         const completionMeta = await getCompletionMetadata(
           dateStr,

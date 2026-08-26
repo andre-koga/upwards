@@ -29,6 +29,7 @@ import {
   withSuppressedProjectionEnqueue,
 } from "./projection-sync";
 import { tombstoneUntimedPeriodsForActivityOnDay } from "@/lib/activity/untimed-period";
+import { reconcileAllJournalDuplicates } from "@/lib/journal/dedupe-by-date";
 
 export interface SubmitSyncOperationInput {
   operation_id: string;
@@ -734,6 +735,8 @@ export async function pullAndApplyOperations(
       );
     }
   }
+
+  await reconcileAllJournalDuplicates();
 
   return {
     maxSequence: maxServerSequence([
