@@ -7,6 +7,8 @@ export const REMOTE_DEBOUNCE_SYNC_MS = 1_000;
 export const DEFAULT_PERIODIC_SYNC_MS = 5 * 60_000;
 /** Avoid infinite resync loops if something keeps marking rows dirty unexpectedly. */
 export const MAX_CHAINED_SYNCS = 25;
+/** Submit pending ops in chunks so a large cutover queue cannot stall the RPC. */
+export const SUBMIT_SYNC_BATCH_SIZE = 50;
 
 export const SYNC_TABLES: SyncTable[] = [
   "activity_groups",

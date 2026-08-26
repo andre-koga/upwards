@@ -49,6 +49,7 @@ import {
   markOperationRetryableError,
   requeueFailedOperations,
   discardPendingOperation,
+  collapseDuplicatePendingProjectionUpserts,
 } from "./pending-operations";
 
 describe("pending-operations", () => {
@@ -164,5 +165,87 @@ describe("pending-operations", () => {
     const count = await reportOpsUnavailablePending();
     expect(count).toBe(1);
     expect(pendingOps.every((row) => row.status === "pending")).toBe(true);
+  });
+
+  it("collapseDuplicatePendingProjectionUpserts keeps the newest upsert per entity", async () => {
+    await enqueuePendingOperation({
+      operation_id: "op-old",
+      device_id: "device-1",
+      entity_type: "activity",
+      entity_id: "act-1",
+      operation_type: "projection.upsert",
+      payload: { row: { name: "old" } },
+    });
+    pendingOps[0].created_at = "2026-08-01T10:00:00.000Z";
+    await enqueuePendingOperation({
+      operation_id: "op-new",
+      device_id: "device-1",
+      entity_type: "activity",
+      entity_id: "act-1",
+      operation_type: "projection.upsert",
+      payload: { row: { name: "new" } },
+    });
+    pendingOps[1].created_at = "2026-08-01T11:00:00.000Z";
+    await enqueuePendingOperation({
+      operation_id: "op-other",
+      device_id: "device-1",
+      entity_type: "activity",
+      entity_id: "act-2",
+      operation_type: "projection.upsert",
+      payload: {},
+    });
+    await enqueuePendingOperation({
+      operation_id: "op-delta",
+      device_id: "device-1",
+      entity_type: "daily_entry",
+      entity_id: "act-1",
+      operation_type: "count.delta",
+      payload: { delta: 1 },
+    });
+
+    const discarded = await collapseDuplicatePendingProjectionUpserts();
+    expect(discarded).toBe(1);
+    expect(pendingOps.find((row) => row.operation_id === "op-old")?.status).toBe(
+      "discarded"
+    );
+    expect(pendingOps.find((row) => row.operation_id === "op-new")?.status).toBe(
+      "pending"
+    );
+    expect(
+      pendingOps.find((row) => row.operation_id === "op-other")?.status
+    ).toBe("pending");
+    expect(
+      pendingOps.find((row) => row.operation_id === "op-delta")?.status
+    ).toBe("pending");
+  });
+
+  it("requeues a failed newest upsert when collapsing duplicates", async () => {
+    await enqueuePendingOperation({
+      operation_id: "op-old",
+      device_id: "device-1",
+      entity_type: "one_time_task",
+      entity_id: "task-1",
+      operation_type: "projection.upsert",
+      payload: {},
+    });
+    pendingOps[0].created_at = "2026-08-01T10:00:00.000Z";
+    const newest = await enqueuePendingOperation({
+      operation_id: "op-new",
+      device_id: "device-1",
+      entity_type: "one_time_task",
+      entity_id: "task-1",
+      operation_type: "projection.upsert",
+      payload: {},
+    });
+    pendingOps[1].created_at = "2026-08-01T11:00:00.000Z";
+    await markOperationFailed(newest.id, "payload too large");
+
+    await collapseDuplicatePendingProjectionUpserts();
+    expect(pendingOps.find((row) => row.operation_id === "op-old")?.status).toBe(
+      "discarded"
+    );
+    expect(pendingOps.find((row) => row.operation_id === "op-new")?.status).toBe(
+      "pending"
+    );
   });
 });

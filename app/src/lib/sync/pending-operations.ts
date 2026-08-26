@@ -148,3 +148,46 @@ export async function discardPendingOperation(id: string): Promise<void> {
     updated_at: now(),
   });
 }
+
+/**
+ * Cutover / retry storms can enqueue many projection.upserts for the same row.
+ * Keep the newest pending or failed upsert per entity; discard the rest.
+ */
+export async function collapseDuplicatePendingProjectionUpserts(): Promise<number> {
+  const rows = (await listPendingOperations()).filter(
+    (row) =>
+      row.operation_type === "projection.upsert" &&
+      (row.status === "pending" || row.status === "failed") &&
+      typeof row.entity_id === "string" &&
+      row.entity_id.length > 0
+  );
+  const groups = new Map<string, SyncPendingOperation[]>();
+  for (const row of rows) {
+    const key = `${row.entity_type}:${row.entity_id}`;
+    const list = groups.get(key) ?? [];
+    list.push(row);
+    groups.set(key, list);
+  }
+
+  let discarded = 0;
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    group.sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    const keep = group[group.length - 1]!;
+    for (const extra of group) {
+      if (extra.id === keep.id) continue;
+      await discardPendingOperation(extra.id);
+      discarded += 1;
+    }
+    if (keep.status === "failed") {
+      await db.syncPendingOperations.update(keep.id, {
+        status: "pending",
+        updated_at: now(),
+      });
+    }
+  }
+  return discarded;
+}

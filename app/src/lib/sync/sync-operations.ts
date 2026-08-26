@@ -8,12 +8,14 @@ import { supabase, getCachedUserId } from "@/lib/supabase";
 import { DEFINITION_SCHEMA_VERSION } from "@/lib/activity/definition-versions";
 import { getOrCreateDeviceId } from "./device-id";
 import {
+  collapseDuplicatePendingProjectionUpserts,
   listPendingOperations,
   markOperationAcked,
   markOperationFailed,
   markOperationRetryableError,
   requeueFailedOperations,
 } from "./pending-operations";
+import { SUBMIT_SYNC_BATCH_SIZE } from "./sync-constants";
 import { recordSyncIssue } from "./sync-issues-store";
 import { isTransientNetworkError } from "@/lib/error-utils";
 import {
@@ -495,24 +497,12 @@ export async function applyAcceptedDailyEntryOp(
   }
 }
 
-export async function pushPendingOperations(): Promise<PushPendingOperationsResult> {
+async function submitPendingOperationBatch(
+  pending: Awaited<ReturnType<typeof listPendingOperations>>
+): Promise<PushPendingOperationsResult> {
   if (!supabase) return { failed: false, skipped: true };
 
-  await requeueFailedOperations();
-
-  const pending = await listPendingOperations({ status: "pending" });
-  if (pending.length === 0) {
-    return { failed: false };
-  }
-
-  const ops = pending
-    .slice()
-    .sort(
-      (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    )
-    .map(toSubmitSyncOperationInput);
-
+  const ops = pending.map(toSubmitSyncOperationInput);
   const { data, error } = await supabase.rpc("submit_sync_operations", {
     ops,
   });
@@ -541,6 +531,7 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
   const pendingByOperationId = new Map(
     pending.map((row) => [row.operation_id, row])
   );
+  let settled = 0;
 
   for (const result of results) {
     const local = pendingByOperationId.get(result.operation_id);
@@ -548,6 +539,7 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
 
     if (result.status === "accepted" || result.status === "duplicate") {
       await markOperationAcked(local.id);
+      settled += 1;
       continue;
     }
 
@@ -631,6 +623,7 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
         account_id: getCachedUserId(),
       });
       await markOperationAcked(local.id);
+      settled += 1;
       continue;
     }
 
@@ -638,12 +631,54 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
       local.id,
       `Unexpected sync status: ${result.status}`
     );
+    settled += 1;
+  }
+
+  if (pending.length > 0 && settled === 0) {
+    return { failed: true };
   }
 
   return {
     failed: false,
     maxSequence: maxServerSequence(results.map((r) => r.server_sequence)),
   };
+}
+
+export async function pushPendingOperations(): Promise<PushPendingOperationsResult> {
+  if (!supabase) return { failed: false, skipped: true };
+
+  await requeueFailedOperations();
+  await collapseDuplicatePendingProjectionUpserts();
+
+  let maxSequence: number | undefined;
+
+  while (true) {
+    const pending = await listPendingOperations({ status: "pending" });
+    if (pending.length === 0) {
+      return maxSequence == null
+        ? { failed: false }
+        : { failed: false, maxSequence };
+    }
+
+    const batch = pending
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      )
+      .slice(0, SUBMIT_SYNC_BATCH_SIZE);
+
+    const result = await submitPendingOperationBatch(batch);
+    if (result.skipped) return { failed: false, skipped: true };
+    if (result.failed) {
+      return {
+        failed: true,
+        transient: result.transient,
+        ...(maxSequence != null ? { maxSequence } : {}),
+      };
+    }
+    maxSequence = maxServerSequence([maxSequence, result.maxSequence]);
+  }
 }
 
 export async function pullAndApplyOperations(

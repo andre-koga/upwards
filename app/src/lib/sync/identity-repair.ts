@@ -11,8 +11,10 @@ import {
   naturalJournalIdForDate,
 } from "./natural-ids";
 import { pickPreferredJournalEntry } from "@/lib/journal/dedupe-by-date";
+import { listPendingEntityIds } from "./unsynced-data";
 
 const IDENTITY_REPAIR_KEY = "okhabit_natural_identity_repaired_v1";
+const CUTOVER_ENQUEUED_KEY = "okhabit_cutover_enqueued_v1";
 
 export function hasRepairedNaturalIdentity(): boolean {
   return localStorage.getItem(IDENTITY_REPAIR_KEY) === "1";
@@ -20,6 +22,18 @@ export function hasRepairedNaturalIdentity(): boolean {
 
 export function markNaturalIdentityRepaired(): void {
   localStorage.setItem(IDENTITY_REPAIR_KEY, "1");
+}
+
+export function hasEnqueuedCutoverRows(): boolean {
+  return localStorage.getItem(CUTOVER_ENQUEUED_KEY) === "1";
+}
+
+export function markCutoverRowsEnqueued(): void {
+  localStorage.setItem(CUTOVER_ENQUEUED_KEY, "1");
+}
+
+export function clearCutoverEnqueueFlag(): void {
+  localStorage.removeItem(CUTOVER_ENQUEUED_KEY);
 }
 
 async function remapDailyEntries(): Promise<void> {
@@ -150,6 +164,8 @@ async function dropLocalUntimedPeriods(): Promise<void> {
 }
 
 export async function enqueueUnsyncedCurrentStateRows(): Promise<void> {
+  if (hasEnqueuedCutoverRows()) return;
+  const pendingIds = await listPendingEntityIds();
   for (const table of OPS_MANAGED_SYNC_TABLES) {
     const dexieTable = TABLE_MAP[table];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -167,7 +183,11 @@ export async function enqueueUnsyncedCurrentStateRows(): Promise<void> {
         if (end && start === end) continue;
         if (isUntimedPeriod(start, end)) continue;
       }
+      const id = typeof row.id === "string" ? row.id : null;
+      if (id && pendingIds.has(id)) continue;
       await enqueueProjectionUpsertForTable(table, row, null);
+      if (id) pendingIds.add(id);
     }
   }
+  markCutoverRowsEnqueued();
 }

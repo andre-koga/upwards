@@ -217,6 +217,14 @@ New / empty device after pending push succeeds:
   → then only ops
 ```
 
+Existing devices cut over once: repair natural IDs, enqueue each unsynced
+current-state row as a `projection.upsert` (skipping ids already in the
+pending queue), submit those ops in bounded batches, then snapshot. That
+enqueue is one-shot. Repeating it every cycle mints new `operation_id`s for
+the same rows and grows the Waiting to sync list without bound. Duplicate
+pending `projection.upsert`s for the same entity are collapsed to the newest
+row before submit.
+
 Local mutations:
 
 1. Apply immediately via `mutateSynced`.
@@ -341,9 +349,11 @@ GitHub Actions owns those two jobs:
      `pull_sync_operations`, and `pull_sync_snapshot` with a real user JWT
      (not `service_role`).
 2. **Merge to `main`** (`.github/workflows/supabase-migrate.yml`)
-   - `supabase db push --project-ref` using repository secrets
-     `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`.
-   - Same-repo PRs that can see those secrets also dry-run `db push`.
+   - `supabase db push --project-ref --include-all` using repository secrets
+     `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`. `--include-all` is
+     required when a historical local migration is missing from remote
+     history; without it later migrations never apply.
+   - Same-repo PRs that can see those secrets also dry-run `db push --include-all`.
    - Never `db reset` production. Review migration SQL in the PR; CI applies
      whatever lands on `main`.
 

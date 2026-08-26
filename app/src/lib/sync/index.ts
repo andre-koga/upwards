@@ -31,7 +31,7 @@ import {
 } from "./sync-operations";
 import { recordSyncIssue, resolveOpenSyncErrors } from "./sync-issues-store";
 import { touchLocalDevice } from "./device-id";
-import { countPendingOperations } from "./pending-operations";
+import { countPendingOperations, collapseDuplicatePendingProjectionUpserts } from "./pending-operations";
 import {
   subscribeToRemoteSyncOperations,
   unsubscribeFromRemoteSyncOperations,
@@ -41,6 +41,7 @@ import { registerSyncScheduler, clearSyncScheduler } from "./sync-scheduler";
 import {
   enqueueUnsyncedCurrentStateRows,
   repairNaturalIdentity,
+  clearCutoverEnqueueFlag,
 } from "./identity-repair";
 import { pullAndApplySnapshot } from "./snapshot-sync";
 
@@ -189,6 +190,7 @@ class SyncEngine {
   private async bootstrapProtocolV2(): Promise<boolean> {
     if (loadSyncProtocolV2()) return true;
     await repairNaturalIdentity();
+    await collapseDuplicatePendingProjectionUpserts();
     await enqueueUnsyncedCurrentStateRows();
     const pushResult = await pushPendingOperations();
     if (pushResult.skipped) return false;
@@ -260,9 +262,6 @@ class SyncEngine {
       }
       this.setState({ lastSyncAt: new Date().toISOString() });
       saveLastServerSyncAt(this.state.lastSyncAt ?? new Date().toISOString());
-      if (!bootstrapped && !loadSyncProtocolV2()) {
-        this.pendingResync = true;
-      }
     } catch (err) {
       if (isTransientNetworkError(err)) {
         interruptedTransiently = true;
@@ -332,6 +331,7 @@ class SyncEngine {
     clearLastServerSyncAt();
     clearSyncProtocolV2();
     localStorage.removeItem("okhabit_natural_identity_repaired_v1");
+    clearCutoverEnqueueFlag();
     this.setState({
       lastSyncAt: null,
       lastError: null,
