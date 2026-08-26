@@ -28,7 +28,7 @@ import {
   isProjectionUpsertEntityType,
   withSuppressedProjectionEnqueue,
 } from "./projection-sync";
-import { tombstoneUntimedPeriodsForActivityOnDay } from "@/lib/activity/untimed-period";
+import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
 import { reconcileAllJournalDuplicates } from "@/lib/journal/dedupe-by-date";
 
 export interface SubmitSyncOperationInput {
@@ -97,6 +97,7 @@ export function isSyncOperationsRpcMissing(
   return (
     haystack.includes("submit_sync_operations") ||
     haystack.includes("pull_sync_operations") ||
+    haystack.includes("pull_sync_snapshot") ||
     haystack.includes("could not find the function") ||
     (haystack.includes("function") && haystack.includes("does not exist")) ||
     error.code === "PGRST202" ||
@@ -146,14 +147,6 @@ function asNumber(value: unknown): number | null {
     return Number.isFinite(n) ? n : null;
   }
   return null;
-}
-
-export function definitionEffectiveToday(
-  effectiveFrom: string | undefined
-): boolean {
-  const today = getEffectiveToday();
-  const from = effectiveFrom ?? today;
-  return from <= today;
 }
 
 export function buildActivityDefinitionVersionFromOp(
@@ -376,18 +369,13 @@ async function applyAcceptedDefinitionOp(
     (op.operation_type === "definition.create" ||
       op.operation_type === "definition.update")
   ) {
-    const version = buildActivityDefinitionVersionFromOp(op);
-    if (!version) return;
-    await db.activityDefinitionVersions.put(version);
-
-    if (definitionEffectiveToday(version.effective_from)) {
-      const patch = activityProjectionPatchFromPayload(payload);
-      if (Object.keys(patch).length > 0) {
-        await db.activities.update(version.activity_id, {
-          ...patch,
-          updated_at: ts,
-        });
-      }
+    if (!op.entity_id) return;
+    const patch = activityProjectionPatchFromPayload(payload);
+    if (Object.keys(patch).length > 0) {
+      await db.activities.update(op.entity_id, {
+        ...patch,
+        updated_at: ts,
+      });
     }
     return;
   }
@@ -397,18 +385,13 @@ async function applyAcceptedDefinitionOp(
     (op.operation_type === "definition.create" ||
       op.operation_type === "definition.update")
   ) {
-    const version = buildGroupDefinitionVersionFromOp(op);
-    if (!version) return;
-    await db.groupDefinitionVersions.put(version);
-
-    if (definitionEffectiveToday(version.effective_from)) {
-      const patch = groupProjectionPatchFromPayload(payload);
-      if (Object.keys(patch).length > 0) {
-        await db.activityGroups.update(version.group_id, {
-          ...patch,
-          updated_at: ts,
-        });
-      }
+    if (!op.entity_id) return;
+    const patch = groupProjectionPatchFromPayload(payload);
+    if (Object.keys(patch).length > 0) {
+      await db.activityGroups.update(op.entity_id, {
+        ...patch,
+        updated_at: ts,
+      });
     }
   }
 }
@@ -436,24 +419,7 @@ export async function applyAcceptedDailyEntryOp(
   const activityId = asString(payload.activity_id) ?? asString(op.entity_id);
   const ts = now();
 
-  let entry = await db.dailyEntries.where("date").equals(date).first();
-  if (entry?.deleted_at) entry = undefined;
-
-  if (!entry) {
-    entry = {
-      id: newId(),
-      date,
-      task_counts: {},
-      paused_task_ids: [],
-      is_break_day: false,
-      current_activity_id: null,
-      created_at: ts,
-      updated_at: ts,
-      synced_at: null,
-      deleted_at: null,
-    };
-    await db.dailyEntries.add(entry);
-  }
+  let entry = await getOrCreateDailyEntry(date);
 
   const counts: Record<string, number> = {
     ...((entry.task_counts as Record<string, number> | null) ?? {}),
@@ -470,17 +436,6 @@ export async function applyAcceptedDailyEntryOp(
       task_counts: counts,
       updated_at: ts,
     });
-    const activity = await db.activities.get(activityId);
-    const target =
-      typeof activity?.completion_target === "number"
-        ? activity.completion_target
-        : 1;
-    if ((counts[activityId] ?? 0) < target) {
-      await tombstoneUntimedPeriodsForActivityOnDay({
-        activityId,
-        dateString: date,
-      });
-    }
     return;
   }
 
@@ -518,7 +473,19 @@ export async function applyAcceptedDailyEntryOp(
     return;
   }
 
-  // Ignore unknown daily_entry op types; is_break_day may also arrive via payload.
+  if (op.operation_type === "completion.note" && activityId) {
+    const notes: Record<string, string> = {
+      ...((entry.completion_notes as Record<string, string> | null) ?? {}),
+    };
+    const note = asString(payload.note);
+    if (note) notes[activityId] = note;
+    else delete notes[activityId];
+    await db.dailyEntries.update(entry.id, {
+      completion_notes: notes,
+      updated_at: ts,
+    });
+    return;
+  }
   const breakFlag = asBoolean(payload.is_break_day);
   if (breakFlag != null) {
     await db.dailyEntries.update(entry.id, {
@@ -535,8 +502,7 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
 
   const pending = await listPendingOperations({ status: "pending" });
   if (pending.length === 0) {
-    // No work to push; still report whether ops mode should govern LWW.
-    return { failed: false, skipped: !loadOpsRpcAvailable() };
+    return { failed: false };
   }
 
   const ops = pending

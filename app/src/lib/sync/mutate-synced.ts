@@ -126,11 +126,7 @@ export async function saveTimedPeriod(
   baseRevision?: string | null
 ): Promise<void> {
   if (isUntimedPeriod(row.start_time, row.end_time)) {
-    await withSuppressedProjectionEnqueue(async () => {
-      const existing = await db.activityPeriods.get(row.id);
-      if (existing) await db.activityPeriods.put(row);
-      else await db.activityPeriods.add(row);
-    });
+    // Untimed completions are derived from counts; never store them as facts.
     return;
   }
   const existing = await db.activityPeriods.get(row.id);
@@ -432,6 +428,47 @@ export async function importBackup(data: BackupImportData): Promise<void> {
         await db.dailyEntries.put(row);
       }
     });
+    for (const row of data.dailyEntries) {
+      for (const [activityId, count] of Object.entries(
+        row.task_counts ?? {}
+      )) {
+        if (count > 0) {
+          await enqueueActivityCountDelta({
+            activityId,
+            date: row.date,
+            previousCount: 0,
+            nextCount: count,
+            dailyEntryId: row.id,
+          });
+        }
+      }
+      for (const activityId of row.paused_task_ids ?? []) {
+        await enqueueActivityPauseChange({
+          activityId,
+          date: row.date,
+          paused: true,
+          dailyEntryId: row.id,
+        });
+      }
+      if (row.is_break_day) {
+        await enqueueBreakDayChange({
+          date: row.date,
+          isBreakDay: true,
+          dailyEntryId: row.id,
+        });
+      }
+      for (const [activityId, note] of Object.entries(
+        row.completion_notes ?? {}
+      )) {
+        if (note) {
+          await applyCompletionNote({
+            date: row.date,
+            activityId,
+            note,
+          });
+        }
+      }
+    }
   }
   for (const row of data.activityPeriods ?? []) {
     await saveTimedPeriod(row);

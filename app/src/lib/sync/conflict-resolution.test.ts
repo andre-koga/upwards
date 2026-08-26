@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SyncIssue } from "@/lib/db/types";
 
-const { appendActivityMock, appendGroupMock } = vi.hoisted(() => ({
-  appendActivityMock: vi.fn(async () => ({ id: "resolved-v1" })),
-  appendGroupMock: vi.fn(async () => ({ id: "resolved-g1" })),
+const { saveActivityMock, saveActivityGroupMock } = vi.hoisted(() => ({
+  saveActivityMock: vi.fn(async (row: { id: string }) => {
+    const existing = activities.get(row.id);
+    if (existing) Object.assign(existing, row);
+  }),
+  saveActivityGroupMock: vi.fn(async (row: { id: string }) => {
+    const existing = activityGroups.get(row.id);
+    if (existing) Object.assign(existing, row);
+  }),
 }));
 
 const activities = new Map<
@@ -104,8 +110,6 @@ vi.mock("@/lib/db", () => ({
 }));
 
 vi.mock("@/lib/activity/definition-versions", () => ({
-  appendActivityDefinitionVersion: appendActivityMock,
-  appendGroupDefinitionVersion: appendGroupMock,
   getLatestActivityDefinitionVersion: async (activityId: string) => {
     const rows = activityVersions
       .filter((row) => row.activity_id === activityId && !row.deleted_at)
@@ -117,6 +121,11 @@ vi.mock("@/lib/activity/definition-versions", () => ({
     return rows[0] ?? null;
   },
   getLatestGroupDefinitionVersion: async () => null,
+}));
+
+vi.mock("@/lib/sync/mutate-synced", () => ({
+  saveActivity: (...args: unknown[]) => saveActivityMock(...args),
+  saveActivityGroup: (...args: unknown[]) => saveActivityGroupMock(...args),
 }));
 
 vi.mock("@/lib/session/day-reset", () => ({
@@ -325,8 +334,8 @@ describe("resolveDefinitionConflict", () => {
     activities.clear();
     activityVersions.length = 0;
     syncIssues.length = 0;
-    appendActivityMock.mockClear();
-    appendGroupMock.mockClear();
+    saveActivityMock.mockClear();
+    saveActivityGroupMock.mockClear();
     activities.set("act-1", {
       id: "act-1",
       name: "Read",
@@ -378,7 +387,7 @@ describe("resolveDefinitionConflict", () => {
 
     await resolveDefinitionConflict(issue, "keep_local");
 
-    expect(appendActivityMock).toHaveBeenCalled();
+    expect(saveActivityMock).toHaveBeenCalled();
     expect(syncIssues[0]?.status).toBe("resolved");
     expect(
       (syncIssues[0]?.payload as DefinitionConflictPayload).resolution?.choice
@@ -465,7 +474,7 @@ describe("resolveDefinitionConflict", () => {
 
     await deferDefinitionConflict(issue);
 
-    expect(appendActivityMock).not.toHaveBeenCalled();
+    expect(saveActivityMock).not.toHaveBeenCalled();
     expect(syncIssues[0]?.status).toBe("deferred");
   });
 });

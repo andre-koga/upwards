@@ -43,6 +43,7 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "paused_task_ids",
     "is_break_day",
     "current_activity_id",
+    "completion_notes",
     "created_at",
     "updated_at",
     "deleted_at",

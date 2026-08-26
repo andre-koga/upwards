@@ -177,6 +177,17 @@ export async function pullOps(
   return data as RemoteOp[];
 }
 
+export async function pullSnapshot(
+  client: SupabaseClient
+): Promise<Record<string, unknown>> {
+  const { data, error } = await client.rpc("pull_sync_snapshot");
+  if (error) throw error;
+  if (!data || typeof data !== "object") {
+    throw new Error("pull_sync_snapshot returned a non-object");
+  }
+  return data as Record<string, unknown>;
+}
+
 export function countDeltaOp(input: {
   deviceId: string;
   activityId: string;

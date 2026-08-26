@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { db, now, newId } from "@/lib/db";
+import { db } from "@/lib/db";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import type { DailyEntry } from "@/lib/db/types";
 import {
@@ -7,10 +7,10 @@ import {
   refreshActivityStreakProjectionFromDate,
 } from "@/lib/streak-utils";
 import {
-  enqueueActivityCountDelta,
-  enqueueActivityPauseChange,
-  enqueueBreakDayChange,
-} from "@/lib/sync/semantic-operations";
+  applyBreakDayChange,
+  applyCountDelta,
+  applyPauseChange,
+} from "@/lib/sync/mutate-synced";
 
 function normalizeTaskCounts(entry: DailyEntry | null): Record<string, number> {
   return (entry?.task_counts as Record<string, number>) || {};
@@ -116,54 +116,6 @@ export function useDailyEntry(dateString: string) {
     return entry;
   }, [dateString]);
 
-  const persistTaskCountsAndPaused = useCallback(
-    async (
-      newCounts: Record<string, number>,
-      newPausedTaskIds: string[]
-    ): Promise<void> => {
-      try {
-        const entry = await db.dailyEntries
-          .where("date")
-          .equals(dateString)
-          .filter((e) => !e.deleted_at)
-          .first();
-        if (entry) {
-          await db.dailyEntries.update(entry.id, {
-            task_counts: newCounts,
-            paused_task_ids: newPausedTaskIds,
-            updated_at: now(),
-          });
-          setDailyEntry({
-            ...entry,
-            task_counts: newCounts,
-            paused_task_ids: newPausedTaskIds,
-            updated_at: now(),
-          });
-        } else {
-          const n = now();
-          const newDbEntry: DailyEntry = {
-            id: newId(),
-            date: dateString,
-            task_counts: newCounts,
-            paused_task_ids: newPausedTaskIds,
-            is_break_day: false,
-            current_activity_id: null,
-            created_at: n,
-            updated_at: n,
-            synced_at: null,
-            deleted_at: null,
-          };
-          await db.dailyEntries.add(newDbEntry);
-          setDailyEntry(newDbEntry);
-        }
-      } catch (err) {
-        console.error("Error persisting task count:", err);
-        loadDailyEntry();
-      }
-    },
-    [dateString, loadDailyEntry]
-  );
-
   const incrementTask = useCallback(
     async (
       activityId: string,
@@ -201,10 +153,9 @@ export function useDailyEntry(dateString: string) {
       setTaskCounts(nextCounts);
       setPausedTaskIds(nextPausedTaskIds);
 
-      await persistTaskCountsAndPaused(nextCounts, nextPausedTaskIds);
-      void enqueueActivityCountDelta({
-        activityId,
+      const saved = await applyCountDelta({
         date: dateString,
+        activityId,
         previousCount: current,
         nextCount: nextCounts[activityId] || 0,
         reason: neverSlip
@@ -213,10 +164,18 @@ export function useDailyEntry(dateString: string) {
             ? "cycle"
             : "increment",
       });
+      if (prevPausedTaskIds.includes(activityId)) {
+        await applyPauseChange({
+          date: dateString,
+          activityId,
+          paused: false,
+        });
+      }
+      setDailyEntry(saved);
       refreshStreakProjection(activityId);
       return { previousCount: current, nextCount: nextCounts[activityId] || 0 };
     },
-    [dateString, persistTaskCountsAndPaused, refreshStreakProjection]
+    [dateString, refreshStreakProjection]
   );
 
   const resetNeverTaskCount = useCallback(
@@ -237,17 +196,17 @@ export function useDailyEntry(dateString: string) {
       setTaskCounts(nextCounts);
       setPausedTaskIds(nextPausedTaskIds);
 
-      await persistTaskCountsAndPaused(nextCounts, nextPausedTaskIds);
-      void enqueueActivityCountDelta({
-        activityId,
+      const saved = await applyCountDelta({
         date: dateString,
+        activityId,
         previousCount,
         nextCount: 0,
         reason: "reset",
       });
+      setDailyEntry(saved);
       refreshStreakProjection(activityId);
     },
-    [dateString, persistTaskCountsAndPaused, refreshStreakProjection]
+    [dateString, refreshStreakProjection]
   );
 
   const toggleTaskPaused = useCallback(
@@ -262,51 +221,12 @@ export function useDailyEntry(dateString: string) {
       setPausedTaskIds(nextPausedTaskIds);
 
       try {
-        const entry = await db.dailyEntries
-          .where("date")
-          .equals(dateString)
-          .filter((e) => !e.deleted_at)
-          .first();
-
-        if (entry) {
-          await db.dailyEntries.update(entry.id, {
-            paused_task_ids: nextPausedTaskIds,
-            updated_at: now(),
-          });
-          setDailyEntry({
-            ...entry,
-            paused_task_ids: nextPausedTaskIds,
-            updated_at: now(),
-          });
-          void enqueueActivityPauseChange({
-            activityId,
-            date: dateString,
-            paused: !wasPaused,
-          });
-          refreshStreakProjection(activityId);
-          return;
-        }
-
-        const n = now();
-        const newDbEntry: DailyEntry = {
-          id: newId(),
+        const saved = await applyPauseChange({
           date: dateString,
-          task_counts: taskCountsRef.current,
-          paused_task_ids: nextPausedTaskIds,
-          is_break_day: false,
-          current_activity_id: null,
-          created_at: n,
-          updated_at: n,
-          synced_at: null,
-          deleted_at: null,
-        };
-        await db.dailyEntries.add(newDbEntry);
-        setDailyEntry(newDbEntry);
-        void enqueueActivityPauseChange({
           activityId,
-          date: dateString,
           paused: !wasPaused,
         });
+        setDailyEntry(saved);
         refreshStreakProjection(activityId);
       } catch (error) {
         console.error("Error toggling paused task:", error);
@@ -321,51 +241,11 @@ export function useDailyEntry(dateString: string) {
     setIsBreakDay(nextIsBreakDay);
 
     try {
-      const entry = await db.dailyEntries
-        .where("date")
-        .equals(dateString)
-        .filter((e) => !e.deleted_at)
-        .first();
-
-      if (entry) {
-        await db.dailyEntries.update(entry.id, {
-          is_break_day: nextIsBreakDay,
-          updated_at: now(),
-        });
-        setDailyEntry({
-          ...entry,
-          is_break_day: nextIsBreakDay,
-          updated_at: now(),
-        });
-        void enqueueBreakDayChange({
-          date: dateString,
-          isBreakDay: nextIsBreakDay,
-          dailyEntryId: entry.id,
-        });
-        refreshAllStreakProjections();
-        return;
-      }
-
-      const n = now();
-      const newDbEntry: DailyEntry = {
-        id: newId(),
-        date: dateString,
-        task_counts: {},
-        paused_task_ids: [],
-        is_break_day: nextIsBreakDay,
-        current_activity_id: null,
-        created_at: n,
-        updated_at: n,
-        synced_at: null,
-        deleted_at: null,
-      };
-      await db.dailyEntries.add(newDbEntry);
-      setDailyEntry(newDbEntry);
-      void enqueueBreakDayChange({
+      const saved = await applyBreakDayChange({
         date: dateString,
         isBreakDay: nextIsBreakDay,
-        dailyEntryId: newDbEntry.id,
       });
+      setDailyEntry(saved);
       refreshAllStreakProjections();
     } catch (error) {
       console.error("Error toggling break day:", error);

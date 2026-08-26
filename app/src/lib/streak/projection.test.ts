@@ -61,6 +61,7 @@ function makeEntry(
     paused_task_ids: overrides.paused_task_ids ?? null,
     is_break_day: overrides.is_break_day ?? null,
     current_activity_id: null,
+    completion_notes: null,
     created_at: `${date}T12:00:00.000Z`,
     updated_at: `${date}T12:00:00.000Z`,
     synced_at: null,

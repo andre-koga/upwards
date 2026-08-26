@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { db, newId, now } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type {
@@ -26,13 +26,7 @@ import {
   saveTimedPeriod,
 } from "@/lib/sync/mutate-synced";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
-import {
-  adoptUntimedPeriodForSession,
-  backfillUntimedCompletionsForDay,
-  ensureUntimedCompletionPeriod,
-  tombstoneUntimedPeriodsForActivityOnDay,
-  untimedCompletionAction,
-} from "@/lib/activity/untimed-period";
+import { adoptUntimedPeriodForSession } from "@/lib/activity/untimed-period";
 import { buildTimelineSessions } from "@/lib/activity/timeline-sessions";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
@@ -97,6 +91,7 @@ export function useDailyTasks({
   );
 
   const {
+    dailyEntry,
     taskCounts,
     pausedTaskIds,
     isBreakDay,
@@ -251,31 +246,9 @@ export function useDailyTasks({
       target: number,
       options?: { neverSlip?: boolean }
     ) => {
-      const { previousCount, nextCount } = await incrementTask(
-        activityId,
-        target,
-        options
-      );
-      const action = untimedCompletionAction({
-        previousCount,
-        nextCount,
-        target,
-        neverSlip: options?.neverSlip,
-      });
-      if (action === "create") {
-        await ensureUntimedCompletionPeriod({ activityId, dateString });
-        await loadActivityPeriods();
-        await loadAllActivityPeriods();
-      } else if (action === "tombstone") {
-        await tombstoneUntimedPeriodsForActivityOnDay({
-          activityId,
-          dateString,
-        });
-        await loadActivityPeriods();
-        await loadAllActivityPeriods();
-      }
+      await incrementTask(activityId, target, options);
     },
-    [incrementTask, dateString, loadActivityPeriods, loadAllActivityPeriods]
+    [incrementTask]
   );
 
   const incrementNeverSlip = useCallback(
@@ -284,41 +257,6 @@ export function useDailyTasks({
     },
     [incrementTaskWithProgress]
   );
-
-  const backfillSignatureRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!isEditableDate || loading) return;
-    const signature = `${dateString}:${dailyActivities
-      .map((activity) => `${activity.id}:${taskCounts[activity.id] || 0}`)
-      .join(",")}`;
-    if (backfillSignatureRef.current === signature) return;
-
-    let cancelled = false;
-    void (async () => {
-      const changed = await backfillUntimedCompletionsForDay({
-        dateString,
-        activities: dailyActivities,
-        taskCounts,
-      });
-      if (cancelled) return;
-      backfillSignatureRef.current = signature;
-      if (changed === 0) return;
-      await loadActivityPeriods();
-      await loadAllActivityPeriods();
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    dateString,
-    isEditableDate,
-    loading,
-    dailyActivities,
-    taskCounts,
-    loadActivityPeriods,
-    loadAllActivityPeriods,
-  ]);
 
   const pausedTaskIdSet = useMemo(
     () => new Set(pausedTaskIds),
@@ -517,8 +455,18 @@ export function useDailyTasks({
         nowMs,
         lookupActivityById,
         lookupGroupById,
+        taskCounts,
+        completionNotes: dailyEntry?.completion_notes ?? {},
       }),
-    [activityPeriods, lookupActivityById, lookupGroupById, dateString, nowMs]
+    [
+      activityPeriods,
+      lookupActivityById,
+      lookupGroupById,
+      dateString,
+      nowMs,
+      taskCounts,
+      dailyEntry?.completion_notes,
+    ]
   );
 
   const runningSession = useMemo(() => {

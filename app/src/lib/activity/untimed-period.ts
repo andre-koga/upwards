@@ -1,8 +1,5 @@
 import { db, now } from "@/lib/db";
 import type { Activity, ActivityPeriod } from "@/lib/db/types";
-import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
-import { isHiddenGroupDefaultActivity } from "@/lib/activity/hidden-default";
-import { naturalUntimedPeriodIdForDay } from "@/lib/sync/natural-ids";
 import {
   calendarDatesOverlappingEffectiveDay,
   effectiveDayEndMs,
@@ -11,10 +8,7 @@ import {
   resolvePeriodFromLogicalDay,
   timestampForLogicalDayTime,
 } from "@/lib/activity/period-day-utils";
-import { normalizeSessionNote } from "@/lib/activity/session-note";
 import { timeToSeconds } from "@/lib/time-utils";
-
-const ensureInflight = new Map<string, Promise<boolean>>();
 
 /** Closed period whose start and end are the same instant — a completion, not a span. */
 export function isUntimedPeriod(
@@ -268,50 +262,11 @@ export async function dedupeUntimedCompletionsForDay(
   return extraIds.length;
 }
 
-function completionIsoForLogicalDay(dateString: string): string {
-  const completedAt = now();
-  if (untimedPeriodBelongsToDay(new Date(completedAt).getTime(), dateString)) {
-    return completedAt;
-  }
-  return new Date(effectiveDayStartMs(dateString)).toISOString();
-}
-
-async function ensureUntimedCompletionPeriodImpl(
-  activityId: string,
-  dateString: string
-): Promise<boolean> {
-  const existing = await listPeriodsForActivityOnDay(activityId, dateString);
-  if (existing.length > 0) return false;
-
-  const entry = await getOrCreateDailyEntry(dateString);
-  const completedAt = completionIsoForLogicalDay(dateString);
-  await db.activityPeriods.add(
-    buildUntimedPeriod({
-      id: naturalUntimedPeriodIdForDay(dateString, activityId),
-      dailyEntryId: entry.id,
-      activityId,
-      completedAt,
-    })
-  );
-  return true;
-}
-
-export async function ensureUntimedCompletionPeriod(params: {
+export async function ensureUntimedCompletionPeriod(_params: {
   activityId: string;
   dateString: string;
 }): Promise<boolean> {
-  const key = `${params.dateString}:${params.activityId}`;
-  const pending = ensureInflight.get(key);
-  if (pending) return pending;
-
-  const promise = ensureUntimedCompletionPeriodImpl(
-    params.activityId,
-    params.dateString
-  ).finally(() => {
-    ensureInflight.delete(key);
-  });
-  ensureInflight.set(key, promise);
-  return promise;
+  return false;
 }
 
 export async function tombstoneUntimedPeriodsForActivityOnDay(params: {
@@ -345,28 +300,16 @@ export async function backfillUntimedCompletionsForDay(params: {
   const removed = await dedupeUntimedCompletionsForDay(params.dateString);
   let changed = removed;
   for (const activity of params.activities) {
-    if (activity.routine === "never") continue;
-    if (isHiddenGroupDefaultActivity(activity)) continue;
-    const target = activity.completion_target ?? 1;
-    const count = params.taskCounts[activity.id] || 0;
-    if (count < target) {
-      changed += await tombstoneUntimedPeriodsForActivityOnDay({
-        activityId: activity.id,
-        dateString: params.dateString,
-      });
-      continue;
-    }
-    const didCreate = await ensureUntimedCompletionPeriod({
+    changed += await tombstoneUntimedPeriodsForActivityOnDay({
       activityId: activity.id,
       dateString: params.dateString,
     });
-    if (didCreate) changed += 1;
   }
   return changed;
 }
 
-/** Convert an untimed completion into a running or timed session, keeping the note. */
-export async function adoptUntimedPeriodForSession(params: {
+/** Leftover untimed rows are not converted; callers should create a timed period. */
+export async function adoptUntimedPeriodForSession(_params: {
   activityId: string;
   dateString: string;
   dailyEntryId: string;
@@ -374,30 +317,5 @@ export async function adoptUntimedPeriodForSession(params: {
   endIso: string | null;
   note?: string | null;
 }): Promise<ActivityPeriod | null> {
-  const untimed = await findUntimedPeriodForActivityOnDay(
-    params.activityId,
-    params.dateString
-  );
-  if (!untimed) return null;
-
-  const n = now();
-  const nextNote =
-    params.note !== undefined
-      ? (normalizeSessionNote(params.note) ?? untimed.note)
-      : untimed.note;
-  await db.activityPeriods.update(untimed.id, {
-    daily_entry_id: params.dailyEntryId,
-    start_time: params.startIso,
-    end_time: params.endIso,
-    note: nextNote,
-    updated_at: n,
-  });
-  return {
-    ...untimed,
-    daily_entry_id: params.dailyEntryId,
-    start_time: params.startIso,
-    end_time: params.endIso,
-    note: nextNote,
-    updated_at: n,
-  };
+  return null;
 }

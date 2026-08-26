@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { db, now } from "@/lib/db";
+import { db, now, newId } from "@/lib/db";
 import type {
   Activity,
   ActivityGroup,
@@ -12,6 +12,7 @@ import {
 } from "@/lib/activity";
 import {
   effectiveDateForMs,
+  effectiveDayStartMs,
   getLogicalEndDate,
   resolvePeriodFromLogicalDay,
   spansLogicalDays,
@@ -37,10 +38,13 @@ import {
 } from "@/lib/session/day-reset";
 import { useTranslation } from "react-i18next";
 import {
+  applyCompletionNote,
   getOrCreateDailyEntryProjection,
   patchTimedPeriod,
+  saveTimedPeriod,
   setCurrentActivityLocal,
 } from "@/lib/sync/mutate-synced";
+import { parseDerivedUntimedSessionId } from "@/lib/activity/timeline-sessions";
 
 const NONE_ACTIVITY_VALUE = "__none__";
 
@@ -49,6 +53,8 @@ interface SessionDetailsData {
   activity: Activity | null;
   period: ActivityPeriod;
   entry: DailyEntry | undefined;
+  derived?: boolean;
+  derivedDate?: string;
 }
 
 interface UseSessionDetailsOptions {
@@ -103,6 +109,76 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
 
       if (!groupId || !sessionId) {
         finish();
+        return;
+      }
+
+      const derived = parseDerivedUntimedSessionId(sessionId);
+      if (derived) {
+        const group = await db.activityGroups.get(groupId);
+        if (!group || group.deleted_at) {
+          finish();
+          return;
+        }
+        const [activity, entry, activities] = await Promise.all([
+          db.activities.get(derived.activityId),
+          db.dailyEntries
+            .where("date")
+            .equals(derived.date)
+            .filter((item) => !item.deleted_at)
+            .first(),
+          db.activities
+            .filter((item) => item.group_id === group.id && !item.deleted_at)
+            .sortBy("created_at"),
+        ]);
+        if (
+          activity &&
+          !activity.deleted_at &&
+          activity.group_id !== group.id
+        ) {
+          finish();
+          return;
+        }
+        const instant = new Date(effectiveDayStartMs(derived.date)).toISOString();
+        const virtualPeriod: ActivityPeriod = {
+          id: sessionId,
+          daily_entry_id: entry?.id ?? "",
+          activity_id: derived.activityId,
+          start_time: instant,
+          end_time: instant,
+          note: entry?.completion_notes?.[derived.activityId] ?? null,
+          created_at: instant,
+          updated_at: instant,
+          synced_at: null,
+          deleted_at: null,
+        };
+        setDetails({
+          group,
+          activity:
+            activity &&
+            !activity.deleted_at &&
+            !isHiddenGroupDefaultActivity(activity)
+              ? activity
+              : null,
+          period: virtualPeriod,
+          entry,
+          derived: true,
+          derivedDate: derived.date,
+        });
+        setGroupActivities(
+          activities.filter((item) => !isHiddenGroupDefaultActivity(item))
+        );
+        setSelectedActivityId(
+          activity &&
+            !activity.deleted_at &&
+            !isHiddenGroupDefaultActivity(activity)
+            ? activity.id
+            : NONE_ACTIVITY_VALUE
+        );
+        setSelectedDate(fromDateString(derived.date));
+        setStartTime("");
+        setEndTime("");
+        setNote(virtualPeriod.note ?? "");
+        setLoading(false);
         return;
       }
 
@@ -165,8 +241,22 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   }, [finish, groupId, sessionId]);
 
   const handleDelete = useCallback(async () => {
-    if (!sessionId) return;
+    if (!sessionId || !details) return;
     try {
+      if (details.derived) {
+        const activityId = details.activity?.id ?? details.period.activity_id;
+        const date = details.derivedDate;
+        if (date && activityId) {
+          await applyCompletionNote({
+            date,
+            activityId,
+            note: null,
+          });
+        }
+        onUpdatedRef.current?.();
+        finish();
+        return;
+      }
       await patchTimedPeriod(sessionId, {
         deleted_at: now(),
         updated_at: now(),
@@ -176,7 +266,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     } catch (deleteError) {
       console.error("Error deleting session:", deleteError);
     }
-  }, [finish, sessionId]);
+  }, [details, finish, sessionId]);
 
   const handleSave = useCallback(async () => {
     if (!sessionId || !details) return;
@@ -232,15 +322,47 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       );
       const entry = await getOrCreateDailyEntryProjection(entryDateString);
       const n = now();
+      const sessionNote = normalizeSessionNote(note);
 
-      await patchTimedPeriod(sessionId, {
-        activity_id: nextActivityId,
-        daily_entry_id: entry.id,
-        start_time: nextStartIso,
-        end_time: nextEndIso,
-        note: normalizeSessionNote(note),
-        updated_at: n,
-      });
+      if (details.derived) {
+        const stillUntimed = !nextEndIso || nextStartIso === nextEndIso;
+        if (stillUntimed) {
+          await applyCompletionNote({
+            date: details.derivedDate ?? entryDateString,
+            activityId: nextActivityId,
+            note: sessionNote,
+          });
+        } else {
+          await saveTimedPeriod({
+            id: newId(),
+            daily_entry_id: entry.id,
+            activity_id: nextActivityId,
+            start_time: nextStartIso,
+            end_time: nextEndIso,
+            note: sessionNote,
+            created_at: n,
+            updated_at: n,
+            synced_at: null,
+            deleted_at: null,
+          });
+          if (sessionNote) {
+            await applyCompletionNote({
+              date: details.derivedDate ?? entryDateString,
+              activityId: nextActivityId,
+              note: sessionNote,
+            });
+          }
+        }
+      } else {
+        await patchTimedPeriod(sessionId, {
+          activity_id: nextActivityId,
+          daily_entry_id: entry.id,
+          start_time: nextStartIso,
+          end_time: nextEndIso,
+          note: sessionNote,
+          updated_at: n,
+        });
+      }
 
       if (isRunning) {
         await setCurrentActivityLocal(entryDateString, nextActivityId);
