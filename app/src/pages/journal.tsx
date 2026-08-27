@@ -81,12 +81,16 @@ export default function JournalPage() {
     return () => observer.disconnect();
   }, [hasMore, loadMore, visibleItems.length]);
 
+  // Consume a pending map-jump request once filters allow it, then clear it
+  // so it doesn't fire again on the next render.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!mapJumpDate) return;
     if (journalArchiveFiltersAreActive(filters)) return;
     revealEntryDate(mapJumpDate);
     setMapJumpDate(null);
   }, [mapJumpDate, filters, revealEntryDate]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!focusEntryDate) return;

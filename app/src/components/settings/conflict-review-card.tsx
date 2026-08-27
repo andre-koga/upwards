@@ -93,6 +93,12 @@ export function ConflictReviewCard({
         : null
     );
 
+  // Re-derive local payload state whenever the issue prop changes, then kick
+  // off an async refresh against the latest local data. This resets state
+  // synchronously in the effect body (not just in response to an external
+  // system), which trips the set-state-in-effect rule, but the reset and the
+  // refresh must stay atomic with `issue` changing.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isJournalConflictPayload(issue.payload)) {
       setProjectionPayload(null);
@@ -133,6 +139,7 @@ export function ConflictReviewCard({
     setProjectionPayload(null);
     setDailyCountPayload(null);
   }, [issue]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleResolveJournal = async (choice: ConflictResolutionChoice) => {
     setBusy(choice);
