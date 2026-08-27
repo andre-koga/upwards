@@ -188,10 +188,14 @@ function WorldMapSurface({
     return () => observer.disconnect();
   }, []);
 
+  // Reset user zoom/pan whenever the pin set or fit bounds change so a new
+  // map view starts from its own default framing.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setZoomDelta(0);
     setCenterOffsetTile({ x: 0, y: 0 });
   }, [pinsKey, fitBounds]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const zoomBy = (delta: number) => {
     const nextZoom = clampZoom(zoom + delta);

@@ -59,6 +59,8 @@ export default function JournalArchiveDateFilterDialog({
   );
   const prevOpenRef = useRef(false);
 
+  // Reset the draft range to the committed value each time the dialog opens.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (open && !prevOpenRef.current) {
       if (value) {
@@ -74,6 +76,7 @@ export default function JournalArchiveDateFilterDialog({
     }
     prevOpenRef.current = open;
   }, [open, today, value]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const earliestYear = availableYears[availableYears.length - 1] ?? todayDate.getFullYear();
   const startMonth = new Date(earliestYear, 0, 1);

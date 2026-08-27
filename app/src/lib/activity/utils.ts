@@ -6,7 +6,6 @@ import type {
   ActivityStatusEvent,
   GroupStatusEvent,
 } from "@/lib/db/types";
-import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { toDateString } from "@/lib/time-utils";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { isActivityStatusAsOf, isGroupStatusAsOf } from "./status-events";
@@ -131,26 +130,8 @@ export function getGroup(
   return groups.find((g) => g.id === groupId);
 }
 
-export function getGroupName(
-  groups: ActivityGroup[],
-  groupId: string,
-  fallback = "Unknown"
-): string {
-  return getGroup(groups, groupId)?.name ?? fallback;
-}
-
-export function getGroupColor(
-  groups: ActivityGroup[],
-  groupId: string,
-  fallback = DEFAULT_GROUP_COLOR
-): string {
-  return getGroup(groups, groupId)?.color ?? fallback;
-}
-
 /** An activity is archived when its own flag is set, independent of the group. */
-export function isArchivedViaGroup(
-  group: ActivityGroup | undefined | null
-): boolean {
+function isArchivedViaGroup(group: ActivityGroup | undefined | null): boolean {
   return !!group?.is_archived && !group?.deleted_at;
 }
 
@@ -160,7 +141,7 @@ export interface TemporalVisibilityContext {
   groupEventsById: Map<string, GroupStatusEvent[]>;
 }
 
-export function isArchivedViaGroupAsOf(
+function isArchivedViaGroupAsOf(
   group: ActivityGroup | undefined | null,
   ctx: TemporalVisibilityContext
 ): boolean {
@@ -177,7 +158,7 @@ export function isDeletedAsOfActivity(
   return isActivityStatusAsOf(events, "deleted", ctx.viewDate, activity);
 }
 
-export function isDeletedAsOfGroup(
+function isDeletedAsOfGroup(
   group: ActivityGroup | undefined | null,
   ctx: TemporalVisibilityContext
 ): boolean {
@@ -190,24 +171,12 @@ export function isActivityArchived(activity: Activity): boolean {
   return activity.is_archived === true || !!activity.completed_at;
 }
 
-export function isArchivedAsOf(
+function isArchivedAsOf(
   activity: Activity,
   ctx: TemporalVisibilityContext
 ): boolean {
   const events = ctx.activityEventsById.get(activity.id) ?? [];
   return isActivityStatusAsOf(events, "archived", ctx.viewDate, activity);
-}
-
-/** @deprecated Use `isArchivedAsOf`. */
-export function isCompletedAsOf(
-  activity: Activity,
-  ctx: TemporalVisibilityContext
-): boolean {
-  return isArchivedAsOf(activity, ctx);
-}
-
-export function isActiveActivity(a: Activity): boolean {
-  return !isActivityArchived(a) && !a.deleted_at;
 }
 
 export function isActiveGroup(g: ActivityGroup): boolean {

@@ -146,7 +146,9 @@ describe("isGroupStatusAsOf / buildActivityEventsByEntityId", () => {
       order_index: 0,
       is_archived: true,
       created_at: "2026-06-10T00:00:00.000Z",
-      updated_at: "2026-06-15T00:00:00.000Z",
+      // Use local noon (not UTC midnight) so this fixture means "June 15
+      // local" regardless of the machine's UTC offset.
+      updated_at: localDay(2026, 6, 15).toISOString(),
       synced_at: null,
       deleted_at: null,
     };

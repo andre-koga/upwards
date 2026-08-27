@@ -148,7 +148,7 @@ export function useJournalEntry(currentDate: Date) {
       const dateStr = toDateString(currentDate);
       const n = now();
       try {
-        let existing =
+        const existing =
           (await reconcileJournalDuplicatesForDate(dateStr, {
             suppressSync: true,
           })) ?? undefined;
