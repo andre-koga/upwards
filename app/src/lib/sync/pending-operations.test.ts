@@ -8,6 +8,7 @@ vi.mock("@/lib/db", () => ({
         pendingOps.push(row);
       },
       toArray: async () => [...pendingOps],
+      get: async (id: string) => pendingOps.find((op) => op.id === id),
       where: (index: string) => ({
         equals: (value: string) => ({
           toArray: async () =>
@@ -18,6 +19,13 @@ vi.mock("@/lib/db", () => ({
           count: async () =>
             pendingOps.filter((row) => {
               if (index === "status") return row.status === value;
+              return true;
+            }).length,
+        }),
+        anyOf: (values: string[]) => ({
+          count: async () =>
+            pendingOps.filter((row) => {
+              if (index === "status") return values.includes(row.status);
               return true;
             }).length,
         }),

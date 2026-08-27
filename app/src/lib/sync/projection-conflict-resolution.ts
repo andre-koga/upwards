@@ -5,7 +5,7 @@ import {
   combineDefinitionFields,
   formatConflictFieldValue,
   type ConflictResolutionChoice,
-} from "@/lib/sync/conflict-resolution";
+} from "@/lib/sync/field-diff";
 import { getOrCreateDeviceId } from "@/lib/sync/device-id";
 import {
   enqueueProjectionUpsertForTable,
@@ -383,28 +383,6 @@ export async function resolveGenericProjectionConflictKeepLocal(
   await resolveProjectionConflict(
     { ...issue, payload },
     "keep_local"
-  );
-}
-
-export async function resolveGenericProjectionConflictKeepRemote(
-  issue: SyncIssue
-): Promise<void> {
-  const entityType = issue.entity_type;
-  const entityId = issue.entity_id;
-  if (!entityType || !entityId) {
-    throw new Error("Conflict issue is missing entity metadata");
-  }
-
-  const payload = isProjectionConflictPayload(issue.payload)
-    ? await refreshProjectionConflictPayload(issue.payload)
-    : await buildProjectionConflictPayload({
-        entity_type: entityType,
-        entity_id: entityId,
-      });
-
-  await resolveProjectionConflict(
-    { ...issue, payload },
-    "keep_remote"
   );
 }
 

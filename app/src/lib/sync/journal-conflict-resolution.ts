@@ -6,7 +6,7 @@ import {
   combineDefinitionFields,
   formatConflictFieldValue,
   type ConflictResolutionChoice,
-} from "@/lib/sync/conflict-resolution";
+} from "@/lib/sync/field-diff";
 import {
   enqueueProjectionUpsertForTable,
   withSuppressedProjectionEnqueue,

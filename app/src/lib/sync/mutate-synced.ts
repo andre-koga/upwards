@@ -380,28 +380,6 @@ export async function applyCompletionNote(input: {
   return { ...entry, completion_notes: notes, updated_at: timestamp };
 }
 
-export async function persistLocalDailyMaps(input: {
-  date: string;
-  taskCounts: Record<string, number>;
-  pausedTaskIds: string[];
-}): Promise<DailyEntry> {
-  const entry = await getOrCreateDailyEntryProjection(input.date);
-  const timestamp = now();
-  await withSuppressedProjectionEnqueue(async () => {
-    await db.dailyEntries.update(entry.id, {
-      task_counts: input.taskCounts,
-      paused_task_ids: input.pausedTaskIds,
-      updated_at: timestamp,
-    });
-  });
-  return {
-    ...entry,
-    task_counts: input.taskCounts,
-    paused_task_ids: input.pausedTaskIds,
-    updated_at: timestamp,
-  };
-}
-
 export interface BackupImportData {
   activityGroups?: ActivityGroup[];
   activities?: Activity[];

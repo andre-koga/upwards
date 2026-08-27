@@ -12,18 +12,15 @@ const ALLOWED_SYNCED_WRITERS = new Set([
   "lib/sync/identity-repair.ts",
   "lib/sync/snapshot-sync.ts",
   "lib/sync/clear-local-sync-data.ts",
-  "lib/sync/conflict-resolution.ts",
   "lib/sync/journal-conflict-resolution.ts",
   "lib/sync/daily-entry-reconciliation.ts",
   "lib/db/daily-entry.ts",
   "lib/db/index.ts",
   "lib/journal/dedupe-by-date.ts",
-  "lib/streak-utils.ts",
-  "lib/activity/untimed-period.ts",
 ]);
 
 const WRITE_RE =
-  /\bdb\.(journalEntries|dailyEntries|activities|activityGroups|activityPeriods|oneTimeTasks|recurringMemos|activityStreaks|activityStatusEvents|groupStatusEvents)\.(add|put|update|delete|bulkPut|bulkAdd|bulkDelete)\b/;
+  /\bdb\.(journalEntries|dailyEntries|activities|activityGroups|activityPeriods|oneTimeTasks|recurringMemos|activityStatusEvents|groupStatusEvents)\.(add|put|update|delete|bulkPut|bulkAdd|bulkDelete)\b/;
 
 const FORBIDDEN_LWW_RE =
   /\b(runPushInternal|runPull|opsSyncActive)\b|from ["']\.\/sync-push["']|from ["']\.\/sync-pull["']/;
@@ -72,25 +69,41 @@ describe("sync protocol guardrails", () => {
     expect(violations).toEqual([]);
   });
 
-  it("does not enqueue or persist untimed periods as facts from feature code", () => {
+  it("never clears the natural-identity repair flag", () => {
+    // Re-arming the cutover is not idempotent: it re-derives natural IDs for
+    // rows already migrated. `resetAfterLocalClear` used to clear this on every
+    // sign-out, so the next account on the device replayed the whole cutover.
+    // A fresh install has no flag and still runs it once.
     const violations: string[] = [];
     for (const file of files) {
       const rel = relative(srcRoot, file).replaceAll("\\", "/");
-      if (
-        rel === "lib/activity/untimed-period.ts" ||
-        rel === "lib/sync/mutate-synced.ts" ||
-        rel === "lib/sync/identity-repair.ts" ||
-        rel === "lib/sync/snapshot-sync.ts" ||
-        rel === "lib/sync/projection-sync.ts"
-      ) {
-        continue;
-      }
+      if (rel === "lib/sync/identity-repair.ts") continue;
       const source = readFileSync(file, "utf8");
-      if (source.includes("ensureUntimedCompletionPeriod(")) {
-        violations.push(`${rel}: ensureUntimedCompletionPeriod`);
+      if (source.includes("okhabit_natural_identity_repaired")) {
+        violations.push(rel);
       }
-      if (source.includes("buildUntimedPeriod(") && rel.startsWith("components/")) {
-        violations.push(`${rel}: buildUntimedPeriod`);
+    }
+    expect(violations).toEqual([]);
+  });
+
+  it("does not reintroduce untimed-period creation", () => {
+    // The builders are gone: untimed completions live in
+    // `daily_entries.task_counts`, not as zero-length `activity_periods`.
+    // 19 fossil rows still exist in Postgres, so `isUntimedPeriod` stays for
+    // reads -- but nothing may write a new one.
+    const violations: string[] = [];
+    for (const file of files) {
+      const rel = relative(srcRoot, file).replaceAll("\\", "/");
+      const source = readFileSync(file, "utf8");
+      for (const banned of [
+        "ensureUntimedCompletionPeriod",
+        "buildUntimedPeriod",
+        "adoptUntimedPeriodForSession",
+        "naturalUntimedPeriodId",
+      ]) {
+        if (source.includes(`${banned}(`)) {
+          violations.push(`${rel}: ${banned}`);
+        }
       }
     }
     expect(violations).toEqual([]);

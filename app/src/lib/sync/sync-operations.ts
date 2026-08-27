@@ -1,11 +1,5 @@
-import { db, now, newId } from "@/lib/db";
-import type {
-  ActivityDefinitionVersion,
-  GroupDefinitionVersion,
-} from "@/lib/db/types";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { db, now } from "@/lib/db";
 import { supabase, getCachedUserId } from "@/lib/supabase";
-import { DEFINITION_SCHEMA_VERSION } from "@/lib/activity/definition-versions";
 import { getOrCreateDeviceId } from "./device-id";
 import {
   collapseDuplicatePendingProjectionUpserts,
@@ -18,13 +12,9 @@ import {
 import { SUBMIT_SYNC_BATCH_SIZE } from "./sync-constants";
 import { recordSyncIssue } from "./sync-issues-store";
 import { isTransientNetworkError } from "@/lib/error-utils";
-import {
-  buildDefinitionConflictPayload,
-  type DefinitionConflictEntityType,
-} from "./conflict-resolution";
 import { buildJournalConflictPayload } from "./journal-conflict-resolution";
 import { buildProjectionConflictPayload } from "./projection-conflict-resolution";
-import { saveOpsRpcAvailable, loadOpsRpcAvailable } from "./sync-storage";
+import { saveOpsRpcAvailable } from "./sync-storage";
 import {
   applyAcceptedProjectionOp,
   isProjectionUpsertEntityType,
@@ -69,6 +59,15 @@ export interface PushPendingOperationsResult {
   skipped?: boolean;
   /** True when failure was abort/offline noise and ops stayed pending. */
   transient?: boolean;
+  /**
+   * True when the server resolved each op individually and rejected some.
+   *
+   * Distinguishes "the RPC died and we cannot tell which op is bad" (worth
+   * re-submitting one at a time to isolate the culprit) from "the server already
+   * told us exactly which ops it rejected" (re-submitting proves nothing and just
+   * burns retry attempts).
+   */
+  perOpRejection?: boolean;
 }
 
 export interface PullAndApplyOperationsResult {
@@ -152,67 +151,7 @@ function asNumber(value: unknown): number | null {
   return null;
 }
 
-export function buildActivityDefinitionVersionFromOp(
-  op: RemoteSyncOperation
-): ActivityDefinitionVersion | null {
-  if (!op.entity_id) return null;
-  const payload = (op.payload ?? {}) as DefinitionPayload;
-  const fields = payload.fields ?? {};
-  const versionId = asString(payload.version_id);
-  if (!versionId) return null;
-
-  return {
-    id: versionId,
-    activity_id: op.entity_id,
-    parent_version_id: asString(payload.parent_version_id),
-    effective_from: asString(payload.effective_from) ?? getEffectiveToday(),
-    recorded_at:
-      asString(payload.recorded_at) ?? asString(op.created_at) ?? now(),
-    server_sequence: op.server_sequence,
-    operation_id: op.operation_id,
-    device_id: op.device_id,
-    name: asString(fields.name),
-    routine: asString(fields.routine),
-    completion_target: asNumber(fields.completion_target),
-    group_id: asString(fields.group_id) ?? "",
-    order_index: asNumber(fields.order_index),
-    schema_version:
-      asNumber(payload.schema_version) ?? DEFINITION_SCHEMA_VERSION,
-    created_at: asString(op.created_at) ?? now(),
-    deleted_at: null,
-  };
-}
-
-export function buildGroupDefinitionVersionFromOp(
-  op: RemoteSyncOperation
-): GroupDefinitionVersion | null {
-  if (!op.entity_id) return null;
-  const payload = (op.payload ?? {}) as DefinitionPayload;
-  const fields = payload.fields ?? {};
-  const versionId = asString(payload.version_id);
-  if (!versionId) return null;
-
-  return {
-    id: versionId,
-    group_id: op.entity_id,
-    parent_version_id: asString(payload.parent_version_id),
-    effective_from: asString(payload.effective_from) ?? getEffectiveToday(),
-    recorded_at:
-      asString(payload.recorded_at) ?? asString(op.created_at) ?? now(),
-    server_sequence: op.server_sequence,
-    operation_id: op.operation_id,
-    device_id: op.device_id,
-    name: asString(fields.name) ?? "Group",
-    color: asString(fields.color),
-    order_index: asNumber(fields.order_index),
-    schema_version:
-      asNumber(payload.schema_version) ?? DEFINITION_SCHEMA_VERSION,
-    created_at: asString(op.created_at) ?? now(),
-    deleted_at: null,
-  };
-}
-
-export function activityProjectionPatchFromPayload(
+function activityProjectionPatchFromPayload(
   payload: DefinitionPayload
 ): Partial<{
   name: string | null;
@@ -245,7 +184,7 @@ export function activityProjectionPatchFromPayload(
   return patch;
 }
 
-export function groupProjectionPatchFromPayload(
+function groupProjectionPatchFromPayload(
   payload: DefinitionPayload
 ): Partial<{
   name: string;
@@ -289,29 +228,7 @@ async function ensureConflictIssueForRemoteOp(
   let title = "Sync conflict";
   let detail = "Your change conflicted with a newer version on another device.";
 
-  if (
-    entityId &&
-    (op.entity_type === "activity_definition" ||
-      op.entity_type === "group_definition")
-  ) {
-    const entityType =
-      op.entity_type === "group_definition"
-        ? "group_definition"
-        : "activity_definition";
-    title = "Definition update conflict";
-    detail = `A change to this ${entityType === "group_definition" ? "group" : "activity"} conflicted with another version.`;
-    try {
-      // Remote conflicted op is "theirs"; local tip is "yours".
-      payload = await buildDefinitionConflictPayload({
-        entity_type: entityType as DefinitionConflictEntityType,
-        entity_id: entityId,
-        remotePayload: op.payload,
-        remoteDeviceId: op.device_id,
-      });
-    } catch (err) {
-      console.warn("[sync] failed to enrich remote conflict payload", err);
-    }
-  } else if (entityId && op.entity_type === "journal_entry") {
+  if (entityId && op.entity_type === "journal_entry") {
     title = "Journal entry conflict";
     detail =
       "This journal entry was edited on another device. Choose which version to keep.";
@@ -422,7 +339,7 @@ export async function applyAcceptedDailyEntryOp(
   const activityId = asString(payload.activity_id) ?? asString(op.entity_id);
   const ts = now();
 
-  let entry = await getOrCreateDailyEntry(date);
+  const entry = await getOrCreateDailyEntry(date);
 
   const counts: Record<string, number> = {
     ...((entry.task_counts as Record<string, number> | null) ?? {}),
@@ -533,6 +450,7 @@ async function submitPendingOperationBatch(
     pending.map((row) => [row.operation_id, row])
   );
   let settled = 0;
+  let rejected = 0;
 
   for (const result of results) {
     const local = pendingByOperationId.get(result.operation_id);
@@ -551,7 +469,11 @@ async function submitPendingOperationBatch(
           ? result.detail
           : "Server rejected this change"
       );
-      settled += 1;
+      // Deliberately NOT counted as settled. A rejected op still holds user data
+      // that never reached the server, so the push did not succeed. Counting it
+      // here is what made the caller report a clean sync, clear the error cards,
+      // and let the sign-out gate wipe the row.
+      rejected += 1;
       continue;
     }
 
@@ -561,25 +483,7 @@ async function submitPendingOperationBatch(
       let detail =
         "Your change conflicted with a newer version on another device.";
 
-      if (
-        local.entity_id &&
-        (local.entity_type === "activity_definition" ||
-          local.entity_type === "group_definition")
-      ) {
-        title = "Definition update conflict";
-        detail =
-          "Your change conflicted with a newer definition on another device.";
-        try {
-          conflictPayload = await buildDefinitionConflictPayload({
-            entity_type: local.entity_type as DefinitionConflictEntityType,
-            entity_id: local.entity_id,
-            localPayload: local.payload,
-            localDeviceId: local.device_id,
-          });
-        } catch (err) {
-          console.warn("[sync] failed to enrich local conflict payload", err);
-        }
-      } else if (local.entity_type === "journal_entry" && local.entity_id) {
+      if (local.entity_type === "journal_entry" && local.entity_id) {
         title = "Journal entry conflict";
         detail =
           "This journal entry was edited on another device. Choose which version to keep.";
@@ -650,6 +554,17 @@ async function submitPendingOperationBatch(
     return { failed: true };
   }
 
+  // A partially-rejected batch is still a failed push. The accepted ops are
+  // acked and will not be resent, but the rejected ones hold data the server
+  // does not have, so the caller must not treat this as a clean sync.
+  if (rejected > 0) {
+    return {
+      failed: true,
+      perOpRejection: true,
+      maxSequence: maxServerSequence(results.map((r) => r.server_sequence)),
+    };
+  }
+
   return {
     failed: false,
     maxSequence: maxServerSequence(results.map((r) => r.server_sequence)),
@@ -668,7 +583,7 @@ const SUBMIT_ENTITY_PRIORITY: Record<string, number> = {
   activity_period: 7,
 };
 
-export function comparePendingForSubmit(
+function comparePendingForSubmit(
   a: { entity_type: string; created_at: string },
   b: { entity_type: string; created_at: string }
 ): number {
@@ -708,8 +623,23 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
         ...(maxSequence != null ? { maxSequence } : {}),
       };
     }
+    // The server already adjudicated each op. Splitting the batch would resubmit
+    // ops it just rejected, and because the loop re-reads `pending` each pass,
+    // continuing here would spin: the rejected ops are `failed`, not `pending`,
+    // so return and let the next sync tick retry them under the attempt ceiling.
+    if (result.failed && result.perOpRejection) {
+      maxSequence = maxServerSequence([maxSequence, result.maxSequence]);
+      return {
+        failed: true,
+        perOpRejection: true,
+        ...(maxSequence != null ? { maxSequence } : {}),
+      };
+    }
     if (result.failed && batch.length > 1) {
+      // Whole-RPC failure: the server told us nothing per-op, so isolate the bad
+      // op by submitting one at a time.
       let anyAcked = false;
+      let anyRejected = false;
       for (const row of batch) {
         const one = await submitPendingOperationBatch([row]);
         if (one.skipped) return { failed: false, skipped: true };
@@ -720,13 +650,19 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
             ...(maxSequence != null ? { maxSequence } : {}),
           };
         }
-        if (one.failed) continue;
-        anyAcked = true;
         maxSequence = maxServerSequence([maxSequence, one.maxSequence]);
+        if (one.failed) {
+          anyRejected = true;
+          continue;
+        }
+        anyAcked = true;
       }
-      if (!anyAcked) {
+      if (!anyAcked || anyRejected) {
+        // Either nothing got through, or some op is still stranded. Both are a
+        // failed push; returning also avoids re-looping over `failed` rows.
         return {
           failed: true,
+          ...(anyRejected ? { perOpRejection: true } : {}),
           ...(maxSequence != null ? { maxSequence } : {}),
         };
       }

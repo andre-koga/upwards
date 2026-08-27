@@ -3,6 +3,17 @@ import type { SyncPendingOperation, SyncPendingStatus } from "@/lib/db/types";
 import { getCachedUserId } from "@/lib/supabase";
 import { recordSyncIssue } from "./sync-issues-store";
 
+/**
+ * Retry ceiling for a server-rejected op.
+ *
+ * `requeueFailedOperations` used to requeue unconditionally, so an op the server
+ * rejects deterministically (a foreign key that will never exist, an oversized
+ * field) looped `pending -> error -> failed -> pending` on every sync tick
+ * forever. The op still holds user data, so it is never discarded — it just stops
+ * being retried and stays visible as a sync issue for the user to act on.
+ */
+export const MAX_PUSH_ATTEMPTS = 5;
+
 export interface EnqueuePendingOperationInput {
   operation_id: string;
   account_id?: string | null;
@@ -81,14 +92,39 @@ export async function markOperationAcked(id: string): Promise<void> {
   });
 }
 
+/**
+ * Records a server rejection.
+ *
+ * This must stay loud. A rejected op holds user data that is not on the server,
+ * and it used to be written here and then never surfaced anywhere: no error card,
+ * no badge, and `pushPendingOperations` reported the batch as a success. The user
+ * saw a green sync while a row sat stranded, and the next sign-out wiped it.
+ */
 export async function markOperationFailed(
   id: string,
   error: string
 ): Promise<void> {
+  const existing = await db.syncPendingOperations.get(id);
+  const attempts = (existing?.attempt_count ?? 0) + 1;
+
   await db.syncPendingOperations.update(id, {
     status: "failed",
     last_error: error,
+    attempt_count: attempts,
     updated_at: now(),
+  });
+
+  await recordSyncIssue({
+    kind: "error",
+    title: "A change was rejected",
+    detail:
+      attempts >= MAX_PUSH_ATTEMPTS
+        ? `The server rejected this change ${attempts} times and it is no longer being retried. It is still saved on this device. (${error})`
+        : `The server rejected this change. It is still saved on this device and will be retried. (${error})`,
+    entity_type: existing?.entity_type ?? null,
+    entity_id: existing?.entity_id ?? null,
+    operation_id: existing?.operation_id ?? null,
+    account_id: existing?.account_id ?? getCachedUserId(),
   });
 }
 
@@ -104,20 +140,55 @@ export async function markOperationRetryableError(
   });
 }
 
-/** Move previously failed ops back to pending so the next sync retries them. */
+/**
+ * Moves failed ops back to pending so the next sync retries them.
+ *
+ * Ops past `MAX_PUSH_ATTEMPTS` are left alone: retrying them cannot succeed and
+ * the loop hid a permanent failure behind an infinitely "busy" queue. They keep
+ * their data and their sync issue.
+ */
 export async function requeueFailedOperations(): Promise<number> {
   const failed = await listPendingOperations({ status: "failed" });
-  if (failed.length === 0) return 0;
+  const retryable = failed.filter(
+    (row) => (row.attempt_count ?? 0) < MAX_PUSH_ATTEMPTS
+  );
+  if (retryable.length === 0) return 0;
   const ts = now();
   await Promise.all(
-    failed.map((row) =>
+    retryable.map((row) =>
       db.syncPendingOperations.update(row.id, {
         status: "pending",
         updated_at: ts,
       })
     )
   );
-  return failed.length;
+  return retryable.length;
+}
+
+/**
+ * Ops holding user data that is not on the server.
+ *
+ * `pending` is work still queued; `failed` is work the server rejected. Both mean
+ * "this device has data the cloud does not", which is the only question a
+ * destructive action (sign-out wipe, account switch, snapshot apply) should ask.
+ * Counting only `pending` is what let a rejected op be silently destroyed.
+ */
+export async function countUnsyncedOperations(): Promise<number> {
+  const rows = await db.syncPendingOperations
+    .where("status")
+    .anyOf(["pending", "failed"])
+    .count();
+  return rows;
+}
+
+/** The ops behind `countUnsyncedOperations`, for per-entity checks. */
+export async function listUnsyncedOperations(): Promise<
+  SyncPendingOperation[]
+> {
+  return db.syncPendingOperations
+    .where("status")
+    .anyOf(["pending", "failed"])
+    .toArray();
 }
 
 /**
@@ -135,11 +206,6 @@ export async function reportOpsUnavailablePending(): Promise<number> {
     account_id: getCachedUserId(),
   });
   return pending.length;
-}
-
-/** @deprecated Use reportOpsUnavailablePending — kept for tests importing the old name. */
-export async function acknowledgePendingWhenOpsUnavailable(): Promise<number> {
-  return reportOpsUnavailablePending();
 }
 
 export async function discardPendingOperation(id: string): Promise<void> {

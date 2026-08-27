@@ -8,7 +8,7 @@ const APP_VERSION =
     ? import.meta.env.VITE_APP_VERSION
     : null;
 
-export async function upsertRemoteDeviceRecord(
+async function upsertRemoteDeviceRecord(
   accountId: string
 ): Promise<void> {
   if (!supabase) return;

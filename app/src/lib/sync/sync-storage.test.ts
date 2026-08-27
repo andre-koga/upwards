@@ -42,11 +42,16 @@ describe("bootstrap flag", () => {
     storage.clear();
   });
 
-  it("re-bootstraps devices that completed the original v2 cutover", () => {
-    // A device damaged by the natural-id cutover has the old key set. It must
-    // still bootstrap once more so the snapshot clears local journal
-    // tombstones the op stream cannot heal.
+  it("does not re-bootstrap a device that already completed the cutover", () => {
+    // Renaming this key to force a repeat bootstrap is what caused the #58
+    // data loss: the bootstrap ends in applySyncSnapshot, which used to
+    // hard-delete every local row absent from the server. A device that has
+    // already cut over must stay cut over.
     storage.set("okhabit_sync_protocol_v2", "1");
+    expect(loadSyncProtocolV2()).toBe(true);
+  });
+
+  it("bootstraps a device that has never cut over", () => {
     expect(loadSyncProtocolV2()).toBe(false);
 
     saveSyncProtocolV2();

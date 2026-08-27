@@ -53,7 +53,6 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 vi.mock("@/lib/activity/untimed-period", () => ({
-  tombstoneUntimedPeriodsForActivityOnDay: vi.fn(async () => 0),
   isUntimedPeriod: (start: string, end: string | null) =>
     Boolean(end && start === end),
 }));
@@ -62,6 +61,7 @@ vi.mock("@/lib/db", () => ({
   db: {
     syncPendingOperations: {
       toArray: async () => [...pendingOps],
+      get: async (id: string) => pendingOps.find((op) => op.id === id),
       where: (index: string) => ({
         equals: (value: string) => ({
           toArray: async () =>
@@ -69,6 +69,18 @@ vi.mock("@/lib/db", () => ({
               if (index === "status") return row.status === value;
               return true;
             }),
+          count: async () =>
+            pendingOps.filter((row) => {
+              if (index === "status") return row.status === value;
+              return true;
+            }).length,
+        }),
+        anyOf: (values: string[]) => ({
+          count: async () =>
+            pendingOps.filter((row) => {
+              if (index === "status") return values.includes(row.status);
+              return true;
+            }).length,
         }),
       }),
       update: async (id: string, patch: Partial<SyncPendingOperation>) => {
@@ -190,6 +202,37 @@ vi.mock("@/lib/db", () => ({
       ) => ({
         first: async () => syncIssues.find(predicate) ?? undefined,
       }),
+      where: (index: string) => ({
+        equals: (value: string) => ({
+          filter: (
+            predicate: (issue: import("@/lib/db/types").SyncIssue) => boolean
+          ) => ({
+            first: async () =>
+              syncIssues.find(
+                (issue) =>
+                  (index !== "status" || issue.status === value) &&
+                  predicate(issue)
+              ) ?? undefined,
+            toArray: async () =>
+              syncIssues.filter(
+                (issue) =>
+                  (index !== "status" || issue.status === value) &&
+                  predicate(issue)
+              ),
+          }),
+          toArray: async () =>
+            syncIssues.filter(
+              (issue) => index !== "status" || issue.status === value
+            ),
+        }),
+      }),
+      update: async (
+        id: string,
+        patch: Partial<import("@/lib/db/types").SyncIssue>
+      ) => {
+        const row = syncIssues.find((issue) => issue.id === id);
+        if (row) Object.assign(row, patch);
+      },
       add: async (row: import("@/lib/db/types").SyncIssue) => {
         syncIssues.push(row);
       },
@@ -209,7 +252,6 @@ vi.mock("@/lib/session/day-reset", () => ({
 
 import {
   applyAcceptedDailyEntryOp,
-  buildActivityDefinitionVersionFromOp,
   isSyncOperationsRpcMissing,
   maxServerSequence,
   pushPendingOperations,
@@ -217,6 +259,7 @@ import {
   toSubmitSyncOperationInput,
 } from "./sync-operations";
 import { saveOpsRpcAvailable } from "./sync-storage";
+import { MAX_PUSH_ATTEMPTS } from "./pending-operations";
 
 function makePending(
   overrides: Partial<SyncPendingOperation> &
@@ -227,12 +270,11 @@ function makePending(
     operation_id: overrides.operation_id,
     account_id: "user-1",
     device_id: overrides.device_id ?? "local-device",
-    entity_type: overrides.entity_type ?? "activity_definition",
+    entity_type: overrides.entity_type ?? "daily_entry",
     entity_id: overrides.entity_id ?? "activity-1",
-    operation_type: overrides.operation_type ?? "definition.update",
+    operation_type: overrides.operation_type ?? "count.delta",
     payload: overrides.payload ?? {
-      version_id: "ver-1",
-      fields: { name: "Run" },
+      row: { id: "activity-1", name: "Run" },
     },
     base_revision: overrides.base_revision ?? null,
     status: overrides.status ?? "pending",
@@ -264,35 +306,14 @@ describe("sync-operations helpers", () => {
     expect(toSubmitSyncOperationInput(pending)).toEqual({
       operation_id: "op-1",
       device_id: "local-device",
-      entity_type: "activity_definition",
+      entity_type: "daily_entry",
       entity_id: "activity-1",
-      operation_type: "definition.update",
+      operation_type: "count.delta",
       payload: pending.payload,
       base_revision: null,
     });
   });
 
-  it("builds activity definition version from remote op", () => {
-    const version = buildActivityDefinitionVersionFromOp({
-      operation_id: "op-remote",
-      device_id: "other-device",
-      entity_type: "activity_definition",
-      entity_id: "activity-1",
-      operation_type: "definition.update",
-      payload: {
-        version_id: "ver-remote",
-        effective_from: "2026-08-01",
-        fields: { name: "Yoga", routine: "daily", group_id: "g-1" },
-      },
-      base_revision: null,
-      status: "accepted",
-      server_sequence: 42,
-      created_at: "2026-08-01T11:00:00.000Z",
-    });
-    expect(version?.id).toBe("ver-remote");
-    expect(version?.server_sequence).toBe(42);
-    expect(version?.name).toBe("Yoga");
-  });
 });
 
 describe("pushPendingOperations", () => {
@@ -373,12 +394,13 @@ describe("pushPendingOperations", () => {
     expect(syncIssues).toHaveLength(1);
     expect(syncIssues[0].kind).toBe("conflict");
     expect(syncIssues[0].operation_id).toBe("op-conflict");
-    expect((syncIssues[0].payload as { kind?: string } | null)?.kind).toBe(
-      "definition_conflict"
-    );
+    // The op's own payload is carried through unenriched. The definition-specific
+    // enrichment that used to run here was deleted along with the rest of the
+    // definition stack; the conflict itself is still recorded and reviewable.
+    expect(syncIssues[0].payload).toEqual(pendingOps[0].payload);
   });
 
-  it("marks apply errors failed without aborting other ops in the batch", async () => {
+  it("reports a rejected op as a failed push, without aborting the rest of the batch", async () => {
     pendingOps.push(
       makePending({ operation_id: "op-ok", id: "row-ok" }),
       makePending({
@@ -407,7 +429,14 @@ describe("pushPendingOperations", () => {
     });
 
     const result = await pushPendingOperations();
-    expect(result).toEqual({ failed: false, maxSequence: 20 });
+    // The good op must still land, but the push is NOT a success: `row-bad` holds
+    // user data the server does not have. Reporting `failed: false` here is what
+    // let the sign-out gate wipe that data.
+    expect(result).toEqual({
+      failed: true,
+      perOpRejection: true,
+      maxSequence: 20,
+    });
     expect(pendingOps.find((row) => row.id === "row-ok")?.status).toBe("acked");
     expect(pendingOps.find((row) => row.id === "row-bad")?.status).toBe(
       "failed"
@@ -415,6 +444,44 @@ describe("pushPendingOperations", () => {
     expect(pendingOps.find((row) => row.id === "row-bad")?.last_error).toMatch(
       /foreign key/
     );
+    // And the user has to be able to find out.
+    expect(
+      syncIssues.some(
+        (issue) => issue.kind === "error" && /rejected/i.test(issue.title)
+      )
+    ).toBe(true);
+  });
+
+  it("stops retrying a rejected op once it hits the attempt ceiling", async () => {
+    pendingOps.push(
+      makePending({
+        operation_id: "op-bad",
+        id: "row-bad",
+        entity_type: "activity_period",
+        operation_type: "projection.upsert",
+      })
+    );
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-bad",
+          status: "error",
+          server_sequence: 0,
+          detail: "violates foreign key constraint",
+        },
+      ],
+      error: null,
+    });
+
+    for (let i = 0; i < MAX_PUSH_ATTEMPTS + 2; i += 1) {
+      await pushPendingOperations();
+    }
+
+    const row = pendingOps.find((r) => r.id === "row-bad");
+    // Never discarded: it still holds the user's data.
+    expect(row?.status).toBe("failed");
+    // But capped, rather than re-submitted forever on every sync tick.
+    expect(row?.attempt_count).toBe(MAX_PUSH_ATTEMPTS);
   });
 
   it("submits parent entities before activity periods", async () => {
@@ -630,10 +697,10 @@ describe("pullAndApplyOperations", () => {
         {
           operation_id: "op-conflict-remote",
           device_id: "other-device",
-          entity_type: "activity_definition",
-          entity_id: "activity-1",
-          operation_type: "definition.update",
-          payload: {},
+          entity_type: "one_time_task",
+          entity_id: "task-1",
+          operation_type: "projection.upsert",
+          payload: { row: { id: "task-1", title: "Buy milk" } },
           base_revision: "ver-old",
           status: "conflict",
           server_sequence: 21,
@@ -646,9 +713,7 @@ describe("pullAndApplyOperations", () => {
     await pullAndApplyOperations(10);
     expect(syncIssues).toHaveLength(1);
     expect(syncIssues[0].operation_id).toBe("op-conflict-remote");
-    expect((syncIssues[0].payload as { kind?: string } | null)?.kind).toBe(
-      "definition_conflict"
-    );
+    expect(syncIssues[0].kind).toBe("conflict");
   });
 
   it("applies remote daily_entry count deltas from other devices", async () => {

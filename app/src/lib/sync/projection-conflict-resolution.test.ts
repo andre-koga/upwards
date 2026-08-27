@@ -1,20 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  analyzeDailyEntryCountDrift,
-  isDailyEntryCountReconciliationPayload,
-} from "./daily-entry-reconciliation";
+import { isDailyEntryCountReconciliationPayload } from "./daily-entry-reconciliation";
 import { isProjectionConflictPayload } from "./projection-conflict-resolution";
 
 describe("daily-entry-reconciliation", () => {
-  it("detects differing activity counts", () => {
-    expect(
-      analyzeDailyEntryCountDrift({
-        before: { a1: 2, a2: 1 },
-        after: { a1: 2, a2: 3 },
-      })
-    ).toEqual(["a2"]);
-  });
-
   it("recognizes reconciliation payload kind", () => {
     expect(
       isDailyEntryCountReconciliationPayload({

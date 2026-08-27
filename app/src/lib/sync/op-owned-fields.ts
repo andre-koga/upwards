@@ -13,8 +13,6 @@ export const OP_OWNED_DAILY_ENTRY_FIELDS = [
 
 /** Dexie tables that are temporal/sync metadata (cleared on sign-out with SYNC_TABLES). */
 export const TEMPORAL_LOCAL_TABLES = [
-  "activityDefinitionVersions",
-  "groupDefinitionVersions",
   "syncPendingOperations",
   "syncIssues",
   "syncDevices",

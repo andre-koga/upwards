@@ -9,4 +9,3 @@ export * from "./periods";
 export * from "./session-note";
 export * from "./untimed-period";
 export * from "./timeline-sessions";
-export * from "./definition-versions";

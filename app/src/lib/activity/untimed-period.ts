@@ -1,9 +1,7 @@
-import { db, now } from "@/lib/db";
-import type { Activity, ActivityPeriod } from "@/lib/db/types";
+import { db } from "@/lib/db";
+import type { ActivityPeriod } from "@/lib/db/types";
 import {
   calendarDatesOverlappingEffectiveDay,
-  effectiveDayEndMs,
-  effectiveDayStartMs,
   periodBelongsToDay,
   resolvePeriodFromLogicalDay,
   timestampForLogicalDayTime,
@@ -21,53 +19,6 @@ export function isUntimedPeriod(
   return Number.isFinite(startMs) && startMs === endMs;
 }
 
-/** Point-in-time completion belongs to the effective day `[dayStart, dayEnd)`. */
-export function untimedPeriodBelongsToDay(
-  startMs: number,
-  dateString: string
-): boolean {
-  const dayStart = effectiveDayStartMs(dateString);
-  const dayEnd = effectiveDayEndMs(dateString);
-  return startMs >= dayStart && startMs < dayEnd;
-}
-
-export function buildUntimedPeriod(params: {
-  id: string;
-  dailyEntryId: string;
-  activityId: string;
-  completedAt: string;
-  note?: string | null;
-}): ActivityPeriod {
-  return {
-    id: params.id,
-    daily_entry_id: params.dailyEntryId,
-    activity_id: params.activityId,
-    start_time: params.completedAt,
-    end_time: params.completedAt,
-    note: params.note ?? null,
-    created_at: params.completedAt,
-    updated_at: params.completedAt,
-    synced_at: null,
-    deleted_at: null,
-  };
-}
-
-export type UntimedCompletionAction = "create" | "tombstone" | "none";
-
-export function untimedCompletionAction(params: {
-  previousCount: number;
-  nextCount: number;
-  target: number;
-  neverSlip?: boolean;
-}): UntimedCompletionAction {
-  if (params.neverSlip) return "none";
-  const wasComplete = params.previousCount >= params.target;
-  const isComplete = params.nextCount >= params.target;
-  if (!wasComplete && isComplete) return "create";
-  if (wasComplete && !isComplete) return "tombstone";
-  return "none";
-}
-
 export function periodsBelongingToDay(
   periods: ActivityPeriod[],
   dateString: string,
@@ -79,18 +30,6 @@ export function periodsBelongingToDay(
     const endMs = period.end_time ? new Date(period.end_time).getTime() : null;
     return periodBelongsToDay(startMs, endMs, dateString, nowMs);
   });
-}
-
-export function findUntimedAmong(
-  periods: ActivityPeriod[],
-  activityId: string
-): ActivityPeriod | undefined {
-  return periods.find(
-    (period) =>
-      !period.deleted_at &&
-      period.activity_id === activityId &&
-      isUntimedPeriod(period.start_time, period.end_time)
-  );
 }
 
 export type ClosedSessionTimesResult =
@@ -158,31 +97,6 @@ export function resolveClosedSessionTimes(params: {
   return { ok: true, startIso: resolved.startIso, endIso: resolved.endIso };
 }
 
-/** Extra untimed rows for the same activity (keep the earliest). */
-export function extraUntimedPeriodIdsToTombstone(
-  periods: ActivityPeriod[]
-): string[] {
-  const groups = new Map<string, ActivityPeriod[]>();
-  for (const period of periods) {
-    if (period.deleted_at) continue;
-    if (!isUntimedPeriod(period.start_time, period.end_time)) continue;
-    const list = groups.get(period.activity_id) ?? [];
-    list.push(period);
-    groups.set(period.activity_id, list);
-  }
-
-  const extraIds: string[] = [];
-  for (const list of groups.values()) {
-    if (list.length <= 1) continue;
-    const sorted = [...list].sort((left, right) => {
-      const created = left.created_at.localeCompare(right.created_at);
-      return created !== 0 ? created : left.id.localeCompare(right.id);
-    });
-    for (const extra of sorted.slice(1)) extraIds.push(extra.id);
-  }
-  return extraIds;
-}
-
 export async function fetchActivityPeriodsForDay(
   dateString: string
 ): Promise<ActivityPeriod[]> {
@@ -226,96 +140,4 @@ export async function fetchActivityPeriodsForDay(
     (left, right) =>
       new Date(left.start_time).getTime() - new Date(right.start_time).getTime()
   );
-}
-
-export async function listPeriodsForActivityOnDay(
-  activityId: string,
-  dateString: string
-): Promise<ActivityPeriod[]> {
-  const periods = await fetchActivityPeriodsForDay(dateString);
-  return periods.filter((period) => period.activity_id === activityId);
-}
-
-export async function findUntimedPeriodForActivityOnDay(
-  activityId: string,
-  dateString: string
-): Promise<ActivityPeriod | undefined> {
-  const periods = await listPeriodsForActivityOnDay(activityId, dateString);
-  return findUntimedAmong(periods, activityId);
-}
-
-export async function dedupeUntimedCompletionsForDay(
-  dateString: string
-): Promise<number> {
-  const periods = await fetchActivityPeriodsForDay(dateString);
-  const extraIds = extraUntimedPeriodIdsToTombstone(periods);
-  if (extraIds.length === 0) return 0;
-  const n = now();
-  await Promise.all(
-    extraIds.map((id) =>
-      db.activityPeriods.update(id, {
-        deleted_at: n,
-        updated_at: n,
-      })
-    )
-  );
-  return extraIds.length;
-}
-
-export async function ensureUntimedCompletionPeriod(_params: {
-  activityId: string;
-  dateString: string;
-}): Promise<boolean> {
-  return false;
-}
-
-export async function tombstoneUntimedPeriodsForActivityOnDay(params: {
-  activityId: string;
-  dateString: string;
-}): Promise<number> {
-  const periods = await listPeriodsForActivityOnDay(
-    params.activityId,
-    params.dateString
-  );
-  const n = now();
-  const untimed = periods.filter((period) =>
-    isUntimedPeriod(period.start_time, period.end_time)
-  );
-  await Promise.all(
-    untimed.map((period) =>
-      db.activityPeriods.update(period.id, {
-        deleted_at: n,
-        updated_at: n,
-      })
-    )
-  );
-  return untimed.length;
-}
-
-export async function backfillUntimedCompletionsForDay(params: {
-  dateString: string;
-  activities: Activity[];
-  taskCounts: Record<string, number>;
-}): Promise<number> {
-  const removed = await dedupeUntimedCompletionsForDay(params.dateString);
-  let changed = removed;
-  for (const activity of params.activities) {
-    changed += await tombstoneUntimedPeriodsForActivityOnDay({
-      activityId: activity.id,
-      dateString: params.dateString,
-    });
-  }
-  return changed;
-}
-
-/** Leftover untimed rows are not converted; callers should create a timed period. */
-export async function adoptUntimedPeriodForSession(_params: {
-  activityId: string;
-  dateString: string;
-  dailyEntryId: string;
-  startIso: string;
-  endIso: string | null;
-  note?: string | null;
-}): Promise<ActivityPeriod | null> {
-  return null;
 }

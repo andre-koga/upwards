@@ -128,17 +128,6 @@ export interface RecurringMemo {
   deleted_at: string | null;
 }
 
-export interface ActivityStreak {
-  id: string;
-  activity_id: string;
-  date: string; // YYYY-MM-DD
-  streak: number;
-  created_at: string;
-  updated_at: string;
-  synced_at: string | null;
-  deleted_at: string | null;
-}
-
 /** Append-only status change for an activity (archived / deleted). `completed` is legacy. */
 export type ActivityStatusType = "archived" | "deleted" | "completed";
 
@@ -193,6 +182,15 @@ export interface SyncPendingOperation {
   base_revision: string | null;
   status: SyncPendingStatus;
   last_error: string | null;
+  /**
+   * Server rejections for this op. Optional because rows written before this
+   * field existed have no value; treat missing as 0.
+   *
+   * A rejection used to requeue forever, retrying a deterministically-invalid op
+   * on every sync tick. Past the retry ceiling the op stays `failed` and is
+   * surfaced as a sync issue instead of spinning silently.
+   */
+  attempt_count?: number;
   created_at: string;
   updated_at: string;
   acked_at: string | null;
@@ -225,44 +223,3 @@ export interface SyncDeviceRecord {
   retired_at: string | null;
 }
 
-/**
- * Immutable activity definition snapshot (authoritative history).
- * Current `activities` rows remain a disposable projection.
- */
-export interface ActivityDefinitionVersion {
-  id: string;
-  activity_id: string;
-  parent_version_id: string | null;
-  /** Logical calendar date (YYYY-MM-DD) this version begins applying. */
-  effective_from: string;
-  recorded_at: string;
-  server_sequence: number | null;
-  operation_id: string;
-  device_id: string;
-  name: string | null;
-  routine: string | null;
-  completion_target: number | null;
-  group_id: string;
-  order_index: number | null;
-  schema_version: number;
-  created_at: string;
-  deleted_at: string | null;
-}
-
-/** Immutable group definition snapshot (authoritative history). */
-export interface GroupDefinitionVersion {
-  id: string;
-  group_id: string;
-  parent_version_id: string | null;
-  effective_from: string;
-  recorded_at: string;
-  server_sequence: number | null;
-  operation_id: string;
-  device_id: string;
-  name: string;
-  color: string | null;
-  order_index: number | null;
-  schema_version: number;
-  created_at: string;
-  deleted_at: string | null;
-}

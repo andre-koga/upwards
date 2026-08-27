@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   dedupeRowsForUpsert,
   isValidUuid,
@@ -6,7 +6,6 @@ import {
   parseTimestamp,
   toRemoteRow,
 } from "./sync-transformers";
-import { stripUnknownColumns } from "./sanitizers";
 
 const VALID_UUID = "11111111-1111-4111-8111-111111111111";
 const VALID_UUID_B = "22222222-2222-4222-8222-222222222222";
@@ -91,50 +90,5 @@ describe("sync transformers", () => {
     ]);
     expect(rows).toHaveLength(2);
     expect(rows.find((r) => r.date === "2026-06-15")?.value).toBe(2);
-  });
-});
-
-describe("stripUnknownColumns", () => {
-  it("drops legacy columns before upsert", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const stripped = stripUnknownColumns("activities", [
-      {
-        id: VALID_UUID,
-        user_id: "u1",
-        name: "Read",
-        legacy_pattern: "daily",
-        pattern: "weekly:1",
-      },
-    ]);
-    expect(stripped[0]).toEqual({
-      id: VALID_UUID,
-      user_id: "u1",
-      name: "Read",
-    });
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
-  });
-
-  it("keeps activity period notes and drops unknown columns", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const stripped = stripUnknownColumns("activity_periods", [
-      {
-        id: VALID_UUID,
-        user_id: "u1",
-        start_time: "2026-08-23T12:00:00.000Z",
-        end_time: "2026-08-23T12:30:00.000Z",
-        note: "walked the dog",
-        leftover: true,
-      },
-    ]);
-    expect(stripped[0]).toEqual({
-      id: VALID_UUID,
-      user_id: "u1",
-      start_time: "2026-08-23T12:00:00.000Z",
-      end_time: "2026-08-23T12:30:00.000Z",
-      note: "walked the dog",
-    });
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
   });
 });

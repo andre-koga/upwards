@@ -91,19 +91,7 @@
     "title": "Sincronização na nuvem",
     "description": "Seus dados são sincronizados automaticamente. Abra Problemas de sincronização para revisar conflitos ou erros.",
     "issuesLink": "Problemas de sincronização",
-    "issuesBadge": "{{count}} problemas de sincronização abertos",
-    "restore": {
-      "action": "Substituir dados locais pela nuvem",
-      "title": "Substituir dados locais pela nuvem?",
-      "description": "Baixa tudo da nuvem e substitui o que está salvo neste dispositivo. Use se algo estiver faltando aqui, mas presente nos seus outros dispositivos. Alterações não enviadas são carregadas primeiro.",
-      "confirm": "Baixar e substituir",
-      "cancel": "Cancelar",
-      "working": "Substituindo…",
-      "success": "Este dispositivo agora corresponde à nuvem.",
-      "pendingWarning": "{{count}} alteração(ões) não puderam ser enviadas e seriam substituídas. Abra Problemas de sincronização primeiro.",
-      "unavailable": "A sincronização na nuvem está indisponível agora. Tente mais tarde.",
-      "failed": "Não foi possível substituir os dados locais. Tente novamente."
-    }
+    "issuesBadge": "{{count}} problemas de sincronização abertos"
   },
   "syncIssues": {
     "page": {
@@ -163,32 +151,16 @@
       "cancel": "Cancelar"
     },
     "conflict": {
-      "untitled": "Alteração sem título",
-      "summary": "Duas versões desta {{entity}} precisam de uma decisão.",
-      "entity": {
-        "activity": "atividade",
-        "group": "grupo"
-      },
       "deferredBadge": "Adiado",
       "bothChangedHint": "Os dois lados alteraram alguns dos mesmos campos. Combinar manterá o seu valor nesses casos.",
       "combinableHint": "Essas alterações tocam campos diferentes e podem ser combinadas sem conflito.",
       "combineWithPreferenceHint": "Campos editados nos dois lados manterão o seu valor.",
       "unknownRemote": "Indisponível",
-      "consequence": "Sua escolha atualiza a atividade ou o grupo atual. Contagens do dia e entradas do diário não mudam.",
       "resolveFailed": "Não foi possível aplicar essa escolha. Tente novamente.",
       "columns": {
         "field": "Campo",
         "yours": "Seu",
-        "theirs": "Outro dispositivo",
-        "base": "Anterior"
-      },
-      "fields": {
-        "name": "Nome",
-        "routine": "Agenda",
-        "completion_target": "Meta",
-        "group_id": "Grupo",
-        "order_index": "Ordem",
-        "color": "Cor"
+        "theirs": "Outro dispositivo"
       },
       "actions": {
         "keepMine": "Manter o meu",

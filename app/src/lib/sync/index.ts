@@ -31,7 +31,8 @@ import {
 } from "./sync-operations";
 import { recordSyncIssue, resolveOpenSyncErrors } from "./sync-issues-store";
 import { touchLocalDevice } from "./device-id";
-import { countPendingOperations, collapseDuplicatePendingProjectionUpserts } from "./pending-operations";
+import { collapseDuplicatePendingProjectionUpserts } from "./pending-operations";
+import { getLocalSyncSafetyStatus } from "./unsynced-data";
 import {
   subscribeToRemoteSyncOperations,
   unsubscribeFromRemoteSyncOperations,
@@ -195,8 +196,11 @@ class SyncEngine {
     const pushResult = await pushPendingOperations();
     if (pushResult.skipped) return false;
     if (pushResult.failed) return false;
-    const pending = await countPendingOperations({ status: "pending" });
-    if (pending > 0) return false;
+    // Same reasoning as the sign-out gate: the snapshot apply that follows treats
+    // the server as authoritative, so it must not run while this device still
+    // holds data the server never accepted.
+    const safety = await getLocalSyncSafetyStatus();
+    if (safety.hasUnsyncedData) return false;
     const snapshot = await pullAndApplySnapshot();
     if (snapshot.skipped) return false;
     if (snapshot.sequence != null) {
@@ -232,8 +236,9 @@ class SyncEngine {
       if (pushOpsResult.failed && pushOpsResult.transient) {
         interruptedTransiently = true;
       } else if (pushOpsResult.failed) {
-        const msg =
-          "Some pending changes could not be uploaded. Try syncing again.";
+        const msg = pushOpsResult.perOpRejection
+          ? "The server rejected some changes. They are still saved on this device — open Sync issues for details."
+          : "Some pending changes could not be uploaded. Try syncing again.";
         logError("Sync ops push failed", new Error(msg));
         this.setState({ lastError: msg });
       }
@@ -303,6 +308,16 @@ class SyncEngine {
     }
   }
 
+  /**
+   * Pushes everything before sign-out and reports whether it is safe to wipe.
+   *
+   * Sign-out ends in clearLocalSyncData(), which clears every synced table *and*
+   * the pending-op queue. So this gate is the last thing standing between a
+   * rejected write and permanent loss, and it has to ask "does this device hold
+   * data the server lacks", not "is the queue empty". It previously counted only
+   * status `pending`; a rejected op is `failed`, so the count read zero and the
+   * wipe proceeded.
+   */
   async pushBeforeSignOut(): Promise<PushBeforeSignOutResult> {
     let pushFailed = false;
     try {
@@ -315,12 +330,12 @@ class SyncEngine {
       console.warn("[sync] pushBeforeSignOut failed:", err);
     }
 
-    const pendingCount = await countPendingOperations({ status: "pending" });
+    const safety = await getLocalSyncSafetyStatus();
 
     return {
-      success: !pushFailed && pendingCount === 0,
-      pendingCount,
-      unsyncedRowCount: pendingCount,
+      success: !pushFailed && !safety.hasUnsyncedData,
+      pendingCount: safety.pendingOpCount,
+      unsyncedRowCount: safety.unsyncedRowCount,
       pushFailed,
     };
   }
@@ -330,73 +345,18 @@ class SyncEngine {
     this.followUpSyncChain = 0;
     clearLastServerSyncAt();
     clearSyncProtocolV2();
-    localStorage.removeItem("okhabit_natural_identity_repaired_v1");
+    // Deliberately NOT clearing the natural-identity repair flag.
+    //
+    // The cutover is not idempotent (see the PROTOCOL_V2_KEY note in
+    // sync-storage.ts): re-running it re-derives IDs for rows that were already
+    // migrated. Clearing the flag here re-armed it for the next account on the
+    // device. A fresh install has no flag and still runs it once.
     clearCutoverEnqueueFlag();
     this.setState({
       lastSyncAt: null,
       lastError: null,
       localDataVersion: this.state.localDataVersion + 1,
     });
-  }
-
-  /**
-   * Replaces local data with the server snapshot, on demand.
-   *
-   * The incremental path cannot repair a local row that is wrong but never
-   * touched again: the op stream carries deltas, and the snapshot normally runs
-   * only during bootstrap. That left journal entries the natural-id cutover
-   * soft-deleted locally invisible even after the server row was healthy.
-   *
-   * Unsent work is pushed first so this does not silently discard local edits.
-   * `pendingAfterPush` lets the caller warn when something could not be pushed
-   * and would be overwritten.
-   */
-  async restoreFromCloudSnapshot(): Promise<{
-    applied: boolean;
-    pendingAfterPush: number;
-    error?: string;
-  }> {
-    if (!this.canSync()) {
-      return { applied: false, pendingAfterPush: 0, error: "not_signed_in" };
-    }
-
-    this.setState({ isSyncing: true, lastError: null });
-    try {
-      // Push first: the snapshot overwrites local rows, so anything unsent
-      // would otherwise be lost without review.
-      await pushPendingOperations();
-      const pendingAfterPush = await countPendingOperations({
-        status: "pending",
-      });
-
-      const snapshot = await pullAndApplySnapshot();
-      if (snapshot.skipped) {
-        return {
-          applied: false,
-          pendingAfterPush,
-          error: "snapshot_unavailable",
-        };
-      }
-
-      if (snapshot.sequence != null) {
-        advanceLastAppliedSequence(snapshot.sequence);
-      }
-      saveSyncProtocolV2();
-      const now = new Date().toISOString();
-      saveLastServerSyncAt(now);
-      this.setState({
-        lastSyncAt: now,
-        localDataVersion: this.state.localDataVersion + 1,
-      });
-      return { applied: true, pendingAfterPush };
-    } catch (err) {
-      const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
-      logError("Restore from cloud failed", err);
-      this.setState({ lastError: msg });
-      return { applied: false, pendingAfterPush: 0, error: msg };
-    } finally {
-      this.setState({ isSyncing: false });
-    }
   }
 
   startAutoSync(

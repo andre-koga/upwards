@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { JournalEntry } from "@/lib/db/types";
 import {
   journalEntryFieldsHaveContent,
+  loserContentWasAbsorbed,
   mergeJournalEntryDuplicates,
   pickPreferredJournalEntry,
 } from "./dedupe-by-date";
@@ -89,6 +90,164 @@ describe("mergeJournalEntryDuplicates", () => {
       day_emoji: "🌞",
       is_bookmarked: true,
     });
+  });
+
+  it("keeps both sides when both wrote prose for the same day", () => {
+    // The core bug. Duplicate rows for one date come from the guest -> signed-in id
+    // divergence, so both sides are routinely real writing from the same day. The
+    // loser's words were silently discarded, with no conflict recorded and no copy
+    // kept anywhere.
+    const winner = makeEntry({
+      id: "winner",
+      entry_date: "2026-08-25",
+      text_content: "Wrote this on my phone",
+    });
+    const loser = makeEntry({
+      id: "loser",
+      entry_date: "2026-08-25",
+      text_content: "Wrote something completely different on my laptop",
+    });
+
+    const merged = mergeJournalEntryDuplicates(winner, loser);
+
+    expect(merged.text_content).toContain("Wrote this on my phone");
+    expect(merged.text_content).toContain(
+      "Wrote something completely different on my laptop"
+    );
+  });
+
+  it("does not duplicate text that is identical or already contained", () => {
+    const winner = makeEntry({
+      id: "winner",
+      entry_date: "2026-08-25",
+      text_content: "Morning run, then groceries.",
+    });
+
+    expect(
+      mergeJournalEntryDuplicates(
+        winner,
+        makeEntry({
+          id: "same",
+          entry_date: "2026-08-25",
+          text_content: "Morning run, then groceries.",
+        })
+      ).text_content
+    ).toBe("Morning run, then groceries.");
+
+    // A partial sync often leaves the shorter prefix behind; appending it would
+    // read as a stutter.
+    expect(
+      mergeJournalEntryDuplicates(
+        winner,
+        makeEntry({
+          id: "prefix",
+          entry_date: "2026-08-25",
+          text_content: "Morning run",
+        })
+      ).text_content
+    ).toBe("Morning run, then groceries.");
+  });
+
+  it("keeps a video and its thumbnail together", () => {
+    // Merging the two fields independently could pair the winner's thumbnail with
+    // the loser's video, leaving a thumbnail pointing at a file that is not there.
+    const winner = makeEntry({
+      id: "winner",
+      entry_date: "2026-08-25",
+      video_thumbnail: "thumb-winner.jpg",
+    });
+    const loser = makeEntry({
+      id: "loser",
+      entry_date: "2026-08-25",
+      video_path: "video-loser.mp4",
+      video_thumbnail: "thumb-loser.jpg",
+    });
+
+    const merged = mergeJournalEntryDuplicates(winner, loser);
+    expect(merged.video_path).toBe("video-loser.mp4");
+    expect(merged.video_thumbnail).toBe("thumb-loser.jpg");
+  });
+});
+
+describe("loserContentWasAbsorbed", () => {
+  it("confirms a fully merged duplicate is safe to retire", () => {
+    const loser = makeEntry({
+      id: "loser",
+      entry_date: "2026-08-25",
+      text_content: "Body",
+      photo_paths: ["a.jpg"],
+    });
+    const merged = mergeJournalEntryDuplicates(
+      makeEntry({ id: "winner", entry_date: "2026-08-25", title: "Title" }),
+      loser
+    );
+
+    expect(loserContentWasAbsorbed(merged, loser)).toBe(true);
+  });
+
+  it("refuses when the loser holds a second emoji the merge could not take", () => {
+    // Production holds 54 journal tombstones, 53 with text and 49 with media, all
+    // machine-written — there is no user-facing journal delete. This check is the
+    // difference between deduplicating and deleting.
+    const loser = makeEntry({
+      id: "loser",
+      entry_date: "2026-08-25",
+      day_emoji: "🌧️",
+    });
+    const merged = mergeJournalEntryDuplicates(
+      makeEntry({ id: "winner", entry_date: "2026-08-25", day_emoji: "🌞" }),
+      loser
+    );
+
+    expect(merged.day_emoji).toBe("🌞");
+    expect(loserContentWasAbsorbed(merged, loser)).toBe(false);
+  });
+
+  it("refuses when the loser holds a second video", () => {
+    const loser = makeEntry({
+      id: "loser",
+      entry_date: "2026-08-25",
+      video_path: "loser.mp4",
+    });
+    const merged = mergeJournalEntryDuplicates(
+      makeEntry({
+        id: "winner",
+        entry_date: "2026-08-25",
+        video_path: "winner.mp4",
+      }),
+      loser
+    );
+
+    expect(loserContentWasAbsorbed(merged, loser)).toBe(false);
+  });
+
+  it("confirms when both sides' prose was concatenated", () => {
+    const loser = makeEntry({
+      id: "loser",
+      entry_date: "2026-08-25",
+      text_content: "Laptop text",
+    });
+    const merged = mergeJournalEntryDuplicates(
+      makeEntry({
+        id: "winner",
+        entry_date: "2026-08-25",
+        text_content: "Phone text",
+      }),
+      loser
+    );
+
+    expect(loserContentWasAbsorbed(merged, loser)).toBe(true);
+  });
+
+  it("confirms for an empty duplicate, which is the common case", () => {
+    const loser = makeEntry({ id: "loser", entry_date: "2026-08-25" });
+    const merged = makeEntry({
+      id: "winner",
+      entry_date: "2026-08-25",
+      text_content: "Real content",
+    });
+
+    expect(loserContentWasAbsorbed(merged, loser)).toBe(true);
   });
 });
 

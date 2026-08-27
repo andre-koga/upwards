@@ -165,6 +165,24 @@ export async function repairNaturalIdentity(): Promise<void> {
   markNaturalIdentityRepaired();
 }
 
+/**
+ * Re-keys local rows onto the signed-in user's natural IDs.
+ *
+ * Natural IDs are derived from `guest:<deviceId>` before sign-in and `userId`
+ * after, so every row a guest wrote carries an id no signed-in device will ever
+ * compute. The `upload_local` handoff pushed them as-is, and the next time that
+ * date was touched while signed in a *second* row appeared under the canonical id.
+ * That is what manufactured the duplicate `(user, date)` rows the journal dedupe
+ * then had to destroy something to clean up.
+ *
+ * Same remapping as the one-shot cutover above, minus its flag: this has to run at
+ * the moment of sign-in, which is normally long after that flag is set.
+ */
+export async function rekeyLocalRowsToCurrentUser(): Promise<void> {
+  await remapDailyEntries();
+  await remapJournals();
+}
+
 async function dropLocalUntimedPeriods(): Promise<void> {
   const periods = await db.activityPeriods.toArray();
   const untimedIds = periods
@@ -181,8 +199,8 @@ export async function enqueueUnsyncedCurrentStateRows(): Promise<void> {
   const pendingIds = await listPendingEntityIds();
   for (const table of OPS_MANAGED_SYNC_TABLES) {
     const dexieTable = TABLE_MAP[table];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows: Array<Record<string, unknown>> = await (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       db[dexieTable] as any
     ).toArray();
     for (const row of rows) {

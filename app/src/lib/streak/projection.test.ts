@@ -3,7 +3,6 @@ import type { Activity, DailyEntry } from "@/lib/db/types";
 import {
   buildActivityStreakOutcomesByDate,
   deriveCurrentStreakFromOutcomes,
-  deriveStreakSeriesFromOutcomes,
 } from "./projection";
 import { buildBreakDaysSet, buildEntriesByDateMap } from "./entry-maps";
 
@@ -100,7 +99,7 @@ describe("streak projection", () => {
     ).toBe(2);
   });
 
-  it("builds outcomes and streak series from daily entries", () => {
+  it("builds outcomes from daily entries", () => {
     const activity = makeActivity();
     const entries = [
       makeEntry("2026-06-15", { task_counts: { "act-1": 1 } }),
@@ -127,17 +126,6 @@ describe("streak projection", () => {
 
     expect(outcomes["2026-06-16"]).toBe("skip");
     expect(outcomes["2026-06-17"]).toBe("skip");
-
-    const series = deriveStreakSeriesFromOutcomes(
-      outcomes,
-      from,
-      to,
-      new Date(2026, 5, 10)
-    );
-    expect(series["2026-06-15"]).toBe(1);
-    expect(series["2026-06-16"]).toBe(1);
-    expect(series["2026-06-17"]).toBe(1);
-    expect(series["2026-06-18"]).toBe(2);
 
     expect(
       deriveCurrentStreakFromOutcomes(outcomes, to, new Date(2026, 5, 10))

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Activity, ActivityStreak, DailyEntry } from "@/lib/db/types";
+import type { Activity, DailyEntry } from "@/lib/db/types";
 
 const storage = new Map<string, string>();
 
@@ -27,8 +27,6 @@ function mockLocalStorage() {
 }
 
 const dailyEntries: DailyEntry[] = [];
-const activityStreaks: ActivityStreak[] = [];
-let idCounter = 0;
 
 vi.mock("@/lib/db", () => ({
   db: {
@@ -45,34 +43,10 @@ vi.mock("@/lib/db", () => ({
         }),
       }),
     },
-    activityStreaks: {
-      where: () => ({
-        equals: ([activityId, date]: [string, string]) => ({
-          filter: (predicate: (row: ActivityStreak) => boolean) => ({
-            first: async () =>
-              activityStreaks.find(
-                (row) =>
-                  row.activity_id === activityId &&
-                  row.date === date &&
-                  predicate(row)
-              ),
-          }),
-        }),
-      }),
-      update: async (id: string, patch: Partial<ActivityStreak>) => {
-        const row = activityStreaks.find((r) => r.id === id);
-        if (row) Object.assign(row, patch);
-      },
-      add: async (row: ActivityStreak) => {
-        activityStreaks.push(row);
-      },
-    },
   },
-  newId: () => `streak-${++idCounter}`,
-  now: () => "2026-06-18T12:00:00.000Z",
 }));
 
-import { getOrComputeActivityStreaksForDate } from "./streak-utils";
+import { computeActivityStreaksForDate } from "./streak-utils";
 
 function makeActivity(overrides: Partial<Activity> = {}): Activity {
   return {
@@ -113,14 +87,12 @@ function addEntry(
   return entry;
 }
 
-describe("getOrComputeActivityStreaksForDate", () => {
+describe("computeActivityStreaksForDate", () => {
   beforeEach(() => {
     storage.clear();
     mockLocalStorage();
     localStorage.setItem("okhabit:day_reset_minutes", "0");
     dailyEntries.length = 0;
-    activityStreaks.length = 0;
-    idCounter = 0;
   });
 
   it("counts consecutive done days and stops on a miss", async () => {
@@ -130,13 +102,11 @@ describe("getOrComputeActivityStreaksForDate", () => {
     addEntry("2026-06-17", { task_counts: {} }); // miss
     addEntry("2026-06-18", { task_counts: { "act-1": 1 } });
 
-    const streaks = await getOrComputeActivityStreaksForDate(
+    const streaks = await computeActivityStreaksForDate(
       [activity],
       new Date(2026, 5, 18)
     );
     expect(streaks["act-1"]).toBe(1);
-    expect(activityStreaks).toHaveLength(1);
-    expect(activityStreaks[0]?.streak).toBe(1);
   });
 
   it("skips break days and paused days without breaking the streak", async () => {
@@ -152,7 +122,7 @@ describe("getOrComputeActivityStreaksForDate", () => {
     });
     addEntry("2026-06-18", { task_counts: { "act-1": 1 } });
 
-    const streaks = await getOrComputeActivityStreaksForDate(
+    const streaks = await computeActivityStreaksForDate(
       [activity],
       new Date(2026, 5, 18)
     );
@@ -165,7 +135,7 @@ describe("getOrComputeActivityStreaksForDate", () => {
     addEntry("2026-06-17", { task_counts: { "act-1": 1 } }); // slip
     addEntry("2026-06-18", { task_counts: {} });
 
-    const streaks = await getOrComputeActivityStreaksForDate(
+    const streaks = await computeActivityStreaksForDate(
       [never],
       new Date(2026, 5, 18)
     );
@@ -177,7 +147,7 @@ describe("getOrComputeActivityStreaksForDate", () => {
     addEntry("2026-06-17", { task_counts: { "act-1": 1 } });
     // No 2026-06-18 row in DB yet
 
-    const streaks = await getOrComputeActivityStreaksForDate(
+    const streaks = await computeActivityStreaksForDate(
       [activity],
       new Date(2026, 5, 18),
       {
@@ -195,7 +165,7 @@ describe("getOrComputeActivityStreaksForDate", () => {
   it("returns 0 for anytime habits", async () => {
     const anytime = makeActivity({ routine: "anytime" });
     addEntry("2026-06-18", { task_counts: { "act-1": 1 } });
-    const streaks = await getOrComputeActivityStreaksForDate(
+    const streaks = await computeActivityStreaksForDate(
       [anytime],
       new Date(2026, 5, 18)
     );
@@ -215,7 +185,7 @@ describe("getOrComputeActivityStreaksForDate", () => {
     addEntry("2026-06-17", { task_counts: { "act-1": 2 } });
     addEntry("2026-06-18", { task_counts: { "act-1": 2 } });
 
-    const streaks = await getOrComputeActivityStreaksForDate(
+    const streaks = await computeActivityStreaksForDate(
       [activity],
       new Date(2026, 5, 18)
     );
@@ -227,7 +197,7 @@ describe("getOrComputeActivityStreaksForDate", () => {
     addEntry("2026-06-13", { task_counts: { "act-1": 1 } }); // Saturday
     addEntry("2026-06-14", { task_counts: { "act-1": 1 } }); // Sunday
 
-    const streaks = await getOrComputeActivityStreaksForDate(
+    const streaks = await computeActivityStreaksForDate(
       [activity],
       new Date(2026, 5, 14)
     );

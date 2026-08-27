@@ -5,6 +5,7 @@ import { TABLE_MAP } from "./sync-constants";
 import { withSuppressedProjectionEnqueue } from "./projection-sync";
 import { isSyncOperationsRpcMissing } from "./sync-operations";
 import { saveOpsRpcAvailable } from "./sync-storage";
+import { stripOpOwnedFields } from "./op-owned-fields";
 import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 
 const SNAPSHOT_TABLES: SyncTable[] = [
@@ -65,6 +66,37 @@ function snapshotRows(
   }
 }
 
+/**
+ * Whether a local row holds content an incoming tombstone must not destroy.
+ *
+ * Restricted to `journal_entries` on purpose. The app has no user-facing journal
+ * delete — grepped for it — so every journal tombstone is machine-written by the
+ * dedupe or cutover paths, and production holds 54 of them, 53 carrying text. An
+ * incoming journal tombstone therefore never represents a user's intent to delete,
+ * which makes refusing it safe.
+ *
+ * activity_periods is deliberately excluded even though a period note is also
+ * free text: use-session-details.ts:260 lets the user delete a session, note and
+ * all, so refusing that tombstone would resurrect a row they meant to remove.
+ */
+function localRowHasContent(
+  table: SyncTable,
+  local: Record<string, unknown>
+): boolean {
+  if (table !== "journal_entries") return false;
+
+  const text = (value: unknown): boolean =>
+    typeof value === "string" && value.trim().length > 0;
+
+  return (
+    text(local.text_content) ||
+    text(local.title) ||
+    text(local.day_emoji) ||
+    text(local.video_path) ||
+    (Array.isArray(local.photo_paths) && local.photo_paths.length > 0)
+  );
+}
+
 export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
   const userId = getCachedUserId();
   if (!userId) return;
@@ -86,24 +118,49 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
           return !isUntimedPeriod(start, end);
         });
 
-      const incomingIds = new Set(
-        incoming
-          .map((row) => row.id)
-          .filter((id): id is string => typeof id === "string")
-      );
+      if (incoming.length === 0) continue;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const localTable = db[dexieKey] as any;
-      const existing: Array<{ id: string }> = await localTable.toArray();
-      const staleIds = existing
-        .map((row) => row.id)
-        .filter((id) => !incomingIds.has(id));
-      if (staleIds.length > 0) {
-        await localTable.bulkDelete(staleIds);
-      }
-      if (incoming.length > 0) {
-        await localTable.bulkPut(incoming);
-      }
+      const existing: Array<Record<string, unknown>> =
+        await localTable.toArray();
+      const existingById = new Map(
+        existing
+          .filter((row): row is Record<string, unknown> & { id: string } =>
+            typeof row.id === "string"
+          )
+          .map((row) => [row.id, row])
+      );
+
+      // A snapshot is a repair pass, not a source of truth for deletion.
+      // Rows the server has not seen may simply be unpushed local work, and the
+      // pending-op gate cannot prove otherwise: an op the server rejected is
+      // marked `failed`, not `pending`. Merge forward only.
+      const merged = incoming.map((row) => {
+        const local =
+          typeof row.id === "string" ? existingById.get(row.id) : undefined;
+        if (!local) return row;
+        // Counts, pauses, and break days belong to the semantic op stream.
+        // Overwriting them here silently discards local completions.
+        const next = { ...local, ...stripOpOwnedFields(table, row) };
+
+        // Symmetry with the rule above. The merge lets incoming fields win, so an
+        // incoming tombstone would delete a live local row — including one whose
+        // content has never been pushed, which is exactly the row a snapshot repair
+        // pass is least entitled to destroy. Production holds 54 journal tombstones
+        // (53 with text) that could arrive this way.
+        //
+        // Keeps the whole local row, not just `deleted_at`: a tombstoned server row
+        // usually has its content fields blanked too, so merging those in would
+        // leave an undeleted but empty row — the same loss by another route.
+        if (row.deleted_at && !local.deleted_at && localRowHasContent(table, local)) {
+          return local;
+        }
+
+        return next;
+      });
+
+      await localTable.bulkPut(merged);
     }
   });
 }

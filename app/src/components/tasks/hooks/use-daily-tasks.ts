@@ -15,7 +15,7 @@ import {
   type TemporalVisibilityContext,
 } from "@/lib/activity";
 import { getEffectiveToday } from "@/lib/session/day-reset";
-import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
+import { computeActivityStreaksForDate } from "@/lib/streak-utils";
 import {
   clipPeriodToDay,
   effectiveDateForMs,
@@ -26,7 +26,6 @@ import {
   saveTimedPeriod,
 } from "@/lib/sync/mutate-synced";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
-import { adoptUntimedPeriodForSession } from "@/lib/activity/untimed-period";
 import { buildTimelineSessions } from "@/lib/activity/timeline-sessions";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
@@ -104,7 +103,6 @@ export function useDailyTasks({
     resetNeverTaskCount,
     toggleTaskPaused,
     toggleBreakDay,
-    streakDbVersion,
   } = useDailyEntry(dateString);
 
   const {
@@ -198,7 +196,7 @@ export function useDailyTasks({
       );
     });
 
-    void getOrComputeActivityStreaksForDate(visibleActivities, currentDate, {
+    void computeActivityStreaksForDate(visibleActivities, currentDate, {
       visibility: streakVisibilityDeps,
       todayOverride: {
         date: dateString,
@@ -228,7 +226,6 @@ export function useDailyTasks({
     pausedTaskIds,
     isBreakDay,
     streakVisibilityDeps,
-    streakDbVersion,
   ]);
 
   const dailyActivities = useMemo(
@@ -417,29 +414,19 @@ export function useDailyTasks({
       const entryDateString = effectiveDateForMs(new Date(startIso).getTime());
       const dailyEntry = await getOrCreateDailyEntryProjection(entryDateString);
 
-      const adopted = await adoptUntimedPeriodForSession({
-        activityId,
-        dateString: entryDateString,
-        dailyEntryId: dailyEntry.id,
-        startIso,
-        endIso,
-        note,
-      });
-      if (!adopted) {
-        const period: ActivityPeriod = {
-          id: newId(),
-          daily_entry_id: dailyEntry.id,
-          activity_id: activityId,
-          start_time: startIso,
-          end_time: endIso,
-          note: normalizeSessionNote(note),
-          created_at: createdAt,
-          updated_at: createdAt,
-          synced_at: null,
-          deleted_at: null,
-        };
-        await saveTimedPeriod(period);
-      }
+      const period: ActivityPeriod = {
+        id: newId(),
+        daily_entry_id: dailyEntry.id,
+        activity_id: activityId,
+        start_time: startIso,
+        end_time: endIso,
+        note: normalizeSessionNote(note),
+        created_at: createdAt,
+        updated_at: createdAt,
+        synced_at: null,
+        deleted_at: null,
+      };
+      await saveTimedPeriod(period);
 
       await loadActivityPeriods();
       await loadAllActivityPeriods();
