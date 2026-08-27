@@ -32,8 +32,17 @@ if (isSupabaseConfigured && supabase) {
       const userId = session?.user?.id;
       if (!userId) return;
       void prepareSignedInSession(userId).then((result) => {
-        if (result === "ready") syncEngine.startAutoSync(60000, userId);
-        else emitGuestHandoffNeeded(userId);
+        if (result === "ready") {
+          syncEngine.startAutoSync(60000, userId);
+          return;
+        }
+        emitGuestHandoffNeeded({
+          userId,
+          reason:
+            result === "needs_account_switch_choice"
+              ? "account_switch_unsynced"
+              : "guest_data",
+        });
       });
     } else if (event === "SIGNED_OUT") {
       syncEngine.stopAutoSync();
