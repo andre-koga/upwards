@@ -75,7 +75,7 @@ export function withSuppressedProjectionEnqueue<T>(
   });
 }
 
-export function isProjectionEnqueueSuppressed(): boolean {
+function isProjectionEnqueueSuppressed(): boolean {
   return suppressProjectionEnqueue > 0;
 }
 

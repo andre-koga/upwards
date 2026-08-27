@@ -151,7 +151,7 @@ function asNumber(value: unknown): number | null {
   return null;
 }
 
-export function activityProjectionPatchFromPayload(
+function activityProjectionPatchFromPayload(
   payload: DefinitionPayload
 ): Partial<{
   name: string | null;
@@ -184,7 +184,7 @@ export function activityProjectionPatchFromPayload(
   return patch;
 }
 
-export function groupProjectionPatchFromPayload(
+function groupProjectionPatchFromPayload(
   payload: DefinitionPayload
 ): Partial<{
   name: string;
@@ -583,7 +583,7 @@ const SUBMIT_ENTITY_PRIORITY: Record<string, number> = {
   activity_period: 7,
 };
 
-export function comparePendingForSubmit(
+function comparePendingForSubmit(
   a: { entity_type: string; created_at: string },
   b: { entity_type: string; created_at: string }
 ): number {

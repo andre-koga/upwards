@@ -345,7 +345,12 @@ class SyncEngine {
     this.followUpSyncChain = 0;
     clearLastServerSyncAt();
     clearSyncProtocolV2();
-    localStorage.removeItem("okhabit_natural_identity_repaired_v1");
+    // Deliberately NOT clearing the natural-identity repair flag.
+    //
+    // The cutover is not idempotent (see the PROTOCOL_V2_KEY note in
+    // sync-storage.ts): re-running it re-derives IDs for rows that were already
+    // migrated. Clearing the flag here re-armed it for the next account on the
+    // device. A fresh install has no flag and still runs it once.
     clearCutoverEnqueueFlag();
     this.setState({
       lastSyncAt: null,

@@ -12,7 +12,7 @@ import {
   parseJournalLocationRoute,
 } from "@/lib/journal/utils";
 
-export async function listActiveJournalEntriesForDate(
+async function listActiveJournalEntriesForDate(
   entryDate: string
 ): Promise<JournalEntry[]> {
   return db.journalEntries

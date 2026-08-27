@@ -51,7 +51,7 @@ export function advanceLastAppliedSequence(sequence: number): void {
   if (sequence > current) saveLastAppliedSequence(sequence);
 }
 
-export function clearLastAppliedSequence(): void {
+function clearLastAppliedSequence(): void {
   localStorage.removeItem(LAST_APPLIED_SEQUENCE_KEY);
 }
 
@@ -62,10 +62,6 @@ export function loadOpsRpcAvailable(): boolean {
 
 export function saveOpsRpcAvailable(available: boolean): void {
   localStorage.setItem(OPS_RPC_AVAILABLE_KEY, available ? "1" : "0");
-}
-
-export function clearOpsRpcAvailable(): void {
-  localStorage.removeItem(OPS_RPC_AVAILABLE_KEY);
 }
 
 export function loadSyncProtocolV2(): boolean {

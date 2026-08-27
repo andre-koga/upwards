@@ -386,28 +386,6 @@ export async function resolveGenericProjectionConflictKeepLocal(
   );
 }
 
-export async function resolveGenericProjectionConflictKeepRemote(
-  issue: SyncIssue
-): Promise<void> {
-  const entityType = issue.entity_type;
-  const entityId = issue.entity_id;
-  if (!entityType || !entityId) {
-    throw new Error("Conflict issue is missing entity metadata");
-  }
-
-  const payload = isProjectionConflictPayload(issue.payload)
-    ? await refreshProjectionConflictPayload(issue.payload)
-    : await buildProjectionConflictPayload({
-        entity_type: entityType,
-        entity_id: entityId,
-      });
-
-  await resolveProjectionConflict(
-    { ...issue, payload },
-    "keep_remote"
-  );
-}
-
 export function formatProjectionConflictFieldValue(
   field: string,
   value: unknown

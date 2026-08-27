@@ -12,7 +12,7 @@ export interface LocalSyncSafetyStatus {
 }
 
 /** Rows with local edits not yet marked synced_at on this device. */
-export async function countUnsyncedRows(): Promise<number> {
+async function countUnsyncedRows(): Promise<number> {
   let total = 0;
   for (const table of SYNC_TABLES) {
     const dexieTable = TABLE_MAP[table];

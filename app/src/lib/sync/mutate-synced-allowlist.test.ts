@@ -17,8 +17,6 @@ const ALLOWED_SYNCED_WRITERS = new Set([
   "lib/db/daily-entry.ts",
   "lib/db/index.ts",
   "lib/journal/dedupe-by-date.ts",
-  "lib/streak-utils.ts",
-  "lib/activity/untimed-period.ts",
 ]);
 
 const WRITE_RE =
@@ -65,6 +63,23 @@ describe("sync protocol guardrails", () => {
       const rel = relative(srcRoot, file).replaceAll("\\", "/");
       const source = readFileSync(file, "utf8");
       if (FORBIDDEN_LWW_RE.test(source)) {
+        violations.push(rel);
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
+  it("never clears the natural-identity repair flag", () => {
+    // Re-arming the cutover is not idempotent: it re-derives natural IDs for
+    // rows already migrated. `resetAfterLocalClear` used to clear this on every
+    // sign-out, so the next account on the device replayed the whole cutover.
+    // A fresh install has no flag and still runs it once.
+    const violations: string[] = [];
+    for (const file of files) {
+      const rel = relative(srcRoot, file).replaceAll("\\", "/");
+      if (rel === "lib/sync/identity-repair.ts") continue;
+      const source = readFileSync(file, "utf8");
+      if (source.includes("okhabit_natural_identity_repaired")) {
         violations.push(rel);
       }
     }

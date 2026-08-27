@@ -208,11 +208,6 @@ export async function reportOpsUnavailablePending(): Promise<number> {
   return pending.length;
 }
 
-/** @deprecated Use reportOpsUnavailablePending — kept for tests importing the old name. */
-export async function acknowledgePendingWhenOpsUnavailable(): Promise<number> {
-  return reportOpsUnavailablePending();
-}
-
 export async function discardPendingOperation(id: string): Promise<void> {
   await db.syncPendingOperations.update(id, {
     status: "discarded",
