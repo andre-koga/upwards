@@ -181,6 +181,16 @@ export async function countUnsyncedOperations(): Promise<number> {
   return rows;
 }
 
+/** The ops behind `countUnsyncedOperations`, for per-entity checks. */
+export async function listUnsyncedOperations(): Promise<
+  SyncPendingOperation[]
+> {
+  return db.syncPendingOperations
+    .where("status")
+    .anyOf(["pending", "failed"])
+    .toArray();
+}
+
 /**
  * When temporal ops RPCs are unavailable, leave pending ops in place and surface
  * a sync error so merges are not silently dropped.
