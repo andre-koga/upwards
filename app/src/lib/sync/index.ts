@@ -232,8 +232,9 @@ class SyncEngine {
       if (pushOpsResult.failed && pushOpsResult.transient) {
         interruptedTransiently = true;
       } else if (pushOpsResult.failed) {
-        const msg =
-          "Some pending changes could not be uploaded. Try syncing again.";
+        const msg = pushOpsResult.perOpRejection
+          ? "The server rejected some changes. They are still saved on this device — open Sync issues for details."
+          : "Some pending changes could not be uploaded. Try syncing again.";
         logError("Sync ops push failed", new Error(msg));
         this.setState({ lastError: msg });
       }

@@ -193,6 +193,15 @@ export interface SyncPendingOperation {
   base_revision: string | null;
   status: SyncPendingStatus;
   last_error: string | null;
+  /**
+   * Server rejections for this op. Optional because rows written before this
+   * field existed have no value; treat missing as 0.
+   *
+   * A rejection used to requeue forever, retrying a deterministically-invalid op
+   * on every sync tick. Past the retry ceiling the op stays `failed` and is
+   * surfaced as a sync issue instead of spinning silently.
+   */
+  attempt_count?: number;
   created_at: string;
   updated_at: string;
   acked_at: string | null;

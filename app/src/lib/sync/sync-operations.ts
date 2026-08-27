@@ -69,6 +69,15 @@ export interface PushPendingOperationsResult {
   skipped?: boolean;
   /** True when failure was abort/offline noise and ops stayed pending. */
   transient?: boolean;
+  /**
+   * True when the server resolved each op individually and rejected some.
+   *
+   * Distinguishes "the RPC died and we cannot tell which op is bad" (worth
+   * re-submitting one at a time to isolate the culprit) from "the server already
+   * told us exactly which ops it rejected" (re-submitting proves nothing and just
+   * burns retry attempts).
+   */
+  perOpRejection?: boolean;
 }
 
 export interface PullAndApplyOperationsResult {
@@ -533,6 +542,7 @@ async function submitPendingOperationBatch(
     pending.map((row) => [row.operation_id, row])
   );
   let settled = 0;
+  let rejected = 0;
 
   for (const result of results) {
     const local = pendingByOperationId.get(result.operation_id);
@@ -551,7 +561,11 @@ async function submitPendingOperationBatch(
           ? result.detail
           : "Server rejected this change"
       );
-      settled += 1;
+      // Deliberately NOT counted as settled. A rejected op still holds user data
+      // that never reached the server, so the push did not succeed. Counting it
+      // here is what made the caller report a clean sync, clear the error cards,
+      // and let the sign-out gate wipe the row.
+      rejected += 1;
       continue;
     }
 
@@ -650,6 +664,17 @@ async function submitPendingOperationBatch(
     return { failed: true };
   }
 
+  // A partially-rejected batch is still a failed push. The accepted ops are
+  // acked and will not be resent, but the rejected ones hold data the server
+  // does not have, so the caller must not treat this as a clean sync.
+  if (rejected > 0) {
+    return {
+      failed: true,
+      perOpRejection: true,
+      maxSequence: maxServerSequence(results.map((r) => r.server_sequence)),
+    };
+  }
+
   return {
     failed: false,
     maxSequence: maxServerSequence(results.map((r) => r.server_sequence)),
@@ -708,8 +733,23 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
         ...(maxSequence != null ? { maxSequence } : {}),
       };
     }
+    // The server already adjudicated each op. Splitting the batch would resubmit
+    // ops it just rejected, and because the loop re-reads `pending` each pass,
+    // continuing here would spin: the rejected ops are `failed`, not `pending`,
+    // so return and let the next sync tick retry them under the attempt ceiling.
+    if (result.failed && result.perOpRejection) {
+      maxSequence = maxServerSequence([maxSequence, result.maxSequence]);
+      return {
+        failed: true,
+        perOpRejection: true,
+        ...(maxSequence != null ? { maxSequence } : {}),
+      };
+    }
     if (result.failed && batch.length > 1) {
+      // Whole-RPC failure: the server told us nothing per-op, so isolate the bad
+      // op by submitting one at a time.
       let anyAcked = false;
+      let anyRejected = false;
       for (const row of batch) {
         const one = await submitPendingOperationBatch([row]);
         if (one.skipped) return { failed: false, skipped: true };
@@ -720,13 +760,19 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
             ...(maxSequence != null ? { maxSequence } : {}),
           };
         }
-        if (one.failed) continue;
-        anyAcked = true;
         maxSequence = maxServerSequence([maxSequence, one.maxSequence]);
+        if (one.failed) {
+          anyRejected = true;
+          continue;
+        }
+        anyAcked = true;
       }
-      if (!anyAcked) {
+      if (!anyAcked || anyRejected) {
+        // Either nothing got through, or some op is still stranded. Both are a
+        // failed push; returning also avoids re-looping over `failed` rows.
         return {
           failed: true,
+          ...(anyRejected ? { perOpRejection: true } : {}),
           ...(maxSequence != null ? { maxSequence } : {}),
         };
       }

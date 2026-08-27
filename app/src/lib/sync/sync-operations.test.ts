@@ -62,6 +62,7 @@ vi.mock("@/lib/db", () => ({
   db: {
     syncPendingOperations: {
       toArray: async () => [...pendingOps],
+      get: async (id: string) => pendingOps.find((op) => op.id === id),
       where: (index: string) => ({
         equals: (value: string) => ({
           toArray: async () =>
@@ -69,6 +70,18 @@ vi.mock("@/lib/db", () => ({
               if (index === "status") return row.status === value;
               return true;
             }),
+          count: async () =>
+            pendingOps.filter((row) => {
+              if (index === "status") return row.status === value;
+              return true;
+            }).length,
+        }),
+        anyOf: (values: string[]) => ({
+          count: async () =>
+            pendingOps.filter((row) => {
+              if (index === "status") return values.includes(row.status);
+              return true;
+            }).length,
         }),
       }),
       update: async (id: string, patch: Partial<SyncPendingOperation>) => {
@@ -190,6 +203,37 @@ vi.mock("@/lib/db", () => ({
       ) => ({
         first: async () => syncIssues.find(predicate) ?? undefined,
       }),
+      where: (index: string) => ({
+        equals: (value: string) => ({
+          filter: (
+            predicate: (issue: import("@/lib/db/types").SyncIssue) => boolean
+          ) => ({
+            first: async () =>
+              syncIssues.find(
+                (issue) =>
+                  (index !== "status" || issue.status === value) &&
+                  predicate(issue)
+              ) ?? undefined,
+            toArray: async () =>
+              syncIssues.filter(
+                (issue) =>
+                  (index !== "status" || issue.status === value) &&
+                  predicate(issue)
+              ),
+          }),
+          toArray: async () =>
+            syncIssues.filter(
+              (issue) => index !== "status" || issue.status === value
+            ),
+        }),
+      }),
+      update: async (
+        id: string,
+        patch: Partial<import("@/lib/db/types").SyncIssue>
+      ) => {
+        const row = syncIssues.find((issue) => issue.id === id);
+        if (row) Object.assign(row, patch);
+      },
       add: async (row: import("@/lib/db/types").SyncIssue) => {
         syncIssues.push(row);
       },
@@ -217,6 +261,7 @@ import {
   toSubmitSyncOperationInput,
 } from "./sync-operations";
 import { saveOpsRpcAvailable } from "./sync-storage";
+import { MAX_PUSH_ATTEMPTS } from "./pending-operations";
 
 function makePending(
   overrides: Partial<SyncPendingOperation> &
@@ -378,7 +423,7 @@ describe("pushPendingOperations", () => {
     );
   });
 
-  it("marks apply errors failed without aborting other ops in the batch", async () => {
+  it("reports a rejected op as a failed push, without aborting the rest of the batch", async () => {
     pendingOps.push(
       makePending({ operation_id: "op-ok", id: "row-ok" }),
       makePending({
@@ -407,7 +452,14 @@ describe("pushPendingOperations", () => {
     });
 
     const result = await pushPendingOperations();
-    expect(result).toEqual({ failed: false, maxSequence: 20 });
+    // The good op must still land, but the push is NOT a success: `row-bad` holds
+    // user data the server does not have. Reporting `failed: false` here is what
+    // let the sign-out gate wipe that data.
+    expect(result).toEqual({
+      failed: true,
+      perOpRejection: true,
+      maxSequence: 20,
+    });
     expect(pendingOps.find((row) => row.id === "row-ok")?.status).toBe("acked");
     expect(pendingOps.find((row) => row.id === "row-bad")?.status).toBe(
       "failed"
@@ -415,6 +467,44 @@ describe("pushPendingOperations", () => {
     expect(pendingOps.find((row) => row.id === "row-bad")?.last_error).toMatch(
       /foreign key/
     );
+    // And the user has to be able to find out.
+    expect(
+      syncIssues.some(
+        (issue) => issue.kind === "error" && /rejected/i.test(issue.title)
+      )
+    ).toBe(true);
+  });
+
+  it("stops retrying a rejected op once it hits the attempt ceiling", async () => {
+    pendingOps.push(
+      makePending({
+        operation_id: "op-bad",
+        id: "row-bad",
+        entity_type: "activity_period",
+        operation_type: "projection.upsert",
+      })
+    );
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          operation_id: "op-bad",
+          status: "error",
+          server_sequence: 0,
+          detail: "violates foreign key constraint",
+        },
+      ],
+      error: null,
+    });
+
+    for (let i = 0; i < MAX_PUSH_ATTEMPTS + 2; i += 1) {
+      await pushPendingOperations();
+    }
+
+    const row = pendingOps.find((r) => r.id === "row-bad");
+    // Never discarded: it still holds the user's data.
+    expect(row?.status).toBe("failed");
+    // But capped, rather than re-submitted forever on every sync tick.
+    expect(row?.attempt_count).toBe(MAX_PUSH_ATTEMPTS);
   });
 
   it("submits parent entities before activity periods", async () => {
