@@ -1,4 +1,5 @@
--- Recover journal entries soft-deleted by the natural-id cutover.
+-- Recover journal entries soft-deleted by the natural-id cutover, and publish
+-- the restores to the operation stream so devices actually see them.
 --
 -- journal_entries is UNIQUE(user_id, entry_date), and the previous
 -- submit_sync_operations redirected every journal projection.upsert onto the
@@ -17,17 +18,27 @@
 -- overwritten by an emptier duplicate: sync_operations retains every pushed
 -- payload verbatim, so the richest non-empty text for that date is available.
 --
--- Idempotent: re-running restores nothing new because restored rows are no
--- longer soft-deleted.
+-- Publishing matters: clients finish the v2 bootstrap once and from then on
+-- read journal rows only from pull_sync_operations. A bare UPDATE here would
+-- heal Postgres while every already-cut-over device kept showing the entry as
+-- deleted. Emitting an accepted projection.upsert per restored row makes the
+-- normal pull deliver it. device_id is a synthetic 'server-recovery' because
+-- pullAndApplyOperations skips ops authored by the local device.
+--
+-- Idempotent: restored rows are no longer soft-deleted, so a re-run selects
+-- nothing and emits no further ops.
 
 DO $$
 DECLARE
   restored INT := 0;
   refilled INT := 0;
+  published INT := 0;
 BEGIN
-  -- Rows whose deletion came from a redirected op (never from their own id).
+  CREATE TEMP TABLE recovered_journal_ids (id UUID PRIMARY KEY) ON COMMIT DROP;
+
+  -- 1. Un-delete rows whose deletion came from a redirected op.
   WITH clobbered AS (
-    SELECT je.id, je.user_id, je.entry_date
+    SELECT je.id
     FROM journal_entries je
     WHERE je.deleted_at IS NOT NULL
       AND EXISTS (
@@ -52,17 +63,22 @@ BEGIN
           AND so.entity_id = je.id
           AND NULLIF(so.payload->'row'->>'deleted_at', '') IS NOT NULL
       )
+  ), undeleted AS (
+    UPDATE journal_entries je
+    SET deleted_at = NULL,
+        updated_at = now()
+    FROM clobbered c
+    WHERE je.id = c.id
+    RETURNING je.id
   )
-  UPDATE journal_entries je
-  SET deleted_at = NULL,
-      updated_at = now()
-  FROM clobbered c
-  WHERE je.id = c.id;
+  INSERT INTO recovered_journal_ids (id)
+  SELECT id FROM undeleted
+  ON CONFLICT DO NOTHING;
 
-  GET DIAGNOSTICS restored = ROW_COUNT;
+  SELECT count(*) INTO restored FROM recovered_journal_ids;
 
-  -- Recover text that an emptier duplicate overwrote, using the richest
-  -- non-empty payload recorded for that date.
+  -- 2. Refill text an emptier duplicate overwrote, using the richest non-empty
+  --    payload recorded for that date.
   WITH best_text AS (
     SELECT DISTINCT ON (so.user_id, so.payload->'row'->>'entry_date')
       so.user_id,
@@ -80,20 +96,64 @@ BEGIN
       so.payload->'row'->>'entry_date',
       length(COALESCE(so.payload->'row'->>'text_content', '')) DESC,
       so.server_sequence DESC
+  ), refilled_rows AS (
+    UPDATE journal_entries je
+    SET text_content = bt.text_content,
+        title = COALESCE(NULLIF(je.title, ''), bt.title),
+        updated_at = now()
+    FROM best_text bt
+    WHERE je.user_id = bt.user_id
+      AND je.entry_date = bt.entry_date
+      AND je.deleted_at IS NULL
+      AND length(COALESCE(je.text_content, '')) = 0
+      AND length(COALESCE(bt.text_content, '')) > 0
+    RETURNING je.id
   )
-  UPDATE journal_entries je
-  SET text_content = bt.text_content,
-      title = COALESCE(NULLIF(je.title, ''), bt.title),
-      updated_at = now()
-  FROM best_text bt
-  WHERE je.user_id = bt.user_id
-    AND je.entry_date = bt.entry_date
-    AND je.deleted_at IS NULL
-    AND length(COALESCE(je.text_content, '')) = 0
-    AND length(COALESCE(bt.text_content, '')) > 0;
+  INSERT INTO recovered_journal_ids (id)
+  SELECT id FROM refilled_rows
+  ON CONFLICT DO NOTHING;
 
-  GET DIAGNOSTICS refilled = ROW_COUNT;
+  SELECT count(*) - restored INTO refilled FROM recovered_journal_ids;
 
-  RAISE NOTICE 'journal recovery: % entries un-deleted, % text bodies refilled',
-    restored, refilled;
+  -- 3. Publish each recovered row so already-cut-over devices pick it up.
+  INSERT INTO sync_operations (
+    user_id, operation_id, device_id, entity_type, entity_id,
+    operation_type, payload, base_revision, status
+  )
+  SELECT
+    je.user_id,
+    gen_random_uuid(),
+    'server-recovery',
+    'journal_entry',
+    je.id,
+    'projection.upsert',
+    jsonb_build_object('row', jsonb_build_object(
+      'id', je.id,
+      'entry_date', je.entry_date,
+      'title', je.title,
+      'text_content', je.text_content,
+      'day_emoji', je.day_emoji,
+      'is_bookmarked', je.is_bookmarked,
+      'video_path', je.video_path,
+      'video_thumbnail', je.video_thumbnail,
+      'photo_paths', to_jsonb(je.photo_paths),
+      'is_journal_complete', je.is_journal_complete,
+      'journal_entry_number', je.journal_entry_number,
+      'journal_completion_streak', je.journal_completion_streak,
+      'journal_completed_at', je.journal_completed_at,
+      'location', je.location,
+      'created_at', je.created_at,
+      'updated_at', je.updated_at,
+      'deleted_at', NULL
+    )),
+    NULL,
+    'accepted'
+  FROM journal_entries je
+  JOIN recovered_journal_ids r ON r.id = je.id
+  WHERE je.deleted_at IS NULL;
+
+  GET DIAGNOSTICS published = ROW_COUNT;
+
+  RAISE NOTICE 'journal recovery: % un-deleted, % text refilled, % ops published',
+    restored, refilled, published;
 END $$;
