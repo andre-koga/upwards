@@ -147,4 +147,127 @@ describe("applySyncSnapshot", () => {
     expect(tables.dailyEntries).toHaveLength(1);
     expect(tables.dailyEntries[0]!.task_counts).toEqual({ "activity-1": 3 });
   });
+
+  it("refuses an incoming tombstone for a live local journal entry with text", async () => {
+    // The mirror of "keeps local rows the server snapshot does not carry". That
+    // rule stops an *absent* server row from deleting local work, but the merge
+    // let incoming fields win, so an incoming tombstone still deleted it. The app
+    // has no user-facing journal delete, so such a tombstone is always
+    // machine-written (production holds 54, 53 carrying text) and never reflects
+    // an intent to delete.
+    tables.journalEntries.push({
+      id: "journal-user-1-2026-08-22",
+      user_id: "user-1",
+      entry_date: "2026-08-22",
+      text_content: "a long entry I typed on this phone",
+      deleted_at: null,
+      updated_at: "2026-08-26T00:00:00.000Z",
+    });
+
+    await applySyncSnapshot({
+      server_sequence: 45,
+      journal_entries: [
+        {
+          id: "journal-user-1-2026-08-22",
+          user_id: "user-1",
+          entry_date: "2026-08-22",
+          text_content: null,
+          deleted_at: "2026-08-27T00:00:00.000Z",
+          updated_at: "2026-08-27T00:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(tables.journalEntries).toHaveLength(1);
+    expect(tables.journalEntries[0]!.deleted_at).toBeNull();
+    expect(tables.journalEntries[0]!.text_content).toBe(
+      "a long entry I typed on this phone"
+    );
+  });
+
+  it("accepts an incoming tombstone for an empty local journal entry", async () => {
+    // Refusing every delete would resurrect rows forever. An empty local row has
+    // nothing to lose, and dedupe legitimately tombstones these.
+    tables.journalEntries.push({
+      id: "journal-user-1-2026-08-23",
+      user_id: "user-1",
+      entry_date: "2026-08-23",
+      text_content: null,
+      photo_paths: [],
+      deleted_at: null,
+      updated_at: "2026-08-26T00:00:00.000Z",
+    });
+
+    await applySyncSnapshot({
+      server_sequence: 46,
+      journal_entries: [
+        {
+          id: "journal-user-1-2026-08-23",
+          user_id: "user-1",
+          entry_date: "2026-08-23",
+          deleted_at: "2026-08-27T00:00:00.000Z",
+          updated_at: "2026-08-27T00:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(tables.journalEntries[0]!.deleted_at).toBe(
+      "2026-08-27T00:00:00.000Z"
+    );
+  });
+
+  it("protects a media-only journal entry, which carries no text at all", async () => {
+    tables.journalEntries.push({
+      id: "journal-user-1-2026-08-24",
+      user_id: "user-1",
+      entry_date: "2026-08-24",
+      text_content: null,
+      photo_paths: ["photo-a.jpg"],
+      deleted_at: null,
+      updated_at: "2026-08-26T00:00:00.000Z",
+    });
+
+    await applySyncSnapshot({
+      server_sequence: 47,
+      journal_entries: [
+        {
+          id: "journal-user-1-2026-08-24",
+          user_id: "user-1",
+          entry_date: "2026-08-24",
+          deleted_at: "2026-08-27T00:00:00.000Z",
+          updated_at: "2026-08-27T00:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(tables.journalEntries[0]!.deleted_at).toBeNull();
+  });
+
+  it("still accepts a tombstone for a row this device already deleted", async () => {
+    tables.journalEntries.push({
+      id: "journal-user-1-2026-08-19",
+      user_id: "user-1",
+      entry_date: "2026-08-19",
+      text_content: "old text",
+      deleted_at: "2026-08-25T00:00:00.000Z",
+      updated_at: "2026-08-25T00:00:00.000Z",
+    });
+
+    await applySyncSnapshot({
+      server_sequence: 48,
+      journal_entries: [
+        {
+          id: "journal-user-1-2026-08-19",
+          user_id: "user-1",
+          entry_date: "2026-08-19",
+          deleted_at: "2026-08-27T00:00:00.000Z",
+          updated_at: "2026-08-27T00:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(tables.journalEntries[0]!.deleted_at).toBe(
+      "2026-08-27T00:00:00.000Z"
+    );
+  });
 });

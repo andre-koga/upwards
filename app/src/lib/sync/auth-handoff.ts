@@ -9,6 +9,7 @@ import {
   clearLastSignedInUserId,
 } from "./sync-storage";
 import { getLocalSyncSafetyStatus } from "./unsynced-data";
+import { rekeyLocalRowsToCurrentUser } from "./identity-repair";
 
 export type PrepareResult =
   | "ready"
@@ -68,7 +69,8 @@ export async function prepareSignedInSession(
 /**
  * Called once the guest-handoff dialog has a confirmed choice.
  *
- * upload_local: push existing data to the new account, then run normal sync.
+ * upload_local: re-key the guest rows onto the signed-in user's natural IDs, then
+ *               push them and run normal sync.
  * use_cloud:    wipe local first, then pull from cloud.
  */
 export async function completeGuestHandoff(
@@ -77,6 +79,12 @@ export async function completeGuestHandoff(
 ): Promise<void> {
   if (choice === "use_cloud") {
     await clearLocalSyncData();
+  } else {
+    // Must happen before the first push. Guest rows carry natural IDs derived from
+    // `guest:<deviceId>`, which no signed-in device recomputes, so pushing them
+    // unchanged seeds a duplicate for every date the user later touches while
+    // signed in.
+    await rekeyLocalRowsToCurrentUser();
   }
   saveLastSignedInUserId(userId);
   syncEngine.startAutoSync(60_000, userId);
