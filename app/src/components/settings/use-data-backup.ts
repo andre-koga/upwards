@@ -9,6 +9,7 @@ import type {
   GroupStatusEvent,
   JournalEntry,
   OneTimeTask,
+  RecurringMemo,
 } from "@/lib/db/types";
 import { normalizeSessionNote } from "@/lib/activity";
 import { getErrorMessage, logError, ERROR_MESSAGES } from "@/lib/error-utils";
@@ -31,6 +32,7 @@ export function useDataBackup() {
         activityPeriods,
         journalEntries,
         oneTimeTasks,
+        recurringMemos,
         activityStatusEvents,
         groupStatusEvents,
       ] = await Promise.all([
@@ -40,19 +42,21 @@ export function useDataBackup() {
         db.activityPeriods.toArray(),
         db.journalEntries.toArray(),
         db.oneTimeTasks.toArray(),
+        db.recurringMemos.toArray(),
         db.activityStatusEvents.toArray(),
         db.groupStatusEvents.toArray(),
       ]);
 
       const backup = {
         exportedAt: new Date().toISOString(),
-        version: 2,
+        version: 3,
         activityGroups,
         activities,
         dailyEntries,
         activityPeriods,
         journalEntries,
         oneTimeTasks,
+        recurringMemos,
         activityStatusEvents,
         groupStatusEvents,
       };
@@ -121,6 +125,7 @@ export function useDataBackup() {
         activityPeriods: normalizedPeriods,
         journalEntries: data.journalEntries as JournalEntry[] | undefined,
         oneTimeTasks: data.oneTimeTasks as OneTimeTask[] | undefined,
+        recurringMemos: data.recurringMemos as RecurringMemo[] | undefined,
         activityStatusEvents: data.activityStatusEvents as
           | ActivityStatusEvent[]
           | undefined,
