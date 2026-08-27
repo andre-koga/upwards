@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { tables } = vi.hoisted(() => ({
   tables: {
     journalEntries: [] as Array<Record<string, unknown>>,
+    dailyEntries: [] as Array<Record<string, unknown>>,
   },
 }));
 
@@ -12,33 +13,33 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 vi.mock("@/lib/db", () => {
-  const rows = tables.journalEntries;
   const empty = () => ({
     toArray: async () => [],
     bulkDelete: async () => {},
     bulkPut: async () => {},
   });
+  const backed = (rows: Array<Record<string, unknown>>) => ({
+    toArray: async () => [...rows],
+    bulkDelete: async (ids: string[]) => {
+      for (const id of ids) {
+        const idx = rows.findIndex((r) => r.id === id);
+        if (idx >= 0) rows.splice(idx, 1);
+      }
+    },
+    bulkPut: async (incoming: Array<Record<string, unknown>>) => {
+      for (const row of incoming) {
+        const idx = rows.findIndex((r) => r.id === row.id);
+        if (idx >= 0) rows[idx] = row;
+        else rows.push(row);
+      }
+    },
+  });
   return {
     db: {
-      journalEntries: {
-        toArray: async () => [...rows],
-        bulkDelete: async (ids: string[]) => {
-          for (const id of ids) {
-            const idx = rows.findIndex((r) => r.id === id);
-            if (idx >= 0) rows.splice(idx, 1);
-          }
-        },
-        bulkPut: async (incoming: Array<Record<string, unknown>>) => {
-          for (const row of incoming) {
-            const idx = rows.findIndex((r) => r.id === row.id);
-            if (idx >= 0) rows[idx] = row;
-            else rows.push(row);
-          }
-        },
-      },
+      journalEntries: backed(tables.journalEntries),
+      dailyEntries: backed(tables.dailyEntries),
       activityGroups: empty(),
       activities: empty(),
-      dailyEntries: empty(),
       activityPeriods: empty(),
       oneTimeTasks: empty(),
       recurringMemos: empty(),
@@ -60,6 +61,7 @@ import { applySyncSnapshot } from "./snapshot-sync";
 describe("applySyncSnapshot", () => {
   beforeEach(() => {
     tables.journalEntries.length = 0;
+    tables.dailyEntries.length = 0;
   });
 
   it("clears a local tombstone when the server row is live", async () => {
@@ -96,18 +98,53 @@ describe("applySyncSnapshot", () => {
     expect(row.content).toBe("the entry I thought I lost");
   });
 
-  it("removes local rows the server no longer has", async () => {
+  it("keeps local rows the server snapshot does not carry", async () => {
+    // The snapshot is a repair pass, not a delete authority. A row missing from
+    // the server may be unpushed local work, and the pending-op gate cannot
+    // prove otherwise: a server-rejected op is marked `failed`, not `pending`.
     tables.journalEntries.push({
       id: "journal-user-1-2026-08-21",
       user_id: "user-1",
       entry_date: "2026-08-21",
-      content: "deleted on another device",
+      content: "not yet pushed",
       deleted_at: null,
       updated_at: "2026-08-26T00:00:00.000Z",
     });
 
     await applySyncSnapshot({ server_sequence: 43, journal_entries: [] });
 
-    expect(tables.journalEntries).toHaveLength(0);
+    expect(tables.journalEntries).toHaveLength(1);
+    expect(tables.journalEntries[0]!.content).toBe("not yet pushed");
+  });
+
+  it("does not overwrite op-owned daily entry counts", async () => {
+    // task_counts belongs to the semantic op stream. A snapshot that writes the
+    // server's copy over a local one silently discards untimed completions,
+    // whose only representation is the count itself.
+    tables.dailyEntries.push({
+      id: "daily-user-1-2026-08-25",
+      user_id: "user-1",
+      date: "2026-08-25",
+      task_counts: { "activity-1": 3 },
+      is_break_day: false,
+      updated_at: "2026-08-26T00:00:00.000Z",
+    });
+
+    await applySyncSnapshot({
+      server_sequence: 44,
+      daily_entries: [
+        {
+          id: "daily-user-1-2026-08-25",
+          user_id: "user-1",
+          date: "2026-08-25",
+          task_counts: {},
+          is_break_day: false,
+          updated_at: "2026-08-27T00:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(tables.dailyEntries).toHaveLength(1);
+    expect(tables.dailyEntries[0]!.task_counts).toEqual({ "activity-1": 3 });
   });
 });

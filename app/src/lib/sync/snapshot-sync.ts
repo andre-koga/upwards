@@ -5,6 +5,7 @@ import { TABLE_MAP } from "./sync-constants";
 import { withSuppressedProjectionEnqueue } from "./projection-sync";
 import { isSyncOperationsRpcMissing } from "./sync-operations";
 import { saveOpsRpcAvailable } from "./sync-storage";
+import { stripOpOwnedFields } from "./op-owned-fields";
 import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 
 const SNAPSHOT_TABLES: SyncTable[] = [
@@ -86,24 +87,34 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
           return !isUntimedPeriod(start, end);
         });
 
-      const incomingIds = new Set(
-        incoming
-          .map((row) => row.id)
-          .filter((id): id is string => typeof id === "string")
-      );
+      if (incoming.length === 0) continue;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const localTable = db[dexieKey] as any;
-      const existing: Array<{ id: string }> = await localTable.toArray();
-      const staleIds = existing
-        .map((row) => row.id)
-        .filter((id) => !incomingIds.has(id));
-      if (staleIds.length > 0) {
-        await localTable.bulkDelete(staleIds);
-      }
-      if (incoming.length > 0) {
-        await localTable.bulkPut(incoming);
-      }
+      const existing: Array<Record<string, unknown>> =
+        await localTable.toArray();
+      const existingById = new Map(
+        existing
+          .filter((row): row is Record<string, unknown> & { id: string } =>
+            typeof row.id === "string"
+          )
+          .map((row) => [row.id, row])
+      );
+
+      // A snapshot is a repair pass, not a source of truth for deletion.
+      // Rows the server has not seen may simply be unpushed local work, and the
+      // pending-op gate cannot prove otherwise: an op the server rejected is
+      // marked `failed`, not `pending`. Merge forward only.
+      const merged = incoming.map((row) => {
+        const local =
+          typeof row.id === "string" ? existingById.get(row.id) : undefined;
+        if (!local) return row;
+        // Counts, pauses, and break days belong to the semantic op stream.
+        // Overwriting them here silently discards local completions.
+        return { ...local, ...stripOpOwnedFields(table, row) };
+      });
+
+      await localTable.bulkPut(merged);
     }
   });
 }

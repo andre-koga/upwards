@@ -91,19 +91,7 @@
     "title": "Sincronização na nuvem",
     "description": "Seus dados são sincronizados automaticamente. Abra Problemas de sincronização para revisar conflitos ou erros.",
     "issuesLink": "Problemas de sincronização",
-    "issuesBadge": "{{count}} problemas de sincronização abertos",
-    "restore": {
-      "action": "Substituir dados locais pela nuvem",
-      "title": "Substituir dados locais pela nuvem?",
-      "description": "Baixa tudo da nuvem e substitui o que está salvo neste dispositivo. Use se algo estiver faltando aqui, mas presente nos seus outros dispositivos. Alterações não enviadas são carregadas primeiro.",
-      "confirm": "Baixar e substituir",
-      "cancel": "Cancelar",
-      "working": "Substituindo…",
-      "success": "Este dispositivo agora corresponde à nuvem.",
-      "pendingWarning": "{{count}} alteração(ões) não puderam ser enviadas e seriam substituídas. Abra Problemas de sincronização primeiro.",
-      "unavailable": "A sincronização na nuvem está indisponível agora. Tente mais tarde.",
-      "failed": "Não foi possível substituir os dados locais. Tente novamente."
-    }
+    "issuesBadge": "{{count}} problemas de sincronização abertos"
   },
   "syncIssues": {
     "page": {
