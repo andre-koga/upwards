@@ -2,7 +2,22 @@ const LAST_SERVER_SYNC_KEY = "okhabit_last_server_sync_at";
 const LAST_APPLIED_SEQUENCE_KEY = "okhabit_last_applied_sync_sequence";
 const LAST_USER_KEY = "okhabit_last_signed_in_user_id";
 const OPS_RPC_AVAILABLE_KEY = "okhabit_ops_rpc_available";
-const PROTOCOL_V2_KEY = "okhabit_sync_protocol_v2";
+/**
+ * Bumped from `okhabit_sync_protocol_v2` to force one more bootstrap per
+ * device.
+ *
+ * The natural-id cutover soft-deleted journal rows in local IndexedDB. Those
+ * local tombstones are never healed by the steady-state path: the snapshot runs
+ * only inside bootstrapProtocolV2, and the op stream carries deltas rather than
+ * current state, so an already-cut-over device keeps hiding entries even after
+ * the server row is healthy.
+ *
+ * Re-running the bootstrap reconciles local state against the server snapshot.
+ * It is safe to repeat: repairNaturalIdentity and enqueueUnsyncedCurrentStateRows
+ * have their own separate flags and no-op, so this only pushes anything already
+ * pending and then applies a fresh snapshot.
+ */
+const PROTOCOL_V2_KEY = "okhabit_sync_protocol_v3_snapshot_repair";
 
 /**
  * The server-side `now()` timestamp captured at the start of the last

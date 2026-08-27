@@ -19,6 +19,8 @@ import {
   advanceLastAppliedSequence,
   loadLastAppliedSequence,
   saveLastAppliedSequence,
+  loadSyncProtocolV2,
+  saveSyncProtocolV2,
 } from "./sync-storage";
 
 describe("last applied sync sequence", () => {
@@ -32,5 +34,22 @@ describe("last applied sync sequence", () => {
     expect(loadLastAppliedSequence()).toBe(12);
     advanceLastAppliedSequence(9);
     expect(loadLastAppliedSequence()).toBe(12);
+  });
+});
+
+describe("bootstrap flag", () => {
+  beforeEach(() => {
+    storage.clear();
+  });
+
+  it("re-bootstraps devices that completed the original v2 cutover", () => {
+    // A device damaged by the natural-id cutover has the old key set. It must
+    // still bootstrap once more so the snapshot clears local journal
+    // tombstones the op stream cannot heal.
+    storage.set("okhabit_sync_protocol_v2", "1");
+    expect(loadSyncProtocolV2()).toBe(false);
+
+    saveSyncProtocolV2();
+    expect(loadSyncProtocolV2()).toBe(true);
   });
 });
