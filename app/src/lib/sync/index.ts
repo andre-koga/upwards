@@ -339,6 +339,66 @@ class SyncEngine {
     });
   }
 
+  /**
+   * Replaces local data with the server snapshot, on demand.
+   *
+   * The incremental path cannot repair a local row that is wrong but never
+   * touched again: the op stream carries deltas, and the snapshot normally runs
+   * only during bootstrap. That left journal entries the natural-id cutover
+   * soft-deleted locally invisible even after the server row was healthy.
+   *
+   * Unsent work is pushed first so this does not silently discard local edits.
+   * `pendingAfterPush` lets the caller warn when something could not be pushed
+   * and would be overwritten.
+   */
+  async restoreFromCloudSnapshot(): Promise<{
+    applied: boolean;
+    pendingAfterPush: number;
+    error?: string;
+  }> {
+    if (!this.canSync()) {
+      return { applied: false, pendingAfterPush: 0, error: "not_signed_in" };
+    }
+
+    this.setState({ isSyncing: true, lastError: null });
+    try {
+      // Push first: the snapshot overwrites local rows, so anything unsent
+      // would otherwise be lost without review.
+      await pushPendingOperations();
+      const pendingAfterPush = await countPendingOperations({
+        status: "pending",
+      });
+
+      const snapshot = await pullAndApplySnapshot();
+      if (snapshot.skipped) {
+        return {
+          applied: false,
+          pendingAfterPush,
+          error: "snapshot_unavailable",
+        };
+      }
+
+      if (snapshot.sequence != null) {
+        advanceLastAppliedSequence(snapshot.sequence);
+      }
+      saveSyncProtocolV2();
+      const now = new Date().toISOString();
+      saveLastServerSyncAt(now);
+      this.setState({
+        lastSyncAt: now,
+        localDataVersion: this.state.localDataVersion + 1,
+      });
+      return { applied: true, pendingAfterPush };
+    } catch (err) {
+      const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
+      logError("Restore from cloud failed", err);
+      this.setState({ lastError: msg });
+      return { applied: false, pendingAfterPush: 0, error: msg };
+    } finally {
+      this.setState({ isSyncing: false });
+    }
+  }
+
   startAutoSync(
     intervalMs = DEFAULT_PERIODIC_SYNC_MS,
     userId?: string | null
