@@ -91,7 +91,19 @@
     "title": "Cloud sync",
     "description": "Your data syncs automatically. Open Sync issues to review conflicts or errors.",
     "issuesLink": "Sync issues",
-    "issuesBadge": "{{count}} open sync issues"
+    "issuesBadge": "{{count}} open sync issues",
+    "restore": {
+      "action": "Replace local data with cloud",
+      "title": "Replace local data with cloud?",
+      "description": "Downloads everything from the cloud and replaces what is stored on this device. Use this if something is missing here but present on your other devices. Unsent changes are uploaded first.",
+      "confirm": "Download and replace",
+      "cancel": "Cancel",
+      "working": "Replacing…",
+      "success": "This device now matches the cloud.",
+      "pendingWarning": "{{count}} change(s) could not be uploaded and would be overwritten. Open Sync issues first.",
+      "unavailable": "Cloud sync is unavailable right now. Try again later.",
+      "failed": "Could not replace local data. Try again."
+    }
   },
   "syncIssues": {
     "page": {
