@@ -3,11 +3,7 @@ import { now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 import { closeOpenPeriods } from "@/lib/activity";
 import { clipPeriodToDay } from "@/lib/activity/period-day-utils";
-import {
-  adoptUntimedPeriodForSession,
-  dedupeUntimedCompletionsForDay,
-  fetchActivityPeriodsForDay,
-} from "@/lib/activity/untimed-period";
+import { fetchActivityPeriodsForDay } from "@/lib/activity/untimed-period";
 import {
   saveTimedPeriod,
   setCurrentActivityLocal,
@@ -23,7 +19,6 @@ export function useActivityTracking(
 
   const loadActivityPeriods = useCallback(async () => {
     try {
-      await dedupeUntimedCompletionsForDay(dateString);
       const periods = await fetchActivityPeriodsForDay(dateString);
       setActivityPeriods(periods);
     } catch (error) {
@@ -82,28 +77,19 @@ export function useActivityTracking(
 
         await closeOpenPeriods(entry.id);
 
-        const adopted = await adoptUntimedPeriodForSession({
-          activityId,
-          dateString,
-          dailyEntryId: entry.id,
-          startIso: n,
-          endIso: null,
-        });
-        if (!adopted) {
-          const newPeriod: ActivityPeriod = {
-            id: newId(),
-            daily_entry_id: entry.id,
-            activity_id: activityId,
-            start_time: n,
-            end_time: null,
-            note: null,
-            created_at: n,
-            updated_at: n,
-            synced_at: null,
-            deleted_at: null,
-          };
-          await saveTimedPeriod(newPeriod);
-        }
+        const newPeriod: ActivityPeriod = {
+          id: newId(),
+          daily_entry_id: entry.id,
+          activity_id: activityId,
+          start_time: n,
+          end_time: null,
+          note: null,
+          created_at: n,
+          updated_at: n,
+          synced_at: null,
+          deleted_at: null,
+        };
+        await saveTimedPeriod(newPeriod);
         await setCurrentActivityLocal(dateString, activityId);
 
         setCurrentActivityId(activityId);

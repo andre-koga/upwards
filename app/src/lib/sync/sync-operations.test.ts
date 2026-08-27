@@ -53,7 +53,6 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 vi.mock("@/lib/activity/untimed-period", () => ({
-  tombstoneUntimedPeriodsForActivityOnDay: vi.fn(async () => 0),
   isUntimedPeriod: (start: string, end: string | null) =>
     Boolean(end && start === end),
 }));

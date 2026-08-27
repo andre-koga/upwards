@@ -71,25 +71,24 @@ describe("sync protocol guardrails", () => {
     expect(violations).toEqual([]);
   });
 
-  it("does not enqueue or persist untimed periods as facts from feature code", () => {
+  it("does not reintroduce untimed-period creation", () => {
+    // The builders are gone: untimed completions live in
+    // `daily_entries.task_counts`, not as zero-length `activity_periods`.
+    // 19 fossil rows still exist in Postgres, so `isUntimedPeriod` stays for
+    // reads -- but nothing may write a new one.
     const violations: string[] = [];
     for (const file of files) {
       const rel = relative(srcRoot, file).replaceAll("\\", "/");
-      if (
-        rel === "lib/activity/untimed-period.ts" ||
-        rel === "lib/sync/mutate-synced.ts" ||
-        rel === "lib/sync/identity-repair.ts" ||
-        rel === "lib/sync/snapshot-sync.ts" ||
-        rel === "lib/sync/projection-sync.ts"
-      ) {
-        continue;
-      }
       const source = readFileSync(file, "utf8");
-      if (source.includes("ensureUntimedCompletionPeriod(")) {
-        violations.push(`${rel}: ensureUntimedCompletionPeriod`);
-      }
-      if (source.includes("buildUntimedPeriod(") && rel.startsWith("components/")) {
-        violations.push(`${rel}: buildUntimedPeriod`);
+      for (const banned of [
+        "ensureUntimedCompletionPeriod",
+        "buildUntimedPeriod",
+        "adoptUntimedPeriodForSession",
+        "naturalUntimedPeriodId",
+      ]) {
+        if (source.includes(`${banned}(`)) {
+          violations.push(`${rel}: ${banned}`);
+        }
       }
     }
     expect(violations).toEqual([]);

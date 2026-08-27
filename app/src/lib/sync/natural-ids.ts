@@ -34,20 +34,3 @@ export function naturalDailyEntryIdForDate(date: string): string {
   return naturalDailyEntryId(currentSyncUserKey(), date);
 }
 
-export function naturalUntimedPeriodId(
-  userKey: string,
-  date: string,
-  activityId: string
-): string {
-  return uuidv5(
-    `untimed:${userKey}:${date}:${activityId}`,
-    UPWARDS_SYNC_NAMESPACE
-  );
-}
-
-export function naturalUntimedPeriodIdForDay(
-  date: string,
-  activityId: string
-): string {
-  return naturalUntimedPeriodId(currentSyncUserKey(), date, activityId);
-}
