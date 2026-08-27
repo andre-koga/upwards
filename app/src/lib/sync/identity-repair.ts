@@ -10,7 +10,10 @@ import {
   naturalDailyEntryIdForDate,
   naturalJournalIdForDate,
 } from "./natural-ids";
-import { pickPreferredJournalEntry } from "@/lib/journal/dedupe-by-date";
+import {
+  pickPreferredJournalEntry,
+  mergeJournalEntryDuplicates,
+} from "@/lib/journal/dedupe-by-date";
 import { listPendingEntityIds } from "./unsynced-data";
 
 const IDENTITY_REPAIR_KEY = "okhabit_natural_identity_repaired_v1";
@@ -112,7 +115,15 @@ async function remapJournals(): Promise<void> {
     const canonicalId = naturalJournalIdForDate(date);
     const preferred = pickPreferredJournalEntry(list, canonicalId);
     if (!preferred) continue;
-    const winner = { ...preferred, id: canonicalId };
+    // Fold the other rows' fields in rather than dropping them: richness
+    // scoring picks a single winner, so an entry that only had photos could
+    // otherwise lose its media to one that only had text.
+    let merged = preferred;
+    for (const other of list) {
+      if (other.id === preferred.id) continue;
+      merged = mergeJournalEntryDuplicates(merged, other);
+    }
+    const winner = { ...merged, id: canonicalId };
     await withSuppressedProjectionEnqueue(async () => {
       if (preferred.id !== canonicalId) {
         const existing = await db.journalEntries.get(canonicalId);
@@ -124,6 +135,8 @@ async function remapJournals(): Promise<void> {
         } else {
           await db.journalEntries.add({ ...winner, updated_at: now() });
         }
+      } else {
+        await db.journalEntries.put({ ...winner, updated_at: now() });
       }
       for (const extra of list) {
         if (extra.id === canonicalId) continue;
@@ -183,6 +196,11 @@ export async function enqueueUnsyncedCurrentStateRows(): Promise<void> {
         if (end && start === end) continue;
         if (isUntimedPeriod(start, end)) continue;
       }
+      // journal_entries is UNIQUE(user_id, entry_date) on the server, so a
+      // local duplicate tombstone would collapse onto the surviving row for
+      // that date and delete real content. The canonical row is enqueued by
+      // remapJournals; these locally-superseded rows must not be pushed.
+      if (table === "journal_entries" && row.deleted_at) continue;
       const id = typeof row.id === "string" ? row.id : null;
       if (id && pendingIds.has(id)) continue;
       await enqueueProjectionUpsertForTable(table, row, null);

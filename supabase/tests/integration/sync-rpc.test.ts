@@ -253,6 +253,104 @@ describe("sync RPC integration", () => {
     expect(rows?.[0]?.text_content).toBe("First device");
   });
 
+  it("does not let a duplicate's soft-delete remove the surviving entry", async () => {
+    const date = "2026-09-02";
+    const survivingId = newId();
+    const duplicateId = newId();
+
+    const created = await submitOps(user.deviceA, [
+      projectionUpsertOp({
+        deviceId: DEVICE_A,
+        entityType: "journal_entry",
+        entityId: survivingId,
+        row: {
+          entry_date: date,
+          title: "Real entry",
+          text_content: "Content that must survive the cutover",
+          created_at: "2026-09-02T12:00:00.000Z",
+          updated_at: "2026-09-02T12:00:00.000Z",
+        },
+      }),
+    ]);
+    expect(created[0]?.status).toBe("accepted");
+
+    // The natural-id cutover soft-deletes local duplicates for a date and
+    // sweeps them into the op queue. That delete must not collapse onto the
+    // surviving row via the UNIQUE(user_id, entry_date) upsert.
+    const deleted = await submitOps(user.deviceA, [
+      projectionUpsertOp({
+        deviceId: DEVICE_A,
+        entityType: "journal_entry",
+        entityId: duplicateId,
+        row: {
+          entry_date: date,
+          title: "Real entry",
+          text_content: "Content that must survive the cutover",
+          created_at: "2026-09-02T12:00:00.000Z",
+          updated_at: "2026-09-02T13:00:00.000Z",
+          deleted_at: "2026-09-02T13:00:00.000Z",
+        },
+      }),
+    ]);
+    expect(deleted[0]?.status).toBe("accepted");
+
+    const { data: rows, error } = await user.deviceA
+      .from("journal_entries")
+      .select("id, text_content, deleted_at")
+      .eq("entry_date", date);
+    if (error) throw error;
+
+    const live = (rows ?? []).filter((row) => row.deleted_at === null);
+    expect(live).toHaveLength(1);
+    expect(live[0]?.id).toBe(survivingId);
+    expect(live[0]?.text_content).toBe(
+      "Content that must survive the cutover"
+    );
+  });
+
+  it("still applies a genuine delete to its own journal row", async () => {
+    const date = "2026-09-03";
+    const entryId = newId();
+
+    await submitOps(user.deviceA, [
+      projectionUpsertOp({
+        deviceId: DEVICE_A,
+        entityType: "journal_entry",
+        entityId: entryId,
+        row: {
+          entry_date: date,
+          text_content: "Written then deleted on purpose",
+          created_at: "2026-09-03T12:00:00.000Z",
+          updated_at: "2026-09-03T12:00:00.000Z",
+        },
+      }),
+    ]);
+
+    await submitOps(user.deviceA, [
+      projectionUpsertOp({
+        deviceId: DEVICE_A,
+        entityType: "journal_entry",
+        entityId: entryId,
+        row: {
+          entry_date: date,
+          text_content: "Written then deleted on purpose",
+          created_at: "2026-09-03T12:00:00.000Z",
+          updated_at: "2026-09-03T14:00:00.000Z",
+          deleted_at: "2026-09-03T14:00:00.000Z",
+        },
+      }),
+    ]);
+
+    const { data: rows, error } = await user.deviceA
+      .from("journal_entries")
+      .select("id, deleted_at")
+      .eq("entry_date", date);
+    if (error) throw error;
+    expect(rows).toHaveLength(1);
+    expect(rows?.[0]?.id).toBe(entryId);
+    expect(rows?.[0]?.deleted_at).not.toBeNull();
+  });
+
   it("ignores untimed period upserts so they cannot re-enter as facts", async () => {
     const periodId = newId();
     const activityId = newId();
