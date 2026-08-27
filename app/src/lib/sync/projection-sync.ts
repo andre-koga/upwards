@@ -30,7 +30,6 @@ const SYNC_TABLE_TO_ENTITY_TYPE: Partial<Record<SyncTable, string>> = {
   activity_periods: "activity_period",
   one_time_tasks: "one_time_task",
   recurring_memos: "recurring_memo",
-  activity_streaks: "activity_streak",
   activity_status_events: "activity_status_event",
   group_status_events: "group_status_event",
   activities: "activity",
@@ -42,7 +41,6 @@ const ENTITY_TYPE_TO_SYNC_TABLE: Record<string, SyncTable> = {
   activity_period: "activity_periods",
   one_time_task: "one_time_tasks",
   recurring_memo: "recurring_memos",
-  activity_streak: "activity_streaks",
   activity_status_event: "activity_status_events",
   group_status_event: "group_status_events",
   activity: "activities",
@@ -54,7 +52,6 @@ const ENTITY_TYPE_TO_DEXIE_TABLE: Record<string, keyof typeof db> = {
   activity_period: "activityPeriods",
   one_time_task: "oneTimeTasks",
   recurring_memo: "recurringMemos",
-  activity_streak: "activityStreaks",
   activity_status_event: "activityStatusEvents",
   group_status_event: "groupStatusEvents",
   activity: "activities",
@@ -126,7 +123,7 @@ export async function enqueueProjectionUpsertForTable(
 ): Promise<void> {
   if (isProjectionEnqueueSuppressed()) return;
   if (!getCachedUserId()) return;
-  if (table === "activity_streaks" || table === "daily_entries") return;
+  if (table === "daily_entries") return;
 
   const entityType = syncTableToEntityType(table);
   if (!entityType) return;

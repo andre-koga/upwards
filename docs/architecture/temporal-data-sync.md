@@ -79,9 +79,10 @@ keys, and derived projections keep devices aligned without silent last-write-win
    Each sync operation has a stable ID. Replaying it must not apply twice.
 5. **Use server ordering for the operation stream, not device clocks.**
    Client timestamps are descriptive metadata.
-6. **Treat streak caches as disposable.**
-   They may be rebuilt from facts plus the current definition. They are never
-   synced.
+6. **Derive streaks; never cache them.**
+   Streaks are replayed from facts plus the current definition on read. The
+   `activity_streaks` cache was removed in schema v29 because it was written on
+   every count mutation and read back nowhere.
 7. **Make every conflict recoverable in the app.**
    Users must not need SQL or developer tools. Journal conflicts and other
    unresolved concurrent edits stay on Sync issues.
@@ -179,7 +180,7 @@ These are rebuilt from facts plus the current definition:
 - `daily_entries.task_counts`, `paused_task_ids`, `is_break_day` — fold of
   semantic ops. The daily-entry row is a local cache; it is not LWW-synced.
 - Untimed completion pills — derived when `count >= target` for that day.
-- `activity_streaks` — rebuilt locally.
+- Streaks — replayed from `daily_entries` on read, never stored.
 - `current_activity_id` — derived from an open timed period (`end_time` null).
 
 Updating a projection is not a history violation.
@@ -289,8 +290,8 @@ Before storing a new column or entity, classify it:
   lifecycle event.
 - **Current-state** (OCC `base_revision`; conflict is reviewable) — habit row,
   journal by date.
-- **Local projection** (rebuild; never an op) — streaks, untimed pills, folded
-  `task_counts`.
+- **Local projection** (recomputed on read; never an op) — streaks, untimed
+  pills, folded `task_counts`.
 
 Then:
 
@@ -328,10 +329,10 @@ retired:
 - Historical streak and day scoring use the current activity row.
 - Do not upsert domain tables from the client or pull by `server_updated_at`.
 - Do not store untimed checkmarks as `activity_periods`.
-- Do not sync `activity_streaks`.
+- Do not reintroduce a stored streak cache, local or synced.
 
-Leftover local version tables may remain until a dedicated cleanup. They must
-not drive new UI, scoring, or RPC writes.
+The legacy local version and streak tables are dropped (schema v28 and v29).
+They must not be reintroduced to drive UI, scoring, or RPC writes.
 
 Old clients that still submit untimed period upserts or LWW rows are rejected
 or ignored by the server so they cannot reintroduce drift.

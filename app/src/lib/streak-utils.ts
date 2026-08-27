@@ -1,4 +1,4 @@
-import { db, newId, now } from "@/lib/db";
+import { db } from "@/lib/db";
 import type {
   Activity,
   ActivityGroup,
@@ -19,7 +19,6 @@ import {
 import {
   buildActivityStreakOutcomesByDate,
   deriveCurrentStreakFromOutcomes,
-  deriveStreakSeriesFromOutcomes,
   type StreakEntryOverride,
   type StreakVisibilityChecker,
 } from "@/lib/streak/projection";
@@ -113,47 +112,6 @@ function buildOutcomesForActivity(
   );
 }
 
-async function persistStreakCacheRows(
-  activityId: string,
-  series: Record<string, number>
-): Promise<void> {
-  const dates = Object.keys(series);
-  if (dates.length === 0) return;
-
-  await Promise.all(
-    dates.map(async (dateStr) => {
-      const streak = series[dateStr] ?? 0;
-      const existing = await db.activityStreaks
-        .where("[activity_id+date]")
-        .equals([activityId, dateStr])
-        .filter((row) => !row.deleted_at)
-        .first();
-
-      if (existing) {
-        if (existing.streak !== streak) {
-          await db.activityStreaks.update(existing.id, {
-            streak,
-            updated_at: now(),
-          });
-        }
-        return;
-      }
-
-      const timestamp = now();
-      await db.activityStreaks.add({
-        id: newId(),
-        activity_id: activityId,
-        date: dateStr,
-        streak,
-        created_at: timestamp,
-        updated_at: timestamp,
-        synced_at: null,
-        deleted_at: null,
-      });
-    })
-  );
-}
-
 function computeStreakRange(
   activity: Activity,
   targetDate: Date
@@ -163,7 +121,14 @@ function computeStreakRange(
   return { fromDate: originDate, toDate, originDate };
 }
 
-export async function getOrComputeActivityStreaksForDate(
+/**
+ * Compute each activity's streak as of `date`.
+ *
+ * There is no cache to consult: the whole range is replayed from `dailyEntries`
+ * on every call. The old `activityStreaks` Dexie cache was written here and read
+ * nowhere, so it only bought an extra IndexedDB round-trip per activity.
+ */
+export async function computeActivityStreaksForDate(
   activities: Activity[],
   date: Date,
   options?: {
@@ -193,91 +158,22 @@ export async function getOrComputeActivityStreaksForDate(
 
   const shared = await loadSharedStreakData(earliestOrigin, targetDay);
 
-  await Promise.all(
-    eligible.map(async (activity) => {
-      const { fromDate, toDate, originDate } = computeStreakRange(
-        activity,
-        targetDay
-      );
-      const outcomes = buildOutcomesForActivity(
-        activity,
-        shared,
-        fromDate,
-        toDate,
-        {
-          visibility,
-          entryOverride:
-            todayOverride?.date === targetDateStr ? todayOverride : undefined,
-        }
-      );
-      const streak = deriveCurrentStreakFromOutcomes(
-        outcomes,
-        targetDay,
-        originDate
-      );
-      streaks[activity.id] = streak;
-      await persistStreakCacheRows(activity.id, {
-        [targetDateStr]: streak,
-      });
-    })
-  );
+  for (const activity of eligible) {
+    const { fromDate, toDate, originDate } = computeStreakRange(
+      activity,
+      targetDay
+    );
+    const outcomes = buildOutcomesForActivity(activity, shared, fromDate, toDate, {
+      visibility,
+      entryOverride:
+        todayOverride?.date === targetDateStr ? todayOverride : undefined,
+    });
+    streaks[activity.id] = deriveCurrentStreakFromOutcomes(
+      outcomes,
+      targetDay,
+      originDate
+    );
+  }
 
   return streaks;
-}
-
-/**
- * Rebuild the disposable streak projection cache from a logical date forward.
- * Uses a single O(n) forward pass per activity instead of recomputing each day.
- */
-export async function refreshActivityStreakProjectionFromDate(
-  activities: Activity[],
-  fromDate: Date,
-  options?: { visibility?: StreakVisibilityDeps }
-): Promise<void> {
-  const todayDay = startOfDay(new Date(getEffectiveToday() + "T00:00:00"));
-  const fromDay = startOfDay(fromDate);
-  const endDay = todayDay.getTime() > fromDay.getTime() ? todayDay : fromDay;
-  const eligible = activities.filter(isStreakEligible);
-  if (eligible.length === 0) return;
-
-  const earliestOrigin = eligible.reduce((earliest, activity) => {
-    const origin = getActivityOriginDay(activity);
-    return origin < earliest ? origin : earliest;
-  }, getActivityOriginDay(eligible[0]!));
-  const rangeStart = fromDay < earliestOrigin ? earliestOrigin : fromDay;
-
-  const shared = await loadSharedStreakData(rangeStart, endDay);
-
-  await Promise.all(
-    eligible.map(async (activity) => {
-      const originDate = getActivityOriginDay(activity);
-      const outcomes = buildOutcomesForActivity(
-        activity,
-        shared,
-        rangeStart,
-        endDay,
-        options
-      );
-      const series = deriveStreakSeriesFromOutcomes(
-        outcomes,
-        rangeStart,
-        endDay,
-        originDate
-      );
-      await persistStreakCacheRows(activity.id, series);
-    })
-  );
-}
-
-/**
- * Incrementally refresh streak cache for one activity after a daily-entry mutation.
- */
-export async function refreshActivityStreakProjectionForActivity(
-  activityId: string,
-  fromDate: Date,
-  options?: { visibility?: StreakVisibilityDeps }
-): Promise<void> {
-  const activity = await db.activities.get(activityId);
-  if (!activity || activity.deleted_at || !isStreakEligible(activity)) return;
-  await refreshActivityStreakProjectionFromDate([activity], fromDate, options);
 }

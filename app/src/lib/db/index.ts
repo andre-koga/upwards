@@ -8,7 +8,6 @@ import type {
   JournalEntry,
   OneTimeTask,
   RecurringMemo,
-  ActivityStreak,
   ActivityStatusEvent,
   GroupStatusEvent,
   AppLog,
@@ -99,7 +98,6 @@ class UpwardsDB extends Dexie {
   journalEntries!: Table<JournalEntry>;
   oneTimeTasks!: Table<OneTimeTask>;
   recurringMemos!: Table<RecurringMemo>;
-  activityStreaks!: Table<ActivityStreak>;
   activityStatusEvents!: Table<ActivityStatusEvent>;
   groupStatusEvents!: Table<GroupStatusEvent>;
   appLogs!: Table<AppLog>;
@@ -975,6 +973,13 @@ class UpwardsDB extends Dexie {
       activityDefinitionVersions: null,
       groupDefinitionVersions: null,
     });
+
+    // v29: drop the activityStreaks cache.
+    //
+    // Streaks are replayed from `dailyEntries` on read (`streak-utils.ts`). This
+    // table was written on every count mutation and read back nowhere, so the
+    // rows are pure duplication of derivable state.
+    this.version(29).stores({ activityStreaks: null });
   }
 }
 

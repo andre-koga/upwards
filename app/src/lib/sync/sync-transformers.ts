@@ -9,7 +9,6 @@ export type SyncTable =
   | "journal_entries"
   | "one_time_tasks"
   | "recurring_memos"
-  | "activity_streaks"
   | "activity_status_events"
   | "group_status_events";
 
@@ -21,7 +20,6 @@ export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
   journal_entries: "user_id,entry_date",
   one_time_tasks: "id",
   recurring_memos: "id",
-  activity_streaks: "user_id,activity_id,date",
   activity_status_events: "id",
   group_status_events: "id",
 };
@@ -63,10 +61,6 @@ export function normalizeSyncRow(
     if (!isValidUuid(sanitized.activity_id)) {
       sanitized.activity_id = null;
     }
-  }
-
-  if (table === "activity_streaks" && !isValidUuid(sanitized.activity_id)) {
-    sanitized.activity_id = null;
   }
 
   if (

@@ -22,7 +22,7 @@ const ALLOWED_SYNCED_WRITERS = new Set([
 ]);
 
 const WRITE_RE =
-  /\bdb\.(journalEntries|dailyEntries|activities|activityGroups|activityPeriods|oneTimeTasks|recurringMemos|activityStreaks|activityStatusEvents|groupStatusEvents)\.(add|put|update|delete|bulkPut|bulkAdd|bulkDelete)\b/;
+  /\bdb\.(journalEntries|dailyEntries|activities|activityGroups|activityPeriods|oneTimeTasks|recurringMemos|activityStatusEvents|groupStatusEvents)\.(add|put|update|delete|bulkPut|bulkAdd|bulkDelete)\b/;
 
 const FORBIDDEN_LWW_RE =
   /\b(runPushInternal|runPull|opsSyncActive)\b|from ["']\.\/sync-push["']|from ["']\.\/sync-pull["']/;

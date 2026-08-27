@@ -128,17 +128,6 @@ export interface RecurringMemo {
   deleted_at: string | null;
 }
 
-export interface ActivityStreak {
-  id: string;
-  activity_id: string;
-  date: string; // YYYY-MM-DD
-  streak: number;
-  created_at: string;
-  updated_at: string;
-  synced_at: string | null;
-  deleted_at: string | null;
-}
-
 /** Append-only status change for an activity (archived / deleted). `completed` is legacy. */
 export type ActivityStatusType = "archived" | "deleted" | "completed";
 

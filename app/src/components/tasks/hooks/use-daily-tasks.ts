@@ -15,7 +15,7 @@ import {
   type TemporalVisibilityContext,
 } from "@/lib/activity";
 import { getEffectiveToday } from "@/lib/session/day-reset";
-import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
+import { computeActivityStreaksForDate } from "@/lib/streak-utils";
 import {
   clipPeriodToDay,
   effectiveDateForMs,
@@ -104,7 +104,6 @@ export function useDailyTasks({
     resetNeverTaskCount,
     toggleTaskPaused,
     toggleBreakDay,
-    streakDbVersion,
   } = useDailyEntry(dateString);
 
   const {
@@ -198,7 +197,7 @@ export function useDailyTasks({
       );
     });
 
-    void getOrComputeActivityStreaksForDate(visibleActivities, currentDate, {
+    void computeActivityStreaksForDate(visibleActivities, currentDate, {
       visibility: streakVisibilityDeps,
       todayOverride: {
         date: dateString,
@@ -228,7 +227,6 @@ export function useDailyTasks({
     pausedTaskIds,
     isBreakDay,
     streakVisibilityDeps,
-    streakDbVersion,
   ]);
 
   const dailyActivities = useMemo(
