@@ -15,8 +15,6 @@ import type {
   SyncPendingOperation,
   SyncIssue,
   SyncDeviceRecord,
-  ActivityDefinitionVersion,
-  GroupDefinitionVersion,
 } from "./types";
 import { shiftDate, startOfDay } from "@/lib/time-utils";
 
@@ -108,8 +106,6 @@ class UpwardsDB extends Dexie {
   syncPendingOperations!: Table<SyncPendingOperation>;
   syncIssues!: Table<SyncIssue>;
   syncDevices!: Table<SyncDeviceRecord>;
-  activityDefinitionVersions!: Table<ActivityDefinitionVersion>;
-  groupDefinitionVersions!: Table<GroupDefinitionVersion>;
 
   constructor() {
     super("okhabit");
@@ -967,6 +963,18 @@ class UpwardsDB extends Dexie {
             row.note = trimmed ? trimmed.slice(0, 200) : null;
           });
       });
+
+    // v28: drop the definition-version tables.
+    //
+    // Nothing has appended to them since #43 (2026-08-21) removed effective-dated
+    // definition edits, and `AGENTS.md` now forbids reintroducing them. v24-v27 are
+    // left untouched on purpose: the v24 upgrade hook writes into these tables, so a
+    // device still on v23 has to be able to migrate through the chain before the
+    // drop applies.
+    this.version(28).stores({
+      activityDefinitionVersions: null,
+      groupDefinitionVersions: null,
+    });
   }
 }
 

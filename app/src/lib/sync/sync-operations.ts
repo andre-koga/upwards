@@ -1,11 +1,5 @@
-import { db, now, newId } from "@/lib/db";
-import type {
-  ActivityDefinitionVersion,
-  GroupDefinitionVersion,
-} from "@/lib/db/types";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { db, now } from "@/lib/db";
 import { supabase, getCachedUserId } from "@/lib/supabase";
-import { DEFINITION_SCHEMA_VERSION } from "@/lib/activity/definition-versions";
 import { getOrCreateDeviceId } from "./device-id";
 import {
   collapseDuplicatePendingProjectionUpserts,
@@ -18,13 +12,9 @@ import {
 import { SUBMIT_SYNC_BATCH_SIZE } from "./sync-constants";
 import { recordSyncIssue } from "./sync-issues-store";
 import { isTransientNetworkError } from "@/lib/error-utils";
-import {
-  buildDefinitionConflictPayload,
-  type DefinitionConflictEntityType,
-} from "./conflict-resolution";
 import { buildJournalConflictPayload } from "./journal-conflict-resolution";
 import { buildProjectionConflictPayload } from "./projection-conflict-resolution";
-import { saveOpsRpcAvailable, loadOpsRpcAvailable } from "./sync-storage";
+import { saveOpsRpcAvailable } from "./sync-storage";
 import {
   applyAcceptedProjectionOp,
   isProjectionUpsertEntityType,
@@ -161,66 +151,6 @@ function asNumber(value: unknown): number | null {
   return null;
 }
 
-export function buildActivityDefinitionVersionFromOp(
-  op: RemoteSyncOperation
-): ActivityDefinitionVersion | null {
-  if (!op.entity_id) return null;
-  const payload = (op.payload ?? {}) as DefinitionPayload;
-  const fields = payload.fields ?? {};
-  const versionId = asString(payload.version_id);
-  if (!versionId) return null;
-
-  return {
-    id: versionId,
-    activity_id: op.entity_id,
-    parent_version_id: asString(payload.parent_version_id),
-    effective_from: asString(payload.effective_from) ?? getEffectiveToday(),
-    recorded_at:
-      asString(payload.recorded_at) ?? asString(op.created_at) ?? now(),
-    server_sequence: op.server_sequence,
-    operation_id: op.operation_id,
-    device_id: op.device_id,
-    name: asString(fields.name),
-    routine: asString(fields.routine),
-    completion_target: asNumber(fields.completion_target),
-    group_id: asString(fields.group_id) ?? "",
-    order_index: asNumber(fields.order_index),
-    schema_version:
-      asNumber(payload.schema_version) ?? DEFINITION_SCHEMA_VERSION,
-    created_at: asString(op.created_at) ?? now(),
-    deleted_at: null,
-  };
-}
-
-export function buildGroupDefinitionVersionFromOp(
-  op: RemoteSyncOperation
-): GroupDefinitionVersion | null {
-  if (!op.entity_id) return null;
-  const payload = (op.payload ?? {}) as DefinitionPayload;
-  const fields = payload.fields ?? {};
-  const versionId = asString(payload.version_id);
-  if (!versionId) return null;
-
-  return {
-    id: versionId,
-    group_id: op.entity_id,
-    parent_version_id: asString(payload.parent_version_id),
-    effective_from: asString(payload.effective_from) ?? getEffectiveToday(),
-    recorded_at:
-      asString(payload.recorded_at) ?? asString(op.created_at) ?? now(),
-    server_sequence: op.server_sequence,
-    operation_id: op.operation_id,
-    device_id: op.device_id,
-    name: asString(fields.name) ?? "Group",
-    color: asString(fields.color),
-    order_index: asNumber(fields.order_index),
-    schema_version:
-      asNumber(payload.schema_version) ?? DEFINITION_SCHEMA_VERSION,
-    created_at: asString(op.created_at) ?? now(),
-    deleted_at: null,
-  };
-}
-
 export function activityProjectionPatchFromPayload(
   payload: DefinitionPayload
 ): Partial<{
@@ -298,29 +228,7 @@ async function ensureConflictIssueForRemoteOp(
   let title = "Sync conflict";
   let detail = "Your change conflicted with a newer version on another device.";
 
-  if (
-    entityId &&
-    (op.entity_type === "activity_definition" ||
-      op.entity_type === "group_definition")
-  ) {
-    const entityType =
-      op.entity_type === "group_definition"
-        ? "group_definition"
-        : "activity_definition";
-    title = "Definition update conflict";
-    detail = `A change to this ${entityType === "group_definition" ? "group" : "activity"} conflicted with another version.`;
-    try {
-      // Remote conflicted op is "theirs"; local tip is "yours".
-      payload = await buildDefinitionConflictPayload({
-        entity_type: entityType as DefinitionConflictEntityType,
-        entity_id: entityId,
-        remotePayload: op.payload,
-        remoteDeviceId: op.device_id,
-      });
-    } catch (err) {
-      console.warn("[sync] failed to enrich remote conflict payload", err);
-    }
-  } else if (entityId && op.entity_type === "journal_entry") {
+  if (entityId && op.entity_type === "journal_entry") {
     title = "Journal entry conflict";
     detail =
       "This journal entry was edited on another device. Choose which version to keep.";
@@ -431,7 +339,7 @@ export async function applyAcceptedDailyEntryOp(
   const activityId = asString(payload.activity_id) ?? asString(op.entity_id);
   const ts = now();
 
-  let entry = await getOrCreateDailyEntry(date);
+  const entry = await getOrCreateDailyEntry(date);
 
   const counts: Record<string, number> = {
     ...((entry.task_counts as Record<string, number> | null) ?? {}),
@@ -575,25 +483,7 @@ async function submitPendingOperationBatch(
       let detail =
         "Your change conflicted with a newer version on another device.";
 
-      if (
-        local.entity_id &&
-        (local.entity_type === "activity_definition" ||
-          local.entity_type === "group_definition")
-      ) {
-        title = "Definition update conflict";
-        detail =
-          "Your change conflicted with a newer definition on another device.";
-        try {
-          conflictPayload = await buildDefinitionConflictPayload({
-            entity_type: local.entity_type as DefinitionConflictEntityType,
-            entity_id: local.entity_id,
-            localPayload: local.payload,
-            localDeviceId: local.device_id,
-          });
-        } catch (err) {
-          console.warn("[sync] failed to enrich local conflict payload", err);
-        }
-      } else if (local.entity_type === "journal_entry" && local.entity_id) {
+      if (local.entity_type === "journal_entry" && local.entity_id) {
         title = "Journal entry conflict";
         detail =
           "This journal entry was edited on another device. Choose which version to keep.";

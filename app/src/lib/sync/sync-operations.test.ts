@@ -253,7 +253,6 @@ vi.mock("@/lib/session/day-reset", () => ({
 
 import {
   applyAcceptedDailyEntryOp,
-  buildActivityDefinitionVersionFromOp,
   isSyncOperationsRpcMissing,
   maxServerSequence,
   pushPendingOperations,
@@ -272,12 +271,11 @@ function makePending(
     operation_id: overrides.operation_id,
     account_id: "user-1",
     device_id: overrides.device_id ?? "local-device",
-    entity_type: overrides.entity_type ?? "activity_definition",
+    entity_type: overrides.entity_type ?? "daily_entry",
     entity_id: overrides.entity_id ?? "activity-1",
-    operation_type: overrides.operation_type ?? "definition.update",
+    operation_type: overrides.operation_type ?? "count.delta",
     payload: overrides.payload ?? {
-      version_id: "ver-1",
-      fields: { name: "Run" },
+      row: { id: "activity-1", name: "Run" },
     },
     base_revision: overrides.base_revision ?? null,
     status: overrides.status ?? "pending",
@@ -309,35 +307,14 @@ describe("sync-operations helpers", () => {
     expect(toSubmitSyncOperationInput(pending)).toEqual({
       operation_id: "op-1",
       device_id: "local-device",
-      entity_type: "activity_definition",
+      entity_type: "daily_entry",
       entity_id: "activity-1",
-      operation_type: "definition.update",
+      operation_type: "count.delta",
       payload: pending.payload,
       base_revision: null,
     });
   });
 
-  it("builds activity definition version from remote op", () => {
-    const version = buildActivityDefinitionVersionFromOp({
-      operation_id: "op-remote",
-      device_id: "other-device",
-      entity_type: "activity_definition",
-      entity_id: "activity-1",
-      operation_type: "definition.update",
-      payload: {
-        version_id: "ver-remote",
-        effective_from: "2026-08-01",
-        fields: { name: "Yoga", routine: "daily", group_id: "g-1" },
-      },
-      base_revision: null,
-      status: "accepted",
-      server_sequence: 42,
-      created_at: "2026-08-01T11:00:00.000Z",
-    });
-    expect(version?.id).toBe("ver-remote");
-    expect(version?.server_sequence).toBe(42);
-    expect(version?.name).toBe("Yoga");
-  });
 });
 
 describe("pushPendingOperations", () => {
@@ -418,9 +395,10 @@ describe("pushPendingOperations", () => {
     expect(syncIssues).toHaveLength(1);
     expect(syncIssues[0].kind).toBe("conflict");
     expect(syncIssues[0].operation_id).toBe("op-conflict");
-    expect((syncIssues[0].payload as { kind?: string } | null)?.kind).toBe(
-      "definition_conflict"
-    );
+    // The op's own payload is carried through unenriched. The definition-specific
+    // enrichment that used to run here was deleted along with the rest of the
+    // definition stack; the conflict itself is still recorded and reviewable.
+    expect(syncIssues[0].payload).toEqual(pendingOps[0].payload);
   });
 
   it("reports a rejected op as a failed push, without aborting the rest of the batch", async () => {
@@ -720,10 +698,10 @@ describe("pullAndApplyOperations", () => {
         {
           operation_id: "op-conflict-remote",
           device_id: "other-device",
-          entity_type: "activity_definition",
-          entity_id: "activity-1",
-          operation_type: "definition.update",
-          payload: {},
+          entity_type: "one_time_task",
+          entity_id: "task-1",
+          operation_type: "projection.upsert",
+          payload: { row: { id: "task-1", title: "Buy milk" } },
           base_revision: "ver-old",
           status: "conflict",
           server_sequence: 21,
@@ -736,9 +714,7 @@ describe("pullAndApplyOperations", () => {
     await pullAndApplyOperations(10);
     expect(syncIssues).toHaveLength(1);
     expect(syncIssues[0].operation_id).toBe("op-conflict-remote");
-    expect((syncIssues[0].payload as { kind?: string } | null)?.kind).toBe(
-      "definition_conflict"
-    );
+    expect(syncIssues[0].kind).toBe("conflict");
   });
 
   it("applies remote daily_entry count deltas from other devices", async () => {

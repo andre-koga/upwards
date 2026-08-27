@@ -151,32 +151,16 @@
       "cancel": "Cancel"
     },
     "conflict": {
-      "untitled": "Untitled change",
-      "summary": "Two versions of this {{entity}} need a decision.",
-      "entity": {
-        "activity": "activity",
-        "group": "group"
-      },
       "deferredBadge": "Deferred",
       "bothChangedHint": "Both sides changed some of the same fields. Combine will keep your value for those.",
       "combinableHint": "These changes touch different fields and can be combined cleanly.",
       "combineWithPreferenceHint": "Fields edited on both sides will keep your value.",
       "unknownRemote": "Unavailable",
-      "consequence": "Your choice updates the current activity or group. Daily counts and journal entries are not changed.",
       "resolveFailed": "Could not apply that choice. Try again.",
       "columns": {
         "field": "Field",
         "yours": "Yours",
-        "theirs": "Other device",
-        "base": "Earlier"
-      },
-      "fields": {
-        "name": "Name",
-        "routine": "Schedule",
-        "completion_target": "Target",
-        "group_id": "Group",
-        "order_index": "Order",
-        "color": "Color"
+        "theirs": "Other device"
       },
       "actions": {
         "keepMine": "Keep mine",

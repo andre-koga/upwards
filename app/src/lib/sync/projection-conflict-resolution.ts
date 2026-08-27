@@ -5,7 +5,7 @@ import {
   combineDefinitionFields,
   formatConflictFieldValue,
   type ConflictResolutionChoice,
-} from "@/lib/sync/conflict-resolution";
+} from "@/lib/sync/field-diff";
 import { getOrCreateDeviceId } from "@/lib/sync/device-id";
 import {
   enqueueProjectionUpsertForTable,

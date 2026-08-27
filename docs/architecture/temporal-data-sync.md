@@ -145,10 +145,11 @@ time. Stale bases become reviewable conflicts.
 - Timed `activity_period` rows — real sessions with a duration. Keyed by
   period UUID.
 
-Local Dexie tables may still contain leftover `activity_definition_versions`
-and `group_definition_versions` rows from earlier builds. Those tables are
-legacy. New product code must not append versions or resolve historical days
-through them. The server no longer writes those tables.
+The `activity_definition_versions` and `group_definition_versions` Dexie tables
+are gone as of schema v28. Nothing had appended to them since effective-dated
+definition edits were removed, the server never wrote them, and production
+recorded zero definition ops. New product code must not reintroduce definition
+versions or resolve historical days through them.
 
 ### 2. Immutable domain events and daily facts
 
