@@ -148,6 +148,33 @@ describe("enqueueUnsyncedCurrentStateRows", () => {
     expect(enqueueMock.mock.calls[0][1]).toMatchObject({ id: "period-timed" });
   });
 
+  it("skips locally soft-deleted journal duplicates", async () => {
+    // The server enforces UNIQUE(user_id, entry_date), so pushing a duplicate
+    // tombstone would collapse onto the surviving row and delete real content.
+    tables.journalEntries.push({
+      id: "journal-dupe",
+      entry_date: "2026-08-01",
+      text_content: "duplicate",
+      updated_at: "2026-08-01T12:00:00.000Z",
+      synced_at: null,
+      deleted_at: "2026-08-01T12:00:00.000Z",
+    });
+    tables.journalEntries.push({
+      id: "journal-canonical",
+      entry_date: "2026-08-01",
+      text_content: "real content",
+      updated_at: "2026-08-01T12:00:00.000Z",
+      synced_at: null,
+      deleted_at: null,
+    });
+
+    await enqueueUnsyncedCurrentStateRows();
+    expect(enqueueMock).toHaveBeenCalledTimes(1);
+    expect(enqueueMock.mock.calls[0][1]).toMatchObject({
+      id: "journal-canonical",
+    });
+  });
+
   it("can enqueue again after the cutover flag is cleared", async () => {
     tables.activities.push({
       id: "act-1",
