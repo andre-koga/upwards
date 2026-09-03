@@ -107,8 +107,8 @@ export default function ManualTimeEntryDialog({
     if (open) {
       const now = new Date();
       setDateString(toDateString(initialDate));
-      setStartTime(formatTimeInput(now.toISOString()));
-      setEndTime("");
+      setStartTime("");
+      setEndTime(formatTimeInput(now.toISOString()));
       setNote("");
       setSaving(false);
       setError(null);

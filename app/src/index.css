@@ -512,6 +512,9 @@
   :focus:not(:focus-visible) {
     outline: none;
   }
+  html {
+    @apply bg-background;
+  }
   body {
     @apply select-none bg-background text-foreground;
     -webkit-touch-callout: none;

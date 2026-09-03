@@ -50,7 +50,26 @@
           if (palette) {
             document.documentElement.setAttribute("data-palette", palette);
           }
-          var themeColor = isDark ? "#0a0a0a" : "#ffffff";
+          /*
+           * Some mobile browsers read theme-color only during initial page
+           * parsing. Resolve the saved palette here as well as in React so
+           * their status bar does not remain the classic white background.
+           */
+          var paletteColors = {
+            ocean: ["#f0f8ff", "#0f172a"],
+            sunset: ["#fff9f5", "#2a2024"],
+            forest: ["#f8f5f0", "#1c2a1f"],
+            mocha: ["#f1f0e5", "#2d2521"],
+            cyberpunk: ["#f8f9fa", "#0c0c1d"],
+            "pastel dreams": ["#f7f3f9", "#1c1917"],
+            graphite: ["#f0f0f0", "#1a1a1a"],
+            jellyfish: ["#e8f0f0", "#0a1a20"],
+          };
+          var themeColor =
+            (palette &&
+              paletteColors[palette] &&
+              paletteColors[palette][isDark ? 1 : 0]) ||
+            (isDark ? "#0a0a0a" : "#ffffff");
           var themeMeta = document.querySelector('meta[name="theme-color"]');
           if (themeMeta) themeMeta.setAttribute("content", themeColor);
           var schemeMeta = document.querySelector('meta[name="color-scheme"]');
