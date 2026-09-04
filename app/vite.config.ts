@@ -82,7 +82,10 @@ export default defineConfig({
         description: "Local-first habit tracker",
         theme_color: "#ffffff",
         background_color: "#ffffff",
-        display: "standalone",
+        // Android's standalone mode is allowed to reserve a status-bar strip.
+        // Fullscreen gives the installed app the whole display; browsers that
+        // cannot honor it fall back to standalone automatically.
+        display: "fullscreen",
         start_url: "/",
         icons: [
           {
