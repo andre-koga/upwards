@@ -57,6 +57,7 @@ function makeEntry(
     is_break_day: overrides.is_break_day ?? null,
     current_activity_id: null,
     completion_notes: null,
+    completion_times: null,
     created_at: `${date}T12:00:00.000Z`,
     updated_at: `${date}T12:00:00.000Z`,
     synced_at: null,

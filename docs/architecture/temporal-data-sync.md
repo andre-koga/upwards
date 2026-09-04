@@ -115,8 +115,10 @@ this document:
    push can receive a higher `server_sequence` than ops it has not pulled yet.
    Saving that as `lastAppliedSequence` skips remote ops.
 7. **Untimed completion pills are derived from the count.** They are not synced
-   `activity_periods` rows. If the day's count is below target, the timeline
-   does not show an untimed pill. Timed sessions (duration > 0) remain facts.
+   `activity_periods` rows. The count delta that reaches a target may carry a
+   completion instant, stored with the daily projection for the pill's clock
+   display. If the day's count is below target, the timeline does not show an
+   untimed pill. Timed sessions (duration > 0) remain facts.
 
 Live updates use Supabase Realtime on `sync_operations` INSERT events. The
 client does not filter on `user_id` in `postgres_changes` (RLS already scopes
@@ -177,8 +179,9 @@ and not an untimed period upsert.
 
 These are rebuilt from facts plus the current definition:
 
-- `daily_entries.task_counts`, `paused_task_ids`, `is_break_day` — fold of
-  semantic ops. The daily-entry row is a local cache; it is not LWW-synced.
+- `daily_entries.task_counts`, `paused_task_ids`, `is_break_day`,
+  `completion_times` — fold of semantic ops. The daily-entry row is a local
+  cache; it is not LWW-synced.
 - Untimed completion pills — derived when `count >= target` for that day.
 - Streaks — replayed from `daily_entries` on read, never stored.
 - `current_activity_id` — derived from an open timed period (`end_time` null).

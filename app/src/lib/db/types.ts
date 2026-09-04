@@ -41,6 +41,8 @@ export interface DailyEntry {
   current_activity_id: string | null;
   /** Notes on derived untimed completions, keyed by activity id. Not a period row. */
   completion_notes: Record<string, string> | null;
+  /** Completion instants for derived untimed completions, keyed by activity id. */
+  completion_times: Record<string, string> | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;
@@ -222,4 +224,3 @@ export interface SyncDeviceRecord {
   created_at: string;
   retired_at: string | null;
 }
-

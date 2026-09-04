@@ -18,6 +18,7 @@ export async function getOrCreateDailyEntry(
 
   if (existing) {
     if (!existing.completion_notes) existing.completion_notes = {};
+    if (!existing.completion_times) existing.completion_times = {};
     return existing;
   }
 
@@ -30,6 +31,7 @@ export async function getOrCreateDailyEntry(
     is_break_day: false,
     current_activity_id: null,
     completion_notes: {},
+    completion_times: {},
     created_at: n,
     updated_at: n,
     synced_at: null,

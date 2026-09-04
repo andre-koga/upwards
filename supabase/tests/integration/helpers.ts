@@ -195,6 +195,7 @@ export function countDeltaOp(input: {
   delta: number;
   previousCount: number;
   nextCount: number;
+  completionAt?: string | null;
 }): SyncOpInput {
   return {
     operation_id: newId(),
@@ -209,6 +210,9 @@ export function countDeltaOp(input: {
       previous_count: input.previousCount,
       next_count: input.nextCount,
       reason: input.delta > 0 ? "increment" : "cycle",
+      ...(input.completionAt !== undefined
+        ? { completion_at: input.completionAt }
+        : {}),
     },
   };
 }

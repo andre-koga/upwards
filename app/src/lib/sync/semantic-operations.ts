@@ -10,6 +10,8 @@ export interface RecordCountDeltaInput {
   nextCount: number;
   /** Optional never-slip / reset semantics for reviewers. */
   reason?: "increment" | "cycle" | "reset" | "never_slip";
+  /** Set when this delta completes the activity; null clears a prior completion. */
+  completionAt?: string | null;
 }
 
 /**
@@ -37,6 +39,7 @@ export async function enqueueActivityCountDelta(
       next_count: input.nextCount,
       reason: input.reason ?? (delta > 0 ? "increment" : "cycle"),
       daily_entry_id: input.dailyEntryId ?? null,
+      completion_at: input.completionAt,
     },
   });
 }

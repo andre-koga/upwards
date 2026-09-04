@@ -125,6 +125,13 @@ export function useDailyEntry(dateString: string) {
           : nextCount === 0
             ? "cycle"
             : "increment",
+        completionAt: neverSlip
+          ? undefined
+          : nextCount >= target
+            ? new Date().toISOString()
+            : nextCount < target
+              ? null
+              : undefined,
       });
       if (prevPausedTaskIds.includes(activityId)) {
         await applyPauseChange({
@@ -163,6 +170,7 @@ export function useDailyEntry(dateString: string) {
         previousCount,
         nextCount: 0,
         reason: "reset",
+        completionAt: null,
       });
       setDailyEntry(saved);
     },
@@ -187,7 +195,6 @@ export function useDailyEntry(dateString: string) {
           paused: !wasPaused,
         });
         setDailyEntry(saved);
-
       } catch (error) {
         console.error("Error toggling paused task:", error);
         loadDailyEntry();

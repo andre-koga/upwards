@@ -92,6 +92,7 @@ export function buildTimelineSessions(params: {
   lookupGroupById: Map<string, ActivityGroup>;
   taskCounts?: Record<string, number>;
   completionNotes?: Record<string, string> | null;
+  completionTimes?: Record<string, string> | null;
 }): TimelineSession[] {
   const {
     periods,
@@ -101,6 +102,7 @@ export function buildTimelineSessions(params: {
     lookupGroupById,
     taskCounts = {},
     completionNotes = {},
+    completionTimes = {},
   } = params;
   const dayStartMs = effectiveDayStartMs(dateString);
 
@@ -154,25 +156,32 @@ export function buildTimelineSessions(params: {
         : 1;
     const count = taskCounts[activity.id] ?? 0;
     if (count < target) continue;
-    if (
-      hasTimedOrRunningPeriodOnDay(periods, activity.id, dateString, nowMs)
-    ) {
+    if (hasTimedOrRunningPeriodOnDay(periods, activity.id, dateString, nowMs)) {
       continue;
     }
     const group = lookupGroupById.get(activity.group_id);
     const note = completionNotes?.[activity.id] ?? null;
+    const completionTime = completionTimes?.[activity.id] ?? null;
+    const completedAtIso =
+      completionTime && !Number.isNaN(new Date(completionTime).getTime())
+        ? completionTime
+        : null;
     derived.push({
       id: derivedUntimedSessionId(dateString, activity.id),
       ...sessionFromActivity(activity, group),
       intervalMs: 0,
-      startTime: derivedPillTimeMs(dateString, nowMs),
+      startTime: completedAtIso
+        ? new Date(completedAtIso).getTime()
+        : derivedPillTimeMs(dateString, nowMs),
       note,
       untimed: true,
-      completedAtIso: null,
+      completedAtIso,
     });
   }
 
-  return [...timedSessions, ...derived].sort((a, b) => b.startTime - a.startTime);
+  return [...timedSessions, ...derived].sort(
+    (a, b) => b.startTime - a.startTime
+  );
 }
 
 export function timelineDurationTotalMs(sessions: TimelineSession[]): number {
