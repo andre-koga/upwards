@@ -39,6 +39,7 @@ import {
 import { useTranslation } from "react-i18next";
 import {
   applyCompletionNote,
+  applyCountDelta,
   getOrCreateDailyEntryProjection,
   patchTimedPeriod,
   saveTimedPeriod,
@@ -331,6 +332,14 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       if (details.derived) {
         const stillUntimed = !nextEndIso || nextStartIso === nextEndIso;
         if (stillUntimed) {
+          const currentCount = entry.task_counts?.[nextActivityId] ?? 0;
+          await applyCountDelta({
+            date: details.derivedDate ?? entryDateString,
+            activityId: nextActivityId,
+            previousCount: currentCount,
+            nextCount: currentCount,
+            completionAt: nextStartIso,
+          });
           await applyCompletionNote({
             date: details.derivedDate ?? entryDateString,
             activityId: nextActivityId,
@@ -358,14 +367,55 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           }
         }
       } else {
-        await patchTimedPeriod(sessionId, {
-          activity_id: nextActivityId,
-          daily_entry_id: entry.id,
-          start_time: nextStartIso,
-          end_time: nextEndIso,
-          note: sessionNote,
-          updated_at: n,
-        });
+        const becomesUntimed = nextEndIso !== null && nextStartIso === nextEndIso;
+        const nextActivity = becomesUntimed
+          ? await db.activities.get(nextActivityId)
+          : null;
+        // Untimed pills are per-activity; the hidden group-default ("None")
+        // activity never renders one, so don't tombstone the period into a
+        // completion that would just disappear. Fall through to the normal
+        // patch for that edge case.
+        if (
+          becomesUntimed &&
+          nextActivity &&
+          !isHiddenGroupDefaultActivity(nextActivity)
+        ) {
+          // Untimed completions are never stored as activity_periods facts
+          // (see docs/architecture/temporal-data-sync.md). Tombstone the old
+          // timed period and represent the completion the same way every
+          // other untimed pill is represented: a count at/above target plus
+          // a completion instant on the daily projection.
+          await patchTimedPeriod(sessionId, {
+            deleted_at: n,
+            updated_at: n,
+          });
+          const target =
+            typeof nextActivity.completion_target === "number"
+              ? nextActivity.completion_target
+              : 1;
+          const currentCount = entry.task_counts?.[nextActivityId] ?? 0;
+          await applyCountDelta({
+            date: entryDateString,
+            activityId: nextActivityId,
+            previousCount: currentCount,
+            nextCount: Math.max(currentCount, target),
+            completionAt: nextStartIso,
+          });
+          await applyCompletionNote({
+            date: entryDateString,
+            activityId: nextActivityId,
+            note: sessionNote,
+          });
+        } else {
+          await patchTimedPeriod(sessionId, {
+            activity_id: nextActivityId,
+            daily_entry_id: entry.id,
+            start_time: nextStartIso,
+            end_time: nextEndIso,
+            note: sessionNote,
+            updated_at: n,
+          });
+        }
       }
 
       if (isRunning) {

@@ -22,7 +22,10 @@ export async function enqueueActivityCountDelta(
   input: RecordCountDeltaInput & { dailyEntryId?: string | null }
 ): Promise<void> {
   const delta = input.nextCount - input.previousCount;
-  if (delta === 0) return;
+  // A delta-0 call can still carry a completion-time-only edit (e.g. from
+  // Session Details editing an untimed completion's clock time); only drop
+  // calls that change nothing at all.
+  if (delta === 0 && input.completionAt === undefined) return;
 
   await enqueuePendingOperation({
     operation_id: newId(),
