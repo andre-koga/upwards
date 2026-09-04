@@ -138,7 +138,11 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           finish();
           return;
         }
-        const instant = new Date(effectiveDayStartMs(derived.date)).toISOString();
+        const completionTime = entry?.completion_times?.[derived.activityId];
+        const instant =
+          completionTime && !Number.isNaN(new Date(completionTime).getTime())
+            ? completionTime
+            : new Date(effectiveDayStartMs(derived.date)).toISOString();
         const virtualPeriod: ActivityPeriod = {
           id: sessionId,
           daily_entry_id: entry?.id ?? "",
@@ -175,7 +179,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
             : NONE_ACTIVITY_VALUE
         );
         setSelectedDate(fromDateString(derived.date));
-        setStartTime("");
+        setStartTime(formatTimeInput(instant));
         setEndTime("");
         setNote(virtualPeriod.note ?? "");
         setLoading(false);

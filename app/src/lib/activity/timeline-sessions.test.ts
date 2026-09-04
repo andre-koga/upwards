@@ -122,6 +122,7 @@ describe("buildTimelineSessions", () => {
       lookupGroupById: new Map([["group-1", makeGroup()]]),
       taskCounts: { "act-1": 1, "act-2": 1 },
       completionNotes: { "act-2": "tucked tight" },
+      completionTimes: { "act-2": "2026-06-26T15:47:00.000Z" },
     });
 
     expect(sessions.map((session) => session.id)).toEqual([
@@ -131,6 +132,10 @@ describe("buildTimelineSessions", () => {
     const derived = sessions.find((session) => session.untimed);
     const timed = sessions.find((session) => session.id === "timed");
     expect(derived?.note).toBe("tucked tight");
+    expect(derived?.completedAtIso).toBe("2026-06-26T15:47:00.000Z");
+    expect(derived?.startTime).toBe(
+      new Date("2026-06-26T15:47:00.000Z").getTime()
+    );
     expect(derived?.intervalMs).toBe(0);
     expect(timed?.untimed).toBe(false);
     expect(timed?.intervalMs).toBe(12 * 60 * 1000);

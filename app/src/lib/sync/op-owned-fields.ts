@@ -9,6 +9,7 @@ export const OP_OWNED_DAILY_ENTRY_FIELDS = [
   "task_counts",
   "paused_task_ids",
   "is_break_day",
+  "completion_times",
 ] as const;
 
 /** Dexie tables that are temporal/sync metadata (cleared on sign-out with SYNC_TABLES). */

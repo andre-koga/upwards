@@ -184,9 +184,7 @@ function activityProjectionPatchFromPayload(
   return patch;
 }
 
-function groupProjectionPatchFromPayload(
-  payload: DefinitionPayload
-): Partial<{
+function groupProjectionPatchFromPayload(payload: DefinitionPayload): Partial<{
   name: string;
   color: string | null;
   order_index: number | null;
@@ -352,8 +350,17 @@ export async function applyAcceptedDailyEntryOp(
     const next = Math.max(0, prev + delta);
     if (next === 0) delete counts[activityId];
     else counts[activityId] = next;
+    const completionTimes: Record<string, string> = {
+      ...((entry.completion_times as Record<string, string> | null) ?? {}),
+    };
+    if ("completion_at" in payload) {
+      const completionAt = asString(payload.completion_at);
+      if (completionAt) completionTimes[activityId] = completionAt;
+      else delete completionTimes[activityId];
+    }
     await db.dailyEntries.update(entry.id, {
       task_counts: counts,
+      completion_times: completionTimes,
       updated_at: ts,
     });
     return;

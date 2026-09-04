@@ -444,6 +444,7 @@ export function useDailyTasks({
         lookupGroupById,
         taskCounts,
         completionNotes: dailyEntry?.completion_notes ?? {},
+        completionTimes: dailyEntry?.completion_times ?? {},
       }),
     [
       activityPeriods,
@@ -453,6 +454,7 @@ export function useDailyTasks({
       nowMs,
       taskCounts,
       dailyEntry?.completion_notes,
+      dailyEntry?.completion_times,
     ]
   );
 

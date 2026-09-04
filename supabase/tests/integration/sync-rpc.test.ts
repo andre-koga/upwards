@@ -207,6 +207,57 @@ describe("sync RPC integration", () => {
     ).toBe(false);
   });
 
+  it("preserves an untimed completion clock time in the daily snapshot", async () => {
+    const activityId = newId();
+    const date = "2026-08-28";
+    const completedAt = "2026-08-28T15:47:00.000Z";
+    const increment = countDeltaOp({
+      deviceId: DEVICE_A,
+      activityId,
+      date,
+      delta: 1,
+      previousCount: 0,
+      nextCount: 1,
+      completionAt: completedAt,
+    });
+
+    expect((await submitOps(user.deviceA, [increment]))[0]?.status).toBe(
+      "accepted"
+    );
+
+    const snapshot = await pullSnapshot(user.deviceB);
+    const entries = snapshot.daily_entries as Array<{
+      date: string;
+      completion_times?: Record<string, string>;
+    }>;
+    const entry = entries.find((item) => item.date === date);
+    expect(entry?.completion_times?.[activityId]).toBe(completedAt);
+
+    const clear = countDeltaOp({
+      deviceId: DEVICE_A,
+      activityId,
+      date,
+      delta: -1,
+      previousCount: 1,
+      nextCount: 0,
+      completionAt: null,
+    });
+    expect((await submitOps(user.deviceA, [clear]))[0]?.status).toBe(
+      "accepted"
+    );
+
+    const after = await pullSnapshot(user.deviceB);
+    const afterEntries = after.daily_entries as Array<{
+      date: string;
+      completion_times?: Record<string, string>;
+    }>;
+    expect(
+      afterEntries.find((item) => item.date === date)?.completion_times?.[
+        activityId
+      ]
+    ).toBeUndefined();
+  });
+
   it("collapses two journal ids for the same date onto one row", async () => {
     const date = "2026-08-27";
     const idA = newId();

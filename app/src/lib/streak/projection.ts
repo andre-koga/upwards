@@ -26,6 +26,7 @@ function syntheticEntryFromOverride(override: StreakEntryOverride): DailyEntry {
     is_break_day: override.isBreakDay,
     current_activity_id: null,
     completion_notes: null,
+    completion_times: null,
     created_at: "",
     updated_at: "",
     synced_at: null,
@@ -118,4 +119,3 @@ export function deriveCurrentStreakFromOutcomes(
 
   return streak;
 }
-

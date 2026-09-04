@@ -24,6 +24,7 @@ const dailyEntries: Array<{
   is_break_day: boolean | null;
   current_activity_id: string | null;
   completion_notes: Record<string, string> | null;
+  completion_times: Record<string, string> | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;
@@ -725,6 +726,7 @@ describe("pullAndApplyOperations", () => {
       is_break_day: false,
       current_activity_id: null,
       completion_notes: {},
+      completion_times: {},
       created_at: "2026-08-01T10:00:00.000Z",
       updated_at: "2026-08-01T10:00:00.000Z",
       synced_at: null,

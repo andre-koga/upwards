@@ -256,15 +256,24 @@ export async function applyCountDelta(input: {
   previousCount: number;
   nextCount: number;
   reason?: "increment" | "cycle" | "reset" | "never_slip";
+  completionAt?: string | null;
 }): Promise<DailyEntry> {
   const entry = await getOrCreateDailyEntryProjection(input.date);
   const counts: Record<string, number> = { ...(entry.task_counts ?? {}) };
   if (input.nextCount <= 0) delete counts[input.activityId];
   else counts[input.activityId] = input.nextCount;
+  const completionTimes: Record<string, string> = {
+    ...(entry.completion_times ?? {}),
+  };
+  if (input.completionAt)
+    completionTimes[input.activityId] = input.completionAt;
+  else if (input.completionAt === null)
+    delete completionTimes[input.activityId];
   const timestamp = now();
   await withSuppressedProjectionEnqueue(async () => {
     await db.dailyEntries.update(entry.id, {
       task_counts: counts,
+      completion_times: completionTimes,
       updated_at: timestamp,
     });
   });
@@ -275,9 +284,15 @@ export async function applyCountDelta(input: {
     nextCount: input.nextCount,
     reason: input.reason,
     dailyEntryId: entry.id,
+    completionAt: input.completionAt,
   });
   requestDebouncedSync();
-  return { ...entry, task_counts: counts, updated_at: timestamp };
+  return {
+    ...entry,
+    task_counts: counts,
+    completion_times: completionTimes,
+    updated_at: timestamp,
+  };
 }
 
 export async function applyPauseChange(input: {
@@ -407,9 +422,7 @@ export async function importBackup(data: BackupImportData): Promise<void> {
       }
     });
     for (const row of data.dailyEntries) {
-      for (const [activityId, count] of Object.entries(
-        row.task_counts ?? {}
-      )) {
+      for (const [activityId, count] of Object.entries(row.task_counts ?? {})) {
         if (count > 0) {
           await enqueueActivityCountDelta({
             activityId,
