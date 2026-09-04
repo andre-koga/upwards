@@ -52,7 +52,7 @@ export default function App() {
           </button>
         </div>
       )}
-      <div className="min-h-screen md:flex md:h-screen md:items-stretch md:justify-center md:gap-10 md:px-6 md:py-6">
+      <div className="min-h-dvh md:flex md:h-screen md:items-stretch md:justify-center md:gap-10 md:px-6 md:py-6">
         <main className="relative w-full bg-background md:h-full md:max-w-[430px] md:overflow-hidden md:rounded-2xl md:border md:border-border md:shadow-2xl md:[transform:translateZ(0)]">
           <SyncStatus />
           <div data-app-scroll className="md:h-full md:overflow-y-auto">
