@@ -148,24 +148,24 @@ describe("resolveClosedSessionTimes", () => {
     });
   });
 
-  it("rejects only an end time without a start time", () => {
+  it("rejects only a start time without an end time", () => {
     expect(
       resolveClosedSessionTimes({
-        startTime: "",
-        endTime: "09:00:00",
+        startTime: "09:00:00",
+        endTime: "",
         logicalDateStr: "2026-06-26",
         resetMinutes: RESET_MIDNIGHT,
         existingStartIso: localIso(2026, 6, 26, 8, 0),
         existingEndIso: localIso(2026, 6, 26, 8, 0),
         createdAt: localIso(2026, 6, 26, 8, 0),
       })
-    ).toEqual({ ok: false, error: "one_time" });
+    ).toEqual({ ok: false, error: "missing_end" });
   });
 
-  it("resolves a start time without an end time as an untimed completion", () => {
+  it("resolves an end time without a start time as an untimed completion", () => {
     const result = resolveClosedSessionTimes({
-      startTime: "09:00:00",
-      endTime: "",
+      startTime: "",
+      endTime: "09:00:00",
       logicalDateStr: "2026-06-26",
       resetMinutes: RESET_MIDNIGHT,
       existingStartIso: localIso(2026, 6, 26, 8, 0),

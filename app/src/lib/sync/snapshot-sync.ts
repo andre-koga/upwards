@@ -14,6 +14,7 @@ const SNAPSHOT_TABLES: SyncTable[] = [
   "daily_entries",
   "activity_periods",
   "journal_entries",
+  "memories",
   "one_time_tasks",
   "recurring_memos",
   "activity_status_events",
@@ -27,6 +28,7 @@ export interface SyncSnapshot {
   daily_entries?: Record<string, unknown>[];
   activity_periods?: Record<string, unknown>[];
   journal_entries?: Record<string, unknown>[];
+  memories?: Record<string, unknown>[];
   one_time_tasks?: Record<string, unknown>[];
   recurring_memos?: Record<string, unknown>[];
   activity_status_events?: Record<string, unknown>[];
@@ -53,6 +55,8 @@ function snapshotRows(
       return snapshot.activity_periods ?? [];
     case "journal_entries":
       return snapshot.journal_entries ?? [];
+    case "memories":
+      return snapshot.memories ?? [];
     case "one_time_tasks":
       return snapshot.one_time_tasks ?? [];
     case "recurring_memos":
@@ -105,11 +109,13 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
     for (const table of SNAPSHOT_TABLES) {
       const dexieKey = TABLE_MAP[table];
       const incoming = snapshotRows(snapshot, table)
-        .map((row): Record<string, unknown> => ({
-          ...normalizeSyncRow(table, row),
-          synced_at:
-            typeof row.updated_at === "string" ? row.updated_at : null,
-        }))
+        .map(
+          (row): Record<string, unknown> => ({
+            ...normalizeSyncRow(table, row),
+            synced_at:
+              typeof row.updated_at === "string" ? row.updated_at : null,
+          })
+        )
         .filter((row) => {
           if (table !== "activity_periods") return true;
           const start =
@@ -126,8 +132,9 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
         await localTable.toArray();
       const existingById = new Map(
         existing
-          .filter((row): row is Record<string, unknown> & { id: string } =>
-            typeof row.id === "string"
+          .filter(
+            (row): row is Record<string, unknown> & { id: string } =>
+              typeof row.id === "string"
           )
           .map((row) => [row.id, row])
       );
@@ -153,7 +160,11 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
         // Keeps the whole local row, not just `deleted_at`: a tombstoned server row
         // usually has its content fields blanked too, so merging those in would
         // leave an undeleted but empty row — the same loss by another route.
-        if (row.deleted_at && !local.deleted_at && localRowHasContent(table, local)) {
+        if (
+          row.deleted_at &&
+          !local.deleted_at &&
+          localRowHasContent(table, local)
+        ) {
           return local;
         }
 

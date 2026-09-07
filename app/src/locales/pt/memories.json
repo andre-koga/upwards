@@ -1,0 +1,40 @@
+{
+  "title": "Memórias",
+  "subtitle": "Momentos do passado, com suas próprias palavras.",
+  "searchPlaceholder": "Buscar memórias",
+  "clearSearch": "Limpar busca",
+  "add": "Adicionar memória",
+  "edit": "Editar",
+  "trashMemory": "Mover memória para a lixeira",
+  "untitled": "Memória sem título",
+  "photoAlt": "Foto da memória {{index}}",
+  "empty": "Nenhuma memória ainda. Adicione um momento que você quer guardar.",
+  "trash": {
+    "title": "Lixeira",
+    "restore": "Restaurar",
+    "deletePermanently": "Excluir permanentemente",
+    "fallbackLabel": "Memória",
+    "confirmTitle": "Excluir memória permanentemente?",
+    "confirmMessage": "Isso removerá permanentemente a memória e suas fotos."
+  },
+  "dialog": {
+    "editTitle": "Editar memória",
+    "newTitle": "Nova memória",
+    "memoryLabel": "Memória",
+    "memoryPlaceholder": "O que você lembra?",
+    "whenLabel": "Quando isso aconteceu?",
+    "whenPlaceholder": "ex.: \"no verão passado\" ou \"quando eu era criança\"",
+    "saveBeforePhotos": "Salve os detalhes da memória antes de adicionar fotos.",
+    "somePhotosFailed": "Algumas fotos não puderam ser enviadas.",
+    "needsContent": "Adicione uma memória ou pelo menos uma foto.",
+    "save": "Salvar",
+    "create": "Criar",
+    "cancel": "Cancelar",
+    "upload": {
+      "addPhotos": "Adicionar fotos",
+      "maxPhotosReached": "Limite de {{count}} fotos atingido",
+      "photoCount": "{{current}}/{{max}} fotos",
+      "removePhoto": "Remover foto {{index}}"
+    }
+  }
+}

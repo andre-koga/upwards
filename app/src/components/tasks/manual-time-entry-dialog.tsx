@@ -115,23 +115,23 @@ export default function ManualTimeEntryDialog({
     }
   }
 
-  const handleEndTimeChange = (value: string) => {
+  const handleStartTimeChange = (value: string) => {
     if (!value) {
-      setEndTime("");
+      setStartTime("");
       return;
     }
-    if (startTime && timeToSeconds(value) === timeToSeconds(startTime)) {
-      setEndTime("");
+    if (endTime && timeToSeconds(value) === timeToSeconds(endTime)) {
+      setStartTime("");
       return;
     }
-    setEndTime(value);
+    setStartTime(value);
   };
 
   const handleSave = async () => {
     if (!activity) return;
 
-    if (!startTime) {
-      setError(t("manualEntry.errorStartRequired"));
+    if (!endTime) {
+      setError(t("manualEntry.errorEndRequired"));
       return;
     }
 
@@ -139,10 +139,10 @@ export default function ManualTimeEntryDialog({
     let startIso: string;
     let endIso: string;
 
-    if (!endTime || timeToSeconds(endTime) === timeToSeconds(startTime)) {
+    if (!startTime || timeToSeconds(endTime) === timeToSeconds(startTime)) {
       const resolved = resolveClosedSessionTimes({
-        startTime,
-        endTime: endTime || "",
+        startTime: startTime || "",
+        endTime,
         logicalDateStr: dateString,
         resetMinutes,
         existingStartIso: new Date(nowMs).toISOString(),
@@ -150,13 +150,13 @@ export default function ManualTimeEntryDialog({
         createdAt: new Date(nowMs).toISOString(),
       });
       if (!resolved.ok) {
-        setError(t("manualEntry.errorStartRequired"));
+        setError(t("manualEntry.errorEndRequired"));
         return;
       }
       startIso = resolved.startIso;
       endIso = resolved.endIso;
-      if (new Date(startIso).getTime() > nowMs) {
-        setError(t("manualEntry.errorStartFuture"));
+      if (new Date(endIso).getTime() > nowMs) {
+        setError(t("manualEntry.errorEndFuture"));
         return;
       }
     } else {
@@ -244,11 +244,11 @@ export default function ManualTimeEntryDialog({
           notePlaceholder={t("manualEntry.notePlaceholder")}
           startTime={startTime}
           endTime={endTime}
-          onStartTimeChange={setStartTime}
-          onEndTimeChange={handleEndTimeChange}
+          onStartTimeChange={handleStartTimeChange}
+          onEndTimeChange={setEndTime}
           note={note}
           onNoteChange={setNote}
-          untimedEndDisplay={!endTime}
+          untimedStartDisplay={!startTime}
         />
 
         {spanWarning && (

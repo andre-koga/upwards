@@ -180,8 +180,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
             : NONE_ACTIVITY_VALUE
         );
         setSelectedDate(fromDateString(derived.date));
-        setStartTime(formatTimeInput(instant));
-        setEndTime("");
+        setStartTime("");
+        setEndTime(formatTimeInput(instant));
         setNote(virtualPeriod.note ?? "");
         setLoading(false);
         return;
@@ -236,8 +236,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       );
       setSelectedDate(fromDateString(logicalDateStr));
       const untimed = isUntimedPeriod(period.start_time, period.end_time);
-      setStartTime(formatTimeInput(period.start_time));
-      setEndTime(untimed ? "" : formatTimeInput(period.end_time));
+      setStartTime(untimed ? "" : formatTimeInput(period.start_time));
+      setEndTime(formatTimeInput(period.end_time));
       setNote(period.note ?? "");
       setLoading(false);
     };
@@ -306,7 +306,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         createdAt: details.period.created_at,
       });
       if (!resolved.ok) {
-        setError(t("sessionDetails.errorOneTime"));
+        setError(t("sessionDetails.errorEndRequired"));
         return;
       }
       nextStartIso = resolved.startIso;
@@ -332,13 +332,14 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       if (details.derived) {
         const stillUntimed = !nextEndIso || nextStartIso === nextEndIso;
         if (stillUntimed) {
+          const completionIso = nextEndIso ?? nextStartIso;
           const currentCount = entry.task_counts?.[nextActivityId] ?? 0;
           await applyCountDelta({
             date: details.derivedDate ?? entryDateString,
             activityId: nextActivityId,
             previousCount: currentCount,
             nextCount: currentCount,
-            completionAt: nextStartIso,
+            completionAt: completionIso,
           });
           await applyCompletionNote({
             date: details.derivedDate ?? entryDateString,
@@ -399,7 +400,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
             activityId: nextActivityId,
             previousCount: currentCount,
             nextCount: Math.max(currentCount, target),
-            completionAt: nextStartIso,
+            completionAt: nextEndIso,
           });
           await applyCompletionNote({
             date: entryDateString,
@@ -478,26 +479,26 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     return `This session spans ${startDay} and ${endDay} (crosses your ${formatResetMinutes(resetMinutes)} day boundary).`;
   }, [isRunningSession, startTime, endTime, selectedDate, resetMinutes]);
 
-  const handleStartTimeChange = useCallback((value: string) => {
-    setStartTime(value);
-  }, []);
-
-  const handleEndTimeChange = useCallback(
+  const handleStartTimeChange = useCallback(
     (value: string) => {
       if (!value) {
-        setEndTime("");
+        setStartTime("");
         return;
       }
-      if (startTime && timeToSeconds(value) === timeToSeconds(startTime)) {
-        setEndTime("");
+      if (endTime && timeToSeconds(value) === timeToSeconds(endTime)) {
+        setStartTime("");
         return;
       }
-      setEndTime(value);
+      setStartTime(value);
     },
-    [startTime]
+    [endTime]
   );
 
-  const showUntimedEnd = !isRunningSession && !endTime;
+  const handleEndTimeChange = useCallback((value: string) => {
+    setEndTime(value);
+  }, []);
+
+  const showUntimedStart = !isRunningSession && !startTime;
 
   return {
     NONE_ACTIVITY_VALUE,
@@ -517,7 +518,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     setStartTime: handleStartTimeChange,
     endTime,
     setEndTime: handleEndTimeChange,
-    showUntimedEnd,
+    showUntimedStart,
     note,
     setNote,
     handleDelete,

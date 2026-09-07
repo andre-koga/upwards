@@ -8,6 +8,7 @@ import type {
   DailyEntry,
   GroupStatusEvent,
   JournalEntry,
+  Memory,
   OneTimeTask,
   RecurringMemo,
 } from "@/lib/db/types";
@@ -31,6 +32,7 @@ export function useDataBackup() {
         dailyEntries,
         activityPeriods,
         journalEntries,
+        memories,
         oneTimeTasks,
         recurringMemos,
         activityStatusEvents,
@@ -41,6 +43,7 @@ export function useDataBackup() {
         db.dailyEntries.toArray(),
         db.activityPeriods.toArray(),
         db.journalEntries.toArray(),
+        db.memories.toArray(),
         db.oneTimeTasks.toArray(),
         db.recurringMemos.toArray(),
         db.activityStatusEvents.toArray(),
@@ -49,12 +52,13 @@ export function useDataBackup() {
 
       const backup = {
         exportedAt: new Date().toISOString(),
-        version: 3,
+        version: 4,
         activityGroups,
         activities,
         dailyEntries,
         activityPeriods,
         journalEntries,
+        memories,
         oneTimeTasks,
         recurringMemos,
         activityStatusEvents,
@@ -124,6 +128,7 @@ export function useDataBackup() {
         dailyEntries: data.dailyEntries as DailyEntry[] | undefined,
         activityPeriods: normalizedPeriods,
         journalEntries: data.journalEntries as JournalEntry[] | undefined,
+        memories: data.memories as Memory[] | undefined,
         oneTimeTasks: data.oneTimeTasks as OneTimeTask[] | undefined,
         recurringMemos: data.recurringMemos as RecurringMemo[] | undefined,
         activityStatusEvents: data.activityStatusEvents as

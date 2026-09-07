@@ -7,6 +7,7 @@ import type {
   DailyEntry,
   GroupStatusEvent,
   JournalEntry,
+  Memory,
   OneTimeTask,
   RecurringMemo,
 } from "@/lib/db/types";
@@ -118,6 +119,47 @@ export async function saveJournalEntry(
     "journal_entries",
     row as unknown as Record<string, unknown>,
     baseRevision
+  );
+}
+
+export async function saveMemory(
+  row: Memory,
+  baseRevision?: string | null
+): Promise<void> {
+  const existing = await db.memories.get(row.id);
+  if (existing) await db.memories.put(row);
+  else await db.memories.add(row);
+  await writeProjection(
+    "memories",
+    row as unknown as Record<string, unknown>,
+    baseRevision
+  );
+}
+
+export async function patchMemory(
+  id: string,
+  patch: Partial<Memory>
+): Promise<void> {
+  const existing = await db.memories.get(id);
+  if (!existing) return;
+  await saveMemory(
+    { ...existing, ...patch, updated_at: patch.updated_at ?? now() },
+    existing.updated_at
+  );
+}
+
+/** Privacy erasure keeps only a tombstone, so a previously synced memory cannot return. */
+export async function eraseMemory(row: Memory): Promise<void> {
+  await saveMemory(
+    {
+      ...row,
+      text_content: null,
+      photo_paths: null,
+      time_label: null,
+      deleted_at: now(),
+      updated_at: now(),
+    },
+    row.updated_at
   );
 }
 
@@ -401,6 +443,7 @@ export interface BackupImportData {
   dailyEntries?: DailyEntry[];
   activityPeriods?: ActivityPeriod[];
   journalEntries?: JournalEntry[];
+  memories?: Memory[];
   oneTimeTasks?: OneTimeTask[];
   recurringMemos?: RecurringMemo[];
   activityStatusEvents?: ActivityStatusEvent[];
@@ -466,6 +509,9 @@ export async function importBackup(data: BackupImportData): Promise<void> {
   }
   for (const row of data.journalEntries ?? []) {
     await saveJournalEntry(row);
+  }
+  for (const row of data.memories ?? []) {
+    await saveMemory(row);
   }
   for (const row of data.oneTimeTasks ?? []) {
     await saveOneTimeTask(row);

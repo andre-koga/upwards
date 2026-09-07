@@ -26,8 +26,8 @@ interface SessionTimeNoteFieldsProps {
   endReadOnlyValue?: string;
   disabled?: boolean;
   allowClearTimes?: boolean;
-  /** When true, an empty end time shows a dash instead of "Not set". */
-  untimedEndDisplay?: boolean;
+  /** When true, an empty start time shows a dash instead of "Not set". */
+  untimedStartDisplay?: boolean;
 }
 
 export function SessionTimeNoteFields({
@@ -47,9 +47,9 @@ export function SessionTimeNoteFields({
   endReadOnlyValue,
   disabled = false,
   allowClearTimes = false,
-  untimedEndDisplay = false,
+  untimedStartDisplay = false,
 }: SessionTimeNoteFieldsProps) {
-  const showUntimedEnd = untimedEndDisplay && !endTime;
+  const showUntimedStart = untimedStartDisplay && !startTime;
 
   return (
     <>
@@ -61,6 +61,7 @@ export function SessionTimeNoteFields({
           onValueChange={onStartTimeChange}
           disabled={disabled}
           allowClear={allowClearTimes}
+          emptyDisplay={showUntimedStart ? "—" : undefined}
           containerClassName="min-w-0 flex-1"
         />
         {endReadOnlyValue != null ? (
@@ -79,7 +80,6 @@ export function SessionTimeNoteFields({
             onValueChange={onEndTimeChange}
             disabled={disabled}
             allowClear={allowClearTimes}
-            emptyDisplay={showUntimedEnd ? "—" : undefined}
             containerClassName="min-w-0 flex-1"
           />
         )}

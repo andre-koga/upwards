@@ -99,6 +99,19 @@ export interface JournalEntry {
   deleted_at: string | null;
 }
 
+/** A recalled experience, intentionally independent from the daily journal. */
+export interface Memory {
+  id: string;
+  text_content: string | null;
+  photo_paths: string[] | null;
+  /** The owner's wording for when this happened, e.g. "when I was six" or "around COVID". */
+  time_label: string | null;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
 export interface OneTimeTask {
   id: string;
   date: string | null; // YYYY-MM-DD, completion date when done

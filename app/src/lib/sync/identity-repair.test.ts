@@ -5,6 +5,7 @@ const { enqueueMock, pendingEntityIds, tables } = vi.hoisted(() => ({
   pendingEntityIds: new Set<string>(),
   tables: {
     journalEntries: [] as Array<Record<string, unknown>>,
+    memories: [] as Array<Record<string, unknown>>,
     activityPeriods: [] as Array<Record<string, unknown>>,
     oneTimeTasks: [] as Array<Record<string, unknown>>,
     recurringMemos: [] as Array<Record<string, unknown>>,
@@ -41,6 +42,7 @@ vi.mock("@/lib/db", () => {
   return {
     db: {
       journalEntries: tableApi(tables.journalEntries),
+      memories: tableApi(tables.memories),
       activityPeriods: tableApi(tables.activityPeriods),
       oneTimeTasks: tableApi(tables.oneTimeTasks),
       recurringMemos: tableApi(tables.recurringMemos),

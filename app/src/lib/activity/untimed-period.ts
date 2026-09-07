@@ -34,12 +34,14 @@ export function periodsBelongingToDay(
 
 export type ClosedSessionTimesResult =
   | { ok: true; startIso: string; endIso: string }
-  | { ok: false; error: "one_time" };
+  | { ok: false; error: "missing_end" };
 
 /**
  * Resolve start/end for a closed session.
  * Both empty → keep the existing completion instant (or created_at).
- * Start only, or same start and end → untimed completion at that clock time.
+ * End only, or same start and end → untimed completion at that clock time
+ * (you mark it done when it's finished, so the completion instant is the
+ * end time; the start is left unset).
  * Different times → a timed span.
  */
 export function resolveClosedSessionTimes(params: {
@@ -64,14 +66,14 @@ export function resolveClosedSessionTimes(params: {
     return { ok: true, startIso: completionIso, endIso: completionIso };
   }
 
-  if (startEmpty) {
-    return { ok: false, error: "one_time" };
+  if (endEmpty) {
+    return { ok: false, error: "missing_end" };
   }
 
-  if (endEmpty) {
+  if (startEmpty) {
     const completionMs = timestampForLogicalDayTime(
       params.logicalDateStr,
-      params.startTime,
+      params.endTime,
       params.resetMinutes
     );
     const completionIso = new Date(completionMs).toISOString();
@@ -81,7 +83,7 @@ export function resolveClosedSessionTimes(params: {
   if (timeToSeconds(params.endTime) === timeToSeconds(params.startTime)) {
     const completionMs = timestampForLogicalDayTime(
       params.logicalDateStr,
-      params.startTime,
+      params.endTime,
       params.resetMinutes
     );
     const completionIso = new Date(completionMs).toISOString();

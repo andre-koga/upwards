@@ -7,6 +7,7 @@ export type SyncTable =
   | "daily_entries"
   | "activity_periods"
   | "journal_entries"
+  | "memories"
   | "one_time_tasks"
   | "recurring_memos"
   | "activity_status_events"
@@ -18,6 +19,7 @@ export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
   daily_entries: "user_id,date",
   activity_periods: "id",
   journal_entries: "user_id,entry_date",
+  memories: "id",
   one_time_tasks: "id",
   recurring_memos: "id",
   activity_status_events: "id",

@@ -72,7 +72,7 @@
     "notePlaceholder": "What did you do?",
     "spanWarning": "This session spans {{startDay}} and {{endDay}} (crosses your {{resetTime}} day boundary).",
     "pastDayWarning": "You're adding a time entry for a different day than today. Double-check the date and times before saving.",
-    "errorStartRequired": "Please set a start time.",
+    "errorEndRequired": "Please set an end time.",
     "errorSameTime": "End time must be different from start time.",
     "errorEndFuture": "End time can't be in the future.",
     "errorStartFuture": "Start time can't be in the future.",
@@ -95,7 +95,7 @@
   },
   "sessionDetails": {
     "timesOptional": "Use the same start and end for a completion without a duration. Use different times if you tracked how long it took.",
-    "errorOneTime": "Set both start and end times.",
+    "errorEndRequired": "Please set an end time.",
     "errorStartRequired": "Please set a start time.",
     "errorSameTime": "End time must be different from start time."
   }

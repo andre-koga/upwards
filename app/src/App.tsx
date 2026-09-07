@@ -14,6 +14,7 @@ const TaskOrderPage = lazy(() => import("@/pages/task-order"));
 const SyncIssuesPage = lazy(() => import("@/pages/sync-issues"));
 const WhatsNewPage = lazy(() => import("@/pages/whats-new"));
 const JournalPage = lazy(() => import("@/pages/journal"));
+const MemoriesPage = lazy(() => import("@/pages/memories"));
 const LogsPage = lazy(() => import("@/pages/logs"));
 
 function PageLoadingFallback() {
@@ -77,6 +78,7 @@ export default function App() {
                 />
                 <Route path="/whats-new" element={<WhatsNewPage />} />
                 <Route path="/journal" element={<JournalPage />} />
+                <Route path="/memories" element={<MemoriesPage />} />
                 <Route path="/logs" element={<LogsPage />} />
               </Routes>
             </Suspense>

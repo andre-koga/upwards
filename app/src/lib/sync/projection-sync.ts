@@ -7,7 +7,10 @@ import { getCachedUserId } from "@/lib/supabase";
 import { newId } from "@/lib/db";
 import { stripOpOwnedFields } from "@/lib/sync/op-owned-fields";
 import type { RemoteSyncOperation } from "./sync-operations";
-import { listOpenConflictEntityIds, recordSyncIssue } from "./sync-issues-store";
+import {
+  listOpenConflictEntityIds,
+  recordSyncIssue,
+} from "./sync-issues-store";
 import { hasPendingOperationForEntity } from "./unsynced-data";
 import { buildProjectionConflictPayloadFromOp } from "./projection-conflict-resolution";
 import { maybeRecordTimelineOverlapInfo } from "./timeline-overlap";
@@ -16,6 +19,7 @@ import { reconcileJournalDuplicatesForDate } from "@/lib/journal/dedupe-by-date"
 /** Current-state rows that sync via projection.upsert. Streaks are local-only. */
 export const OPS_MANAGED_SYNC_TABLES: SyncTable[] = [
   "journal_entries",
+  "memories",
   "activity_periods",
   "one_time_tasks",
   "recurring_memos",
@@ -27,6 +31,7 @@ export const OPS_MANAGED_SYNC_TABLES: SyncTable[] = [
 
 const SYNC_TABLE_TO_ENTITY_TYPE: Partial<Record<SyncTable, string>> = {
   journal_entries: "journal_entry",
+  memories: "memory",
   activity_periods: "activity_period",
   one_time_tasks: "one_time_task",
   recurring_memos: "recurring_memo",
@@ -38,6 +43,7 @@ const SYNC_TABLE_TO_ENTITY_TYPE: Partial<Record<SyncTable, string>> = {
 
 const ENTITY_TYPE_TO_SYNC_TABLE: Record<string, SyncTable> = {
   journal_entry: "journal_entries",
+  memory: "memories",
   activity_period: "activity_periods",
   one_time_task: "one_time_tasks",
   recurring_memo: "recurring_memos",
@@ -49,6 +55,7 @@ const ENTITY_TYPE_TO_SYNC_TABLE: Record<string, SyncTable> = {
 
 const ENTITY_TYPE_TO_DEXIE_TABLE: Record<string, keyof typeof db> = {
   journal_entry: "journalEntries",
+  memory: "memories",
   activity_period: "activityPeriods",
   one_time_task: "oneTimeTasks",
   recurring_memo: "recurringMemos",

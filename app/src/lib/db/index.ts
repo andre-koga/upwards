@@ -6,6 +6,7 @@ import type {
   DailyEntry,
   ActivityPeriod,
   JournalEntry,
+  Memory,
   OneTimeTask,
   RecurringMemo,
   ActivityStatusEvent,
@@ -96,6 +97,7 @@ class UpwardsDB extends Dexie {
   dailyEntries!: Table<DailyEntry>;
   activityPeriods!: Table<ActivityPeriod>;
   journalEntries!: Table<JournalEntry>;
+  memories!: Table<Memory>;
   oneTimeTasks!: Table<OneTimeTask>;
   recurringMemos!: Table<RecurringMemo>;
   activityStatusEvents!: Table<ActivityStatusEvent>;
@@ -980,6 +982,10 @@ class UpwardsDB extends Dexie {
     // table was written on every count mutation and read back nowhere, so the
     // rows are pure duplication of derivable state.
     this.version(29).stores({ activityStreaks: null });
+
+    this.version(30).stores({
+      memories: "id, deleted_at, created_at",
+    });
   }
 }
 

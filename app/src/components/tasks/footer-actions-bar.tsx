@@ -10,6 +10,7 @@ import {
   Folder,
   Github,
   History,
+  Sparkles,
   Menu,
   MessageSquare,
   Settings,
@@ -181,6 +182,18 @@ export default function FooterActionsBar({
                 />
               </a>
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full justify-start rounded-xl"
+              onClick={() => {
+                setPathsDrawerOpen(false);
+                navigate("/settings");
+              }}
+            >
+              <Settings className="h-4 w-4" />
+              {t("settings")}
+            </Button>
           </div>
 
           <div className="my-2" role="separator" aria-hidden />
@@ -204,11 +217,11 @@ export default function FooterActionsBar({
               className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
               onClick={() => {
                 setPathsDrawerOpen(false);
-                navigate("/settings");
+                navigate("/memories");
               }}
             >
-              <Settings className="h-5 w-5 shrink-0" />
-              {t("settings")}
+              <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
+              {t("memories")}
             </Button>
           </div>
         </SheetContent>

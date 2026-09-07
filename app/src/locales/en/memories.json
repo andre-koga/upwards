@@ -1,0 +1,40 @@
+{
+  "title": "Memories",
+  "subtitle": "Past moments, in your own words.",
+  "searchPlaceholder": "Search memories",
+  "clearSearch": "Clear search",
+  "add": "Add memory",
+  "edit": "Edit",
+  "trashMemory": "Move memory to trash",
+  "untitled": "Untitled memory",
+  "photoAlt": "Memory photo {{index}}",
+  "empty": "No memories yet. Add a moment you want to keep.",
+  "trash": {
+    "title": "Trash",
+    "restore": "Restore",
+    "deletePermanently": "Delete permanently",
+    "fallbackLabel": "Memory",
+    "confirmTitle": "Delete memory permanently?",
+    "confirmMessage": "This will permanently remove the memory and its photos."
+  },
+  "dialog": {
+    "editTitle": "Edit memory",
+    "newTitle": "New memory",
+    "memoryLabel": "Memory",
+    "memoryPlaceholder": "What do you remember?",
+    "whenLabel": "When did this happen?",
+    "whenPlaceholder": "e.g. \"last summer\" or \"when I was a kid\"",
+    "saveBeforePhotos": "Save the memory details before adding photos.",
+    "somePhotosFailed": "Some photos could not be uploaded.",
+    "needsContent": "Add a memory or at least one photo.",
+    "save": "Save",
+    "create": "Create",
+    "cancel": "Cancel",
+    "upload": {
+      "addPhotos": "Add photos",
+      "maxPhotosReached": "Maximum {{count}} photos reached",
+      "photoCount": "{{current}}/{{max}} photos",
+      "removePhoto": "Remove photo {{index}}"
+    }
+  }
+}

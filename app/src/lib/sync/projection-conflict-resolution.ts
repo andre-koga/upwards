@@ -19,6 +19,7 @@ import { getCachedUserId, supabase } from "@/lib/supabase";
 import type { RemoteSyncOperation } from "./sync-operations";
 
 const PROJECTION_FIELD_KEYS: Record<string, readonly string[]> = {
+  memory: ["text_content", "photo_paths", "time_label", "deleted_at"],
   activity_period: [
     "activity_id",
     "daily_entry_id",
@@ -37,13 +38,7 @@ const PROJECTION_FIELD_KEYS: Record<string, readonly string[]> = {
     "order_index",
     "deleted_at",
   ],
-  recurring_memo: [
-    "title",
-    "routine",
-    "is_pinned",
-    "is_enabled",
-    "deleted_at",
-  ],
+  recurring_memo: ["title", "routine", "is_pinned", "is_enabled", "deleted_at"],
   activity: [
     "name",
     "routine",
@@ -124,7 +119,10 @@ function snapshotFromRow(
   };
 }
 
-function entityLabel(entityType: string, fields: Record<string, unknown>): string {
+function entityLabel(
+  entityType: string,
+  fields: Record<string, unknown>
+): string {
   if (typeof fields.title === "string" && fields.title.trim()) {
     return fields.title.trim();
   }
@@ -135,6 +133,12 @@ function entityLabel(entityType: string, fields: Record<string, unknown>): strin
   if (entityType === "one_time_task") return "Memo";
   if (entityType === "recurring_memo") return "Recurring memo";
   if (entityType === "activity_streak") return "Streak";
+  if (entityType === "memory") {
+    if (typeof fields.time_label === "string" && fields.time_label.trim()) {
+      return fields.time_label.trim();
+    }
+    return "Memory";
+  }
   return entityType.replace(/_/g, " ");
 }
 
@@ -380,10 +384,7 @@ export async function resolveGenericProjectionConflictKeepLocal(
     entity_type: entityType,
     entity_id: entityId,
   });
-  await resolveProjectionConflict(
-    { ...issue, payload },
-    "keep_local"
-  );
+  await resolveProjectionConflict({ ...issue, payload }, "keep_local");
 }
 
 export function formatProjectionConflictFieldValue(
