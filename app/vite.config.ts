@@ -79,7 +79,9 @@ export default defineConfig({
       manifest: {
         name: "Upwards",
         short_name: "Upwards",
-        description: "Local-first habit tracker",
+        description:
+          "Plan your day, track habits and focused time, and reflect — all locally first.",
+        categories: ["productivity", "lifestyle"],
         theme_color: "#000000",
         background_color: "#ffffff",
         // Keep Android's status and navigation bars visible while still

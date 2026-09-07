@@ -16,8 +16,9 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <!--
-      Chrome selects one of these while loading the installed app. They follow
-      the Android/browser preference rather than the in-app theme switch.
+      Chrome selects one of these while creating the installed-app window.
+      React updates both after load so a manual in-app theme can override the
+      Android preference without changing which media query Chrome selects.
     -->
     <meta
       name="theme-color"
@@ -55,6 +56,18 @@
           var palette = localStorage.getItem("upwards-color-palette");
           if (palette) {
             document.documentElement.setAttribute("data-palette", palette);
+          }
+          var themeColor = isDark ? "#000000" : "#ffffff";
+          document
+            .querySelectorAll('meta[name="theme-color"]')
+            .forEach(function (meta) {
+              meta.setAttribute("content", themeColor);
+            });
+          var colorScheme = document.querySelector(
+            'meta[name="color-scheme"]'
+          );
+          if (colorScheme) {
+            colorScheme.setAttribute("content", isDark ? "dark" : "light");
           }
         } catch (e) {
           /* ignore */

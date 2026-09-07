@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import SyncStatus from "@/components/settings/sync-status";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
+import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
+import { SystemBarThemeSync } from "@/components/pwa/system-bar-theme-sync";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -32,6 +34,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <SystemBarThemeSync />
       {!noticeDismissed && (
         <div className="hidden md:mx-auto md:block md:max-w-sm md:pt-6">
           <button
@@ -83,6 +86,7 @@ export default function App() {
         </main>
       </div>
       <AuthDataHandoffDialog />
+      <InstallAppPrompt />
       <SpeedInsights />
       <Analytics />
     </BrowserRouter>
