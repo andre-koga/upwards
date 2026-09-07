@@ -19,6 +19,27 @@ function ensureMeta(selector: string, name: string): HTMLMetaElement {
   return meta;
 }
 
+/**
+ * Chrome's installed-app host does not consistently repaint its system-bar
+ * surface after a `theme-color` content mutation. Replacing the node gives it
+ * a new metadata entry to consume while leaving the document's single active
+ * theme-color declaration intact.
+ */
+function replaceThemeColor(content: string): void {
+  const current = document.querySelector<HTMLMetaElement>(THEME_COLOR_META);
+  if (current?.getAttribute("content") === content) return;
+
+  const next = document.createElement("meta");
+  next.setAttribute("name", "theme-color");
+  next.setAttribute("content", content);
+
+  if (current) {
+    current.replaceWith(next);
+  } else {
+    document.head.prepend(next);
+  }
+}
+
 /** Convert `H S% L%` (or `H S L`) CSS variable value to `#rrggbb`. */
 export function hslChannelsToHex(channels: string): string | null {
   const parts = channels
@@ -90,7 +111,7 @@ export function syncBrowserChromeTheme(): void {
   const scheme = isDocumentDark() ? "dark" : "light";
 
   if (hex) {
-    ensureMeta(THEME_COLOR_META, "theme-color").setAttribute("content", hex);
+    replaceThemeColor(hex);
     document.documentElement.style.backgroundColor = hex;
     if (document.body) {
       document.body.style.backgroundColor = hex;
