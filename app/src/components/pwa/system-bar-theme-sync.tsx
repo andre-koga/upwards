@@ -6,8 +6,8 @@ const DARK_THEME_COLOR = "#000000";
 
 /**
  * Keeps Android's installed-PWA system-bar request aligned with the resolved
- * in-app theme. Both media-qualified tags are updated because Android may keep
- * selecting the tag that matches the device theme rather than the app theme.
+ * in-app theme. Replacing the tag, rather than mutating its content in place,
+ * gives Chrome's installed-app host a new metadata entry to consume.
  */
 export function SystemBarThemeSync() {
   const { resolvedTheme } = useTheme();
@@ -18,9 +18,15 @@ export function SystemBarThemeSync() {
     const themeColor =
       resolvedTheme === "dark" ? DARK_THEME_COLOR : LIGHT_THEME_COLOR;
 
-    document
-      .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
-      .forEach((meta) => meta.setAttribute("content", themeColor));
+    const currentThemeColor = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]'
+    );
+    if (currentThemeColor?.content !== themeColor) {
+      const nextThemeColor = document.createElement("meta");
+      nextThemeColor.name = "theme-color";
+      nextThemeColor.content = themeColor;
+      currentThemeColor?.replaceWith(nextThemeColor);
+    }
 
     document
       .querySelector<HTMLMetaElement>('meta[name="color-scheme"]')

@@ -16,21 +16,11 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <!--
-      Chrome selects one of these while creating the installed-app window.
-      React updates both after load so a manual in-app theme can override the
-      Android preference without changing which media query Chrome selects.
+      This stays as one active tag because Upwards supports a manual theme
+      override. Media-qualified tags follow Android's device theme instead.
     -->
-    <meta
-      name="theme-color"
-      content="#ffffff"
-      media="(prefers-color-scheme: light)"
-    />
-    <meta
-      name="theme-color"
-      content="#000000"
-      media="(prefers-color-scheme: dark)"
-    />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!--
@@ -58,11 +48,8 @@
             document.documentElement.setAttribute("data-palette", palette);
           }
           var themeColor = isDark ? "#000000" : "#ffffff";
-          document
-            .querySelectorAll('meta[name="theme-color"]')
-            .forEach(function (meta) {
-              meta.setAttribute("content", themeColor);
-            });
+          var themeMeta = document.querySelector('meta[name="theme-color"]');
+          if (themeMeta) themeMeta.setAttribute("content", themeColor);
           var colorScheme = document.querySelector(
             'meta[name="color-scheme"]'
           );
