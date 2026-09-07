@@ -80,7 +80,7 @@ export default defineConfig({
         name: "Upwards",
         short_name: "Upwards",
         description: "Local-first habit tracker",
-        theme_color: "#ffffff",
+        theme_color: "#000000",
         background_color: "#ffffff",
         // Keep Android's status and navigation bars visible while still
         // launching outside of the browser's URL bar.

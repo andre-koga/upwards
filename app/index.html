@@ -4,20 +4,32 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/icon-192x192.png"
+    />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <!--
-      Single theme-color + color-scheme (no media queries): the in-app theme
-      can differ from the OS preference. theme-color drives the top status bar;
-      color-scheme drives the Android nav bar in a standalone PWA.
-      The inline script below sets both before paint; React keeps them in sync.
+      Chrome selects one of these while loading the installed app. They follow
+      the Android/browser preference rather than the in-app theme switch.
     -->
-    <meta name="theme-color" content="#ffffff" />
-    <meta name="color-scheme" content="light" />
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#000000"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta name="color-scheme" content="light dark" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!--
@@ -36,8 +48,7 @@
             "(prefers-color-scheme: dark)"
           ).matches;
           var isDark =
-            storedTheme === "dark" ||
-            (storedTheme !== "light" && systemDark);
+            storedTheme === "dark" || (storedTheme !== "light" && systemDark);
           if (isDark) {
             document.documentElement.classList.add("dark");
           }
@@ -45,13 +56,6 @@
           if (palette) {
             document.documentElement.setAttribute("data-palette", palette);
           }
-          var themeColor = isDark ? "#0a0a0a" : "#ffffff";
-          var themeMeta = document.querySelector('meta[name="theme-color"]');
-          if (themeMeta) themeMeta.setAttribute("content", themeColor);
-          var schemeMeta = document.querySelector('meta[name="color-scheme"]');
-          if (schemeMeta)
-            schemeMeta.setAttribute("content", isDark ? "dark" : "light");
-          document.documentElement.style.backgroundColor = themeColor;
         } catch (e) {
           /* ignore */
         }
