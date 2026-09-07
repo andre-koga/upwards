@@ -1,4 +1,10 @@
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type AnimationEvent,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { ChevronDown, ChevronLeft, Plus, X } from "lucide-react";
@@ -32,6 +38,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+
+type PendingDrawerContent =
+  | { type: "groups" }
+  | { type: "activities"; group: ActivityGroup };
 
 async function loadActivityGroupLists(): Promise<{
   active: ActivityGroup[];
@@ -221,35 +231,78 @@ export default function ActivityGroupsDrawer({
 
   const reloadGroupActivities = () => setGroupActivitiesTick((t) => t + 1);
 
-  const resetDrawerView = () => {
+  const resetDrawerView = useCallback(() => {
     setView("groups");
     setSelectedGroup(null);
     setShowArchivedGroups(false);
     setShowArchivedActivities(false);
-  };
+  }, []);
+
+  const pendingContentRef = useRef<PendingDrawerContent | null>(null);
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
-    if (!nextOpen) {
-      resetDrawerView();
-    }
   };
 
   const closeDrawer = () => {
+    pendingContentRef.current = null;
     setOpen(false);
-    resetDrawerView();
   };
 
   const handleOpenGroup = (group: ActivityGroup) => {
-    setSelectedGroup(group);
-    setView("activities");
+    pendingContentRef.current = { type: "activities", group };
+    setOpen(false);
   };
 
   const handleBackToGroups = () => {
-    setSelectedGroup(null);
-    setView("groups");
-    setShowArchivedActivities(false);
+    pendingContentRef.current = { type: "groups" };
+    setOpen(false);
   };
+
+  const completeDrawerClose = useCallback(() => {
+    const pending = pendingContentRef.current;
+    pendingContentRef.current = null;
+    if (pending?.type === "activities") {
+      setSelectedGroup(pending.group);
+      setView("activities");
+      setOpen(true);
+      return;
+    }
+
+    if (pending?.type === "groups") {
+      setSelectedGroup(null);
+      setView("groups");
+      setShowArchivedGroups(false);
+      setShowArchivedActivities(false);
+      setOpen(true);
+      return;
+    }
+
+    resetDrawerView();
+  }, [resetDrawerView]);
+
+  // Keep the outgoing view visible until SheetContent's close animation ends.
+  // This avoids guessing a duration and prevents the groups list flashing while
+  // the activities view slides away.
+  const handleSheetAnimationEnd = useCallback(
+    (event: AnimationEvent<HTMLDivElement>) => {
+      if (open || event.currentTarget !== event.target) return;
+      completeDrawerClose();
+    },
+    [completeDrawerClose, open]
+  );
+
+  useEffect(() => {
+    if (
+      open ||
+      typeof window === "undefined" ||
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(completeDrawerClose);
+    return () => window.cancelAnimationFrame(frame);
+  }, [completeDrawerClose, open]);
 
   const activeActivities = groupActivities.filter(
     (a) => !isActivityArchived(a)
@@ -277,6 +330,7 @@ export default function ActivityGroupsDrawer({
           showCloseButton={false}
           className="flex max-h-[70vh] flex-col gap-0 rounded-t-2xl border-t border-border p-0 shadow-xl"
           style={{ bottom: bottomInset }}
+          onAnimationEnd={handleSheetAnimationEnd}
         >
           <div
             className="mx-auto mb-1 mt-3 h-1 w-10 shrink-0 rounded-full bg-muted"

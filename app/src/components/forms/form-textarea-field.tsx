@@ -1,11 +1,8 @@
 import type { ComponentProps, ReactNode } from "react";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import {
-  dialogFieldLabelClassName,
-  dialogTextareaClassName,
-} from "@/components/forms/styles";
+import { dialogTextareaClassName } from "@/components/forms/styles";
+import { FormFieldShell } from "@/components/forms/form-field-shell";
 
 export interface FormTextareaFieldProps extends ComponentProps<
   typeof Textarea
@@ -29,23 +26,19 @@ export function FormTextareaField({
   ...textareaProps
 }: FormTextareaFieldProps) {
   return (
-    <div className={cn("space-y-1", containerClassName)}>
-      <Label
-        htmlFor={id}
-        className={cn(dialogFieldLabelClassName, labelClassName)}
-      >
-        {label}
-      </Label>
+    <FormFieldShell
+      id={id}
+      label={label}
+      containerClassName={containerClassName}
+      labelClassName={labelClassName}
+      message={message}
+      messageClassName={messageClassName}
+    >
       <Textarea
         id={id}
         className={cn(dialogTextareaClassName, className)}
         {...textareaProps}
       />
-      {message ? (
-        <p className={cn("text-xs text-muted-foreground", messageClassName)}>
-          {message}
-        </p>
-      ) : null}
-    </div>
+    </FormFieldShell>
   );
 }

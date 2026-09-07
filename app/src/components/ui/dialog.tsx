@@ -5,11 +5,85 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { cn } from "@/lib/utils";
+import {
+  dialogSurfaceMotionClassName,
+  overlayBackdropMotionClassName,
+} from "@/components/ui/overlay-motion";
+
+/** Matches DialogContent's closed-state animation duration. */
+const DIALOG_EXIT_MS = 150;
 
 function Dialog({
+  open,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+  const isControlled = open !== undefined;
+  const [renderOpen, setRenderOpen] = React.useState(open ?? false);
+  const closeTimerRef = React.useRef<number | null>(null);
+
+  const clearCloseTimer = React.useCallback(() => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!isControlled) return;
+
+    // Keep the internal visual state aligned when a caller changes `open`
+    // itself (rather than through Radix's dismissal event).
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (open) {
+      clearCloseTimer();
+      setRenderOpen(true);
+    } else {
+      setRenderOpen(false);
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [clearCloseTimer, isControlled, open]);
+
+  React.useEffect(
+    () => () => {
+      clearCloseTimer();
+    },
+    [clearCloseTimer]
+  );
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!isControlled) {
+      onOpenChange?.(nextOpen);
+      return;
+    }
+
+    clearCloseTimer();
+    setRenderOpen(nextOpen);
+
+    if (nextOpen) {
+      onOpenChange?.(true);
+      return;
+    }
+
+    const closeDelay = window.matchMedia("(prefers-reduced-motion: reduce)")
+      .matches
+      ? 0
+      : DIALOG_EXIT_MS;
+
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      onOpenChange?.(false);
+    }, closeDelay);
+  };
+
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      open={isControlled ? renderOpen : undefined}
+      onOpenChange={isControlled ? handleOpenChange : onOpenChange}
+      {...props}
+    />
+  );
 }
 
 function DialogTrigger({
@@ -32,7 +106,8 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 z-[var(--z-dialog-overlay)] bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-[var(--z-dialog-overlay)] bg-black/50 backdrop-blur-sm",
+        overlayBackdropMotionClassName,
         className
       )}
       {...props}
@@ -59,13 +134,17 @@ function DialogContent({
         data-slot="dialog-content"
         data-size={size}
         className={cn(
-          "fixed left-1/2 z-[var(--z-dialog)] grid max-h-[min(90dvh,100svh-1rem)] w-full max-w-[calc(100%-2rem)] gap-4 overflow-y-auto rounded-xl border bg-background p-6 shadow-lg duration-200 data-[size=sm]:max-w-xs data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[size=default]:sm:max-w-lg",
+          "fixed left-1/2 z-[var(--z-dialog)] grid max-h-[min(90dvh,100svh-1rem)] w-full max-w-[calc(100%-2rem)] gap-4 overflow-y-auto rounded-xl border bg-background p-6 shadow-lg data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-lg",
+          dialogSurfaceMotionClassName,
           className
         )}
         style={{
           ...style,
           top: centerY,
-          transform: "translateX(-50%) translateY(-50%)",
+          // `translate` composes with the animation's `transform`; using
+          // `transform` here would be overwritten by animate-in/out and make
+          // the dialog jump away from its visual-viewport center.
+          translate: "-50% -50%",
         }}
         {...props}
       />

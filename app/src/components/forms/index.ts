@@ -6,6 +6,7 @@ export * from "@/components/forms/form-control-button";
 export * from "@/components/forms/form-dialog-actions";
 export * from "@/components/forms/form-dialog";
 export * from "@/components/forms/form-field";
+export * from "@/components/forms/form-field-shell";
 export * from "@/components/forms/form-row";
 export * from "@/components/forms/form-select-field";
 export * from "@/components/forms/form-stack";

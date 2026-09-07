@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -8,10 +7,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import {
-  dialogFieldLabelClassName,
-  dialogSelectTriggerClassName,
-} from "@/components/forms/styles";
+import { dialogSelectTriggerClassName } from "@/components/forms/styles";
+import { FormFieldShell } from "@/components/forms/form-field-shell";
 
 interface FormSelectOption {
   value: string;
@@ -51,13 +48,14 @@ export function FormSelectField({
   messageClassName,
 }: FormSelectFieldProps) {
   return (
-    <div className={cn("space-y-1", containerClassName)}>
-      <Label
-        htmlFor={id}
-        className={cn(dialogFieldLabelClassName, labelClassName)}
-      >
-        {label}
-      </Label>
+    <FormFieldShell
+      id={id}
+      label={label}
+      containerClassName={containerClassName}
+      labelClassName={labelClassName}
+      message={message}
+      messageClassName={messageClassName}
+    >
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
         <SelectTrigger
           id={id}
@@ -77,11 +75,6 @@ export function FormSelectField({
           ))}
         </SelectContent>
       </Select>
-      {message ? (
-        <p className={cn("text-xs text-muted-foreground", messageClassName)}>
-          {message}
-        </p>
-      ) : null}
-    </div>
+    </FormFieldShell>
   );
 }

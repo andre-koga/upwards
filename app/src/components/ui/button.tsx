@@ -14,6 +14,8 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground shadow transition-colors hover:bg-[color-mix(in_srgb,hsl(var(--primary))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--primary))_88%,white)]",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm transition-colors hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)]",
+        destructiveOutline:
+          "border border-destructive bg-background text-destructive shadow-sm transition-colors hover:bg-destructive/10",
         outline:
           "border border-input bg-background text-foreground shadow-sm transition-colors hover:bg-muted",
         secondary:
@@ -41,6 +43,7 @@ const buttonVariants = cva(
         lg: "h-10 rounded-md px-8",
         icon: "h-9 w-9 [&_svg]:size-4",
         smIcon: "h-6 w-6 [&_svg]:size-4",
+        iconRoundSm: "h-8 w-8 shrink-0 rounded-full p-0 [&_svg]:size-4",
         iconRoundMd: "h-9 w-9 shrink-0 rounded-full p-0",
         iconRoundLg: "h-10 w-10 shrink-0 rounded-full p-0",
         /** Floating nav control — matches previous h-12 w-12 chrome. */

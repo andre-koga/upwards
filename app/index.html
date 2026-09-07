@@ -10,10 +10,26 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
+    <!--
+      Single theme-color + color-scheme (no media queries): the in-app theme
+      can differ from the OS preference. theme-color drives the top status bar;
+      color-scheme drives the Android nav bar in a standalone PWA.
+      The inline script below sets both before paint; React keeps them in sync.
+    -->
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!--
+      black-translucent lets the page background show through the iOS status bar
+      (true custom colors aren't supported there — matching body bg is the fix).
+    -->
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <script>
       (function () {
-        var themeColor = "#ffffff";
-        var scheme = "light";
         try {
           var storedTheme = localStorage.getItem("theme");
           var systemDark = window.matchMedia(
@@ -29,59 +45,18 @@
           if (palette) {
             document.documentElement.setAttribute("data-palette", palette);
           }
-          /*
-           * Some mobile browsers read theme-color only during initial page
-           * parsing. Resolve the saved palette here as well as in React so
-           * their status bar does not remain the classic white background.
-           */
-          var paletteColors = {
-            ocean: ["#f0f8ff", "#0f172a"],
-            sunset: ["#fff9f5", "#2a2024"],
-            forest: ["#f8f5f0", "#1c2a1f"],
-            mocha: ["#f1f0e5", "#2d2521"],
-            cyberpunk: ["#f8f9fa", "#0c0c1d"],
-            "pastel dreams": ["#f7f3f9", "#1c1917"],
-            graphite: ["#f0f0f0", "#1a1a1a"],
-            jellyfish: ["#e8f0f0", "#0a1a20"],
-          };
-          themeColor =
-            (palette &&
-              paletteColors[palette] &&
-              paletteColors[palette][isDark ? 1 : 0]) ||
-            (isDark ? "#0a0a0a" : "#ffffff");
-          scheme = isDark ? "dark" : "light";
+          var themeColor = isDark ? "#0a0a0a" : "#ffffff";
+          var themeMeta = document.querySelector('meta[name="theme-color"]');
+          if (themeMeta) themeMeta.setAttribute("content", themeColor);
+          var schemeMeta = document.querySelector('meta[name="color-scheme"]');
+          if (schemeMeta)
+            schemeMeta.setAttribute("content", isDark ? "dark" : "light");
+          document.documentElement.style.backgroundColor = themeColor;
         } catch (e) {
           /* ignore */
         }
-
-        /*
-         * Create these metas with their resolved values as the parser reaches
-         * them. Android installed PWAs can latch the first parsed theme-color,
-         * so a static white value cannot safely be corrected afterward.
-         */
-        var themeMeta = document.createElement("meta");
-        themeMeta.setAttribute("name", "theme-color");
-        themeMeta.setAttribute("content", themeColor);
-        document.head.appendChild(themeMeta);
-
-        var schemeMeta = document.createElement("meta");
-        schemeMeta.setAttribute("name", "color-scheme");
-        schemeMeta.setAttribute("content", scheme);
-        document.head.appendChild(schemeMeta);
-
-        document.documentElement.style.backgroundColor = themeColor;
       })();
     </script>
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!--
-      black-translucent lets the page background show through the iOS status bar
-      (true custom colors aren't supported there — matching body bg is the fix).
-    -->
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
     <title>Upwards</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&display=swap"

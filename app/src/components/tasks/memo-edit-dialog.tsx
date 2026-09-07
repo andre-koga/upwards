@@ -68,9 +68,9 @@ export function MemoEditDialog({
         onArchive ? (
           <Button
             type="button"
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 shrink-0 rounded-full border-destructive text-destructive"
+            variant="destructiveOutline"
+            size="iconRoundSm"
+            className="shrink-0"
             onClick={onArchive}
             title={t("memo.archive")}
             aria-label={t("memo.archive")}
