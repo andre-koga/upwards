@@ -15,10 +15,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <!--
-      This stays as one active tag because Upwards supports a manual theme
-      override. Media-qualified tags follow Android's device theme instead.
-    -->
+    <!-- Keep Android's standalone-PWA system bar consistently black. -->
     <meta name="theme-color" content="#000000" />
     <meta name="color-scheme" content="dark" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -46,15 +43,6 @@
           var palette = localStorage.getItem("upwards-color-palette");
           if (palette) {
             document.documentElement.setAttribute("data-palette", palette);
-          }
-          var themeColor = isDark ? "#000000" : "#ffffff";
-          var themeMeta = document.querySelector('meta[name="theme-color"]');
-          if (themeMeta) themeMeta.setAttribute("content", themeColor);
-          var colorScheme = document.querySelector(
-            'meta[name="color-scheme"]'
-          );
-          if (colorScheme) {
-            colorScheme.setAttribute("content", isDark ? "dark" : "light");
           }
         } catch (e) {
           /* ignore */
