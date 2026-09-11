@@ -40,6 +40,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
       "Session details saves correctly when you add or remove times on an untimed completion.",
       "Sync no longer drops journal entries or habit counts when using multiple devices.",
       "Checking off a habit records the completion time as the end time, so session details open with sensible defaults.",
+      "Never habits now appear on the timeline when you log a slip.",
     ],
   },
   {
