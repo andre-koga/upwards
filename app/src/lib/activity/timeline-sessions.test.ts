@@ -159,6 +159,35 @@ describe("buildTimelineSessions", () => {
     expect(sessions).toEqual([]);
   });
 
+  it("derives untimed pills for never habits when slip count reaches target", () => {
+    const neverActivity = makeActivity({
+      id: "act-never",
+      name: "No smoking",
+      routine: "never",
+      completion_target: 1,
+    });
+    const sessions = buildTimelineSessions({
+      periods: [],
+      dateString: "2026-06-26",
+      nowMs: new Date(2026, 5, 26, 12, 0, 0, 0).getTime(),
+      lookupActivityById: new Map([["act-never", neverActivity]]),
+      lookupGroupById: new Map([["group-1", makeGroup()]]),
+      taskCounts: { "act-never": 1 },
+      completionTimes: { "act-never": "2026-06-26T14:30:00.000Z" },
+    });
+
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].id).toBe(
+      derivedUntimedSessionId("2026-06-26", "act-never")
+    );
+    expect(sessions[0].untimed).toBe(true);
+    expect(sessions[0].name).toBe("No smoking");
+    expect(sessions[0].completedAtIso).toBe("2026-06-26T14:30:00.000Z");
+    expect(sessions[0].startTime).toBe(
+      new Date("2026-06-26T14:30:00.000Z").getTime()
+    );
+  });
+
   it("does not derive an untimed pill when a timed session already exists", () => {
     const timedStart = new Date(2026, 5, 26, 9, 0, 0, 0).toISOString();
     const timedEnd = new Date(2026, 5, 26, 9, 12, 0, 0).toISOString();

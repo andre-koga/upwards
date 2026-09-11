@@ -149,7 +149,6 @@ export function buildTimelineSessions(params: {
   for (const activity of lookupActivityById.values()) {
     if (activity.deleted_at) continue;
     if (isHiddenGroupDefaultActivity(activity)) continue;
-    if (activity.routine === "never") continue;
     const target =
       typeof activity.completion_target === "number"
         ? activity.completion_target

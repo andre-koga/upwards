@@ -125,9 +125,8 @@ export function useDailyEntry(dateString: string) {
           : nextCount === 0
             ? "cycle"
             : "increment",
-        completionAt: neverSlip
-          ? undefined
-          : nextCount >= target
+        completionAt:
+          nextCount >= target
             ? new Date().toISOString()
             : nextCount < target
               ? null
