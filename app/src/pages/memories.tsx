@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { MemoryEditDialog } from "@/components/memories/memory-edit-dialog";
@@ -28,23 +28,28 @@ function MemoryCard({
   const { t } = useTranslation("memories");
   return (
     <article className="space-y-3 rounded-xl border p-4">
-      <div className="flex justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-medium">
-            {memory.time_label || t("untitled")}
-          </p>
-        </div>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={onEdit}>
-            {t("edit")}
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 text-sm font-medium leading-none">
+          {memory.time_label || t("untitled")}
+        </p>
+        <div className="-mr-1.5 -mt-1.5 flex shrink-0 items-center gap-0">
+          <Button
+            variant="ghost"
+            size="smIcon"
+            onClick={onEdit}
+            aria-label={t("edit")}
+            className="text-muted-foreground"
+          >
+            <Pencil className="size-3" aria-hidden />
           </Button>
           <Button
             variant="ghost"
-            size="icon"
+            size="smIcon"
             onClick={onTrash}
             aria-label={t("trashMemory")}
+            className="text-muted-foreground"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="size-3" aria-hidden />
           </Button>
         </div>
       </div>
