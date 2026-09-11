@@ -12,6 +12,37 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-09-11-memories",
+    date: "2026-09-11",
+    title: "Memories",
+    bullets: [
+      "Save past moments outside the daily journal — open Memories from More to capture what you remember and when it happened, in your own words.",
+      'Add a free-text time label like "last summer" or "when I was a kid" instead of picking an exact date.',
+      "Attach photos and search your memories by text or time label.",
+      "Trash a memory to hide it, then restore or delete it permanently from the trash section.",
+      "Settings moved into the More menu list so Journal and Memories get the spotlight in the footer grid.",
+    ],
+    fixes: [
+      "The sync status pill now sits in the top-right corner.",
+      "Memory cards use compact edit and trash icons aligned with the time label.",
+    ],
+  },
+  {
+    id: "2026-09-04-installed-app-polish",
+    date: "2026-09-04",
+    title: "Installed app polish",
+    bullets: [
+      "The installed Android app now runs fullscreen and keeps the system status and navigation bars visible.",
+      "System bars match your light or dark theme instead of staying stuck on the wrong color.",
+    ],
+    fixes: [
+      "Untimed completions keep their clock time on the timeline after reload.",
+      "Session details saves correctly when you add or remove times on an untimed completion.",
+      "Sync no longer drops journal entries or habit counts when using multiple devices.",
+      "Checking off a habit records the completion time as the end time, so session details open with sensible defaults.",
+    ],
+  },
+  {
     id: "2026-08-25-untimed-completion-time",
     date: "2026-08-25",
     title: "Completion time on the timeline",
