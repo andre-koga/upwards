@@ -31,6 +31,7 @@ function makeEntry(
     video_path: overrides.video_path ?? null,
     video_thumbnail: overrides.video_thumbnail ?? null,
     photo_paths: overrides.photo_paths ?? null,
+    embed_url: overrides.embed_url ?? null,
     is_journal_complete: overrides.is_journal_complete ?? null,
     journal_entry_number: overrides.journal_entry_number ?? null,
     journal_completion_streak: overrides.journal_completion_streak ?? null,
@@ -70,6 +71,14 @@ describe("journal archive helpers", () => {
     expect(
       journalEntryHasContent(
         makeEntry({ entry_date: "2026-01-01", title: "Hello" })
+      )
+    ).toBe(true);
+    expect(
+      journalEntryHasContent(
+        makeEntry({
+          entry_date: "2026-01-01",
+          embed_url: "https://open.spotify.com/track/4cOdK2wGLETkXbDXpjN8eu",
+        })
       )
     ).toBe(true);
     expect(
@@ -245,9 +254,7 @@ describe("journal archive helpers", () => {
       mapPlaceLabel: "Austin",
     };
     expect(journalEntryMatchesFilters(inCluster, filters, "en")).toBe(true);
-    expect(journalEntryMatchesFilters(outOfCluster, filters, "en")).toBe(
-      false
-    );
+    expect(journalEntryMatchesFilters(outOfCluster, filters, "en")).toBe(false);
   });
 
   it("clusters nearby pins at low zoom and splits them when zoomed in", () => {
@@ -344,8 +351,8 @@ describe("journal archive helpers", () => {
       )
     ).toBe(false);
 
-    expect(
-      collectJournalArchiveYears([inside, outside, inside])
-    ).toEqual([2026, 2025]);
+    expect(collectJournalArchiveYears([inside, outside, inside])).toEqual([
+      2026, 2025,
+    ]);
   });
 });

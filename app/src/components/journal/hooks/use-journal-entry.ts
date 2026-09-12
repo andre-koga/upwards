@@ -32,6 +32,7 @@ export interface JournalDraft {
   locationRoute: JournalLocationRoute;
   videoThumbnail: string | null;
   photoPaths: string[];
+  embedUrl: string;
 }
 
 const EMPTY_LOCATION_ROUTE: JournalLocationRoute = {
@@ -48,6 +49,7 @@ export function useJournalEntry(currentDate: Date) {
   const [draftLocationRoute, setDraftLocationRoute] =
     useState<JournalLocationRoute>(EMPTY_LOCATION_ROUTE);
   const [draftPhotoPaths, setDraftPhotoPaths] = useState<string[]>([]);
+  const [draftEmbedUrl, setDraftEmbedUrl] = useState("");
 
   // Ref so blur-save handlers always read the latest draft without stale closures
   const draftRef = useRef<JournalDraft>({
@@ -59,6 +61,7 @@ export function useJournalEntry(currentDate: Date) {
     locationRoute: EMPTY_LOCATION_ROUTE,
     videoThumbnail: null,
     photoPaths: [],
+    embedUrl: "",
   });
 
   // Track which date the current draft is for to prevent cross-date saves
@@ -79,6 +82,7 @@ export function useJournalEntry(currentDate: Date) {
           setDraftVideoPath("");
           setDraftLocationRoute(EMPTY_LOCATION_ROUTE);
           setDraftPhotoPaths([]);
+          setDraftEmbedUrl("");
           draftRef.current = {
             title: "",
             text: "",
@@ -88,6 +92,7 @@ export function useJournalEntry(currentDate: Date) {
             locationRoute: EMPTY_LOCATION_ROUTE,
             videoThumbnail: null,
             photoPaths: [],
+            embedUrl: "",
           };
         }
 
@@ -121,6 +126,7 @@ export function useJournalEntry(currentDate: Date) {
     const locationRoute = parseJournalLocationRoute(journalEntry?.location);
     const vt = journalEntry?.video_thumbnail ?? null;
     const pp = journalEntry?.photo_paths ?? [];
+    const eu = journalEntry?.embed_url ?? "";
     setDraftTitle(t);
     setDraftText(tx);
     setDraftEmoji(e);
@@ -128,6 +134,7 @@ export function useJournalEntry(currentDate: Date) {
     setDraftVideoPath(p);
     setDraftLocationRoute(locationRoute);
     setDraftPhotoPaths(pp);
+    setDraftEmbedUrl(eu);
     draftRef.current = {
       title: t,
       text: tx,
@@ -137,6 +144,7 @@ export function useJournalEntry(currentDate: Date) {
       locationRoute,
       videoThumbnail: vt,
       photoPaths: pp,
+      embedUrl: eu,
     };
   }, [journalEntry]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -161,6 +169,7 @@ export function useJournalEntry(currentDate: Date) {
             day_emoji: fields.day_emoji,
             video_path: fields.video_path,
             photo_paths: fields.photo_paths,
+            embed_url: fields.embed_url,
             location: fields.location,
             is_bookmarked: fields.is_bookmarked,
           })
@@ -226,6 +235,7 @@ export function useJournalEntry(currentDate: Date) {
       location: serializeJournalLocationRoute(r.locationRoute),
       video_thumbnail: r.videoThumbnail || null,
       photo_paths: r.photoPaths.length > 0 ? r.photoPaths : null,
+      embed_url: r.embedUrl || null,
     });
   }, [canEditJournal, saveJournalEntry, currentDate]);
 
@@ -246,6 +256,7 @@ export function useJournalEntry(currentDate: Date) {
         location: serializeJournalLocationRoute(r.locationRoute),
         video_thumbnail: r.videoThumbnail || null,
         photo_paths: r.photoPaths.length > 0 ? r.photoPaths : null,
+        embed_url: r.embedUrl || null,
       });
     },
     [saveJournalEntry, currentDate]
@@ -268,6 +279,7 @@ export function useJournalEntry(currentDate: Date) {
         location: serializeJournalLocationRoute(route),
         video_thumbnail: r.videoThumbnail || null,
         photo_paths: r.photoPaths.length > 0 ? r.photoPaths : null,
+        embed_url: r.embedUrl || null,
       });
     },
     [saveJournalEntry, currentDate]
@@ -294,6 +306,7 @@ export function useJournalEntry(currentDate: Date) {
       setDraftLocationRoute(normalizeJournalLocationRoute(patch.locationRoute));
     }
     if (patch.photoPaths !== undefined) setDraftPhotoPaths(patch.photoPaths);
+    if (patch.embedUrl !== undefined) setDraftEmbedUrl(patch.embedUrl);
   }, []);
 
   const setDraftTitleSynced = useCallback(
@@ -320,6 +333,10 @@ export function useJournalEntry(currentDate: Date) {
     (photoPaths: string[]) => updateDraft({ photoPaths }),
     [updateDraft]
   );
+  const setDraftEmbedUrlSynced = useCallback(
+    (embedUrl: string) => updateDraft({ embedUrl }),
+    [updateDraft]
+  );
   const setDraftLocationRouteSynced = useCallback(
     (locationRoute: JournalLocationRoute) => updateDraft({ locationRoute }),
     [updateDraft]
@@ -340,6 +357,8 @@ export function useJournalEntry(currentDate: Date) {
       setDraftVideoPath: setDraftVideoPathSynced,
       draftPhotoPaths,
       setDraftPhotoPaths: setDraftPhotoPathsSynced,
+      draftEmbedUrl,
+      setDraftEmbedUrl: setDraftEmbedUrlSynced,
       draftRef,
       canEditJournal,
       // state
@@ -373,6 +392,8 @@ export function useJournalEntry(currentDate: Date) {
       setDraftVideoPathSynced,
       draftPhotoPaths,
       setDraftPhotoPathsSynced,
+      draftEmbedUrl,
+      setDraftEmbedUrlSynced,
       canEditJournal,
       draftLocationRoute,
       draftLocations,

@@ -60,8 +60,7 @@ function tableApi(rows: Array<Record<string, unknown>>) {
     },
     where: () => ({
       equals: (value: string) => ({
-        toArray: async () =>
-          rows.filter((r) => r.daily_entry_id === value),
+        toArray: async () => rows.filter((r) => r.daily_entry_id === value),
       }),
     }),
   };
@@ -109,6 +108,7 @@ describe("rekeyLocalRowsToCurrentUser", () => {
       video_path: null,
       video_thumbnail: null,
       photo_paths: null,
+      embed_url: null,
       location: null,
       is_bookmarked: null,
       is_journal_complete: null,

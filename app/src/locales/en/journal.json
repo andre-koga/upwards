@@ -4,9 +4,12 @@
   "titlePlaceholder": "Give this day a title...",
   "reflectionLabel": "Journal reflection",
   "reflectionPlaceholder": "Write your thoughts for the day...",
+  "embedLabel": "Embed link",
+  "embedPlaceholder": "Paste a Spotify, YouTube, or other embed link…",
+  "embedInvalid": "This link can't be embedded. Try Spotify, YouTube, SoundCloud, Vimeo, or Apple Music.",
+  "embedFrameTitle": "Embedded media",
   "removeBookmark": "Remove bookmark",
   "bookmarkDay": "Bookmark this day",
-  "editJournal": "Edit journal",
   "upload": {
     "videoFailed": "Failed to upload video.",
     "photoFailed": "Failed to upload photo.",

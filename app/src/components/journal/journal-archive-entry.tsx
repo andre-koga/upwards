@@ -14,6 +14,7 @@ import { getActiveLocaleTag } from "@/lib/i18n";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import JournalVideoSection from "@/components/journal/journal-video-section";
 import JournalLocationMapPicker from "@/components/journal/journal-location-map-picker";
+import JournalEmbedFrame from "@/components/journal/journal-embed";
 import MediaLightbox from "@/components/journal/media-lightbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -88,7 +89,10 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
   return (
     <>
       <div
-        className={cn("grid gap-1.5", singlePreview ? "grid-cols-1" : "grid-cols-2")}
+        className={cn(
+          "grid gap-1.5",
+          singlePreview ? "grid-cols-1" : "grid-cols-2"
+        )}
       >
         {previewPaths.map((path, index) => {
           const url = getJournalPhotoUrl(path);
@@ -266,6 +270,15 @@ export default function JournalArchiveEntry({
               </p>
             ) : null}
           </button>
+
+          {entry.embed_url?.trim() ? (
+            <div className="px-3 pb-2.5">
+              <JournalEmbedFrame
+                url={entry.embed_url}
+                title={t("embedFrameTitle")}
+              />
+            </div>
+          ) : null}
 
           {locations.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 px-3 pb-2.5">

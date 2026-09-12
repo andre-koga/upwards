@@ -9,6 +9,8 @@ export type JournalEditSessionValues = {
   text: string;
   videoPath: string;
   photoPaths: string[];
+  embedUrl: string;
+  bookmarked: boolean;
 };
 
 const journalEditDrafts = new Map<string, JournalEditSessionValues>();

@@ -206,6 +206,7 @@ export interface JournalFields {
   location: JournalLocationRoute | null;
   video_thumbnail: string | null;
   photo_paths: string[] | null;
+  embed_url: string | null;
 }
 
 export interface JournalCompletionMetadata {
