@@ -97,6 +97,7 @@ function localRowHasContent(
     text(local.title) ||
     text(local.day_emoji) ||
     text(local.video_path) ||
+    text(local.embed_url) ||
     (Array.isArray(local.photo_paths) && local.photo_paths.length > 0)
   );
 }

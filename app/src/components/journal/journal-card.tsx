@@ -26,7 +26,6 @@ import JournalTextSection from "@/components/journal/journal-text-section";
 import JournalEditDialog from "@/components/journal/journal-edit-dialog";
 import JournalLocationsDialog from "@/components/journal/journal-locations-dialog";
 import JournalLocationMapPicker from "@/components/journal/journal-location-map-picker";
-import JournalMetaBar from "@/components/journal/journal-meta-bar";
 import JournalPhotoStack from "@/components/journal/journal-photo-stack";
 import type { LocationData } from "@/lib/db/types";
 
@@ -71,9 +70,8 @@ export default function JournalCard({
     journal.draftLocations.length > 0
       ? journal.draftLocationRoute
       : journal.persistedLocationRoute;
-  const knownLocations = normalizeJournalLocationRoute(
-    knownLocationRoute
-  ).locations;
+  const knownLocations =
+    normalizeJournalLocationRoute(knownLocationRoute).locations;
 
   const displayLocations = knownLocations;
 
@@ -163,6 +161,15 @@ export default function JournalCard({
   const handleJournalPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!journal.canEditJournal) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    const el = event.target;
+    if (
+      el instanceof Element &&
+      el.closest(
+        "button, a, input, textarea, select, iframe, [role='button'], [role='link'], [contenteditable='true'], video"
+      )
+    ) {
+      return;
+    }
     clearJournalHoldTimer();
     journalHoldTimerRef.current = setTimeout(() => {
       journalHoldTimerRef.current = null;
@@ -189,7 +196,7 @@ export default function JournalCard({
     if (!(el instanceof Element)) return;
     if (
       el.closest(
-        "button, a, input, textarea, select, [role='button'], [role='link'], [contenteditable='true'], video"
+        "button, a, input, textarea, select, iframe, [role='button'], [role='link'], [contenteditable='true'], video"
       )
     ) {
       return;
@@ -250,10 +257,11 @@ export default function JournalCard({
             </div>
           </div>
 
-          <div className="mx-auto max-w-2xl space-y-3 px-5">
+          <div className="mx-auto max-w-2xl space-y-3 px-5 pb-4">
             <JournalTextSection
               title={journal.draftTitle}
               text={journal.draftText}
+              embedUrl={journal.draftEmbedUrl}
               locations={
                 displayLocations.length > 0 ? displayLocations : undefined
               }
@@ -281,10 +289,20 @@ export default function JournalCard({
           initialText={journal.draftText}
           initialVideoPath={journal.draftVideoPath}
           initialPhotoPaths={journal.draftPhotoPaths}
+          initialEmbedUrl={journal.draftEmbedUrl}
+          initialBookmarked={journal.draftBookmarked}
           entryDate={dateString}
           canUploadVideo={isSupabaseConfigured && isAuthed}
           onOpenChange={handleJournalEditOpenChange}
-          onSave={({ emoji, title, text, videoPath, photoPaths }) => {
+          onSave={({
+            emoji,
+            title,
+            text,
+            videoPath,
+            photoPaths,
+            embedUrl,
+            bookmarked,
+          }) => {
             // Clear the stale thumbnail only when the video actually changes.
             const videoChanged = draftRef.current.videoPath !== videoPath;
             updateDraft({
@@ -293,6 +311,8 @@ export default function JournalCard({
               text,
               videoPath,
               photoPaths,
+              embedUrl,
+              bookmarked,
               ...(videoChanged ? { videoThumbnail: null } : {}),
             });
             journal.saveDraft();
@@ -316,8 +336,6 @@ export default function JournalCard({
             onFullscreenOpenChange={setPlacesMapOpen}
           />
         ) : null}
-
-        <JournalMetaBar journal={journal} onEditRequest={openJournalEditor} />
       </div>
     </>
   );

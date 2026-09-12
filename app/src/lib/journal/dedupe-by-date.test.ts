@@ -18,6 +18,7 @@ function makeEntry(
     video_path: overrides.video_path ?? null,
     video_thumbnail: overrides.video_thumbnail ?? null,
     photo_paths: overrides.photo_paths ?? null,
+    embed_url: overrides.embed_url ?? null,
     is_journal_complete: overrides.is_journal_complete ?? null,
     journal_entry_number: overrides.journal_entry_number ?? null,
     journal_completion_streak: overrides.journal_completion_streak ?? null,
@@ -249,6 +250,24 @@ describe("loserContentWasAbsorbed", () => {
 
     expect(loserContentWasAbsorbed(merged, loser)).toBe(true);
   });
+
+  it("keeps the winner embed and does not absorb a different loser embed", () => {
+    const winner = makeEntry({
+      id: "winner",
+      entry_date: "2026-08-25",
+      embed_url: "https://open.spotify.com/track/aaaaaaaaaaaaaaaaaaaaaa",
+    });
+    const loser = makeEntry({
+      id: "loser",
+      entry_date: "2026-08-25",
+      embed_url: "https://open.spotify.com/track/bbbbbbbbbbbbbbbbbbbbbb",
+    });
+    const merged = mergeJournalEntryDuplicates(winner, loser);
+    expect(merged.embed_url).toBe(
+      "https://open.spotify.com/track/aaaaaaaaaaaaaaaaaaaaaa"
+    );
+    expect(loserContentWasAbsorbed(merged, loser)).toBe(false);
+  });
 });
 
 describe("journalEntryFieldsHaveContent", () => {
@@ -260,6 +279,7 @@ describe("journalEntryFieldsHaveContent", () => {
         day_emoji: null,
         video_path: null,
         photo_paths: null,
+        embed_url: null,
         location: null,
         is_bookmarked: true,
       })
@@ -274,9 +294,25 @@ describe("journalEntryFieldsHaveContent", () => {
         day_emoji: null,
         video_path: null,
         photo_paths: null,
+        embed_url: null,
         location: null,
         is_bookmarked: false,
       })
     ).toBe(false);
+  });
+
+  it("treats an embed-only draft as meaningful", () => {
+    expect(
+      journalEntryFieldsHaveContent({
+        title: null,
+        text_content: null,
+        day_emoji: null,
+        video_path: null,
+        photo_paths: null,
+        embed_url: "https://open.spotify.com/track/4cOdK2wGLETkXbDXpjN8eu",
+        location: null,
+        is_bookmarked: false,
+      })
+    ).toBe(true);
   });
 });

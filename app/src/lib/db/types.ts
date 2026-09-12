@@ -87,6 +87,8 @@ export interface JournalEntry {
   video_path: string | null;
   video_thumbnail: string | null;
   photo_paths: string[] | null;
+  /** Share/embed URL rendered under the journal text (Spotify, YouTube, etc.). */
+  embed_url: string | null;
   is_journal_complete: boolean | null;
   journal_entry_number: number | null;
   journal_completion_streak: number | null;

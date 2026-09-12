@@ -4,9 +4,12 @@
   "titlePlaceholder": "Dê um título para este dia...",
   "reflectionLabel": "Reflexão do diário",
   "reflectionPlaceholder": "Escreva o que passou pela sua cabeça hoje...",
+  "embedLabel": "Link de embed",
+  "embedPlaceholder": "Cole um link do Spotify, YouTube ou outro embed…",
+  "embedInvalid": "Não dá para incorporar este link. Tente Spotify, YouTube, SoundCloud, Vimeo ou Apple Music.",
+  "embedFrameTitle": "Mídia incorporada",
   "removeBookmark": "Remover favorito",
   "bookmarkDay": "Favoritar este dia",
-  "editJournal": "Editar diário",
   "upload": {
     "videoFailed": "Não foi possível enviar o vídeo.",
     "photoFailed": "Não foi possível enviar a foto.",

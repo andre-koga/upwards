@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-09-12-journal-embeds",
+    date: "2026-09-12",
+    title: "Songs and embeds on journal days",
+    bullets: [
+      "Paste a Spotify, YouTube, SoundCloud, Vimeo, or Apple Music link in its own field when you edit a day — it plays under your writing, not inside it.",
+      "Heart a day with the square button beside the title in the journal editor.",
+      "Tap the journal text to edit; the pencil icon is gone.",
+    ],
+  },
+  {
     id: "2026-09-11-memories",
     date: "2026-09-11",
     title: "Memories",

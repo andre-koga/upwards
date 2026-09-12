@@ -1,4 +1,5 @@
 export * from "./editable-window";
+export * from "./embed";
 export * from "./utils";
 export * from "./location-search";
 export * from "./video-storage";

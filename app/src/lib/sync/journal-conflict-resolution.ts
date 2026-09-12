@@ -24,6 +24,7 @@ const JOURNAL_CONFLICT_FIELD_KEYS = [
   "video_path",
   "video_thumbnail",
   "photo_paths",
+  "embed_url",
   "is_journal_complete",
   "journal_entry_number",
   "journal_completion_streak",
@@ -72,7 +73,9 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function journalFieldsFromRow(row: Record<string, unknown>): Record<string, unknown> {
+function journalFieldsFromRow(
+  row: Record<string, unknown>
+): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
   for (const key of JOURNAL_CONFLICT_FIELD_KEYS) {
     if (key in row) fields[key] = row[key];
@@ -107,15 +110,13 @@ async function fetchRemoteJournalEntry(
     .maybeSingle();
 
   if (error || !data) return null;
-  return normalizeSyncRow(
-    "journal_entries",
-    data as Record<string, unknown>
-  );
+  return normalizeSyncRow("journal_entries", data as Record<string, unknown>);
 }
 
-function journalLabelFromFields(
-  fields: Record<string, unknown>
-): { entryDate: string | null; title: string | null } {
+function journalLabelFromFields(fields: Record<string, unknown>): {
+  entryDate: string | null;
+  title: string | null;
+} {
   const entryDate =
     typeof fields.entry_date === "string" ? fields.entry_date : null;
   const title =
@@ -180,8 +181,9 @@ export async function buildJournalConflictPayload(input: {
     }
   }
 
-  const { entryDate: localDate, title: localTitle } =
-    journalLabelFromFields(local.fields);
+  const { entryDate: localDate, title: localTitle } = journalLabelFromFields(
+    local.fields
+  );
   const { entryDate: remoteDate, title: remoteTitle } = journalLabelFromFields(
     remote?.fields ?? {}
   );
@@ -264,6 +266,10 @@ function patchJournalFromFields(
       fields.photo_paths !== undefined
         ? (fields.photo_paths as string[] | null)
         : existing.photo_paths,
+    embed_url:
+      fields.embed_url !== undefined
+        ? (fields.embed_url as string | null)
+        : existing.embed_url,
     is_journal_complete:
       fields.is_journal_complete !== undefined
         ? (fields.is_journal_complete as boolean | null)
@@ -376,12 +382,7 @@ export async function resolveJournalConflict(
     payload.remote?.updated_at ?? null
   );
 
-  await markJournalIssueResolved(
-    issue,
-    payload,
-    choice,
-    resultingUpdatedAt
-  );
+  await markJournalIssueResolved(issue, payload, choice, resultingUpdatedAt);
 }
 
 export async function deferJournalConflict(issue: SyncIssue): Promise<void> {

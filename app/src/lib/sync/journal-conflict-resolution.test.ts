@@ -73,6 +73,7 @@ function makeJournal(overrides: Partial<JournalEntry> = {}): JournalEntry {
     video_path: null,
     video_thumbnail: null,
     photo_paths: null,
+    embed_url: null,
     is_journal_complete: false,
     journal_entry_number: 1,
     journal_completion_streak: null,

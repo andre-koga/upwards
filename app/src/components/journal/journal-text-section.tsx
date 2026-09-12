@@ -2,10 +2,13 @@ import { Flame, MapPin, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { LocationData } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
+import JournalEmbedFrame from "@/components/journal/journal-embed";
+import { parseJournalEmbed } from "@/lib/journal/embed";
 
 interface JournalTextSectionProps {
   title: string;
   text: string;
+  embedUrl?: string;
   /** Distinct places visited that day (unordered). */
   locations?: LocationData[];
   /** Opens the places editor (search / manage). */
@@ -19,6 +22,7 @@ interface JournalTextSectionProps {
 export default function JournalTextSection({
   title,
   text,
+  embedUrl,
   locations,
   onLocationsEditClick,
   onPlacesMapClick,
@@ -38,6 +42,7 @@ export default function JournalTextSection({
 
   const chipClassName =
     "inline-flex h-6 max-w-full items-center gap-1 rounded-full px-2 text-left text-xs font-normal leading-none text-muted-foreground shadow-none";
+  const hasEmbed = Boolean(embedUrl && parseJournalEmbed(embedUrl));
 
   return (
     <>
@@ -116,13 +121,21 @@ export default function JournalTextSection({
         {title || t("untitled")}
       </p>
 
-      <p
-        className={`w-full whitespace-pre-wrap text-left font-crimson text-base leading-relaxed ${
-          text ? "text-muted-foreground" : "italic text-muted-foreground"
-        }`}
-      >
-        {text || t("noReflection")}
-      </p>
+      {text || !hasEmbed ? (
+        <p
+          className={`w-full whitespace-pre-wrap text-left font-crimson text-base leading-relaxed ${
+            text ? "text-muted-foreground" : "italic text-muted-foreground"
+          }`}
+        >
+          {text || t("noReflection")}
+        </p>
+      ) : null}
+
+      {hasEmbed && embedUrl ? (
+        <div className={text ? "pt-1" : undefined}>
+          <JournalEmbedFrame url={embedUrl} title={t("embedFrameTitle")} />
+        </div>
+      ) : null}
     </>
   );
 }

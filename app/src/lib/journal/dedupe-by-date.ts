@@ -6,7 +6,10 @@ import {
   withSuppressedProjectionEnqueue,
 } from "@/lib/sync/projection-sync";
 import { discardPendingOperation } from "@/lib/sync/pending-operations";
-import { recordSyncIssue, listOpenConflictEntityIds } from "@/lib/sync/sync-issues-store";
+import {
+  recordSyncIssue,
+  listOpenConflictEntityIds,
+} from "@/lib/sync/sync-issues-store";
 import {
   mergeJournalLocationRoute,
   parseJournalLocationRoute,
@@ -29,6 +32,7 @@ function journalEntryRichnessScore(entry: JournalEntry): number {
   if (entry.day_emoji?.trim()) score += 2;
   if (entry.video_path?.trim()) score += 4;
   if (entry.photo_paths?.length) score += 4 + entry.photo_paths.length;
+  if (entry.embed_url?.trim()) score += 3;
   if (entry.location?.locations?.length) {
     score += 2 + entry.location.locations.length;
   }
@@ -51,10 +55,12 @@ export function pickPreferredJournalEntry(
       if (b.id === preferredId && a.id !== preferredId) return 1;
     }
 
-    const scoreDiff = journalEntryRichnessScore(b) - journalEntryRichnessScore(a);
+    const scoreDiff =
+      journalEntryRichnessScore(b) - journalEntryRichnessScore(a);
     if (scoreDiff !== 0) return scoreDiff;
 
-    const syncedDiff = Number(Boolean(b.synced_at)) - Number(Boolean(a.synced_at));
+    const syncedDiff =
+      Number(Boolean(b.synced_at)) - Number(Boolean(a.synced_at));
     if (syncedDiff !== 0) return syncedDiff;
 
     const timeDiff = Date.parse(b.updated_at) - Date.parse(a.updated_at);
@@ -150,18 +156,23 @@ export function mergeJournalEntryDuplicates(
     title: mergeTextField(winner.title, loser.title),
     text_content: mergeTextField(winner.text_content, loser.text_content),
     day_emoji: preferWinnerValue(winner.day_emoji, loser.day_emoji),
-    video_path: keepWinnerVideo ? winner.video_path : (loser.video_path ?? null),
+    video_path: keepWinnerVideo
+      ? winner.video_path
+      : (loser.video_path ?? null),
     video_thumbnail: keepWinnerVideo
       ? winner.video_thumbnail
       : (loser.video_thumbnail ?? null),
     photo_paths: mergePhotoPaths(winner.photo_paths, loser.photo_paths),
+    embed_url: preferWinnerValue(winner.embed_url, loser.embed_url),
     location: mergedLocation,
     is_bookmarked: Boolean(winner.is_bookmarked || loser.is_bookmarked),
     is_journal_complete: winnerComplete || loserComplete,
     journal_entry_number:
       winner.journal_entry_number ?? loser.journal_entry_number ?? null,
     journal_completion_streak:
-      winner.journal_completion_streak ?? loser.journal_completion_streak ?? null,
+      winner.journal_completion_streak ??
+      loser.journal_completion_streak ??
+      null,
     journal_completed_at:
       winner.journal_completed_at ?? loser.journal_completed_at ?? null,
   };
@@ -198,6 +209,9 @@ export function loserContentWasAbsorbed(
   for (const path of loser.photo_paths ?? []) {
     if (path?.trim() && !mergedPhotos.has(path)) return false;
   }
+
+  const loserEmbed = loser.embed_url?.trim();
+  if (loserEmbed && merged.embed_url?.trim() !== loserEmbed) return false;
 
   const mergedPlaces = new Set(
     (merged.location?.locations ?? []).map((place) => place.displayName)
@@ -265,7 +279,10 @@ export async function reconcileJournalDuplicatesForDate(
   const losers: JournalEntry[] = [];
   const retained: JournalEntry[] = [];
   for (const loser of candidates) {
-    if (journalEntryHasContent(loser) && !loserContentWasAbsorbed(merged, loser)) {
+    if (
+      journalEntryHasContent(loser) &&
+      !loserContentWasAbsorbed(merged, loser)
+    ) {
       retained.push(loser);
     } else {
       losers.push(loser);
@@ -359,6 +376,7 @@ export function journalEntryFieldsHaveContent(
     | "day_emoji"
     | "video_path"
     | "photo_paths"
+    | "embed_url"
     | "location"
     | "is_bookmarked"
   >
@@ -375,6 +393,7 @@ export function journalEntryFieldsHaveContent(
     video_path: fields.video_path,
     video_thumbnail: null,
     photo_paths: fields.photo_paths,
+    embed_url: fields.embed_url,
     is_journal_complete: null,
     journal_entry_number: null,
     journal_completion_streak: null,

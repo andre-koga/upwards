@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ImagePlus, Loader2, Trash2, Video, X } from "lucide-react";
+import { Heart, ImagePlus, Loader2, Trash2, Video, X } from "lucide-react";
 import {
   FormCharacterCount,
   FormControlButton,
   FormDialog,
   FormDialogActions,
   FormField,
+  FormRow,
   FormStack,
   FormTextareaField,
+  FormToggleButton,
 } from "@/components/forms";
 import { getFirstEmoji } from "@/lib/emoji-utils";
 import {
@@ -16,6 +18,10 @@ import {
   JournalVideoUploadError,
   deleteJournalPhoto,
   getJournalPhotoUrl,
+  JOURNAL_EMBED_URL_LIMIT,
+  journalEmbedInputLooksSet,
+  normalizeJournalEmbedInput,
+  parseJournalEmbed,
   uploadJournalPhoto,
   uploadJournalVideo,
 } from "@/lib/journal";
@@ -24,6 +30,8 @@ import {
   getJournalEditSessionDraft,
   setJournalEditSessionDraft,
 } from "@/lib/dialog-session-drafts";
+import JournalEmbedFrame from "@/components/journal/journal-embed";
+import { cn } from "@/lib/utils";
 
 const TITLE_LIMIT = 30;
 const TEXT_LIMIT = 300;
@@ -37,6 +45,8 @@ interface JournalEditDialogProps {
   initialText: string;
   initialVideoPath: string;
   initialPhotoPaths: string[];
+  initialEmbedUrl: string;
+  initialBookmarked: boolean;
   entryDate: string;
   canUploadVideo: boolean;
   onOpenChange: (open: boolean) => void;
@@ -46,6 +56,8 @@ interface JournalEditDialogProps {
     text: string;
     videoPath: string;
     photoPaths: string[];
+    embedUrl: string;
+    bookmarked: boolean;
   }) => void;
 }
 
@@ -57,6 +69,8 @@ export default function JournalEditDialog({
   initialText,
   initialVideoPath,
   initialPhotoPaths,
+  initialEmbedUrl,
+  initialBookmarked,
   entryDate,
   canUploadVideo,
   onOpenChange,
@@ -69,6 +83,8 @@ export default function JournalEditDialog({
   const [text, setText] = useState(initialText);
   const [videoPath, setVideoPath] = useState(initialVideoPath);
   const [photoPaths, setPhotoPaths] = useState<string[]>(initialPhotoPaths);
+  const [embedUrl, setEmbedUrl] = useState(initialEmbedUrl);
+  const [bookmarked, setBookmarked] = useState(initialBookmarked);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -97,6 +113,8 @@ export default function JournalEditDialog({
         setText(draft.text);
         setVideoPath(draft.videoPath);
         setPhotoPaths(draft.photoPaths);
+        setEmbedUrl(draft.embedUrl ?? "");
+        setBookmarked(draft.bookmarked ?? false);
         setInitialPhotoPathsSnapshot(draft.photoPaths);
       } else {
         setEmoji(initialEmoji);
@@ -104,6 +122,8 @@ export default function JournalEditDialog({
         setText(initialText);
         setVideoPath(initialVideoPath);
         setPhotoPaths(initialPhotoPaths);
+        setEmbedUrl(initialEmbedUrl);
+        setBookmarked(initialBookmarked);
         setInitialPhotoPathsSnapshot(initialPhotoPaths);
       }
       setUploadError(null);
@@ -124,11 +144,23 @@ export default function JournalEditDialog({
           text,
           videoPath,
           photoPaths,
+          embedUrl,
+          bookmarked,
         });
       }
     }
     prevOpenRef.current = open;
-  }, [open, emoji, title, text, videoPath, photoPaths, sessionEntryDate]);
+  }, [
+    open,
+    emoji,
+    title,
+    text,
+    videoPath,
+    photoPaths,
+    embedUrl,
+    bookmarked,
+    sessionEntryDate,
+  ]);
 
   const deleteRemovedSavedPhotos = (finalPhotoPaths: string[]) => {
     const removedPaths = initialPhotoPathsSnapshot.filter(
@@ -164,6 +196,8 @@ export default function JournalEditDialog({
       text: text.trim(),
       videoPath: videoPath.trim(),
       photoPaths,
+      embedUrl: normalizeJournalEmbedInput(embedUrl),
+      bookmarked,
     });
     onOpenChange(false);
   };
@@ -258,6 +292,16 @@ export default function JournalEditDialog({
 
   const photoCount = photoPaths.length;
   const canAddMorePhotos = photoCount < MAX_PHOTOS;
+  const embedLooksSet = journalEmbedInputLooksSet(embedUrl);
+  const parsedEmbed = parseJournalEmbed(embedUrl);
+
+  const handleEmbedChange = (value: string) => {
+    if (/<iframe/i.test(value)) {
+      setEmbedUrl(normalizeJournalEmbedInput(value));
+      return;
+    }
+    setEmbedUrl(value.slice(0, JOURNAL_EMBED_URL_LIMIT));
+  };
 
   if (!canEdit) return null;
 
@@ -281,18 +325,29 @@ export default function JournalEditDialog({
           />
         </div>
 
-        <FormField
-          id="journal-title"
-          label={t("titleLabel")}
-          labelClassName="sr-only"
-          value={title}
-          maxLength={TITLE_LIMIT}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={t("titlePlaceholder")}
-          message={
-            <FormCharacterCount current={title.length} max={TITLE_LIMIT} />
-          }
-        />
+        <FormRow className="items-start">
+          <FormField
+            id="journal-title"
+            label={t("titleLabel")}
+            labelClassName="sr-only"
+            value={title}
+            maxLength={TITLE_LIMIT}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t("titlePlaceholder")}
+            containerClassName="min-w-0 flex-1"
+            message={
+              <FormCharacterCount current={title.length} max={TITLE_LIMIT} />
+            }
+          />
+          <FormToggleButton
+            toggled={bookmarked}
+            onToggle={setBookmarked}
+            label={bookmarked ? t("removeBookmark") : t("bookmarkDay")}
+            activeClassName="border-red-500/40 bg-red-500/10 text-red-500"
+          >
+            <Heart className={cn(bookmarked && "fill-red-500")} aria-hidden />
+          </FormToggleButton>
+        </FormRow>
 
         <FormTextareaField
           id="journal-reflection"
@@ -308,6 +363,29 @@ export default function JournalEditDialog({
             <FormCharacterCount current={text.length} max={TEXT_LIMIT} />
           }
         />
+
+        <FormField
+          id="journal-embed"
+          label={t("embedLabel")}
+          labelClassName="sr-only"
+          value={embedUrl}
+          maxLength={JOURNAL_EMBED_URL_LIMIT}
+          onChange={(e) => handleEmbedChange(e.target.value)}
+          placeholder={t("embedPlaceholder")}
+          inputMode="url"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          message={
+            embedLooksSet && !parsedEmbed ? t("embedInvalid") : undefined
+          }
+          messageClassName={
+            embedLooksSet && !parsedEmbed ? "text-destructive" : undefined
+          }
+        />
+        {parsedEmbed ? (
+          <JournalEmbedFrame url={embedUrl} title={t("embedFrameTitle")} />
+        ) : null}
 
         <div className="space-y-2">
           {uploadError ? (
