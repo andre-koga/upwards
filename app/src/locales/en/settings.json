@@ -93,6 +93,27 @@
     "issuesLink": "Sync issues",
     "issuesBadge": "{{count}} open sync issues"
   },
+  "ai": {
+    "title": "AI insights",
+    "description": "Bring your own OpenAI-compatible API key. It's stored server-side and never sent back to any device — only used to generate periodic, aggregated insights.",
+    "baseUrl": "Base URL",
+    "model": "Model",
+    "apiKey": "API key",
+    "apiKeyPlaceholder": "sk-...",
+    "apiKeySavedPlaceholder": "Key saved — enter a new one to replace it",
+    "save": "Save",
+    "saving": "Saving…",
+    "testConnection": "Test connection",
+    "testing": "Testing…",
+    "testSuccess": "Connection looks good.",
+    "testFailure": "Couldn't connect: {{error}}",
+    "saveSuccess": "AI settings saved.",
+    "saveFailure": "Couldn't save AI settings: {{error}}",
+    "configuredWith": "Connected — using {{model}}",
+    "notConfigured": "Not connected yet",
+    "notSignedIn": "Sign in to sync to set up AI insights.",
+    "syncNotConfigured": "Sync is not configured for this build."
+  },
   "syncIssues": {
     "page": {
       "title": "Sync issues",

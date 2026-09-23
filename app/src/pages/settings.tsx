@@ -5,6 +5,7 @@ import { AppearanceCard } from "@/components/settings/appearance-card";
 import { LanguageCard } from "@/components/settings/language-card";
 import { AuthCard } from "@/components/settings/auth-card";
 import { SyncCard } from "@/components/settings/sync-card";
+import { AiCard } from "@/components/settings/ai-card";
 // import { BackupCard } from "@/components/settings/backup-card";
 import { TaskOrderCard } from "@/components/settings/navigation-cards";
 import { DayResetCard } from "@/components/settings/day-reset-card";
@@ -30,6 +31,7 @@ export default function SettingsPage() {
         <>
           <AuthCard />
           <SyncCard />
+          <AiCard />
         </>
       )}
 

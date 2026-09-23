@@ -17,6 +17,7 @@ const JournalPage = lazy(() => import("@/pages/journal"));
 const MemoriesPage = lazy(() => import("@/pages/memories"));
 const LogsPage = lazy(() => import("@/pages/logs"));
 const RedesignPreviewPage = lazy(() => import("@/pages/redesign-preview"));
+const HomePage = lazy(() => import("@/pages/home"));
 
 function PageLoadingFallback() {
   return (
@@ -85,6 +86,7 @@ export default function App() {
                   path="/redesign-preview"
                   element={<RedesignPreviewPage />}
                 />
+                <Route path="/home" element={<HomePage />} />
               </Routes>
             </Suspense>
           </div>

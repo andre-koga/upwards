@@ -10,6 +10,7 @@ import {
   Folder,
   Github,
   History,
+  Image as ImageIcon,
   Sparkles,
   Menu,
   MessageSquare,
@@ -198,7 +199,19 @@ export default function FooterActionsBar({
 
           <div className="my-2" role="separator" aria-hidden />
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
+              onClick={() => {
+                setPathsDrawerOpen(false);
+                navigate("/home");
+              }}
+            >
+              <Sparkles className="h-5 w-5 shrink-0 text-emerald-500" />
+              {t("aiInsights")}
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -220,7 +233,7 @@ export default function FooterActionsBar({
                 navigate("/memories");
               }}
             >
-              <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
+              <ImageIcon className="h-5 w-5 shrink-0 text-amber-500" />
               {t("memories")}
             </Button>
           </div>

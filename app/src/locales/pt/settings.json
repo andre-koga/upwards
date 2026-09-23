@@ -93,6 +93,27 @@
     "issuesLink": "Problemas de sincronização",
     "issuesBadge": "{{count}} problemas de sincronização abertos"
   },
+  "ai": {
+    "title": "Insights de IA",
+    "description": "Use sua própria chave de API compatível com OpenAI. Ela fica armazenada no servidor e nunca é devolvida a nenhum dispositivo — só é usada para gerar insights periódicos e agregados.",
+    "baseUrl": "URL base",
+    "model": "Modelo",
+    "apiKey": "Chave de API",
+    "apiKeyPlaceholder": "sk-...",
+    "apiKeySavedPlaceholder": "Chave salva — digite uma nova para substituí-la",
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "testConnection": "Testar conexão",
+    "testing": "Testando…",
+    "testSuccess": "A conexão parece boa.",
+    "testFailure": "Não foi possível conectar: {{error}}",
+    "saveSuccess": "Configurações de IA salvas.",
+    "saveFailure": "Não foi possível salvar as configurações de IA: {{error}}",
+    "configuredWith": "Conectado — usando {{model}}",
+    "notConfigured": "Ainda não conectado",
+    "notSignedIn": "Entre na sua conta de sincronização para configurar os insights de IA.",
+    "syncNotConfigured": "A sincronização não está configurada nesta versão."
+  },
   "syncIssues": {
     "page": {
       "title": "Problemas de sincronização",

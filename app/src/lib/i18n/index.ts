@@ -10,6 +10,7 @@ import enToday from "@/locales/en/today.json";
 import enJournal from "@/locales/en/journal.json";
 import enMemories from "@/locales/en/memories.json";
 import enProjects from "@/locales/en/projects.json";
+import enHome from "@/locales/en/home.json";
 import ptCommon from "@/locales/pt/common.json";
 import ptNav from "@/locales/pt/nav.json";
 import ptSettings from "@/locales/pt/settings.json";
@@ -18,6 +19,7 @@ import ptToday from "@/locales/pt/today.json";
 import ptJournal from "@/locales/pt/journal.json";
 import ptMemories from "@/locales/pt/memories.json";
 import ptProjects from "@/locales/pt/projects.json";
+import ptHome from "@/locales/pt/home.json";
 import {
   LOCALE_HTML_TAGS,
   resolveInitialLocale,
@@ -34,6 +36,7 @@ const resources = {
     journal: enJournal,
     memories: enMemories,
     projects: enProjects,
+    home: enHome,
   },
   pt: {
     common: ptCommon,
@@ -44,6 +47,7 @@ const resources = {
     journal: ptJournal,
     memories: ptMemories,
     projects: ptProjects,
+    home: ptHome,
   },
 } as const;
 

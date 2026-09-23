@@ -1,0 +1,28 @@
+{
+  "page": {
+    "title": "Home",
+    "subtitle": "What your last week is actually telling you."
+  },
+  "loading": "Loading…",
+  "setup": {
+    "title": "Add your AI key to get insights",
+    "description": "Connect an OpenAI-compatible key in Settings and Home will turn your recent activity, journal, and habit stats into a short summary and a few concrete recommendations.",
+    "cta": "Go to Settings"
+  },
+  "notSignedIn": {
+    "title": "Sign in to get insights",
+    "description": "AI insights need a signed-in sync account so your key can be stored securely.",
+    "cta": "Go to Settings"
+  },
+  "insight": {
+    "refreshedAt": "Refreshed {{time}}",
+    "refresh": "Refresh insights",
+    "refreshing": "Refreshing…",
+    "recommendationsTitle": "Worth acting on",
+    "basedOn": "Based on the last 7 days · your key, your model"
+  },
+  "error": {
+    "generic": "Couldn't generate insights: {{error}}",
+    "rateLimited": "You've hit today's AI insight limit — try again tomorrow."
+  }
+}
