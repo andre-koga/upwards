@@ -7,6 +7,7 @@ import {
   getNextResetTime,
   setDayResetMinutes,
 } from "./day-reset";
+import { resolveDayPhase } from "./day-phase";
 
 const storage = new Map<string, string>();
 
@@ -96,5 +97,23 @@ describe("day-reset", () => {
     expect(DAY_RESET_OPTIONS).toHaveLength(9);
     expect(DAY_RESET_OPTIONS[0]).toEqual({ minutes: 0, label: "Midnight" });
     expect(DAY_RESET_OPTIONS[4]).toEqual({ minutes: 240, label: "4:00 AM" });
+  });
+
+  it("resolves phases around the effective-day reset boundary", () => {
+    setDayResetMinutes(240);
+    expect(resolveDayPhase(new Date(2026, 5, 15, 3, 59), 240)).toBe("evening");
+    expect(resolveDayPhase(new Date(2026, 5, 15, 4, 0), 240)).toBe("morning");
+    expect(resolveDayPhase(new Date(2026, 5, 15, 11, 59), 240)).toBe("morning");
+    expect(resolveDayPhase(new Date(2026, 5, 15, 12, 0), 240)).toBe("day");
+    expect(resolveDayPhase(new Date(2026, 5, 15, 16, 59), 240)).toBe("day");
+    expect(resolveDayPhase(new Date(2026, 5, 15, 17, 0), 240)).toBe("evening");
+  });
+
+  it("starts in the day phase when a late reset leaves no morning", () => {
+    expect(resolveDayPhase(new Date(2026, 5, 15, 11, 59), 12 * 60)).toBe(
+      "evening",
+    );
+    expect(resolveDayPhase(new Date(2026, 5, 15, 12, 0), 12 * 60)).toBe("day");
+    expect(resolveDayPhase(new Date(2026, 5, 15, 12, 30), 12 * 60)).toBe("day");
   });
 });

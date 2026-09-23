@@ -11,7 +11,7 @@ import { useDailyTasks } from "./hooks/use-daily-tasks";
 import ManualTimeEntryDialog from "./manual-time-entry-dialog";
 import { ArchivedMemosDialog } from "./archived-memos-dialog";
 import { RecurringMemosDialog } from "./recurring-memos-dialog";
-import { Palmtree, RefreshCw, Archive } from "lucide-react";
+import { Archive, ChevronDown, Palmtree, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ import {
   formatResetMinutes,
   getEffectiveToday,
 } from "@/lib/session/day-reset";
+import type { DayPhase } from "@/lib/session/day-phase";
 import { getActiveLocaleTag } from "@/lib/i18n";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
@@ -42,6 +43,7 @@ interface DailyTasksListProps {
   entryDates: Set<string>;
   bookmarkedDates: Set<string>;
   loadJournalMeta: () => Promise<void>;
+  phase: DayPhase | null;
   onTasksDataChanged?: () => void;
 }
 
@@ -55,6 +57,7 @@ export default function DailyTasksList({
   entryDates,
   bookmarkedDates,
   loadJournalMeta,
+  phase,
   onTasksDataChanged,
 }: DailyTasksListProps) {
   const { t } = useTranslation("today");
@@ -79,6 +82,10 @@ export default function DailyTasksList({
     kind: ActivityRetiredKind;
     activityName: string;
   } | null>(null);
+  const [timelineExpanded, setTimelineExpanded] = useState(
+    phase === null || phase === "evening",
+  );
+  const [completedExpanded, setCompletedExpanded] = useState(phase === null);
 
   const {
     isToday,
@@ -143,6 +150,11 @@ export default function DailyTasksList({
 
   const resetMin = getDayResetMinutes();
 
+  useEffect(() => {
+    setTimelineExpanded(phase === null || phase === "evening");
+    setCompletedExpanded(phase === null);
+  }, [phase]);
+
   // Labels shown at the top and bottom of the timeline when a non-midnight
   // reset is configured, so the user knows when their "day" window starts/ends.
   const timelineBoundaryLabels = useMemo(() => {
@@ -184,6 +196,144 @@ export default function DailyTasksList({
       const today = new Date(getEffectiveToday() + "T12:00:00");
       onDateChange(today);
     }
+  };
+
+  const isActivityComplete = (activity: Activity) => {
+    const count = taskCounts[activity.id] || 0;
+    const target = activity.completion_target ?? 1;
+    return activity.routine === "never"
+      ? count >= target
+      : !pausedTaskIdSet.has(activity.id) && count >= target;
+  };
+
+  const incompleteActivities = dailyActivities.filter(
+    (activity) => !isActivityComplete(activity),
+  );
+  const completedActivities = dailyActivities.filter(isActivityComplete);
+
+  const renderActivity = (activity: Activity) => {
+    const count = taskCounts[activity.id] || 0;
+
+    return (
+      <ActivityTaskItem
+        key={activity.id}
+        activity={activity}
+        group={getGroup(activity)}
+        count={count}
+        streak={activityStreaks[activity.id] || 0}
+        timeSpent={getActivityElapsedMs(activity.id)}
+        isPaused={pausedTaskIdSet.has(activity.id)}
+        isBreakDay={isBreakDay}
+        isCurrentActivity={currentActivityId === activity.id}
+        isEditableDate={isEditableDate}
+        temporal={temporalForViewDate}
+        onIncrement={incrementTask}
+        onNeverIncrement={incrementNeverSlip}
+        onNeverReset={resetNeverTaskCount}
+        onStartActivity={handleStartActivity}
+        onStopActivity={handleStopActivity}
+        onManualEntry={setManualEntryActivityId}
+        onEdit={setEditingActivity}
+        onShowRetiredInfo={(kind, activityName) =>
+          setRetiredInfo({ kind, activityName })
+        }
+      />
+    );
+  };
+
+  const timelineTotalMs = timelineSessions.reduce(
+    (total, session) => total + session.intervalMs,
+    0,
+  );
+  const renderTimeline = () => {
+    if (!currentActivityId && timelineSessions.length === 0) return null;
+
+    const forceExpandedForRunningTimer =
+      phase === "day" && currentActivityId !== null;
+    if (phase !== null && !timelineExpanded && !forceExpandedForRunningTimer) {
+      return (
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4 flex h-11 w-full items-center justify-start gap-2 rounded-xl px-4"
+          aria-expanded={false}
+          onClick={() => setTimelineExpanded(true)}
+        >
+          <span className="flex-1 text-left text-sm font-medium">
+            {t("sections.timeline")}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatTimerDisplay(timelineTotalMs)}
+          </span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden />
+        </Button>
+      );
+    }
+
+    return (
+      <div className="mt-6 space-y-2">
+        <div className="ml-1 mr-1.5 flex items-center justify-between">
+          <SectionLabel>
+            {t("sections.timeline")}
+            {timelineBoundaryLabels && (
+              <span className="ml-1.5 font-normal normal-case">
+                {t("sections.timelineBoundary", {
+                  time: formatResetMinutes(resetMin),
+                })}
+              </span>
+            )}
+          </SectionLabel>
+          <span className="text-xs text-muted-foreground">
+            {formatTimerDisplay(timelineTotalMs)}
+          </span>
+        </div>
+        <ActiveActivityPill
+          currentActivityId={currentActivityId}
+          activities={lookupActivities}
+          groups={lookupGroups}
+          elapsedMs={currentActivityElapsedMs}
+          onStop={handleStopActivity}
+          onEdit={
+            runningSession
+              ? () =>
+                  setEditingSession({
+                    groupId: runningSession.groupId,
+                    sessionId: runningSession.sessionId,
+                  })
+              : undefined
+          }
+        />
+        {timelineSessions.map((session) => {
+          const isUnknown = !session.groupId;
+          return (
+            <ActivityTimelineItem
+              key={session.id}
+              activityName={session.name}
+              groupColor={session.groupColor}
+              intervalMs={session.intervalMs}
+              activityId={session.activityId || ""}
+              note={session.note}
+              untimed={session.untimed}
+              completedAtIso={session.completedAtIso}
+              onClick={
+                isUnknown
+                  ? () => openAssignDialog(session.id, session.intervalMs)
+                  : () =>
+                      setEditingSession({
+                        groupId: session.groupId,
+                        sessionId: session.id,
+                      })
+              }
+              onStartActivity={
+                !isUnknown && !session.untimed
+                  ? handleStartActivityFromPastDay
+                  : undefined
+              }
+            />
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -239,6 +389,8 @@ export default function DailyTasksList({
         </div>
       )}
 
+      {phase === "day" && currentActivityId ? renderTimeline() : null}
+
       {(loading || dailyActivities.length > 0) && (
         <>
           <div className="mb-2">
@@ -251,32 +403,32 @@ export default function DailyTasksList({
                 {t("loading")}
               </p>
             )}
-            {!loading &&
-              dailyActivities.map((activity) => (
-                <ActivityTaskItem
-                  key={activity.id}
-                  activity={activity}
-                  group={getGroup(activity)}
-                  count={taskCounts[activity.id] || 0}
-                  streak={activityStreaks[activity.id] || 0}
-                  timeSpent={getActivityElapsedMs(activity.id)}
-                  isPaused={pausedTaskIdSet.has(activity.id)}
-                  isBreakDay={isBreakDay}
-                  isCurrentActivity={currentActivityId === activity.id}
-                  isEditableDate={isEditableDate}
-                  temporal={temporalForViewDate}
-                  onIncrement={incrementTask}
-                  onNeverIncrement={incrementNeverSlip}
-                  onNeverReset={resetNeverTaskCount}
-                  onStartActivity={handleStartActivity}
-                  onStopActivity={handleStopActivity}
-                  onManualEntry={setManualEntryActivityId}
-                  onEdit={setEditingActivity}
-                  onShowRetiredInfo={(kind, activityName) =>
-                    setRetiredInfo({ kind, activityName })
-                  }
-                />
-              ))}
+            {!loading && incompleteActivities.map(renderActivity)}
+            {!loading && completedActivities.length > 0 ? (
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="flex h-11 w-full items-center justify-start gap-2 rounded-xl px-3 text-xs font-medium text-muted-foreground"
+                  aria-expanded={completedExpanded}
+                  onClick={() => setCompletedExpanded((expanded) => !expanded)}
+                >
+                  <span className="flex-1 text-left">
+                    {t("sections.completed", {
+                      count: completedActivities.length,
+                    })}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      completedExpanded && "rotate-180",
+                    )}
+                    aria-hidden
+                  />
+                </Button>
+                {completedExpanded && completedActivities.map(renderActivity)}
+              </>
+            ) : null}
           </div>
 
           <div className="mt-4 flex flex-col items-center justify-center gap-1">
@@ -289,7 +441,7 @@ export default function DailyTasksList({
               disabled={!isEditableDate}
               className={cn(
                 "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default",
-                isBreakDay ? "text-amber-500" : "text-muted-foreground"
+                isBreakDay ? "text-amber-500" : "text-muted-foreground",
               )}
               title={isBreakDay ? t("breakDay.unset") : t("breakDay.set")}
             >
@@ -305,75 +457,7 @@ export default function DailyTasksList({
         </>
       )}
 
-      {(currentActivityId || timelineSessions.length > 0) && (
-        <div className="mt-6 space-y-2">
-          <div className="ml-1 mr-1.5 flex items-center justify-between">
-            <SectionLabel>
-              {t("sections.timeline")}
-              {timelineBoundaryLabels && (
-                <span className="ml-1.5 font-normal normal-case">
-                  {t("sections.timelineBoundary", {
-                    time: formatResetMinutes(resetMin),
-                  })}
-                </span>
-              )}
-            </SectionLabel>
-            <span className="text-xs text-muted-foreground">
-              {formatTimerDisplay(
-                timelineSessions.reduce(
-                  (total, session) => total + session.intervalMs,
-                  0
-                )
-              )}
-            </span>
-          </div>
-          <ActiveActivityPill
-            currentActivityId={currentActivityId}
-            activities={lookupActivities}
-            groups={lookupGroups}
-            elapsedMs={currentActivityElapsedMs}
-            onStop={handleStopActivity}
-            onEdit={
-              runningSession
-                ? () =>
-                    setEditingSession({
-                      groupId: runningSession.groupId,
-                      sessionId: runningSession.sessionId,
-                    })
-                : undefined
-            }
-          />
-          {timelineSessions.map((session) => {
-            const isUnknown = !session.groupId;
-            return (
-              <ActivityTimelineItem
-                key={session.id}
-                activityName={session.name}
-                groupColor={session.groupColor}
-                intervalMs={session.intervalMs}
-                activityId={session.activityId || ""}
-                note={session.note}
-                untimed={session.untimed}
-                completedAtIso={session.completedAtIso}
-                onClick={
-                  isUnknown
-                    ? () => openAssignDialog(session.id, session.intervalMs)
-                    : () =>
-                        setEditingSession({
-                          groupId: session.groupId,
-                          sessionId: session.id,
-                        })
-                }
-                onStartActivity={
-                  !isUnknown && !session.untimed
-                    ? handleStartActivityFromPastDay
-                    : undefined
-                }
-              />
-            );
-          })}
-        </div>
-      )}
+      {phase !== "day" || !currentActivityId ? renderTimeline() : null}
 
       <FooterActionsBar
         currentDate={currentDate}
