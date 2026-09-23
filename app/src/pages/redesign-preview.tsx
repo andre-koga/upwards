@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
-  BarChart3,
+  Bookmark,
   BookOpen,
   CalendarDays,
   Check,
@@ -11,10 +11,12 @@ import {
   CircleHelp,
   Clock3,
   FolderKanban,
+  Image as ImageIcon,
   Leaf,
   Menu,
   MoreHorizontal,
   Plus,
+  RefreshCw,
   Search,
   Settings2,
   Sparkles,
@@ -32,15 +34,13 @@ interface NavItem {
 }
 
 const primaryNav: NavItem[] = [
+  { label: "Home", icon: Sparkles },
   { label: "Today", icon: SunMedium },
   { label: "Journal", icon: BookOpen },
-  { label: "Memories", icon: Sparkles },
+  { label: "Memories", icon: ImageIcon },
 ];
 
-const utilityNav: NavItem[] = [
-  { label: "Projects", icon: FolderKanban },
-  { label: "Insights", icon: BarChart3 },
-];
+const utilityNav: NavItem[] = [{ label: "Projects", icon: FolderKanban }];
 
 const tasks = [
   {
@@ -83,6 +83,80 @@ const spaces = [
   { label: "Studio refresh", count: "4 open", color: "#c36e52" },
   { label: "Personal", count: "2 open", color: "#789b7f" },
   { label: "Wellbeing", count: "1 open", color: "#d5a94a" },
+];
+
+const insightSummary =
+  "You're most consistent before noon — mornings run at 91% completion versus 58% after 3pm.";
+
+const insightRecommendations = [
+  {
+    title: "Move deep work earlier",
+    detail:
+      "Deep work block finishes on time 90% of days when started before 10am, only 40% after — try shifting it 30 minutes earlier.",
+    color: "#c36e52",
+  },
+  {
+    title: "Protect the Wednesday streak",
+    detail:
+      "Your rhythm peaks midweek. Wednesdays have your highest completion rate this month — keep the load light on Thursdays to avoid burnout.",
+    color: "#426a5a",
+  },
+  {
+    title: "Wellbeing is slipping",
+    detail:
+      "Walk without a phone has been skipped 3 of the last 5 days. Pairing it right after lunch has worked well in the past.",
+    color: "#d5a94a",
+  },
+];
+
+const journalEntries = [
+  {
+    date: "Sep 22, 2026",
+    snippet: "Closed the laptop by seven and actually meant it this time.",
+    emoji: "🌙",
+    bookmarked: true,
+  },
+  {
+    date: "Sep 21, 2026",
+    snippet: "Long walk turned into a long call with an old friend.",
+    emoji: "☎️",
+    bookmarked: false,
+  },
+  {
+    date: "Sep 20, 2026",
+    snippet: "Rain all day. Read on the couch instead of forcing a run.",
+    emoji: "🌧️",
+    bookmarked: false,
+  },
+  {
+    date: "Sep 19, 2026",
+    snippet: "Studio refresh finally has a color plan. Feels real now.",
+    emoji: "🎨",
+    bookmarked: true,
+  },
+];
+
+const memories = [
+  {
+    timeLabel: "Around 2019",
+    snippet: "The apartment with the bad radiator and the good light.",
+    color: "#e1ebe1",
+  },
+  {
+    timeLabel: "When I was six",
+    snippet: "Dad taught me to ride a bike in the church parking lot.",
+    color: "#f3dfd7",
+  },
+  {
+    timeLabel: "Summer, a few years back",
+    snippet: "Three weeks with no plans. Still the best vacation.",
+    color: "#f6ecd3",
+  },
+  {
+    timeLabel: "Right after graduating",
+    snippet: "Drove across the state with everything I owned in the back seat.",
+    color: "#e6e1ee",
+  },
 ];
 
 const previewStyle = {
@@ -163,7 +237,13 @@ function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
-function PageHeader() {
+function PageHeader({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle: string;
+}) {
   return (
     <header className="flex flex-col gap-5 border-b border-[#e5ddd1] pb-7 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -173,11 +253,10 @@ function PageHeader() {
           <span>08:42</span>
         </div>
         <h1 className="max-w-2xl font-display text-[clamp(2.65rem,5vw,4.6rem)] leading-[0.92] tracking-[-0.06em] text-[#21332c]">
-          Good morning, Alex
+          {title}
         </h1>
         <p className="mt-4 max-w-lg text-[0.98rem] leading-7 text-[#6e776f]">
-          A little structure for the things that matter, with enough space for
-          the unexpected.
+          {subtitle}
         </p>
       </div>
       <div className="flex items-center gap-2">
@@ -246,7 +325,9 @@ function JournalFeature() {
           Coffee, open windows, and one clear page.”
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-2 text-xs text-[#d7e5d8]">
-          <span className="rounded-full bg-[#fffdf8]/10 px-3 py-1.5">Home</span>
+          <span className="rounded-full bg-[#fffdf8]/10 px-3 py-1.5">
+            Living room
+          </span>
           <span className="rounded-full bg-[#fffdf8]/10 px-3 py-1.5">
             #presence
           </span>
@@ -449,8 +530,197 @@ function SpacesPanel() {
   );
 }
 
+function HomeHero() {
+  return (
+    <article className="relative overflow-hidden rounded-[2rem] bg-[#426a5a] p-6 text-[#fffdf8] shadow-[0_18px_45px_rgba(66,106,90,0.18)] sm:p-8">
+      <div
+        className="absolute -right-20 -top-24 size-64 rounded-full border-[34px] border-[#789b7f]/25"
+        aria-hidden
+      />
+      <div
+        className="absolute -bottom-20 right-8 size-44 rounded-full border-[24px] border-[#d5a94a]/20"
+        aria-hidden
+      />
+      <div className="relative">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-3.5 text-[#d5a94a]" />
+            <SectionLabel>
+              <span className="text-[#d7e5d8]">AI insight · Refreshed 3h ago</span>
+            </SectionLabel>
+          </div>
+          <Button
+            type="button"
+            variant="bare"
+            size="iconRoundMd"
+            className="border border-[#fffdf8]/20 bg-[#fffdf8]/10 text-[#fffdf8] hover:bg-[#fffdf8]/20"
+            aria-label="Refresh insights"
+          >
+            <RefreshCw className="size-4" />
+          </Button>
+        </div>
+        <h2 className="mt-5 max-w-lg font-display text-[clamp(1.8rem,3.4vw,2.6rem)] leading-[1.05] tracking-[-0.04em]">
+          {insightSummary}
+        </h2>
+        <div className="mt-8 flex flex-wrap items-center gap-2 text-xs text-[#d7e5d8]">
+          <span className="ml-0 flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-[#d5a94a]" />
+            Based on the last 7 days · your key, your model
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function RecommendationsPanel() {
+  return (
+    <section className="rounded-[2rem] border border-[#e5ddd1] bg-[#fffdf8] p-5 shadow-[0_12px_35px_rgba(92,77,58,0.06)] sm:p-6">
+      <SectionLabel>Worth acting on</SectionLabel>
+      <div className="mt-4 space-y-3">
+        {insightRecommendations.map((item) => (
+          <div
+            key={item.title}
+            className="flex gap-3 rounded-2xl border border-[#e5ddd1] bg-[#fffdf8] p-4"
+          >
+            <span
+              className="mt-1 size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: item.color }}
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[#21332c]">
+                {item.title}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-[#6e776f]">
+                {item.detail}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Button
+        type="button"
+        variant="bare"
+        className="mt-4 h-9 w-full justify-between rounded-xl px-3 text-xs font-semibold text-[#6e776f] hover:bg-[#f5f1ea] hover:text-[#21332c]"
+      >
+        Refresh insights
+        <RefreshCw className="size-3.5" />
+      </Button>
+    </section>
+  );
+}
+
+function JournalEntryRow({ entry }: { entry: (typeof journalEntries)[number] }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 hover:border-[#e5ddd1]">
+      <span className="w-16 shrink-0 text-xs font-semibold text-[#8b938a]">
+        {entry.date}
+      </span>
+      <span className="shrink-0 text-base" aria-hidden>
+        {entry.emoji}
+      </span>
+      <p className="min-w-0 flex-1 truncate text-sm text-[#4d5b52]">
+        {entry.snippet}
+      </p>
+      <Bookmark
+        className={cn(
+          "size-3.5 shrink-0",
+          entry.bookmarked
+            ? "fill-[#c36e52] text-[#c36e52]"
+            : "text-[#c7cec7]"
+        )}
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+function JournalPastEntries() {
+  return (
+    <section className="rounded-[2rem] border border-[#e5ddd1] bg-[#fffdf8] p-5 shadow-[0_12px_35px_rgba(92,77,58,0.06)] sm:p-6">
+      <div className="flex items-start justify-between gap-4">
+        <SectionLabel>Past entries</SectionLabel>
+        <span className="text-xs text-[#8b938a]">12 day streak</span>
+      </div>
+      <div className="mt-3 space-y-1">
+        {journalEntries.map((entry) => (
+          <JournalEntryRow key={entry.date} entry={entry} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MemoryPreviewCard({ memory }: { memory: (typeof memories)[number] }) {
+  return (
+    <article className="overflow-hidden rounded-[1.75rem] border border-[#e5ddd1] bg-[#fffdf8] shadow-[0_12px_35px_rgba(92,77,58,0.06)]">
+      <div
+        className="h-28 w-full"
+        style={{ backgroundColor: memory.color }}
+        aria-hidden
+      />
+      <div className="p-4">
+        <SectionLabel>{memory.timeLabel}</SectionLabel>
+        <p className="mt-2 text-sm leading-6 text-[#4d5b52]">
+          {memory.snippet}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function MemoriesGrid() {
+  return (
+    <section className="rounded-[2rem] border border-[#e5ddd1] bg-[#fffdf8] p-5 shadow-[0_12px_35px_rgba(92,77,58,0.06)] sm:p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <SectionLabel>Your memories</SectionLabel>
+          <h2 className="mt-2 font-display text-[2rem] leading-none tracking-[-0.04em] text-[#21332c]">
+            Kept for later
+          </h2>
+        </div>
+        <Button
+          type="button"
+          variant="bare"
+          className="h-9 rounded-full px-3 text-xs font-semibold text-[#426a5a] hover:bg-[#e1ebe1]"
+        >
+          <Plus className="size-3.5" />
+          Add
+        </Button>
+      </div>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        {memories.map((memory) => (
+          <MemoryPreviewCard key={memory.timeLabel} memory={memory} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const pageCopy: Record<string, { title: string; subtitle: string }> = {
+  Home: {
+    title: "Good morning, Alex",
+    subtitle:
+      "Here's what your last week is actually telling you, distilled into a few sentences.",
+  },
+  Today: {
+    title: "Good morning, Alex",
+    subtitle:
+      "A little structure for the things that matter, with enough space for the unexpected.",
+  },
+  Journal: {
+    title: "Your journal",
+    subtitle: "A running record, in your own words, one day at a time.",
+  },
+  Memories: {
+    title: "Memories",
+    subtitle: "The moments worth keeping, even the ones without a date.",
+  },
+};
+
 export default function RedesignPreviewPage() {
-  const [activeNav, setActiveNav] = useState("Today");
+  const [activeNav, setActiveNav] = useState("Home");
+  const copy = pageCopy[activeNav] ?? pageCopy.Today;
 
   return (
     <div
@@ -568,14 +838,28 @@ export default function RedesignPreviewPage() {
           </header>
 
           <main className="mx-auto max-w-[1230px] px-4 pb-24 pt-7 sm:px-6 md:px-8 md:pb-12 md:pt-10 lg:px-12">
-            <PageHeader />
+            <PageHeader title={copy.title} subtitle={copy.subtitle} />
             <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
               <div className="min-w-0 space-y-5">
-                <JournalFeature />
-                <TasksPanel />
+                {activeNav === "Home" ? (
+                  <>
+                    <HomeHero />
+                    <RecommendationsPanel />
+                  </>
+                ) : null}
+                {activeNav === "Today" ? <TasksPanel /> : null}
+                {activeNav === "Journal" ? (
+                  <>
+                    <JournalFeature />
+                    <JournalPastEntries />
+                  </>
+                ) : null}
+                {activeNav === "Memories" ? <MemoriesGrid /> : null}
               </div>
               <aside className="space-y-5">
-                <RhythmPanel />
+                {activeNav === "Home" || activeNav === "Today" ? (
+                  <RhythmPanel />
+                ) : null}
                 <SpacesPanel />
                 <div className="hidden items-center gap-3 px-2 text-xs leading-5 text-[#8b938a] xl:flex">
                   <Clock3 className="size-4 shrink-0 text-[#c36e52]" />
