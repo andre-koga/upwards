@@ -86,6 +86,7 @@ export default function DailyTasksList({
     phase === null || phase === "evening",
   );
   const [completedExpanded, setCompletedExpanded] = useState(phase === null);
+  const [expansionPhase, setExpansionPhase] = useState<DayPhase | null>(phase);
 
   const {
     isToday,
@@ -150,11 +151,6 @@ export default function DailyTasksList({
 
   const resetMin = getDayResetMinutes();
 
-  useEffect(() => {
-    setTimelineExpanded(phase === null || phase === "evening");
-    setCompletedExpanded(phase === null);
-  }, [phase]);
-
   // Labels shown at the top and bottom of the timeline when a non-midnight
   // reset is configured, so the user knows when their "day" window starts/ends.
   const timelineBoundaryLabels = useMemo(() => {
@@ -210,6 +206,12 @@ export default function DailyTasksList({
     (activity) => !isActivityComplete(activity),
   );
   const completedActivities = dailyActivities.filter(isActivityComplete);
+  const isTimelineExpanded =
+    expansionPhase === phase
+      ? timelineExpanded
+      : phase === null || phase === "evening";
+  const isCompletedExpanded =
+    expansionPhase === phase ? completedExpanded : phase === null;
 
   const renderActivity = (activity: Activity) => {
     const count = taskCounts[activity.id] || 0;
@@ -250,14 +252,21 @@ export default function DailyTasksList({
 
     const forceExpandedForRunningTimer =
       phase === "day" && currentActivityId !== null;
-    if (phase !== null && !timelineExpanded && !forceExpandedForRunningTimer) {
+    if (
+      phase !== null &&
+      !isTimelineExpanded &&
+      !forceExpandedForRunningTimer
+    ) {
       return (
         <Button
           type="button"
           variant="outline"
           className="mt-4 flex h-11 w-full items-center justify-start gap-2 rounded-xl px-4"
           aria-expanded={false}
-          onClick={() => setTimelineExpanded(true)}
+          onClick={() => {
+            setExpansionPhase(phase);
+            setTimelineExpanded(true);
+          }}
         >
           <span className="flex-1 text-left text-sm font-medium">
             {t("sections.timeline")}
@@ -410,8 +419,11 @@ export default function DailyTasksList({
                   type="button"
                   variant="ghost"
                   className="flex h-11 w-full items-center justify-start gap-2 rounded-xl px-3 text-xs font-medium text-muted-foreground"
-                  aria-expanded={completedExpanded}
-                  onClick={() => setCompletedExpanded((expanded) => !expanded)}
+                  aria-expanded={isCompletedExpanded}
+                  onClick={() => {
+                    setExpansionPhase(phase);
+                    setCompletedExpanded((expanded) => !expanded);
+                  }}
                 >
                   <span className="flex-1 text-left">
                     {t("sections.completed", {
@@ -421,12 +433,12 @@ export default function DailyTasksList({
                   <ChevronDown
                     className={cn(
                       "h-4 w-4 transition-transform",
-                      completedExpanded && "rotate-180",
+                      isCompletedExpanded && "rotate-180",
                     )}
                     aria-hidden
                   />
                 </Button>
-                {completedExpanded && completedActivities.map(renderActivity)}
+                {isCompletedExpanded && completedActivities.map(renderActivity)}
               </>
             ) : null}
           </div>
