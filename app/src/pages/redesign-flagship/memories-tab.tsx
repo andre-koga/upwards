@@ -1,8 +1,9 @@
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { memories } from "@/pages/redesign-preview-data";
-import { MonoLabel } from "./shared";
+import { memories, memoryThrowback } from "@/pages/redesign-preview-data";
+import { AiGlowBadge, MonoLabel } from "./shared";
+import { aiGradient } from "./style";
 
 function MemoryCard({ memory }: { memory: (typeof memories)[number] }) {
   return (
@@ -17,6 +18,35 @@ function MemoryCard({ memory }: { memory: (typeof memories)[number] }) {
         <p className="mt-2 text-sm leading-6 text-[#4d5b52]">
           {memory.snippet}
         </p>
+      </div>
+    </article>
+  );
+}
+
+function Throwback() {
+  return (
+    <article
+      className="relative overflow-hidden rounded-[1.5rem] p-6 text-[var(--paper)]"
+      style={{ backgroundImage: aiGradient }}
+    >
+      <div
+        className="pointer-events-none absolute -right-14 -top-14 size-52 rounded-full bg-[radial-gradient(circle,_rgba(201,154,63,0.5),_transparent_65%)] blur-2xl"
+        aria-hidden
+      />
+      <div className="relative">
+        <AiGlowBadge
+          label={`${memoryThrowback.yearsAgo} years ago today`}
+          className="bg-white/15 shadow-none backdrop-blur-sm"
+        />
+        <p className="mt-4 font-display text-xl leading-snug">
+          "{memoryThrowback.snippet}"
+        </p>
+        <div className="mt-4 flex items-center justify-between text-xs text-[#f2ead9]">
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="size-3" />
+            Surfaced automatically · {memoryThrowback.date}
+          </span>
+        </div>
       </div>
     </article>
   );
@@ -41,6 +71,9 @@ export function MemoriesTab() {
           Add
         </Button>
       </div>
+
+      <Throwback />
+
       <div className="grid gap-4 sm:grid-cols-2">
         {memories.map((memory) => (
           <MemoryCard key={memory.timeLabel} memory={memory} />

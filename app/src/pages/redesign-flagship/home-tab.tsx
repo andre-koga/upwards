@@ -7,8 +7,10 @@ import {
   identityTraits,
   insightRecommendations,
   insightSummary,
+  nextCheckIn,
 } from "@/pages/redesign-preview-data";
 import { Dot, MonoLabel, ShortcutChip } from "./shared";
+import { aiGradient } from "./style";
 
 // The Home tab is the product's actual pitch: not a pile of static data,
 // but that data digested against who the person says they're trying to
@@ -21,8 +23,7 @@ function AiHero({ onOpenCompass }: { onOpenCompass: () => void }) {
     <article
       className="relative overflow-hidden rounded-[1.75rem] p-5 text-[#fbf7ee] shadow-[0_20px_50px_rgba(40,69,58,0.28)] sm:p-7"
       style={{
-        backgroundImage:
-          "radial-gradient(120% 140% at 0% 0%, #3f6656 0%, #2c5246 32%, #1f3f52 58%, #4a3b63 78%, #a4643f 100%)",
+        backgroundImage: aiGradient,
       }}
     >
       {/* Two soft glows, not hard rings — the "beautiful" register applied
@@ -176,13 +177,18 @@ export function HomeTab({ onOpenCompass }: { onOpenCompass: () => void }) {
       <button
         type="button"
         onClick={onOpenCompass}
-        className="w-full rounded-xl border border-[var(--line)] bg-[var(--canvas-deep)]/60 px-4 py-3.5 text-left transition-colors hover:bg-[var(--canvas-deep)]"
+        className="relative w-full overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--canvas-deep)]/60 px-4 py-3.5 text-left transition-colors hover:bg-[var(--canvas-deep)]"
       >
-        <div className="flex items-center justify-between">
+        <div
+          className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-25 blur-2xl"
+          style={{ backgroundImage: aiGradient }}
+          aria-hidden
+        />
+        <div className="relative flex items-center justify-between">
           <MonoLabel>Your compass</MonoLabel>
           <ShortcutChip>G Y</ShortcutChip>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="relative mt-2 flex flex-wrap items-center gap-1.5">
           {identityTraits.map((trait) => (
             <span
               key={trait}
@@ -194,8 +200,12 @@ export function HomeTab({ onOpenCompass }: { onOpenCompass: () => void }) {
             </span>
           ))}
         </div>
-        <p className="mt-2.5 text-xs text-[var(--muted)]">
+        <p className="relative mt-2.5 text-xs text-[var(--muted)]">
           Top goal: {topGoal.title} — {topGoal.progress}% there
+        </p>
+        <p className="relative mt-2 flex items-center gap-1.5 text-xs font-medium text-[var(--terracotta)]">
+          <span className="size-1.5 rounded-full bg-[var(--terracotta)]" />
+          A few questions to deepen this in {nextCheckIn.daysUntil} days
         </p>
       </button>
     </div>

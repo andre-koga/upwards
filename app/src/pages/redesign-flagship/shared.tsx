@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { aiGradientLinear } from "./style";
 
 // Shared visual primitives for the flagship mockup
 // (app/src/pages/redesign-flagship/*). Single source for the small chip/
@@ -51,5 +53,31 @@ export function Dot({ color }: { color: string }) {
       style={{ backgroundColor: color }}
       aria-hidden
     />
+  );
+}
+
+// The one recurring "this is AI-touched" signal — a small gradient-ringed
+// sparkle used as a badge next to anything the AI personalized: a reordered
+// task, an AI-written journal prompt, a curated memory throwback. Reused
+// everywhere instead of inventing a new treatment per surface, so the
+// "splash of color" reads as one consistent language.
+export function AiGlowBadge({
+  label,
+  className,
+}: {
+  label: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-medium text-white shadow-sm",
+        className
+      )}
+      style={{ backgroundImage: aiGradientLinear }}
+    >
+      <Sparkles className="size-3" />
+      {label}
+    </span>
   );
 }

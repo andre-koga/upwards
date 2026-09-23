@@ -1,9 +1,10 @@
-import { Bookmark, MoreHorizontal } from "lucide-react";
+import { Bookmark, MoreHorizontal, RefreshCw, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { journalEntries } from "@/pages/redesign-preview-data";
+import { journalEntries, journalPrompts } from "@/pages/redesign-preview-data";
 import { MonoLabel } from "./shared";
+import { aiGradient } from "./style";
 
 // Journal is the reflective register: warm, unhurried, no tabular-nums or
 // shortcut chips — this is where the "homey, personal" half of the design
@@ -30,6 +31,41 @@ function JournalRow({ entry }: { entry: (typeof journalEntries)[number] }) {
         )}
         aria-hidden
       />
+    </div>
+  );
+}
+
+function StuckPrompts() {
+  return (
+    <div className="rounded-2xl p-[1.5px]" style={{ backgroundImage: aiGradient }}>
+      <div className="rounded-[calc(1rem-1.5px)] bg-[var(--paper)] p-4">
+        <div className="flex items-center justify-between">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-[var(--ink)]">
+            <Sparkles className="size-3.5 text-[var(--terracotta)]" />
+            Not sure what to write?
+          </span>
+          <Button
+            type="button"
+            variant="bare"
+            size="iconRoundSm"
+            className="text-[var(--faint)] hover:bg-[var(--sage)] hover:text-[var(--green)]"
+            aria-label="Shuffle prompts"
+          >
+            <RefreshCw className="size-3.5" />
+          </Button>
+        </div>
+        <div className="mt-3 space-y-1.5">
+          {journalPrompts.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              className="w-full rounded-lg px-2.5 py-2 text-left text-sm leading-5 text-[var(--muted)] transition-colors hover:bg-[var(--canvas)] hover:text-[var(--ink)]"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -76,6 +112,8 @@ export function JournalTab() {
           </div>
         </div>
       </article>
+
+      <StuckPrompts />
 
       <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-3 py-1">
         <div className="flex items-center justify-between px-1 py-2.5">

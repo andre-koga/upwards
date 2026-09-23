@@ -9,12 +9,14 @@ export const tasks = [
     meta: "Personal · 20 min",
     state: "complete" as const,
     color: "#789b7f",
+    aiReason: "You finish this 95% of days when it's first",
   },
   {
     title: "Deep work block",
     meta: "Studio refresh · 9:30–11:30",
     state: "current" as const,
     color: "#c36e52",
+    aiReason: "Starts on time 3x more often after two quick wins",
   },
   {
     title: "Walk without a phone",
@@ -27,6 +29,7 @@ export const tasks = [
     meta: "Personal · Before 18:00",
     state: "upcoming" as const,
     color: "#8d84a9",
+    pinned: true,
   },
 ];
 
@@ -106,7 +109,59 @@ export const goals = [
   },
 ];
 
-export const journalEntries = [
+// The compass check-in cadence: every N days the AI asks a short round of
+// questions and folds the answers into the knowledge map below, instead of
+// the user filling out a profile once and it going stale.
+export const nextCheckIn = {
+  daysUntil: 2,
+  questionCount: 3,
+  estMinutes: 2,
+};
+
+// What the AI has learned from onboarding + check-ins so far, oldest first.
+// This is the "organic, evolving" part — each entry is a real answer, dated,
+// not a static bio field.
+export const knowledgeMap = [
+  {
+    question: "What does a good day look like for you?",
+    answer:
+      "Coffee, a quiet morning, and one meaningful thing done before noon.",
+    learnedAgo: "5 weeks ago",
+  },
+  {
+    question: "What's a habit you're trying to build right now?",
+    answer: "Getting outside without my phone, at least once a day.",
+    learnedAgo: "3 weeks ago",
+  },
+  {
+    question: "When do you feel most like yourself?",
+    answer: "Right after a walk, before anyone needs anything from me.",
+    learnedAgo: "2 days ago",
+  },
+];
+
+// Strategies the AI has actually verified against this person's data —
+// distinct from goals (what they want) and identity (who they are): this is
+// what demonstrably works for them specifically.
+export const strategies = [
+  {
+    title: "Morning deep work sticks, evening doesn't",
+    detail:
+      "6 weeks of data: 90% completion before 10am versus 40% after 6pm.",
+    color: "#c36e52",
+  },
+  {
+    title: "Short walks unlock better journal entries",
+    detail: "Entries written within an hour of a walk run twice as long.",
+    color: "#426a5a",
+  },
+  {
+    title: "Two quick wins before the big one",
+    detail:
+      "Deep work starts on time 3x more often when 2+ small tasks are already checked off first.",
+    color: "#c99a3f",
+  },
+];export const journalEntries = [
   {
     date: "Sep 22, 2026",
     snippet: "Closed the laptop by seven and actually meant it this time.",
@@ -133,6 +188,15 @@ export const journalEntries = [
   },
 ];
 
+// AI-written journal prompts — shown when the entry is empty, tuned using
+// what the AI already knows from the compass + recent days, not generic
+// writing-prompt filler.
+export const journalPrompts = [
+  "You mentioned wanting to be calmer with your kids — what almost tested that today?",
+  "Deep work started late again. What actually got in the way this morning?",
+  "What's one thing from this week you'd want to remember in a year?",
+];
+
 export const memories = [
   {
     timeLabel: "Around 2019",
@@ -155,6 +219,16 @@ export const memories = [
     color: "#e6e1ee",
   },
 ];
+
+// AI-curated "on this day" throwback — resurfaced automatically, not
+// something the user has to go dig for.
+export const memoryThrowback = {
+  yearsAgo: 3,
+  date: "Sep 23, 2023",
+  snippet:
+    "Signed the lease on the studio. Terrified and thrilled in equal parts.",
+  color: "#f3dfd7",
+};
 
 export type TabId = "Home" | "Today" | "Journal" | "Memories";
 
