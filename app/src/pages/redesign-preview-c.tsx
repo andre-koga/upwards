@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
@@ -15,28 +15,30 @@ import {
   journalEntries,
   memories,
   rhythmBars,
-  spaces,
   tabOrder,
   tasks,
   type TabId,
 } from "@/pages/redesign-preview-data";
 
-// Variant C — "command-first". Diagnosis this is answering: the original
-// preview relies on generous touch targets and prose copy aimed at mouse/
-// touch users, which is part of what reads as "website" rather than "tool" —
-// power tools (terminals, IDEs, Superhuman, Raycast) lean on the keyboard as
-// the primary input and show that everywhere: shortcut badges next to every
-// action, a persistent command bar instead of a search icon, an icon-only
-// rail instead of a labeled sidebar, and a status line instead of a header.
-// Palette is deliberately closer to grayscale so the one accent color reads
-// as signal, not decoration.
+// Variant C — "quiet command deck". Keeps the keyboard-first idea from the
+// prior pass (shortcut badges, a real command bar) but drops the terminal
+// palette — this uses the same warm paper/ink/sage/terracotta family as the
+// original, generous type, and soft-but-defined corners. The "tool" signal
+// comes from precision (monospace numerals, shortcut chips, hairline
+// dividers on functional rows) placed *next to* spacious serif headlines and
+// soft photo-block memories, not from turning everything gray and dense.
 
-const shortcuts: Record<TabId, string> = {
-  Home: "G H",
-  Today: "G T",
-  Journal: "G J",
-  Memories: "G M",
-};
+const previewStyle = {
+  "--ink": "#21332c",
+  "--muted": "#6e776f",
+  "--paper": "#fffdf8",
+  "--canvas": "#f3efe6",
+  "--line": "#e4dccf",
+  "--sage": "#e1ebe1",
+  "--green": "#3f6656",
+  "--terracotta": "#c36e52",
+  "--gold": "#c99a3f",
+} as CSSProperties;
 
 const tabIcons: Record<TabId, LucideIcon> = {
   Home: Sparkles,
@@ -45,15 +47,30 @@ const tabIcons: Record<TabId, LucideIcon> = {
   Memories: ImageIcon,
 };
 
-function Kbd({ children }: { children: ReactNode }) {
+const shortcuts: Record<TabId, string> = {
+  Home: "G H",
+  Today: "G T",
+  Journal: "G J",
+  Memories: "G M",
+};
+
+function Chip({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded-[3px] border border-neutral-700 bg-neutral-800 px-1 py-0.5 font-mono text-[0.6rem] leading-none text-neutral-400">
+    <span className="rounded-md border border-[var(--line)] bg-[var(--paper)] px-1.5 py-0.5 font-mono text-[0.62rem] text-[var(--muted)]">
       {children}
     </span>
   );
 }
 
-function IconRail({
+function MonoLabel({ children }: { children: ReactNode }) {
+  return (
+    <span className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#8b938a]">
+      {children}
+    </span>
+  );
+}
+
+function TopDeck({
   active,
   onChange,
 }: {
@@ -61,158 +78,156 @@ function IconRail({
   onChange: (tab: TabId) => void;
 }) {
   return (
-    <nav
-      aria-label="Primary navigation"
-      className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-neutral-800 bg-neutral-950 py-3"
-    >
-      {tabOrder.map((tab) => {
-        const Icon = tabIcons[tab];
-        const isActive = tab === active;
-        return (
-          <button
-            key={tab}
-            type="button"
-            title={`${tab} (${shortcuts[tab]})`}
-            aria-label={tab}
-            aria-current={isActive ? "page" : undefined}
-            onClick={() => onChange(tab)}
-            className={cn(
-              "flex size-9 items-center justify-center rounded-[3px]",
-              isActive
-                ? "bg-neutral-800 text-emerald-400"
-                : "text-neutral-500 hover:bg-neutral-900 hover:text-neutral-300"
-            )}
-          >
-            <Icon className="size-4" />
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-function CommandBar({ activeLabel }: { activeLabel: string }) {
-  return (
-    <div className="flex items-center gap-2 border-b border-neutral-800 bg-neutral-950 px-3 py-2">
-      <span className="font-mono text-[0.7rem] text-neutral-500">upwards</span>
-      <span className="text-neutral-700">/</span>
-      <span className="font-mono text-[0.7rem] text-neutral-300">
-        {activeLabel}
-      </span>
-      <div className="ml-auto flex flex-1 items-center gap-2 rounded-[3px] border border-neutral-800 bg-neutral-900 px-2.5 py-1 sm:max-w-xs">
-        <span className="font-mono text-[0.7rem] text-neutral-600">
-          Type a command…
-        </span>
-        <Kbd>⌘K</Kbd>
+    <header className="border-b border-[var(--line)] bg-[var(--paper)]">
+      <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 py-3">
+        <p className="font-display text-lg tracking-[-0.02em] text-[var(--ink)]">
+          upwards
+        </p>
+        <div className="flex flex-1 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--canvas)] px-3 py-2 sm:max-w-sm">
+          <Sparkles className="size-3.5 text-[var(--muted)]" />
+          <span className="text-sm text-[var(--muted)]">
+            Jump to, or ask about, anything…
+          </span>
+          <Chip>⌘K</Chip>
+        </div>
       </div>
-    </div>
-  );
-}
-
-function StatusBar() {
-  return (
-    <div className="flex items-center justify-between border-t border-neutral-800 bg-neutral-950 px-3 py-1.5 font-mono text-[0.65rem] text-neutral-500">
-      <div className="flex items-center gap-3">
-        <span className="flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-emerald-500" />
-          synced
-        </span>
-        <span>alex@personal</span>
-      </div>
-      <div className="flex items-center gap-3">
-        <span>7 recs pending</span>
-        <span>v0.9.0-preview</span>
-      </div>
-    </div>
+      <nav
+        aria-label="Primary navigation"
+        className="mx-auto flex max-w-3xl items-center gap-1 px-5 pb-2"
+      >
+        {tabOrder.map((tab) => {
+          const Icon = tabIcons[tab];
+          const isActive = tab === active;
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => onChange(tab)}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm",
+                isActive
+                  ? "bg-[var(--sage)] font-semibold text-[var(--green)]"
+                  : "text-[var(--muted)] hover:bg-[var(--canvas)] hover:text-[var(--ink)]"
+              )}
+            >
+              <Icon className="size-3.5" />
+              {tab}
+              <Chip>{shortcuts[tab]}</Chip>
+            </button>
+          );
+        })}
+      </nav>
+    </header>
   );
 }
 
 function HomeView() {
   return (
-    <div className="space-y-3">
-      <div className="border border-neutral-800 bg-neutral-900 p-3">
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-neutral-500">
-            insight
-          </span>
-          <Kbd>R</Kbd>
-        </div>
-        <p className="mt-2 text-sm leading-6 text-neutral-200">
-          {insightSummary}
-        </p>
-      </div>
-      {insightRecommendations.map((item, i) => (
-        <div
-          key={item.title}
-          className="flex items-start justify-between gap-3 border border-neutral-800 bg-neutral-900 px-3 py-2.5"
-        >
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-neutral-100">
-              {item.title}
-            </p>
-            <p className="mt-0.5 text-xs leading-5 text-neutral-500">
-              {item.detail}
-            </p>
+    <div className="space-y-5">
+      <h1 className="max-w-lg font-display text-[2.6rem] leading-[1] tracking-[-0.04em] text-[var(--ink)]">
+        {insightSummary}
+      </h1>
+      <div className="space-y-2">
+        {insightRecommendations.map((item, i) => (
+          <div
+            key={item.title}
+            className="flex items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3"
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              <div>
+                <p className="text-sm font-semibold text-[var(--ink)]">
+                  {item.title}
+                </p>
+                <p className="mt-0.5 max-w-md text-xs leading-5 text-[var(--muted)]">
+                  {item.detail}
+                </p>
+              </div>
+            </div>
+            <Chip>{`⌥${i + 1}`}</Chip>
           </div>
-          <Kbd>{`⌥${i + 1}`}</Kbd>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
 
 function TodayView() {
   return (
-    <div className="space-y-3">
-      <div className="border border-neutral-800 bg-neutral-900">
+    <div className="space-y-5">
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3">
+          <MonoLabel>Completion</MonoLabel>
+          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-[var(--ink)]">
+            74%
+          </p>
+        </div>
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3">
+          <MonoLabel>Best window</MonoLabel>
+          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-[var(--ink)]">
+            AM
+          </p>
+        </div>
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3">
+          <MonoLabel>Streak</MonoLabel>
+          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-[var(--ink)]">
+            12d
+          </p>
+        </div>
+      </div>
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)]">
         {tasks.map((task, i) => {
           const complete = task.state === "complete";
           return (
             <div
               key={task.title}
-              className="flex items-center gap-2.5 border-b border-neutral-800 px-3 py-2 last:border-b-0"
+              className="flex items-center gap-3 border-b border-[var(--line)] px-4 py-2.5 last:border-b-0"
             >
               <span
                 className={cn(
-                  "flex size-4 shrink-0 items-center justify-center rounded-[3px] border",
+                  "flex size-4 shrink-0 items-center justify-center rounded-full border",
                   complete
-                    ? "border-emerald-500 bg-emerald-500 text-neutral-950"
-                    : "border-neutral-700 text-transparent"
+                    ? "border-[var(--green)] bg-[var(--green)] text-white"
+                    : "border-[#c7cec7] text-transparent"
                 )}
               >
                 {complete ? <Check className="size-2.5" /> : null}
               </span>
               <p
                 className={cn(
-                  "min-w-0 flex-1 truncate text-sm text-neutral-200",
-                  complete && "text-neutral-600 line-through"
+                  "min-w-0 flex-1 truncate text-sm text-[var(--ink)]",
+                  complete && "text-[var(--muted)] line-through"
                 )}
               >
                 {task.title}
               </p>
-              <span className="shrink-0 font-mono text-[0.65rem] text-neutral-600">
+              <span className="hidden shrink-0 font-mono text-xs text-[var(--muted)] sm:inline">
                 {task.meta}
               </span>
-              <Kbd>{i + 1}</Kbd>
+              <Chip>{i + 1}</Chip>
             </div>
           );
         })}
       </div>
-      <div className="border border-neutral-800 bg-neutral-900 p-3">
-        <div className="flex h-14 items-end justify-between gap-1.5">
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3.5">
+        <div className="flex h-16 items-end justify-between gap-2">
           {rhythmBars.map((bar) => (
             <div
               key={`${bar.day}-${bar.value}`}
-              className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+              className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
             >
               <div
                 className={cn(
-                  "w-full",
-                  bar.active ? "bg-emerald-500" : "bg-neutral-700"
+                  "w-full max-w-6 rounded-t-sm",
+                  bar.active ? "bg-[var(--green)]" : "bg-[#d7e0d8]"
                 )}
                 style={{ height: `${bar.value}%` }}
               />
-              <span className="font-mono text-[0.6rem] text-neutral-600">
+              <span className="font-mono text-[0.62rem] text-[var(--muted)]">
                 {bar.day}
               </span>
             </div>
@@ -225,45 +240,56 @@ function TodayView() {
 
 function JournalView() {
   return (
-    <div className="border border-neutral-800 bg-neutral-900">
-      {journalEntries.map((entry, i) => (
-        <div
-          key={entry.date}
-          className="flex items-center gap-3 border-b border-neutral-800 px-3 py-2.5 last:border-b-0"
-        >
-          <span className="w-20 shrink-0 font-mono text-[0.65rem] text-neutral-600">
-            {entry.date}
-          </span>
-          <span aria-hidden>{entry.emoji}</span>
-          <p className="min-w-0 flex-1 truncate text-sm text-neutral-200">
-            {entry.snippet}
-          </p>
-          <Kbd>{`J ${i + 1}`}</Kbd>
-        </div>
-      ))}
+    <div className="space-y-5">
+      <article className="rounded-2xl bg-[var(--green)] p-7 text-[var(--paper)]">
+        <h2 className="max-w-md font-display text-[2.2rem] leading-[1.02] tracking-[-0.03em]">
+          A slower start
+        </h2>
+        <p className="mt-4 max-w-md text-sm leading-7 text-[#e1ebe1]">
+          "I let the morning arrive before I started asking it to be useful."
+        </p>
+      </article>
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)]">
+        {journalEntries.map((entry, i) => (
+          <div
+            key={entry.date}
+            className="flex items-center gap-3 border-b border-[var(--line)] px-4 py-3 last:border-b-0"
+          >
+            <span className="w-20 shrink-0 font-mono text-xs tabular-nums text-[var(--muted)]">
+              {entry.date}
+            </span>
+            <span aria-hidden>{entry.emoji}</span>
+            <p className="min-w-0 flex-1 truncate text-sm text-[var(--ink)]">
+              {entry.snippet}
+            </p>
+            <Chip>{`J ${i + 1}`}</Chip>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function MemoriesView() {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2">
       {memories.map((memory) => (
-        <div key={memory.timeLabel} className="border border-neutral-800 bg-neutral-900">
+        <article
+          key={memory.timeLabel}
+          className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--paper)]"
+        >
           <div
-            className="h-14 w-full opacity-80"
+            className="h-28 w-full"
             style={{ backgroundColor: memory.color }}
             aria-hidden
           />
-          <div className="p-2">
-            <p className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-neutral-500">
-              {memory.timeLabel}
-            </p>
-            <p className="mt-1 truncate text-xs text-neutral-300">
+          <div className="p-4">
+            <MonoLabel>{memory.timeLabel}</MonoLabel>
+            <p className="mt-2 text-sm leading-6 text-[#4d5b52]">
               {memory.snippet}
             </p>
           </div>
-        </div>
+        </article>
       ))}
     </div>
   );
@@ -273,22 +299,17 @@ export default function RedesignPreviewVariantC() {
   const [tab, setTab] = useState<TabId>("Home");
 
   return (
-    <div className="flex min-h-screen bg-neutral-950 font-mono text-neutral-200">
-      <IconRail active={tab} onChange={setTab} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <CommandBar activeLabel={tab} />
-        <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-4 font-sans">
-          {tab === "Home" ? <HomeView /> : null}
-          {tab === "Today" ? <TodayView /> : null}
-          {tab === "Journal" ? <JournalView /> : null}
-          {tab === "Memories" ? <MemoriesView /> : null}
-          <p className="mt-4 font-mono text-[0.65rem] text-neutral-600">
-            {spaces.length} spaces active — press{" "}
-            <Kbd>P</Kbd> to jump to projects
-          </p>
-        </main>
-        <StatusBar />
-      </div>
+    <div
+      className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--ink)]"
+      style={previewStyle}
+    >
+      <TopDeck active={tab} onChange={setTab} />
+      <main className="mx-auto max-w-3xl px-5 py-8">
+        {tab === "Home" ? <HomeView /> : null}
+        {tab === "Today" ? <TodayView /> : null}
+        {tab === "Journal" ? <JournalView /> : null}
+        {tab === "Memories" ? <MemoriesView /> : null}
+      </main>
     </div>
   );
 }

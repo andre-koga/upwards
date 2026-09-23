@@ -1,10 +1,10 @@
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
   Check,
-  ChevronRight,
   Image as ImageIcon,
+  Leaf,
   Plus,
   RefreshCw,
   Search,
@@ -20,19 +20,33 @@ import {
   journalEntries,
   memories,
   rhythmBars,
+  spaces,
   tabOrder,
   tasks,
   type TabId,
 } from "@/pages/redesign-preview-data";
 
-// Variant B — "dense list tool". Diagnosis this is answering: the original
-// preview reads as a lifestyle/marketing site (huge serif greeting, soft
-// 2rem-radius cards, decorative ring flourishes, generous whitespace). This
-// variant keeps the same warm-neutral palette family but swaps every
-// structural choice for something closer to a dense productivity tool
-// (Linear/Height/Superhuman): sharp 6–8px corners, 1px hairline borders, no
-// shadows, small type, tight row heights, monospace metadata, and a
-// segmented tab strip instead of a branded vertical rail.
+// Variant B — "editorial tool". The contrast lives *within* the page, not
+// across pages: the reflective content (the greeting, journal, memories)
+// keeps the warm serif voice and soft, generous shapes from the original.
+// The functional content (today's tasks, the weekly numbers) switches
+// register — tighter rows, tabular-nums, hairline rules, quiet monospace
+// labels — the way a well-made paper planner still looks handmade but the
+// grid inside it is precise. Corners are toned down (0.75–1.25rem, not
+// 2rem) everywhere so the whole thing feels considered rather than either
+// "soft blob" or "sharp rectangle".
+
+const previewStyle = {
+  "--ink": "#21332c",
+  "--muted": "#6e776f",
+  "--paper": "#fffdf8",
+  "--canvas": "#f6f2ea",
+  "--line": "#e4dccf",
+  "--sage": "#e1ebe1",
+  "--green": "#3f6656",
+  "--terracotta": "#c36e52",
+  "--gold": "#c99a3f",
+} as CSSProperties;
 
 const tabIcons: Record<TabId, LucideIcon> = {
   Home: Sparkles,
@@ -41,15 +55,15 @@ const tabIcons: Record<TabId, LucideIcon> = {
   Memories: ImageIcon,
 };
 
-function Label({ children }: { children: ReactNode }) {
+function MonoLabel({ children }: { children: ReactNode }) {
   return (
-    <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-neutral-400">
+    <span className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#8b938a]">
       {children}
     </span>
   );
 }
 
-function StatTile({
+function StatCard({
   label,
   value,
   hint,
@@ -59,17 +73,17 @@ function StatTile({
   hint: string;
 }) {
   return (
-    <div className="border border-neutral-200 bg-white p-3">
-      <Label>{label}</Label>
-      <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-neutral-900">
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3">
+      <MonoLabel>{label}</MonoLabel>
+      <p className="mt-1.5 font-mono text-[1.7rem] font-semibold tabular-nums text-[var(--ink)]">
         {value}
       </p>
-      <p className="mt-0.5 text-[0.7rem] text-neutral-500">{hint}</p>
+      <p className="mt-0.5 text-xs text-[var(--muted)]">{hint}</p>
     </div>
   );
 }
 
-function TabStrip({
+function Sidebar({
   active,
   onChange,
 }: {
@@ -77,28 +91,98 @@ function TabStrip({
   onChange: (tab: TabId) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 border border-neutral-200 bg-neutral-50 p-1">
-      {tabOrder.map((tab) => {
-        const Icon = tabIcons[tab];
-        const isActive = tab === active;
-        return (
+    <aside className="hidden w-56 shrink-0 border-r border-[var(--line)] bg-[#f9f6ef] md:block">
+      <div className="flex h-full flex-col p-5">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-8 items-center justify-center rounded-xl bg-[var(--green)] text-[var(--paper)]">
+            <Leaf className="size-4" strokeWidth={1.8} />
+          </div>
+          <p className="font-display text-[1.2rem] tracking-[-0.03em] text-[var(--ink)]">
+            upwards
+          </p>
+        </div>
+        <nav className="mt-10 space-y-0.5" aria-label="Primary navigation">
+          {tabOrder.map((tab) => {
+            const Icon = tabIcons[tab];
+            const isActive = tab === active;
+            return (
+              <Button
+                key={tab}
+                type="button"
+                variant="bare"
+                onClick={() => onChange(tab)}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "h-9 w-full justify-start gap-2.5 rounded-lg px-2.5 text-sm",
+                  isActive
+                    ? "bg-[var(--sage)] font-semibold text-[var(--green)]"
+                    : "text-[var(--muted)] hover:bg-[#efe9dd] hover:text-[var(--ink)]"
+                )}
+              >
+                <Icon className="size-4" />
+                {tab}
+              </Button>
+            );
+          })}
+        </nav>
+        <div className="mt-auto rounded-xl bg-[#efe6d5] p-3.5">
+          <p className="font-display text-sm leading-snug text-[#4d5b52]">
+            Make a little room for the good stuff.
+          </p>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function HomeView() {
+  return (
+    <div className="space-y-5">
+      <div>
+        <MonoLabel>Wednesday, September 23</MonoLabel>
+        <h1 className="mt-2 max-w-lg font-display text-[2.75rem] leading-[0.98] tracking-[-0.045em] text-[var(--ink)]">
+          Good morning, Alex
+        </h1>
+      </div>
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-3.5 text-[var(--gold)]" />
+            <MonoLabel>AI insight · 3h ago</MonoLabel>
+          </div>
           <Button
-            key={tab}
             type="button"
             variant="bare"
-            onClick={() => onChange(tab)}
-            className={cn(
-              "h-7 gap-1.5 rounded-none px-3 text-xs font-medium",
-              isActive
-                ? "bg-white text-neutral-900 shadow-[inset_0_0_0_1px_theme(colors.neutral.300)]"
-                : "text-neutral-500 hover:bg-white/60 hover:text-neutral-700"
-            )}
+            size="iconRoundSm"
+            className="text-[var(--muted)] hover:bg-[var(--sage)] hover:text-[var(--green)]"
+            aria-label="Refresh"
           >
-            <Icon className="size-3.5" />
-            {tab}
+            <RefreshCw className="size-3.5" />
           </Button>
-        );
-      })}
+        </div>
+        <p className="mt-3 max-w-lg font-display text-[1.4rem] leading-[1.25] tracking-[-0.01em] text-[var(--ink)]">
+          {insightSummary}
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {insightRecommendations.map((item) => (
+          <div
+            key={item.title}
+            className="rounded-xl border border-[var(--line)] bg-[var(--paper)] p-3.5"
+          >
+            <span
+              className="size-2 rounded-full"
+              style={{ backgroundColor: item.color }}
+            />
+            <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
+              {item.title}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
+              {item.detail}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -107,36 +191,30 @@ function TaskRow({ task }: { task: (typeof tasks)[number] }) {
   const complete = task.state === "complete";
   const current = task.state === "current";
   return (
-    <div className="flex items-center gap-2.5 border-b border-neutral-150 px-3 py-2 last:border-b-0 hover:bg-neutral-50">
-      <button
-        type="button"
-        aria-label={complete ? `Completed: ${task.title}` : `Mark ${task.title} complete`}
+    <div className="flex items-center gap-3 border-b border-[var(--line)] px-1 py-2.5 last:border-b-0">
+      <span
         className={cn(
-          "flex size-4 shrink-0 items-center justify-center border",
+          "flex size-4 shrink-0 items-center justify-center rounded-full border",
           complete
-            ? "border-neutral-800 bg-neutral-800 text-white"
-            : "border-neutral-300 bg-white text-transparent"
+            ? "border-[var(--green)] bg-[var(--green)] text-white"
+            : "border-[#c7cec7] text-transparent"
         )}
       >
         {complete ? <Check className="size-2.5" /> : null}
-      </button>
-      <span
-        className="size-1.5 shrink-0 rounded-full"
-        style={{ backgroundColor: task.color }}
-      />
+      </span>
       <p
         className={cn(
-          "min-w-0 flex-1 truncate text-sm text-neutral-800",
-          complete && "text-neutral-400 line-through"
+          "min-w-0 flex-1 truncate text-sm text-[var(--ink)]",
+          complete && "text-[var(--muted)] line-through"
         )}
       >
         {task.title}
       </p>
-      <span className="shrink-0 font-mono text-[0.68rem] text-neutral-400">
+      <span className="shrink-0 font-mono text-[0.68rem] tabular-nums text-[var(--muted)]">
         {task.meta}
       </span>
       {current ? (
-        <span className="shrink-0 rounded-sm bg-amber-100 px-1.5 py-0.5 font-mono text-[0.6rem] font-semibold uppercase text-amber-700">
+        <span className="shrink-0 rounded-sm bg-[#f3dfd7] px-1.5 py-0.5 font-mono text-[0.6rem] font-bold uppercase text-[#a4523b]">
           now
         </span>
       ) : null}
@@ -144,97 +222,54 @@ function TaskRow({ task }: { task: (typeof tasks)[number] }) {
   );
 }
 
-function HomeView() {
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2">
-        <StatTile label="Completion" value="74%" hint="of intentions met" />
-        <StatTile label="Streak" value="12d" hint="writing streak" />
-        <StatTile label="Best window" value="AM" hint="91% before noon" />
-      </div>
-      <div className="border border-neutral-200 bg-white">
-        <div className="flex items-center justify-between border-b border-neutral-150 px-3 py-2">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-3.5 text-amber-600" />
-            <Label>AI insight · refreshed 3h ago</Label>
-          </div>
-          <Button
-            type="button"
-            variant="bare"
-            size="iconRoundSm"
-            className="rounded-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
-            aria-label="Refresh insight"
-          >
-            <RefreshCw className="size-3.5" />
-          </Button>
-        </div>
-        <p className="px-3 py-3 text-sm leading-6 text-neutral-800">
-          {insightSummary}
-        </p>
-      </div>
-      <div className="border border-neutral-200 bg-white">
-        <div className="border-b border-neutral-150 px-3 py-2">
-          <Label>Worth acting on</Label>
-        </div>
-        {insightRecommendations.map((item) => (
-          <div
-            key={item.title}
-            className="flex gap-2.5 border-b border-neutral-150 px-3 py-2.5 last:border-b-0"
-          >
-            <span
-              className="mt-1 size-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-neutral-900">
-                {item.title}
-              </p>
-              <p className="mt-0.5 text-xs leading-5 text-neutral-500">
-                {item.detail}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function TodayView() {
   return (
-    <div className="space-y-3">
-      <div className="border border-neutral-200 bg-white">
-        <div className="flex items-center justify-between border-b border-neutral-150 px-3 py-2">
-          <Label>Today · 4 items</Label>
+    <div className="space-y-5">
+      <div>
+        <MonoLabel>Today's rhythm</MonoLabel>
+        <h1 className="mt-2 font-display text-[2.75rem] leading-[0.98] tracking-[-0.045em] text-[var(--ink)]">
+          4 things, in order
+        </h1>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <StatCard label="Completion" value="74%" hint="of intentions met" />
+        <StatCard label="Best window" value="AM" hint="91% before noon" />
+        <StatCard label="Streak" value="12d" hint="writing streak" />
+      </div>
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-1">
+        <div className="flex items-center justify-between border-b border-[var(--line)] py-2.5">
+          <MonoLabel>4 items</MonoLabel>
           <Button
             type="button"
             variant="bare"
-            className="h-6 gap-1 rounded-none px-2 text-xs text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
+            className="h-7 gap-1 rounded-md px-2 text-xs font-semibold text-[var(--green)] hover:bg-[var(--sage)]"
           >
-            <Plus className="size-3" />
-            add
+            <Plus className="size-3.5" />
+            Add
           </Button>
         </div>
         {tasks.map((task) => (
           <TaskRow key={task.title} task={task} />
         ))}
       </div>
-      <div className="border border-neutral-200 bg-white p-3">
-        <Label>This week</Label>
-        <div className="mt-3 flex h-16 items-end justify-between gap-1.5">
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3.5">
+        <div className="flex h-16 items-end justify-between gap-2">
           {rhythmBars.map((bar) => (
             <div
               key={`${bar.day}-${bar.value}`}
-              className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+              className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
             >
+              <span className="font-mono text-[0.62rem] tabular-nums text-[var(--muted)]">
+                {bar.value}
+              </span>
               <div
                 className={cn(
-                  "w-full",
-                  bar.active ? "bg-neutral-800" : "bg-neutral-200"
+                  "w-full max-w-6 rounded-t-sm",
+                  bar.active ? "bg-[var(--green)]" : "bg-[#d7e0d8]"
                 )}
                 style={{ height: `${bar.value}%` }}
               />
-              <span className="font-mono text-[0.6rem] text-neutral-400">
+              <span className="font-mono text-[0.62rem] text-[var(--muted)]">
                 {bar.day}
               </span>
             </div>
@@ -247,49 +282,71 @@ function TodayView() {
 
 function JournalView() {
   return (
-    <div className="border border-neutral-200 bg-white">
-      <div className="flex items-center justify-between border-b border-neutral-150 px-3 py-2">
-        <Label>Entries · 12 day streak</Label>
-      </div>
-      {journalEntries.map((entry) => (
-        <div
-          key={entry.date}
-          className="flex items-center gap-3 border-b border-neutral-150 px-3 py-2.5 last:border-b-0 hover:bg-neutral-50"
-        >
-          <span className="w-20 shrink-0 font-mono text-[0.68rem] text-neutral-400">
-            {entry.date}
-          </span>
-          <span aria-hidden className="shrink-0">
-            {entry.emoji}
-          </span>
-          <p className="min-w-0 flex-1 truncate text-sm text-neutral-800">
-            {entry.snippet}
-          </p>
-          <ChevronRight className="size-3.5 shrink-0 text-neutral-300" />
+    <div className="space-y-5">
+      <article className="relative overflow-hidden rounded-2xl bg-[var(--green)] p-7 text-[var(--paper)]">
+        <MonoLabel>
+          <span className="text-[#d7e5d8]">Journal note · 07:18</span>
+        </MonoLabel>
+        <h2 className="mt-4 max-w-md font-display text-[2.4rem] leading-[1] tracking-[-0.04em]">
+          A slower start
+        </h2>
+        <p className="mt-5 max-w-md text-sm leading-7 text-[#e1ebe1]">
+          "I let the morning arrive before I started asking it to be useful.
+          Coffee, open windows, and one clear page."
+        </p>
+      </article>
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--paper)] px-4 py-1">
+        <div className="border-b border-[var(--line)] py-2.5">
+          <MonoLabel>Past entries · 12 day streak</MonoLabel>
         </div>
-      ))}
+        {journalEntries.map((entry) => (
+          <div
+            key={entry.date}
+            className="flex items-center gap-3 border-b border-[var(--line)] py-3 last:border-b-0"
+          >
+            <span className="w-20 shrink-0 font-mono text-[0.68rem] tabular-nums text-[var(--muted)]">
+              {entry.date}
+            </span>
+            <span aria-hidden>{entry.emoji}</span>
+            <p className="min-w-0 flex-1 truncate text-sm text-[var(--ink)]">
+              {entry.snippet}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function MemoriesView() {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-      {memories.map((memory) => (
-        <div key={memory.timeLabel} className="border border-neutral-200 bg-white">
-          <div
-            className="h-16 w-full"
-            style={{ backgroundColor: memory.color }}
-            aria-hidden
-          />
-          <div className="p-2.5">
-            <Label>{memory.timeLabel}</Label>
-            <p className="mt-1 text-xs leading-5 text-neutral-700">
-              {memory.snippet}
-            </p>
-          </div>
-        </div>
-      ))}
+    <div className="space-y-5">
+      <div>
+        <MonoLabel>Kept for later</MonoLabel>
+        <h1 className="mt-2 font-display text-[2.75rem] leading-[0.98] tracking-[-0.045em] text-[var(--ink)]">
+          Memories
+        </h1>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {memories.map((memory) => (
+          <article
+            key={memory.timeLabel}
+            className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--paper)]"
+          >
+            <div
+              className="h-24 w-full"
+              style={{ backgroundColor: memory.color }}
+              aria-hidden
+            />
+            <div className="p-4">
+              <MonoLabel>{memory.timeLabel}</MonoLabel>
+              <p className="mt-2 text-sm leading-6 text-[#4d5b52]">
+                {memory.snippet}
+              </p>
+            </div>
+          </article>
+        ))}
+      </div>
     </div>
   );
 }
@@ -298,34 +355,30 @@ export default function RedesignPreviewVariantB() {
   const [tab, setTab] = useState<TabId>("Home");
 
   return (
-    <div className="min-h-screen bg-neutral-100 font-sans text-neutral-900">
-      <div className="mx-auto max-w-[960px]">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 bg-white px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-sm font-semibold tracking-tight">
-              upwards
-            </span>
-            <TabStrip active={tab} onChange={setTab} />
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs text-neutral-400">
+    <div
+      className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--ink)]"
+      style={previewStyle}
+    >
+      <div className="flex min-h-screen">
+        <Sidebar active={tab} onChange={setTab} />
+        <div className="min-w-0 flex-1">
+          <header className="flex items-center justify-between border-b border-[var(--line)] px-5 py-3 md:px-8">
+            <div className="flex items-center gap-2 text-xs font-medium text-[var(--muted)]">
+              <span className="size-1.5 rounded-full bg-[#789b7f]" />
+              Synced just now · {spaces.length} spaces
+            </div>
+            <div className="flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--paper)] px-2.5 py-1.5 text-xs text-[var(--muted)]">
               <Search className="size-3" />
-              <span>Search</span>
-              <span className="ml-2 rounded-sm border border-neutral-300 bg-white px-1 font-mono text-[0.6rem]">
-                ⌘K
-              </span>
+              Search
             </div>
-            <div className="flex size-6 items-center justify-center rounded-sm bg-neutral-800 text-[0.6rem] font-bold text-white">
-              AM
-            </div>
-          </div>
-        </header>
-        <main className="p-4">
-          {tab === "Home" ? <HomeView /> : null}
-          {tab === "Today" ? <TodayView /> : null}
-          {tab === "Journal" ? <JournalView /> : null}
-          {tab === "Memories" ? <MemoriesView /> : null}
-        </main>
+          </header>
+          <main className="mx-auto max-w-2xl px-5 py-8 md:px-8">
+            {tab === "Home" ? <HomeView /> : null}
+            {tab === "Today" ? <TodayView /> : null}
+            {tab === "Journal" ? <JournalView /> : null}
+            {tab === "Memories" ? <MemoriesView /> : null}
+          </main>
+        </div>
       </div>
     </div>
   );

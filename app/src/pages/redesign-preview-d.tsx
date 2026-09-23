@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { BookOpen, Image as ImageIcon, Sparkles, SunMedium } from "lucide-react";
 
@@ -15,14 +15,25 @@ import {
   type TabId,
 } from "@/pages/redesign-preview-data";
 
-// Variant D — "data-forward dashboard". Diagnosis this is answering: the
-// original preview leads with narrative copy ("Here's what your last week
-// is actually telling you...") before any numbers. Analytics tools (Linear
-// Insights, Amplitude, Grafana) lead with the numbers and let copy annotate
-// them, not the other way round. This variant puts metric tiles and
-// sparklines first, renders lists as dense tables instead of illustrated
-// cards, and swaps the vertical brand sidebar for a horizontal tab strip —
-// closer to a dashboard app than a content page.
+// Variant D — "field notebook dashboard". Leads with numbers like an
+// analytics tool (metric tiles, sparkline, a real table for tasks), but the
+// numbers sit in a warm paper canvas with a big serif headline above them —
+// like a research notebook where the data table is precise but the page
+// itself is not clinical. Journal/Memories stay fully in the editorial
+// register (serif, soft photo blocks) since those are reflective, not
+// operational — the contrast is intentional per-section, not uniform.
+
+const previewStyle = {
+  "--ink": "#21332c",
+  "--muted": "#6e776f",
+  "--paper": "#fffdf8",
+  "--canvas": "#f3efe6",
+  "--line": "#e4dccf",
+  "--sage": "#e1ebe1",
+  "--green": "#3f6656",
+  "--terracotta": "#c36e52",
+  "--gold": "#c99a3f",
+} as CSSProperties;
 
 const tabIcons: Record<TabId, LucideIcon> = {
   Home: Sparkles,
@@ -31,53 +42,30 @@ const tabIcons: Record<TabId, LucideIcon> = {
   Memories: ImageIcon,
 };
 
-function MetricTile({
-  label,
-  value,
-  delta,
-  positive = true,
-}: {
-  label: string;
-  value: string;
-  delta: string;
-  positive?: boolean;
-}) {
+function MonoLabel({ children }: { children: ReactNode }) {
   return (
-    <div className="border border-slate-200 bg-white p-3">
-      <p className="text-[0.68rem] font-medium uppercase tracking-wide text-slate-400">
-        {label}
-      </p>
-      <div className="mt-1.5 flex items-baseline gap-2">
-        <p className="text-xl font-semibold tabular-nums text-slate-900">
-          {value}
-        </p>
-        <span
-          className={cn(
-            "text-[0.68rem] font-medium tabular-nums",
-            positive ? "text-emerald-600" : "text-rose-600"
-          )}
-        >
-          {delta}
-        </span>
-      </div>
-    </div>
+    <span className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#8b938a]">
+      {children}
+    </span>
   );
 }
 
-function Sparkline() {
-  const max = Math.max(...rhythmBars.map((b) => b.value));
+function MetricTile({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
   return (
-    <div className="flex h-8 items-end gap-1">
-      {rhythmBars.map((bar) => (
-        <div
-          key={`${bar.day}-${bar.value}`}
-          className={cn(
-            "w-2.5 rounded-t-sm",
-            bar.active ? "bg-indigo-500" : "bg-slate-200"
-          )}
-          style={{ height: `${(bar.value / max) * 100}%` }}
-        />
-      ))}
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3.5">
+      <MonoLabel>{label}</MonoLabel>
+      <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-[var(--ink)]">
+        {value}
+      </p>
+      <p className="mt-0.5 text-xs text-[var(--muted)]">{hint}</p>
     </div>
   );
 }
@@ -103,8 +91,8 @@ function TabBar({
             className={cn(
               "flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium",
               isActive
-                ? "border-indigo-600 text-slate-900"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                ? "border-[var(--green)] text-[var(--ink)]"
+                : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
             )}
           >
             <Icon className="size-3.5" />
@@ -118,44 +106,29 @@ function TabBar({
 
 function HomeView() {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MetricTile label="Completion" value="74%" delta="+6% wow" />
-        <MetricTile label="Writing streak" value="12d" delta="+1d" />
-        <MetricTile
-          label="Wellbeing tasks"
-          value="2/5"
-          delta="-3 vs plan"
-          positive={false}
-        />
-        <MetricTile label="AM completion" value="91%" delta="best window" />
-      </div>
-      <div className="border border-slate-200 bg-white p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-            Summary
-          </p>
-          <Sparkline />
-        </div>
-        <p className="mt-2 text-sm leading-6 text-slate-700">
-          {insightSummary}
-        </p>
-      </div>
-      <div className="border border-slate-200 bg-white">
+    <div className="space-y-5">
+      <h1 className="max-w-xl font-display text-[2.6rem] leading-[1.05] tracking-[-0.04em] text-[var(--ink)]">
+        {insightSummary}
+      </h1>
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)]">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-[0.68rem] uppercase tracking-wide text-slate-400">
-              <th className="px-3 py-2 font-medium">Recommendation</th>
-              <th className="px-3 py-2 font-medium">Signal</th>
+            <tr className="border-b border-[var(--line)]">
+              <th className="px-4 py-2.5">
+                <MonoLabel>Recommendation</MonoLabel>
+              </th>
+              <th className="px-4 py-2.5">
+                <MonoLabel>Signal</MonoLabel>
+              </th>
             </tr>
           </thead>
           <tbody>
             {insightRecommendations.map((item) => (
-              <tr key={item.title} className="border-b border-slate-100 last:border-b-0">
-                <td className="px-3 py-2.5 align-top font-medium text-slate-900">
+              <tr key={item.title} className="border-b border-[var(--line)] last:border-b-0">
+                <td className="px-4 py-3 align-top font-medium text-[var(--ink)]">
                   {item.title}
                 </td>
-                <td className="px-3 py-2.5 align-top text-slate-500">
+                <td className="px-4 py-3 align-top text-[var(--muted)]">
                   {item.detail}
                 </td>
               </tr>
@@ -169,32 +142,45 @@ function HomeView() {
 
 function TodayView() {
   return (
-    <div className="space-y-4">
-      <div className="border border-slate-200 bg-white">
+    <div className="space-y-5">
+      <h1 className="font-display text-[2.6rem] leading-[1.05] tracking-[-0.04em] text-[var(--ink)]">
+        4 things, in order
+      </h1>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <MetricTile label="Completion" value="74%" hint="of intentions met" />
+        <MetricTile label="Streak" value="12d" hint="writing streak" />
+        <MetricTile label="Best window" value="AM" hint="91% before noon" />
+        <MetricTile label="Wellbeing" value="2/5" hint="tasks this week" />
+      </div>
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)]">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-[0.68rem] uppercase tracking-wide text-slate-400">
-              <th className="px-3 py-2 font-medium">Task</th>
-              <th className="px-3 py-2 font-medium">Space</th>
-              <th className="px-3 py-2 font-medium">Status</th>
+            <tr className="border-b border-[var(--line)]">
+              <th className="px-4 py-2.5">
+                <MonoLabel>Task</MonoLabel>
+              </th>
+              <th className="px-4 py-2.5">
+                <MonoLabel>Space</MonoLabel>
+              </th>
+              <th className="px-4 py-2.5">
+                <MonoLabel>Status</MonoLabel>
+              </th>
             </tr>
           </thead>
           <tbody>
             {tasks.map((task) => (
-              <tr key={task.title} className="border-b border-slate-100 last:border-b-0">
-                <td className="px-3 py-2.5 font-medium text-slate-900">
+              <tr key={task.title} className="border-b border-[var(--line)] last:border-b-0">
+                <td className="px-4 py-3 font-medium text-[var(--ink)]">
                   {task.title}
                 </td>
-                <td className="px-3 py-2.5 text-slate-500">{task.meta}</td>
-                <td className="px-3 py-2.5">
+                <td className="px-4 py-3 text-[var(--muted)]">{task.meta}</td>
+                <td className="px-4 py-3">
                   <span
                     className={cn(
-                      "rounded-sm px-1.5 py-0.5 text-[0.68rem] font-medium uppercase",
-                      task.state === "complete" &&
-                        "bg-emerald-50 text-emerald-700",
-                      task.state === "current" &&
-                        "bg-amber-50 text-amber-700",
-                      task.state === "upcoming" && "bg-slate-100 text-slate-500"
+                      "rounded-md px-1.5 py-0.5 text-[0.68rem] font-medium uppercase",
+                      task.state === "complete" && "bg-[var(--sage)] text-[var(--green)]",
+                      task.state === "current" && "bg-[#f3dfd7] text-[#a4523b]",
+                      task.state === "upcoming" && "bg-[#eee9df] text-[var(--muted)]"
                     )}
                   >
                     {task.state}
@@ -205,27 +191,27 @@ function TodayView() {
           </tbody>
         </table>
       </div>
-      <div className="border border-slate-200 bg-white p-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-          7-day completion
-        </p>
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3.5">
+        <MonoLabel>7-day completion</MonoLabel>
         <div className="mt-3 flex h-20 items-end justify-between gap-2">
           {rhythmBars.map((bar) => (
             <div
               key={`${bar.day}-${bar.value}`}
               className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
             >
-              <span className="text-[0.65rem] tabular-nums text-slate-400">
+              <span className="font-mono text-[0.62rem] tabular-nums text-[var(--muted)]">
                 {bar.value}
               </span>
               <div
                 className={cn(
-                  "w-full max-w-6 rounded-sm",
-                  bar.active ? "bg-indigo-500" : "bg-slate-200"
+                  "w-full max-w-6 rounded-t-sm",
+                  bar.active ? "bg-[var(--green)]" : "bg-[#d7e0d8]"
                 )}
                 style={{ height: `${bar.value}%` }}
               />
-              <span className="text-[0.65rem] text-slate-400">{bar.day}</span>
+              <span className="font-mono text-[0.62rem] text-[var(--muted)]">
+                {bar.day}
+              </span>
             </div>
           ))}
         </div>
@@ -236,66 +222,60 @@ function TodayView() {
 
 function JournalView() {
   return (
-    <div className="border border-slate-200 bg-white">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-slate-200 text-[0.68rem] uppercase tracking-wide text-slate-400">
-            <th className="px-3 py-2 font-medium">Date</th>
-            <th className="px-3 py-2 font-medium">Entry</th>
-            <th className="px-3 py-2 font-medium">Bookmarked</th>
-          </tr>
-        </thead>
-        <tbody>
-          {journalEntries.map((entry) => (
-            <tr key={entry.date} className="border-b border-slate-100 last:border-b-0">
-              <td className="whitespace-nowrap px-3 py-2.5 text-slate-500">
-                {entry.date}
-              </td>
-              <td className="px-3 py-2.5 text-slate-800">
-                <span className="mr-1.5" aria-hidden>
-                  {entry.emoji}
-                </span>
-                {entry.snippet}
-              </td>
-              <td className="px-3 py-2.5 text-slate-400">
-                {entry.bookmarked ? "Yes" : "—"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-5">
+      <article className="rounded-2xl bg-[var(--green)] p-7 text-[var(--paper)]">
+        <MonoLabel>
+          <span className="text-[#d7e5d8]">Journal note · 07:18</span>
+        </MonoLabel>
+        <h2 className="mt-4 max-w-md font-display text-[2.3rem] leading-[1.02] tracking-[-0.03em]">
+          A slower start
+        </h2>
+        <p className="mt-5 max-w-md text-sm leading-7 text-[#e1ebe1]">
+          "I let the morning arrive before I started asking it to be useful.
+          Coffee, open windows, and one clear page."
+        </p>
+      </article>
+      <div className="space-y-1">
+        {journalEntries.map((entry) => (
+          <div
+            key={entry.date}
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-[var(--paper)]"
+          >
+            <span className="w-20 shrink-0 font-mono text-xs tabular-nums text-[var(--muted)]">
+              {entry.date}
+            </span>
+            <span aria-hidden>{entry.emoji}</span>
+            <p className="min-w-0 flex-1 truncate text-sm text-[var(--ink)]">
+              {entry.snippet}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function MemoriesView() {
   return (
-    <div className="border border-slate-200 bg-white">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-slate-200 text-[0.68rem] uppercase tracking-wide text-slate-400">
-            <th className="px-3 py-2 font-medium">When</th>
-            <th className="px-3 py-2 font-medium">Note</th>
-          </tr>
-        </thead>
-        <tbody>
-          {memories.map((memory) => (
-            <tr key={memory.timeLabel} className="border-b border-slate-100 last:border-b-0">
-              <td className="whitespace-nowrap px-3 py-2.5">
-                <span className="flex items-center gap-2 text-slate-700">
-                  <span
-                    className="size-2.5 shrink-0 rounded-sm"
-                    style={{ backgroundColor: memory.color }}
-                    aria-hidden
-                  />
-                  {memory.timeLabel}
-                </span>
-              </td>
-              <td className="px-3 py-2.5 text-slate-600">{memory.snippet}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="grid gap-4 sm:grid-cols-2">
+      {memories.map((memory) => (
+        <article
+          key={memory.timeLabel}
+          className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--paper)]"
+        >
+          <div
+            className="h-28 w-full"
+            style={{ backgroundColor: memory.color }}
+            aria-hidden
+          />
+          <div className="p-4">
+            <MonoLabel>{memory.timeLabel}</MonoLabel>
+            <p className="mt-2 text-sm leading-6 text-[#4d5b52]">
+              {memory.snippet}
+            </p>
+          </div>
+        </article>
+      ))}
     </div>
   );
 }
@@ -304,20 +284,23 @@ export default function RedesignPreviewVariantD() {
   const [tab, setTab] = useState<TabId>("Home");
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="mx-auto max-w-[1000px]">
-        <header className="border-b border-slate-200 bg-white px-4">
-          <div className="flex items-center justify-between py-3">
-            <span className="text-sm font-semibold tracking-tight">
+    <div
+      className="min-h-screen bg-[var(--canvas)] font-sans text-[var(--ink)]"
+      style={previewStyle}
+    >
+      <div className="mx-auto max-w-3xl">
+        <header className="border-b border-[var(--line)] px-1">
+          <div className="flex items-center justify-between py-4">
+            <p className="font-display text-xl tracking-[-0.02em] text-[var(--ink)]">
               upwards
-            </span>
-            <span className="text-xs text-slate-400">
+            </p>
+            <span className="text-xs text-[var(--muted)]">
               {spaces.length} spaces · synced just now
             </span>
           </div>
           <TabBar active={tab} onChange={setTab} />
         </header>
-        <main className="p-4">
+        <main className="px-1 py-8">
           {tab === "Home" ? <HomeView /> : null}
           {tab === "Today" ? <TodayView /> : null}
           {tab === "Journal" ? <JournalView /> : null}
