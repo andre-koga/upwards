@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import SyncStatus from "@/components/settings/sync-status";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
@@ -31,11 +31,29 @@ function PageLoadingFallback() {
   );
 }
 
-export default function App() {
+// Pages that ship their own full-width, adaptive desktop layout — these
+// intentionally render outside the shared phone-frame shell instead of being
+// squeezed into its 430px card. See docs/architecture/ui-system-and-responsive-layout.md:
+// this app-wide phone-frame simulation is the *current* baseline, not the
+// desktop direction, so an already-adaptive preview page shouldn't inherit it.
+const FULL_BLEED_ROUTES = new Set(["/redesign-preview"]);
+
+function AppShell() {
+  const location = useLocation();
   const [noticeDismissed, setNoticeDismissed] = useState(false);
 
+  if (FULL_BLEED_ROUTES.has(location.pathname)) {
+    return (
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Routes>
+          <Route path="/redesign-preview" element={<RedesignPreviewPage />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
   return (
-    <BrowserRouter>
+    <>
       {!noticeDismissed && (
         <div className="hidden md:mx-auto md:block md:max-w-sm md:pt-6">
           <button
@@ -82,16 +100,20 @@ export default function App() {
                 <Route path="/journal" element={<JournalPage />} />
                 <Route path="/memories" element={<MemoriesPage />} />
                 <Route path="/logs" element={<LogsPage />} />
-                <Route
-                  path="/redesign-preview"
-                  element={<RedesignPreviewPage />}
-                />
                 <Route path="/home" element={<HomePage />} />
               </Routes>
             </Suspense>
           </div>
         </main>
       </div>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppShell />
       <AuthDataHandoffDialog />
       <InstallAppPrompt />
       <SpeedInsights />
