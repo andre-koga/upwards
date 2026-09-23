@@ -60,7 +60,7 @@ interface FooterActionsBarProps {
     options?: {
       due_date?: string | null;
       is_pinned?: boolean;
-    }
+    },
   ) => Promise<boolean>;
   onTasksDataChanged?: () => void;
 }
@@ -86,7 +86,7 @@ export default function FooterActionsBar({
   const [pathsDrawerOpen, setPathsDrawerOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(
-    hasUnreadWhatsNewRelease
+    hasUnreadWhatsNewRelease,
   );
   const { bottomInset } = useVisualViewportLayout();
   const isSelectedToday = toDateString(currentDate) === getEffectiveToday();
@@ -252,7 +252,7 @@ export default function FooterActionsBar({
               variant="outline"
               className={cn(
                 "h-10 rounded-full border px-3 shadow-lg",
-                isSelectedToday && ""
+                isSelectedToday && "",
               )}
               onClick={() => setCalendarOpen(true)}
               title={t("pickDate")}
@@ -278,6 +278,8 @@ export default function FooterActionsBar({
 
           <AddTaskModal
             onAdd={onAddQuickMemo}
+            activities={activities}
+            onStartActivity={onStartActivity}
             icon={CircleCheckBig}
             triggerTitle={t("addQuickMemo")}
             floating={false}

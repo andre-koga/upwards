@@ -8,8 +8,17 @@
   "sections": {
     "memos": "Memos",
     "forToday": "Para hoje",
+    "journal": "Diário",
     "timeline": "Linha do tempo",
+    "completed": "Concluídas ({{count}})",
     "timelineBoundary": "(o dia começa e termina às {{time}})"
+  },
+  "phases": {
+    "label": "Foco do dia",
+    "morning": "Manhã",
+    "day": "Dia",
+    "evening": "Noite",
+    "showFullDay": "Mostrar dia completo"
   },
   "timelineItem": {
     "completedAt": "Concluído às {{time}}"
