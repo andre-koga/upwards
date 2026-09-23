@@ -17,6 +17,9 @@ const JournalPage = lazy(() => import("@/pages/journal"));
 const MemoriesPage = lazy(() => import("@/pages/memories"));
 const LogsPage = lazy(() => import("@/pages/logs"));
 const RedesignPreviewPage = lazy(() => import("@/pages/redesign-preview"));
+const RedesignPreviewBPage = lazy(() => import("@/pages/redesign-preview-b"));
+const RedesignPreviewCPage = lazy(() => import("@/pages/redesign-preview-c"));
+const RedesignPreviewDPage = lazy(() => import("@/pages/redesign-preview-d"));
 const HomePage = lazy(() => import("@/pages/home"));
 
 function PageLoadingFallback() {
@@ -36,7 +39,12 @@ function PageLoadingFallback() {
 // squeezed into its 430px card. See docs/architecture/ui-system-and-responsive-layout.md:
 // this app-wide phone-frame simulation is the *current* baseline, not the
 // desktop direction, so an already-adaptive preview page shouldn't inherit it.
-const FULL_BLEED_ROUTES = new Set(["/redesign-preview"]);
+const FULL_BLEED_ROUTES = new Set([
+  "/redesign-preview",
+  "/redesign-preview-b",
+  "/redesign-preview-c",
+  "/redesign-preview-d",
+]);
 
 function AppShell() {
   const location = useLocation();
@@ -47,6 +55,18 @@ function AppShell() {
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           <Route path="/redesign-preview" element={<RedesignPreviewPage />} />
+          <Route
+            path="/redesign-preview-b"
+            element={<RedesignPreviewBPage />}
+          />
+          <Route
+            path="/redesign-preview-c"
+            element={<RedesignPreviewCPage />}
+          />
+          <Route
+            path="/redesign-preview-d"
+            element={<RedesignPreviewDPage />}
+          />
         </Routes>
       </Suspense>
     );
