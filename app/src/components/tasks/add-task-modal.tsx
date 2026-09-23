@@ -120,7 +120,7 @@ export default function AddTaskModal({
       <MemoEditDialog
         open={open}
         onOpenChange={handleOpenChange}
-        dialogTitle={t("memo.newTitle")}
+        dialogTitle={t("quickCapture.title")}
         title={title}
         onTitleChange={setTitle}
         dueDate={dueDate}
