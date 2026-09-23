@@ -20,6 +20,7 @@ const RedesignPreviewPage = lazy(() => import("@/pages/redesign-preview"));
 const RedesignPreviewBPage = lazy(() => import("@/pages/redesign-preview-b"));
 const RedesignPreviewCPage = lazy(() => import("@/pages/redesign-preview-c"));
 const RedesignPreviewDPage = lazy(() => import("@/pages/redesign-preview-d"));
+const RedesignFlagshipPage = lazy(() => import("@/pages/redesign-flagship"));
 const HomePage = lazy(() => import("@/pages/home"));
 
 function PageLoadingFallback() {
@@ -44,6 +45,7 @@ const FULL_BLEED_ROUTES = new Set([
   "/redesign-preview-b",
   "/redesign-preview-c",
   "/redesign-preview-d",
+  "/redesign-flagship",
 ]);
 
 function AppShell() {
@@ -67,6 +69,7 @@ function AppShell() {
             path="/redesign-preview-d"
             element={<RedesignPreviewDPage />}
           />
+          <Route path="/redesign-flagship" element={<RedesignFlagshipPage />} />
         </Routes>
       </Suspense>
     );

@@ -55,18 +55,54 @@ export const insightRecommendations = [
     detail:
       "Deep work block finishes on time 90% of days when started before 10am, only 40% after — try shifting it 30 minutes earlier.",
     color: "#c36e52",
+    goal: "Finish the studio refresh",
   },
   {
     title: "Protect the Wednesday streak",
     detail:
       "Your rhythm peaks midweek. Wednesdays have your highest completion rate this month — keep the load light on Thursdays to avoid burnout.",
     color: "#426a5a",
+    goal: "Become someone who finishes what they start",
   },
   {
     title: "Wellbeing is slipping",
     detail:
       "Walk without a phone has been skipped 3 of the last 5 days. Pairing it right after lunch has worked well in the past.",
     color: "#d5a94a",
+    goal: "Be a calmer, more present parent",
+  },
+];
+
+// "Who I'm becoming" — the identity/goals layer the flagship mockup adds.
+// This is what the AI insight is meant to point toward, rather than just
+// reporting stats: the same weekly data, read against what the person says
+// they're trying to become.
+export const identityTraits = ["Present", "Disciplined", "Creative", "Patient"];
+
+export const northStar =
+  "Someone who finishes what they start, and rests without guilt.";
+
+export const goals = [
+  {
+    title: "Be a calmer, more present parent",
+    detail: "Ongoing · tied to Wellbeing",
+    progress: 62,
+    color: "#d5a94a",
+    aiNote: "Surfaced in 3 insights this week",
+  },
+  {
+    title: "Finish the studio refresh",
+    detail: "Target: November · tied to Studio refresh",
+    progress: 40,
+    color: "#c36e52",
+    aiNote: "On pace if this week's deep work holds",
+  },
+  {
+    title: "Become someone who finishes what they start",
+    detail: "Ongoing · tied to Personal",
+    progress: 55,
+    color: "#426a5a",
+    aiNote: "Your longest-running thread — 4 months tracked",
   },
 ];
 
