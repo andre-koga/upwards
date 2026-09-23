@@ -41,6 +41,33 @@ behavior while preserving Upwards-specific components and mobile behavior. It
 also requires a real adaptive desktop shell rather than a wider or centered
 phone layout.
 
+Before planning or implementing any change to frontend code, visual design,
+styling, layout, copy, component structure, or page-level information
+architecture, read:
+
+- [`docs/architecture/design-and-branding.md`](docs/architecture/design-and-branding.md)
+
+That document is the binding design manifesto. In particular:
+
+- Reflective content uses the editorial register (serif, spacious, soft radii);
+  operational content uses the instrument register (mono `tabular-nums`, dense
+  rows, hairline rules). The contrast between them is the brand.
+- The AI gradient is rationed: shared tokens only, documented intensity tiers,
+  at most one full-bleed AI surface per screen.
+- Every AI surface names its evidence, offers an action, allows override, and
+  handles missing-key/offline/error states. The app works with no API key.
+- Statistics must be paired with an interpretation and an action.
+- Use palette tokens, never raw hexes; survive dark mode and all nine palettes.
+- Journal and Memories are one record distinguished by date precision.
+- Feature coverage is mandatory: silently dropping a shipped feature (counters,
+  never-habits, streaks, break days, memos, time tracking, the sessions
+  timeline, places, groups lifecycle, day navigation, palettes, i18n, sync
+  conflict review) is a regression, not a simplification.
+
+Do not introduce solid saturated brand-color content cards, pastel placeholder
+blocks, disconnected floating lists, frosted glass on content cards, or a fixed
+phone-width frame on new surfaces.
+
 ## Existing scoped rules
 
 Also follow applicable rules in `.cursor/rules/`, including the Supabase

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { Sparkles } from "lucide-react";
+import { Flame, Image as ImageIcon, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { aiGradientLinear } from "./style";
+import { aiGradient, aiGradientLinear, grainUrl } from "./style";
 
 // Shared visual primitives for the flagship mockup
 // (app/src/pages/redesign-flagship/*). Single source for the small chip/
@@ -56,11 +56,85 @@ export function Dot({ color }: { color: string }) {
   );
 }
 
-// The one recurring "this is AI-touched" signal — a small gradient-ringed
-// sparkle used as a badge next to anything the AI personalized: a reordered
-// task, an AI-written journal prompt, a curated memory throwback. Reused
-// everywhere instead of inventing a new treatment per surface, so the
-// "splash of color" reads as one consistent language.
+// Grain overlay for glass and gradient surfaces (manifesto §2.5). Decorative
+// only — never over text, and always aria-hidden.
+export function Grain({ opacity = 0.035 }: { opacity?: number }) {
+  return (
+    <span
+      className="pointer-events-none absolute inset-0 mix-blend-overlay"
+      style={{ backgroundImage: grainUrl, opacity }}
+      aria-hidden
+    />
+  );
+}
+
+// A content card. Opaque paper + hairline border, per the manifesto: content
+// cards are never glass and never a saturated brand fill.
+export function Card({
+  children,
+  className,
+  flush = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  flush?: boolean;
+}) {
+  return (
+    <section
+      className={cn(
+        "rounded-xl border border-[var(--line)] bg-[var(--paper)]",
+        !flush && "p-4",
+        className
+      )}
+    >
+      {children}
+    </section>
+  );
+}
+
+// Section label + optional trailing action, bound to the container below it so
+// lists never read as a disconnected floating box (manifesto §5).
+export function CardHeader({
+  label,
+  children,
+}: {
+  label: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-2.5">
+      {typeof label === "string" ? <MonoLabel>{label}</MonoLabel> : label}
+      {children}
+    </div>
+  );
+}
+
+// Neutral media placeholder. Explicitly not a pastel block (manifesto §5).
+export function MediaPlaceholder({
+  className,
+  icon,
+  tone,
+}: {
+  className?: string;
+  icon?: ReactNode;
+  tone?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-center bg-[var(--canvas-deep)] text-[var(--faint)]",
+        className
+      )}
+      style={tone ? { backgroundColor: tone } : undefined}
+      aria-hidden
+    >
+      {icon ?? <ImageIcon className="size-4 opacity-60" />}
+    </div>
+  );
+}
+
+// The one recurring "this is AI-touched" signal — tier 3 of the intensity
+// scale in the manifesto. Reused everywhere instead of per-surface treatments.
 export function AiGlowBadge({
   label,
   className,
@@ -78,6 +152,36 @@ export function AiGlowBadge({
     >
       <Sparkles className="size-3" />
       {label}
+    </span>
+  );
+}
+
+// Tier 2: a gradient hairline edge around otherwise-paper content.
+export function AiEdge({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn("rounded-2xl p-[1.5px]", className)}
+      style={{ backgroundImage: aiGradient }}
+    >
+      <div className="rounded-[calc(1rem-1.5px)] bg-[var(--paper)]">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// A streak flame, rendered inside checkboxes/counters like the real app does.
+export function StreakFlame({ count }: { count: number }) {
+  return (
+    <span className="flex items-center gap-0.5 font-mono text-[0.6rem] font-bold tabular-nums text-[var(--terracotta)]">
+      <Flame className="size-2.5 fill-current" />
+      {count}
     </span>
   );
 }

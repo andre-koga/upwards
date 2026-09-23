@@ -275,6 +275,37 @@ export function YouTab() {
         Home's insights point back to this — every recommendation names the
         goal it serves.
       </p>
+
+      {/* Secondary surfaces kept visible rather than buried, so the redesign
+          doesn't hide shipped functionality (manifesto §3.4). */}
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--paper)]">
+        <div className="border-b border-[var(--line)] px-4 py-2.5">
+          <MonoLabel>Account & data</MonoLabel>
+        </div>
+        {[
+          { label: "Appearance", hint: "System / Light / Dark · 9 palettes" },
+          { label: "Language", hint: "English · Português (BR)" },
+          { label: "Day reset time", hint: "4:00 AM" },
+          { label: "AI insights", hint: "Your key, your model · test connection" },
+          { label: "Sync & conflicts", hint: "All synced · review issues" },
+          { label: "Backup", hint: "Export / import JSON" },
+          { label: "What's new", hint: "2 unread" },
+        ].map((row) => (
+          <button
+            key={row.label}
+            type="button"
+            className="flex w-full items-center gap-3 border-b border-[var(--line)] px-4 py-2.5 text-left last:border-b-0 hover:bg-[var(--canvas)]"
+          >
+            <span className="flex-1 truncate text-sm text-[var(--ink)]">
+              {row.label}
+            </span>
+            <span className="shrink-0 truncate text-[0.66rem] text-[var(--muted)]">
+              {row.hint}
+            </span>
+            <ArrowRight className="size-3.5 shrink-0 text-[var(--faint)]" />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

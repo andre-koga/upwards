@@ -1,0 +1,54 @@
+---
+description: Binding design and branding manifesto for all frontend, visual design, copy, and information-architecture work.
+alwaysApply: true
+---
+
+# Design & Branding Manifesto
+
+Before planning or changing any frontend code, visual design, styling, layout,
+copy, component structure, or page-level information architecture, read:
+
+- `docs/architecture/design-and-branding.md`
+
+Treat that document as binding repository guidance. Non-negotiables:
+
+- **Two registers.** Reflective content (journal, memories, identity, greeting)
+  is editorial: serif `font-display`, generous spacing, soft radii. Operational
+  content (tasks, timers, sessions, stats, settings) is instrument: mono
+  `tabular-nums`, dense rows, hairline rules, restrained radii. Mixing registers
+  across a screen is the brand; mixing them inside one component is a bug.
+- **The AI gradient is rationed.** Use the shared `aiGradient` /
+  `aiGradientLinear` tokens only, at the documented intensity tiers, with at most
+  one full-bleed tier-1 surface visible at a time. Never re-author the gradient
+  per surface.
+- **Every AI surface** names its evidence, offers an action, allows manual
+  override, and handles not-configured / signed-out / loading / stale /
+  rate-limited / error states. The app must be fully usable with no API key.
+- **Statistics require adjacent actions.** A metric with nothing to do about it
+  gets cut, not decorated.
+- **Palette tokens, never raw hexes.** New surfaces must survive System/Light/Dark
+  plus all nine named palettes.
+- **No solid saturated brand-color content cards, no pastel placeholder blocks,
+  no disconnected floating white lists.** Depth comes from tone and hairlines.
+- **Frosted glass only** on floating/sticky chrome and AI surfaces; content cards
+  stay opaque paper.
+- **Mobile-first literally.** Unprefixed classes describe the phone; `lg:` adds a
+  real two-column desktop shell with a wide primary column and a narrow context
+  rail. Never the fixed 430px phone frame for new surfaces.
+- **Journal and Memories are one record** distinguished by date precision
+  (`exact` vs `approximate`), not two destinations.
+- **Feature coverage is mandatory.** The app already ships counters, never/avoid
+  habits, streak flames, break days, memos and recurring presets, start/stop time
+  tracking with a live pill, the sessions timeline with derived untimed
+  completions, session editing, manual time entry, journal video/photos/places
+  and the world map, groups with archive/restore lifecycle, day navigation with a
+  configurable reset hour, nine palettes, en/pt i18n, sync conflict review, and
+  BYO-key AI settings. A redesign that silently drops a shipped feature is a
+  regression. Represent it or remove it deliberately in writing.
+- **Copy in both `en` and `pt`**, through i18n. Hardcoded English is a defect.
+- **Keyboard equivalent for every pointer interaction**; labels on icon-only
+  controls.
+
+Any intentional departure must update
+`docs/architecture/design-and-branding.md` first and explain the changed product
+tradeoff before implementation.
