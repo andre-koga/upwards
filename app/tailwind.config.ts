@@ -46,6 +46,8 @@ export default {
       },
       fontFamily: {
         crimson: ["Crimson Pro", "serif"],
+        display: ["Newsreader", "serif"],
+        preview: ["Manrope", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
       borderRadius: {
