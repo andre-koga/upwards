@@ -26,8 +26,9 @@ Treat that document as binding repository guidance. Non-negotiables:
   rate-limited / error states. The app must be fully usable with no API key.
 - **Statistics require adjacent actions.** A metric with nothing to do about it
   gets cut, not decorated.
-- **Palette tokens, never raw hexes.** New surfaces must survive System/Light/Dark
-  plus all nine named palettes.
+- **Palette tokens, never raw hexes.** The app ships System/Light/Dark only;
+  every surface must work in light and dark. Named palettes were removed — do
+  not bring them back.
 - **No solid saturated brand-color content cards, no pastel placeholder blocks,
   no disconnected floating white lists.** Depth comes from tone and hairlines.
 - **Frosted glass only** on floating/sticky chrome and AI surfaces; content cards
@@ -37,14 +38,16 @@ Treat that document as binding repository guidance. Non-negotiables:
   rail. Never the fixed 430px phone frame for new surfaces.
 - **Journal and Memories are one record** distinguished by date precision
   (`exact` vs `approximate`), not two destinations.
-- **Feature coverage is mandatory.** The app already ships counters, never/avoid
-  habits, streak flames, break days, memos and recurring presets, start/stop time
-  tracking with a live pill, the sessions timeline with derived untimed
-  completions, session editing, manual time entry, journal video/photos/places
-  and the world map, groups with archive/restore lifecycle, day navigation with a
-  configurable reset hour, nine palettes, en/pt i18n, sync conflict review, and
-  BYO-key AI settings. A redesign that silently drops a shipped feature is a
-  regression. Represent it or remove it deliberately in writing.
+- **Scope is decided in `docs/architecture/product-scope.md`.** Every kept
+  feature (counters, never/avoid habits, check-only activities, streak flames,
+  break days, memos, AI ordering with pins, start/stop time tracking, the
+  sessions timeline, journal photos/places/opt-in daily clip, holiday and month
+  banners, groups lifecycle, day navigation, en/pt, sync conflict review, backup,
+  BYO-key AI) must be represented. Removed features (named palettes, quote
+  footer, hearted-entry gradients, per-day pause, entry numbers, hidden group
+  activities, timed⇄untimed conversion, guest mode, task-order screen, 7-day
+  edit lock) must not be designed for. Changing either list requires updating
+  `product-scope.md` first.
 - **Copy in both `en` and `pt`**, through i18n. Hardcoded English is a defect.
 - **Keyboard equivalent for every pointer interaction**; labels on icon-only
   controls.

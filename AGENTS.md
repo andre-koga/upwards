@@ -57,12 +57,22 @@ That document is the binding design manifesto. In particular:
 - Every AI surface names its evidence, offers an action, allows override, and
   handles missing-key/offline/error states. The app works with no API key.
 - Statistics must be paired with an interpretation and an action.
-- Use palette tokens, never raw hexes; survive dark mode and all nine palettes.
+- Use palette tokens, never raw hexes; work in light and dark (System/Light/Dark
+  is the only appearance choice).
 - Journal and Memories are one record distinguished by date precision.
-- Feature coverage is mandatory: silently dropping a shipped feature (counters,
-  never-habits, streaks, break days, memos, time tracking, the sessions
-  timeline, places, groups lifecycle, day navigation, palettes, i18n, sync
-  conflict review) is a regression, not a simplification.
+- Feature coverage is mandatory: silently dropping a kept feature (counters,
+  never-habits, check-only activities, streaks, break days, memos, time
+  tracking, the sessions timeline, places, groups lifecycle, day navigation,
+  i18n, sync conflict review, backup) is a regression, not a simplification.
+
+Before adding, removing, or reshaping a user-facing feature, read:
+
+- [`docs/architecture/product-scope.md`](docs/architecture/product-scope.md)
+
+It records what the product keeps, what was reshaped (recurring memos became
+check-only activities, the edit lock became confirm + revisions, video became an
+opt-in daily clip, accounts became required), and what was deliberately removed.
+Do not reintroduce a removed feature without updating that document first.
 
 Do not introduce solid saturated brand-color content cards, pastel placeholder
 blocks, disconnected floating lists, frosted glass on content cards, or a fixed

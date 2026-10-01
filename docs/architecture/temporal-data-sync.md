@@ -1,6 +1,17 @@
 # Temporal Data and Sync Architecture
 
-Status: **Required direction** — updated 2026-08-26
+Status: **Required direction** — updated 2026-10-01
+
+## Scope update (2026-10-01)
+
+[`product-scope.md`](product-scope.md) removed or reshaped several features. The
+data-model consequences recorded below are: accounts are required (no guest
+identity), recurring memos migrate to check-only activities (`tracks_time`),
+the hidden group-default activity becomes an ordinary activity, sessions belong
+to the logical day they start in, the 7-day edit lock is replaced by a
+confirmation plus append-only journal revisions, the journal streak is derived
+instead of stored, per-day pause is historical-only, and backup import is an
+idempotent merge through the operation log.
 
 This document defines the source-of-truth, history, synchronization, conflict,
 and statistics model for Upwards. It must be read before changing database
@@ -105,7 +116,8 @@ this document:
 2. **Push before pull.** Realtime wakes, focus, and timer sync all push pending
    local work before applying remote changes.
 3. **No local wipe without confirmed server ack.** Sign-out, account switch, and
-   guest `use_cloud` must not delete unpushed work without an explicit discard.
+   the one-time legacy guest migration must not delete unpushed work without an
+   explicit discard.
 4. **Conflicts stay open until resolved.** Dismissing an issue must apply an
    explicit user choice or re-enqueue local state — never just hide the problem.
 5. **Tombstones are intentional deletes only.** `deleted_at` syncs when the user
@@ -140,13 +152,21 @@ Optimistic concurrency uses `base_revision` = the row's `updated_at` at edit
 time. Stale bases become reviewable conflicts.
 
 - `activities` and `activity_groups` — labels and rules. Projection upserts
-  send the full current row (name, routine, target, group, order, archive).
+  send the full current row (name, routine, target, group, order, archive,
+  `tracks_time`). Every activity has a name; the hidden group-default activity
+  (`name === null`) is migrated to a named activity and must not be recreated.
+  `tracks_time = false` activities never own sessions.
 - `journal_entry` — **one per user per date**. Natural key
   `(user_id, entry_date)`. Devices get-or-create that row; they never mint a
-  second UUID for the same day.
-- `one_time_task`, `recurring_memo` — keyed by entity UUID.
-- Timed `activity_period` rows — real sessions with a duration. Keyed by
-  period UUID.
+  second UUID for the same day. Every date is editable; there is no edit
+  window. `journal_entry_number` and `journal_completion_streak` are no longer
+  written.
+- `one_time_task` — keyed by entity UUID.
+- `recurring_memo` — legacy. Migrated once to check-only activities and no
+  longer written.
+- Timed `activity_period` rows — real sessions with `end > start` (or open with
+  `end` null). Keyed by period UUID. A session belongs to the logical day of
+  its `start_time`.
 
 The `activity_definition_versions` and `group_definition_versions` Dexie tables
 are gone as of schema v28. Nothing had appended to them since effective-dated
@@ -159,7 +179,9 @@ versions or resolve historical days through them.
 Actions and facts that accumulate over time remain recorded:
 
 - Activity count incremented or decremented (`count.delta`)
-- Activity paused or resumed for a day
+- Activity paused or resumed for a day — historical only. Clients no longer
+  emit pause ops; the server still accepts and replays recorded ones, and past
+  pauses keep their effect on streaks.
 - Break day enabled or disabled
 - Timed session started, stopped, or tombstoned (optional 200-character note
   lives on the period row)
@@ -167,6 +189,10 @@ Actions and facts that accumulate over time remain recorded:
 - Habit or group archived or restored
 - Habit or group deleted
 - Journal content changed
+- Journal revision recorded — when a confirmed edit to a day older than 7 days
+  overwrites title, emoji, text, or media, the previous values are appended as
+  a `journal_entry_revisions` row (union by UUID, never edited). Storage
+  objects referenced by a revision are not deleted.
 - Attachment added or removed
 
 Every sync operation still has a globally unique `operation_id`. Prefer
@@ -183,7 +209,8 @@ These are rebuilt from facts plus the current definition:
   `completion_times` — fold of semantic ops. The daily-entry row is a local
   cache; it is not LWW-synced.
 - Untimed completion pills — derived when `count >= target` for that day.
-- Streaks — replayed from `daily_entries` on read, never stored.
+- Streaks — replayed from `daily_entries` on read, never stored. The journal
+  completion streak is replayed from completed journal entries the same way.
 - `current_activity_id` — derived from an open timed period (`end_time` null).
 
 Updating a projection is not a history violation.
@@ -198,8 +225,10 @@ Updating a projection is not a history violation.
 | Timed session | period UUID | Union by id; tombstone is explicit. |
 | Habit / group | UUID | Stable from first create. |
 
-Guest (unsigned) devices use `guest:{device_id}` in place of `user_id` so
-local IDs stay stable until sign-in.
+Every user is signed in; there is no guest mode. Rows keyed with
+`guest:{device_id}` exist only on devices that predate that decision. They are
+rekeyed into the account once, through the legacy handoff on first sign-in,
+and that path is then removed. New code must not create guest identities.
 
 ## Synchronization protocol
 
@@ -320,6 +349,23 @@ deletion.
 Large media remains in object storage. History stores attachment metadata and
 content hashes rather than binary data in the event log.
 
+## Backup and restore
+
+Backup is a user-facing recovery path and must obey the same invariants as
+sync (full requirements in [`product-scope.md`](product-scope.md) §2.9):
+
+- Export covers every user-owned table and account setting, plus media files
+  unless the user picks "data only". It never includes the AI API key.
+- Import goes through `mutateSynced` with operation IDs derived from the
+  backup's row identity, so importing the same file twice is a no-op.
+- Counts are imported as the difference from current state, never as
+  "+N from zero". Sessions and events union by ID; media dedupes by content
+  hash.
+- A date whose journal text differs from the backup becomes a reviewable
+  conflict, not an overwrite.
+- Old backup formats are migrated forward with the same scope migrations as
+  live data.
+
 ## Delivery notes
 
 Earlier incremental work added definition versions, an effective-from editor,
@@ -390,6 +436,11 @@ Changes in this area must test at least:
 - Snapshot bootstrap then incremental ops (RPC integration test).
 - Sign-out/account switching occurs with pending operations (client unit
   tests; Dexie is mocked).
+- Backup round trip: export → clear → import restores the same state; importing
+  the same file twice changes nothing; importing into a non-empty account does
+  not double counts.
+- A confirmed edit to an old journal day appends exactly one revision on every
+  device, and restoring it is itself a normal reviewable journal edit.
 
 ## Rules for AI agents and contributors
 

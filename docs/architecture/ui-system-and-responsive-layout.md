@@ -404,7 +404,8 @@ Shared UI and responsive changes must verify:
 - Screen-reader names and status announcements
 - Touch scrolling and on-screen keyboard behavior
 - Reduced motion
-- Light, dark, and all supported color palettes
+- Light and dark (System / Light / Dark are the only appearance options; see
+  `product-scope.md`)
 - Route navigation and browser Back/Forward behavior
 - Dialogs opened from dialogs or sheets
 - Overlay stacking with notifications, projects, calendars, and media

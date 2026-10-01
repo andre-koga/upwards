@@ -10,6 +10,8 @@ Related binding documents:
   shared primitives, adaptive shell, accessibility baseline.
 - [`temporal-data-sync.md`](temporal-data-sync.md) — current-state definitions,
   daily facts, lifecycle events, idempotent sync.
+- [`product-scope.md`](product-scope.md) — which features the product keeps,
+  reshapes, and deliberately removed, and why.
 
 This document governs *what things should look and feel like, and why*. The other
 two govern *how data and layout behave*. When they conflict, raise it rather than
@@ -119,10 +121,12 @@ Group/category colors are **user data**, not theme tokens. Render them as small
 dots, 2px bars, or tinted backgrounds at ~15% alpha. Never fill a whole card with
 a user's group color.
 
-**The real app additionally ships System/Light/Dark modes and nine named color
-palettes** (`app/src/lib/themes.ts`). Any new surface must survive all of them:
-never hardcode a hex where a theme token exists, and never assume a light
-background.
+The app ships **System / Light / Dark** and nothing else. The nine named color
+palettes were removed deliberately ([`product-scope.md`](product-scope.md) §1):
+the brand is one palette, and the AI gradient only reads as special against it.
+Do not add user-selectable palettes or accent colors back. Every surface must
+work in light and dark: never hardcode a hex where a theme token exists, and
+never assume a light background.
 
 ### 2.4 Type scale
 
@@ -186,8 +190,12 @@ Four primary destinations. This is a hard cap on the mobile tab bar.
 | **You** | The compass: identity, north star, goals, strategies, check-ins | Editorial + AI |
 
 Everything else is secondary and reached from a profile/overflow menu or `⌘K`:
-Projects/groups, Settings (appearance, language, day-reset, account, sync, AI
-key, task order), Sync issues, What's new, Feedback, Logs, Backup.
+Projects/groups, Settings (appearance, language, day-reset, holiday calendars,
+daily clip, automatic location, account, sync, AI key, backup), Sync issues,
+What's new, Feedback, and About (version, error logs, source link).
+
+There is no task-order screen. Today's order comes from the AI, with a reason on
+each task, and the user overrides it by pinning.
 
 Timeline/sessions are **not** a separate destination — they are a view mode
 inside Today, because a session belongs to a day.
@@ -199,12 +207,15 @@ documented user need.
 
 1. **Feed** — reverse-chronological, month and holiday banners, infinite scroll,
    full-text search, tri-state filter chips (hearted / photos / video / places).
+   The video chip appears only when the daily clip is enabled.
 2. **Calendar** — month grid with per-day density markers (entry dot, bookmark
    heart), drilling into a day.
 3. **Map** — places plotted with zoom-aware pin clustering; a cluster filters the
    feed to those days.
 4. **Gallery** — all photos and video posters by month. This is the one genuinely
    missing surface today: media is captured and then unreachable in aggregate.
+   With the daily clip enabled, each month and year also offers its compilation
+   here (see [`product-scope.md`](product-scope.md) §2.5).
 
 `⌘K` is a **cross-entity** command palette: journal entries, memories, memos,
 activities, sessions, places, settings. The two existing per-page searches cannot
@@ -212,72 +223,85 @@ see each other's data; the palette is what fixes that.
 
 ### 3.4 Feature coverage is mandatory
 
-The app already does a great deal. A redesign that silently drops a shipped
-feature is a regression, not a simplification. Every one of the following must be
-either visibly represented or explicitly and deliberately removed in writing:
+A redesign that silently drops a feature is a regression, not a simplification.
+The product's scope is decided in [`product-scope.md`](product-scope.md): what
+stays, what was reshaped, and what was deliberately removed. Every feature below
+must be visibly represented. Removing one requires updating `product-scope.md`
+first.
 
 **Capture & tracking**
 - Checkbox habits, **counter habits** (`count/target`, tap to increment, cycles
   to 0 when complete), **"never"/avoid habits** (log a slip; long-press clears),
-  **anytime activities** (no schedule, timeable, streak-ineligible), hidden
-  group-default activities.
+  **anytime activities** (no schedule, timeable, streak-ineligible).
+- **Check-only activities** (`tracks_time = false`) for things like medication:
+  scheduled, countable, streaked, but with no timer. These replace recurring
+  memo presets.
 - Routines: daily / weekly (weekday set) / monthly (day-of-month) / custom
   interval / anytime / never.
 - **Per-activity streak flame** rendered inside the checkbox or counter.
 - **Break day** toggle: marks a day as a break so misses don't break streaks.
 - **Memos** (one-time tasks): quick-add FAB, due date with relative labels, pin
   via long-press, edit/archive/delete, carry-forward of incomplete memos.
-- **Recurring memo presets** with routine + pin + enabled flag, auto-spawned at
-  day reset and de-duplicated.
+- **AI ordering with a reason per task**, and **pinning** as the manual override.
 
-**Time tracking**
+**Time tracking** (full rule set in [`product-scope.md`](product-scope.md) §2.2)
 - Start/stop with a **live running pill** (group color, elapsed clock, STOP).
-- One activity running at a time; sub-5s sessions discarded unless noted.
+- One session at a time; a session belongs to the day it starts; sub-5s
+  sessions without a note are discarded.
 - **Timeline**: newest-first list of the day's sessions, day total in the header,
-  reset-boundary labels, group-colored dots, session notes shown inline.
-- **Derived untimed completions** — a "completed at HH:MM" pill synthesized from
-  count-vs-target when no timed session exists. Never stored as a row.
-- **Session details**: reassign activity, edit start/end, edit note, delete,
-  convert timed ⇄ untimed. Read-only past 7 days.
-- **Manual time entry** with date/start/end/note; end-only means untimed.
-- **Replay** a past session to start that activity today.
+  group-colored dots, session notes inline, ▶ "start again" on each row, and
+  overlaps flagged inline.
+- **Derived completions** — a "done at HH:MM" row synthesized from
+  count-vs-target. Never stored as a session.
+- **Session details**: reassign activity, edit start/end, edit note, delete.
+- **Manual time entry** with date, start, end (both required), and note.
 - **Unknown-activity repair** for orphaned sessions.
 
 **Journal & record**
-- Emoji + title (30) + text (300); completion requires all three.
-- Sequential **entry number** and **journal completion streak**, re-propagated
-  when an earlier day is completed.
-- **Video** (one per day, 10s cap, generated poster, offline state) and up to
-  **8 photos** as a "tossed pile" stack with a lightbox.
-- **Places**: automatic GPS capture for today with reverse geocoding, manual
-  place search, max 5/day, per-day map, world map in the archive.
-- Bookmark/heart via long-press, with a gradient wash on hearted entries.
-- 7-day edit window; bookmarking and places bypass it.
-- Month banners (12 seasonal images) and locale-aware holidays (US for `en`,
-  Brazilian for `pt`).
+- Emoji + title (30) + text (300); completion requires all three. Answering an
+  AI prompt counts.
+- **Journal completion streak**, derived on read; backfilling a past day heals
+  it.
+- Up to **8 photos** as a "tossed pile" stack with a lightbox.
+- **Daily clip** (opt-in; one per day, 10s cap, generated poster, offline state)
+  and month/year compilations.
+- **Places**: manual place search, max 5/day, per-day map, world map in the
+  archive; automatic GPS capture is opt-in.
+- Bookmark/heart via long-press (keyboard equivalent required), shown as a heart
+  marker.
+- **Every day is editable.** Saving a change to a day older than 7 days asks for
+  confirmation naming the date, and overwritten journal content is kept as a
+  restorable previous version.
+- Hemisphere-aware month banners and holiday banners from user-chosen holiday
+  calendars.
 
 **Structure & lifecycle**
 - Groups/projects with name + color; activities inside groups.
 - Archive → restore → permanent delete for groups, activities, and memos, with
   append-only status events so historical days render with the right definitions.
-- Manual activity ordering.
 
 **Day navigation**
 - Swipe left/right between days, clamped at today; date picker with entry and
-  bookmark markers; configurable **day-reset hour**; read-only beyond 7 days;
-  retired-activity explanation on past days.
+  bookmark markers; configurable **day-reset hour**; retired-activity
+  explanation on past days.
 
 **System**
-- Appearance: System/Light/Dark **plus nine color palettes**.
+- Appearance: System / Light / Dark.
 - Language: English and Português (Brasil).
-- Account: sign in/up/out, password reset, guest→account data handoff.
+- Account (required): sign in/up/out, password reset.
 - Sync: status pill, manual retry, **conflict review** with per-field
   keep-mine/keep-theirs/combine, pending operations, device list.
 - AI: bring-your-own OpenAI-compatible base URL + model + write-only key, test
   connection, daily call cap.
-- Backup: JSON export/import. (Currently commented out of Settings — either ship
-  it or remove it deliberately; do not leave it orphaned.)
-- What's new with unread dot, feedback, error logs, PWA install prompt.
+- Backup: `.zip` export (data + media, or data only) and idempotent import.
+- What's new with unread dot, feedback, About (version, error logs, source),
+  PWA install prompt.
+
+**Deliberately removed** (reasons in [`product-scope.md`](product-scope.md) §1):
+named color palettes, the habit-quote footer, gradient washes on hearted
+entries, per-day activity pause, journal entry numbers, hidden group-default
+activities, timed ⇄ untimed session conversion, end-only manual entries, guest
+mode, the task-order screen, and the 7-day edit lock. Do not design for them.
 
 ---
 
@@ -320,9 +344,9 @@ Match intensity to prominence. Only one tier-1 surface may be visible at a time.
 - **Always disclose cost and ownership.** "your key, your model" stays visible.
 - **Never fabricate.** Text on an AI surface must be derived from real aggregates
   (`app/src/lib/ai/build-insight-payload.ts`), never invented for visual effect.
-- **Never block on the AI.** Every AI surface needs not-configured, signed-out,
+- **Never block on the AI.** Every AI surface needs not-configured, offline,
   loading, stale-cache, rate-limited, and error states. The app is fully usable
-  with no key.
+  with no key. (There is no signed-out state: an account is required.)
 
 ### 4.4 Statistics must come with actions
 
@@ -341,6 +365,11 @@ is nothing to do about a metric, cut the metric.
   Depth comes from tone, not saturation.
 - **No solid-color placeholders for missing media.** Missing photos get a neutral
   warm `--canvas-deep` field with a small muted icon — never a pastel block.
+- **No decorative gradients outside AI surfaces.** Hearted entries get a heart
+  marker, not a wash; banners use imagery, not gradient fills.
+- **Banner imagery has one art direction.** Month and holiday banners are warm,
+  natural, photographic or painterly, muted enough to sit on `--paper`, with no
+  text in the image and no pastel or cartoon style.
 - **Lists must be connected to their container.** A list of entries floating in
   its own white box, disconnected from the section label, reads as an
   afterthought. Bind rows to the surface with shared hairline dividers and one
@@ -391,6 +420,7 @@ Mobile-first is literal: unprefixed Tailwind classes describe the phone, and
 - **All user-visible copy goes through i18n** with namespaced keys in both `en`
   and `pt`. Hardcoded English is a defect — the audit found it in logs, backup,
   the handoff dialog, photo/video sections, and upload errors. Do not add more.
+  Holiday names and banner alt text are translated too.
 - Format dates, numbers, and times through the locale tag, never with hardcoded
   English 12-hour strings.
 
@@ -399,15 +429,14 @@ Mobile-first is literal: unprefixed Tailwind classes describe the phone, and
 ## 8. Checklist before shipping a frontend change
 
 1. Which register is this surface, and is it internally consistent?
-2. Does it use palette tokens, not raw hexes, and survive dark mode plus all nine
-   palettes?
+2. Does it use palette tokens, not raw hexes, and work in both light and dark?
 3. If it is an AI surface: correct intensity tier, evidence named, action offered,
    override possible, all states handled?
 4. If it shows a statistic: is there an adjacent interpretation and action?
 5. Mobile-first at 375px, then a genuine two-column desktop at `lg`?
 6. Glass only on floating/sticky chrome and AI surfaces?
-7. Any shipped feature displaced, hidden, or dropped? If so, is that deliberate
-   and written down?
+7. Any feature displaced, hidden, or dropped — or a removed one brought back? If
+   so, is `product-scope.md` updated first?
 8. Keyboard path for every pointer interaction; labels on icon-only controls?
 9. All new copy in `en` and `pt`?
 10. `tsc`, `eslint`, and the test suite pass?
