@@ -18,7 +18,9 @@ That document is the required architectural direction. In particular:
 - Historical days and streaks use the current definition, not an effective-dated
   version history.
 - Daily facts (counts, sessions, journal) remain recorded per day.
-- Archive and delete are lifecycle events with an in-app restore/delete path.
+- Archive and delete are lifecycle timestamps (`archived_at`, `deleted_at`) on
+  the current row, with an in-app restore/delete path. Past days before the
+  timestamp still show the item.
 - Sync uses idempotent operations. Unresolved conflicts stay reviewable in the
   app.
 
@@ -71,7 +73,9 @@ Before adding, removing, or reshaping a user-facing feature, read:
 
 It records what the product keeps, what was reshaped (recurring memos became
 check-only activities, the edit lock became confirm + revisions, video became an
-opt-in daily clip, accounts became required), and what was deliberately removed.
+opt-in daily clip, accounts became required, days end at midnight with sessions
+apportioned on read, one baseline local schema), and what was deliberately
+removed.
 Do not reintroduce a removed feature without updating that document first.
 
 Do not introduce solid saturated brand-color content cards, pastel placeholder

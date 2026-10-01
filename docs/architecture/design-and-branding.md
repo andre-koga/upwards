@@ -279,8 +279,12 @@ first.
 
 **Structure & lifecycle**
 - Groups/projects with name + color; activities inside groups.
-- Archive → restore → permanent delete for groups, activities, and memos, with
-  append-only status events so historical days render with the right definitions.
+- Archive → restore → permanent delete for groups, activities, and memos.
+  Archived and deleted items still render on days before they left, with the
+  retired-activity explanation.
+- The activity form asks one type question — **Habit** (scheduled, timer
+  optional), **Avoid** (logs slips), **Time-only** (unscheduled, timed) —
+  instead of independent routine / target / timer switches.
 
 **Day navigation**
 - Swipe left/right between days, clamped at today; date picker with entry and
@@ -291,8 +295,9 @@ first.
 - Appearance: System / Light / Dark.
 - Language: English and Português (Brasil).
 - Account (required): sign in/up/out, password reset.
-- Sync: status pill, manual retry, **conflict review** with per-field
-  keep-mine/keep-theirs/combine, pending operations, device list.
+- Sync: status pill, manual retry, **conflict review** (whole-item keep this
+  device's / keep the other; journal adds keep both), pending operations,
+  device list.
 - AI: bring-your-own OpenAI-compatible base URL + model + write-only key, test
   connection, daily call cap.
 - Backup: `.zip` export (data + media, or data only) and idempotent import.
@@ -303,8 +308,8 @@ first.
 named color palettes, the habit-quote footer, gradient washes on hearted
 entries, per-day activity pause, journal entry numbers, hidden group-default
 activities, timed ⇄ untimed session conversion, end-only manual entries, guest
-mode, the task-order screen, the 7-day edit lock, and the configurable
-day-reset hour. Do not design for them.
+mode, the task-order screen, the 7-day edit lock, the configurable day-reset
+hour, and per-field conflict merging. Do not design for them.
 
 ---
 

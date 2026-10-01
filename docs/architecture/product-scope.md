@@ -38,6 +38,7 @@ with the product tradeoff that changed.
 | **Guest mode** (using the app without an account) | The AI needs an account, and the guest identity, rekeying, and guest→account handoff are among the most fragile code paths. | An account is required. See §2.6 for the one-time migration. Afterwards, delete `lib/sync/auth-handoff.ts`, `guest-handoff-emitter.ts`, `rekey-guest-rows`, `components/settings/auth-data-handoff-dialog.tsx`, and the `guest:{device_id}` identity. |
 | **Standalone Task Order page** (`pages/task-order.tsx`) | Ordering is now done by the AI with an explanation per task, and the user overrides by pinning. A separate global up/down list is a second, competing ordering system. | Remove the page and its Settings entry. Fallback order when the AI is not configured: pinned → not yet done → existing `order_index`. `order_index` stays in the schema but is no longer editable. |
 | **Configurable day-reset hour** (default 4 AM, up to 8 AM) | A day that ends at an arbitrary hour forces every date calculation through an "effective today" layer: render-time clipping of sessions, boundary labels, and logical-day math in streaks, the journal, memos, and AI aggregation. The setting also lives in device `localStorage`, so two devices could disagree about which day it is. | Days always end at local midnight. Delete `lib/session/day-reset.ts` and `components/settings/day-reset-card.tsx`, and reduce `lib/activity/period-day-utils.ts` to the single midnight-based overlap helper (§2.2). `getEffectiveToday()` becomes the plain local date. The day timer (`hooks/use-day-reset-timer.ts`) becomes a UI-only midnight timer that rolls Today over and runs memo carry-forward. No rewrite of past facts: counts, break days, and journal entries stay on the dates they were recorded on. **Behavior change:** because the old default was 4 AM, anything done between midnight and 4 AM now belongs to the new day. The lifted edit lock (§2.3) makes it easy to log a late-night item on yesterday instead. |
+| **Per-field conflict merging** | Choosing field by field between two versions of a habit is precision nobody needs for a rare, low-stakes conflict, and it costs about 1,600 lines. | Whole-item choice, plus "keep both" for journal text. See §2.10. |
 | **Error Logs and GitHub link in the main menu** | Developer tools in a personal-life app's primary navigation. | Both move to Settings › About. The `/logs` route stays for support. |
 
 ## 2. Changed
@@ -63,6 +64,20 @@ track time. The real gap was that every activity was timeable.
   writes.
 - **One-off memos stay** (quick add, due date, pin, carry-forward, archive):
   simple tasks are genuinely useful and feed the AI.
+- **The activity form asks one "type" question** instead of exposing routine,
+  target, and `tracks_time` as independent switches, several combinations of
+  which are meaningless:
+
+  | Type | Schedule | Target | Timer |
+  |---|---|---|---|
+  | **Habit** | daily / weekly / monthly / custom interval | 1, or more for a counter | optional toggle (off for meds) |
+  | **Avoid** | routine `never`; logs slips | — | always off |
+  | **Time-only** | routine `anytime`; no schedule, no streak | — | always on |
+
+  The stored fields do not change; the form maps the type onto them, and save
+  normalizes invalid combinations. The `tracks_time` migration sets it to
+  `false` for existing avoid habits. Sessions already recorded on them stay as
+  facts.
 
 ### 2.2 Time tracking: the whole rule set
 
@@ -239,12 +254,14 @@ Required behavior:
    (photos, clips, posters, memory photos), plus a lighter "data only" export.
    Never include the AI API key.
 2. **Complete coverage.** Every user-owned table and account setting, including
-   journal revisions, the compass and knowledge map, and lifecycle events. Add a
-   test that fails when a new user-owned Dexie table is not in the backup.
+   journal revisions, the compass and knowledge map, and lifecycle timestamps.
+   Add a test that fails when a new user-owned Dexie table is not in the backup.
 3. **Versioned with migrators.** Each format version has a migrator to the next.
    Importing an old file runs the same scope migrations as live data (recurring
    memos → activities, hidden group activity → named activity, zero-length
-   periods → completion times).
+   periods → completion times, status events → lifecycle timestamps). These
+   migrators are also the only upgrade path for devices on a pre-baseline local
+   schema (§2.10), so legacy row shapes are understood in exactly one place.
 4. **Idempotent merge, through the sync command API.** Operation IDs are derived
    from the backup's row identity, so re-importing is a no-op. Counts are
    imported as the difference between the backup and current state, never as
@@ -254,6 +271,96 @@ Required behavior:
 5. **Tests.** Export → clear → import equals the original. Import twice changes
    nothing. Importing into a non-empty account merges without double counts.
 6. All copy through i18n in `en` and `pt`.
+
+### 2.10 Data model and sync cleanup
+
+The scope decisions above leave behind storage and sync code that exists only
+for features or designs that are gone. Each item below departs from an earlier
+rule in [`temporal-data-sync.md`](temporal-data-sync.md), which records the
+new rule.
+
+**Sessions stand alone.** A session is `{activity, start, end, note}` and no
+longer references a daily-entry row: day membership is computed from time
+(§2.2). Stop writing `activity_periods.daily_entry_id`. The server no longer
+creates an empty `daily_entries` row when a session arrives without one. Local
+queries index `start_time`/`end_time` instead of the daily-entry link, and the
+overlap check in `lib/sync/timeline-overlap.ts` works by time.
+
+**Store facts, derive everything else.** Stop storing values that are a pure
+function of other data:
+- `journal_entry.is_journal_complete` and `journal_completed_at` — completion
+  is "emoji, title, and text are all present".
+- `daily_entries.current_activity_id` — the running session is the one with
+  `end` null.
+
+Stop writing always-null or superseded columns: `activity_groups.emoji`,
+`one_time_task.group_id`, `one_time_task.recurring_memo_id` (after §2.1),
+the `activities.completed_at` archive dual-write, and reads of the legacy
+`pattern` / `__group_default_hidden__` sentinels. Columns are dropped from
+Supabase only after the baseline gate below, so old clients that still send
+them do not fail.
+
+**One baseline local schema.** `lib/db/index.ts` carries 30 Dexie versions of
+upgrade steps. Several sync modules exist only to repair data from earlier
+designs:
+- `lib/sync/identity-repair.ts` and the natural-ID cutover flags;
+- `lib/journal/dedupe-by-date.ts` and its reconcile pass, which merge
+  same-date journal duplicates that deterministic IDs now make impossible;
+- the heal step in `lib/sync/sync-storage.ts`;
+- the one-shot cutover enqueue.
+
+All of it is replaced by a single baseline schema plus a reset path for devices
+older than it:
+1. Before Dexie opens, read the installed IndexedDB version. If it predates the
+   baseline, first push whatever pending operations still submit.
+2. Read every local row with raw IndexedDB and keep it as a recovery bundle
+   (same format as a data-only backup), offered for download.
+3. Delete the local database, sign in, and bootstrap from the server snapshot.
+4. Import the recovery bundle through the idempotent backup import (§2.9).
+   Anything that differs from the server lands on Sync issues; nothing is
+   silently dropped.
+
+Devices report their local schema version with their heartbeat. The legacy
+modules above are deleted once no device seen recently reports a pre-baseline
+version. Any device that reappears later simply takes the reset path.
+
+**Lifecycle as timestamps, not event logs.** Replace `activity_status_events`
+and `group_status_events` (archive / restore / delete toggles with
+`effective_at` intervals, plus a legacy `completed` status) with two
+current-state fields on the activity and group rows:
+- `archived_at` — set on archive, cleared on restore.
+- `deleted_at` — set on permanent delete from the archive; still a tombstone,
+  never a hard delete.
+
+A past day shows an activity when it existed then and was not yet archived or
+deleted: `created_at ≤ day < (archived_at ?? deleted_at ?? ∞)`. This keeps the
+retired-activity explanation on past days. It applies the existing "past days
+use the current definition" rule to lifecycle too.
+
+**Accepted cost:** archiving in January and restoring in March makes February
+show the activity as scheduled and missed. Break days and the editable past
+(§2.3) cover that rare case.
+
+Migration: fold each entity's events into the two timestamps (a currently open
+archive interval sets `archived_at`; a legacy `completed` status counts as
+archived). The client stops reading and writing the event tables. The server
+keeps them read-only rather than dropping them, so the old interval history is
+not destroyed.
+
+**Simpler conflict review.** Conflicts stay reviewable in the app, but the
+per-field keep-mine / keep-theirs / combine UI and its two resolvers (about
+1,600 lines across `components/settings/conflict-review-card.tsx`,
+`lib/sync/projection-conflict-resolution.ts`, and
+`lib/sync/journal-conflict-resolution.ts`) shrink to two shapes:
+- **Activities, groups, memos:** show both versions with differing fields
+  highlighted; choose "keep this device's" or "keep the other". These conflicts
+  are rare and low-stakes.
+- **Journal:** side-by-side text with "keep mine", "keep theirs", or "keep
+  both". "Keep both" joins the two texts with a divider, opens the result for
+  editing, and unions photos and places.
+
+Each resolution is an ordinary operation through `mutateSynced`, so it syncs
+and can be revised like any edit.
 
 ## 3. Kept on purpose
 
@@ -267,11 +374,13 @@ the user's ability to act:
 - Start/stop time tracking and the sessions timeline (rules in §2.2).
 - The journal with emoji, title, text, up to 8 photos, places, and hearting,
   merged with memories as one record (manifesto §3.1).
-- Groups with archive → restore → permanent delete lifecycle.
+- Groups and activities with archive → restore → permanent delete (as
+  timestamps, §2.10).
 - Day navigation: swipe and date picker.
 - Month and holiday banners (§2.8), the world map.
 - English and Português (Brasil).
-- Sync status, conflict review, pending operations, and the device list.
+- Sync status, conflict review (simplified, §2.10), pending operations, and
+  the device list.
 - BYO-key AI settings, What's new, feedback, and the PWA install prompt.
 
 ## 4. Order of work
@@ -285,15 +394,22 @@ migration lands before the code that depended on the old shape is deleted:
    before any migration, so users can take a trustworthy backup first.
 3. **Data migrations** — recurring memos → check-only activities (Supabase
    column `tracks_time` plus Dexie version bump), hidden group activity → named
-   activity, zero-length periods → completion times, stop writing the entry
-   number and stored journal streak. Each migration is idempotent and covered by
-   a two-device test.
+   activity, zero-length periods → completion times, status events → lifecycle
+   timestamps. Stop writing the entry number, stored journal streak and
+   completion flag, `current_activity_id`, the session → daily-entry link, and
+   the always-null legacy columns (§2.10). Each migration is idempotent and
+   covered by a two-device test.
 4. **Rules and lock** — midnight day boundary with the single overlap helper
    and removal of the day-reset setting, the rest of the time-tracking
    simplification (§2.2), edit-lock removal with confirmation and journal
-   revisions (§2.3), derived journal streak (§2.4).
+   revisions (§2.3), derived journal streak (§2.4), the activity type question
+   (§2.1), and the simplified conflict review (§2.10).
 5. **Accounts required** (§2.6) — ship the migration release, then delete the
    guest code in the next one.
-6. **Opt-ins** — automatic location (§2.7) and daily clip with the new encoder
+6. **Baseline schema** (§2.10) — ship the baseline plus the reset path, add the
+   schema version to device heartbeats, and once no recent device is
+   pre-baseline, delete the legacy repair modules and drop the dead Supabase
+   columns.
+7. **Opt-ins** — automatic location (§2.7) and daily clip with the new encoder
    (§2.5).
-7. **Holidays and banners** (§2.8), then the compilation spike.
+8. **Holidays and banners** (§2.8), then the compilation spike.

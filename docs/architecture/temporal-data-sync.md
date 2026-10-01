@@ -15,6 +15,27 @@ confirmation plus append-only journal revisions, the journal streak is derived
 instead of stored, per-day pause is historical-only, and backup import is an
 idempotent merge through the operation log.
 
+The same update makes four deliberate departures from earlier rules in this
+document ([`product-scope.md`](product-scope.md) §2.10 has the reasoning):
+
+1. **Lifecycle is current state, not an event log.** Archive and delete become
+   `archived_at` / `deleted_at` timestamps on the activity and group rows,
+   replacing the append-only status-event tables. Past days use the current
+   timestamps, consistent with the 2026-08-21 decision that past days use the
+   current definition. Accepted cost: archive → restore leaves no record of
+   the archived interval. Delete is still a tombstone, never a hard delete.
+2. **Sessions do not reference daily entries.** Day membership comes from
+   `start_time`/`end_time`. The server no longer creates daily-entry shells
+   for sessions.
+3. **One baseline local schema.** The Dexie upgrade chain and the one-time
+   cutover/repair code are replaced by a baseline schema. Pre-baseline devices
+   save local rows to a recovery bundle, re-bootstrap from the snapshot, and
+   re-import the bundle through the idempotent backup import.
+4. **Simpler conflict resolution.** Definition and memo conflicts resolve as
+   whole-row "keep this device's / keep the other". Journal conflicts offer
+   keep mine / keep theirs / keep both. Per-field merging is removed, but
+   every conflict is still reviewed in the app.
+
 This document defines the source-of-truth, history, synchronization, conflict,
 and statistics model for Upwards. It must be read before changing database
 schemas, synchronization, offline storage, activity lifecycle, historical
@@ -39,8 +60,9 @@ What still is **not** current-row-only:
 
 - Daily facts (counts, pauses, break days, sessions, journal content) stay
   recorded per calendar day (local midnight to midnight).
-- Archive and delete append lifecycle events so a habit or group can remain
-  visible on earlier days after it leaves the current list.
+- Archive and delete set lifecycle timestamps (`archived_at`, `deleted_at`)
+  rather than erasing, so a habit or group stays visible on days before it
+  left the current list (`created_at ≤ day < archived_at ?? deleted_at`).
 - Sync retries stay idempotent. Concurrent journal edits and other true
   conflicts stay visible on the in-app Sync issues page.
 
@@ -80,14 +102,16 @@ keys, and derived projections keep devices aligned without silent last-write-win
 ## Core invariants
 
 1. **Definitions are current state.**
-   Activity and group name, routine, target, color, order, and archive flags
-   live on the mutable row. Edits replace that row.
+   Activity and group name, routine, target, color, order, and the
+   `archived_at` / `deleted_at` lifecycle timestamps live on the mutable row.
+   Edits replace that row.
 2. **Do not rewrite recorded facts.**
    Daily counts, pauses, sessions, and journal content are not deleted when a
    definition changes.
 3. **Archive and delete are lifecycle, not silent erasure.**
-   Ordinary archive hides the entity from current lists. Past days can still
-   show it. Permanent privacy erasure is a separate, explicit operation.
+   Ordinary archive hides the entity from current lists. Past days before
+   the archive or delete timestamp still show it. Permanent privacy erasure is
+   a separate, explicit operation.
 4. **Retries are idempotent.**
    Each sync operation has a stable ID. Replaying it must not apply twice.
 5. **Use server ordering for the operation stream, not device clocks.**
@@ -112,8 +136,8 @@ keys, and derived projections keep devices aligned without silent last-write-win
 These rules govern cross-device sync and must not be weakened without updating
 this document:
 
-1. **Additive unions; same-row edits need review.** New sessions, memos, status
-   events, and count deltas merge by stable IDs. Concurrent edits to the same
+1. **Additive unions; same-row edits need review.** New sessions, memos,
+   journal revisions, and count deltas merge by stable IDs. Concurrent edits to the same
    current-state row never silently last-write-wins.
 2. **Push before pull.** Realtime wakes, focus, and timer sync all push pending
    local work before applying remote changes.
@@ -154,15 +178,17 @@ Optimistic concurrency uses `base_revision` = the row's `updated_at` at edit
 time. Stale bases become reviewable conflicts.
 
 - `activities` and `activity_groups` — labels and rules. Projection upserts
-  send the full current row (name, routine, target, group, order, archive,
-  `tracks_time`). Every activity has a name; the hidden group-default activity
+  send the full current row (name, routine, target, group, order,
+  `tracks_time`, `archived_at`, `deleted_at`). Every activity has a name; the
+  hidden group-default activity
   (`name === null`) is migrated to a named activity and must not be recreated.
   `tracks_time = false` activities never own sessions.
 - `journal_entry` — **one per user per date**. Natural key
   `(user_id, entry_date)`. Devices get-or-create that row; they never mint a
   second UUID for the same day. Every date is editable; there is no edit
-  window. `journal_entry_number` and `journal_completion_streak` are no longer
-  written.
+  window. `journal_entry_number`, `journal_completion_streak`,
+  `is_journal_complete`, and `journal_completed_at` are no longer written;
+  completion is derived from content (emoji, title, and text present).
 - `one_time_task` — keyed by entity UUID.
 - `recurring_memo` — legacy. Migrated once to check-only activities and no
   longer written.
@@ -171,7 +197,8 @@ time. Stale bases become reviewable conflicts.
   to midnight. Sessions are stored exactly as recorded and never split or
   auto-stopped; a session that crosses midnight belongs to every day it
   overlaps, and each day's share is computed on read (a local projection, never
-  synced).
+  synced). Sessions carry no `daily_entry_id`; local queries index
+  `start_time` and `end_time`.
 
 The `activity_definition_versions` and `group_definition_versions` Dexie tables
 are gone as of schema v28. Nothing had appended to them since effective-dated
@@ -191,8 +218,6 @@ Actions and facts that accumulate over time remain recorded:
 - Timed session started, stopped, or tombstoned (optional 200-character note
   lives on the period row)
 - One-time task completed or reopened
-- Habit or group archived or restored
-- Habit or group deleted
 - Journal content changed
 - Journal revision recorded — when a confirmed edit to a day older than 7 days
   overwrites title, emoji, text, or media, the previous values are appended as
@@ -216,7 +241,15 @@ These are rebuilt from facts plus the current definition:
 - Untimed completion pills — derived when `count >= target` for that day.
 - Streaks — replayed from `daily_entries` on read, never stored. The journal
   completion streak is replayed from completed journal entries the same way.
-- `current_activity_id` — derived from an open timed period (`end_time` null).
+- The running session — the open timed period (`end_time` null). The
+  `current_activity_id` column is no longer written.
+- Journal completion — derived from the entry's content.
+- Whether an activity or group appears on a past day — derived from
+  `created_at`, `archived_at`, and `deleted_at`.
+
+The legacy `activity_status_events` and `group_status_events` tables are not
+read or written by the client. Their contents were folded into the lifecycle
+timestamps once; the server keeps them read-only.
 
 Updating a projection is not a history violation.
 
@@ -227,7 +260,8 @@ Updating a projection is not a history violation.
 | Journal | `(user_id, entry_date)` | Deterministic UUID from user + date; get-or-create. Server upserts on the natural key. |
 | Daily entry | `(user_id, date)` | Same. Shell rows may be created locally as a projection; counts still arrive via ops. |
 | Untimed completion | none | Do not insert an `activity_periods` row. |
-| Timed session | period UUID | Union by id; tombstone is explicit. || Habit / group | UUID | Stable from first create. |
+| Timed session | period UUID | Union by id; tombstone is explicit. No daily-entry link. |
+| Habit / group | UUID | Stable from first create. |
 
 Every user is signed in; there is no guest mode. Rows keyed with
 `guest:{device_id}` exist only on devices that predate that decision. They are
@@ -255,15 +289,23 @@ New / empty device after pending push succeeds:
   → then only ops
 ```
 
-Existing devices cut over once: repair natural IDs, enqueue each unsynced
-current-state row as a `projection.upsert` (skipping ids already in the
-pending queue), submit those ops in bounded batches, then snapshot. That
-enqueue is one-shot. Repeating it every cycle mints new `operation_id`s for
-the same rows and grows the Waiting to sync list without bound. Duplicate
-pending `projection.upsert`s for the same entity are collapsed to the newest
-row before submit. Submit applies each op in its own subtransaction so one
-foreign-key or cast error cannot abort the rest of the batch. Timed period
-upserts create a `daily_entries` shell when the parent row is missing.
+Devices whose local IndexedDB predates the **baseline schema** do not run an
+upgrade chain or a natural-ID cutover. Before Dexie opens:
+
+1. Push whatever pending operations still submit.
+2. Save every local row (raw IndexedDB read) as a recovery bundle in the
+   data-only backup format, and offer it for download.
+3. Delete the local database and bootstrap from `pull_sync_snapshot`.
+4. Import the bundle through the idempotent backup import, which owns all
+   legacy row-shape migrations. Differences become Sync issues.
+
+Devices report their local schema version with their heartbeat. Legacy repair
+modules (natural-ID repair, same-date journal dedupe, storage heal, cutover
+enqueue) are deleted once no recently seen device is pre-baseline.
+
+Duplicate pending `projection.upsert`s for the same entity are collapsed to the
+newest row before submit. Submit applies each op in its own subtransaction so
+one foreign-key or cast error cannot abort the rest of the batch.
 
 Local mutations:
 
@@ -286,7 +328,7 @@ sync error.
 | Independent creations                | Union                                                        |
 | Count increments/decrements          | Apply each unique operation once                             |
 | Independent timed sessions           | Union; flag impossible overlaps separately                   |
-| Archive / delete lifecycle events    | Union using effective-at and server ordering                 |
+| Archive / restore / delete           | Lifecycle timestamps on the current row; same-row conflict rules apply |
 | Current definition row updates       | Latest accepted projection upsert; conflicts stay reviewable |
 | Concurrent journal text edits        | Preserve both; never choose silently                         |
 | Attachment additions                 | Union by immutable attachment ID/content hash                |
@@ -318,14 +360,26 @@ archive + count; snapshot vs local after ack.
 Resolving a definition conflict updates the **current** activity or group
 row. It does not create an effective-dated historical version.
 
+Resolution shapes:
+
+- **Activities, groups, memos** — both versions shown with differing fields
+  highlighted; the user keeps this device's version or the other one, as a
+  whole row.
+- **Journal** — side-by-side text; keep mine, keep theirs, or keep both. Keep
+  both joins the texts with a divider, opens the result for editing, and
+  unions photos and places.
+
+Every resolution is an ordinary `mutateSynced` operation. Per-field merge
+choices are not offered.
+
 ## Adding a synced field (required checklist)
 
 Before storing a new column or entity, classify it:
 
 - **Fact** (merge by `operation_id` / union) — count delta, timed session,
-  lifecycle event.
-- **Current-state** (OCC `base_revision`; conflict is reviewable) — habit row,
-  journal by date.
+  journal revision.
+- **Current-state** (OCC `base_revision`; conflict is reviewable) — habit row
+  including its lifecycle timestamps, journal by date.
 - **Local projection** (recomputed on read; never an op) — streaks, untimed
   pills, folded `task_counts`.
 
@@ -344,8 +398,9 @@ end_time`) period is stored as a fact.
 
 ## Deletion, retention, and media
 
-Normal deletion appends a tombstone/lifecycle event. The entity disappears
-from current views but remains reconstructable on earlier dates.
+Normal deletion sets the `deleted_at` tombstone. The entity disappears from
+current views but still renders on days before it was deleted, and its facts
+are kept.
 
 Permanent erasure is a separate, explicit operation for privacy and account
 deletion.
@@ -427,6 +482,11 @@ Changes in this area must test at least:
 - Archiving a habit hides it from For Today and lists it under Archived.
 - Unarchive restores it; delete from the archived actions confirms permanently.
 - Groups keep the same archive / unarchive / delete drawer pattern.
+- An archived or deleted activity still renders on days before its
+  timestamp and not after.
+- A pre-baseline device recovers through the reset path: pending ops pushed,
+  recovery bundle saved, snapshot bootstrapped, bundle re-imported with no
+  double counts.
 - Two devices increment the same activity without dropping either increment
   (RPC integration test).
 - Concurrent journal text edits remain reviewable (RPC integration test;
@@ -453,8 +513,8 @@ Changes in this area must test at least:
 Before changing related infrastructure:
 
 1. Read this entire document.
-2. Identify whether each changed table is a current definition, a recorded
-   fact, a lifecycle event, or a disposable cache.
+2. Identify whether each changed table is a current definition (including
+   lifecycle timestamps), a recorded fact, or a disposable cache.
 3. Do not add effective-dated definition versions or apply-from UI.
 4. Do not hard-delete accepted history during ordinary product operations.
 5. Do not implement a conflict policy that lacks an in-app review path.
