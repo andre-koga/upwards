@@ -301,7 +301,30 @@ upgrade chain or a natural-ID cutover. Before Dexie opens:
 
 Devices report their local schema version with their heartbeat. Legacy repair
 modules (natural-ID repair, same-date journal dedupe, storage heal, cutover
-enqueue) are deleted once no recently seen device is pre-baseline.
+enqueue) are deleted in the baseline release, after a migration window (see
+below). Devices that missed the window take the reset path.
+
+### Release gates and data migrations (2026-10-01)
+
+- **Protocol gate.** Every sync RPC receives the client's `CLIENT_PROTOCOL`
+  integer. The server rejects values below `app_config.min_client_protocol`
+  with `client_outdated`. The client shows "Update required", keeps its pending
+  queue, and reloads into the new build. Raise the minimum whenever operation
+  shapes or table semantics change.
+- **Server-side migrations with a data epoch.** Data migrations are Supabase SQL
+  migrations, idempotent when re-run, that also increment
+  `app_config.data_epoch`. A client that sees a newer epoch pushes its pending
+  operations and then re-bootstraps from `pull_sync_snapshot`. Clients never
+  run their own data conversions.
+- **Heartbeat.** `sync_devices` records `client_protocol`,
+  `local_schema_version`, and `pending_count`, so a migration window can be
+  confirmed in SQL before deploying.
+- **Migration windows.** Because the audience is small, migrations ship in a
+  coordinated window: every device synced with nothing pending, a backup taken,
+  then the client and server deploy together
+  ([`product-scope.md`](product-scope.md) §4.1). If the app opens to
+  strangers, add a grace period in which the server translates old operation
+  shapes instead of rejecting them.
 
 Duplicate pending `projection.upsert`s for the same entity are collapsed to the
 newest row before submit. Submit applies each op in its own subtransaction so
@@ -415,6 +438,8 @@ sync (full requirements in [`product-scope.md`](product-scope.md) §2.9):
 
 - Export covers every user-owned table and account setting, plus media files
   unless the user picks "data only". It never includes the AI API key.
+- Export and import first push pending operations and pull. Import is
+  disabled until the device reaches that clean state.
 - Import goes through `mutateSynced` with operation IDs derived from the
   backup's row identity, so importing the same file twice is a no-op.
 - Counts are imported as the difference from current state, never as
@@ -503,6 +528,11 @@ Changes in this area must test at least:
 - Backup round trip: export → clear → import restores the same state; importing
   the same file twice changes nothing; importing into a non-empty account does
   not double counts.
+- An outdated `CLIENT_PROTOCOL` is rejected, and pending operations survive
+  the update that follows.
+- A `data_epoch` bump makes a client push its pending operations and then
+  re-bootstrap from the snapshot.
+- Every data migration produces the same result when run twice.
 - A confirmed edit to an old journal day appends exactly one revision on every
   device, and restoring it is itself a normal reviewable journal edit.
 - A session crossing midnight (including across a DST change) appears on both

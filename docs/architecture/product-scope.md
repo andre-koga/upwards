@@ -54,6 +54,9 @@ track time. The real gap was that every activity was timeable.
   creates sessions, and never appears in session pickers. It still has a
   routine, a target (`2` for twice-daily meds), counts, completion times, and a
   streak.
+- Activities also gain **`is_pinned`** (the user's override of AI ordering). The
+  field arrives with the data migrations; the pin control arrives with the
+  redesigned Today.
 - One-time, idempotent migration: each `recurring_memo` becomes an activity with
   `tracks_time = false`, the same routine, `completion_target = 1`, pinned if it
   was pinned, archived if it was disabled. Migrated items go into a group named
@@ -196,10 +199,13 @@ photos.
 
 - The app opens to sign in / sign up. Offline-first behavior after sign-in is
   unchanged: everything applies locally first and syncs later.
-- **One-time migration** for devices that hold guest data: on first launch after
-  the change, the user is asked to sign in and the existing handoff imports
-  their local data into the account. That release is the last one carrying
-  handoff code. If someone declines, they can export a backup (§2.9) before
+- **First launch needs internet.** A fresh install cannot be used until the
+  first sign-in; after that it works offline as before. Accepted.
+- Until the redesign, the sign-in screen is a minimal full-screen version of
+  the existing auth card.
+- **Existing guest data** on a device is moved into the account by the existing
+  handoff on first sign-in. That code is deleted in the baseline cleanup
+  (§4, A8). If someone declines, they can export a backup (§2.9) before
   anything is cleared — no wipe without an explicit choice.
 - Sign-out and account switching keep the existing guarantees: no local wipe
   while operations are unacknowledged, unless the user syncs, exports, or
@@ -213,6 +219,12 @@ photos.
   geolocation calls and no reverse-geocoding requests.
 - Manual place search, up to 5 places per day, the per-day map, and the world map
   all stay.
+- Automatic location and the daily clip (§2.5) start as plain Settings toggles.
+  Friendly one-time prompts arrive with the redesign's onboarding; nothing here
+  waits on onboarding.
+- Account settings (`auto_location`, `daily_clip`, `holiday_calendars`,
+  `hemisphere`) live on the existing `user_profile` row so they follow the
+  account across devices.
 
 ### 2.8 Holidays and month banners: kept and widened
 
@@ -228,6 +240,9 @@ photos.
   and `hebrew` calendars, and a precomputed table for Hindu lunisolar dates,
   which `Intl` does not cover. Islamic dates can differ from local observance by
   a day; that is acceptable for a banner.
+- **First release:** the US and Brazil national calendars plus the global set
+  above. The holiday list is a reviewable data file; the Hindu date table
+  covers 2000–2050. More countries are added later as data, not code.
 - **Month banners are hemisphere-aware.** The current set is Northern-Hemisphere
   seasons (July is a tropical beach), which is wrong in Brazil. There will be two
   sets of 12, chosen by hemisphere and inferred from the holiday region, with an
@@ -250,8 +265,18 @@ JSON export/import is built but hidden, and it is not correct as written:
 
 Required behavior:
 
-1. **Bundle format.** A `.zip` containing `backup.json` and a `media/` folder
-   (photos, clips, posters, memory photos), plus a lighter "data only" export.
+**Sync first.** Export and import start by pushing pending operations and
+pulling. If the device cannot reach a clean state (offline, or pending
+operations that will not submit), import is disabled with an explanation. This
+is what makes "backup minus current" counts correct.
+
+1. **Bundle format.** Zips built with `fflate`, which can assemble them in
+   pieces. Three exports, so a phone never builds one huge file in memory:
+   - **Data only** — `backup.json`.
+   - **Data + photos** — `backup.json` plus `media/` (journal and memory
+     photos, video posters).
+   - **Daily clips** — one zip per year.
+
    Never include the AI API key.
 2. **Complete coverage.** Every user-owned table and account setting, including
    journal revisions, the compass and knowledge map, and lifecycle timestamps.
@@ -297,8 +322,8 @@ Stop writing always-null or superseded columns: `activity_groups.emoji`,
 `one_time_task.group_id`, `one_time_task.recurring_memo_id` (after §2.1),
 the `activities.completed_at` archive dual-write, and reads of the legacy
 `pattern` / `__group_default_hidden__` sentinels. Columns are dropped from
-Supabase only after the baseline gate below, so old clients that still send
-them do not fail.
+Supabase only in the baseline release (§4.2, A8), after the protocol gate has
+turned away the old clients that still send them.
 
 **One baseline local schema.** `lib/db/index.ts` carries 30 Dexie versions of
 upgrade steps. Several sync modules exist only to repair data from earlier
@@ -320,17 +345,19 @@ older than it:
    Anything that differs from the server lands on Sync issues; nothing is
    silently dropped.
 
-Devices report their local schema version with their heartbeat. The legacy
-modules above are deleted once no device seen recently reports a pre-baseline
-version. Any device that reappears later simply takes the reset path.
+Devices report their local schema version with their heartbeat. Because the
+audience is small (§4.1), the legacy modules are deleted in the same release
+as the baseline, right after a migration window. A device that missed the
+window simply takes the reset path when it next opens.
 
 **Lifecycle as timestamps, not event logs.** Replace `activity_status_events`
 and `group_status_events` (archive / restore / delete toggles with
 `effective_at` intervals, plus a legacy `completed` status) with two
 current-state fields on the activity and group rows:
-- `archived_at` — set on archive, cleared on restore.
-- `deleted_at` — set on permanent delete from the archive; still a tombstone,
-  never a hard delete.
+- `archived_at` (new) — set on archive, cleared on restore. Replaces the
+  `is_archived` flag and the legacy `completed_at` dual-write.
+- `deleted_at` (existing column, already written by permanent delete) — still
+  a tombstone, never a hard delete.
 
 A past day shows an activity when it existed then and was not yet archived or
 deleted: `created_at ≤ day < (archived_at ?? deleted_at ?? ∞)`. This keeps the
@@ -373,7 +400,8 @@ the user's ability to act:
 - One-off memos.
 - Start/stop time tracking and the sessions timeline (rules in §2.2).
 - The journal with emoji, title, text, up to 8 photos, places, and hearting,
-  merged with memories as one record (manifesto §3.1).
+  merged with memories as one record in the UI (manifesto §3.1); the journal
+  and memory tables stay separate.
 - Groups and activities with archive → restore → permanent delete (as
   timestamps, §2.10).
 - Day navigation: swipe and date picker.
@@ -383,33 +411,207 @@ the user's ability to act:
   the device list.
 - BYO-key AI settings, What's new, feedback, and the PWA install prompt.
 
-## 4. Order of work
+## 4. Delivery plan
 
-The cuts touch different subsystems. Do them in this order, so that each data
-migration lands before the code that depended on the old shape is deleted:
+### 4.1 Operating assumptions
 
-1. **Pure UI cuts** — palettes, quote footer, hearted gradients, Task Order page,
-   menu cleanup. No data changes.
-2. **Backup correctness** (§2.9) — idempotent import plus round-trip tests,
-   before any migration, so users can take a trustworthy backup first.
-3. **Data migrations** — recurring memos → check-only activities (Supabase
-   column `tracks_time` plus Dexie version bump), hidden group activity → named
-   activity, zero-length periods → completion times, status events → lifecycle
-   timestamps. Stop writing the entry number, stored journal streak and
-   completion flag, `current_activity_id`, the session → daily-entry link, and
-   the always-null legacy columns (§2.10). Each migration is idempotent and
-   covered by a two-device test.
-4. **Rules and lock** — midnight day boundary with the single overlap helper
-   and removal of the day-reset setting, the rest of the time-tracking
-   simplification (§2.2), edit-lock removal with confirmation and journal
-   revisions (§2.3), derived journal streak (§2.4), the activity type question
-   (§2.1), and the simplified conflict review (§2.10).
-5. **Accounts required** (§2.6) — ship the migration release, then delete the
-   guest code in the next one.
-6. **Baseline schema** (§2.10) — ship the baseline plus the reset path, add the
-   schema version to device heartbeats, and once no recent device is
-   pre-baseline, delete the legacy repair modules and drop the dead Supabase
-   columns.
-7. **Opt-ins** — automatic location (§2.7) and daily clip with the new encoder
-   (§2.5).
-8. **Holidays and banners** (§2.8), then the compilation spike.
+- **Small audience.** Upwards is used by its author and people the author can
+  message directly. Data migrations therefore run in a coordinated **migration
+  window** (below), not a multi-release rollout. If the app opens to strangers,
+  add back: a guest-data migration release, waiting for every device to pass the
+  baseline before deleting legacy code, and server-side translation of old
+  operation shapes during a grace period.
+- **Migrations run on the server.** Every data migration is a Supabase SQL
+  migration that also bumps a `data_epoch`. A device that sees a newer epoch
+  pushes its pending operations, then re-bootstraps from `pull_sync_snapshot`.
+  Devices never run their own data conversions, so they cannot disagree.
+- **Old builds are turned away.** The client sends `CLIENT_PROTOCOL` (an integer
+  in `lib/sync/sync-constants.ts`, bumped deliberately) to every sync RPC. The
+  server rejects anything below `min_client_protocol` with `client_outdated`.
+  The app then shows "Update required" and reloads into the new service worker,
+  keeping pending operations. Every migration raises the minimum.
+- **Two tracks.** Track A (data foundation) changes the current app with no new
+  UI beyond removals and minimal pieces. Track B (redesign) builds each new
+  screen once, on top of the cleaned model. Track A's UI-facing decisions (type
+  question, pin control, previous versions, conflict review) are built only in
+  Track B.
+
+**Migration window procedure**
+
+1. Announce the window. Everyone opens the app on every device and waits for
+   "All synced".
+2. Confirm in SQL that every row in `sync_devices` has been seen since the
+   announcement with `pending_count = 0`, or is a device you are deliberately
+   abandoning.
+3. Take a full backup of your account (§2.9) and a Supabase database backup.
+4. Deploy the client release and the server migration together. The migration
+   raises `min_client_protocol` and `data_epoch`.
+5. Devices update, push, and re-bootstrap.
+6. Spot-check counts, streaks, timeline, and journal against the backup on two
+   devices.
+
+A device that missed the window is caught by the version gate and, after A8,
+by the recovery-bundle reset path. Nothing it holds is discarded silently.
+
+### 4.2 Track A — data foundation
+
+Each item is one pull request unless noted. "Done" always also means `tsc -b`,
+ESLint, Vitest, and the integration suite pass, user-visible changes appear in
+What's New in `en` and `pt`, and nothing in
+[`temporal-data-sync.md`](temporal-data-sync.md) is contradicted.
+
+**A1. Release gates.** Protocol version, data epoch, device heartbeat.
+- Server: an `app_config` row with `min_client_protocol` and `data_epoch`.
+  `submit_sync_operations`, `pull_sync_operations`, and `pull_sync_snapshot`
+  take `p_client_protocol` (defaulting to 0, so old builds are rejected once
+  the minimum is above 0) and return `data_epoch`. `sync_devices` gains
+  `client_protocol`, `local_schema_version`, and `pending_count`.
+- Client: send the protocol on every call. Handle `client_outdated` with an
+  "Update required" screen. Store the last seen epoch; on a newer one, push and
+  then snapshot. Report the heartbeat fields.
+- Tests: integration (outdated protocol rejected; epoch bump causes snapshot
+  bootstrap with no lost pending ops); unit tests for the client handling.
+- Done when: raising `min_client_protocol` in SQL makes an older build show
+  "Update required" and its pending operations survive the update.
+
+**A2. Backup correctness** (§2.9).
+- Move `components/settings/use-data-backup.ts` into `lib/backup/` (`format.ts`,
+  `export.ts`, `import.ts`, `migrators/`). Rewrite `importBackup` in
+  `lib/sync/mutate-synced.ts`. Add `fflate`. Re-enable `backup-card.tsx`.
+- Sync first; three exports; operation IDs derived from row identity; counts as
+  differences; journal differences as conflicts; media upload deduped by content
+  hash.
+- Tests: round trip; import twice is a no-op; import into a non-empty account
+  does not double counts; a coverage test that fails when a user-owned Dexie
+  table is missing from the format.
+- Done when: the three tests pass, and a manual export → import on a phone and
+  a desktop restores data and photos.
+
+**A3. Removals with no data change.**
+- Palettes (`lib/themes.ts`, `lib/palette.ts`, `appearance-card.tsx`; clear the
+  stored key), the quote footer (`lib/habit-quotes.ts`), hearted gradient
+  washes, Logs and GitHub moved to Settings › About.
+- Session details lose timed ⇄ untimed conversion; manual entry requires start
+  and end.
+- Done when: nothing references the removed modules, and the existing session
+  and manual-entry tests are updated to the reduced behavior.
+
+**A4. Midnight days and the overlap helper** (§1 day-reset row, §2.2).
+- Delete `lib/session/day-reset.ts` and `day-reset-card.tsx`. Replace
+  `getEffectiveToday()` with the local date across its ~26 callers. Turn
+  `use-day-reset-timer.ts` into a UI-only midnight timer.
+- Reduce `lib/activity/period-day-utils.ts` to `sessionsOnDay` and
+  `sessionShareOfDay`. The timeline, totals, streaks, and the AI payload all
+  use them.
+- What's New explains that 00:00–04:00 now belongs to the new day.
+- Tests: cross-midnight and DST shares sum to the full duration; a running
+  session started yesterday appears on today.
+
+**A5. Editable past, confirmation, revisions** (§2.3, §2.4).
+- Delete `lib/journal/editable-window.ts` and the locked-session paths. Saving
+  changes to a day older than 7 days asks for confirmation via `AlertDialog`.
+- Server and Dexie: a `journal_entry_revisions` table with RLS, an append-only
+  revision operation, and a `mutateSynced` command. Photo and clip deletion
+  skips objects that a revision references. Revisions are recorded now; the
+  restore UI comes in B3.
+- Derive the journal streak; stop writing `journal_completion_streak` and
+  `journal_entry_number`.
+- Tests: two devices append one revision each and both see both; the
+  confirmation threshold; a backfilled day heals the streak.
+
+**A6. Migration window 1: model cutover** (§2.1, §2.2, §2.10). Two PRs that
+ship together in one window: A6a (server) and A6b (client).
+- A6a — Supabase migration:
+  - add `activities.tracks_time`, `activities.is_pinned`, and `archived_at` on
+    activities and groups;
+  - convert recurring memos into "Routines" activities, hidden group
+    activities into named ones (the group's name, or "Group · general" on a
+    clash), and lifecycle events into timestamps (a legacy `completed` status
+    counts as archived);
+  - set `tracks_time = false` on avoid habits;
+  - for zero-length sessions, the day's count is the truth: the session donates
+    its time and note to `completion_times` / `completion_notes` only when that
+    day's count reached the target, and is otherwise ignored; nothing is
+    deleted;
+  - make the status-event and `recurring_memo` tables read-only, and reject
+    their operation types in `submit_sync_operations`;
+  - stop requiring `activity_periods.daily_entry_id` and stop creating
+    daily-entry shells;
+  - raise `min_client_protocol` and `data_epoch`.
+- A6b — client:
+  - delete `lib/activity/status-events.ts`, `lib/memos/spawn-recurring-memos.ts`
+    and the recurring memo dialogs, `lib/activity/hidden-default.ts`, and the
+    `isUntimedPeriod` read paths;
+  - archive and restore write `archived_at`;
+  - Today hides the timer when `tracks_time` is false, and the current
+    activity dialog gets a minimal "Track time" switch until B2;
+  - stop writing `is_journal_complete`, `journal_completed_at`,
+    `current_activity_id`, and the always-null columns;
+  - sessions are queried by time.
+- Tests: each SQL step is idempotent (run twice, same result); a two-device
+  integration test after cutover; past days render archived and deleted items
+  correctly.
+- Done when: the window procedure (§4.1) is executed and spot-checked.
+
+**A7. Accounts required** (§2.6).
+- Unauthenticated users see the minimal sign-in screen. The existing handoff
+  moves guest data on first sign-in.
+- Done when: a fresh install requires sign-in; a guest device signs in and keeps
+  its data; signed-in offline use is unchanged.
+
+**A8. Baseline schema and legacy deletion** (§2.10). Migration window 2.
+- Dexie: collapse `lib/db/index.ts` to one baseline version. Pre-baseline
+  devices take the recovery path (push, recovery bundle in the A2 data-only
+  format, delete, snapshot, re-import).
+- Delete: `lib/sync/identity-repair.ts`, `lib/journal/dedupe-by-date.ts` and its
+  reconcile pass, the `sync-storage.ts` heal step, the cutover flags and
+  enqueue, and the guest code (`auth-handoff.ts`, `guest-handoff-emitter.ts`,
+  `rekey-guest-rows`, `auth-data-handoff-dialog.tsx`).
+- Supabase: drop the dead columns listed in §2.10. Keep the read-only legacy
+  tables.
+- Tests: a seeded old-version IndexedDB recovers with no double counts; the
+  suite passes with the modules deleted.
+
+**A9. Account settings and opt-ins** (§2.5, §2.7).
+- `user_profile` columns from §2.7 and Settings toggles. Automatic location is
+  off by default and makes no geolocation or geocoding calls while off. The
+  daily clip toggle hides the video slot, the video filter, and posters.
+- This can land any time after A1.
+
+**A10. Daily clip encoder, then the compilation spike** (§2.5).
+- Replace `lib/journal/video-compression.ts` with WebCodecs encoding (via
+  Mediabunny or an equivalent muxer) to H.264/AAC MP4.
+- Run the spike on a recent iPhone and a mid-range Android phone; record the
+  results in this document. The compilation UI is B7.
+
+**A11. Holiday engine** (§2.8).
+- Replace `lib/journal/holidays.ts` with calendar data files: US, Brazil, the
+  global set, and the 2000–2050 Hindu table. Rules: fixed dates, Easter, and
+  `Intl` calendars. Hemisphere-aware month selection, with calendars chosen
+  from A9's settings. Banner images are generated in B3.
+
+Dependencies: A1 comes first. A2 before A6, so trustworthy backups exist.
+A3, A4, A5, A9, A10, and A11 are independent of each other after A1. A6
+before A7, and A7 before A8.
+
+### 4.3 Track B — redesign
+
+Track B gets its own breakdown before it starts. Its shape:
+
+- **B0.** Mock the screens the flagship lacks: previous versions, conflict
+  review, the activity type question, sign-in, onboarding.
+- **B1.** Adaptive shell and navigation (Home / Today / Journal / You, `⌘K`).
+  Reconcile with the existing `cursor/adaptive-app-shell-5a78` branch first.
+- **B2.** Today: activity rows, the type question, the pin control, AI
+  ordering with reasons and a no-AI fallback. Then remove the task-order page.
+- **B3.** Journal: one record across the journal and memory tables (the merge is
+  UI-only; the tables stay separate). Feed, calendar, map, and gallery;
+  previous versions with restore; generated month and holiday banners.
+- **B4.** Home: AI insight surfaces on the existing AI groundwork.
+- **B5.** You / compass and onboarding, including the one-time daily clip and
+  location prompts. The compass needs a data-model pass in
+  [`temporal-data-sync.md`](temporal-data-sync.md) before code.
+- **B6.** Conflict review rebuilt with the §2.10 resolution shapes, replacing
+  the per-field card and resolvers.
+- **B7.** Month and year clip compilations, if the A10 spike passed.
+- **B8.** Settings and sign-in restyled.
