@@ -42,7 +42,7 @@ const NAV: { id: TabId; label: string; icon: LucideIcon; key: string }[] = [
 const SECONDARY = [
   { label: "Projects & groups", icon: FolderKanban, hint: "3 · archive" },
   { label: "Appearance", icon: Palette, hint: "System · Light · Dark" },
-  { label: "Settings", icon: Settings2, hint: "Language, day reset, AI key" },
+  { label: "Settings", icon: Settings2, hint: "Language, holidays, AI key" },
 ];
 
 function Wordmark({ compact = false }: { compact?: boolean }) {
@@ -346,7 +346,7 @@ function ContextRail({ tab }: { tab: TabId }) {
         <MonoLabel>Day window</MonoLabel>
         <p className="mt-1.5 flex items-center gap-1.5 text-xs text-[var(--muted)]">
           <Timer className="size-3.5 shrink-0" />
-          Resets at 4:00 AM · next in 10h 18m
+          New day at midnight · in 5h 18m
         </p>
         <p className="mt-2 text-[0.66rem] leading-5 text-[var(--faint)]">
           Every day stays editable. Changes to days older than a week ask

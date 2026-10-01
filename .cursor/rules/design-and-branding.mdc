@@ -46,7 +46,8 @@ Treat that document as binding repository guidance. Non-negotiables:
   BYO-key AI) must be represented. Removed features (named palettes, quote
   footer, hearted-entry gradients, per-day pause, entry numbers, hidden group
   activities, timed⇄untimed conversion, guest mode, task-order screen, 7-day
-  edit lock) must not be designed for. Changing either list requires updating
+  edit lock, configurable day-reset hour — days end at midnight) must not be
+  designed for. Changing either list requires updating
   `product-scope.md` first.
 - **Copy in both `en` and `pt`**, through i18n. Hardcoded English is a defect.
 - **Keyboard equivalent for every pointer interaction**; labels on icon-only

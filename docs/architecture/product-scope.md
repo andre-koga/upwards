@@ -37,6 +37,7 @@ with the product tradeoff that changed.
 | **End-only manual time entry** (meaning "untimed") | Same reason: it is a hidden second way to create a completion. | Manual entry requires start and end. To record "done at 9pm" without a duration, check the task and set its completion time. |
 | **Guest mode** (using the app without an account) | The AI needs an account, and the guest identity, rekeying, and guest→account handoff are among the most fragile code paths. | An account is required. See §2.6 for the one-time migration. Afterwards, delete `lib/sync/auth-handoff.ts`, `guest-handoff-emitter.ts`, `rekey-guest-rows`, `components/settings/auth-data-handoff-dialog.tsx`, and the `guest:{device_id}` identity. |
 | **Standalone Task Order page** (`pages/task-order.tsx`) | Ordering is now done by the AI with an explanation per task, and the user overrides by pinning. A separate global up/down list is a second, competing ordering system. | Remove the page and its Settings entry. Fallback order when the AI is not configured: pinned → not yet done → existing `order_index`. `order_index` stays in the schema but is no longer editable. |
+| **Configurable day-reset hour** (default 4 AM, up to 8 AM) | A day that ends at an arbitrary hour forces every date calculation through an "effective today" layer: render-time clipping of sessions, boundary labels, and logical-day math in streaks, the journal, memos, and AI aggregation. The setting also lives in device `localStorage`, so two devices could disagree about which day it is. | Days always end at local midnight. Delete `lib/session/day-reset.ts`, `components/settings/day-reset-card.tsx`, and the clipping in `lib/activity/period-day-utils.ts`; `getEffectiveToday()` becomes the plain local date. The day timer (`hooks/use-day-reset-timer.ts`) becomes a midnight timer used for the session split (§2.2) and memo carry-forward. No rewrite of past facts: counts, break days, and journal entries stay on the dates they were recorded on. **Behavior change:** because the old default was 4 AM, anything done between midnight and 4 AM now belongs to the new day. The lifted edit lock (§2.3) makes it easy to log a late-night item on yesterday instead. |
 | **Error Logs and GitHub link in the main menu** | Developer tools in a personal-life app's primary navigation. | Both move to Settings › About. The `/logs` route stays for support. |
 
 ## 2. Changed
@@ -58,7 +59,7 @@ track time. The real gap was that every activity was timeable.
   "Routines", which the user can rename. Memos already spawned stay as one-time
   memos, so history is untouched.
 - Then remove `lib/memos/spawn-recurring-memos.ts`, the recurring memo dialogs,
-  and the day-reset spawn step. The `recurring_memo` table stops receiving
+  and the spawn step at day change. The `recurring_memo` table stops receiving
   writes.
 - **One-off memos stay** (quick add, due date, pin, carry-forward, archive):
   simple tasks are genuinely useful and feed the AI.
@@ -74,19 +75,37 @@ documented.
 2. **One session runs at a time.** Starting another stops the current one at
    the same instant. The running session is the one with `end = null`; no
    separate "current activity" state.
-3. A session **belongs to the logical day it starts in** (after the
-   configurable day-reset hour). Sessions that cross the boundary are not split
-   or shown on two days. This replaces the current overlap-based day membership.
-4. A session shorter than **5 seconds with no note** is discarded on stop as an
-   accidental tap.
-5. **Completions are not sessions.** Checking a task records a count, with an
+3. **A day is a local calendar date, midnight to midnight.** There is no
+   configurable day boundary (see §1).
+4. **No session crosses midnight.** A session still running at 00:00 is ended
+   at 00:00, and a continuation of the same activity starts at 00:00 on the
+   new day. Every session therefore lies inside one day, and day membership is
+   just the date of `start`. No clipping, overlap math, or boundary labels.
+   - The split runs when the app is open at midnight (a timer scheduled for the
+     next 00:00) and as a catch-up whenever the app starts, resumes, syncs, or
+     stops the timer. A session that has been open across several midnights is
+     split into one session per day.
+   - The continuation's ID is derived deterministically from the original
+     session's ID and the new date, and the original's end is exactly 00:00.
+     Two offline devices that both perform the split produce identical rows,
+     so the union merges them instead of duplicating time.
+   - The note stays on the first part. The running pill shows elapsed time
+     since 00:00.
+   - Midnight is computed with local calendar arithmetic in the device's time
+     zone, never as "start + 24h".
+   - A one-time, idempotent migration splits historical sessions that cross
+     midnight the same way, so the rule holds for every row and the read path
+     can drop its clipping code.
+5. A session shorter than **5 seconds with no note** is discarded when the user
+   stops it, as an accidental tap. Automatic midnight splits are exempt.
+6. **Completions are not sessions.** Checking a task records a count, with an
    optional completion time, on the day. The timeline shows derived "done at
    HH:MM" rows next to real sessions. Legacy zero-length period rows are folded
    into completion times by a one-time migration and no longer read as periods.
    They are not hard-deleted.
-6. **Overlaps** can only come from manual edits. They are shown inline on the
+7. **Overlaps** can only come from manual edits. They are shown inline on the
    timeline rows involved, not raised as sync issues.
-7. Kept as-is: the live running pill, the timeline with day total, session
+8. Kept as-is: the live running pill, the timeline with day total, session
    notes, manual entry (start + end), reassigning an activity, delete, the ▶
    "start again" button on timeline rows (it calls the normal start), and the
    unknown-activity repair for orphaned sessions.
@@ -245,7 +264,7 @@ the user's ability to act:
 - The journal with emoji, title, text, up to 8 photos, places, and hearting,
   merged with memories as one record (manifesto §3.1).
 - Groups with archive → restore → permanent delete lifecycle.
-- Day navigation: swipe, date picker, configurable day-reset hour.
+- Day navigation: swipe and date picker.
 - Month and holiday banners (§2.8), the world map.
 - English and Português (Brasil).
 - Sync status, conflict review, pending operations, and the device list.
@@ -262,12 +281,13 @@ migration lands before the code that depended on the old shape is deleted:
    before any migration, so users can take a trustworthy backup first.
 3. **Data migrations** — recurring memos → check-only activities (Supabase
    column `tracks_time` plus Dexie version bump), hidden group activity → named
-   activity, zero-length periods → completion times, stop writing the entry
-   number and stored journal streak. Each migration is idempotent and covered by
-   a two-device test.
-4. **Rules and lock** — the time-tracking simplification (§2.2), edit-lock
-   removal with confirmation and journal revisions (§2.3), derived journal
-   streak (§2.4).
+   activity, zero-length periods → completion times, historical sessions split
+   at midnight, stop writing the entry number and stored journal streak. Each
+   migration is idempotent and covered by a two-device test.
+4. **Rules and lock** — midnight day boundary with the automatic session split
+   and removal of the day-reset setting, the rest of the time-tracking
+   simplification (§2.2), edit-lock removal with confirmation and journal
+   revisions (§2.3), derived journal streak (§2.4).
 5. **Accounts required** (§2.6) — ship the migration release, then delete the
    guest code in the next one.
 6. **Opt-ins** — automatic location (§2.7) and daily clip with the new encoder

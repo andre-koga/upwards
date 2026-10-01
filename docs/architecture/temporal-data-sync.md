@@ -7,8 +7,10 @@ Status: **Required direction** — updated 2026-10-01
 [`product-scope.md`](product-scope.md) removed or reshaped several features. The
 data-model consequences recorded below are: accounts are required (no guest
 identity), recurring memos migrate to check-only activities (`tracks_time`),
-the hidden group-default activity becomes an ordinary activity, sessions belong
-to the logical day they start in, the 7-day edit lock is replaced by a
+the hidden group-default activity becomes an ordinary activity, days always end
+at local midnight (no configurable reset hour) and a session running at
+midnight is split into a deterministic continuation, the 7-day edit lock is
+replaced by a
 confirmation plus append-only journal revisions, the journal streak is derived
 instead of stored, per-day pause is historical-only, and backup import is an
 idempotent merge through the operation log.
@@ -36,7 +38,7 @@ immutable definition versions as the source of historical truth.
 What still is **not** current-row-only:
 
 - Daily facts (counts, pauses, break days, sessions, journal content) stay
-  recorded per logical day.
+  recorded per calendar day (local midnight to midnight).
 - Archive and delete append lifecycle events so a habit or group can remain
   visible on earlier days after it leaves the current list.
 - Sync retries stay idempotent. Concurrent journal edits and other true
@@ -165,8 +167,10 @@ time. Stale bases become reviewable conflicts.
 - `recurring_memo` — legacy. Migrated once to check-only activities and no
   longer written.
 - Timed `activity_period` rows — real sessions with `end > start` (or open with
-  `end` null). Keyed by period UUID. A session belongs to the logical day of
-  its `start_time`.
+  `end` null). Keyed by period UUID. A day is the local calendar date, midnight
+  to midnight, and no session crosses midnight: a session still running at
+  00:00 is ended at 00:00 and continued by a new session starting at 00:00.
+  The session's day is the date of its `start_time`.
 
 The `activity_definition_versions` and `group_definition_versions` Dexie tables
 are gone as of schema v28. Nothing had appended to them since effective-dated
@@ -223,6 +227,7 @@ Updating a projection is not a history violation.
 | Daily entry | `(user_id, date)` | Same. Shell rows may be created locally as a projection; counts still arrive via ops. |
 | Untimed completion | none | Do not insert an `activity_periods` row. |
 | Timed session | period UUID | Union by id; tombstone is explicit. |
+| Midnight continuation | `(original period id, date)` | Deterministic UUID; the original's end is exactly 00:00 of that date. Devices that split the same session independently produce identical rows. |
 | Habit / group | UUID | Stable from first create. |
 
 Every user is signed in; there is no guest mode. Rows keyed with
@@ -441,6 +446,9 @@ Changes in this area must test at least:
   not double counts.
 - A confirmed edit to an old journal day appends exactly one revision on every
   device, and restoring it is itself a normal reviewable journal edit.
+- Two offline devices that both split the same running session at midnight
+  converge on one original (ending 00:00) and one continuation, with no
+  duplicated time.
 
 ## Rules for AI agents and contributors
 

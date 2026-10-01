@@ -190,7 +190,7 @@ Four primary destinations. This is a hard cap on the mobile tab bar.
 | **You** | The compass: identity, north star, goals, strategies, check-ins | Editorial + AI |
 
 Everything else is secondary and reached from a profile/overflow menu or `⌘K`:
-Projects/groups, Settings (appearance, language, day-reset, holiday calendars,
+Projects/groups, Settings (appearance, language, holiday calendars,
 daily clip, automatic location, account, sync, AI key, backup), Sync issues,
 What's new, Feedback, and About (version, error logs, source link).
 
@@ -246,8 +246,9 @@ first.
 
 **Time tracking** (full rule set in [`product-scope.md`](product-scope.md) §2.2)
 - Start/stop with a **live running pill** (group color, elapsed clock, STOP).
-- One session at a time; a session belongs to the day it starts; sub-5s
-  sessions without a note are discarded.
+- One session at a time. Days run midnight to midnight, and a session still
+  running at 00:00 continues as a new session on the new day. Sub-5s sessions
+  without a note are discarded.
 - **Timeline**: newest-first list of the day's sessions, day total in the header,
   group-colored dots, session notes inline, ▶ "start again" on each row, and
   overlaps flagged inline.
@@ -282,8 +283,8 @@ first.
 
 **Day navigation**
 - Swipe left/right between days, clamped at today; date picker with entry and
-  bookmark markers; configurable **day-reset hour**; retired-activity
-  explanation on past days.
+  bookmark markers; retired-activity explanation on past days. Days always end
+  at local midnight.
 
 **System**
 - Appearance: System / Light / Dark.
@@ -301,7 +302,8 @@ first.
 named color palettes, the habit-quote footer, gradient washes on hearted
 entries, per-day activity pause, journal entry numbers, hidden group-default
 activities, timed ⇄ untimed session conversion, end-only manual entries, guest
-mode, the task-order screen, and the 7-day edit lock. Do not design for them.
+mode, the task-order screen, the 7-day edit lock, and the configurable
+day-reset hour. Do not design for them.
 
 ---
 
