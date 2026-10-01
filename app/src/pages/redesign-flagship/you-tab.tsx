@@ -283,7 +283,7 @@ export function YouTab() {
           <MonoLabel>Account & data</MonoLabel>
         </div>
         {[
-          { label: "Appearance", hint: "System / Light / Dark · 9 palettes" },
+          { label: "Appearance", hint: "System / Light / Dark" },
           { label: "Language", hint: "English · Português (BR)" },
           { label: "Day reset time", hint: "4:00 AM" },
           { label: "AI insights", hint: "Your key, your model · test connection" },

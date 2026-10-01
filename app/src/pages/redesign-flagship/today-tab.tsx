@@ -187,34 +187,39 @@ function ActivityRow({
           />
         ) : null}
 
-        {/* Start/stop timer — the feature the earlier mockup dropped entirely. */}
-        <Button
-          type="button"
-          variant="bare"
-          size="iconRoundSm"
-          className={cn(
-            "shrink-0 border",
-            a.running
-              ? "border-[var(--terracotta)] bg-[var(--terracotta)] text-white"
-              : "border-[var(--line)] bg-[var(--paper)] text-[var(--muted)]"
-          )}
-          aria-label={a.running ? `Stop timing ${a.title}` : `Start timing ${a.title}`}
-        >
-          {a.running ? (
-            <Square className="size-3 fill-current" />
-          ) : (
-            <Play className="size-3 fill-current" />
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="bare"
-          size="iconRoundSm"
-          className="shrink-0 text-[var(--faint)]"
-          aria-label={`Add time manually to ${a.title}`}
-        >
-          <Plus className="size-3.5" />
-        </Button>
+        {a.tracksTime === false ? null : (
+          <>
+            <Button
+              type="button"
+              variant="bare"
+              size="iconRoundSm"
+              className={cn(
+                "shrink-0 border",
+                a.running
+                  ? "border-[var(--terracotta)] bg-[var(--terracotta)] text-white"
+                  : "border-[var(--line)] bg-[var(--paper)] text-[var(--muted)]"
+              )}
+              aria-label={
+                a.running ? `Stop timing ${a.title}` : `Start timing ${a.title}`
+              }
+            >
+              {a.running ? (
+                <Square className="size-3 fill-current" />
+              ) : (
+                <Play className="size-3 fill-current" />
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="bare"
+              size="iconRoundSm"
+              className="shrink-0 text-[var(--faint)]"
+              aria-label={`Add time manually to ${a.title}`}
+            >
+              <Plus className="size-3.5" />
+            </Button>
+          </>
+        )}
         <ShortcutChip>{index + 1}</ShortcutChip>
       </div>
       {a.aiReason ? (
@@ -310,8 +315,8 @@ function Timeline() {
       ))}
       <p className="px-4 py-2 text-[0.66rem] text-[var(--faint)]">
         <Clock3 className="mr-1 inline size-3" />
-        Untimed rows are completions without a duration. Tap any row to edit,
-        reassign, or replay it.
+        Untimed rows are completions without a duration. Tap a session to edit
+        or reassign it, or ▶ to start it again.
       </p>
     </Card>
   );
@@ -356,11 +361,6 @@ function Memos() {
           >
             {m.title}
           </p>
-          {m.recurring ? (
-            <span className="shrink-0 rounded-md bg-[var(--sage)] px-1.5 py-0.5 font-mono text-[0.58rem] uppercase text-[var(--green)]">
-              recurring
-            </span>
-          ) : null}
           {m.due ? (
             <span className="shrink-0 font-mono text-[0.66rem] text-[var(--muted)]">
               {m.due}

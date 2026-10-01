@@ -176,7 +176,7 @@ function TodayEntry() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <MonoLabel>
-              Entry #{e.entryNumber} · {e.dateLabel}
+              {e.dateLabel}
             </MonoLabel>
             <h2 className="mt-1.5 font-display text-2xl leading-tight tracking-[-0.02em] text-[var(--ink)]">
               {e.title}

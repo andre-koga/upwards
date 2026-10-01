@@ -41,7 +41,7 @@ const NAV: { id: TabId; label: string; icon: LucideIcon; key: string }[] = [
 
 const SECONDARY = [
   { label: "Projects & groups", icon: FolderKanban, hint: "3 · archive" },
-  { label: "Appearance", icon: Palette, hint: "Dark · 9 palettes" },
+  { label: "Appearance", icon: Palette, hint: "System · Light · Dark" },
   { label: "Settings", icon: Settings2, hint: "Language, day reset, AI key" },
 ];
 
@@ -349,8 +349,8 @@ function ContextRail({ tab }: { tab: TabId }) {
           Resets at 4:00 AM · next in 10h 18m
         </p>
         <p className="mt-2 text-[0.66rem] leading-5 text-[var(--faint)]">
-          Days older than 7 are read-only. Editing a past day re-propagates
-          streaks forward.
+          Every day stays editable. Changes to days older than a week ask
+          first, and earlier versions of an entry stay restorable.
         </p>
       </Card>
     </aside>

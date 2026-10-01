@@ -21,6 +21,8 @@ export const todayActivities: {
   running?: boolean;
   pinned?: boolean;
   aiReason?: string;
+  /** Check-only activities (meds, vitamins) set this false: no timer. */
+  tracksTime?: boolean;
 }[] = [
   {
     title: "Morning pages",
@@ -41,6 +43,17 @@ export const todayActivities: {
     running: true,
     trackedMs: 3_930_000,
     aiReason: "Starts on time 3x more often after two quick wins",
+  },
+  {
+    title: "Meds",
+    group: "Routines",
+    color: "#6e8f9c",
+    kind: "counter",
+    count: 1,
+    target: 2,
+    streak: 31,
+    pinned: true,
+    tracksTime: false,
   },
   {
     title: "Glasses of water",
@@ -79,8 +92,7 @@ export const anytimeActivities = [
 export const memos = [
   { title: "Book the dentist", due: "Today", pinned: true, done: false },
   { title: "Reply to Sam about the quote", due: "Tomorrow", pinned: false, done: false },
-  { title: "Order the tile samples", due: null, pinned: false, done: true, recurring: false },
-  { title: "Water the plants", due: "Today", pinned: false, done: false, recurring: true },
+  { title: "Order the tile samples", due: null, pinned: false, done: true },
 ];
 
 // --- Today: the sessions timeline ----------------------------------------
@@ -277,7 +289,7 @@ export const paletteGroups = [
   {
     label: "Settings",
     items: [
-      { icon: "setting", title: "Appearance", meta: "Theme · 9 palettes" },
+      { icon: "setting", title: "Appearance", meta: "System · Light · Dark" },
       { icon: "setting", title: "AI insights", meta: "Base URL · model · key" },
     ],
   },
