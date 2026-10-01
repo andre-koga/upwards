@@ -37,7 +37,7 @@ with the product tradeoff that changed.
 | **End-only manual time entry** (meaning "untimed") | Same reason: it is a hidden second way to create a completion. | Manual entry requires start and end. To record "done at 9pm" without a duration, check the task and set its completion time. |
 | **Guest mode** (using the app without an account) | The AI needs an account, and the guest identity, rekeying, and guest→account handoff are among the most fragile code paths. | An account is required. See §2.6 for the one-time migration. Afterwards, delete `lib/sync/auth-handoff.ts`, `guest-handoff-emitter.ts`, `rekey-guest-rows`, `components/settings/auth-data-handoff-dialog.tsx`, and the `guest:{device_id}` identity. |
 | **Standalone Task Order page** (`pages/task-order.tsx`) | Ordering is now done by the AI with an explanation per task, and the user overrides by pinning. A separate global up/down list is a second, competing ordering system. | Remove the page and its Settings entry. Fallback order when the AI is not configured: pinned → not yet done → existing `order_index`. `order_index` stays in the schema but is no longer editable. |
-| **Configurable day-reset hour** (default 4 AM, up to 8 AM) | A day that ends at an arbitrary hour forces every date calculation through an "effective today" layer: render-time clipping of sessions, boundary labels, and logical-day math in streaks, the journal, memos, and AI aggregation. The setting also lives in device `localStorage`, so two devices could disagree about which day it is. | Days always end at local midnight. Delete `lib/session/day-reset.ts`, `components/settings/day-reset-card.tsx`, and the clipping in `lib/activity/period-day-utils.ts`; `getEffectiveToday()` becomes the plain local date. The day timer (`hooks/use-day-reset-timer.ts`) becomes a midnight timer used for the session split (§2.2) and memo carry-forward. No rewrite of past facts: counts, break days, and journal entries stay on the dates they were recorded on. **Behavior change:** because the old default was 4 AM, anything done between midnight and 4 AM now belongs to the new day. The lifted edit lock (§2.3) makes it easy to log a late-night item on yesterday instead. |
+| **Configurable day-reset hour** (default 4 AM, up to 8 AM) | A day that ends at an arbitrary hour forces every date calculation through an "effective today" layer: render-time clipping of sessions, boundary labels, and logical-day math in streaks, the journal, memos, and AI aggregation. The setting also lives in device `localStorage`, so two devices could disagree about which day it is. | Days always end at local midnight. Delete `lib/session/day-reset.ts` and `components/settings/day-reset-card.tsx`, and reduce `lib/activity/period-day-utils.ts` to the single midnight-based overlap helper (§2.2). `getEffectiveToday()` becomes the plain local date. The day timer (`hooks/use-day-reset-timer.ts`) becomes a UI-only midnight timer that rolls Today over and runs memo carry-forward. No rewrite of past facts: counts, break days, and journal entries stay on the dates they were recorded on. **Behavior change:** because the old default was 4 AM, anything done between midnight and 4 AM now belongs to the new day. The lifted edit lock (§2.3) makes it easy to log a late-night item on yesterday instead. |
 | **Error Logs and GitHub link in the main menu** | Developer tools in a personal-life app's primary navigation. | Both move to Settings › About. The `/logs` route stays for support. |
 
 ## 2. Changed
@@ -77,27 +77,31 @@ documented.
    separate "current activity" state.
 3. **A day is a local calendar date, midnight to midnight.** There is no
    configurable day boundary (see §1).
-4. **No session crosses midnight.** A session still running at 00:00 is ended
-   at 00:00, and a continuation of the same activity starts at 00:00 on the
-   new day. Every session therefore lies inside one day, and day membership is
-   just the date of `start`. No clipping, overlap math, or boundary labels.
-   - The split runs when the app is open at midnight (a timer scheduled for the
-     next 00:00) and as a catch-up whenever the app starts, resumes, syncs, or
-     stops the timer. A session that has been open across several midnights is
-     split into one session per day.
-   - The continuation's ID is derived deterministically from the original
-     session's ID and the new date, and the original's end is exactly 00:00.
-     Two offline devices that both perform the split produce identical rows,
-     so the union merges them instead of duplicating time.
-   - The note stays on the first part. The running pill shows elapsed time
-     since 00:00.
-   - Midnight is computed with local calendar arithmetic in the device's time
-     zone, never as "start + 24h".
-   - A one-time, idempotent migration splits historical sessions that cross
-     midnight the same way, so the rule holds for every row and the read path
-     can drop its clipping code.
+4. **Sessions are stored as they happened and never split or auto-stopped.**
+   Each day's view computes its share at read time. One pure helper owns this,
+   and the timeline, day totals, week stats, and the AI payload all call it:
+   - A session is on a day when `start < dayEnd && (end ?? now) > dayStart`.
+   - Its time on that day is `min(end ?? now, dayEnd) − max(start, dayStart)`.
+   - `dayStart`/`dayEnd` are local midnights computed with calendar arithmetic
+     in the device's time zone, never "start + 24h", so DST days are 23 or 25
+     hours.
+
+   A session that crosses midnight appears on both days. Each row shows its
+   real times with a quiet "from yesterday" or "continues tomorrow" marker,
+   and each day's total counts only that day's share, so totals across days add
+   up exactly. Editing or deleting acts on the one session, and the dialog says
+   when it spans two days. The running pill shows the session's full elapsed
+   time.
+
+   Nothing is written at midnight: no splitting, no catch-up, no migration, no
+   generated IDs. The only midnight timer is a UI one that rolls Today over to
+   the new date.
+
+   Auto-stopping at midnight was rejected. It silently loses real time
+   (23:00–01:00 would record one hour), and because the app is often closed
+   at midnight it still needs a catch-up write on next launch.
 5. A session shorter than **5 seconds with no note** is discarded when the user
-   stops it, as an accidental tap. Automatic midnight splits are exempt.
+   stops it, as an accidental tap.
 6. **Completions are not sessions.** Checking a task records a count, with an
    optional completion time, on the day. The timeline shows derived "done at
    HH:MM" rows next to real sessions. Legacy zero-length period rows are folded
@@ -281,10 +285,10 @@ migration lands before the code that depended on the old shape is deleted:
    before any migration, so users can take a trustworthy backup first.
 3. **Data migrations** — recurring memos → check-only activities (Supabase
    column `tracks_time` plus Dexie version bump), hidden group activity → named
-   activity, zero-length periods → completion times, historical sessions split
-   at midnight, stop writing the entry number and stored journal streak. Each
-   migration is idempotent and covered by a two-device test.
-4. **Rules and lock** — midnight day boundary with the automatic session split
+   activity, zero-length periods → completion times, stop writing the entry
+   number and stored journal streak. Each migration is idempotent and covered by
+   a two-device test.
+4. **Rules and lock** — midnight day boundary with the single overlap helper
    and removal of the day-reset setting, the rest of the time-tracking
    simplification (§2.2), edit-lock removal with confirmation and journal
    revisions (§2.3), derived journal streak (§2.4).

@@ -246,9 +246,10 @@ first.
 
 **Time tracking** (full rule set in [`product-scope.md`](product-scope.md) §2.2)
 - Start/stop with a **live running pill** (group color, elapsed clock, STOP).
-- One session at a time. Days run midnight to midnight, and a session still
-  running at 00:00 continues as a new session on the new day. Sub-5s sessions
-  without a note are discarded.
+- One session at a time. Days run midnight to midnight. A session that crosses
+  midnight shows on both days with a quiet "from yesterday" / "continues
+  tomorrow" marker, and each day totals only its share. Sub-5s sessions without
+  a note are discarded.
 - **Timeline**: newest-first list of the day's sessions, day total in the header,
   group-colored dots, session notes inline, ▶ "start again" on each row, and
   overlaps flagged inline.
