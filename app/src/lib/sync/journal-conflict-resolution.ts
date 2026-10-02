@@ -7,10 +7,7 @@ import {
   formatConflictFieldValue,
   type ConflictResolutionChoice,
 } from "@/lib/sync/field-diff";
-import {
-  enqueueProjectionUpsertForTable,
-  withSuppressedProjectionEnqueue,
-} from "@/lib/sync/projection-sync";
+import { enqueueProjectionUpsertForTable } from "@/lib/sync/projection-sync";
 import { deferSyncIssue } from "@/lib/sync/sync-issues-store";
 import { normalizeSyncRow } from "@/lib/sync/sync-transformers";
 import { getCachedUserId, supabase } from "@/lib/supabase";
@@ -304,14 +301,12 @@ async function applyResolvedJournalFields(
 
   const next = patchJournalFromFields(existing, fields);
 
-  await withSuppressedProjectionEnqueue(async () => {
-    await db.journalEntries.put(next);
-    await enqueueProjectionUpsertForTable(
-      "journal_entries",
-      next as unknown as Record<string, unknown>,
-      remoteUpdatedAt ?? existing.updated_at
-    );
-  });
+  await db.journalEntries.put(next);
+  await enqueueProjectionUpsertForTable(
+    "journal_entries",
+    next as unknown as Record<string, unknown>,
+    remoteUpdatedAt ?? existing.updated_at
+  );
 
   return next.updated_at;
 }
