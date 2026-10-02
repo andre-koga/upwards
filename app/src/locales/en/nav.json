@@ -37,5 +37,13 @@
     "errorGeneric": "Could not send feedback right now.",
     "helperNoSync": "Cloud sync is not configured on this device.",
     "helperSignIn": "Sign in to send feedback from inside the app."
+  },
+  "updateRequired": {
+    "title": "Update required",
+    "description": "This version of Upwards can no longer sync. Your changes are saved on this device and will upload after the update.",
+    "pending_one": "{{count}} change is waiting to upload.",
+    "pending_other": "{{count}} changes are waiting to upload.",
+    "action": "Update now",
+    "updating": "Updating…"
   }
 }

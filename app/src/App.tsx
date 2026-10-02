@@ -4,6 +4,7 @@ import TodayPage from "@/pages/today";
 import SyncStatus from "@/components/settings/sync-status";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
 import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
+import { UpdateRequiredDialog } from "@/components/pwa/update-required-dialog";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -139,6 +140,7 @@ export default function App() {
       <AppShell />
       <AuthDataHandoffDialog />
       <InstallAppPrompt />
+      <UpdateRequiredDialog />
       <SpeedInsights />
       <Analytics />
     </BrowserRouter>
