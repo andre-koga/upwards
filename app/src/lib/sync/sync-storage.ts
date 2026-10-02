@@ -2,6 +2,7 @@ const LAST_SERVER_SYNC_KEY = "okhabit_last_server_sync_at";
 const LAST_APPLIED_SEQUENCE_KEY = "okhabit_last_applied_sync_sequence";
 const LAST_USER_KEY = "okhabit_last_signed_in_user_id";
 const OPS_RPC_AVAILABLE_KEY = "okhabit_ops_rpc_available";
+const LAST_DATA_EPOCH_KEY = "okhabit_last_data_epoch";
 /**
  * Do not bump this key to force a re-bootstrap. It was briefly renamed to
  * `okhabit_sync_protocol_v3_snapshot_repair` to heal local journal tombstones,
@@ -53,6 +54,28 @@ export function advanceLastAppliedSequence(sequence: number): void {
 
 function clearLastAppliedSequence(): void {
   localStorage.removeItem(LAST_APPLIED_SEQUENCE_KEY);
+}
+
+/**
+ * The `app_config.data_epoch` this device last re-bootstrapped against.
+ *
+ * Missing reads as 0, the server's initial epoch, so a device that first runs
+ * this build after a bump still re-bootstraps instead of adopting the new epoch.
+ */
+export function loadLastDataEpoch(): number {
+  const raw = localStorage.getItem(LAST_DATA_EPOCH_KEY);
+  if (!raw) return 0;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : 0;
+}
+
+export function saveLastDataEpoch(epoch: number): void {
+  if (!Number.isInteger(epoch) || epoch < 0) return;
+  localStorage.setItem(LAST_DATA_EPOCH_KEY, String(epoch));
+}
+
+export function clearLastDataEpoch(): void {
+  localStorage.removeItem(LAST_DATA_EPOCH_KEY);
 }
 
 /** Whether temporal ops RPCs are known to exist on this project. */

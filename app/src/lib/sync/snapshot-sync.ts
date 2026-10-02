@@ -1,12 +1,17 @@
 import { db } from "@/lib/db";
 import { supabase, getCachedUserId } from "@/lib/supabase";
 import { normalizeSyncRow, type SyncTable } from "./sync-transformers";
-import { TABLE_MAP } from "./sync-constants";
+import { CLIENT_PROTOCOL, TABLE_MAP } from "./sync-constants";
 import { withSuppressedProjectionEnqueue } from "./projection-sync";
 import { isSyncOperationsRpcMissing } from "./sync-operations";
 import { saveOpsRpcAvailable } from "./sync-storage";
 import { stripOpOwnedFields } from "./op-owned-fields";
 import { isUntimedPeriod } from "@/lib/activity/untimed-period";
+import {
+  readDataEpoch,
+  recordObservedDataEpoch,
+  throwIfClientOutdated,
+} from "./release-gate";
 
 const SNAPSHOT_TABLES: SyncTable[] = [
   "activity_groups",
@@ -38,6 +43,8 @@ export interface SyncSnapshot {
 export interface PullSnapshotResult {
   skipped?: boolean;
   sequence?: number;
+  /** The data epoch this snapshot was read under. */
+  dataEpoch?: number;
 }
 
 function snapshotRows(
@@ -180,8 +187,11 @@ export async function pullAndApplySnapshot(): Promise<PullSnapshotResult> {
   if (!supabase) return { skipped: true };
   if (!getCachedUserId()) return { skipped: true };
 
-  const { data, error } = await supabase.rpc("pull_sync_snapshot");
+  const { data, error } = await supabase.rpc("pull_sync_snapshot", {
+    p_client_protocol: CLIENT_PROTOCOL,
+  });
   if (error) {
+    throwIfClientOutdated(error);
     if (isSyncOperationsRpcMissing(error)) {
       saveOpsRpcAvailable(false);
       return { skipped: true };
@@ -190,6 +200,8 @@ export async function pullAndApplySnapshot(): Promise<PullSnapshotResult> {
   }
 
   saveOpsRpcAvailable(true);
+  const dataEpoch = readDataEpoch(data);
+  recordObservedDataEpoch(dataEpoch);
   const snapshot = (data ?? {}) as SyncSnapshot;
   const sequence =
     typeof snapshot.server_sequence === "number"
@@ -199,5 +211,8 @@ export async function pullAndApplySnapshot(): Promise<PullSnapshotResult> {
     ...snapshot,
     server_sequence: Number.isFinite(sequence) ? sequence : 0,
   });
-  return { sequence: Number.isFinite(sequence) ? sequence : 0 };
+  return {
+    sequence: Number.isFinite(sequence) ? sequence : 0,
+    ...(dataEpoch != null ? { dataEpoch } : {}),
+  };
 }

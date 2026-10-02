@@ -18,6 +18,9 @@ import {
   saveSyncProtocolV2,
   saveLastServerSyncAt,
   clearSyncProtocolV2,
+  loadLastDataEpoch,
+  saveLastDataEpoch,
+  clearLastDataEpoch,
 } from "./sync-storage";
 import {
   DEBOUNCE_SYNC_MS,
@@ -45,6 +48,11 @@ import {
   clearCutoverEnqueueFlag,
 } from "./identity-repair";
 import { pullAndApplySnapshot } from "./snapshot-sync";
+import {
+  getObservedDataEpoch,
+  isClientOutdatedError,
+  requeueClientOutdatedOperations,
+} from "./release-gate";
 
 export interface PushBeforeSignOutResult {
   success: boolean;
@@ -59,6 +67,11 @@ export interface SyncState {
   lastError: string | null;
   /** Incremented each time local data is wiped; subscribers can reload on change. */
   localDataVersion: number;
+  /**
+   * The server rejected this build's sync protocol. Sync stops until the app
+   * reloads into a newer build; pending operations stay queued on the device.
+   */
+  updateRequired: boolean;
 }
 
 type StateListener = (state: SyncState) => void;
@@ -69,6 +82,7 @@ class SyncEngine {
     lastSyncAt: loadLastServerSyncAt(),
     lastError: null,
     localDataVersion: 0,
+    updateRequired: false,
   };
   private listeners = new Set<StateListener>();
   private syncInterval: ReturnType<typeof setInterval> | null = null;
@@ -164,20 +178,70 @@ class SyncEngine {
   private canSync(): boolean {
     if (!isSupabaseConfigured || !supabase) return false;
     if (!getCachedUserId()) return false;
+    if (this.state.updateRequired) return false;
     return true;
+  }
+
+  private enterUpdateRequired(): void {
+    this.clearDebounceTimer();
+    this.pendingResync = false;
+    this.setState({ updateRequired: true, lastError: null });
+    // The heartbeat is a plain table write, not a gated RPC, so the stuck
+    // device still reports its protocol and pending count.
+    const userId = getCachedUserId();
+    if (userId) void syncDeviceRegistry(userId);
+  }
+
+  /**
+   * A server-side data migration bumped `app_config.data_epoch`. Push first,
+   * then re-read the server: the snapshot treats the server as authoritative,
+   * so it must not run while this device holds data the server never accepted.
+   * Until that holds the epoch stays unadopted and the next sync retries.
+   */
+  private async adoptNewerDataEpoch(): Promise<void> {
+    const observed = getObservedDataEpoch();
+    if (observed == null || observed <= loadLastDataEpoch()) return;
+
+    const pushResult = await pushPendingOperations();
+    if (pushResult.skipped || pushResult.failed) return;
+    const safety = await getLocalSyncSafetyStatus();
+    if (safety.hasUnsyncedData) {
+      console.warn(
+        "[sync] data epoch changed; waiting for unsynced changes before refreshing"
+      );
+      return;
+    }
+
+    const snapshot = await pullAndApplySnapshot();
+    if (snapshot.skipped) return;
+    if (snapshot.sequence != null) {
+      advanceLastAppliedSequence(snapshot.sequence);
+    }
+    saveLastDataEpoch(snapshot.dataEpoch ?? observed);
   }
 
   async push(): Promise<{ failedTables: string[] }> {
     if (!this.canSync()) return { failedTables: [] };
-    const result = await pushPendingOperations();
-    return { failedTables: result.failed ? ["sync_operations"] : [] };
+    try {
+      const result = await pushPendingOperations();
+      return { failedTables: result.failed ? ["sync_operations"] : [] };
+    } catch (err) {
+      if (!isClientOutdatedError(err)) throw err;
+      this.enterUpdateRequired();
+      return { failedTables: ["sync_operations"] };
+    }
   }
 
   async pull(): Promise<void> {
     if (!this.canSync()) return;
-    const pullOpsResult = await pullAndApplyOperations(
-      loadLastAppliedSequence()
-    );
+    let pullOpsResult;
+    try {
+      pullOpsResult = await pullAndApplyOperations(loadLastAppliedSequence());
+    } catch (err) {
+      if (!isClientOutdatedError(err)) throw err;
+      this.enterUpdateRequired();
+      return;
+    }
     if (pullOpsResult.skipped !== true && pullOpsResult.maxSequence != null) {
       advanceLastAppliedSequence(pullOpsResult.maxSequence);
     }
@@ -206,6 +270,7 @@ class SyncEngine {
     if (snapshot.sequence != null) {
       advanceLastAppliedSequence(snapshot.sequence);
     }
+    if (snapshot.dataEpoch != null) saveLastDataEpoch(snapshot.dataEpoch);
     saveSyncProtocolV2();
     saveLastServerSyncAt(new Date().toISOString());
     this.setState({ lastSyncAt: new Date().toISOString() });
@@ -222,6 +287,7 @@ class SyncEngine {
     this.setState({ isSyncing: true, lastError: null });
     let interruptedTransiently = false;
     try {
+      await requeueClientOutdatedOperations();
       const alreadyV2 = loadSyncProtocolV2();
       const bootstrapped = await this.bootstrapProtocolV2();
       const pushOpsResult = await pushPendingOperations();
@@ -260,6 +326,8 @@ class SyncEngine {
         }
       }
 
+      await this.adoptNewerDataEpoch();
+
       const userId = getCachedUserId();
       if (userId) {
         void touchLocalDevice(userId);
@@ -268,7 +336,9 @@ class SyncEngine {
       this.setState({ lastSyncAt: new Date().toISOString() });
       saveLastServerSyncAt(this.state.lastSyncAt ?? new Date().toISOString());
     } catch (err) {
-      if (isTransientNetworkError(err)) {
+      if (isClientOutdatedError(err)) {
+        this.enterUpdateRequired();
+      } else if (isTransientNetworkError(err)) {
         interruptedTransiently = true;
         console.warn("[sync] interrupted (transient):", err);
       } else {
@@ -345,6 +415,7 @@ class SyncEngine {
     this.followUpSyncChain = 0;
     clearLastServerSyncAt();
     clearSyncProtocolV2();
+    clearLastDataEpoch();
     // Deliberately NOT clearing the natural-identity repair flag.
     //
     // The cutover is not idempotent (see the PROTOCOL_V2_KEY note in

@@ -2,6 +2,8 @@ import { supabase, getCachedUserId } from "@/lib/supabase";
 import { db, now } from "@/lib/db";
 import type { SyncDeviceRecord } from "@/lib/db/types";
 import { getOrCreateDeviceId } from "./device-id";
+import { countUnsyncedOperations } from "./pending-operations";
+import { CLIENT_PROTOCOL } from "./sync-constants";
 
 const APP_VERSION =
   typeof import.meta.env.VITE_APP_VERSION === "string"
@@ -14,6 +16,7 @@ async function upsertRemoteDeviceRecord(
   if (!supabase) return;
   const deviceId = getOrCreateDeviceId();
   const ts = now();
+  const pendingCount = await countUnsyncedOperations();
 
   const { error } = await supabase.from("sync_devices").upsert(
     {
@@ -21,6 +24,9 @@ async function upsertRemoteDeviceRecord(
       user_id: accountId,
       last_seen_at: ts,
       app_version: APP_VERSION,
+      client_protocol: CLIENT_PROTOCOL,
+      local_schema_version: db.verno,
+      pending_count: pendingCount,
       updated_at: ts,
     },
     { onConflict: "user_id,id" }

@@ -319,6 +319,24 @@ below). Devices that missed the window take the reset path.
 - **Heartbeat.** `sync_devices` records `client_protocol`,
   `local_schema_version`, and `pending_count`, so a migration window can be
   confirmed in SQL before deploying.
+- **Implementation (A1, 2026-10-02).** `app_config` is a singleton row
+  readable only by the service role and SQL; the client never reads it
+  directly. The public RPCs (`submit_sync_operations(ops, p_client_protocol)`,
+  `pull_sync_operations(since_sequence, p_client_protocol)`,
+  `pull_sync_snapshot(p_client_protocol)`) check the gate and wrap private
+  `*_ungated` bodies, which clients cannot execute. **Edit the `*_ungated`
+  functions when changing RPC behavior**; recreating the old one-argument
+  signatures would add an ungated overload. Protocol 0 (builds without the
+  gate) still receives the legacy bare-array responses while the minimum is 0;
+  protocol 1 and above receive `{ results | operations, data_epoch }`, and the
+  snapshot carries `data_epoch` alongside its tables.
+- **Client handling.** `client_outdated` throws before any pending op is
+  marked failed, sets `SyncState.updateRequired`, and stops sync until the app
+  reloads into a new build. Older builds cannot tell this rejection from a bad
+  op, so the new build requeues ops stored as failed with `client_outdated`
+  and resets their attempts. A newer epoch than the stored one triggers push,
+  then the unsynced-data check, then a snapshot; the epoch is stored only after
+  the snapshot applies, so a blocked re-bootstrap retries on the next sync.
 - **Migration windows.** Because the audience is small, migrations ship in a
   coordinated window: every device synced with nothing pending, a backup taken,
   then the client and server deploy together
