@@ -468,6 +468,39 @@ sync (full requirements in [`product-scope.md`](product-scope.md) §2.9):
 - Old backup formats are migrated forward with the same scope migrations as
   live data.
 
+Implementation (`app/src/lib/backup/`):
+
+- **Format.** `format.ts` lists every Dexie table as either backed up or
+  device-local (sync queue, sync issues, device records, app logs, and the
+  emptied `memoPeriods`). A test fails when a table is in neither list.
+  `migrators/` upgrades older files; legacy row shapes shared with the local
+  schema upgrade live in `lib/db/legacy-shapes.ts`.
+- **Operation IDs** are `uuidv5(target user, last applied sequence, row, change)`.
+  Re-importing the same file from the same synced state reproduces the same
+  IDs, which the server acks as duplicates. Once the account has moved on, a
+  new import gets new IDs, so dedupe never swallows a real change.
+- **Counts merge to the maximum** of local and backup and are sent as that
+  delta. An import never lowers a count; lowering one is an ordinary edit.
+- **Current-state rows** (activities, groups, tasks, memories, compass,
+  knowledge) are inserted when missing and updated only when the backup's
+  `updated_at` is newer. Status events are append-only and union by ID.
+  Pauses, break days, completion times, and notes are filled only when the
+  account has none for that day.
+- **Journal conflicts** from a backup are ordinary journal conflicts with
+  `source: "backup"` and a content fingerprint, so the same difference is
+  recorded once. Resolving uses the device's synced row as the base revision.
+- **Another account's backup** is re-keyed with deterministic IDs, and media
+  paths move under the importing user's prefix.
+- **Media** uploads with `upsert: false`. An existing object with the same
+  hash counts as present. An object with a different hash is kept, and the
+  backup's file is stored under a hash-prefixed name with references
+  rewritten. Video posters are data URLs inside journal rows, so they travel
+  with the data.
+- **Settings.** The only account setting left after the removals in
+  `product-scope.md` §1 is language. It is restored only when this device
+  has none. AI provider settings are not exported, because they are unusable
+  without the key, which a backup never contains.
+
 ## Delivery notes
 
 Earlier incremental work added definition versions, an effective-from editor,

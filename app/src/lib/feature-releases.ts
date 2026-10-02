@@ -12,6 +12,20 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-02-backup",
+    date: "2026-10-02",
+    title: "Backup and restore",
+    bullets: [
+      "Download a backup of everything you've recorded from Settings — just your data, your data with photos, or your daily clips one year at a time.",
+      "Restoring a backup adds what's missing and never counts the same thing twice, even if you restore it again.",
+      "When a journal entry in the backup differs from the one you have, both versions wait on the Sync issues page so you can choose.",
+      "Your AI key is never included in a backup.",
+    ],
+    fixes: [
+      "Choices you make on the Sync issues page now reach your other devices.",
+    ],
+  },
+  {
     id: "2026-10-02-update-required",
     date: "2026-10-02",
     title: "Safer app updates",
