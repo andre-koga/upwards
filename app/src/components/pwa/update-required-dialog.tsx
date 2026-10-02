@@ -72,7 +72,7 @@ export function UpdateRequiredDialog() {
         <DialogFooter>
           <Button
             type="button"
-            className="h-11 w-full"
+            className="h-11 w-full focus-visible:ring-2 focus-visible:ring-offset-2"
             disabled={updating}
             onClick={() => void handleUpdate()}
           >
