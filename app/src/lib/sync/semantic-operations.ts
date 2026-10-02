@@ -12,6 +12,8 @@ export interface RecordCountDeltaInput {
   reason?: "increment" | "cycle" | "reset" | "never_slip";
   /** Set when this delta completes the activity; null clears a prior completion. */
   completionAt?: string | null;
+  /** Deterministic id for replayable callers such as backup import. */
+  operationId?: string;
 }
 
 /**
@@ -28,7 +30,7 @@ export async function enqueueActivityCountDelta(
   if (delta === 0 && input.completionAt === undefined) return;
 
   await enqueuePendingOperation({
-    operation_id: newId(),
+    operation_id: input.operationId ?? newId(),
     account_id: getCachedUserId(),
     device_id: getOrCreateDeviceId(),
     entity_type: "daily_entry",
@@ -52,9 +54,10 @@ export async function enqueueActivityPauseChange(input: {
   date: string;
   paused: boolean;
   dailyEntryId?: string | null;
+  operationId?: string;
 }): Promise<void> {
   await enqueuePendingOperation({
-    operation_id: newId(),
+    operation_id: input.operationId ?? newId(),
     account_id: getCachedUserId(),
     device_id: getOrCreateDeviceId(),
     entity_type: "daily_entry",
@@ -73,9 +76,10 @@ export async function enqueueBreakDayChange(input: {
   date: string;
   isBreakDay: boolean;
   dailyEntryId?: string | null;
+  operationId?: string;
 }): Promise<void> {
   await enqueuePendingOperation({
-    operation_id: newId(),
+    operation_id: input.operationId ?? newId(),
     account_id: getCachedUserId(),
     device_id: getOrCreateDeviceId(),
     entity_type: "daily_entry",

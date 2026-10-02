@@ -126,7 +126,8 @@ function hasMeaningfulProjectionPayload(
 export async function enqueueProjectionUpsertForTable(
   table: SyncTable,
   row: Record<string, unknown>,
-  baseRevision?: string | null
+  baseRevision?: string | null,
+  options?: { operationId?: string }
 ): Promise<void> {
   if (isProjectionEnqueueSuppressed()) return;
   if (!getCachedUserId()) return;
@@ -149,7 +150,7 @@ export async function enqueueProjectionUpsertForTable(
   const payloadRow = rowForProjectionPayload(table, row);
 
   await enqueuePendingOperation({
-    operation_id: newId(),
+    operation_id: options?.operationId ?? newId(),
     account_id: getCachedUserId(),
     device_id: getOrCreateDeviceId(),
     entity_type: entityType,
