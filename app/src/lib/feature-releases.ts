@@ -12,6 +12,18 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-02-update-required",
+    date: "2026-10-02",
+    title: "Safer app updates",
+    bullets: [
+      "When a newer version of Upwards is needed to keep syncing, the app asks you to update instead of failing quietly.",
+      "Changes you made before updating stay on your device and upload as soon as the new version opens.",
+    ],
+    fixes: [
+      "Your other devices now show up in the device list on the Sync issues page.",
+    ],
+  },
+  {
     id: "2026-09-11-memories",
     date: "2026-09-11",
     title: "Memories",

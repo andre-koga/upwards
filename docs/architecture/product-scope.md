@@ -205,7 +205,7 @@ photos.
   the existing auth card.
 - **Existing guest data** on a device is moved into the account by the existing
   handoff on first sign-in. That code is deleted in the baseline cleanup
-  (§4, A8). If someone declines, they can export a backup (§2.9) before
+  (§4.2, A8). If someone declines, they can export a backup (§2.9) before
   anything is cleared — no wipe without an explicit choice.
 - Sign-out and account switching keep the existing guarantees: no local wipe
   while operations are unacknowledged, unless the user syncs, exports, or
