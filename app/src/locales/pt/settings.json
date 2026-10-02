@@ -114,6 +114,70 @@
     "notSignedIn": "Entre na sua conta de sincronização para configurar os insights de IA.",
     "syncNotConfigured": "A sincronização não está configurada nesta versão."
   },
+  "backup": {
+    "title": "Backup",
+    "description": "Baixe uma cópia dos seus dados ou traga uma de volta. A importação se junta ao que já está aqui e nunca soma contagens duas vezes.",
+    "export": {
+      "label": "Exportar",
+      "data": "Só dados",
+      "photos": "Dados + fotos",
+      "clips": "Clipes diários",
+      "hint": "Cada exportação sincroniza antes. Os clipes diários saem em um arquivo por ano.",
+      "clipsYear_one": "{{year}} · {{count}} clipe",
+      "clipsYear_other": "{{year}} · {{count}} clipes",
+      "noClips": "Ainda não há clipes diários para exportar.",
+      "done": "Backup baixado.",
+      "missingMedia_one": "{{count}} arquivo não pôde ser baixado e não está no backup.",
+      "missingMedia_other": "{{count}} arquivos não puderam ser baixados e não estão no backup.",
+      "failed": "Não foi possível criar o backup. Tente de novo."
+    },
+    "import": {
+      "label": "Importar",
+      "choose": "Importar um backup…",
+      "hint": "Aceita arquivos de backup e de clipes do Upwards (.zip) e backups .json antigos.",
+      "done": "Backup importado.",
+      "summary": "{{inserted}} adicionados, {{updated}} atualizados, {{unchanged}} já estavam aqui.",
+      "countsAdded_one": "{{count}} conclusão restaurada.",
+      "countsAdded_other": "{{count}} conclusões restauradas.",
+      "keptNewer_one": "{{count}} item mantido — esta conta tem uma versão mais recente.",
+      "keptNewer_other": "{{count}} itens mantidos — esta conta tem versões mais recentes.",
+      "conflicts_one": "{{count}} entrada de diário tem outro texto no backup. Escolha qual manter em Problemas de sincronização.",
+      "conflicts_other": "{{count}} entradas de diário têm outro texto no backup. Escolha qual manter em Problemas de sincronização.",
+      "mediaRestored_one": "{{count}} foto restaurada.",
+      "mediaRestored_other": "{{count}} fotos restauradas.",
+      "mediaFailed_one": "{{count}} arquivo não pôde ser restaurado.",
+      "mediaFailed_other": "{{count}} arquivos não puderam ser restaurados.",
+      "clipsDone_one": "{{count}} clipe restaurado.",
+      "clipsDone_other": "{{count}} clipes restaurados.",
+      "clipsUnmatched_one": "{{count}} clipe não tem um dia de diário correspondente aqui. Importe primeiro o backup de dados e depois os clipes de novo.",
+      "clipsUnmatched_other": "{{count}} clipes não têm um dia de diário correspondente aqui. Importe primeiro o backup de dados e depois os clipes de novo.",
+      "failed": "Não foi possível importar esse arquivo. Você pode tentar de novo com segurança.",
+      "blocked": {
+        "offline": "A importação precisa de conexão, para que seus dados sincronizem antes e depois.",
+        "update_required": "Atualize o Upwards para importar — esta versão não consegue sincronizar.",
+        "pending_changes_one": "{{count}} alteração neste dispositivo ainda não foi enviada. A importação funciona depois que ela for — veja Problemas de sincronização.",
+        "pending_changes_other": "{{count}} alterações neste dispositivo ainda não foram enviadas. A importação funciona depois que elas forem — veja Problemas de sincronização.",
+        "sync_failed": "A sincronização não terminou, então a importação está pausada. Veja Problemas de sincronização e tente de novo."
+      },
+      "fileError": {
+        "unrecognized": "Esse arquivo não é um backup do Upwards.",
+        "newer_version": "Esse backup vem de uma versão mais nova do Upwards. Atualize o app e importe de novo.",
+        "sign_in_required": "Entre na sua conta para restaurar clipes diários."
+      }
+    },
+    "progress": {
+      "syncing": "Sincronizando antes…",
+      "collecting": "Reunindo seus dados…",
+      "packing": "Montando o arquivo…",
+      "reading": "Lendo o arquivo…",
+      "merging": "Juntando com seus dados…",
+      "media": {
+        "export": "Baixando arquivo {{done}} de {{total}}…",
+        "import": "Restaurando arquivo {{done}} de {{total}}…"
+      }
+    },
+    "openSyncIssues": "Abrir Problemas de sincronização"
+  },
   "syncIssues": {
     "page": {
       "title": "Problemas de sincronização",
@@ -181,16 +245,19 @@
       "columns": {
         "field": "Campo",
         "yours": "Seu",
-        "theirs": "Outro dispositivo"
+        "theirs": "Outro dispositivo",
+        "backup": "Backup"
       },
       "actions": {
         "keepMine": "Manter o meu",
         "keepTheirs": "Manter o deles",
         "combine": "Combinar",
-        "defer": "Decidir depois"
+        "defer": "Decidir depois",
+        "keepBackup": "Manter o do backup"
       },
       "journal": {
         "summary": "Duas versões desta entrada de diário precisam de uma decisão.",
+        "backupSummary": "Esta entrada de diário tem outro texto em um backup que você importou.",
         "untitled": "Entrada de diário",
         "untitledWithDate": "Diário de {{date}}",
         "entryDate": "Data: {{date}}",
