@@ -261,6 +261,12 @@ import {
 } from "./sync-operations";
 import { saveOpsRpcAvailable } from "./sync-storage";
 import { MAX_PUSH_ATTEMPTS } from "./pending-operations";
+import { CLIENT_PROTOCOL } from "./sync-constants";
+import {
+  ClientOutdatedError,
+  getObservedDataEpoch,
+  resetObservedDataEpochForTests,
+} from "./release-gate";
 
 function makePending(
   overrides: Partial<SyncPendingOperation> &
@@ -634,6 +640,103 @@ describe("pushPendingOperations", () => {
     expect(rpcMock.mock.calls[0][1].ops).toHaveLength(50);
     expect(rpcMock.mock.calls[1][1].ops).toHaveLength(1);
     expect(pendingOps.every((row) => row.status === "acked")).toBe(true);
+  });
+});
+
+describe("release gate", () => {
+  beforeEach(() => {
+    pendingOps.length = 0;
+    syncIssues.length = 0;
+    storage.clear();
+    rpcMock.mockReset();
+    resetObservedDataEpochForTests();
+  });
+
+  it("sends the client protocol and reads the gated submit response", async () => {
+    pendingOps.push(makePending({ operation_id: "op-1", id: "row-1" }));
+    rpcMock.mockResolvedValue({
+      data: {
+        results: [
+          { operation_id: "op-1", status: "accepted", server_sequence: 7 },
+        ],
+        data_epoch: 2,
+      },
+      error: null,
+    });
+
+    const result = await pushPendingOperations();
+    expect(rpcMock.mock.calls[0][1]).toMatchObject({
+      p_client_protocol: CLIENT_PROTOCOL,
+    });
+    expect(result).toEqual({ failed: false, maxSequence: 7 });
+    expect(pendingOps[0].status).toBe("acked");
+    expect(getObservedDataEpoch()).toBe(2);
+  });
+
+  it("leaves ops pending and untouched when the build is turned away", async () => {
+    pendingOps.push(
+      makePending({ operation_id: "op-1", id: "row-1" }),
+      makePending({ operation_id: "op-2", id: "row-2" })
+    );
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: {
+        code: "P0001",
+        message: "client_outdated",
+        details: "client_protocol=1 min_client_protocol=2",
+      },
+    });
+
+    await expect(pushPendingOperations()).rejects.toBeInstanceOf(
+      ClientOutdatedError
+    );
+    // No per-op isolation retries: the rejection is about the build.
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(pendingOps.map((row) => row.status)).toEqual(["pending", "pending"]);
+    expect(pendingOps.every((row) => !row.attempt_count)).toBe(true);
+    expect(syncIssues).toHaveLength(0);
+  });
+
+  it("sends the client protocol and reads the gated pull response", async () => {
+    rpcMock.mockResolvedValue({
+      data: {
+        operations: [
+          {
+            operation_id: "remote-op",
+            device_id: "local-device",
+            entity_type: "daily_entry",
+            entity_id: "activity-1",
+            operation_type: "count.delta",
+            payload: {},
+            base_revision: null,
+            status: "accepted",
+            server_sequence: 12,
+            created_at: "2026-08-01T10:00:00.000Z",
+          },
+        ],
+        data_epoch: 4,
+      },
+      error: null,
+    });
+
+    const result = await pullAndApplyOperations(3);
+    expect(rpcMock.mock.calls[0]).toEqual([
+      "pull_sync_operations",
+      { since_sequence: 3, p_client_protocol: CLIENT_PROTOCOL },
+    ]);
+    expect(result).toEqual({ maxSequence: 12 });
+    expect(getObservedDataEpoch()).toBe(4);
+  });
+
+  it("rejects a pull with the typed error when the build is turned away", async () => {
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: { code: "P0001", message: "client_outdated" },
+    });
+
+    await expect(pullAndApplyOperations(0)).rejects.toBeInstanceOf(
+      ClientOutdatedError
+    );
   });
 });
 

@@ -2,6 +2,13 @@ import { db } from "@/lib/db";
 import type { SyncTable } from "./sync-transformers";
 
 export const EPOCH = "1970-01-01T00:00:00.000Z";
+/**
+ * Sent to every sync RPC; the server rejects builds below
+ * `app_config.min_client_protocol` with `client_outdated`. Bump it whenever
+ * operation shapes or table semantics change, and raise the server minimum in
+ * the same migration window (docs/architecture/product-scope.md §4.1).
+ */
+export const CLIENT_PROTOCOL = 1;
 export const DEBOUNCE_SYNC_MS = 5_000;
 export const REMOTE_DEBOUNCE_SYNC_MS = 1_000;
 export const DEFAULT_PERIODIC_SYNC_MS = 5 * 60_000;

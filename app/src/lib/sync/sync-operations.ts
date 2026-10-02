@@ -9,7 +9,12 @@ import {
   markOperationRetryableError,
   requeueFailedOperations,
 } from "./pending-operations";
-import { SUBMIT_SYNC_BATCH_SIZE } from "./sync-constants";
+import { CLIENT_PROTOCOL, SUBMIT_SYNC_BATCH_SIZE } from "./sync-constants";
+import {
+  readDataEpoch,
+  recordObservedDataEpoch,
+  throwIfClientOutdated,
+} from "./release-gate";
 import { recordSyncIssue } from "./sync-issues-store";
 import { isTransientNetworkError } from "@/lib/error-utils";
 import { buildJournalConflictPayload } from "./journal-conflict-resolution";
@@ -430,9 +435,11 @@ async function submitPendingOperationBatch(
   const ops = pending.map(toSubmitSyncOperationInput);
   const { data, error } = await supabase.rpc("submit_sync_operations", {
     ops,
+    p_client_protocol: CLIENT_PROTOCOL,
   });
 
   if (error) {
+    throwIfClientOutdated(error);
     if (isSyncOperationsRpcMissing(error)) {
       saveOpsRpcAvailable(false);
       return { failed: false, skipped: true };
@@ -452,7 +459,10 @@ async function submitPendingOperationBatch(
 
   saveOpsRpcAvailable(true);
 
-  const results = (data ?? []) as SubmitSyncOperationResult[];
+  recordObservedDataEpoch(readDataEpoch(data));
+  const results = (
+    Array.isArray(data) ? data : ((data as { results?: unknown })?.results ?? [])
+  ) as SubmitSyncOperationResult[];
   const pendingByOperationId = new Map(
     pending.map((row) => [row.operation_id, row])
   );
@@ -692,9 +702,11 @@ export async function pullAndApplyOperations(
 
   const { data, error } = await supabase.rpc("pull_sync_operations", {
     since_sequence: sinceSequence,
+    p_client_protocol: CLIENT_PROTOCOL,
   });
 
   if (error) {
+    throwIfClientOutdated(error);
     if (isSyncOperationsRpcMissing(error)) {
       saveOpsRpcAvailable(false);
       return { skipped: true };
@@ -704,7 +716,12 @@ export async function pullAndApplyOperations(
 
   saveOpsRpcAvailable(true);
 
-  const ops = (data ?? []) as RemoteSyncOperation[];
+  recordObservedDataEpoch(readDataEpoch(data));
+  const ops = (
+    Array.isArray(data)
+      ? data
+      : ((data as { operations?: unknown })?.operations ?? [])
+  ) as RemoteSyncOperation[];
   if (ops.length === 0) {
     return { maxSequence: sinceSequence > 0 ? sinceSequence : undefined };
   }
