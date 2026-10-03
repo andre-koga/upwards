@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toDateString, fromDateString } from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/journal/journal-card";
-import { pickRandomHabitQuote } from "@/lib/habit-quotes";
 import { useTodayPage } from "@/hooks/use-today-page";
 import { getEffectiveToday } from "@/lib/session/day-reset";
 import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
@@ -35,7 +34,6 @@ export default function TodayPage() {
     () =>
       consumeJournalJumpDate() ?? new Date(`${getEffectiveToday()}T12:00:00`)
   );
-  const [quote] = useState(pickRandomHabitQuote);
   const [swipeFeedback, setSwipeFeedback] = useState<{
     direction: "prev" | "next";
     progress: number;
@@ -228,10 +226,6 @@ export default function TodayPage() {
             void refreshTasksData();
           }}
         />
-
-        <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground">
-          {quote}
-        </blockquote>
       </div>
     </div>
   );
