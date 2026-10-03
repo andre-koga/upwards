@@ -3,10 +3,7 @@ import type { ActivityPeriod } from "@/lib/db/types";
 import {
   calendarDatesOverlappingEffectiveDay,
   periodBelongsToDay,
-  resolvePeriodFromLogicalDay,
-  timestampForLogicalDayTime,
 } from "@/lib/activity/period-day-utils";
-import { timeToSeconds } from "@/lib/time-utils";
 
 /** Closed period whose start and end are the same instant — a completion, not a span. */
 export function isUntimedPeriod(
@@ -30,73 +27,6 @@ export function periodsBelongingToDay(
     const endMs = period.end_time ? new Date(period.end_time).getTime() : null;
     return periodBelongsToDay(startMs, endMs, dateString, nowMs);
   });
-}
-
-export type ClosedSessionTimesResult =
-  | { ok: true; startIso: string; endIso: string }
-  | { ok: false; error: "missing_end" };
-
-/**
- * Resolve start/end for a closed session.
- * Both empty → keep the existing completion instant (or created_at).
- * End only, or same start and end → untimed completion at that clock time
- * (you mark it done when it's finished, so the completion instant is the
- * end time; the start is left unset).
- * Different times → a timed span.
- */
-export function resolveClosedSessionTimes(params: {
-  startTime: string;
-  endTime: string;
-  logicalDateStr: string;
-  resetMinutes: number;
-  existingStartIso: string;
-  existingEndIso: string | null;
-  createdAt: string;
-}): ClosedSessionTimesResult {
-  const startEmpty = !params.startTime;
-  const endEmpty = !params.endTime;
-
-  if (startEmpty && endEmpty) {
-    const completionIso = isUntimedPeriod(
-      params.existingStartIso,
-      params.existingEndIso
-    )
-      ? params.existingStartIso
-      : params.createdAt;
-    return { ok: true, startIso: completionIso, endIso: completionIso };
-  }
-
-  if (endEmpty) {
-    return { ok: false, error: "missing_end" };
-  }
-
-  if (startEmpty) {
-    const completionMs = timestampForLogicalDayTime(
-      params.logicalDateStr,
-      params.endTime,
-      params.resetMinutes
-    );
-    const completionIso = new Date(completionMs).toISOString();
-    return { ok: true, startIso: completionIso, endIso: completionIso };
-  }
-
-  if (timeToSeconds(params.endTime) === timeToSeconds(params.startTime)) {
-    const completionMs = timestampForLogicalDayTime(
-      params.logicalDateStr,
-      params.endTime,
-      params.resetMinutes
-    );
-    const completionIso = new Date(completionMs).toISOString();
-    return { ok: true, startIso: completionIso, endIso: completionIso };
-  }
-
-  const resolved = resolvePeriodFromLogicalDay(
-    params.logicalDateStr,
-    params.startTime,
-    params.endTime,
-    params.resetMinutes
-  );
-  return { ok: true, startIso: resolved.startIso, endIso: resolved.endIso };
 }
 
 export async function fetchActivityPeriodsForDay(

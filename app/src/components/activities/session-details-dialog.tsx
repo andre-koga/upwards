@@ -46,7 +46,7 @@ export default function SessionDetailsDialog({
     setStartTime,
     endTime,
     setEndTime,
-    showUntimedStart,
+    isUntimedSession,
     note,
     setNote,
     handleDelete,
@@ -105,10 +105,9 @@ export default function SessionDetailsDialog({
             onEndTimeChange={setEndTime}
             note={note}
             onNoteChange={setNote}
+            startReadOnlyValue={isUntimedSession ? "—" : undefined}
             endReadOnlyValue={isRunningSession ? "Still running" : undefined}
             disabled={isLockedHistoricalSession}
-            allowClearTimes={!isRunningSession}
-            untimedStartDisplay={showUntimedStart}
           />
           {spanWarning && (
             <p className="text-sm text-amber-600 dark:text-amber-400">

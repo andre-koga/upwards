@@ -7,7 +7,10 @@ import { AuthCard } from "@/components/settings/auth-card";
 import { SyncCard } from "@/components/settings/sync-card";
 import { AiCard } from "@/components/settings/ai-card";
 import { BackupCard } from "@/components/settings/backup-card";
-import { TaskOrderCard } from "@/components/settings/navigation-cards";
+import {
+  AboutCard,
+  TaskOrderCard,
+} from "@/components/settings/navigation-cards";
 import { DayResetCard } from "@/components/settings/day-reset-card";
 import { useAuth } from "@/lib/use-auth";
 
@@ -37,6 +40,7 @@ export default function SettingsPage() {
 
       <TaskOrderCard />
       <BackupCard />
+      <AboutCard />
 
       <div className="space-y-1 pt-4 text-center text-xs text-muted-foreground">
         <p>{t("page.tagline")}</p>
