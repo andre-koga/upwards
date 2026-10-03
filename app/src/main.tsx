@@ -7,7 +7,6 @@ import { syncEngine } from "./lib/sync";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { prepareSignedInSession } from "./lib/sync/auth-handoff";
 import { emitGuestHandoffNeeded } from "./lib/sync/guest-handoff-emitter";
-import { initializeStoredPalette } from "./lib/palette";
 import "./lib/i18n";
 
 void (async () => {
@@ -49,7 +48,8 @@ if (isSupabaseConfigured && supabase) {
   });
 }
 
-initializeStoredPalette();
+// Named palettes were removed; drop the stored choice so it can't linger.
+localStorage.removeItem("upwards-color-palette");
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

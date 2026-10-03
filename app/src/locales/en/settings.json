@@ -7,22 +7,10 @@
   "appearance": {
     "title": "Appearance",
     "theme": "Theme",
-    "palette": "Palette",
     "modes": {
       "system": "System",
       "light": "Light",
       "dark": "Dark"
-    },
-    "palettes": {
-      "default": "Classic",
-      "ocean": "Ocean Breeze",
-      "sunset": "Warm Sunset",
-      "forest": "Deep Forest",
-      "mocha": "Hot Mocha",
-      "cyberpunk": "Cyberpunk",
-      "pastel dreams": "Pastel Dreams",
-      "graphite": "Pure Graphite",
-      "jellyfish": "Jellyfish"
     }
   },
   "language": {
@@ -335,5 +323,10 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "savingOrder": "Saving order..."
+  },
+  "about": {
+    "title": "About",
+    "errorLogs": "Error logs",
+    "github": "Source code"
   }
 }
