@@ -12,6 +12,17 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-02-simpler-settings",
+    date: "2026-10-02",
+    title: "A quieter app",
+    bullets: [
+      "Color palettes are gone. Appearance is now System, Light, or Dark.",
+      "The quote at the bottom of Today and the colored washes on hearted journal entries are gone.",
+      "Error logs and the GitHub link moved from the More menu to Settings › About.",
+      "A session is either a span with a start and end, or a single completion time. You can no longer turn one into the other, and manual entries need both a start and an end.",
+    ],
+  },
+  {
     id: "2026-10-02-backup",
     date: "2026-10-02",
     title: "Backup and restore",
