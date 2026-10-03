@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { db, now, newId } from "@/lib/db";
+import { db, now } from "@/lib/db";
 import type {
   Activity,
   ActivityGroup,
@@ -27,10 +27,7 @@ import {
 } from "@/lib/time-utils";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
-import {
-  resolveClosedSessionTimes,
-  isUntimedPeriod,
-} from "@/lib/activity/untimed-period";
+import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 import {
   getEffectiveToday,
   getDayResetMinutes,
@@ -42,7 +39,6 @@ import {
   applyCountDelta,
   getOrCreateDailyEntryProjection,
   patchTimedPeriod,
-  saveTimedPeriod,
   setCurrentActivityLocal,
 } from "@/lib/sync/mutate-synced";
 import { parseDerivedUntimedSessionId } from "@/lib/activity/timeline-sessions";
@@ -273,6 +269,11 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     }
   }, [details, finish, sessionId]);
 
+  const isUntimedSession =
+    details != null &&
+    (details.derived === true ||
+      isUntimedPeriod(details.period.start_time, details.period.end_time));
+
   const handleSave = useCallback(async () => {
     if (!sessionId || !details) return;
 
@@ -295,20 +296,37 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       );
       nextStartIso = new Date(startMs).toISOString();
       nextEndIso = null;
-    } else {
-      const resolved = resolveClosedSessionTimes({
-        startTime,
-        endTime,
-        logicalDateStr,
-        resetMinutes,
-        existingStartIso: details.period.start_time,
-        existingEndIso: details.period.end_time,
-        createdAt: details.period.created_at,
-      });
-      if (!resolved.ok) {
+    } else if (isUntimedSession) {
+      // A completion has one instant (its end time). It is never converted
+      // into a timed span, and a span is never collapsed into a completion.
+      if (!endTime) {
         setError(t("sessionDetails.errorEndRequired"));
         return;
       }
+      const completionIso = new Date(
+        timestampForLogicalDayTime(logicalDateStr, endTime, resetMinutes)
+      ).toISOString();
+      nextStartIso = completionIso;
+      nextEndIso = completionIso;
+    } else {
+      if (!startTime) {
+        setError(t("sessionDetails.errorStartRequired"));
+        return;
+      }
+      if (!endTime) {
+        setError(t("sessionDetails.errorEndRequired"));
+        return;
+      }
+      if (timeToSeconds(startTime) === timeToSeconds(endTime)) {
+        setError(t("sessionDetails.errorSameTime"));
+        return;
+      }
+      const resolved = resolvePeriodFromLogicalDay(
+        logicalDateStr,
+        startTime,
+        endTime,
+        resetMinutes
+      );
       nextStartIso = resolved.startIso;
       nextEndIso = resolved.endIso;
     }
@@ -330,93 +348,29 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       const sessionNote = normalizeSessionNote(note);
 
       if (details.derived) {
-        const stillUntimed = !nextEndIso || nextStartIso === nextEndIso;
-        if (stillUntimed) {
-          const completionIso = nextEndIso ?? nextStartIso;
-          const currentCount = entry.task_counts?.[nextActivityId] ?? 0;
-          await applyCountDelta({
-            date: details.derivedDate ?? entryDateString,
-            activityId: nextActivityId,
-            previousCount: currentCount,
-            nextCount: currentCount,
-            completionAt: completionIso,
-          });
-          await applyCompletionNote({
-            date: details.derivedDate ?? entryDateString,
-            activityId: nextActivityId,
-            note: sessionNote,
-          });
-        } else {
-          await saveTimedPeriod({
-            id: newId(),
-            daily_entry_id: entry.id,
-            activity_id: nextActivityId,
-            start_time: nextStartIso,
-            end_time: nextEndIso,
-            note: sessionNote,
-            created_at: n,
-            updated_at: n,
-            synced_at: null,
-            deleted_at: null,
-          });
-          if (sessionNote) {
-            await applyCompletionNote({
-              date: details.derivedDate ?? entryDateString,
-              activityId: nextActivityId,
-              note: sessionNote,
-            });
-          }
-        }
+        const date = details.derivedDate ?? entryDateString;
+        const currentCount = entry.task_counts?.[nextActivityId] ?? 0;
+        await applyCountDelta({
+          date,
+          activityId: nextActivityId,
+          previousCount: currentCount,
+          nextCount: currentCount,
+          completionAt: nextStartIso,
+        });
+        await applyCompletionNote({
+          date,
+          activityId: nextActivityId,
+          note: sessionNote,
+        });
       } else {
-        const becomesUntimed = nextEndIso !== null && nextStartIso === nextEndIso;
-        const nextActivity = becomesUntimed
-          ? await db.activities.get(nextActivityId)
-          : null;
-        // Untimed pills are per-activity; the hidden group-default ("None")
-        // activity never renders one, so don't tombstone the period into a
-        // completion that would just disappear. Fall through to the normal
-        // patch for that edge case.
-        if (
-          becomesUntimed &&
-          nextActivity &&
-          !isHiddenGroupDefaultActivity(nextActivity)
-        ) {
-          // Untimed completions are never stored as activity_periods facts
-          // (see docs/architecture/temporal-data-sync.md). Tombstone the old
-          // timed period and represent the completion the same way every
-          // other untimed pill is represented: a count at/above target plus
-          // a completion instant on the daily projection.
-          await patchTimedPeriod(sessionId, {
-            deleted_at: n,
-            updated_at: n,
-          });
-          const target =
-            typeof nextActivity.completion_target === "number"
-              ? nextActivity.completion_target
-              : 1;
-          const currentCount = entry.task_counts?.[nextActivityId] ?? 0;
-          await applyCountDelta({
-            date: entryDateString,
-            activityId: nextActivityId,
-            previousCount: currentCount,
-            nextCount: Math.max(currentCount, target),
-            completionAt: nextEndIso,
-          });
-          await applyCompletionNote({
-            date: entryDateString,
-            activityId: nextActivityId,
-            note: sessionNote,
-          });
-        } else {
-          await patchTimedPeriod(sessionId, {
-            activity_id: nextActivityId,
-            daily_entry_id: entry.id,
-            start_time: nextStartIso,
-            end_time: nextEndIso,
-            note: sessionNote,
-            updated_at: n,
-          });
-        }
+        await patchTimedPeriod(sessionId, {
+          activity_id: nextActivityId,
+          daily_entry_id: entry.id,
+          start_time: nextStartIso,
+          end_time: nextEndIso,
+          note: sessionNote,
+          updated_at: n,
+        });
       }
 
       if (isRunning) {
@@ -447,6 +401,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     note,
     selectedDate,
     selectedActivityId,
+    isUntimedSession,
     finish,
     t,
   ]);
@@ -479,26 +434,9 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     return `This session spans ${startDay} and ${endDay} (crosses your ${formatResetMinutes(resetMinutes)} day boundary).`;
   }, [isRunningSession, startTime, endTime, selectedDate, resetMinutes]);
 
-  const handleStartTimeChange = useCallback(
-    (value: string) => {
-      if (!value) {
-        setStartTime("");
-        return;
-      }
-      if (endTime && timeToSeconds(value) === timeToSeconds(endTime)) {
-        setStartTime("");
-        return;
-      }
-      setStartTime(value);
-    },
-    [endTime]
-  );
-
   const handleEndTimeChange = useCallback((value: string) => {
     setEndTime(value);
   }, []);
-
-  const showUntimedStart = !isRunningSession && !startTime;
 
   return {
     NONE_ACTIVITY_VALUE,
@@ -515,10 +453,10 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     selectedDate,
     setSelectedDate,
     startTime,
-    setStartTime: handleStartTimeChange,
+    setStartTime,
     endTime,
     setEndTime: handleEndTimeChange,
-    showUntimedStart,
+    isUntimedSession,
     note,
     setNote,
     handleDelete,

@@ -22,12 +22,11 @@ interface SessionTimeNoteFieldsProps {
   onEndTimeChange: (value: string) => void;
   note: string;
   onNoteChange: (value: string) => void;
+  /** When set, the start field is a read-only display (e.g. a completion with no span). */
+  startReadOnlyValue?: string;
   /** When set, the end field is a read-only display (e.g. a running session). */
   endReadOnlyValue?: string;
   disabled?: boolean;
-  allowClearTimes?: boolean;
-  /** When true, an empty start time shows a dash instead of "Not set". */
-  untimedStartDisplay?: boolean;
 }
 
 export function SessionTimeNoteFields({
@@ -44,26 +43,31 @@ export function SessionTimeNoteFields({
   onEndTimeChange,
   note,
   onNoteChange,
+  startReadOnlyValue,
   endReadOnlyValue,
   disabled = false,
-  allowClearTimes = false,
-  untimedStartDisplay = false,
 }: SessionTimeNoteFieldsProps) {
-  const showUntimedStart = untimedStartDisplay && !startTime;
-
   return (
     <>
       <FormRow className="items-end gap-3">
-        <FormTimeField
-          id={startId}
-          label={startLabel}
-          value={startTime}
-          onValueChange={onStartTimeChange}
-          disabled={disabled}
-          allowClear={allowClearTimes}
-          emptyDisplay={showUntimedStart ? "—" : undefined}
-          containerClassName="min-w-0 flex-1"
-        />
+        {startReadOnlyValue != null ? (
+          <FormField
+            id={startId}
+            label={startLabel}
+            value={startReadOnlyValue}
+            readOnly
+            containerClassName="min-w-0 flex-1"
+          />
+        ) : (
+          <FormTimeField
+            id={startId}
+            label={startLabel}
+            value={startTime}
+            onValueChange={onStartTimeChange}
+            disabled={disabled}
+            containerClassName="min-w-0 flex-1"
+          />
+        )}
         {endReadOnlyValue != null ? (
           <FormField
             id={endId}
@@ -79,7 +83,6 @@ export function SessionTimeNoteFields({
             value={endTime}
             onValueChange={onEndTimeChange}
             disabled={disabled}
-            allowClear={allowClearTimes}
             containerClassName="min-w-0 flex-1"
           />
         )}

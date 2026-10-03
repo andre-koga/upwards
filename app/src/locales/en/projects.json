@@ -73,6 +73,7 @@
     "spanWarning": "This session spans {{startDay}} and {{endDay}} (crosses your {{resetTime}} day boundary).",
     "pastDayWarning": "You're adding a time entry for a different day than today. Double-check the date and times before saving.",
     "errorEndRequired": "Please set an end time.",
+    "errorStartRequired": "Please set a start time.",
     "errorSameTime": "End time must be different from start time.",
     "errorEndFuture": "End time can't be in the future.",
     "errorStartFuture": "Start time can't be in the future.",
