@@ -9,6 +9,7 @@
     "pin": "Pin memo",
     "unpin": "Unpin memo",
     "due": "Due {{date}}",
+    "moreOptions": "More options",
     "recurring": "Recurring",
     "recurringMemo": "Recurring memo",
     "pinnedMarkIncomplete": "Pinned memo — mark incomplete",
@@ -40,6 +41,13 @@
   },
   "addTask": {
     "trigger": "Add one-time task"
+  },
+  "quickCapture": {
+    "title": "Quick capture",
+    "placeholder": "Capture a task or start a habit…",
+    "more": "More options",
+    "start": "Start",
+    "saveAsMemo": "Save as memo"
   },
   "recurringMemo": {
     "editTitle": "Edit recurring memo",

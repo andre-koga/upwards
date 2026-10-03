@@ -9,6 +9,7 @@
     "pin": "Fixar memo",
     "unpin": "Desfixar memo",
     "due": "Prazo: {{date}}",
+    "moreOptions": "Mais opções",
     "recurring": "Recorrente",
     "recurringMemo": "Memo recorrente",
     "pinnedMarkIncomplete": "Memo fixado — marcar como incompleto",
@@ -40,6 +41,13 @@
   },
   "addTask": {
     "trigger": "Adicionar tarefa avulsa"
+  },
+  "quickCapture": {
+    "title": "Captura rápida",
+    "placeholder": "Capture uma tarefa ou inicie um hábito…",
+    "more": "Mais opções",
+    "start": "Iniciar",
+    "saveAsMemo": "Salvar como memo"
   },
   "recurringMemo": {
     "editTitle": "Editar memo recorrente",

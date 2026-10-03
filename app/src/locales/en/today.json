@@ -8,8 +8,17 @@
   "sections": {
     "memos": "Memos",
     "forToday": "For Today",
+    "journal": "Journal",
     "timeline": "Timeline",
+    "completed": "Completed ({{count}})",
     "timelineBoundary": "(starts and ends at {{time}})"
+  },
+  "phases": {
+    "label": "Day focus",
+    "morning": "Morning",
+    "day": "Day",
+    "evening": "Evening",
+    "showFullDay": "Show full day"
   },
   "timelineItem": {
     "completedAt": "Completed at {{time}}"

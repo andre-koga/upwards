@@ -1,14 +1,22 @@
-import { useState, useRef, type TouchEvent, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  type KeyboardEvent,
+  type TouchEvent,
+  useCallback,
+} from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { toDateString, fromDateString } from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/journal/journal-card";
 import { pickRandomHabitQuote } from "@/lib/habit-quotes";
 import { useTodayPage } from "@/hooks/use-today-page";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { getDayResetMinutes, getEffectiveToday } from "@/lib/session/day-reset";
+import { resolveDayPhase, type DayPhase } from "@/lib/session/day-phase";
 import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
 import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
+import { Button } from "@/components/ui/button";
 
 function consumeJournalJumpDate(): Date | null {
   try {
@@ -24,6 +32,8 @@ function consumeJournalJumpDate(): Date | null {
   }
 }
 
+const PHASES: DayPhase[] = ["morning", "day", "evening"];
+
 export default function TodayPage() {
   const { t } = useTranslation("today");
   const SWIPE_MIN_DISTANCE_PX = 70;
@@ -33,7 +43,14 @@ export default function TodayPage() {
 
   const [currentDate, setCurrentDate] = useState(
     () =>
-      consumeJournalJumpDate() ?? new Date(`${getEffectiveToday()}T12:00:00`)
+      consumeJournalJumpDate() ?? new Date(`${getEffectiveToday()}T12:00:00`),
+  );
+  const [selectedPhase, setSelectedPhase] = useState<DayPhase>(() =>
+    resolveDayPhase(new Date(), getDayResetMinutes()),
+  );
+  const [showFullDay, setShowFullDay] = useState(false);
+  const [journalExpanded, setJournalExpanded] = useState(
+    selectedPhase === "evening",
   );
   const [quote] = useState(pickRandomHabitQuote);
   const [swipeFeedback, setSwipeFeedback] = useState<{
@@ -52,6 +69,10 @@ export default function TodayPage() {
   // Re-render when the day resets so swipe "today" boundary updates live.
   const handleDayReset = useCallback(() => {
     setDayResetTick((t) => t + 1);
+    const nextPhase = resolveDayPhase(new Date(), getDayResetMinutes());
+    setSelectedPhase(nextPhase);
+    setJournalExpanded(nextPhase === "evening");
+    setShowFullDay(false);
   }, []);
   useDayResetTimer(handleDayReset);
 
@@ -67,6 +88,28 @@ export default function TodayPage() {
     dailyTasks,
     refreshTasksData,
   } = useTodayPage(currentDate, dayResetTick);
+  const isEffectiveToday = toDateString(currentDate) === getEffectiveToday();
+  const focusedPhase = isEffectiveToday && !showFullDay ? selectedPhase : null;
+
+  const handlePhaseKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const currentIndex = PHASES.indexOf(selectedPhase);
+    const nextIndex =
+      event.key === "ArrowRight"
+        ? (currentIndex + 1) % PHASES.length
+        : (currentIndex - 1 + PHASES.length) % PHASES.length;
+    const nextPhase = PHASES[nextIndex];
+    setSelectedPhase(nextPhase);
+    setJournalExpanded(nextPhase === "evening");
+    setShowFullDay(false);
+  };
+
+  const handlePhaseChange = (phase: DayPhase) => {
+    setSelectedPhase(phase);
+    setJournalExpanded(phase === "evening");
+    setShowFullDay(false);
+  };
 
   if (loading) {
     return (
@@ -80,8 +123,8 @@ export default function TodayPage() {
     if (!(target instanceof Element)) return false;
     return Boolean(
       target.closest(
-        "button, a, input, textarea, select, [role='button'], [role='link'], [contenteditable='true'], [data-no-swipe]"
-      )
+        "button, a, input, textarea, select, [role='button'], [role='link'], [contenteditable='true'], [data-no-swipe]",
+      ),
     );
   };
 
@@ -206,12 +249,66 @@ export default function TodayPage() {
         </div>
       )}
 
-      <JournalCard
-        key={toDateString(currentDate)}
-        currentDate={currentDate}
-        journal={journal}
-        loadJournalMeta={loadJournalMeta}
-      />
+      {isEffectiveToday ? (
+        <div className="mb-3 space-y-2 px-3 pt-2">
+          <div
+            className="flex items-center gap-1 rounded-full border border-border bg-muted/30 p-1"
+            role="radiogroup"
+            aria-label={t("phases.label")}
+            onKeyDown={handlePhaseKeyDown}
+          >
+            {PHASES.map((phase) => (
+              <Button
+                key={phase}
+                type="button"
+                variant={selectedPhase === phase ? "default" : "ghost"}
+                role="radio"
+                aria-checked={selectedPhase === phase}
+                className="h-10 min-w-0 flex-1 rounded-full px-3 text-xs font-semibold"
+                onClick={() => handlePhaseChange(phase)}
+              >
+                {t(`phases.${phase}`)}
+              </Button>
+            ))}
+          </div>
+          {!showFullDay ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-9 w-full rounded-full text-xs text-muted-foreground"
+              onClick={() => {
+                setShowFullDay(true);
+                setJournalExpanded(true);
+              }}
+            >
+              {t("phases.showFullDay")}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isEffectiveToday && !journalExpanded && !showFullDay ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="mx-3 mb-2 flex h-11 w-[calc(100%-1.5rem)] items-center justify-start gap-2 rounded-xl px-4"
+          aria-expanded={false}
+          onClick={() => setJournalExpanded(true)}
+        >
+          <BookOpen className="h-4 w-4 text-rose-500" aria-hidden />
+          <span className="min-w-0 flex-1 truncate text-left text-sm font-medium">
+            {journal.draftTitle || t("sections.journal")}
+          </span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden />
+        </Button>
+      ) : (
+        <JournalCard
+          key={toDateString(currentDate)}
+          currentDate={currentDate}
+          journal={journal}
+          loadJournalMeta={loadJournalMeta}
+        />
+      )}
 
       <div className="p-3">
         <DailyTasksList
@@ -224,6 +321,7 @@ export default function TodayPage() {
           entryDates={entryDates}
           bookmarkedDates={bookmarkedDates}
           loadJournalMeta={loadJournalMeta}
+          phase={focusedPhase}
           onTasksDataChanged={() => {
             void refreshTasksData();
           }}

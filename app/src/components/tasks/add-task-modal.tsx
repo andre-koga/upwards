@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { Activity } from "@/lib/db/types";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,8 +19,10 @@ interface AddTaskModalProps {
     options?: {
       due_date?: string | null;
       is_pinned?: boolean;
-    }
+    },
   ) => Promise<boolean>;
+  activities?: Activity[];
+  onStartActivity?: (activityId: string) => void | Promise<void>;
   triggerClassName?: string;
   triggerTitle?: string;
   /** Shown next to the icon inside the trigger (wider layouts). */
@@ -37,6 +40,8 @@ export default function AddTaskModal({
   icon: Icon = Plus,
   disabled = false,
   floating = true,
+  activities = [],
+  onStartActivity,
 }: AddTaskModalProps) {
   const { t } = useTranslation("tasks");
   const { t: tCommon } = useTranslation("common");
@@ -47,6 +52,14 @@ export default function AddTaskModal({
   const [isPinned, setIsPinned] = useState(false);
   const [adding, setAdding] = useState(false);
   const closingFromSuccessRef = useRef(false);
+  const normalizedTitle = title.trim().toLocaleLowerCase();
+  const matchingActivities = activities.filter(
+    (activity) => activity.name?.trim().toLocaleLowerCase() === normalizedTitle,
+  );
+  const matchedActivity =
+    normalizedTitle && matchingActivities.length === 1
+      ? matchingActivities[0]
+      : null;
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
@@ -89,21 +102,52 @@ export default function AddTaskModal({
     setAdding(false);
   };
 
+  const handleStart = async () => {
+    if (!matchedActivity || !onStartActivity) return;
+    setAdding(true);
+    await onStartActivity(matchedActivity.id);
+    clearQuickMemoSessionDraft();
+    closingFromSuccessRef.current = true;
+    setTitle("");
+    setDueDate(null);
+    setIsPinned(false);
+    handleOpenChange(false);
+    setAdding(false);
+  };
+
   return (
     <>
       <MemoEditDialog
         open={open}
         onOpenChange={handleOpenChange}
-        dialogTitle={t("memo.newTitle")}
+        dialogTitle={t("quickCapture.title")}
         title={title}
         onTitleChange={setTitle}
         dueDate={dueDate}
         onDueDateChange={setDueDate}
         isPinned={isPinned}
         onPinnedChange={setIsPinned}
-        onConfirm={handleAdd}
-        confirmLabel={tCommon("add")}
+        confirmLabel={
+          matchedActivity && onStartActivity
+            ? t("quickCapture.start")
+            : tCommon("add")
+        }
         confirmDisabled={adding || !title.trim()}
+        titlePlaceholder={t("quickCapture.placeholder")}
+        showAdvancedToggle
+        advancedLabel={t("quickCapture.more")}
+        secondaryAction={
+          matchedActivity && onStartActivity
+            ? {
+                label: t("quickCapture.saveAsMemo"),
+                onClick: () => {
+                  void handleAdd();
+                },
+                disabled: adding,
+              }
+            : undefined
+        }
+        onConfirm={matchedActivity && onStartActivity ? handleStart : handleAdd}
       />
 
       <Button
@@ -119,7 +163,7 @@ export default function AddTaskModal({
             !triggerLabel &&
             "fixed bottom-2 right-2 z-[60] gap-0 px-0 shadow-md",
           triggerLabel && "rounded-full shadow-md",
-          triggerClassName
+          triggerClassName,
         )}
       >
         {triggerLabel ? (
