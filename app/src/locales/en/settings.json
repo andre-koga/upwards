@@ -114,6 +114,70 @@
     "notSignedIn": "Sign in to sync to set up AI insights.",
     "syncNotConfigured": "Sync is not configured for this build."
   },
+  "backup": {
+    "title": "Backup",
+    "description": "Download a copy of your data, or bring one back. Importing merges with what is already here and never adds counts twice.",
+    "export": {
+      "label": "Export",
+      "data": "Data only",
+      "photos": "Data + photos",
+      "clips": "Daily clips",
+      "hint": "Each export syncs first. Daily clips download as one file per year.",
+      "clipsYear_one": "{{year}} · {{count}} clip",
+      "clipsYear_other": "{{year}} · {{count}} clips",
+      "noClips": "No daily clips to export yet.",
+      "done": "Backup downloaded.",
+      "missingMedia_one": "{{count}} file couldn't be downloaded and is not in the backup.",
+      "missingMedia_other": "{{count}} files couldn't be downloaded and are not in the backup.",
+      "failed": "Couldn't create the backup. Try again."
+    },
+    "import": {
+      "label": "Import",
+      "choose": "Import a backup…",
+      "hint": "Accepts Upwards backup and clips files (.zip), and older .json backups.",
+      "done": "Backup imported.",
+      "summary": "{{inserted}} added, {{updated}} updated, {{unchanged}} already here.",
+      "countsAdded_one": "{{count}} completion restored.",
+      "countsAdded_other": "{{count}} completions restored.",
+      "keptNewer_one": "{{count}} item kept as is — this account has a newer version.",
+      "keptNewer_other": "{{count}} items kept as is — this account has newer versions.",
+      "conflicts_one": "{{count}} journal entry has different text in the backup. Choose which to keep in Sync issues.",
+      "conflicts_other": "{{count}} journal entries have different text in the backup. Choose which to keep in Sync issues.",
+      "mediaRestored_one": "{{count}} photo restored.",
+      "mediaRestored_other": "{{count}} photos restored.",
+      "mediaFailed_one": "{{count}} file couldn't be restored.",
+      "mediaFailed_other": "{{count}} files couldn't be restored.",
+      "clipsDone_one": "{{count}} clip restored.",
+      "clipsDone_other": "{{count}} clips restored.",
+      "clipsUnmatched_one": "{{count}} clip has no matching journal day here. Import the data backup first, then the clips again.",
+      "clipsUnmatched_other": "{{count}} clips have no matching journal day here. Import the data backup first, then the clips again.",
+      "failed": "Couldn't import that file. It's safe to try again.",
+      "blocked": {
+        "offline": "Import needs a connection, so your data can sync before and after.",
+        "update_required": "Update Upwards to import — this version can't sync.",
+        "pending_changes_one": "{{count}} change on this device hasn't uploaded yet. Import works once it has — check Sync issues.",
+        "pending_changes_other": "{{count}} changes on this device haven't uploaded yet. Import works once they have — check Sync issues.",
+        "sync_failed": "Sync didn't finish, so import is paused. Check Sync issues and try again."
+      },
+      "fileError": {
+        "unrecognized": "That file isn't an Upwards backup.",
+        "newer_version": "That backup comes from a newer version of Upwards. Update the app, then import it.",
+        "sign_in_required": "Sign in to restore daily clips."
+      }
+    },
+    "progress": {
+      "syncing": "Syncing first…",
+      "collecting": "Gathering your data…",
+      "packing": "Building the file…",
+      "reading": "Reading the file…",
+      "merging": "Merging into your data…",
+      "media": {
+        "export": "Downloading file {{done}} of {{total}}…",
+        "import": "Restoring file {{done}} of {{total}}…"
+      }
+    },
+    "openSyncIssues": "Open Sync issues"
+  },
   "syncIssues": {
     "page": {
       "title": "Sync issues",
@@ -181,16 +245,19 @@
       "columns": {
         "field": "Field",
         "yours": "Yours",
-        "theirs": "Other device"
+        "theirs": "Other device",
+        "backup": "Backup"
       },
       "actions": {
         "keepMine": "Keep mine",
         "keepTheirs": "Keep theirs",
         "combine": "Combine",
-        "defer": "Decide later"
+        "defer": "Decide later",
+        "keepBackup": "Keep backup"
       },
       "journal": {
         "summary": "Two versions of this journal entry need a decision.",
+        "backupSummary": "This journal entry has different text in a backup you imported.",
         "untitled": "Journal entry",
         "untitledWithDate": "Journal for {{date}}",
         "entryDate": "Date: {{date}}",

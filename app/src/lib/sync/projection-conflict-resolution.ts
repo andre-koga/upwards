@@ -11,7 +11,6 @@ import {
   enqueueProjectionUpsertForTable,
   entityTypeToSyncTable,
   dexieTableForSyncTable,
-  withSuppressedProjectionEnqueue,
 } from "@/lib/sync/projection-sync";
 import { deferSyncIssue } from "@/lib/sync/sync-issues-store";
 import { normalizeSyncRow } from "@/lib/sync/sync-transformers";
@@ -280,15 +279,13 @@ async function applyResolvedProjectionFields(
     updated_at: ts,
   };
 
-  await withSuppressedProjectionEnqueue(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (db as any)[dexieKey].put(next);
-    await enqueueProjectionUpsertForTable(
-      table,
-      next as Record<string, unknown>,
-      remoteUpdatedAt ?? existing.updated_at
-    );
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any)[dexieKey].put(next);
+  await enqueueProjectionUpsertForTable(
+    table,
+    next as Record<string, unknown>,
+    remoteUpdatedAt ?? existing.updated_at
+  );
 
   return next.updated_at;
 }

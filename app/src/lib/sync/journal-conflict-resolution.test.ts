@@ -1,9 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { JournalEntry, SyncIssue } from "@/lib/db/types";
 
-const { enqueueProjectionMock } = vi.hoisted(() => ({
-  enqueueProjectionMock: vi.fn(async () => undefined),
-}));
+const { enqueueProjectionMock, suppression } = vi.hoisted(() => {
+  const suppression = { depth: 0 };
+  return {
+    suppression,
+    // The real enqueue returns early while suppressed, so a resolution that
+    // enqueued inside withSuppressedProjectionEnqueue never reached the server.
+    enqueueProjectionMock: vi.fn(async () => {
+      if (suppression.depth > 0) {
+        throw new Error("projection upsert enqueued while suppressed");
+      }
+    }),
+  };
+});
 
 const journalEntries = new Map<string, JournalEntry>();
 const syncIssues: SyncIssue[] = [];
@@ -24,8 +34,16 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 vi.mock("@/lib/sync/projection-sync", () => ({
-  withSuppressedProjectionEnqueue: async (operation: () => Promise<unknown>) =>
-    operation(),
+  withSuppressedProjectionEnqueue: async (
+    operation: () => Promise<unknown>
+  ) => {
+    suppression.depth += 1;
+    try {
+      return await operation();
+    } finally {
+      suppression.depth -= 1;
+    }
+  },
   enqueueProjectionUpsertForTable: enqueueProjectionMock,
 }));
 

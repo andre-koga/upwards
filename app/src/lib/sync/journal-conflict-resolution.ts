@@ -7,10 +7,7 @@ import {
   formatConflictFieldValue,
   type ConflictResolutionChoice,
 } from "@/lib/sync/field-diff";
-import {
-  enqueueProjectionUpsertForTable,
-  withSuppressedProjectionEnqueue,
-} from "@/lib/sync/projection-sync";
+import { enqueueProjectionUpsertForTable } from "@/lib/sync/projection-sync";
 import { deferSyncIssue } from "@/lib/sync/sync-issues-store";
 import { normalizeSyncRow } from "@/lib/sync/sync-transformers";
 import { getCachedUserId, supabase } from "@/lib/supabase";
@@ -50,6 +47,10 @@ export interface JournalConflictPayload {
   differing_fields: string[];
   auto_combinable_fields: string[];
   both_changed_fields: string[];
+  /** "backup": the other side is a backup file, not another device. */
+  source?: "device" | "backup";
+  /** Set for backup conflicts so re-importing the same file adds no second issue. */
+  backup_fingerprint?: string;
   resolution?: {
     choice: ConflictResolutionChoice | "defer";
     resolved_at: string;
@@ -72,7 +73,9 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function journalFieldsFromRow(row: Record<string, unknown>): Record<string, unknown> {
+function journalFieldsFromRow(
+  row: Record<string, unknown>
+): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
   for (const key of JOURNAL_CONFLICT_FIELD_KEYS) {
     if (key in row) fields[key] = row[key];
@@ -107,15 +110,13 @@ async function fetchRemoteJournalEntry(
     .maybeSingle();
 
   if (error || !data) return null;
-  return normalizeSyncRow(
-    "journal_entries",
-    data as Record<string, unknown>
-  );
+  return normalizeSyncRow("journal_entries", data as Record<string, unknown>);
 }
 
-function journalLabelFromFields(
-  fields: Record<string, unknown>
-): { entryDate: string | null; title: string | null } {
+function journalLabelFromFields(fields: Record<string, unknown>): {
+  entryDate: string | null;
+  title: string | null;
+} {
   const entryDate =
     typeof fields.entry_date === "string" ? fields.entry_date : null;
   const title =
@@ -180,8 +181,9 @@ export async function buildJournalConflictPayload(input: {
     }
   }
 
-  const { entryDate: localDate, title: localTitle } =
-    journalLabelFromFields(local.fields);
+  const { entryDate: localDate, title: localTitle } = journalLabelFromFields(
+    local.fields
+  );
   const { entryDate: remoteDate, title: remoteTitle } = journalLabelFromFields(
     remote?.fields ?? {}
   );
@@ -304,14 +306,12 @@ async function applyResolvedJournalFields(
 
   const next = patchJournalFromFields(existing, fields);
 
-  await withSuppressedProjectionEnqueue(async () => {
-    await db.journalEntries.put(next);
-    await enqueueProjectionUpsertForTable(
-      "journal_entries",
-      next as unknown as Record<string, unknown>,
-      remoteUpdatedAt ?? existing.updated_at
-    );
-  });
+  await db.journalEntries.put(next);
+  await enqueueProjectionUpsertForTable(
+    "journal_entries",
+    next as unknown as Record<string, unknown>,
+    remoteUpdatedAt ?? existing.updated_at
+  );
 
   return next.updated_at;
 }
@@ -370,18 +370,14 @@ export async function resolveJournalConflict(
     );
   }
 
+  // A backup's revision was never on the server; the row this device synced is the base.
   const resultingUpdatedAt = await applyResolvedJournalFields(
     payload.entity_id,
     chosenFields,
-    payload.remote?.updated_at ?? null
+    payload.source === "backup" ? null : (payload.remote?.updated_at ?? null)
   );
 
-  await markJournalIssueResolved(
-    issue,
-    payload,
-    choice,
-    resultingUpdatedAt
-  );
+  await markJournalIssueResolved(issue, payload, choice, resultingUpdatedAt);
 }
 
 export async function deferJournalConflict(issue: SyncIssue): Promise<void> {

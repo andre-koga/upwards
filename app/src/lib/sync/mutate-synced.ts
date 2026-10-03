@@ -1,3 +1,4 @@
+import type { Table } from "dexie";
 import { db, now } from "@/lib/db";
 import type {
   Activity,
@@ -27,6 +28,23 @@ import {
   enqueueBreakDayChange,
 } from "./semantic-operations";
 import type { SyncTable } from "./sync-transformers";
+import { recordSyncIssue } from "./sync-issues-store";
+import {
+  buildJournalConflictPayload,
+  isJournalConflictPayload,
+} from "./journal-conflict-resolution";
+import type { BackupTables } from "@/lib/backup/format";
+import {
+  backupJournalFingerprint,
+  backupOperationId,
+} from "@/lib/backup/identity";
+import {
+  decideAppendOnlyRow,
+  decideCurrentStateRow,
+  isEmptyDailyPlan,
+  planDailyEntryMerge,
+  planJournalMerge,
+} from "@/lib/backup/merge-plan";
 
 export async function getOrCreateDailyEntryProjection(
   dateString: string
@@ -299,6 +317,7 @@ export async function applyCountDelta(input: {
   nextCount: number;
   reason?: "increment" | "cycle" | "reset" | "never_slip";
   completionAt?: string | null;
+  operationId?: string;
 }): Promise<DailyEntry> {
   const entry = await getOrCreateDailyEntryProjection(input.date);
   const counts: Record<string, number> = { ...(entry.task_counts ?? {}) };
@@ -327,6 +346,7 @@ export async function applyCountDelta(input: {
     reason: input.reason,
     dailyEntryId: entry.id,
     completionAt: input.completionAt,
+    operationId: input.operationId,
   });
   requestDebouncedSync();
   return {
@@ -341,6 +361,7 @@ export async function applyPauseChange(input: {
   date: string;
   activityId: string;
   paused: boolean;
+  operationId?: string;
 }): Promise<DailyEntry> {
   const entry = await getOrCreateDailyEntryProjection(input.date);
   const pausedIds = new Set(entry.paused_task_ids ?? []);
@@ -359,6 +380,7 @@ export async function applyPauseChange(input: {
     date: input.date,
     paused: input.paused,
     dailyEntryId: entry.id,
+    operationId: input.operationId,
   });
   requestDebouncedSync();
   return { ...entry, paused_task_ids: nextPaused, updated_at: timestamp };
@@ -367,6 +389,7 @@ export async function applyPauseChange(input: {
 export async function applyBreakDayChange(input: {
   date: string;
   isBreakDay: boolean;
+  operationId?: string;
 }): Promise<DailyEntry> {
   const entry = await getOrCreateDailyEntryProjection(input.date);
   const timestamp = now();
@@ -380,6 +403,7 @@ export async function applyBreakDayChange(input: {
     date: input.date,
     isBreakDay: input.isBreakDay,
     dailyEntryId: entry.id,
+    operationId: input.operationId,
   });
   requestDebouncedSync();
   return { ...entry, is_break_day: input.isBreakDay, updated_at: timestamp };
@@ -404,6 +428,7 @@ export async function applyCompletionNote(input: {
   date: string;
   activityId: string;
   note: string | null;
+  operationId?: string;
 }): Promise<DailyEntry> {
   const entry = await getOrCreateDailyEntryProjection(input.date);
   const notes: Record<string, string> = { ...(entry.completion_notes ?? {}) };
@@ -419,7 +444,7 @@ export async function applyCompletionNote(input: {
   });
   if (getCachedUserId()) {
     await enqueuePendingOperation({
-      operation_id: crypto.randomUUID(),
+      operation_id: input.operationId ?? crypto.randomUUID(),
       account_id: getCachedUserId(),
       device_id: getOrCreateDeviceId(),
       entity_type: "daily_entry",
@@ -437,92 +462,249 @@ export async function applyCompletionNote(input: {
   return { ...entry, completion_notes: notes, updated_at: timestamp };
 }
 
-export interface BackupImportData {
-  activityGroups?: ActivityGroup[];
-  activities?: Activity[];
-  dailyEntries?: DailyEntry[];
-  activityPeriods?: ActivityPeriod[];
-  journalEntries?: JournalEntry[];
-  memories?: Memory[];
-  oneTimeTasks?: OneTimeTask[];
-  recurringMemos?: RecurringMemo[];
-  activityStatusEvents?: ActivityStatusEvent[];
-  groupStatusEvents?: GroupStatusEvent[];
+export interface BackupImportSummary {
+  inserted: number;
+  updated: number;
+  unchanged: number;
+  /** Rows the account already has in a newer revision than the backup. */
+  keptNewer: number;
+  /** Completions added to reach the backup's counts. */
+  countsAdded: number;
+  journalConflicts: number;
 }
 
-/** Restore a local backup through the command API so synced tables enqueue ops. */
-export async function importBackup(data: BackupImportData): Promise<void> {
-  for (const row of data.activityGroups ?? []) {
-    await saveActivityGroup(row);
-  }
-  for (const row of data.activities ?? []) {
-    await saveActivity(row);
-  }
-  if (data.dailyEntries?.length) {
-    await withSuppressedProjectionEnqueue(async () => {
-      for (const row of data.dailyEntries ?? []) {
-        await db.dailyEntries.put(row);
+export interface BackupImportOptions {
+  /** `syncUserKey` of the account receiving the import. */
+  targetUserKey: string;
+  /** Server sequence this device has applied; part of every operation id. */
+  syncedSequence: number;
+}
+
+function emptyImportSummary(): BackupImportSummary {
+  return {
+    inserted: 0,
+    updated: 0,
+    unchanged: 0,
+    keptNewer: 0,
+    countsAdded: 0,
+    journalConflicts: 0,
+  };
+}
+
+/**
+ * Merge a backup into this account through the command API.
+ *
+ * Every change is computed against current state and enqueued with an
+ * operation id derived from the backup row, so importing the same file twice
+ * changes nothing and never adds counts on top of counts. A journal date whose
+ * text differs becomes a conflict on Sync issues instead of an overwrite.
+ *
+ * Callers must sync first: counts are the difference from this device's view,
+ * which is only the account's view once nothing is pending.
+ */
+export async function importBackup(
+  tables: BackupTables,
+  options: BackupImportOptions
+): Promise<BackupImportSummary> {
+  const summary = emptyImportSummary();
+  const opId = (
+    ...parts: Array<string | number | boolean | null | undefined>
+  ) => backupOperationId(options.targetUserKey, options.syncedSequence, parts);
+
+  async function importRows<T extends { id: string; updated_at: string }>(
+    rows: T[],
+    table: SyncTable,
+    dexieTable: Table<T, string>,
+    mode: "current" | "append" = "current"
+  ): Promise<void> {
+    for (const row of rows) {
+      const local = await dexieTable.get(row.id);
+      const decision =
+        mode === "append"
+          ? decideAppendOnlyRow(local)
+          : decideCurrentStateRow(local, row);
+      if (decision === "unchanged") {
+        summary.unchanged += 1;
+        continue;
       }
-    });
-    for (const row of data.dailyEntries) {
-      for (const [activityId, count] of Object.entries(row.task_counts ?? {})) {
-        if (count > 0) {
-          await enqueueActivityCountDelta({
-            activityId,
-            date: row.date,
-            previousCount: 0,
-            nextCount: count,
-            dailyEntryId: row.id,
-          });
-        }
+      if (decision === "keep_local") {
+        summary.keptNewer += 1;
+        continue;
       }
-      for (const activityId of row.paused_task_ids ?? []) {
-        await enqueueActivityPauseChange({
-          activityId,
-          date: row.date,
-          paused: true,
-          dailyEntryId: row.id,
-        });
-      }
-      if (row.is_break_day) {
-        await enqueueBreakDayChange({
-          date: row.date,
-          isBreakDay: true,
-          dailyEntryId: row.id,
-        });
-      }
-      for (const [activityId, note] of Object.entries(
-        row.completion_notes ?? {}
-      )) {
-        if (note) {
-          await applyCompletionNote({
-            date: row.date,
-            activityId,
-            note,
-          });
-        }
-      }
+      const next = { ...row, synced_at: null };
+      await dexieTable.put(next);
+      await enqueueProjectionUpsertForTable(
+        table,
+        next as unknown as Record<string, unknown>,
+        decision === "update" ? local!.updated_at : null,
+        { operationId: opId(table, row.id, row.updated_at) }
+      );
+      summary[decision === "insert" ? "inserted" : "updated"] += 1;
     }
   }
-  for (const row of data.activityPeriods ?? []) {
-    await saveTimedPeriod(row);
+
+  await importRows(tables.activityGroups, "activity_groups", db.activityGroups);
+  await importRows(tables.activities, "activities", db.activities);
+  await importRows(tables.recurringMemos, "recurring_memos", db.recurringMemos);
+  await importRows(tables.oneTimeTasks, "one_time_tasks", db.oneTimeTasks);
+  await importRows(
+    tables.activityStatusEvents,
+    "activity_status_events",
+    db.activityStatusEvents,
+    "append"
+  );
+  await importRows(
+    tables.groupStatusEvents,
+    "group_status_events",
+    db.groupStatusEvents,
+    "append"
+  );
+
+  for (const row of tables.dailyEntries) {
+    const local = await db.dailyEntries
+      .where("date")
+      .equals(row.date)
+      .filter((entry) => !entry.deleted_at)
+      .first();
+    const plan = planDailyEntryMerge(local, row);
+    if (isEmptyDailyPlan(plan)) {
+      summary.unchanged += 1;
+      continue;
+    }
+    for (const change of plan.counts) {
+      await applyCountDelta({
+        date: row.date,
+        activityId: change.activityId,
+        previousCount: change.previousCount,
+        nextCount: change.nextCount,
+        completionAt: change.completionAt,
+        operationId: opId(
+          "count",
+          row.date,
+          change.activityId,
+          change.previousCount,
+          change.nextCount,
+          change.completionAt
+        ),
+      });
+      summary.countsAdded += change.nextCount - change.previousCount;
+    }
+    for (const activityId of plan.pauseActivityIds) {
+      await applyPauseChange({
+        date: row.date,
+        activityId,
+        paused: true,
+        operationId: opId("pause", row.date, activityId),
+      });
+    }
+    if (plan.enableBreakDay) {
+      await applyBreakDayChange({
+        date: row.date,
+        isBreakDay: true,
+        operationId: opId("break_day", row.date),
+      });
+    }
+    for (const { activityId, note } of plan.notes) {
+      await applyCompletionNote({
+        date: row.date,
+        activityId,
+        note,
+        operationId: opId("note", row.date, activityId, note),
+      });
+    }
+    summary[local ? "updated" : "inserted"] += 1;
   }
-  for (const row of data.journalEntries ?? []) {
-    await saveJournalEntry(row);
+
+  const dateByDailyId = new Map(
+    tables.dailyEntries.map((entry) => [entry.id, entry.date])
+  );
+  const timedPeriods: ActivityPeriod[] = [];
+  for (const period of tables.activityPeriods) {
+    if (isUntimedPeriod(period.start_time, period.end_time)) continue;
+    const date = dateByDailyId.get(period.daily_entry_id);
+    if (date && !(await db.activityPeriods.get(period.id))) {
+      const entry = await getOrCreateDailyEntryProjection(date);
+      timedPeriods.push({ ...period, daily_entry_id: entry.id });
+    } else {
+      timedPeriods.push(period);
+    }
   }
-  for (const row of data.memories ?? []) {
-    await saveMemory(row);
+  await importRows(timedPeriods, "activity_periods", db.activityPeriods);
+
+  for (const row of tables.journalEntries) {
+    const local =
+      (await db.journalEntries.get(row.id)) ??
+      (await db.journalEntries
+        .where("entry_date")
+        .equals(row.entry_date)
+        .filter((entry) => !entry.deleted_at)
+        .first());
+    const decision = planJournalMerge(local, row, now());
+    if (decision.kind === "unchanged") {
+      summary.unchanged += 1;
+    } else if (decision.kind === "keep_local") {
+      summary.keptNewer += 1;
+    } else if (decision.kind === "conflict") {
+      if (await recordBackupJournalConflict(local!, row)) {
+        summary.journalConflicts += 1;
+      }
+    } else {
+      const next =
+        decision.kind === "insert"
+          ? { ...row, synced_at: null }
+          : { ...decision.row, synced_at: null };
+      await db.journalEntries.put(next);
+      await enqueueProjectionUpsertForTable(
+        "journal_entries",
+        next as unknown as Record<string, unknown>,
+        local?.updated_at ?? null,
+        { operationId: opId("journal_entries", next.id, row.updated_at) }
+      );
+      summary[decision.kind === "insert" ? "inserted" : "updated"] += 1;
+    }
   }
-  for (const row of data.oneTimeTasks ?? []) {
-    await saveOneTimeTask(row);
-  }
-  for (const row of data.recurringMemos ?? []) {
-    await saveRecurringMemo(row);
-  }
-  for (const row of data.activityStatusEvents ?? []) {
-    await saveActivityStatusEvent(row);
-  }
-  for (const row of data.groupStatusEvents ?? []) {
-    await saveGroupStatusEvent(row);
-  }
+
+  await importRows(tables.memories, "memories", db.memories);
+
+  requestDebouncedSync();
+  return summary;
+}
+
+/** Returns false when this backup's version is already on Sync issues. */
+async function recordBackupJournalConflict(
+  local: JournalEntry,
+  backup: JournalEntry
+): Promise<boolean> {
+  const fingerprint = backupJournalFingerprint(
+    local.id,
+    backup.text_content?.trim() ?? ""
+  );
+  const existing = await db.syncIssues
+    .where("kind")
+    .equals("conflict")
+    .filter(
+      (issue) =>
+        issue.entity_id === local.id &&
+        isJournalConflictPayload(issue.payload) &&
+        issue.payload.backup_fingerprint === fingerprint
+    )
+    .first();
+  if (existing) return false;
+
+  const payload = await buildJournalConflictPayload({
+    entity_id: local.id,
+    localRow: local,
+    remoteRow: { ...backup, id: local.id },
+    remoteDeviceId: null,
+  });
+  await recordSyncIssue({
+    kind: "conflict",
+    title: "Journal entry differs from backup",
+    detail: `The backup has different text for ${backup.entry_date}.`,
+    entity_type: "journal_entry",
+    entity_id: local.id,
+    payload: { ...payload, source: "backup", backup_fingerprint: fingerprint },
+    account_id: getCachedUserId(),
+  });
+  return true;
 }

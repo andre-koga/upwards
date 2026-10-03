@@ -361,6 +361,7 @@ function JournalConflictCard({
     payload.remote != null && payload.both_changed_fields.length === 0;
   const hasBothChanged = payload.both_changed_fields.length > 0;
   const isDeferred = issue.status === "deferred";
+  const fromBackup = payload.source === "backup";
 
   return (
     <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
@@ -369,7 +370,9 @@ function JournalConflictCard({
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm font-medium">{title}</p>
           <p className="text-sm text-muted-foreground">
-            {t("syncIssues.conflict.journal.summary")}
+            {fromBackup
+              ? t("syncIssues.conflict.journal.backupSummary")
+              : t("syncIssues.conflict.journal.summary")}
           </p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {payload.entry_date ? (
@@ -407,7 +410,9 @@ function JournalConflictCard({
                 {t("syncIssues.conflict.columns.yours")}
               </th>
               <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.columns.theirs")}
+                {fromBackup
+                  ? t("syncIssues.conflict.columns.backup")
+                  : t("syncIssues.conflict.columns.theirs")}
               </th>
             </tr>
           </thead>
@@ -425,13 +430,13 @@ function JournalConflictCard({
                   <td className="px-2 py-1.5 font-medium">
                     {fieldLabel(field, t, "journal")}
                   </td>
-                  <td className="px-2 py-1.5 whitespace-pre-wrap">
+                  <td className="whitespace-pre-wrap px-2 py-1.5">
                     {formatJournalConflictFieldValue(
                       field,
                       payload.local.fields[field]
                     )}
                   </td>
-                  <td className="px-2 py-1.5 whitespace-pre-wrap">
+                  <td className="whitespace-pre-wrap px-2 py-1.5">
                     {payload.remote
                       ? formatJournalConflictFieldValue(
                           field,
@@ -473,7 +478,9 @@ function JournalConflictCard({
           {busy === "keep_remote" ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : null}
-          {t("syncIssues.conflict.actions.keepTheirs")}
+          {fromBackup
+            ? t("syncIssues.conflict.actions.keepBackup")
+            : t("syncIssues.conflict.actions.keepTheirs")}
         </Button>
         <Button
           variant="outline"
@@ -538,7 +545,9 @@ function ProjectionConflictCard({
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm font-medium">{title}</p>
           <p className="text-sm text-muted-foreground">
-            {t("syncIssues.conflict.projection.summary", { entity: entityKind })}
+            {t("syncIssues.conflict.projection.summary", {
+              entity: entityKind,
+            })}
           </p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {isDeferred ? (
@@ -587,13 +596,13 @@ function ProjectionConflictCard({
                   <td className="px-2 py-1.5 font-medium">
                     {fieldLabel(field, t, "projection")}
                   </td>
-                  <td className="px-2 py-1.5 whitespace-pre-wrap">
+                  <td className="whitespace-pre-wrap px-2 py-1.5">
                     {formatProjectionConflictFieldValue(
                       field,
                       payload.local.fields[field]
                     )}
                   </td>
-                  <td className="px-2 py-1.5 whitespace-pre-wrap">
+                  <td className="whitespace-pre-wrap px-2 py-1.5">
                     {payload.remote
                       ? formatProjectionConflictFieldValue(
                           field,
