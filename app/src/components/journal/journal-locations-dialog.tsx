@@ -18,7 +18,6 @@ interface JournalLocationsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   route: JournalLocationRoute;
-  canEdit: boolean;
   onSave: (route: JournalLocationRoute) => void;
 }
 
@@ -40,7 +39,6 @@ export default function JournalLocationsDialog({
   open,
   onOpenChange,
   route,
-  canEdit,
   onSave,
 }: JournalLocationsDialogProps) {
   const { t } = useTranslation("journal");
@@ -66,7 +64,7 @@ export default function JournalLocationsDialog({
   }
 
   useEffect(() => {
-    if (!open || !canEdit) return;
+    if (!open) return;
     const trimmed = addSearch.query.trim();
     if (trimmed.length < 2) return;
 
@@ -97,7 +95,7 @@ export default function JournalLocationsDialog({
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [open, canEdit, addSearch.query, t]);
+  }, [open, addSearch.query, t]);
 
   const handleAddQueryChange = (value: string) => {
     setAddSearch((prev) => ({
@@ -126,10 +124,6 @@ export default function JournalLocationsDialog({
   };
 
   const handleSave = () => {
-    if (!canEdit) {
-      onOpenChange(false);
-      return;
-    }
     onSave(normalizeJournalLocationRoute(draftRoute));
     onOpenChange(false);
   };
@@ -139,8 +133,7 @@ export default function JournalLocationsDialog({
     onOpenChange(nextOpen);
   };
 
-  const canAddLocation =
-    canEdit && draftRoute.locations.length < MAX_DAILY_LOCATIONS;
+  const canAddLocation = draftRoute.locations.length < MAX_DAILY_LOCATIONS;
   const deleteConfirmName =
     deleteConfirmIndex != null
       ? draftRoute.locations[deleteConfirmIndex]?.displayName.trim() ||
@@ -184,29 +177,23 @@ export default function JournalLocationsDialog({
                         t("locations.manualPlace")}
                     </span>
                   </span>
-                  {canEdit ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 border-destructive text-destructive"
-                      onClick={() => setDeleteConfirmIndex(index)}
-                      title={t("locations.deleteLocation")}
-                      aria-label={t("locations.deleteLocation")}
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden />
-                    </Button>
-                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 border-destructive text-destructive"
+                    onClick={() => setDeleteConfirmIndex(index)}
+                    title={t("locations.deleteLocation")}
+                    aria-label={t("locations.deleteLocation")}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden />
+                  </Button>
                 </div>
               ))}
             </div>
-          ) : canEdit ? (
-            <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-              {t("locations.emptyHelper")}
-            </p>
           ) : (
             <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-              {t("locations.noLocationsYet")}
+              {t("locations.emptyHelper")}
             </p>
           )}
 
@@ -219,7 +206,6 @@ export default function JournalLocationsDialog({
                   onChange={(event) => handleAddQueryChange(event.target.value)}
                   placeholder={t("locations.searchAddPlaceholder")}
                   className="border-dashed pl-9"
-                  disabled={!canEdit}
                 />
                 {addSearch.searching ? (
                   <Loader2
@@ -269,16 +255,12 @@ export default function JournalLocationsDialog({
 
         <FormDialogActions
           onConfirm={handleSave}
-          confirmLabel={canEdit ? t("locations.save") : tCommon("close")}
+          confirmLabel={t("locations.save")}
           containerClassName="pt-0"
-          secondaryAction={
-            canEdit
-              ? {
-                  label: tCommon("cancel"),
-                  onClick: () => onOpenChange(false),
-                }
-              : undefined
-          }
+          secondaryAction={{
+            label: tCommon("cancel"),
+            onClick: () => onOpenChange(false),
+          }}
         />
       </FormDialog>
 

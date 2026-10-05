@@ -39,18 +39,16 @@ export default function JournalMetaBar({
           )}
         />
       </Button>
-      {journal.canEditJournal && (
-        <Button
-          variant="ghost"
-          size="smIcon"
-          onClick={onEditRequest}
-          className="text-muted-foreground"
-          title={t("editJournal")}
-          aria-label={t("editJournal")}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="smIcon"
+        onClick={onEditRequest}
+        className="text-muted-foreground"
+        title={t("editJournal")}
+        aria-label={t("editJournal")}
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
     </div>
   );
 }

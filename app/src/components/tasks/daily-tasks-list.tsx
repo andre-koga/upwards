@@ -77,7 +77,6 @@ export default function DailyTasksList({
 
   const {
     isToday,
-    isEditableDate,
     temporalForViewDate,
     loading,
     activityStreaks,
@@ -228,7 +227,6 @@ export default function DailyTasksList({
                   isPaused={pausedTaskIdSet.has(activity.id)}
                   isBreakDay={isBreakDay}
                   isCurrentActivity={currentActivityId === activity.id}
-                  isEditableDate={isEditableDate}
                   temporal={temporalForViewDate}
                   onIncrement={incrementTask}
                   onNeverIncrement={incrementNeverSlip}
@@ -251,7 +249,6 @@ export default function DailyTasksList({
               onClick={() => {
                 void toggleBreakDay();
               }}
-              disabled={!isEditableDate}
               className={cn(
                 "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default",
                 isBreakDay ? "text-amber-500" : "text-muted-foreground"

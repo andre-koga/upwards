@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { toDateString, startOfDay, todayDateString } from "@/lib/time-utils";
+import { journalStreakAsOf } from "@/lib/journal/streak";
 import { computeActivityStreaksForDate } from "@/lib/streak-utils";
 
 const RANGE_DAYS = 7;
@@ -92,7 +93,9 @@ export async function buildInsightPayload(): Promise<InsightPayload> {
       entriesThisWeek: journalEntries.filter((e) =>
         Boolean(e.text_content?.trim())
       ).length,
-      streak: latestJournal?.journal_completion_streak ?? 0,
+      streak: latestJournal
+        ? await journalStreakAsOf(latestJournal.entry_date)
+        : 0,
       bookmarkedCount: journalEntries.filter((e) => e.is_bookmarked).length,
     },
     completionRate,

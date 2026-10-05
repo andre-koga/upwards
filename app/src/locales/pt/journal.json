@@ -124,12 +124,52 @@
     "noResults": "Sem resultados",
     "typeToSearch": "Digite para buscar",
     "addLocation": "Adicionar lugar",
-    "noLocationsYet": "Nenhum lugar registrado ainda.",
     "emptyHelper": "Busque para adicionar lugares deste dia. Hoje também pode ser detectado automaticamente.",
     "maxLocations": "Até {{count}} lugares por dia",
     "deleteLocation": "Remover lugar",
     "deleteConfirmTitle": "Remover lugar",
     "deleteConfirmDescription": "Remover \"{{name}}\" deste dia?",
     "save": "Salvar lugares"
+  },
+  "oldDay": {
+    "title": "Salvar alterações em {{date}}?",
+    "reassurance": "A versão anterior é guardada e você pode recuperá-la depois.",
+    "confirm": "Salvar alterações",
+    "cancel": "Continuar editando",
+    "listLocale": "pt",
+    "edited": "Editado em {{date}}",
+    "change": {
+      "title": {
+        "added": "Título adicionado",
+        "changed": "Título alterado",
+        "removed": "Título removido"
+      },
+      "emoji": {
+        "added": "Emoji adicionado",
+        "changed": "Emoji alterado",
+        "removed": "Emoji removido"
+      },
+      "text": {
+        "added": "Texto adicionado",
+        "changed": "Texto alterado",
+        "removed": "Texto removido"
+      },
+      "video": {
+        "added": "Vídeo adicionado",
+        "changed": "Vídeo alterado",
+        "removed": "Vídeo removido"
+      },
+      "photosAdded_one": "{{count}} foto adicionada",
+      "photosAdded_other": "{{count}} fotos adicionadas",
+      "photosRemoved_one": "{{count}} foto removida",
+      "photosRemoved_other": "{{count}} fotos removidas",
+      "count": "Contagem alterada",
+      "timer": "Sessão alterada",
+      "breakDay": "Dia de pausa alterado"
+    },
+    "activity": {
+      "title": "Alterar {{date}}?",
+      "summary": "Isso atualiza seu registro desse dia."
+    }
   }
 }

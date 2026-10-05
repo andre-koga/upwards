@@ -19,6 +19,7 @@ import { reconcileJournalDuplicatesForDate } from "@/lib/journal/dedupe-by-date"
 /** Current-state rows that sync via projection.upsert. Streaks are local-only. */
 export const OPS_MANAGED_SYNC_TABLES: SyncTable[] = [
   "journal_entries",
+  "journal_entry_revisions",
   "memories",
   "activity_periods",
   "one_time_tasks",
@@ -31,6 +32,7 @@ export const OPS_MANAGED_SYNC_TABLES: SyncTable[] = [
 
 const SYNC_TABLE_TO_ENTITY_TYPE: Partial<Record<SyncTable, string>> = {
   journal_entries: "journal_entry",
+  journal_entry_revisions: "journal_entry_revision",
   memories: "memory",
   activity_periods: "activity_period",
   one_time_tasks: "one_time_task",
@@ -43,6 +45,7 @@ const SYNC_TABLE_TO_ENTITY_TYPE: Partial<Record<SyncTable, string>> = {
 
 const ENTITY_TYPE_TO_SYNC_TABLE: Record<string, SyncTable> = {
   journal_entry: "journal_entries",
+  journal_entry_revision: "journal_entry_revisions",
   memory: "memories",
   activity_period: "activity_periods",
   one_time_task: "one_time_tasks",
@@ -55,6 +58,7 @@ const ENTITY_TYPE_TO_SYNC_TABLE: Record<string, SyncTable> = {
 
 const ENTITY_TYPE_TO_DEXIE_TABLE: Record<string, keyof typeof db> = {
   journal_entry: "journalEntries",
+  journal_entry_revision: "journalEntryRevisions",
   memory: "memories",
   activity_period: "activityPeriods",
   one_time_task: "oneTimeTasks",
@@ -69,6 +73,7 @@ const ENTITY_TYPE_TO_DEXIE_TABLE: Record<string, keyof typeof db> = {
 const APPEND_ONLY_ENTITY_TYPES = new Set([
   "activity_status_event",
   "group_status_event",
+  "journal_entry_revision",
 ]);
 
 let suppressProjectionEnqueue = 0;

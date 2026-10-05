@@ -159,7 +159,6 @@ export default function JournalCard({
   };
 
   const handleJournalPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (!journal.canEditJournal) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
     clearJournalHoldTimer();
     journalHoldTimerRef.current = setTimeout(() => {
@@ -176,7 +175,6 @@ export default function JournalCard({
   };
 
   const handleJournalCardClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (!journal.canEditJournal) return;
     if (suppressNextCardClickRef.current) {
       suppressNextCardClickRef.current = false;
       event.preventDefault();
@@ -199,27 +197,17 @@ export default function JournalCard({
     <>
       <div
         className="mb-2 overflow-hidden"
-        onPointerDown={
-          journal.canEditJournal ? handleJournalPointerDown : undefined
-        }
-        onPointerUp={
-          journal.canEditJournal ? handleJournalPointerEnd : undefined
-        }
-        onPointerLeave={
-          journal.canEditJournal ? handleJournalPointerEnd : undefined
-        }
-        onPointerCancel={
-          journal.canEditJournal ? handleJournalPointerEnd : undefined
-        }
-        onContextMenu={
-          journal.canEditJournal ? (event) => event.preventDefault() : undefined
-        }
+        onPointerDown={handleJournalPointerDown}
+        onPointerUp={handleJournalPointerEnd}
+        onPointerLeave={handleJournalPointerEnd}
+        onPointerCancel={handleJournalPointerEnd}
+        onContextMenu={(event) => event.preventDefault()}
       >
         <div
           className={cn(
             suppressJournalOpenHitArea && "[&_*]:!pointer-events-none"
           )}
-          onClick={journal.canEditJournal ? handleJournalCardClick : undefined}
+          onClick={handleJournalCardClick}
         >
           <JournalVideoSection
             videoSrc={videoPlaybackSrc ?? ""}
@@ -273,7 +261,6 @@ export default function JournalCard({
 
         <JournalEditDialog
           open={journalEditOpen}
-          canEdit={journal.canEditJournal}
           initialEmoji={journal.draftEmoji}
           initialTitle={journal.draftTitle}
           initialText={journal.draftText}
@@ -300,7 +287,6 @@ export default function JournalCard({
           open={journalLocationsOpen}
           onOpenChange={handleLocationsOpenChange}
           route={knownLocationRoute}
-          canEdit={journal.canEditJournal}
           onSave={(route) => {
             updateDraft({ locationRoute: route });
             saveLocationRoute(route);

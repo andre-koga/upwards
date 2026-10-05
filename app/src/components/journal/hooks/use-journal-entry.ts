@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { db, now } from "@/lib/db";
+import { useTranslation } from "react-i18next";
+import { db, now, newId } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type {
   JournalEntry,
@@ -8,17 +9,28 @@ import type {
 } from "@/lib/db/types";
 import {
   getCompletionMetadata,
-  isJournalCalendarDateEditable,
+  isJournalEntryComplete,
   journalEntryFieldsHaveContent,
+  journalStreakAsOf,
   normalizeJournalLocationRoute,
   parseJournalLocationRoute,
-  propagateJournalCompletionStreaksAfterSave,
   reconcileJournalDuplicatesForDate,
   serializeJournalLocationRoute,
   toJournalVideoPath,
   type JournalFields,
 } from "@/lib/journal";
-import { saveJournalEntry as persistSyncedJournal } from "@/lib/sync/mutate-synced";
+import {
+  recordJournalRevision,
+  saveJournalEntry as persistSyncedJournal,
+} from "@/lib/sync/mutate-synced";
+import {
+  buildJournalRevision,
+  hasJournalChange,
+  summarizeJournalChange,
+} from "@/lib/journal/old-day-edit";
+import { requestOldDayEdit } from "@/lib/journal/old-day-gate";
+import { deletePhotosNoLongerUsed } from "@/lib/journal/photo-cleanup";
+import { describeJournalChange } from "@/components/journal/describe-journal-change";
 import { naturalJournalIdForDate } from "@/lib/sync/natural-ids";
 
 export type { JournalLocationRoute, LocationData, JournalFields };
@@ -39,6 +51,7 @@ const EMPTY_LOCATION_ROUTE: JournalLocationRoute = {
 };
 
 export function useJournalEntry(currentDate: Date) {
+  const { t } = useTranslation("journal");
   const [journalEntry, setJournalEntry] = useState<JournalEntry | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [draftText, setDraftText] = useState("");
@@ -110,17 +123,15 @@ export function useJournalEntry(currentDate: Date) {
     [currentDate]
   );
 
-  // Sync draft fields whenever the persisted entry changes (NOT on date change to avoid race conditions)
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    const t = journalEntry?.title ?? "";
-    const tx = journalEntry?.text_content ?? "";
-    const e = journalEntry?.day_emoji ?? "";
-    const b = journalEntry?.is_bookmarked ?? false;
-    const p = toJournalVideoPath(journalEntry?.video_path ?? "");
-    const locationRoute = parseJournalLocationRoute(journalEntry?.location);
-    const vt = journalEntry?.video_thumbnail ?? null;
-    const pp = journalEntry?.photo_paths ?? [];
+  const syncDraftFromEntry = useCallback((entry: JournalEntry | null) => {
+    const t = entry?.title ?? "";
+    const tx = entry?.text_content ?? "";
+    const e = entry?.day_emoji ?? "";
+    const b = entry?.is_bookmarked ?? false;
+    const p = toJournalVideoPath(entry?.video_path ?? "");
+    const locationRoute = parseJournalLocationRoute(entry?.location);
+    const vt = entry?.video_thumbnail ?? null;
+    const pp = entry?.photo_paths ?? [];
     setDraftTitle(t);
     setDraftText(tx);
     setDraftEmoji(e);
@@ -138,10 +149,28 @@ export function useJournalEntry(currentDate: Date) {
       videoThumbnail: vt,
       photoPaths: pp,
     };
-  }, [journalEntry]);
+  }, []);
+
+  // Sync draft fields whenever the persisted entry changes (NOT on date change to avoid race conditions)
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    syncDraftFromEntry(journalEntry);
+  }, [journalEntry, syncDraftFromEntry]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const canEditJournal = isJournalCalendarDateEditable(currentDate);
+  // Derived on read from every complete entry, so backfilling any day heals it.
+  const [journalCompletionStreak, setJournalCompletionStreak] = useState<
+    number | null
+  >(null);
+  useEffect(() => {
+    let cancelled = false;
+    void journalStreakAsOf(toDateString(currentDate)).then((streak) => {
+      if (!cancelled) setJournalCompletionStreak(streak);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [journalEntry, currentDate]);
 
   const saveJournalEntry = useCallback(
     async (fields: JournalFields) => {
@@ -168,12 +197,36 @@ export function useJournalEntry(currentDate: Date) {
           return;
         }
 
-        const completionMeta = await getCompletionMetadata(
-          dateStr,
-          fields,
-          existing,
-          n
-        );
+        // Every day is editable. Changing the words or media of a day older
+        // than 7 days asks first, and keeps the values it replaces. Hearting
+        // and places are not revisable fields, so they never prompt.
+        const change = summarizeJournalChange(existing, {
+          title: fields.title,
+          day_emoji: fields.day_emoji,
+          text_content: fields.text_content,
+          photo_paths: fields.photo_paths,
+          video_path: fields.video_path,
+        });
+        if (hasJournalChange(change)) {
+          const decision = await requestOldDayEdit(
+            dateStr,
+            describeJournalChange(change, t)
+          );
+          // "Keep editing": leave the draft as it is so nothing typed is lost.
+          if (!decision.confirmed) return;
+          if (decision.startsSession) {
+            const revision = buildJournalRevision({
+              before: existing,
+              after: fields,
+              id: newId(),
+              at: n,
+              videoThumbnail: existing?.video_thumbnail ?? null,
+            });
+            if (revision) await recordJournalRevision(revision);
+          }
+        }
+
+        const completionMeta = getCompletionMetadata(fields, existing, n);
 
         if (existing) {
           const updatedEntry: JournalEntry = {
@@ -186,13 +239,21 @@ export function useJournalEntry(currentDate: Date) {
           await persistSyncedJournal(updatedEntry, existing.updated_at);
 
           setJournalEntry(updatedEntry);
-          await propagateJournalCompletionStreaksAfterSave(dateStr);
+          // After the save, so a cancelled edit never deletes a photo. Photos
+          // a revision still points at are kept.
+          await deletePhotosNoLongerUsed(
+            (existing.photo_paths ?? []).filter(
+              (path) => !(fields.photo_paths ?? []).includes(path)
+            )
+          );
         } else {
           const entry: JournalEntry = {
             id: naturalJournalIdForDate(dateStr),
             entry_date: dateStr,
             ...fields,
             ...completionMeta,
+            journal_entry_number: null,
+            journal_completion_streak: null,
             created_at: n,
             updated_at: n,
             synced_at: null,
@@ -200,17 +261,15 @@ export function useJournalEntry(currentDate: Date) {
           };
           await persistSyncedJournal(entry);
           setJournalEntry(entry);
-          await propagateJournalCompletionStreaksAfterSave(dateStr);
         }
       } catch (error) {
         console.error("Error saving journal entry:", error);
       }
     },
-    [currentDate]
+    [currentDate, t]
   );
 
   const saveDraft = useCallback(() => {
-    if (!canEditJournal) return;
     // Prevent saving if the date has changed (e.g., blur event fires during navigation)
     const currentDateStr = toDateString(currentDate);
     if (draftDateRef.current !== currentDateStr) {
@@ -227,7 +286,7 @@ export function useJournalEntry(currentDate: Date) {
       video_thumbnail: r.videoThumbnail || null,
       photo_paths: r.photoPaths.length > 0 ? r.photoPaths : null,
     });
-  }, [canEditJournal, saveJournalEntry, currentDate]);
+  }, [saveJournalEntry, currentDate]);
 
   // Save only the bookmarked field — works for any day, not just editable ones
   const saveBookmark = useCallback(
@@ -341,14 +400,14 @@ export function useJournalEntry(currentDate: Date) {
       draftPhotoPaths,
       setDraftPhotoPaths: setDraftPhotoPathsSynced,
       draftRef,
-      canEditJournal,
       // state
       draftLocationRoute,
       draftLocations,
       setDraftLocationRoute: setDraftLocationRouteSynced,
-      journalCompletionStreak: journalEntry?.journal_completion_streak ?? null,
-      journalEntryNumber: journalEntry?.journal_entry_number ?? null,
-      isJournalComplete: !!journalEntry?.is_journal_complete,
+      journalCompletionStreak,
+      isJournalComplete: journalEntry
+        ? isJournalEntryComplete(journalEntry)
+        : false,
       videoThumbnail: journalEntry?.video_thumbnail ?? null,
       /** Parsed `journalEntries.location`; updates with `journalEntry` (not one effect behind draft state). */
       persistedLocationRoute,
@@ -373,11 +432,11 @@ export function useJournalEntry(currentDate: Date) {
       setDraftVideoPathSynced,
       draftPhotoPaths,
       setDraftPhotoPathsSynced,
-      canEditJournal,
       draftLocationRoute,
       draftLocations,
       setDraftLocationRouteSynced,
       journalEntry,
+      journalCompletionStreak,
       persistedLocationRoute,
       loadJournalEntry,
       saveDraft,

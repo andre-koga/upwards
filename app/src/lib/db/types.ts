@@ -99,6 +99,26 @@ export interface JournalEntry {
   deleted_at: string | null;
 }
 
+/**
+ * The values an old journal day had before a confirmed edit replaced them.
+ * Append-only: never updated or deleted, union by id. Keyed to the entry by
+ * date because the journal has one row per user per date.
+ */
+export interface JournalEntryRevision {
+  id: string;
+  entry_date: string; // YYYY-MM-DD
+  title: string | null;
+  day_emoji: string | null;
+  text_content: string | null;
+  photo_paths: string[] | null;
+  video_path: string | null;
+  video_thumbnail: string | null;
+  /** When the previous values were replaced. */
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+}
+
 /** A recalled experience, intentionally independent from the daily journal. */
 export interface Memory {
   id: string;

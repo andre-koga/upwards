@@ -19,6 +19,7 @@ const SNAPSHOT_TABLES: SyncTable[] = [
   "daily_entries",
   "activity_periods",
   "journal_entries",
+  "journal_entry_revisions",
   "memories",
   "one_time_tasks",
   "recurring_memos",
@@ -33,6 +34,7 @@ export interface SyncSnapshot {
   daily_entries?: Record<string, unknown>[];
   activity_periods?: Record<string, unknown>[];
   journal_entries?: Record<string, unknown>[];
+  journal_entry_revisions?: Record<string, unknown>[];
   memories?: Record<string, unknown>[];
   one_time_tasks?: Record<string, unknown>[];
   recurring_memos?: Record<string, unknown>[];
@@ -62,6 +64,8 @@ function snapshotRows(
       return snapshot.activity_periods ?? [];
     case "journal_entries":
       return snapshot.journal_entries ?? [];
+    case "journal_entry_revisions":
+      return snapshot.journal_entry_revisions ?? [];
     case "memories":
       return snapshot.memories ?? [];
     case "one_time_tasks":

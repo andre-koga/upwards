@@ -6,6 +6,7 @@ import type {
   DailyEntry,
   GroupStatusEvent,
   JournalEntry,
+  JournalEntryRevision,
   Memory,
   OneTimeTask,
   RecurringMemo,
@@ -29,6 +30,7 @@ export interface BackupTables {
   dailyEntries: DailyEntry[];
   activityPeriods: ActivityPeriod[];
   journalEntries: JournalEntry[];
+  journalEntryRevisions: JournalEntryRevision[];
   memories: Memory[];
   oneTimeTasks: OneTimeTask[];
   recurringMemos: RecurringMemo[];
@@ -45,6 +47,7 @@ export const BACKUP_TABLE_NAMES = [
   "dailyEntries",
   "activityPeriods",
   "journalEntries",
+  "journalEntryRevisions",
   "memories",
   "oneTimeTasks",
   "recurringMemos",
@@ -109,6 +112,7 @@ export function emptyBackupTables(): BackupTables {
     dailyEntries: [],
     activityPeriods: [],
     journalEntries: [],
+    journalEntryRevisions: [],
     memories: [],
     oneTimeTasks: [],
     recurringMemos: [],

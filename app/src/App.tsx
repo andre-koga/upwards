@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import SyncStatus from "@/components/settings/sync-status";
+import { OldDayEditDialog } from "@/components/journal/old-day-edit-dialog";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
 import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
 import { UpdateRequiredDialog } from "@/components/pwa/update-required-dialog";
@@ -141,6 +142,7 @@ export default function App() {
       <AuthDataHandoffDialog />
       <InstallAppPrompt />
       <UpdateRequiredDialog />
+      <OldDayEditDialog />
       <SpeedInsights />
       <Analytics />
     </BrowserRouter>

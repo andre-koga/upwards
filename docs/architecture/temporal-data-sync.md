@@ -222,7 +222,13 @@ Actions and facts that accumulate over time remain recorded:
 - Journal revision recorded — when a confirmed edit to a day older than 7 days
   overwrites title, emoji, text, or media, the previous values are appended as
   a `journal_entry_revisions` row (union by UUID, never edited). Storage
-  objects referenced by a revision are not deleted.
+  objects referenced by a revision are not deleted. One revision is recorded
+  per confirmed editing session (see product-scope §2.3), holding the values
+  from before the session. It syncs as an append-only `journal_entry_revision`
+  `projection.upsert`: the server inserts it once (`ON CONFLICT DO NOTHING`,
+  replay reports `duplicate`), it has no `base_revision`, and RLS allows insert
+  and select only. Revisions reference their entry by `entry_date`, not by a
+  foreign key, because the journal is keyed by `(user_id, entry_date)`.
 - Attachment added or removed
 
 Every sync operation still has a globally unique `operation_id`. Prefer

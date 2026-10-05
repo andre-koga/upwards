@@ -594,6 +594,7 @@ const SUBMIT_ENTITY_PRIORITY: Record<string, number> = {
   activity: 1,
   recurring_memo: 2,
   journal_entry: 3,
+  journal_entry_revision: 3,
   one_time_task: 4,
   activity_status_event: 5,
   group_status_event: 6,

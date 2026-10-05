@@ -8,6 +8,7 @@ import type {
   DailyEntry,
   GroupStatusEvent,
   JournalEntry,
+  JournalEntryRevision,
   Memory,
   OneTimeTask,
   RecurringMemo,
@@ -138,6 +139,26 @@ export async function saveJournalEntry(
     row as unknown as Record<string, unknown>,
     baseRevision
   );
+}
+
+/**
+ * Append the previous values of an old journal day as a revision. Revisions are
+ * facts: inserted once, never edited, merged across devices by id. The caller
+ * passes a fresh id so a retried save cannot record the same edit twice.
+ */
+export async function recordJournalRevision(
+  row: JournalEntryRevision,
+  options?: { operationId?: string }
+): Promise<void> {
+  if (await db.journalEntryRevisions.get(row.id)) return;
+  await db.journalEntryRevisions.add(row);
+  await enqueueProjectionUpsertForTable(
+    "journal_entry_revisions",
+    row as unknown as Record<string, unknown>,
+    null,
+    options
+  );
+  requestDebouncedSync();
 }
 
 export async function saveMemory(
@@ -547,6 +568,12 @@ export async function importBackup(
   await importRows(tables.activities, "activities", db.activities);
   await importRows(tables.recurringMemos, "recurring_memos", db.recurringMemos);
   await importRows(tables.oneTimeTasks, "one_time_tasks", db.oneTimeTasks);
+  await importRows(
+    tables.journalEntryRevisions,
+    "journal_entry_revisions",
+    db.journalEntryRevisions,
+    "append"
+  );
   await importRows(
     tables.activityStatusEvents,
     "activity_status_events",

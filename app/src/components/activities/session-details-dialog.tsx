@@ -6,9 +6,7 @@ import {
 } from "@/components/forms";
 import { SessionTimeNoteFields } from "@/components/activities/session-time-note-fields";
 import { getActivityDisplayName } from "@/lib/activity";
-import { toDateString } from "@/lib/time-utils";
 import { useSessionDetails } from "@/components/activities/hooks/use-session-details";
-import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import { useCallback } from "react";
 
 interface SessionDetailsDialogProps {
@@ -41,7 +39,6 @@ export default function SessionDetailsDialog({
     groupActivities,
     selectedActivityId,
     setSelectedActivityId,
-    selectedDate,
     startTime,
     setStartTime,
     endTime,
@@ -59,10 +56,6 @@ export default function SessionDetailsDialog({
   });
 
   if (!sessionId) return null;
-
-  const sessionDateString = details?.entry?.date ?? toDateString(selectedDate);
-  const isLockedHistoricalSession =
-    !!details && !isActivityDateEditable(sessionDateString);
 
   return (
     <FormDialog
@@ -89,7 +82,6 @@ export default function SessionDetailsDialog({
                 label: getActivityDisplayName(activity, details.group),
               })),
             ]}
-            disabled={isLockedHistoricalSession}
           />
           <SessionTimeNoteFields
             startId="session-start-time"
@@ -107,7 +99,6 @@ export default function SessionDetailsDialog({
             onNoteChange={setNote}
             startReadOnlyValue={isUntimedSession ? "—" : undefined}
             endReadOnlyValue={isRunningSession ? "Still running" : undefined}
-            disabled={isLockedHistoricalSession}
           />
           {spanWarning && (
             <p className="text-sm text-amber-600 dark:text-amber-400">
@@ -115,22 +106,14 @@ export default function SessionDetailsDialog({
             </p>
           )}
           {error && <p className="text-sm text-destructive">{error}</p>}
-          {isLockedHistoricalSession ? (
-            <p className="text-sm text-muted-foreground">
-              Sessions older than 7 days are read-only.
-            </p>
-          ) : null}
 
           <FormDialogActions
-            onConfirm={isLockedHistoricalSession ? () => undefined : handleSave}
+            onConfirm={handleSave}
             confirmLabel={saving ? "Saving..." : "Save"}
-            confirmDisabled={saving || isLockedHistoricalSession}
+            confirmDisabled={saving}
             secondaryAction={{
               label: "Delete",
-              onClick: isLockedHistoricalSession
-                ? () => undefined
-                : handleDelete,
-              disabled: isLockedHistoricalSession,
+              onClick: handleDelete,
               destructive: true,
             }}
           />
