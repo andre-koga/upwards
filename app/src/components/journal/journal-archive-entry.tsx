@@ -24,24 +24,6 @@ interface JournalArchiveEntryProps {
   highlighted?: boolean;
 }
 
-/** Soft washes on the content panel — picked stably per bookmarked entry. */
-const BOOKMARK_GRADIENTS = [
-  "bg-gradient-to-br from-rose-500/15 via-amber-400/8 to-transparent dark:from-rose-400/20 dark:via-amber-300/12",
-  "bg-gradient-to-bl from-sky-500/15 via-teal-400/8 to-transparent dark:from-sky-400/20 dark:via-teal-300/12",
-  "bg-gradient-to-tr from-orange-500/15 via-rose-400/8 to-transparent dark:from-orange-400/20 dark:via-rose-300/12",
-  "bg-gradient-to-tl from-emerald-500/15 via-lime-400/8 to-transparent dark:from-emerald-400/20 dark:via-lime-300/12",
-  "bg-gradient-to-br from-fuchsia-500/15 via-pink-400/8 to-transparent dark:from-fuchsia-400/20 dark:via-pink-300/12",
-  "bg-gradient-to-bl from-cyan-500/15 via-sky-400/8 to-transparent dark:from-cyan-400/20 dark:via-sky-300/12",
-] as const;
-
-function bookmarkGradientFor(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
-  }
-  return BOOKMARK_GRADIENTS[Math.abs(hash) % BOOKMARK_GRADIENTS.length];
-}
-
 interface LightboxState {
   key: string;
   index: number;
@@ -88,7 +70,10 @@ function ArchivePhotoGrid({ photoPaths }: { photoPaths: string[] }) {
   return (
     <>
       <div
-        className={cn("grid gap-1.5", singlePreview ? "grid-cols-1" : "grid-cols-2")}
+        className={cn(
+          "grid gap-1.5",
+          singlePreview ? "grid-cols-1" : "grid-cols-2"
+        )}
       >
         {previewPaths.map((path, index) => {
           const url = getJournalPhotoUrl(path);
@@ -197,9 +182,6 @@ export default function JournalArchiveEntry({
     entry.location ?? { locations: [] }
   ).locations;
   const isBookmarked = Boolean(entry.is_bookmarked);
-  const bookmarkGradient = isBookmarked
-    ? bookmarkGradientFor(entry.id || entry.entry_date)
-    : null;
 
   const openDay = () => {
     try {
@@ -246,12 +228,7 @@ export default function JournalArchiveEntry({
           ) : null}
         </div>
 
-        <div
-          className={cn(
-            "min-w-0 overflow-hidden rounded-xl border border-border/70",
-            bookmarkGradient
-          )}
-        >
+        <div className="min-w-0 overflow-hidden rounded-xl border border-border/70">
           <button
             type="button"
             onClick={openDay}

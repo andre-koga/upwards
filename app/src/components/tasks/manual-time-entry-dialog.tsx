@@ -14,7 +14,6 @@ import {
   resolvePeriodFromLogicalDay,
   spansLogicalDays,
 } from "@/lib/activity/period-day-utils";
-import { resolveClosedSessionTimes } from "@/lib/activity/untimed-period";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
   formatTimeInput,
@@ -115,70 +114,36 @@ export default function ManualTimeEntryDialog({
     }
   }
 
-  const handleStartTimeChange = (value: string) => {
-    if (!value) {
-      setStartTime("");
-      return;
-    }
-    if (endTime && timeToSeconds(value) === timeToSeconds(endTime)) {
-      setStartTime("");
-      return;
-    }
-    setStartTime(value);
-  };
-
   const handleSave = async () => {
     if (!activity) return;
 
+    if (!startTime) {
+      setError(t("manualEntry.errorStartRequired"));
+      return;
+    }
     if (!endTime) {
       setError(t("manualEntry.errorEndRequired"));
       return;
     }
+    if (timeToSeconds(endTime) === timeToSeconds(startTime)) {
+      setError(t("manualEntry.errorSameTime"));
+      return;
+    }
 
     const nowMs = Date.now();
-    let startIso: string;
-    let endIso: string;
-
-    if (!startTime || timeToSeconds(endTime) === timeToSeconds(startTime)) {
-      const resolved = resolveClosedSessionTimes({
-        startTime: startTime || "",
-        endTime,
-        logicalDateStr: dateString,
-        resetMinutes,
-        existingStartIso: new Date(nowMs).toISOString(),
-        existingEndIso: new Date(nowMs).toISOString(),
-        createdAt: new Date(nowMs).toISOString(),
-      });
-      if (!resolved.ok) {
-        setError(t("manualEntry.errorEndRequired"));
-        return;
-      }
-      startIso = resolved.startIso;
-      endIso = resolved.endIso;
-      if (new Date(endIso).getTime() > nowMs) {
-        setError(t("manualEntry.errorEndFuture"));
-        return;
-      }
-    } else {
-      const { startIso: nextStartIso, endIso: nextEndIso, startMs, endMs } =
-        resolvePeriodFromLogicalDay(
-          dateString,
-          startTime,
-          endTime,
-          resetMinutes
-        );
-
-      if (endMs > nowMs) {
-        setError(t("manualEntry.errorEndFuture"));
-        return;
-      }
-      if (startMs > nowMs) {
-        setError(t("manualEntry.errorStartFuture"));
-        return;
-      }
-
-      startIso = nextStartIso;
-      endIso = nextEndIso;
+    const { startIso, endIso, startMs, endMs } = resolvePeriodFromLogicalDay(
+      dateString,
+      startTime,
+      endTime,
+      resetMinutes
+    );
+    if (endMs > nowMs) {
+      setError(t("manualEntry.errorEndFuture"));
+      return;
+    }
+    if (startMs > nowMs) {
+      setError(t("manualEntry.errorStartFuture"));
+      return;
     }
 
     try {
@@ -244,11 +209,10 @@ export default function ManualTimeEntryDialog({
           notePlaceholder={t("manualEntry.notePlaceholder")}
           startTime={startTime}
           endTime={endTime}
-          onStartTimeChange={handleStartTimeChange}
+          onStartTimeChange={setStartTime}
           onEndTimeChange={setEndTime}
           note={note}
           onNoteChange={setNote}
-          untimedStartDisplay={!startTime}
         />
 
         {spanWarning && (

@@ -5,10 +5,7 @@ import { getActiveLocaleTag } from "@/lib/i18n";
 import {
   BookOpen,
   CircleCheckBig,
-  ExternalLink,
-  FileText,
   Folder,
-  Github,
   History,
   Image as ImageIcon,
   Sparkles,
@@ -144,44 +141,6 @@ export default function FooterActionsBar({
             >
               <MessageSquare className="h-4 w-4" />
               {t("feedback")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full justify-start rounded-xl"
-              onClick={() => {
-                setPathsDrawerOpen(false);
-                navigate("/logs");
-              }}
-              title={t("viewErrorLogs")}
-              aria-label={t("viewErrorLogs")}
-            >
-              <FileText className="h-4 w-4" />
-              {t("errorLogs")}
-            </Button>
-            <Button
-              variant="outline"
-              className="h-11 w-full rounded-xl p-0"
-              asChild
-            >
-              <a
-                href="https://github.com/andre-koga/upwards"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setPathsDrawerOpen(false)}
-                title={t("githubSource")}
-                aria-label={t("githubSource")}
-                className="flex h-11 w-full items-center justify-between gap-2 px-4"
-              >
-                <span className="flex items-center gap-2">
-                  <Github className="h-4 w-4" />
-                  {t("github")}
-                </span>
-                <ExternalLink
-                  className="h-4 w-4 shrink-0 text-muted-foreground"
-                  aria-hidden
-                />
-              </a>
             </Button>
             <Button
               type="button"
