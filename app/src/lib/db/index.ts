@@ -6,6 +6,7 @@ import type {
   DailyEntry,
   ActivityPeriod,
   JournalEntry,
+  JournalEntryRevision,
   Memory,
   OneTimeTask,
   RecurringMemo,
@@ -28,6 +29,7 @@ class UpwardsDB extends Dexie {
   dailyEntries!: Table<DailyEntry>;
   activityPeriods!: Table<ActivityPeriod>;
   journalEntries!: Table<JournalEntry>;
+  journalEntryRevisions!: Table<JournalEntryRevision>;
   memories!: Table<Memory>;
   oneTimeTasks!: Table<OneTimeTask>;
   recurringMemos!: Table<RecurringMemo>;
@@ -916,6 +918,11 @@ class UpwardsDB extends Dexie {
 
     this.version(30).stores({
       memories: "id, deleted_at, created_at",
+    });
+
+    // v31: append-only journal revisions (A5).
+    this.version(31).stores({
+      journalEntryRevisions: "id, entry_date, created_at",
     });
   }
 }

@@ -38,6 +38,11 @@ export function collectPhotoRefs(tables: BackupTables): MediaRef[] {
     for (const path of memory.photo_paths ?? [])
       if (path.trim()) paths.add(path);
   }
+  // Revisions are never deleted, so the photos they reference stay in the backup.
+  for (const revision of tables.journalEntryRevisions) {
+    for (const path of revision.photo_paths ?? [])
+      if (path.trim()) paths.add(path);
+  }
   return [...paths].map((path) => ({ bucket: PHOTO_BUCKET, path }));
 }
 
@@ -171,6 +176,13 @@ export function rewriteMediaReferences(
       ...entry,
       photo_paths: entry.photo_paths ? entry.photo_paths.map(photo) : null,
       video_path: video(entry.video_path),
+    })),
+    journalEntryRevisions: tables.journalEntryRevisions.map((revision) => ({
+      ...revision,
+      photo_paths: revision.photo_paths
+        ? revision.photo_paths.map(photo)
+        : null,
+      video_path: video(revision.video_path),
     })),
     memories: tables.memories.map((memory) => ({
       ...memory,

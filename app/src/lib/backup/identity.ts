@@ -124,6 +124,12 @@ export function remapBackupIdentity(
       photo_paths: row.photo_paths ? row.photo_paths.map(owner) : null,
       video_path: row.video_path ? owner(row.video_path) : null,
     })),
+    journalEntryRevisions: t.journalEntryRevisions.map((row) => ({
+      ...row,
+      id: mapId("journal_entry_revision", row.id),
+      photo_paths: row.photo_paths ? row.photo_paths.map(owner) : null,
+      video_path: row.video_path ? owner(row.video_path) : null,
+    })),
     memories: t.memories.map((row) => ({
       ...row,
       id: mapId("memory", row.id),
