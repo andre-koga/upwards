@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { requestOldDayEdit } from "@/lib/journal/old-day-gate";
 import { db, newId, now } from "@/lib/db";
 import { toDateString, todayDateString } from "@/lib/time-utils";
 import type {
@@ -15,7 +17,6 @@ import {
   type TemporalVisibilityContext,
 } from "@/lib/activity";
 import { computeActivityStreaksForDate } from "@/lib/streak-utils";
-import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import {
   getOrCreateDailyEntryProjection,
   saveTimedPeriod,
@@ -53,11 +54,9 @@ export function useDailyTasks({
   refreshTrigger = 0,
   dayResetTick = 0,
 }: UseDailyTasksParams) {
+  const { t } = useTranslation("journal");
   const dateString = toDateString(currentDate);
-  // Tasks and timers are only editable on the current effective day.
-  // Journal entries keep their own 7-day window (isJournalCalendarDateEditable).
   const isToday = dateString === todayDateString();
-  const isEditableDate = isActivityDateEditable(dateString);
   const [activityStreaks, setActivityStreaks] = useState<
     Record<string, number>
   >({});
@@ -407,6 +406,11 @@ export function useDailyTasks({
       const { activityId, startIso, endIso, note } = params;
       const createdAt = now();
       const entryDateString = toDateString(new Date(startIso));
+      const { confirmed } = await requestOldDayEdit(
+        entryDateString,
+        t("oldDay.activity.summary", { ns: "journal" })
+      );
+      if (!confirmed) return;
       const dailyEntry = await getOrCreateDailyEntryProjection(entryDateString);
 
       const period: ActivityPeriod = {
@@ -426,7 +430,7 @@ export function useDailyTasks({
       await loadActivityPeriods();
       await loadAllActivityPeriods();
     },
-    [loadActivityPeriods, loadAllActivityPeriods]
+    [loadActivityPeriods, loadAllActivityPeriods, t]
   );
 
   const timelineSessions = useMemo(
@@ -489,7 +493,6 @@ export function useDailyTasks({
 
   return {
     isToday,
-    isEditableDate,
     temporalForViewDate,
     loading,
     activityStreaks,

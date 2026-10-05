@@ -124,12 +124,52 @@
     "noResults": "No results",
     "typeToSearch": "Type to search",
     "addLocation": "Add place",
-    "noLocationsYet": "No places tracked yet.",
     "emptyHelper": "Search to add places for this day. Today can also be detected automatically.",
     "maxLocations": "Up to {{count}} places per day",
     "deleteLocation": "Remove place",
     "deleteConfirmTitle": "Remove place",
     "deleteConfirmDescription": "Remove \"{{name}}\" from this day?",
     "save": "Save places"
+  },
+  "oldDay": {
+    "title": "Save changes to {{date}}?",
+    "reassurance": "The earlier version is kept, and you can bring it back later.",
+    "confirm": "Save changes",
+    "cancel": "Keep editing",
+    "listLocale": "en",
+    "edited": "Edited {{date}}",
+    "change": {
+      "title": {
+        "added": "Title added",
+        "changed": "Title changed",
+        "removed": "Title removed"
+      },
+      "emoji": {
+        "added": "Emoji added",
+        "changed": "Emoji changed",
+        "removed": "Emoji removed"
+      },
+      "text": {
+        "added": "Text added",
+        "changed": "Text changed",
+        "removed": "Text removed"
+      },
+      "video": {
+        "added": "Clip added",
+        "changed": "Clip changed",
+        "removed": "Clip removed"
+      },
+      "photosAdded_one": "{{count}} photo added",
+      "photosAdded_other": "{{count}} photos added",
+      "photosRemoved_one": "{{count}} photo removed",
+      "photosRemoved_other": "{{count}} photos removed",
+      "count": "Count changed",
+      "timer": "Session changed",
+      "breakDay": "Break day changed"
+    },
+    "activity": {
+      "title": "Change {{date}}?",
+      "summary": "This updates your record for that day."
+    }
   }
 }

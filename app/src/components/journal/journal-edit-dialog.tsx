@@ -31,7 +31,6 @@ const MAX_PHOTOS = 8;
 
 interface JournalEditDialogProps {
   open: boolean;
-  canEdit: boolean;
   initialEmoji: string;
   initialTitle: string;
   initialText: string;
@@ -51,7 +50,6 @@ interface JournalEditDialogProps {
 
 export default function JournalEditDialog({
   open,
-  canEdit,
   initialEmoji,
   initialTitle,
   initialText,
@@ -130,18 +128,6 @@ export default function JournalEditDialog({
     prevOpenRef.current = open;
   }, [open, emoji, title, text, videoPath, photoPaths, sessionEntryDate]);
 
-  const deleteRemovedSavedPhotos = (finalPhotoPaths: string[]) => {
-    const removedPaths = initialPhotoPathsSnapshot.filter(
-      (path) => !finalPhotoPaths.includes(path)
-    );
-    if (removedPaths.length === 0) return;
-    void Promise.all(
-      removedPaths.map((path) =>
-        deleteJournalPhoto(path).catch(() => undefined)
-      )
-    );
-  };
-
   const deleteOrphanedUploads = (currentPhotoPaths: string[]) => {
     const orphanedPaths = currentPhotoPaths.filter(
       (path) => !initialPhotoPathsSnapshot.includes(path)
@@ -157,7 +143,6 @@ export default function JournalEditDialog({
   const handleSave = () => {
     closeReasonRef.current = "save";
     clearJournalEditSessionDraft(sessionEntryDate);
-    deleteRemovedSavedPhotos(photoPaths);
     onSave({
       emoji: getFirstEmoji(emoji),
       title: title.trim(),
@@ -258,8 +243,6 @@ export default function JournalEditDialog({
 
   const photoCount = photoPaths.length;
   const canAddMorePhotos = photoCount < MAX_PHOTOS;
-
-  if (!canEdit) return null;
 
   return (
     <FormDialog

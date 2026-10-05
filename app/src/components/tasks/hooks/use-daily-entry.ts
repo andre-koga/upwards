@@ -1,4 +1,6 @@
 import { useState, useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { requestOldDayEdit } from "@/lib/journal/old-day-gate";
 import { db } from "@/lib/db";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
 import type { DailyEntry } from "@/lib/db/types";
@@ -21,6 +23,14 @@ function normalizeBreakDay(entry: DailyEntry | null): boolean {
 }
 
 export function useDailyEntry(dateString: string) {
+  const { t } = useTranslation("journal");
+  /** Asks before changing a day older than 7 days; false means "keep as is". */
+  const confirmEdit = useCallback(
+    async () =>
+      (await requestOldDayEdit(dateString, t("oldDay.activity.summary")))
+        .confirmed,
+    [dateString, t]
+  );
   const [dailyEntry, setDailyEntry] = useState<DailyEntry | null>(null);
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
   const [pausedTaskIds, setPausedTaskIds] = useState<string[]>([]);
@@ -84,6 +94,7 @@ export function useDailyEntry(dateString: string) {
       target: number,
       options?: { neverSlip?: boolean }
     ) => {
+      if (!(await confirmEdit())) return;
       const neverSlip = options?.neverSlip ?? false;
       const prevCounts = taskCountsRef.current;
       const prevPausedTaskIds = pausedTaskIdsRef.current;
@@ -142,11 +153,12 @@ export function useDailyEntry(dateString: string) {
       setDailyEntry(saved);
       return { previousCount: current, nextCount: nextCounts[activityId] || 0 };
     },
-    [dateString]
+    [dateString, confirmEdit]
   );
 
   const resetNeverTaskCount = useCallback(
     async (activityId: string) => {
+      if (!(await confirmEdit())) return;
       const prevCounts = taskCountsRef.current;
       const prevPausedTaskIds = pausedTaskIdsRef.current;
       const previousCount = prevCounts[activityId] || 0;
@@ -173,11 +185,12 @@ export function useDailyEntry(dateString: string) {
       });
       setDailyEntry(saved);
     },
-    [dateString]
+    [dateString, confirmEdit]
   );
 
   const toggleTaskPaused = useCallback(
     async (activityId: string) => {
+      if (!(await confirmEdit())) return;
       const prevPausedTaskIds = pausedTaskIdsRef.current;
       const wasPaused = prevPausedTaskIds.includes(activityId);
       const nextPausedTaskIds = wasPaused
@@ -199,10 +212,11 @@ export function useDailyEntry(dateString: string) {
         loadDailyEntry();
       }
     },
-    [dateString, loadDailyEntry]
+    [dateString, loadDailyEntry, confirmEdit]
   );
 
   const toggleBreakDay = useCallback(async () => {
+    if (!(await confirmEdit())) return;
     const nextIsBreakDay = !isBreakDay;
     setIsBreakDay(nextIsBreakDay);
 
@@ -216,7 +230,7 @@ export function useDailyEntry(dateString: string) {
       console.error("Error toggling break day:", error);
       loadDailyEntry();
     }
-  }, [dateString, isBreakDay, loadDailyEntry]);
+  }, [dateString, isBreakDay, loadDailyEntry, confirmEdit]);
 
   return {
     dailyEntry,

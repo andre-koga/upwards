@@ -23,12 +23,12 @@ export interface DailyTaskInteractionState {
 /**
  * Single source of truth for For Today row interactivity on the daily tasks list.
  * Once an activity is deleted (row `deleted_at`), every historical row is
- * read-only. Archived habits keep the interactive pill styling on editable dates.
+ * read-only. Every day is otherwise editable; older days ask for confirmation
+ * when saving, not here.
  */
 export function getDailyTaskInteractionState(
   activity: Activity,
-  temporal: TemporalVisibilityContext,
-  isEditableDate: boolean
+  temporal: TemporalVisibilityContext
 ): DailyTaskInteractionState {
   // Row flag: activity was deleted globally — lock all past For Today rows even
   // on calendar days before the deletion (e.g. delete today, view yesterday).
@@ -49,21 +49,11 @@ export function getDailyTaskInteractionState(
 
   if (isArchivedRetired) {
     return {
-      isReadOnly: !isEditableDate,
+      isReadOnly: false,
       retiredKind: "archived",
       canClickName: true,
-      canEditCounts: isEditableDate,
-      canUseTimer: isEditableDate,
-    };
-  }
-
-  if (!isEditableDate) {
-    return {
-      isReadOnly: true,
-      retiredKind: null,
-      canClickName: true,
-      canEditCounts: false,
-      canUseTimer: false,
+      canEditCounts: true,
+      canUseTimer: true,
     };
   }
 

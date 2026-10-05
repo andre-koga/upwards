@@ -24,7 +24,6 @@ interface ActivityTaskItemProps {
   isBreakDay: boolean;
   isCurrentActivity: boolean;
   /** Whether the viewed calendar day is within the journal edit window. */
-  isEditableDate: boolean;
   temporal: TemporalVisibilityContext;
   /** Definition effective on the viewed date (routine / target). */
   schedulable?: SchedulableActivity;
@@ -51,7 +50,6 @@ function ActivityTaskItem({
   isPaused,
   isBreakDay,
   isCurrentActivity,
-  isEditableDate,
   temporal,
   schedulable,
   onIncrement,
@@ -68,8 +66,8 @@ function ActivityTaskItem({
   const longPressHandledRef = useRef(false);
 
   const interaction = useMemo(
-    () => getDailyTaskInteractionState(activity, temporal, isEditableDate),
-    [activity, temporal, isEditableDate]
+    () => getDailyTaskInteractionState(activity, temporal),
+    [activity, temporal]
   );
 
   const effective = schedulable ?? activity;

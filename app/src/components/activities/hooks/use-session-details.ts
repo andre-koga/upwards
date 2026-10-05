@@ -26,6 +26,7 @@ import { ERROR_MESSAGES } from "@/lib/error-utils";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
 import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 import { useTranslation } from "react-i18next";
+import { requestOldDayEdit } from "@/lib/journal/old-day-gate";
 import {
   applyCompletionNote,
   applyCountDelta,
@@ -235,6 +236,12 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const handleDelete = useCallback(async () => {
     if (!sessionId || !details) return;
     try {
+      const { confirmed } = await requestOldDayEdit(
+        details.derivedDate ??
+          toDateString(new Date(details.period.start_time)),
+        t("oldDay.activity.summary", { ns: "journal" })
+      );
+      if (!confirmed) return;
       if (details.derived) {
         const activityId = details.activity?.id ?? details.period.activity_id;
         const date = details.derivedDate;
@@ -258,7 +265,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     } catch (deleteError) {
       console.error("Error deleting session:", deleteError);
     }
-  }, [details, finish, sessionId]);
+  }, [details, finish, sessionId, t]);
 
   const isUntimedSession =
     details != null &&
@@ -317,12 +324,19 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       setSaving(true);
       setError(null);
 
+      // Ask before writing anything, including the hidden default activity.
+      const entryDateString = toDateString(new Date(nextStartIso));
+      const { confirmed } = await requestOldDayEdit(
+        entryDateString,
+        t("oldDay.activity.summary", { ns: "journal" })
+      );
+      if (!confirmed) return;
+
       const nextActivityId =
         selectedActivityId === NONE_ACTIVITY_VALUE
           ? (await getOrCreateHiddenGroupDefaultActivity(details.group)).id
           : selectedActivityId;
 
-      const entryDateString = toDateString(new Date(nextStartIso));
       const entry = await getOrCreateDailyEntryProjection(entryDateString);
       const n = now();
       const sessionNote = normalizeSessionNote(note);

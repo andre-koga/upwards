@@ -1,4 +1,3 @@
-export * from "./editable-window";
 export * from "./utils";
 export * from "./streak";
 export * from "./location-search";
