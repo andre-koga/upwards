@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 import { closeOpenPeriods } from "@/lib/activity";
-import { clipPeriodToDay } from "@/lib/activity/period-day-utils";
+import { sessionShareOfDay } from "@/lib/activity/period-day-utils";
 import { fetchActivityPeriodsForDay } from "@/lib/activity/untimed-period";
 import {
   saveTimedPeriod,
@@ -35,7 +35,7 @@ export function useActivityTracking(
         .reduce((total, period) => {
           const startMs = new Date(period.start_time).getTime();
           const endMs = new Date(period.end_time!).getTime();
-          return total + clipPeriodToDay(startMs, endMs, dateString, nowMs);
+          return total + sessionShareOfDay(startMs, endMs, dateString, nowMs);
         }, 0);
     },
     [activityPeriods, dateString]
@@ -58,11 +58,13 @@ export function useActivityTracking(
           if (period.end_time) {
             const endMs = new Date(period.end_time).getTime();
             return (
-              total + clipPeriodToDay(startMs, endMs, dateString, liveNowMs)
+              total + sessionShareOfDay(startMs, endMs, dateString, liveNowMs)
             );
           }
           if (!includeOpenPeriod) return total;
-          return total + clipPeriodToDay(startMs, null, dateString, liveNowMs);
+          return (
+            total + sessionShareOfDay(startMs, null, dateString, liveNowMs)
+          );
         }, 0);
     },
     [activityPeriods, dateString]

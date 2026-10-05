@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { db, newId, now } from "@/lib/db";
-import { toDateString } from "@/lib/time-utils";
+import { toDateString, todayDateString } from "@/lib/time-utils";
 import type {
   Activity,
   ActivityGroup,
@@ -14,12 +14,7 @@ import {
   getGroup,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
-import { getEffectiveToday } from "@/lib/session/day-reset";
 import { computeActivityStreaksForDate } from "@/lib/streak-utils";
-import {
-  clipPeriodToDay,
-  effectiveDateForMs,
-} from "@/lib/activity/period-day-utils";
 import { isActivityDateEditable } from "@/lib/journal/editable-window";
 import {
   getOrCreateDailyEntryProjection,
@@ -61,7 +56,7 @@ export function useDailyTasks({
   const dateString = toDateString(currentDate);
   // Tasks and timers are only editable on the current effective day.
   // Journal entries keep their own 7-day window (isJournalCalendarDateEditable).
-  const isToday = dateString === getEffectiveToday();
+  const isToday = dateString === todayDateString();
   const isEditableDate = isActivityDateEditable(dateString);
   const [activityStreaks, setActivityStreaks] = useState<
     Record<string, number>
@@ -117,7 +112,7 @@ export function useDailyTasks({
   } = useOneTimeTasks(dateString);
 
   const loadMemosWithSpawn = useCallback(async () => {
-    if (dateString === getEffectiveToday()) {
+    if (dateString === todayDateString()) {
       await spawnRecurringMemosForToday();
     }
     await loadOneTimeTasks();
@@ -411,7 +406,7 @@ export function useDailyTasks({
     }) => {
       const { activityId, startIso, endIso, note } = params;
       const createdAt = now();
-      const entryDateString = effectiveDateForMs(new Date(startIso).getTime());
+      const entryDateString = toDateString(new Date(startIso));
       const dailyEntry = await getOrCreateDailyEntryProjection(entryDateString);
 
       const period: ActivityPeriod = {
@@ -487,8 +482,10 @@ export function useDailyTasks({
     if (!activePeriod) return 0;
 
     const startMs = new Date(activePeriod.start_time).getTime();
-    return clipPeriodToDay(startMs, null, dateString, nowMs);
-  }, [resolvedCurrentActivityId, activityPeriods, nowMs, dateString]);
+    // The running pill shows the session's full elapsed time, not its share
+    // of this day.
+    return Math.max(0, nowMs - startMs);
+  }, [resolvedCurrentActivityId, activityPeriods, nowMs]);
 
   return {
     isToday,

@@ -11,8 +11,8 @@ import {
   formatWeekdayShortDate,
   fromDateString,
   toDateString,
+  todayDateString,
 } from "@/lib/time-utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
 import { dialogFieldLabelClassName } from "@/components/forms/styles";
 
 export interface FormCalendarDateFieldProps {
@@ -69,7 +69,7 @@ export function FormCalendarDateField({
   }, [value]);
 
   const [calendarMonth, setCalendarMonth] = useState<Date>(
-    selectedDate ?? fromDateString(getEffectiveToday())
+    selectedDate ?? fromDateString(todayDateString())
   );
 
   const minDate = useMemo(() => (min ? fromDateString(min) : undefined), [min]);
@@ -113,9 +113,7 @@ export function FormCalendarDateField({
           aria-readonly={readOnly}
           onClick={() => {
             if (readOnly) return;
-            setCalendarMonth(
-              selectedDate ?? fromDateString(getEffectiveToday())
-            );
+            setCalendarMonth(selectedDate ?? fromDateString(todayDateString()));
             setOpen(true);
           }}
           className={cn(
@@ -150,9 +148,7 @@ export function FormCalendarDateField({
             return;
           }
           if (nextOpen) {
-            setCalendarMonth(
-              selectedDate ?? fromDateString(getEffectiveToday())
-            );
+            setCalendarMonth(selectedDate ?? fromDateString(todayDateString()));
           }
           setOpen(nextOpen);
         }}

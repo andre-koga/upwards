@@ -8,11 +8,12 @@
   "sections": {
     "memos": "Memos",
     "forToday": "For Today",
-    "timeline": "Timeline",
-    "timelineBoundary": "(starts and ends at {{time}})"
+    "timeline": "Timeline"
   },
   "timelineItem": {
-    "completedAt": "Completed at {{time}}"
+    "completedAt": "Completed at {{time}}",
+    "fromPreviousDay": "From the day before",
+    "continuesNextDay": "Continues the next day"
   },
   "recurringMemosButton": "Recurring",
   "manageRecurringMemos": "Manage recurring memos",

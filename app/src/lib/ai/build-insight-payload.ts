@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
-import { toDateString, startOfDay } from "@/lib/time-utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { toDateString, startOfDay, todayDateString } from "@/lib/time-utils";
 import { computeActivityStreaksForDate } from "@/lib/streak-utils";
 
 const RANGE_DAYS = 7;
@@ -30,7 +29,7 @@ export interface InsightPayload {
  * payload small and numeric.
  */
 export async function buildInsightPayload(): Promise<InsightPayload> {
-  const today = new Date(`${getEffectiveToday()}T12:00:00`);
+  const today = new Date(`${todayDateString()}T12:00:00`);
   const start = new Date(today);
   start.setDate(start.getDate() - (RANGE_DAYS - 1));
   const startStr = toDateString(startOfDay(start));

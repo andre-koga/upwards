@@ -86,7 +86,6 @@ describe("buildTimelineSessions", () => {
   beforeEach(() => {
     storage.clear();
     mockLocalStorage();
-    localStorage.setItem("okhabit:day_reset_minutes", "0");
   });
 
   it("derives untimed pills from counts and ignores leftover zero-duration rows", () => {
@@ -207,5 +206,31 @@ describe("buildTimelineSessions", () => {
     });
 
     expect(sessions.map((session) => session.id)).toEqual(["timed"]);
+  });
+
+  it("counts only each day's share of a cross-midnight session and flags the overlap", () => {
+    const period = makePeriod({
+      id: "late",
+      start_time: new Date(2026, 5, 26, 23, 0, 0, 0).toISOString(),
+      end_time: new Date(2026, 5, 27, 1, 0, 0, 0).toISOString(),
+    });
+    const build = (dateString: string) =>
+      buildTimelineSessions({
+        periods: [period],
+        dateString,
+        nowMs: new Date(2026, 5, 27, 12, 0, 0, 0).getTime(),
+        lookupActivityById: new Map([["act-1", makeActivity()]]),
+        lookupGroupById: new Map([["group-1", makeGroup()]]),
+      });
+
+    const first = build("2026-06-26");
+    const second = build("2026-06-27");
+    const hour = 60 * 60 * 1000;
+    expect(timelineDurationTotalMs(first)).toBe(hour);
+    expect(timelineDurationTotalMs(second)).toBe(hour);
+    expect(first[0].continuesNextDay).toBe(true);
+    expect(first[0].fromPreviousDay).toBe(false);
+    expect(second[0].fromPreviousDay).toBe(true);
+    expect(second[0].continuesNextDay).toBe(false);
   });
 });

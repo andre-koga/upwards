@@ -3,10 +3,9 @@ import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
 import { isHiddenGroupDefaultActivity } from "@/lib/activity/hidden-default";
 import { getActivityDisplayName } from "@/lib/activity/utils";
 import {
-  clipPeriodToDay,
-  effectiveDayEndMs,
-  effectiveDayStartMs,
-  periodBelongsToDay,
+  dayBoundsMs,
+  sessionShareOfDay,
+  sessionsOnDay,
 } from "@/lib/activity/period-day-utils";
 import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 
@@ -21,6 +20,10 @@ export interface TimelineSession {
   note: string | null;
   untimed: boolean;
   completedAtIso: string | null;
+  /** The session began before this day; only its share is counted here. */
+  fromPreviousDay?: boolean;
+  /** The session runs past this day's end; only its share is counted here. */
+  continuesNextDay?: boolean;
 }
 
 const DERIVED_UNTIMED_PREFIX = "derived-untimed:";
@@ -46,10 +49,9 @@ export function parseDerivedUntimedSessionId(
 }
 
 function derivedPillTimeMs(dateString: string, nowMs: number): number {
-  const dayStart = effectiveDayStartMs(dateString);
-  const dayEnd = effectiveDayEndMs(dateString);
-  if (nowMs >= dayStart && nowMs < dayEnd) return nowMs;
-  return dayStart;
+  const { startMs, endMs } = dayBoundsMs(dateString);
+  if (nowMs >= startMs && nowMs < endMs) return nowMs;
+  return startMs;
 }
 
 function hasTimedOrRunningPeriodOnDay(
@@ -58,14 +60,12 @@ function hasTimedOrRunningPeriodOnDay(
   dateString: string,
   nowMs: number
 ): boolean {
-  return periods.some((period) => {
-    if (period.deleted_at) return false;
-    if (period.activity_id !== activityId) return false;
-    if (isUntimedPeriod(period.start_time, period.end_time)) return false;
-    const startMs = new Date(period.start_time).getTime();
-    const endMs = period.end_time ? new Date(period.end_time).getTime() : null;
-    return periodBelongsToDay(startMs, endMs, dateString, nowMs);
-  });
+  const timed = periods.filter(
+    (period) =>
+      period.activity_id === activityId &&
+      !isUntimedPeriod(period.start_time, period.end_time)
+  );
+  return sessionsOnDay(timed, dateString, nowMs).length > 0;
 }
 
 function sessionFromActivity(
@@ -104,7 +104,7 @@ export function buildTimelineSessions(params: {
     completionNotes = {},
     completionTimes = {},
   } = params;
-  const dayStartMs = effectiveDayStartMs(dateString);
+  const { startMs: dayStartMs, endMs: dayEndMs } = dayBoundsMs(dateString);
 
   const timedSessions = periods
     .filter(
@@ -120,7 +120,7 @@ export function buildTimelineSessions(params: {
         : undefined;
       const startMs = new Date(period.start_time).getTime();
       const endMs = new Date(period.end_time!).getTime();
-      const clippedInterval = clipPeriodToDay(
+      const clippedInterval = sessionShareOfDay(
         startMs,
         endMs,
         dateString,
@@ -141,6 +141,8 @@ export function buildTimelineSessions(params: {
         note: period.note,
         untimed: false,
         completedAtIso: null,
+        fromPreviousDay: startMs < dayStartMs,
+        continuesNextDay: endMs > dayEndMs,
       };
     })
     .filter((session) => session.intervalMs > 0);

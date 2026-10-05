@@ -8,8 +8,11 @@ import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { ArchiveMemoDialog } from "@/components/tasks/archive-memo-dialog";
 import { DeleteMemoDialog } from "@/components/tasks/delete-memo-dialog";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
-import { formatDateShort, fromDateString } from "@/lib/time-utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import {
+  formatDateShort,
+  fromDateString,
+  todayDateString,
+} from "@/lib/time-utils";
 
 function getDueDateDisplayLabel(
   dueDate: string,
@@ -18,7 +21,7 @@ function getDueDateDisplayLabel(
   const due = fromDateString(dueDate);
   const dueMs = due.getTime();
 
-  const today = fromDateString(getEffectiveToday());
+  const today = fromDateString(todayDateString());
   const todayMs = today.getTime();
 
   const yesterday = new Date(today);

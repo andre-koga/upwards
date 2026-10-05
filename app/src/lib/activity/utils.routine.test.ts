@@ -65,7 +65,6 @@ describe("isRoutineDueOnDate", () => {
   beforeEach(() => {
     storage.clear();
     mockLocalStorage();
-    localStorage.setItem("okhabit:day_reset_minutes", "240");
   });
 
   it("returns false for anytime and before creation day", () => {
@@ -132,21 +131,12 @@ describe("isRoutineDueOnDate", () => {
     ).toBe(false);
   });
 
-  it("uses effective creation day across the reset boundary", () => {
-    // Created at 2 AM on June 15 with 4 AM reset → effective day is June 14
+  it("uses the calendar creation day, including just after midnight", () => {
+    // Created at 2 AM on June 15: days end at midnight, so that is June 15.
     const createdAt = new Date(2026, 5, 15, 2, 0, 0, 0).toISOString();
-    expect(
-      isRoutineDueOnDate(
-        activity({ routine: "daily", created_at: createdAt }),
-        new Date(2026, 5, 14)
-      )
-    ).toBe(true);
-    expect(
-      isRoutineDueOnDate(
-        activity({ routine: "daily", created_at: createdAt }),
-        new Date(2026, 5, 13)
-      )
-    ).toBe(false);
+    const daily = activity({ routine: "daily", created_at: createdAt });
+    expect(isRoutineDueOnDate(daily, new Date(2026, 5, 15))).toBe(true);
+    expect(isRoutineDueOnDate(daily, new Date(2026, 5, 14))).toBe(false);
   });
 });
 

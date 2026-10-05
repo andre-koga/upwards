@@ -1,30 +1,52 @@
 import { useEffect } from "react";
-import { getNextResetTime } from "@/lib/session/day-reset";
+import { todayDateString } from "@/lib/time-utils";
 
 /**
- * Schedules a one-shot timer that fires at the next configured day-reset time.
- * When it fires: calls onReset so the parent can re-render with the new
- * effective date.  Re-schedules itself each time so resets keep working even
- * if the app stays open overnight.
+ * UI-only midnight timer. Calls `onReset` when the local date rolls over so
+ * Today can move to the new date (and carry memos forward). Nothing is written
+ * to the database at midnight; sessions are stored whole and each day's view
+ * computes its share at read time.
  *
- * No DB-level period splitting is performed here; the frontend clips periods
- * to the effective day at render time.
+ * A long `setTimeout` is throttled or frozen while a phone sleeps, so the date
+ * is also re-checked whenever the app becomes visible again.
  */
 export function useDayResetTimer(onReset: () => void): void {
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
+    let lastDate = todayDateString();
+
+    const rollOver = () => {
+      const current = todayDateString();
+      if (current === lastDate) return;
+      lastDate = current;
+      onReset();
+    };
 
     const schedule = () => {
-      const next = getNextResetTime();
-      const msUntilReset = next.getTime() - Date.now();
-
+      const now = new Date();
+      const nextMidnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1
+      );
       timeoutId = setTimeout(() => {
-        onReset();
+        rollOver();
         schedule();
-      }, msUntilReset);
+      }, nextMidnight.getTime() - now.getTime());
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      rollOver();
+      clearTimeout(timeoutId);
+      schedule();
     };
 
     schedule();
-    return () => clearTimeout(timeoutId);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [onReset]);
 }

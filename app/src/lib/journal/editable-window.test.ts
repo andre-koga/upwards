@@ -34,7 +34,6 @@ describe("journal editable window", () => {
   beforeEach(() => {
     storage.clear();
     mockLocalStorage();
-    localStorage.setItem("okhabit:day_reset_minutes", "240");
   });
 
   it("allows today through lookback and rejects older / future days", () => {
@@ -59,12 +58,11 @@ describe("journal editable window", () => {
     );
   });
 
-  it("uses the day-reset boundary for activity date editability", () => {
-    // 2 AM on June 20 with 4 AM reset → effective today is June 19
-    const beforeReset = new Date(2026, 5, 20, 2, 0, 0, 0);
-    expect(isActivityDateEditable("2026-06-19", beforeReset)).toBe(true);
-    expect(isActivityDateEditable("2026-06-20", beforeReset)).toBe(false);
-    expect(isActivityDateEditable("2026-06-12", beforeReset)).toBe(true);
-    expect(isActivityDateEditable("2026-06-11", beforeReset)).toBe(false);
+  it("treats 2 AM as part of the new calendar day", () => {
+    const twoAm = new Date(2026, 5, 20, 2, 0, 0, 0);
+    expect(isActivityDateEditable("2026-06-20", twoAm)).toBe(true);
+    expect(isActivityDateEditable("2026-06-13", twoAm)).toBe(true);
+    expect(isActivityDateEditable("2026-06-12", twoAm)).toBe(false);
+    expect(isActivityDateEditable("2026-06-21", twoAm)).toBe(false);
   });
 });

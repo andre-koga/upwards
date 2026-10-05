@@ -18,13 +18,6 @@
     "current": "Language",
     "comingSoon": "More languages are on the way."
   },
-  "dayReset": {
-    "title": "Day reset time",
-    "description": "Choose a time when you're definitely asleep—before you wake up. Your day will reset at this time.",
-    "resetAt": "Reset at",
-    "midnight": "Midnight",
-    "helper": "Your day resets at {{time}}. Pick a time you're always asleep—activities started before then count toward the previous day."
-  },
   "auth": {
     "title": "Sync account",
     "signedInAs": "Signed in as",

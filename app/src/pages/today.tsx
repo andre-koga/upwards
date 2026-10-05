@@ -1,11 +1,14 @@
 import { useState, useRef, type TouchEvent, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { toDateString, fromDateString } from "@/lib/time-utils";
+import {
+  toDateString,
+  fromDateString,
+  todayDateString,
+} from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/journal/journal-card";
 import { useTodayPage } from "@/hooks/use-today-page";
-import { getEffectiveToday } from "@/lib/session/day-reset";
 import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
 import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
 
@@ -31,8 +34,7 @@ export default function TodayPage() {
   const SWIPE_FEEDBACK_DIRECTION_RATIO = 1.1;
 
   const [currentDate, setCurrentDate] = useState(
-    () =>
-      consumeJournalJumpDate() ?? new Date(`${getEffectiveToday()}T12:00:00`)
+    () => consumeJournalJumpDate() ?? new Date(`${todayDateString()}T12:00:00`)
   );
   const [swipeFeedback, setSwipeFeedback] = useState<{
     direction: "prev" | "next";
@@ -47,7 +49,7 @@ export default function TodayPage() {
 
   const [dayResetTick, setDayResetTick] = useState(0);
 
-  // Re-render when the day resets so swipe "today" boundary updates live.
+  // Re-render at midnight so the swipe "today" boundary updates live.
   const handleDayReset = useCallback(() => {
     setDayResetTick((t) => t + 1);
   }, []);
@@ -127,7 +129,7 @@ export default function TodayPage() {
 
     const direction = deltaX > 0 ? "prev" : "next";
     const isBlocked =
-      direction === "next" && toDateString(currentDate) === getEffectiveToday();
+      direction === "next" && toDateString(currentDate) === todayDateString();
 
     setSwipeFeedback({
       direction,
@@ -162,7 +164,7 @@ export default function TodayPage() {
     }
 
     setCurrentDate((prev) => {
-      if (toDateString(prev) === getEffectiveToday()) return prev;
+      if (toDateString(prev) === todayDateString()) return prev;
       const next = new Date(prev);
       next.setDate(next.getDate() + 1);
       return next;

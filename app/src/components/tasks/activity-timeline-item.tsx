@@ -20,6 +20,8 @@ interface ActivityTimelineItemProps {
   note?: string | null;
   untimed?: boolean;
   completedAtIso?: string | null;
+  fromPreviousDay?: boolean;
+  continuesNextDay?: boolean;
   onStartActivity?: (activityId: string) => void;
   onClick?: () => void;
   className?: string;
@@ -33,6 +35,8 @@ function ActivityTimelineItem({
   note,
   untimed = false,
   completedAtIso,
+  fromPreviousDay = false,
+  continuesNextDay = false,
   onStartActivity,
   onClick,
   className = "",
@@ -54,6 +58,16 @@ function ActivityTimelineItem({
       />
       <span className="min-w-0 flex-1 text-left">
         <span className={TIMELINE_ITEM_NAME_CLASS}>{activityName}</span>
+        {fromPreviousDay || continuesNextDay ? (
+          <span className={TIMELINE_ITEM_NOTE_CLASS}>
+            {[
+              fromPreviousDay ? t("timelineItem.fromPreviousDay") : null,
+              continuesNextDay ? t("timelineItem.continuesNextDay") : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
+        ) : null}
         {trimmedNote ? (
           <span className={TIMELINE_ITEM_NOTE_CLASS}>{trimmedNote}</span>
         ) : null}

@@ -73,7 +73,6 @@ describe("streak projection", () => {
   beforeEach(() => {
     storage.clear();
     mockLocalStorage();
-    localStorage.setItem("okhabit:day_reset_minutes", "0");
   });
 
   it("derives current streak from pre-built outcomes", () => {

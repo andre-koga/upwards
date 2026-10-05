@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
@@ -21,12 +21,7 @@ import {
   ActivityRetiredInfoDialog,
   type ActivityRetiredKind,
 } from "@/components/activities/activity-retired-info-dialog";
-import {
-  getDayResetMinutes,
-  formatResetMinutes,
-  getEffectiveToday,
-} from "@/lib/session/day-reset";
-import { getActiveLocaleTag } from "@/lib/i18n";
+import { todayDateString } from "@/lib/time-utils";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -141,36 +136,6 @@ export default function DailyTasksList({
     setAssignDialogOpen(true);
   };
 
-  const resetMin = getDayResetMinutes();
-
-  // Labels shown at the top and bottom of the timeline when a non-midnight
-  // reset is configured, so the user knows when their "day" window starts/ends.
-  const timelineBoundaryLabels = useMemo(() => {
-    if (resetMin === 0) return null;
-    const resetLabel = formatResetMinutes(resetMin);
-
-    // Effective day starts at resetMin on the current calendar date.
-    const [y, m, d] = currentDate
-      .toISOString()
-      .split("T")[0]
-      .split("-")
-      .map(Number);
-    const dayStart = new Date(y, (m || 1) - 1, d || 1);
-    dayStart.setHours(Math.floor(resetMin / 60), resetMin % 60, 0, 0);
-    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-
-    const fmt = (date: Date) =>
-      date.toLocaleDateString(getActiveLocaleTag(), {
-        month: "short",
-        day: "numeric",
-      });
-
-    return {
-      top: `${resetLabel} ${fmt(dayEnd)}`,
-      bottom: `${resetLabel} ${fmt(dayStart)}`,
-    };
-  }, [resetMin, currentDate]);
-
   const handleAssignSuccess = () => {
     void loadActivityPeriods();
   };
@@ -181,7 +146,7 @@ export default function DailyTasksList({
     } else {
       // Set the activity to start and navigate to today
       setActivityToStartOnToday(activityId);
-      const today = new Date(getEffectiveToday() + "T12:00:00");
+      const today = new Date(todayDateString() + "T12:00:00");
       onDateChange(today);
     }
   };
@@ -308,16 +273,7 @@ export default function DailyTasksList({
       {(currentActivityId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">
           <div className="ml-1 mr-1.5 flex items-center justify-between">
-            <SectionLabel>
-              {t("sections.timeline")}
-              {timelineBoundaryLabels && (
-                <span className="ml-1.5 font-normal normal-case">
-                  {t("sections.timelineBoundary", {
-                    time: formatResetMinutes(resetMin),
-                  })}
-                </span>
-              )}
-            </SectionLabel>
+            <SectionLabel>{t("sections.timeline")}</SectionLabel>
             <span className="text-xs text-muted-foreground">
               {formatTimerDisplay(
                 timelineSessions.reduce(
@@ -355,6 +311,8 @@ export default function DailyTasksList({
                 note={session.note}
                 untimed={session.untimed}
                 completedAtIso={session.completedAtIso}
+                fromPreviousDay={session.fromPreviousDay}
+                continuesNextDay={session.continuesNextDay}
                 onClick={
                   isUnknown
                     ? () => openAssignDialog(session.id, session.intervalMs)

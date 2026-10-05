@@ -8,7 +8,7 @@ export interface CachedInsight {
   recommendations: string[];
 }
 
-/** Local-only cache (like the day-reset setting) — never synced. */
+/** Local-only cache — never synced. */
 export function getCachedInsight(): CachedInsight | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY);

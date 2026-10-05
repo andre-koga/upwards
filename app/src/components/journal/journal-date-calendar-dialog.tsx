@@ -10,8 +10,11 @@ import { Heart } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { fromDateString, toDateString } from "@/lib/time-utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import {
+  fromDateString,
+  toDateString,
+  todayDateString,
+} from "@/lib/time-utils";
 
 export interface JournalDateCalendarDialogProps {
   open: boolean;
@@ -34,7 +37,7 @@ export function JournalDateCalendarDialog({
   onCalendarOpen,
 }: JournalDateCalendarDialogProps) {
   const { t } = useTranslation("nav");
-  const effectiveToday = fromDateString(getEffectiveToday());
+  const effectiveToday = fromDateString(todayDateString());
   const [calendarMonth, setCalendarMonth] = useState(currentDate);
   const prevOpenRef = useRef(false);
 

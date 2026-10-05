@@ -124,24 +124,49 @@ export function timeToSeconds(time: string): number {
 }
 
 /**
- * Helper: today as YYYY-MM-DD (local time).
+ * The local calendar date (YYYY-MM-DD) of an instant, default now. Days run
+ * midnight to midnight; there is no configurable day boundary.
  */
-export function todayDateString(): string {
-  // Inline effective-day logic to avoid circular dep with day-reset.ts
-  const resetMin = (() => {
-    const raw = localStorage.getItem("okhabit:day_reset_minutes");
-    if (!raw) return 240;
-    const n = parseInt(raw, 10);
-    return isNaN(n) || n < 0 || n > 480 ? 240 : n;
-  })();
-  const now = new Date();
-  if (resetMin > 0) {
-    const currentMin = now.getHours() * 60 + now.getMinutes();
-    if (currentMin < resetMin) {
-      const prev = new Date(now);
-      prev.setDate(prev.getDate() - 1);
-      return toDateString(prev);
-    }
-  }
+export function todayDateString(now = new Date()): string {
   return toDateString(now);
+}
+
+/** Absolute time (ms) of a wall-clock `HH:MM[:SS]` on a local calendar date. */
+export function dateTimeMs(dateStr: string, time: string): number {
+  return new Date(combineDateAndTime(fromDateString(dateStr), time)).getTime();
+}
+
+/**
+ * Absolute start/end of a session entered as wall-clock times on a date. An
+ * end at or before the start means the session ends the next day.
+ */
+export function resolveSessionSpan(
+  dateStr: string,
+  startTime: string,
+  endTime: string
+): { startMs: number; endMs: number; startIso: string; endIso: string } {
+  const startMs = dateTimeMs(dateStr, startTime);
+  let endMs = dateTimeMs(dateStr, endTime);
+  if (endMs <= startMs) {
+    endMs = new Date(
+      combineDateAndTime(shiftDate(fromDateString(dateStr), 1), endTime)
+    ).getTime();
+  }
+  return {
+    startMs,
+    endMs,
+    startIso: new Date(startMs).toISOString(),
+    endIso: new Date(endMs).toISOString(),
+  };
+}
+
+/** The local dates a session touches: its start date and its last instant's. */
+export function sessionDateRange(
+  startMs: number,
+  endMs: number
+): { startDate: string; endDate: string } {
+  return {
+    startDate: toDateString(new Date(startMs)),
+    endDate: toDateString(new Date(Math.max(startMs, endMs - 1))),
+  };
 }
