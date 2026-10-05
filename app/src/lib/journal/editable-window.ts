@@ -1,5 +1,4 @@
-import { toDateString } from "@/lib/time-utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { toDateString, todayDateString } from "@/lib/time-utils";
 
 /**
  * How far back from the current effective today the journal and aligned day
@@ -21,14 +20,14 @@ export function isJournalCalendarDateEditable(
 
 /**
  * Whether timeline sessions and For Today task interactions on the given date
- * string are editable. Uses the configured day-reset boundary for "today" and
+ * string are editable. Uses the local calendar date for "today" and
  * allows up to 7 days back, matching the journal window.
  */
 export function isActivityDateEditable(
   dateString: string,
   referenceNow: Date = new Date()
 ): boolean {
-  const todayStr = getEffectiveToday(referenceNow);
+  const todayStr = todayDateString(referenceNow);
   const todayMidnight = new Date(todayStr + "T00:00:00");
   const entryMidnight = new Date(dateString + "T00:00:00");
   const diffDays = Math.floor(

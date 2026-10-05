@@ -70,7 +70,7 @@
     "endTime": "End time",
     "note": "Note",
     "notePlaceholder": "What did you do?",
-    "spanWarning": "This session spans {{startDay}} and {{endDay}} (crosses your {{resetTime}} day boundary).",
+    "spanWarning": "This session spans {{startDay}} and {{endDay}} (it crosses midnight).",
     "pastDayWarning": "You're adding a time entry for a different day than today. Double-check the date and times before saving.",
     "errorEndRequired": "Please set an end time.",
     "errorStartRequired": "Please set a start time.",
@@ -95,9 +95,9 @@
     "clear": "Clear"
   },
   "sessionDetails": {
-    "timesOptional": "Use the same start and end for a completion without a duration. Use different times if you tracked how long it took.",
     "errorEndRequired": "Please set an end time.",
     "errorStartRequired": "Please set a start time.",
-    "errorSameTime": "End time must be different from start time."
+    "errorSameTime": "End time must be different from start time.",
+    "spanWarning": "This session spans {{startDay}} and {{endDay}} (it crosses midnight)."
   }
 }

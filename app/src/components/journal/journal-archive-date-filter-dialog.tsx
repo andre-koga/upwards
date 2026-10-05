@@ -24,8 +24,11 @@ import {
   createYearDateRange,
   type JournalArchiveDateRange,
 } from "@/lib/journal/archive";
-import { fromDateString, toDateString } from "@/lib/time-utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import {
+  fromDateString,
+  toDateString,
+  todayDateString,
+} from "@/lib/time-utils";
 import { cn } from "@/lib/utils";
 
 export interface JournalArchiveDateFilterDialogProps {
@@ -51,11 +54,11 @@ export default function JournalArchiveDateFilterDialog({
   bookmarkedDates = new Set(),
 }: JournalArchiveDateFilterDialogProps) {
   const { t } = useTranslation("journal");
-  const today = getEffectiveToday();
+  const today = todayDateString();
   const todayDate = fromDateString(today);
   const [draftRange, setDraftRange] = useState<DateRange | undefined>();
   const [calendarMonth, setCalendarMonth] = useState(() =>
-    fromDateString(getEffectiveToday())
+    fromDateString(todayDateString())
   );
   const prevOpenRef = useRef(false);
 
@@ -78,7 +81,8 @@ export default function JournalArchiveDateFilterDialog({
   }, [open, today, value]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const earliestYear = availableYears[availableYears.length - 1] ?? todayDate.getFullYear();
+  const earliestYear =
+    availableYears[availableYears.length - 1] ?? todayDate.getFullYear();
   const startMonth = new Date(earliestYear, 0, 1);
 
   const calendarComponents = useMemo(
@@ -176,8 +180,7 @@ export default function JournalArchiveDateFilterDialog({
                     onClick={() => handleYear(year)}
                     className={cn(
                       "h-8 rounded-full px-3 text-xs font-medium shadow-none",
-                      selected &&
-                        "border-primary bg-primary/10 text-primary"
+                      selected && "border-primary bg-primary/10 text-primary"
                     )}
                     aria-pressed={selected}
                   >

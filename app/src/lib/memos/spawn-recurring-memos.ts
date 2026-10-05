@@ -1,8 +1,7 @@
 import { db, newId, now } from "@/lib/db";
 import type { RecurringMemo } from "@/lib/db/types";
 import { isRoutineDueOnDate } from "@/lib/activity/utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
-import { fromDateString } from "@/lib/time-utils";
+import { fromDateString, todayDateString } from "@/lib/time-utils";
 import { normalizeMemoTitle } from "@/components/tasks/memo-title";
 import { saveOneTimeTask } from "@/lib/sync/mutate-synced";
 
@@ -76,7 +75,7 @@ async function spawnRecurringMemosForTodayInternal(
 let spawnInFlight: Promise<number> | null = null;
 
 export async function spawnRecurringMemosForToday(
-  today = getEffectiveToday()
+  today = todayDateString()
 ): Promise<number> {
   if (spawnInFlight) {
     return spawnInFlight;

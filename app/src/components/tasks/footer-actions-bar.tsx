@@ -15,8 +15,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Activity } from "@/lib/db/types";
-import { toDateString } from "@/lib/time-utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { toDateString, todayDateString } from "@/lib/time-utils";
 import { JournalDateCalendarDialog } from "@/components/journal/journal-date-calendar-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,7 +86,7 @@ export default function FooterActionsBar({
     hasUnreadWhatsNewRelease
   );
   const { bottomInset } = useVisualViewportLayout();
-  const isSelectedToday = toDateString(currentDate) === getEffectiveToday();
+  const isSelectedToday = toDateString(currentDate) === todayDateString();
   const shortDate = currentDate.toLocaleDateString(getActiveLocaleTag(), {
     weekday: "short",
     month: "short",

@@ -48,8 +48,10 @@ if (isSupabaseConfigured && supabase) {
   });
 }
 
-// Named palettes were removed; drop the stored choice so it can't linger.
+// Named palettes and the configurable day-reset hour were removed; drop the
+// stored choices so they can't linger.
 localStorage.removeItem("upwards-color-palette");
+localStorage.removeItem("okhabit:day_reset_minutes");
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

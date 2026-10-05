@@ -18,13 +18,6 @@
     "current": "Idioma",
     "comingSoon": "Mais idiomas em breve."
   },
-  "dayReset": {
-    "title": "Horário de virada do dia",
-    "description": "Escolha um horário em que você com certeza estará dormindo, antes de acordar. Seu dia vira nesse horário.",
-    "resetAt": "Virada às",
-    "midnight": "Meia-noite",
-    "helper": "Seu dia vira às {{time}}. Escolha um horário em que você costuma estar dormindo — atividades iniciadas antes desse horário contam para o dia anterior."
-  },
   "auth": {
     "title": "Conta para sincronização",
     "signedInAs": "Conectado como",

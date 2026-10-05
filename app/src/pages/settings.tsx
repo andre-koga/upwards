@@ -11,7 +11,6 @@ import {
   AboutCard,
   TaskOrderCard,
 } from "@/components/settings/navigation-cards";
-import { DayResetCard } from "@/components/settings/day-reset-card";
 import { useAuth } from "@/lib/use-auth";
 
 export default function SettingsPage() {
@@ -28,7 +27,6 @@ export default function SettingsPage() {
     >
       <AppearanceCard />
       <LanguageCard />
-      <DayResetCard />
 
       {isSupabaseConfigured && (
         <>

@@ -12,8 +12,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { getEffectiveToday } from "@/lib/session/day-reset";
-import { fromDateString } from "@/lib/time-utils";
+import { fromDateString, todayDateString } from "@/lib/time-utils";
 import { getActiveDateFnsLocale, getActiveLocaleTag } from "@/lib/i18n";
 
 function Calendar({
@@ -32,7 +31,7 @@ function Calendar({
   const defaultClassNames = getDefaultClassNames();
 
   // Use effective today if not provided
-  const effectiveToday = today ?? fromDateString(getEffectiveToday());
+  const effectiveToday = today ?? fromDateString(todayDateString());
 
   return (
     <DayPicker

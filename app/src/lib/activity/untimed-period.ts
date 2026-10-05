@@ -1,9 +1,7 @@
 import { db } from "@/lib/db";
 import type { ActivityPeriod } from "@/lib/db/types";
-import {
-  calendarDatesOverlappingEffectiveDay,
-  periodBelongsToDay,
-} from "@/lib/activity/period-day-utils";
+import { sessionsOnDay } from "@/lib/activity/period-day-utils";
+import { fromDateString, shiftDate, toDateString } from "@/lib/time-utils";
 
 /** Closed period whose start and end are the same instant — a completion, not a span. */
 export function isUntimedPeriod(
@@ -16,23 +14,15 @@ export function isUntimedPeriod(
   return Number.isFinite(startMs) && startMs === endMs;
 }
 
-export function periodsBelongingToDay(
-  periods: ActivityPeriod[],
-  dateString: string,
-  nowMs: number
-): ActivityPeriod[] {
-  return periods.filter((period) => {
-    if (period.deleted_at) return false;
-    const startMs = new Date(period.start_time).getTime();
-    const endMs = period.end_time ? new Date(period.end_time).getTime() : null;
-    return periodBelongsToDay(startMs, endMs, dateString, nowMs);
-  });
-}
-
 export async function fetchActivityPeriodsForDay(
   dateString: string
 ): Promise<ActivityPeriod[]> {
-  const datesToQuery = calendarDatesOverlappingEffectiveDay(dateString);
+  // A session is linked to the entry of the day it started, so one that
+  // crosses midnight onto this day lives on the previous day's entry.
+  const base = fromDateString(dateString);
+  const datesToQuery = [-1, 0, 1].map((offset) =>
+    toDateString(shiftDate(base, offset))
+  );
   const entries = await db.dailyEntries
     .where("date")
     .anyOf(datesToQuery)
@@ -57,7 +47,7 @@ export async function fetchActivityPeriodsForDay(
     .toArray();
 
   const byId = new Map<string, ActivityPeriod>();
-  for (const period of periodsBelongingToDay(candidates, dateString, nowMs)) {
+  for (const period of sessionsOnDay(candidates, dateString, nowMs)) {
     byId.set(period.id, period);
   }
   // Untimed rows can miss interval overlap when stamped with `now()` on a

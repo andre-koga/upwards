@@ -10,8 +10,7 @@ import {
   shouldShowActivity,
   type TemporalVisibilityContext,
 } from "@/lib/activity";
-import { startOfDay, toDateString } from "@/lib/time-utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
+import { startOfDay, toDateString, todayDateString } from "@/lib/time-utils";
 import {
   buildBreakDaysSet,
   buildEntriesByDateMap,
@@ -38,7 +37,7 @@ function isStreakEligible(activity: Activity): boolean {
 /** Logical first day an activity can contribute to streak history. */
 function getActivityOriginDay(activity: Activity): Date {
   return startOfDay(
-    new Date(getEffectiveToday(new Date(activity.created_at!)) + "T00:00:00")
+    new Date(todayDateString(new Date(activity.created_at!)) + "T00:00:00")
   );
 }
 
@@ -163,11 +162,17 @@ export async function computeActivityStreaksForDate(
       activity,
       targetDay
     );
-    const outcomes = buildOutcomesForActivity(activity, shared, fromDate, toDate, {
-      visibility,
-      entryOverride:
-        todayOverride?.date === targetDateStr ? todayOverride : undefined,
-    });
+    const outcomes = buildOutcomesForActivity(
+      activity,
+      shared,
+      fromDate,
+      toDate,
+      {
+        visibility,
+        entryOverride:
+          todayOverride?.date === targetDateStr ? todayOverride : undefined,
+      }
+    );
     streaks[activity.id] = deriveCurrentStreakFromOutcomes(
       outcomes,
       targetDay,

@@ -92,7 +92,6 @@ describe("computeActivityStreaksForDate", () => {
   beforeEach(() => {
     storage.clear();
     mockLocalStorage();
-    localStorage.setItem("okhabit:day_reset_minutes", "0");
     dailyEntries.length = 0;
   });
 

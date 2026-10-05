@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-02-midnight-days",
+    date: "2026-10-02",
+    title: "Days end at midnight",
+    bullets: [
+      "The day-reset setting is gone. A day now runs from midnight to midnight, so anything you do between 12:00 AM and 4:00 AM belongs to the new day. To log a late-night item on the day before, open yesterday and add it there.",
+      'A session that crosses midnight appears on both days with a "from the day before" or "continues the next day" note, and each day counts only its own share of the time.',
+      "The running timer always shows the session's full elapsed time.",
+    ],
+  },
+  {
     id: "2026-10-02-simpler-settings",
     date: "2026-10-02",
     title: "A quieter app",

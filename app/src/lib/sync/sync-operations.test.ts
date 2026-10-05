@@ -182,7 +182,9 @@ vi.mock("@/lib/db", () => ({
             return false;
           });
           return {
-            filter: (predicate: (entry: (typeof dailyEntries)[number]) => boolean) => ({
+            filter: (
+              predicate: (entry: (typeof dailyEntries)[number]) => boolean
+            ) => ({
               first: async () => matches.find(predicate),
             }),
             first: async () => matches[0],
@@ -245,10 +247,6 @@ vi.mock("@/lib/db", () => ({
 
 vi.mock("@/lib/sync/device-id", () => ({
   getOrCreateDeviceId: () => "local-device",
-}));
-
-vi.mock("@/lib/session/day-reset", () => ({
-  getEffectiveToday: () => "2026-08-01",
 }));
 
 import {
@@ -320,7 +318,6 @@ describe("sync-operations helpers", () => {
       base_revision: null,
     });
   });
-
 });
 
 describe("pushPendingOperations", () => {
@@ -611,7 +608,9 @@ describe("pushPendingOperations", () => {
     expect(pendingOps.find((row) => row.id === "row-old")?.status).toBe(
       "discarded"
     );
-    expect(pendingOps.find((row) => row.id === "row-new")?.status).toBe("acked");
+    expect(pendingOps.find((row) => row.id === "row-new")?.status).toBe(
+      "acked"
+    );
   });
 
   it("submits pending ops in bounded batches", async () => {
@@ -625,14 +624,16 @@ describe("pushPendingOperations", () => {
       );
     }
     let sequence = 0;
-    rpcMock.mockImplementation(async (_fn: string, args: { ops: Array<{ operation_id: string }> }) => ({
-      data: args.ops.map((op) => ({
-        operation_id: op.operation_id,
-        status: "accepted",
-        server_sequence: ++sequence,
-      })),
-      error: null,
-    }));
+    rpcMock.mockImplementation(
+      async (_fn: string, args: { ops: Array<{ operation_id: string }> }) => ({
+        data: args.ops.map((op) => ({
+          operation_id: op.operation_id,
+          status: "accepted",
+          server_sequence: ++sequence,
+        })),
+        error: null,
+      })
+    );
 
     const result = await pushPendingOperations();
     expect(result).toEqual({ failed: false, maxSequence: 51 });

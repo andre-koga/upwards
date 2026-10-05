@@ -10,29 +10,21 @@ import {
   getOrCreateHiddenGroupDefaultActivity,
   isHiddenGroupDefaultActivity,
 } from "@/lib/activity";
-import {
-  effectiveDateForMs,
-  effectiveDayStartMs,
-  getLogicalEndDate,
-  resolvePeriodFromLogicalDay,
-  spansLogicalDays,
-  timestampForLogicalDayTime,
-} from "@/lib/activity/period-day-utils";
+import { dayBoundsMs } from "@/lib/activity/period-day-utils";
 import {
   toDateString,
   formatTimeInput,
   formatWeekdayShortDate,
   timeToSeconds,
   fromDateString,
+  dateTimeMs,
+  resolveSessionSpan,
+  sessionDateRange,
+  todayDateString,
 } from "@/lib/time-utils";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
 import { isUntimedPeriod } from "@/lib/activity/untimed-period";
-import {
-  getEffectiveToday,
-  getDayResetMinutes,
-  formatResetMinutes,
-} from "@/lib/session/day-reset";
 import { useTranslation } from "react-i18next";
 import {
   applyCompletionNote,
@@ -79,7 +71,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const [groupActivities, setGroupActivities] = useState<Activity[]>([]);
   const [selectedActivityId, setSelectedActivityId] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(() =>
-    fromDateString(getEffectiveToday())
+    fromDateString(todayDateString())
   );
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -139,7 +131,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         const instant =
           completionTime && !Number.isNaN(new Date(completionTime).getTime())
             ? completionTime
-            : new Date(effectiveDayStartMs(derived.date)).toISOString();
+            : new Date(dayBoundsMs(derived.date).startMs).toISOString();
         const virtualPeriod: ActivityPeriod = {
           id: sessionId,
           daily_entry_id: entry?.id ?? "",
@@ -206,8 +198,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           .sortBy("created_at"),
       ]);
 
-      const startMs = new Date(period.start_time).getTime();
-      const logicalDateStr = effectiveDateForMs(startMs);
+      const logicalDateStr = toDateString(new Date(period.start_time));
 
       setDetails({
         group,
@@ -279,7 +270,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
 
     const isRunning = details.period.end_time === null;
     const logicalDateStr = toDateString(selectedDate);
-    const resetMinutes = getDayResetMinutes();
 
     let nextStartIso: string;
     let nextEndIso: string | null;
@@ -289,12 +279,9 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         setError(t("sessionDetails.errorStartRequired"));
         return;
       }
-      const startMs = timestampForLogicalDayTime(
-        logicalDateStr,
-        startTime,
-        resetMinutes
-      );
-      nextStartIso = new Date(startMs).toISOString();
+      nextStartIso = new Date(
+        dateTimeMs(logicalDateStr, startTime)
+      ).toISOString();
       nextEndIso = null;
     } else if (isUntimedSession) {
       // A completion has one instant (its end time). It is never converted
@@ -304,7 +291,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         return;
       }
       const completionIso = new Date(
-        timestampForLogicalDayTime(logicalDateStr, endTime, resetMinutes)
+        dateTimeMs(logicalDateStr, endTime)
       ).toISOString();
       nextStartIso = completionIso;
       nextEndIso = completionIso;
@@ -321,12 +308,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         setError(t("sessionDetails.errorSameTime"));
         return;
       }
-      const resolved = resolvePeriodFromLogicalDay(
-        logicalDateStr,
-        startTime,
-        endTime,
-        resetMinutes
-      );
+      const resolved = resolveSessionSpan(logicalDateStr, startTime, endTime);
       nextStartIso = resolved.startIso;
       nextEndIso = resolved.endIso;
     }
@@ -340,9 +322,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           ? (await getOrCreateHiddenGroupDefaultActivity(details.group)).id
           : selectedActivityId;
 
-      const entryDateString = effectiveDateForMs(
-        new Date(nextStartIso).getTime()
-      );
+      const entryDateString = toDateString(new Date(nextStartIso));
       const entry = await getOrCreateDailyEntryProjection(entryDateString);
       const n = now();
       const sessionNote = normalizeSessionNote(note);
@@ -409,30 +389,23 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const isRunningSession =
     details?.period != null && details.period.end_time === null;
 
-  const resetMinutes = getDayResetMinutes();
-
   const spanWarning = useMemo(() => {
     if (isRunningSession || !startTime || !endTime) return null;
     if (timeToSeconds(endTime) === timeToSeconds(startTime)) return null;
 
-    const logicalDateStr = toDateString(selectedDate);
-    const { startMs, endMs } = resolvePeriodFromLogicalDay(
-      logicalDateStr,
+    const { startMs, endMs } = resolveSessionSpan(
+      toDateString(selectedDate),
       startTime,
-      endTime,
-      resetMinutes
+      endTime
     );
+    const { startDate, endDate } = sessionDateRange(startMs, endMs);
+    if (startDate === endDate) return null;
 
-    if (!spansLogicalDays(startMs, endMs)) return null;
-
-    const startDay = formatWeekdayShortDate(
-      fromDateString(effectiveDateForMs(startMs))
-    );
-    const endDay = formatWeekdayShortDate(
-      fromDateString(getLogicalEndDate(startMs, endMs))
-    );
-    return `This session spans ${startDay} and ${endDay} (crosses your ${formatResetMinutes(resetMinutes)} day boundary).`;
-  }, [isRunningSession, startTime, endTime, selectedDate, resetMinutes]);
+    return t("sessionDetails.spanWarning", {
+      startDay: formatWeekdayShortDate(fromDateString(startDate)),
+      endDay: formatWeekdayShortDate(fromDateString(endDate)),
+    });
+  }, [isRunningSession, startTime, endTime, selectedDate, t]);
 
   const handleEndTimeChange = useCallback((value: string) => {
     setEndTime(value);
@@ -446,7 +419,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     details,
     isRunningSession,
     spanWarning,
-    resetMinutes,
     groupActivities,
     selectedActivityId,
     setSelectedActivityId,
@@ -461,6 +433,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     setNote,
     handleDelete,
     handleSave,
-    today: useMemo(() => fromDateString(getEffectiveToday()), []),
+    today: useMemo(() => fromDateString(todayDateString()), []),
   };
 }

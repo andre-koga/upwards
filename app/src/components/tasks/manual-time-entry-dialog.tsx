@@ -8,26 +8,17 @@ import {
 } from "@/components/forms";
 import { SessionTimeNoteFields } from "@/components/activities/session-time-note-fields";
 import { getActivityDisplayName, normalizeSessionNote } from "@/lib/activity";
-import {
-  effectiveDateForMs,
-  getLogicalEndDate,
-  resolvePeriodFromLogicalDay,
-  spansLogicalDays,
-} from "@/lib/activity/period-day-utils";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
   formatTimeInput,
   formatWeekdayShortDate,
   fromDateString,
+  resolveSessionSpan,
+  sessionDateRange,
   timeToSeconds,
   toDateString,
+  todayDateString,
 } from "@/lib/time-utils";
-
-import {
-  getEffectiveToday,
-  getDayResetMinutes,
-  formatResetMinutes,
-} from "@/lib/session/day-reset";
 
 export interface ManualTimeEntryPayload {
   activityId: string;
@@ -63,42 +54,27 @@ export default function ManualTimeEntryDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const todayString = useMemo(() => getEffectiveToday(), []);
-  const resetMinutes = useMemo(() => getDayResetMinutes(), []);
+  const todayString = useMemo(() => todayDateString(), []);
   const isPastDay = dateString !== todayString;
 
   const resolvedPeriod = useMemo(() => {
     if (!startTime || !endTime) return null;
     if (timeToSeconds(endTime) === timeToSeconds(startTime)) return null;
-    return resolvePeriodFromLogicalDay(
-      dateString,
-      startTime,
-      endTime,
-      resetMinutes
-    );
-  }, [dateString, startTime, endTime, resetMinutes]);
+    return resolveSessionSpan(dateString, startTime, endTime);
+  }, [dateString, startTime, endTime]);
 
   const spanWarning = useMemo(() => {
-    if (
-      !resolvedPeriod ||
-      !spansLogicalDays(resolvedPeriod.startMs, resolvedPeriod.endMs)
-    ) {
-      return null;
-    }
-    const startDay = formatWeekdayShortDate(
-      fromDateString(effectiveDateForMs(resolvedPeriod.startMs))
+    if (!resolvedPeriod) return null;
+    const { startDate, endDate } = sessionDateRange(
+      resolvedPeriod.startMs,
+      resolvedPeriod.endMs
     );
-    const endDay = formatWeekdayShortDate(
-      fromDateString(
-        getLogicalEndDate(resolvedPeriod.startMs, resolvedPeriod.endMs)
-      )
-    );
+    if (startDate === endDate) return null;
     return t("manualEntry.spanWarning", {
-      startDay,
-      endDay,
-      resetTime: formatResetMinutes(resetMinutes),
+      startDay: formatWeekdayShortDate(fromDateString(startDate)),
+      endDay: formatWeekdayShortDate(fromDateString(endDate)),
     });
-  }, [resolvedPeriod, resetMinutes, t]);
+  }, [resolvedPeriod, t]);
 
   const [prevOpen, setPrevOpen] = useState(open);
   if (prevOpen !== open) {
@@ -131,11 +107,10 @@ export default function ManualTimeEntryDialog({
     }
 
     const nowMs = Date.now();
-    const { startIso, endIso, startMs, endMs } = resolvePeriodFromLogicalDay(
+    const { startIso, endIso, startMs, endMs } = resolveSessionSpan(
       dateString,
       startTime,
-      endTime,
-      resetMinutes
+      endTime
     );
     if (endMs > nowMs) {
       setError(t("manualEntry.errorEndFuture"));
@@ -152,7 +127,7 @@ export default function ManualTimeEntryDialog({
 
       await onSave({
         activityId: activity.id,
-        dateString: effectiveDateForMs(new Date(startIso).getTime()),
+        dateString: toDateString(new Date(startIso)),
         startIso,
         endIso,
         note: normalizeSessionNote(note),

@@ -69,7 +69,6 @@ describe("getScheduledDayOutcome", () => {
   beforeEach(() => {
     storage.clear();
     mockLocalStorage();
-    localStorage.setItem("okhabit:day_reset_minutes", "0");
   });
 
   it("returns win/loss for scheduled days and skip when not due", () => {

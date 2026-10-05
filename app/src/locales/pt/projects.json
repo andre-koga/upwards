@@ -70,7 +70,7 @@
     "endTime": "Horário de fim",
     "note": "Nota",
     "notePlaceholder": "O que você fez?",
-    "spanWarning": "Esta sessão vai de {{startDay}} a {{endDay}} (passa da virada do dia às {{resetTime}}).",
+    "spanWarning": "Esta sessão vai de {{startDay}} a {{endDay}} (passa da meia-noite).",
     "pastDayWarning": "Você está adicionando um registro de tempo para um dia diferente de hoje. Confira a data e os horários antes de salvar.",
     "errorEndRequired": "Informe um horário de fim.",
     "errorStartRequired": "Informe um horário de início.",
@@ -95,9 +95,9 @@
     "clear": "Limpar"
   },
   "sessionDetails": {
-    "timesOptional": "Use o mesmo horário de início e fim para uma conclusão sem duração. Use horários diferentes se você registrou quanto tempo levou.",
     "errorEndRequired": "Informe um horário de fim.",
     "errorStartRequired": "Informe um horário de início.",
-    "errorSameTime": "O horário de fim deve ser diferente do horário de início."
+    "errorSameTime": "O horário de fim deve ser diferente do horário de início.",
+    "spanWarning": "Esta sessão vai de {{startDay}} a {{endDay}} (passa da meia-noite)."
   }
 }

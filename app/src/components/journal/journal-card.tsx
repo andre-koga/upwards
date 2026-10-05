@@ -6,7 +6,7 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import { toDateString } from "@/lib/time-utils";
+import { toDateString, todayDateString } from "@/lib/time-utils";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import {
   getJournalVideoPlaybackUrl,
@@ -16,7 +16,6 @@ import {
 import { useAuth } from "@/lib/use-auth";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { cn } from "@/lib/utils";
-import { getEffectiveToday } from "@/lib/session/day-reset";
 import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
 import { useLocationDetection } from "@/components/journal/hooks/use-location-detection";
 import JournalVideoSection, {
@@ -56,7 +55,7 @@ export default function JournalCard({
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
   const dateString = toDateString(currentDate);
-  const isCurrentDay = dateString === getEffectiveToday();
+  const isCurrentDay = dateString === todayDateString();
 
   const videoPlaybackSrc = getJournalVideoPlaybackUrl(journal.draftVideoPath);
 
@@ -71,9 +70,8 @@ export default function JournalCard({
     journal.draftLocations.length > 0
       ? journal.draftLocationRoute
       : journal.persistedLocationRoute;
-  const knownLocations = normalizeJournalLocationRoute(
-    knownLocationRoute
-  ).locations;
+  const knownLocations =
+    normalizeJournalLocationRoute(knownLocationRoute).locations;
 
   const displayLocations = knownLocations;
 
