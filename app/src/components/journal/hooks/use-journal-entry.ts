@@ -9,10 +9,11 @@ import type {
 import {
   getCompletionMetadata,
   isJournalCalendarDateEditable,
+  isJournalEntryComplete,
   journalEntryFieldsHaveContent,
+  journalStreakAsOf,
   normalizeJournalLocationRoute,
   parseJournalLocationRoute,
-  propagateJournalCompletionStreaksAfterSave,
   reconcileJournalDuplicatesForDate,
   serializeJournalLocationRoute,
   toJournalVideoPath,
@@ -141,6 +142,20 @@ export function useJournalEntry(currentDate: Date) {
   }, [journalEntry]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  // Derived on read from every complete entry, so backfilling any day heals it.
+  const [journalCompletionStreak, setJournalCompletionStreak] = useState<
+    number | null
+  >(null);
+  useEffect(() => {
+    let cancelled = false;
+    void journalStreakAsOf(toDateString(currentDate)).then((streak) => {
+      if (!cancelled) setJournalCompletionStreak(streak);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [journalEntry, currentDate]);
+
   const canEditJournal = isJournalCalendarDateEditable(currentDate);
 
   const saveJournalEntry = useCallback(
@@ -168,12 +183,7 @@ export function useJournalEntry(currentDate: Date) {
           return;
         }
 
-        const completionMeta = await getCompletionMetadata(
-          dateStr,
-          fields,
-          existing,
-          n
-        );
+        const completionMeta = getCompletionMetadata(fields, existing, n);
 
         if (existing) {
           const updatedEntry: JournalEntry = {
@@ -186,13 +196,14 @@ export function useJournalEntry(currentDate: Date) {
           await persistSyncedJournal(updatedEntry, existing.updated_at);
 
           setJournalEntry(updatedEntry);
-          await propagateJournalCompletionStreaksAfterSave(dateStr);
         } else {
           const entry: JournalEntry = {
             id: naturalJournalIdForDate(dateStr),
             entry_date: dateStr,
             ...fields,
             ...completionMeta,
+            journal_entry_number: null,
+            journal_completion_streak: null,
             created_at: n,
             updated_at: n,
             synced_at: null,
@@ -200,7 +211,6 @@ export function useJournalEntry(currentDate: Date) {
           };
           await persistSyncedJournal(entry);
           setJournalEntry(entry);
-          await propagateJournalCompletionStreaksAfterSave(dateStr);
         }
       } catch (error) {
         console.error("Error saving journal entry:", error);
@@ -346,9 +356,10 @@ export function useJournalEntry(currentDate: Date) {
       draftLocationRoute,
       draftLocations,
       setDraftLocationRoute: setDraftLocationRouteSynced,
-      journalCompletionStreak: journalEntry?.journal_completion_streak ?? null,
-      journalEntryNumber: journalEntry?.journal_entry_number ?? null,
-      isJournalComplete: !!journalEntry?.is_journal_complete,
+      journalCompletionStreak,
+      isJournalComplete: journalEntry
+        ? isJournalEntryComplete(journalEntry)
+        : false,
       videoThumbnail: journalEntry?.video_thumbnail ?? null,
       /** Parsed `journalEntries.location`; updates with `journalEntry` (not one effect behind draft state). */
       persistedLocationRoute,
@@ -378,6 +389,7 @@ export function useJournalEntry(currentDate: Date) {
       draftLocations,
       setDraftLocationRouteSynced,
       journalEntry,
+      journalCompletionStreak,
       persistedLocationRoute,
       loadJournalEntry,
       saveDraft,
