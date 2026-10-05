@@ -12,6 +12,20 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-05-edit-any-day",
+    date: "2026-10-05",
+    title: "Edit any day",
+    bullets: [
+      "Every day is editable now, including journal entries, habit counts, and sessions from more than a week ago.",
+      "Changing a day older than 7 days asks you to confirm first, and tells you what will change.",
+      "When you rewrite an older journal day, the earlier version is kept so nothing is lost.",
+      "Your journal streak counts every completed day, so filling in a missed day brings the streak back.",
+    ],
+    fixes: [
+      "Photos you remove from an older journal day are kept if an earlier version still uses them.",
+    ],
+  },
+  {
     id: "2026-10-02-midnight-days",
     date: "2026-10-02",
     title: "Days end at midnight",

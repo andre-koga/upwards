@@ -147,6 +147,16 @@ to forbid editing. It is replaced with protection that does not block anyone:
   revision (`journal_entry_revisions`, union by UUID). The entry menu offers
   "Previous versions" with restore. Storage objects referenced by any revision
   are not deleted.
+- **One confirmation per editing session.** Confirming grants that day a
+  10-minute editing session, renewed while the user keeps editing. Taps, blurs,
+  and count changes inside it do not prompt again, and the confirmation that
+  starts the session records the one revision: the values as they were before
+  the session began. "Keep editing" grants nothing and leaves the draft. Timers
+  are not day edits (starting from a past day starts today's session).
+- **Shipped in A5:** the lock is gone, the prompt, and the revisions
+  (recorded, synced, backed up). **Not yet:** the "Previous versions" list with
+  restore and the muted "edited" note, both in B3, which reads the revisions
+  A5 records.
 - An entry's date is always `entry_date`; editing never moves it in the record.
   A muted "edited 2 Oct 2026" note shows when an old entry was changed.
 - Remove `lib/journal/editable-window.ts` and the `isLockedHistoricalSession`
