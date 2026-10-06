@@ -1,5 +1,5 @@
 import type { JournalEntry } from "@/lib/db/types";
-import { getHolidayName } from "@/lib/journal/holidays";
+import { getHolidayName, type CalendarId } from "@/lib/holidays";
 import type { LocaleValue } from "@/lib/i18n/locale-storage";
 import {
   formatDateShort,
@@ -49,12 +49,13 @@ function formatSearchableDate(entryDate: string): string {
 export function journalEntryMatchesQuery(
   entry: JournalEntry,
   query: string,
-  locale: LocaleValue
+  locale: LocaleValue,
+  calendars: readonly CalendarId[]
 ): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
 
-  const holiday = getHolidayName(entry.entry_date, locale) ?? "";
+  const holiday = getHolidayName(entry.entry_date, locale, calendars) ?? "";
   const haystack = [
     entry.title ?? "",
     entry.text_content ?? "",
@@ -179,7 +180,8 @@ function matchesTriFilter(
 export function journalEntryMatchesFilters(
   entry: JournalEntry,
   filters: JournalArchiveFilters,
-  locale: LocaleValue
+  locale: LocaleValue,
+  calendars: readonly CalendarId[]
 ): boolean {
   if (filters.mapEntryDates?.length) {
     if (!filters.mapEntryDates.includes(entry.entry_date)) return false;
@@ -194,7 +196,9 @@ export function journalEntryMatchesFilters(
     }
   }
 
-  if (!journalEntryMatchesQuery(entry, filters.query, locale)) return false;
+  if (!journalEntryMatchesQuery(entry, filters.query, locale, calendars)) {
+    return false;
+  }
 
   const hasPhotos = Boolean(entry.photo_paths && entry.photo_paths.length > 0);
   const hasVideo = Boolean(
@@ -306,7 +310,8 @@ export type JournalArchiveItem =
  */
 export function buildJournalArchiveFeed(
   entries: JournalEntry[],
-  locale: LocaleValue
+  locale: LocaleValue,
+  calendars: readonly CalendarId[]
 ): JournalArchiveItem[] {
   const sorted = [...entries].sort((a, b) =>
     b.entry_date.localeCompare(a.entry_date)
@@ -325,7 +330,7 @@ export function buildJournalArchiveFeed(
       lastMonthKey = monthKey;
     }
 
-    const holiday = getHolidayName(entry.entry_date, locale);
+    const holiday = getHolidayName(entry.entry_date, locale, calendars);
     if (holiday) {
       items.push({
         kind: "holiday",

@@ -317,6 +317,36 @@ photos.
   seasons (July is a tropical beach), which is wrong in Brazil. There will be two
   sets of 12, chosen by hemisphere and inferred from the holiday region, with an
   override.
+- **Shipped in A11:** the holiday engine and its Settings card (`lib/holidays/`).
+  `catalog.ts` defines each holiday once, by id, with an `en` and `pt` name and a
+  rule (fixed date, nth weekday, offset from Easter, a `Intl` Chinese, Islamic
+  (Umm al-Qura) or Hebrew date, or the Hindu table). `calendars.ts` lists which
+  ids each calendar contains: US, Brazil, and a global set. A holiday in two
+  calendars shows once, and when two share a day the calendar listed first wins.
+  Names follow the reader's language, not the calendar.
+  - **Default calendars** come from the region in the locale (`en-US` -> US,
+    `pt-BR` -> BR, always plus the global set) and apply only until the user
+    chooses. `pt-PT` and `en-GB` get just the global set, because the language
+    does not name the country. An explicit empty choice means no holidays.
+  - **Hemisphere** is the user's choice, else inferred from the first
+    non-global calendar (Brazil is south), else north. Southern months reuse
+    the existing twelve images six months along (January shows the beach); the
+    label still names the real month. This is a stopgap: it gets the seasons
+    right, but the December image is a snowy Christmas scene with lights, so a
+    southern June shows that cabin. A dedicated southern set comes with the
+    generated banners in B3.
+  - **The Hindu table** (`hindu-table.ts`, 2000-2050) was computed from the
+    Sun's and Moon's positions and checked against 31 published dates for each
+    of Holi and Diwali (2000-2030). Diwali matched all 31. The astronomy for
+    Holi differed in three years (2016, 2023, 2026), so those use the published
+    date. Holi in 2036, 2043, 2046, 2049 and 2050 depends on a close call
+    between rules and may be a day later in some traditions.
+  - **`Intl` is a day off the official Lunar New Year in 2027 and 2030**
+    (new moons within minutes of midnight in China), so those years are
+    overridden. Found by comparing every year 2000-2050 with the astronomical
+    new moon. Islamic dates follow Umm al-Qura and can differ from local
+    sighting by a day, which is acceptable for a banner.
+  - Not in A11: banner images for holidays (B3), more countries (data, later).
 - **Holiday banners get images too**, generated once with AI as static assets in
   one art direction shared with the month set: warm, natural, photographic or
   painterly, muted enough to sit on `--paper`, no text in the image, no pastel or

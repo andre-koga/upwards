@@ -12,6 +12,17 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-06-holiday-calendars",
+    date: "2026-10-06",
+    title: "Holidays for where you are",
+    bullets: [
+      "Choose which holidays appear in your journal in Settings: the United States, Brazil, or a set of celebrations from around the world.",
+      "The world set covers Lunar New Year, Holi, Ramadan, Eid, Diwali, Hanukkah, Easter and Day of the Dead.",
+      "Holidays follow the calendars you pick, not your language, so you can read in Portuguese and follow the US calendar, or the other way round.",
+      "Month banners can now match the seasons where you live, so December shows summer in the Southern Hemisphere.",
+    ],
+  },
+  {
     id: "2026-10-06-clip-format",
     date: "2026-10-06",
     title: "Daily clips in one format",

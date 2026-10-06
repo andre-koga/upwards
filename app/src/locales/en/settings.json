@@ -335,5 +335,30 @@
       "label": "Daily clip",
       "hint": "Record one short clip a day. When off, the clip option, video filter and video previews are hidden. Your recorded clips are kept."
     }
+  },
+  "holidays": {
+    "title": "Holidays",
+    "description": "Holidays appear as banners in your journal feed and in search. Pick the calendars you follow; it's separate from your language.",
+    "calendars": {
+      "US": {
+        "label": "United States",
+        "hint": "New Year's Day, Thanksgiving, Independence Day, Halloween and more."
+      },
+      "BR": {
+        "label": "Brazil",
+        "hint": "Carnaval, Tiradentes, Independência do Brasil, Finados and more."
+      },
+      "GLOBAL": {
+        "label": "Around the world",
+        "hint": "Lunar New Year, Holi, Ramadan, Eid, Diwali, Hanukkah, Easter and Day of the Dead."
+      }
+    },
+    "hemisphere": {
+      "label": "Seasons",
+      "hint": "Month banners show winter or summer scenes to match where you live.",
+      "auto": "Automatic ({{season}})",
+      "north": "Northern Hemisphere",
+      "south": "Southern Hemisphere"
+    }
   }
 }

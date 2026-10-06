@@ -19,12 +19,14 @@ import {
   type JournalArchiveFilters,
 } from "@/lib/journal/archive";
 import { useAccountSettings } from "@/lib/use-account-settings";
+import { useHemisphere } from "@/lib/holidays/use-holiday-calendars";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
 
 export default function JournalPage() {
   const { t } = useTranslation("journal");
   const { t: tNav } = useTranslation("nav");
   const clipEnabled = useAccountSettings().dailyClip === true;
+  const hemisphere = useHemisphere();
   const [chosenFilters, setFilters] = useState<JournalArchiveFilters>(
     DEFAULT_JOURNAL_ARCHIVE_FILTERS
   );
@@ -234,6 +236,7 @@ export default function JournalPage() {
                   key={item.key}
                   variant="month"
                   month={item.month}
+                  hemisphere={hemisphere}
                   label={formatArchiveMonthLabel(item.year, item.month)}
                 />
               );

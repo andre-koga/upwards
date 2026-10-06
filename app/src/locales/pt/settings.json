@@ -335,5 +335,30 @@
       "label": "Vídeo do dia",
       "hint": "Grave um vídeo curto por dia. Quando desativado, a opção de vídeo, o filtro de vídeo e as prévias ficam ocultos. Seus vídeos gravados são mantidos."
     }
+  },
+  "holidays": {
+    "title": "Feriados",
+    "description": "Os feriados aparecem como faixas no seu diário e na busca. Escolha os calendários que você acompanha; é independente do idioma.",
+    "calendars": {
+      "US": {
+        "label": "Estados Unidos",
+        "hint": "Ano Novo, Ação de Graças, Dia da Independência, Halloween e mais."
+      },
+      "BR": {
+        "label": "Brasil",
+        "hint": "Carnaval, Tiradentes, Independência do Brasil, Finados e mais."
+      },
+      "GLOBAL": {
+        "label": "Pelo mundo",
+        "hint": "Ano Novo Lunar, Holi, Ramadã, Eid, Diwali, Hanucá, Páscoa e Dia dos Mortos."
+      }
+    },
+    "hemisphere": {
+      "label": "Estações",
+      "hint": "As faixas dos meses mostram cenas de inverno ou verão conforme onde você mora.",
+      "auto": "Automático ({{season}})",
+      "north": "Hemisfério Norte",
+      "south": "Hemisfério Sul"
+    }
   }
 }
