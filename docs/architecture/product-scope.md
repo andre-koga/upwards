@@ -205,6 +205,30 @@ photos.
   back to silent output. If the spike fails, the daily clip still ships with
   the new format and compilation waits.
 
+  **Shipped in A10:** the encoder (`lib/journal/video-compression.ts`, using
+  Mediabunny over WebCodecs: H.264 + AAC in an MP4, 30 fps, keyframe every second,
+  longest edge 1920, orientation preserved, 10 s cap, about 2 Mbps) and a joiner
+  (`lib/journal/clip-compile.ts`) that the B7 screen will reuse. Nothing in the
+  daily-clip UI changed. Clips already stored (WebM or MP4) are untouched and
+  are not re-encoded. If a browser cannot encode H.264 the app refuses to attach
+  a clip and says why, rather than storing a different format. If it cannot
+  encode AAC the clip is kept without sound.
+
+  **Running the spike.** On the phone, open `/clip-spike` (it is not linked from
+  the app), pick a few recorded videos (a long one, a portrait one, one with
+  sound), play each result to check sound and orientation, then join 31 clips and
+  copy the report. Paste it under "Spike results" below. Also open one old
+  Chrome-recorded WebM clip in Safari to check it still plays back.
+
+  #### Spike results
+
+  _Not yet run on a device._ Needed: a recent iPhone (Safari) and a mid-range
+  Android phone (Chrome). Record, per device: whether H.264 and AAC encoding are
+  available, encode time against clip length, output size, whether the join of a
+  month completed without crashing the tab, and peak memory where the browser
+  reports it. If the month join fails, compilation waits and the new clip format
+  still ships.
+
 ### 2.6 Accounts required
 
 - The app opens to sign in / sign up. Offline-first behavior after sign-in is
