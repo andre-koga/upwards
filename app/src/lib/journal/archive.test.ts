@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { getHolidayName } from "@/lib/journal/holidays";
 import {
   buildJournalArchiveFeed,
   clusterJournalArchiveMapPins,
@@ -43,24 +42,7 @@ function makeEntry(
   };
 }
 
-describe("getHolidayName", () => {
-  it("returns fixed US holidays", () => {
-    expect(getHolidayName("2026-07-04", "en")).toBe("Independence Day");
-    expect(getHolidayName("2026-12-25", "en")).toBe("Christmas Day");
-  });
-
-  it("returns Thanksgiving as the 4th Thursday of November", () => {
-    expect(getHolidayName("2026-11-26", "en")).toBe("Thanksgiving");
-  });
-
-  it("returns Brazilian Independence Day in pt", () => {
-    expect(getHolidayName("2026-09-07", "pt")).toBe("Independência do Brasil");
-  });
-
-  it("returns null for ordinary days", () => {
-    expect(getHolidayName("2026-07-17", "en")).toBeNull();
-  });
-});
+const US = ["US"] as const;
 
 describe("journal archive helpers", () => {
   it("detects entries with content", () => {
@@ -101,9 +83,24 @@ describe("journal archive helpers", () => {
       text_content: "Fireworks at night",
       day_emoji: "🎆",
     });
-    expect(journalEntryMatchesQuery(entry, "fireworks", "en")).toBe(true);
-    expect(journalEntryMatchesQuery(entry, "independence", "en")).toBe(true);
-    expect(journalEntryMatchesQuery(entry, "missing", "en")).toBe(false);
+    expect(journalEntryMatchesQuery(entry, "fireworks", "en", US)).toBe(true);
+    expect(journalEntryMatchesQuery(entry, "independence", "en", US)).toBe(
+      true
+    );
+    expect(journalEntryMatchesQuery(entry, "missing", "en", US)).toBe(false);
+  });
+
+  it("finds a day by its holiday name only for calendars the user follows", () => {
+    const entry = makeEntry({ entry_date: "2026-07-04", title: "Day off" });
+    expect(journalEntryMatchesQuery(entry, "independence", "en", US)).toBe(
+      true
+    );
+    expect(journalEntryMatchesQuery(entry, "independence", "en", [])).toBe(
+      false
+    );
+    expect(journalEntryMatchesQuery(entry, "independence", "en", ["BR"])).toBe(
+      false
+    );
   });
 
   it("inserts month and holiday banners", () => {
@@ -113,7 +110,8 @@ describe("journal archive helpers", () => {
         makeEntry({ entry_date: "2026-06-01", title: "B" }),
         makeEntry({ entry_date: "2025-12-25", title: "C" }),
       ],
-      "en"
+      "en",
+      US
     );
     expect(feed.map((i) => i.kind)).toEqual([
       "month",
@@ -204,28 +202,32 @@ describe("journal archive helpers", () => {
       journalEntryMatchesFilters(
         hearted,
         { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, bookmarked: "yes" },
-        "en"
+        "en",
+        US
       )
     ).toBe(true);
     expect(
       journalEntryMatchesFilters(
         plain,
         { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, bookmarked: "yes" },
-        "en"
+        "en",
+        US
       )
     ).toBe(false);
     expect(
       journalEntryMatchesFilters(
         plain,
         { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, hasPhotos: "yes" },
-        "en"
+        "en",
+        US
       )
     ).toBe(true);
     expect(
       journalEntryMatchesFilters(
         hearted,
         { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, hasPhotos: "yes" },
-        "en"
+        "en",
+        US
       )
     ).toBe(false);
   });
@@ -244,8 +246,8 @@ describe("journal archive helpers", () => {
       mapEntryDates: ["2026-01-01"],
       mapPlaceLabel: "Austin",
     };
-    expect(journalEntryMatchesFilters(inCluster, filters, "en")).toBe(true);
-    expect(journalEntryMatchesFilters(outOfCluster, filters, "en")).toBe(
+    expect(journalEntryMatchesFilters(inCluster, filters, "en", US)).toBe(true);
+    expect(journalEntryMatchesFilters(outOfCluster, filters, "en", US)).toBe(
       false
     );
   });
@@ -333,19 +335,21 @@ describe("journal archive helpers", () => {
       journalEntryMatchesFilters(
         inside,
         { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, dateRange: yearRange },
-        "en"
+        "en",
+        US
       )
     ).toBe(true);
     expect(
       journalEntryMatchesFilters(
         outside,
         { ...DEFAULT_JOURNAL_ARCHIVE_FILTERS, dateRange: yearRange },
-        "en"
+        "en",
+        US
       )
     ).toBe(false);
 
-    expect(
-      collectJournalArchiveYears([inside, outside, inside])
-    ).toEqual([2026, 2025]);
+    expect(collectJournalArchiveYears([inside, outside, inside])).toEqual([
+      2026, 2025,
+    ]);
   });
 });

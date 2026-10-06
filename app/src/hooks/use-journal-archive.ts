@@ -17,10 +17,12 @@ import {
 import { reconcileAllJournalDuplicates } from "@/lib/journal/dedupe-by-date";
 import type { LocaleValue } from "@/lib/i18n/locale-storage";
 import { logError } from "@/lib/error-utils";
+import { useHolidayCalendars } from "@/lib/holidays/use-holiday-calendars";
 
 export function useJournalArchive(filters: JournalArchiveFilters) {
   const { i18n } = useTranslation();
   const locale = (i18n.language as LocaleValue) || "en";
+  const calendars = useHolidayCalendars();
 
   const [allEntries, setAllEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,13 +58,13 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
 
   const filteredEntries = useMemo(() => {
     return allEntries.filter((e) =>
-      journalEntryMatchesFilters(e, filters, locale)
+      journalEntryMatchesFilters(e, filters, locale, calendars)
     );
-  }, [allEntries, filters, locale]);
+  }, [allEntries, filters, locale, calendars]);
 
   const fullFeed = useMemo(
-    () => buildJournalArchiveFeed(filteredEntries, locale),
-    [filteredEntries, locale]
+    () => buildJournalArchiveFeed(filteredEntries, locale, calendars),
+    [filteredEntries, locale, calendars]
   );
 
   const mapPins: JournalArchiveMapPin[] = useMemo(

@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 
+import { bannerMonthFor, type Hemisphere } from "@/lib/holidays/hemisphere";
+
 type BannerVariant = "month" | "holiday";
 
 interface JournalArchiveBannerProps {
@@ -7,6 +9,8 @@ interface JournalArchiveBannerProps {
   label: string;
   /** 1–12 when variant is month — picks the seasonal banner image. */
   month?: number;
+  /** Which seasons the image follows; the label always names the real month. */
+  hemisphere?: Hemisphere;
   className?: string;
 }
 
@@ -29,18 +33,18 @@ export default function JournalArchiveBanner({
   variant,
   label,
   month,
+  hemisphere = "north",
   className,
 }: JournalArchiveBannerProps) {
   const imageSrc =
-    variant === "month" && month != null ? MONTH_IMAGES[month] : undefined;
+    variant === "month" && month != null
+      ? MONTH_IMAGES[bannerMonthFor(month, hemisphere)]
+      : undefined;
 
   if (variant === "month" && imageSrc) {
     return (
       <div
-        className={cn(
-          "relative -mx-4 overflow-hidden rounded-none",
-          className
-        )}
+        className={cn("relative -mx-4 overflow-hidden rounded-none", className)}
         role="separator"
         aria-label={label}
       >
