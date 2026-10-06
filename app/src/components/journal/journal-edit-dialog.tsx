@@ -38,6 +38,8 @@ interface JournalEditDialogProps {
   initialPhotoPaths: string[];
   entryDate: string;
   canUploadVideo: boolean;
+  /** The daily clip is opt-in; when off the editor offers photos only. */
+  clipEnabled: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (values: {
     emoji: string;
@@ -57,6 +59,7 @@ export default function JournalEditDialog({
   initialPhotoPaths,
   entryDate,
   canUploadVideo,
+  clipEnabled,
   onOpenChange,
   onSave,
 }: JournalEditDialogProps) {
@@ -299,13 +302,15 @@ export default function JournalEditDialog({
 
           {canUploadVideo && (
             <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/*"
-                className="hidden"
-                onChange={handleVideoFileChange}
-              />
+              {clipEnabled ? (
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={handleVideoFileChange}
+                />
+              ) : null}
               <input
                 ref={photoInputRef}
                 type="file"
@@ -315,7 +320,7 @@ export default function JournalEditDialog({
                 onChange={handlePhotoFilesChange}
               />
               <div className="flex gap-2">
-                {videoPath.trim().length > 0 ? (
+                {clipEnabled && videoPath.trim().length > 0 ? (
                   <FormControlButton
                     className="w-10 shrink-0 justify-center px-0 text-destructive"
                     onClick={() => {
@@ -328,6 +333,7 @@ export default function JournalEditDialog({
                     <Trash2 aria-hidden />
                   </FormControlButton>
                 ) : null}
+                {clipEnabled ? (
                 <FormControlButton
                   className="min-w-0 flex-1"
                   onClick={() => fileInputRef.current?.click()}
@@ -347,6 +353,7 @@ export default function JournalEditDialog({
                     ? t("upload.replaceVideo")
                     : t("upload.addVideo")}
                 </FormControlButton>
+                ) : null}
 
                 <FormControlButton
                   className="w-10 shrink-0 justify-center px-0"

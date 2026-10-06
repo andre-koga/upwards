@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BookOpen, Search, X } from "lucide-react";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
@@ -18,13 +18,24 @@ import {
   journalArchiveFiltersAreActive,
   type JournalArchiveFilters,
 } from "@/lib/journal/archive";
+import { useAccountSettings } from "@/lib/use-account-settings";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
 
 export default function JournalPage() {
   const { t } = useTranslation("journal");
   const { t: tNav } = useTranslation("nav");
-  const [filters, setFilters] = useState<JournalArchiveFilters>(
+  const clipEnabled = useAccountSettings().dailyClip === true;
+  const [chosenFilters, setFilters] = useState<JournalArchiveFilters>(
     DEFAULT_JOURNAL_ARCHIVE_FILTERS
+  );
+  // The video chip disappears when the daily clip is off, so a "has video"
+  // filter chosen earlier must not keep hiding entries with no way to clear it.
+  const filters = useMemo<JournalArchiveFilters>(
+    () =>
+      clipEnabled || chosenFilters.hasVideo === "any"
+        ? chosenFilters
+        : { ...chosenFilters, hasVideo: "any" },
+    [clipEnabled, chosenFilters]
   );
   const [searchInput, setSearchInput] = useState("");
   const [mapJumpDate, setMapJumpDate] = useState<string | null>(null);

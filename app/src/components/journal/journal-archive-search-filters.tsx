@@ -1,3 +1,4 @@
+import { useAccountSettings } from "@/lib/use-account-settings";
 import { useState } from "react";
 import {
   CalendarDays,
@@ -35,6 +36,9 @@ const FILTER_KEYS: JournalArchiveFilterKey[] = [
   "hasVideo",
   "hasPlaces",
 ];
+/** The video chip only exists while the daily clip is on. */
+const filterKeysFor = (clipEnabled: boolean) =>
+  FILTER_KEYS.filter((key) => clipEnabled || key !== "hasVideo");
 
 function FilterIcon({
   filterKey,
@@ -94,6 +98,7 @@ export default function JournalArchiveSearchFilters({
   bookmarkedDates,
 }: JournalArchiveSearchFiltersProps) {
   const { t } = useTranslation("journal");
+  const clipEnabled = useAccountSettings().dailyClip === true;
   const [datesOpen, setDatesOpen] = useState(false);
   const hasStructuredFilters =
     filters.bookmarked !== "any" ||
@@ -219,7 +224,7 @@ export default function JournalArchiveSearchFilters({
           ) : null}
         </div>
 
-        {FILTER_KEYS.map((key) => {
+        {filterKeysFor(clipEnabled).map((key) => {
           const value = filters[key];
           const label = t(`archive.filters.${key}.${value}`);
           return (

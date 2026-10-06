@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/use-auth";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { cn } from "@/lib/utils";
 import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
+import { useAccountSettings } from "@/lib/use-account-settings";
 import { useLocationDetection } from "@/components/journal/hooks/use-location-detection";
 import JournalVideoSection, {
   type JournalThumbnailSource,
@@ -54,6 +55,7 @@ export default function JournalCard({
   );
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
+  const clipEnabled = useAccountSettings().dailyClip === true;
   const dateString = toDateString(currentDate);
   const isCurrentDay = dateString === todayDateString();
 
@@ -209,15 +211,17 @@ export default function JournalCard({
           )}
           onClick={handleJournalCardClick}
         >
-          <JournalVideoSection
-            videoSrc={videoPlaybackSrc ?? ""}
-            canPlay={isOnline}
-            thumbnail={journalThumbnail}
-            onThumbnailGenerated={(thumb) => {
-              updateDraft({ videoThumbnail: thumb });
-              journal.saveDraft();
-            }}
-          />
+          {clipEnabled ? (
+            <JournalVideoSection
+              videoSrc={videoPlaybackSrc ?? ""}
+              canPlay={isOnline}
+              thumbnail={journalThumbnail}
+              onThumbnailGenerated={(thumb) => {
+                updateDraft({ videoThumbnail: thumb });
+                journal.saveDraft();
+              }}
+            />
+          ) : null}
 
           <div className="pointer-events-none relative z-10 mx-auto -mt-10 h-20 w-full max-w-2xl px-4">
             <div className="pointer-events-auto absolute bottom-0 left-4">
@@ -268,6 +272,7 @@ export default function JournalCard({
           initialPhotoPaths={journal.draftPhotoPaths}
           entryDate={dateString}
           canUploadVideo={isSupabaseConfigured && isAuthed}
+          clipEnabled={clipEnabled}
           onOpenChange={handleJournalEditOpenChange}
           onSave={({ emoji, title, text, videoPath, photoPaths }) => {
             // Clear the stale thumbnail only when the video actually changes.

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { AppearanceCard } from "@/components/settings/appearance-card";
+import { PrivacyOptInsCard } from "@/components/settings/privacy-opt-ins-card";
 import { LanguageCard } from "@/components/settings/language-card";
 import { AuthCard } from "@/components/settings/auth-card";
 import { SyncCard } from "@/components/settings/sync-card";
@@ -27,6 +28,7 @@ export default function SettingsPage() {
     >
       <AppearanceCard />
       <LanguageCard />
+      <PrivacyOptInsCard />
 
       {isSupabaseConfigured && (
         <>
