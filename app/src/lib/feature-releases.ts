@@ -12,6 +12,18 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-06-privacy-opt-ins",
+    date: "2026-10-06",
+    title: "You choose what's on",
+    bullets: [
+      "Settings has a new Privacy and extras section with two switches: add my location automatically, and the daily clip.",
+      "Automatic location is off until you turn it on, and Upwards never asks your device where you are while it's off.",
+      "Turn off the daily clip and the video option, the video filter, and video previews disappear. Clips you already recorded are kept.",
+      "Both choices follow your account, so they carry over to your other devices.",
+    ],
+    fixes: ["Other people can no longer read your profile settings."],
+  },
+  {
     id: "2026-10-05-edit-any-day",
     date: "2026-10-05",
     title: "Edit any day",

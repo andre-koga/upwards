@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logError } from "@/lib/error-utils";
 import type { LocationData } from "@/lib/db/types";
+import { detectCurrentLocation } from "@/lib/journal/detect-location";
+import { useAccountSettings } from "@/lib/use-account-settings";
 
 const VISIBILITY_DETECT_MIN_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -19,67 +21,26 @@ export function useLocationDetection({
   knownLocations,
   onLocationDetected,
 }: UseLocationDetectionParams) {
+  const autoLocation = useAccountSettings().autoLocation === true;
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const hasTriedInitialGeoRef = useRef(false);
   const lastVisibilityDetectRef = useRef(0);
 
   const runGeolocation = useCallback(
     (onComplete: () => void) => {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          try {
-            const { latitude, longitude } = pos.coords;
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-            );
-            const data = (await res.json()) as {
-              address: {
-                city?: string;
-                town?: string;
-                village?: string;
-                county?: string;
-                state?: string;
-                country?: string;
-                country_code?: string;
-              };
-            };
-            const city =
-              data.address.city ||
-              data.address.town ||
-              data.address.village ||
-              data.address.county ||
-              null;
-            const displayName =
-              city || data.address.state || data.address.country || null;
-            if (displayName) {
-              const locationData: LocationData = {
-                displayName,
-                city,
-                state: data.address.state ?? null,
-                country: data.address.country ?? null,
-                countryCode: data.address.country_code ?? null,
-                lat: latitude,
-                lon: longitude,
-              };
-              onLocationDetected(locationData);
-            }
-          } catch (e) {
-            logError("Reverse geocoding failed", e);
-          } finally {
-            onComplete();
-          }
-        },
-        () => {
-          onComplete();
-        },
-        { timeout: 10000, maximumAge: 5 * 60 * 1000 }
-      );
+      detectCurrentLocation()
+        .then((location) => {
+          if (location) onLocationDetected(location);
+        })
+        .catch((e) => logError("Reverse geocoding failed", e))
+        .finally(onComplete);
     },
     [onLocationDetected]
   );
 
   const detectLocation = useCallback(
     (opts?: { fromVisibility?: boolean }) => {
+      if (!autoLocation) return;
       if (!isToday) return;
       if (!navigator.geolocation) return;
       if (isDetectingLocation) return;
@@ -106,6 +67,7 @@ export function useLocationDetection({
       runGeolocation(() => setIsDetectingLocation(false));
     },
     [
+      autoLocation,
       isToday,
       isJournalLoaded,
       knownLocations.length,
@@ -115,14 +77,14 @@ export function useLocationDetection({
   );
 
   useEffect(() => {
-    if (!isToday) return;
+    if (!isToday || !autoLocation) return;
     const onVis = () => {
       if (document.visibilityState !== "visible") return;
       detectLocation({ fromVisibility: true });
     };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
-  }, [isToday, detectLocation]);
+  }, [isToday, autoLocation, detectLocation]);
 
   return { detectLocation, isDetectingLocation };
 }

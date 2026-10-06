@@ -321,5 +321,19 @@
     "title": "Sobre",
     "errorLogs": "Registros de erro",
     "github": "Código-fonte"
+  },
+  "optIns": {
+    "title": "Privacidade e extras",
+    "description": "Ambos começam desativados até você ativar, e acompanham sua conta nos outros dispositivos.",
+    "autoLocation": {
+      "label": "Adicionar minha localização ao dia automaticamente",
+      "hint": "Quando ativado, o Upwards pergunta ao seu dispositivo onde você está e adiciona a cidade mais próxima ao diário de hoje. Quando desativado, nunca pergunta. Você ainda pode adicionar lugares pela busca.",
+      "denied": "O acesso à localização está bloqueado para este app. Permita nas configurações do navegador ou do dispositivo e tente de novo.",
+      "unsupported": "Este dispositivo ou navegador não consegue compartilhar a localização."
+    },
+    "dailyClip": {
+      "label": "Vídeo do dia",
+      "hint": "Grave um vídeo curto por dia. Quando desativado, a opção de vídeo, o filtro de vídeo e as prévias ficam ocultos. Seus vídeos gravados são mantidos."
+    }
   }
 }

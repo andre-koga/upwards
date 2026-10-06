@@ -321,5 +321,19 @@
     "title": "About",
     "errorLogs": "Error logs",
     "github": "Source code"
+  },
+  "optIns": {
+    "title": "Privacy and extras",
+    "description": "Both are off until you turn them on, and they follow your account to your other devices.",
+    "autoLocation": {
+      "label": "Add my location to today automatically",
+      "hint": "When on, Upwards asks your device where you are and adds the nearest city to today's journal. When off, it never asks. You can still add places by searching.",
+      "denied": "Location access is blocked for this app. Allow it in your browser or device settings, then try again.",
+      "unsupported": "This device or browser can't share its location."
+    },
+    "dailyClip": {
+      "label": "Daily clip",
+      "hint": "Record one short clip a day. When off, the clip option, video filter and video previews are hidden. Your recorded clips are kept."
+    }
   }
 }

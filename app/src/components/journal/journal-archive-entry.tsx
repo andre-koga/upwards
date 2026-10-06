@@ -12,6 +12,7 @@ import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
 import { fromDateString } from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { useAccountSettings } from "@/lib/use-account-settings";
 import JournalVideoSection from "@/components/journal/journal-video-section";
 import JournalLocationMapPicker from "@/components/journal/journal-location-map-picker";
 import MediaLightbox from "@/components/journal/media-lightbox";
@@ -177,7 +178,8 @@ export default function JournalArchiveEntry({
     ? getJournalVideoPlaybackUrl(entry.video_path)
     : null;
   const photoPaths = entry.photo_paths ?? [];
-  const hasVideo = Boolean(videoSrc || entry.video_thumbnail);
+  const clipEnabled = useAccountSettings().dailyClip === true;
+  const hasVideo = clipEnabled && Boolean(videoSrc || entry.video_thumbnail);
   const locations = normalizeJournalLocationRoute(
     entry.location ?? { locations: [] }
   ).locations;

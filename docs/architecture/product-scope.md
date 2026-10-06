@@ -233,8 +233,24 @@ photos.
   Friendly one-time prompts arrive with the redesign's onboarding; nothing here
   waits on onboarding.
 - Account settings (`auto_location`, `daily_clip`, `holiday_calendars`,
-  `hemisphere`) live on the existing `user_profile` row so they follow the
-  account across devices.
+  `hemisphere`) live on the existing `user_profiles` row so they follow the
+  account across devices. Each column is nullable: `null` means "never chosen",
+  which is not "off". They are cached in localStorage so the toggles work
+  offline and signed out, and are cleared on sign-out and account switch.
+- **Shipped in A9:** `auto_location` and `daily_clip` have Settings toggles.
+  `holiday_calendars` and `hemisphere` are stored but have no UI until A11.
+  Turning automatic location on requests permission right then and stays off
+  if refused. Turning the daily clip off hides the video slot, the editor's
+  clip controls, the archive's video chip and clip posters; it never deletes a
+  recorded clip. An account that has never chosen but already has clips is
+  treated as "on" once, so existing video does not vanish.
+- Backups carry `daily_clip`, `holiday_calendars` and `hemisphere`, filling only
+  what the device has not chosen. **`auto_location` is never restored from a
+  backup**: it must be a fresh choice on each device because turning it on
+  triggers a permission prompt.
+- `user_profiles` read access is own-row only. The old "view any profile"
+  policy came from the removed friends feature and would have exposed these
+  settings.
 
 ### 2.8 Holidays and month banners: kept and widened
 
