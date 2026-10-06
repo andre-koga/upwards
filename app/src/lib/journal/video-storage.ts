@@ -3,9 +3,20 @@ import {
   isSupabaseConfigured,
   getCachedUserId,
 } from "@/lib/supabase";
-import { compressVideo, VideoCompressionError } from "./video-compression";
+import {
+  VideoCompressionError,
+  type VideoCompressionCode,
+} from "./video-compression-error";
 
-export class JournalVideoUploadError extends Error {}
+export class JournalVideoUploadError extends Error {
+  /** Set when the clip could not be made; the UI translates it. */
+  readonly code?: VideoCompressionCode;
+  constructor(message: string, code?: VideoCompressionCode) {
+    super(message);
+    this.name = "JournalVideoUploadError";
+    this.code = code;
+  }
+}
 
 const JOURNAL_VIDEO_BUCKET = "journal-videos";
 
@@ -28,12 +39,15 @@ export async function uploadJournalVideo(
 
   let compressed: File;
   try {
+    // Loaded on demand: the video library is large and most sessions never
+    // attach a clip.
+    const { compressVideo } = await import("./video-compression");
     compressed = await compressVideo(file);
   } catch (error) {
     if (error instanceof VideoCompressionError) {
-      throw new JournalVideoUploadError(error.message);
+      throw new JournalVideoUploadError(error.message, error.code);
     }
-    throw new JournalVideoUploadError("Failed to process video.");
+    throw new JournalVideoUploadError("Failed to process video.", "failed");
   }
 
   const safeName = compressed.name.replace(/[^\w.-]/g, "_").toLowerCase();

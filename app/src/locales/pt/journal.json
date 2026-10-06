@@ -18,7 +18,15 @@
     "photoCount": "{{current}}/{{max}} fotos",
     "addPhotos": "Adicionar fotos",
     "photoAlt": "Foto {{index}}",
-    "removePhoto": "Remover foto {{index}}"
+    "removePhoto": "Remover foto {{index}}",
+    "clip": {
+      "unsupported": "Este navegador não consegue criar vídeos do dia. Tente um Chrome, Edge ou Safari recente.",
+      "no_video": "Esse arquivo não contém um vídeo.",
+      "empty": "Esse vídeo parece vazio ou danificado.",
+      "no_h264": "Este navegador não consegue criar vídeos do dia. Tente um Chrome, Edge ou Safari recente.",
+      "convert": "Não foi possível converter esse vídeo. Tente outro.",
+      "failed": "Não foi possível processar esse vídeo. Tente de novo."
+    }
   },
   "archive": {
     "title": "Diário",
