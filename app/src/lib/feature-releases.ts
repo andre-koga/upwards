@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-06-clip-format",
+    date: "2026-10-06",
+    title: "Daily clips in one format",
+    bullets: [
+      "New daily clips are saved as standard MP4 videos, so they play the same on every phone and browser.",
+      "Long videos are trimmed to the first 10 seconds.",
+      "If your browser can't make clips, Upwards tells you why instead of failing quietly. Your photos and existing clips aren't affected.",
+    ],
+  },
+  {
     id: "2026-10-06-privacy-opt-ins",
     date: "2026-10-06",
     title: "You choose what's on",

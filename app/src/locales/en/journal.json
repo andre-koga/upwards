@@ -18,7 +18,15 @@
     "photoCount": "{{current}}/{{max}} photos",
     "addPhotos": "Add photos",
     "photoAlt": "Photo {{index}}",
-    "removePhoto": "Remove photo {{index}}"
+    "removePhoto": "Remove photo {{index}}",
+    "clip": {
+      "unsupported": "This browser can't make daily clips. Try a recent Chrome, Edge, or Safari.",
+      "no_video": "That file doesn't contain a video.",
+      "empty": "That video looks empty or damaged.",
+      "no_h264": "This browser can't make daily clips. Try a recent Chrome, Edge, or Safari.",
+      "convert": "That video can't be converted. Try another one.",
+      "failed": "Couldn't process that video. Try again."
+    }
   },
   "archive": {
     "title": "Journal",

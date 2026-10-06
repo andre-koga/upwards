@@ -170,7 +170,7 @@ export default function JournalEditDialog({
     } catch (error) {
       let message = t("upload.videoFailed");
       if (error instanceof JournalVideoUploadError) {
-        message = error.message;
+        message = error.code ? t(`upload.clip.${error.code}`) : error.message;
       } else if (error instanceof Error) {
         message = error.message;
       }

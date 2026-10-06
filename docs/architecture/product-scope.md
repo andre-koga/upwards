@@ -205,6 +205,50 @@ photos.
   back to silent output. If the spike fails, the daily clip still ships with
   the new format and compilation waits.
 
+  **Shipped in A10:** the encoder (`lib/journal/video-compression.ts`, using
+  Mediabunny over WebCodecs: H.264 + AAC in an MP4, 30 fps, keyframe every second,
+  longest edge 1920, orientation preserved, 10 s cap, about 2 Mbps) and a joiner
+  (`lib/journal/clip-compile.ts`) that the B7 screen will reuse. Nothing in the
+  daily-clip UI changed. Clips already stored (WebM or MP4) are untouched and
+  are not re-encoded. If a browser cannot encode H.264 the app refuses to attach
+  a clip and says why, rather than storing a different format. If it cannot
+  encode AAC the clip is kept without sound.
+
+  **Running the spike.** On the phone, open `/clip-spike` (it is not linked from
+  the app), pick a few recorded videos (a long one, a portrait one, one with
+  sound), play each result to check sound and orientation, then join 31 clips and
+  copy the report. Paste it under "Spike results" below. Also open one old
+  Chrome-recorded WebM clip in Safari to check it still plays back.
+
+  #### Spike results
+
+  **Desktop Chrome, 2026-10-06 (automated, macOS, Chrome 154 headless).** Not the
+  phone result the spec requires, but it proves the encoder works end to end.
+  Sources were generated in the page (VP9/Opus WebM, the kind current Chrome
+  records), plus an MP4 with a 90 degree rotation flag like a phone clip.
+
+  | Source | Output | Result |
+  | --- | --- | --- |
+  | 1280x720, 12 s, with sound | 1280x720 H.264 + AAC, 10.07 s, 1.1 MB, 5.3 s to encode | trimmed to 10 s, sound kept |
+  | 720x1280, 4 s, silent | 720x1280 H.264, 0.33 MB, 0.4 s | portrait stayed portrait |
+  | 3840x2160, 3 s | 1920x1080 H.264, 0.6 MB, 1.1 s | scaled to the cap |
+  | 720x1280 stored sideways, rotation 90 | 1280x720 coded, rotation 90, displays 720x1280 | pixel check: output frame matches the source's displayed frame |
+  | a text file | rejected with `no_video` | translated message |
+  | 31 clips joined, 1 s each | 1080x1920 H.264, 31.0 s, 3.9 MB, 3.8 s | peak JS heap about 40 MB |
+
+  Every output was a faststart MP4 (`ftyp, moov, mdat`) that Chrome's own video
+  element opened at the right size and length. Not covered: sound was checked
+  as "an AAC track exists", not by ear; a real phone recording; WebM played
+  back in Safari; and low-memory devices.
+
+  #### Phone spike (still to do)
+
+  Needed: a recent iPhone (Safari) and a mid-range Android phone (Chrome).
+  Record, per device: whether H.264 and AAC encoding are available, encode time
+  against clip length, output size, whether the join of a month completed
+  without crashing the tab, and peak memory where the browser reports it. If
+  the month join fails, compilation waits and the new clip format still ships.
+
 ### 2.6 Accounts required
 
 - The app opens to sign in / sign up. Offline-first behavior after sign-in is
