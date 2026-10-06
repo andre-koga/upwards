@@ -7,6 +7,7 @@ import {
   Mp4OutputFormat,
   Output,
   QUALITY_HIGH,
+  UnsupportedInputFormatError,
   canEncodeAudio,
   canEncodeVideo,
 } from "mediabunny";
@@ -42,7 +43,7 @@ export function isClipEncodingSupported(): boolean {
   );
 }
 
-const fromPlanError = (error: unknown): VideoCompressionError => {
+export const toCompressionError = (error: unknown): VideoCompressionError => {
   if (error instanceof ClipPlanError) {
     const code =
       error.code === "invalid_source"
@@ -51,6 +52,10 @@ const fromPlanError = (error: unknown): VideoCompressionError => {
           ? "no_h264"
           : "no_video";
     return new VideoCompressionError(code, error.message);
+  }
+  // Mediabunny throws this when the file is not a video container at all.
+  if (error instanceof UnsupportedInputFormatError) {
+    return new VideoCompressionError("no_video", "That is not a video file.");
   }
   return new VideoCompressionError("failed", "Failed to process video.");
 };
@@ -164,7 +169,7 @@ export async function encodeClip(
     };
   } catch (error) {
     if (error instanceof VideoCompressionError) throw error;
-    throw fromPlanError(error);
+    throw toCompressionError(error);
   } finally {
     input.dispose();
   }
