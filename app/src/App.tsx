@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import SyncStatus from "@/components/settings/sync-status";
+import { useAccountSettingsSync } from "@/lib/use-account-settings";
 import { OldDayEditDialog } from "@/components/journal/old-day-edit-dialog";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
 import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
@@ -136,6 +137,7 @@ function AppShell() {
 }
 
 export default function App() {
+  useAccountSettingsSync();
   return (
     <BrowserRouter>
       <AppShell />

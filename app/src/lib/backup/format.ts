@@ -73,6 +73,14 @@ export const NON_BACKUP_TABLE_NAMES = [
  */
 export interface BackupSettings {
   locale: string | null;
+  /**
+   * Optional so older v5 files still read. Automatic location is deliberately
+   * not included: turning it on must be a fresh choice on each device, because
+   * it triggers a browser permission request.
+   */
+  dailyClip?: boolean | null;
+  holidayCalendars?: string[] | null;
+  hemisphere?: "north" | "south" | null;
 }
 
 /** A storage object carried in the archive under `media/<bucket>/<path>`. */
