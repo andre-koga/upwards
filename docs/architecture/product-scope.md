@@ -347,6 +347,36 @@ photos.
     new moon. Islamic dates follow Umm al-Qura and can differ from local
     sighting by a day, which is acceptable for a banner.
   - Not in A11: banner images for holidays (B3), more countries (data, later).
+- **Your birthday is a holiday of your own.** The user enters their own birth
+  date in Settings (next to the holiday calendars), and from then on their
+  birthday appears in the journal feed like any other holiday: a banner on that
+  date each year, saying "Your birthday" and, because the year is known, which
+  one ("Your 30th birthday"). It is optional and empty by default, and nothing
+  shows until it is set.
+  - **Only your own.** No one else's birthday: that would need a people or
+    contacts feature, which the product does not have (friends were removed
+    before this scope was written, and no part of the app stores other people).
+    Nothing here should grow toward one.
+  - **Storage.** A nullable `birthday` (a date, `YYYY-MM-DD`) on the
+    `user_profiles` row, next to `holiday_calendars` and `hemisphere` (§2.7),
+    so it follows the account. `null` means never entered. Reading it is
+    own-row only, like the other settings. It is a full date of birth, so it is
+    personal data: it is never sent to the AI provider, never put in analytics,
+    and never shown anywhere except the owner's own screens.
+  - **Engine.** One more holiday rule, resolved from this setting instead of
+    from a calendar file, so it appears in the feed, in archive search ("birthday"
+    finds it) and in the same banner style. It is not a calendar and has no
+    switch of its own: clearing the date removes it.
+  - **Backup.** Included in the backup settings and filled in only when the
+    device has none, like the other account settings.
+  - **Open decisions, to settle when this is built:**
+    - A 29 February birthday: show on 28 February in years without a leap day
+      (proposed), or on 1 March.
+    - Whether the birthday also appears on the Today screen on the day, or only
+      in the journal feed (proposed: feed only, until the redesigned Today in
+      B2 decides how special days look).
+    - Whether to offer a way to hide the age ("Your birthday" without the
+      number) for people who would rather not see it.
 - **Holiday banners get images too**, generated once with AI as static assets in
   one art direction shared with the month set: warm, natural, photographic or
   painterly, muted enough to sit on `--paper`, no text in the image, no pastel or
@@ -505,7 +535,8 @@ the user's ability to act:
 - Groups and activities with archive → restore → permanent delete (as
   timestamps, §2.10).
 - Day navigation: swipe and date picker.
-- Month and holiday banners (§2.8), the world map.
+- Month and holiday banners (§2.8), your own birthday as a banner (§2.8),
+  the world map.
 - English and Português (Brasil).
 - Sync status, conflict review (simplified, §2.10), pending operations, and
   the device list.
@@ -690,9 +721,20 @@ ship together in one window: A6a (server) and A6b (client).
   `Intl` calendars. Hemisphere-aware month selection, with calendars chosen
   from A9's settings. Banner images are generated in B3.
 
+**A12. Your birthday** (§2.8).
+- A nullable `birthday` column on `user_profiles`, a date field in Settings next
+  to the holiday calendars, a birthday rule in the holiday engine, and the
+  banner in the journal feed and archive search. Own birthday only.
+- Done when: setting a date shows "Your birthday" (with the age) on that date in
+  every year of the feed, clearing it removes the banner, a 29 February birthday
+  behaves as decided in §2.8, and backups carry it.
+- Depends on A9 (the profile settings) and A11 (the holiday engine). It can land
+  any time after both, and its banner look is redone with the rest of the feed
+  in B3.
+
 Dependencies: A1 comes first. A2 before A6, so trustworthy backups exist.
-A3, A4, A5, A9, A10, and A11 are independent of each other after A1. A6
-before A7, and A7 before A8.
+A3, A4, A5, A9, A10, and A11 are independent of each other after A1. A12
+needs A9 and A11. A6 before A7, and A7 before A8.
 
 ### 4.3 Track B — redesign
 
