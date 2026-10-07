@@ -1,6 +1,6 @@
 import ActivityPill from "@/components/activities/activity-pill";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { getActivityDisplayName } from "@/lib/activity";
+import { activityTracksTime, getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import type { DailyTaskInteractionState } from "@/lib/activity";
 
@@ -40,6 +40,7 @@ export default function DailyTaskActivityPill({
       color={groupColor}
       elapsedMs={timeSpent}
       isRunning={isCurrentActivity}
+      showTimer={activityTracksTime(activity)}
       readOnly={interaction.isReadOnly}
       allowNameClickWhenReadOnly={
         interaction.isReadOnly && interaction.canClickName

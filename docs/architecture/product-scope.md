@@ -500,6 +500,13 @@ deleted: `created_at ≤ day < (archived_at ?? deleted_at ?? ∞)`. This keeps t
 retired-activity explanation on past days. It applies the existing "past days
 use the current definition" rule to lifecycle too.
 
+The two boundaries differ by a day, as they did with the event log: **archiving
+hides an item from the next day on** (the day you archive it, it still shows),
+while **deleting hides it from that day on** (it vanishes at once). The rule
+lives in `lib/activity/lifecycle.ts`. Restoring clears `archived_at`, which
+brings the item back on every earlier day too, not just from the restore date;
+that is the accepted cost below.
+
 **Accepted cost:** archiving in January and restoring in March makes February
 show the activity as scheduled and missed. Break days and the editable past
 (§2.3) cover that rare case.

@@ -1,10 +1,6 @@
 import { ConfirmFormDialog } from "@/components/forms";
 import { db, now } from "@/lib/db";
-import {
-  appendActivityStatusEvent,
-  appendGroupStatusEvent,
-  stopCurrentActivity,
-} from "@/lib/activity";
+import { stopCurrentActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 import { patchActivity, patchActivityGroup } from "@/lib/sync/mutate-synced";
 
@@ -27,18 +23,11 @@ export function DeleteConfirmDialog({
     if (!id || !type) return;
     try {
       const n = now();
-      const actionDate = new Date();
       if (type === "group") {
         await stopCurrentActivity({ groupId: id });
         const activities = await db.activities
           .filter((a) => a.group_id === id)
           .toArray();
-        await appendGroupStatusEvent(id, "deleted", true, actionDate);
-        await Promise.all(
-          activities.map((a) =>
-            appendActivityStatusEvent(a.id, "deleted", true, actionDate)
-          )
-        );
         await Promise.all(
           activities.map((a) =>
             patchActivity(a.id, { deleted_at: n, updated_at: n })
@@ -47,7 +36,6 @@ export function DeleteConfirmDialog({
         await patchActivityGroup(id, { deleted_at: n, updated_at: n });
       } else {
         await stopCurrentActivity({ activityId: id });
-        await appendActivityStatusEvent(id, "deleted", true, actionDate);
         await patchActivity(id, { deleted_at: n, updated_at: n });
       }
       onOpenChange(false);

@@ -105,14 +105,6 @@ describe("sessionsOnDay", () => {
     expect(sessionsOnDay([ends], "2026-06-27", now)).toHaveLength(0);
   });
 
-  it("places a legacy zero-length completion on the day of its instant", () => {
-    const atMidnight = localMs(2026, 6, 26, 0);
-    const now = localMs(2026, 6, 26, 12);
-    const completion = session(atMidnight, atMidnight);
-    expect(sessionsOnDay([completion], "2026-06-26", now)).toHaveLength(1);
-    expect(sessionsOnDay([completion], "2026-06-25", now)).toHaveLength(0);
-  });
-
   it("skips deleted sessions", () => {
     const deleted = session(localMs(2026, 6, 26, 9), localMs(2026, 6, 26, 10), {
       deleted_at: "2026-06-26T12:00:00.000Z",

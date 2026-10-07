@@ -1,11 +1,5 @@
 import { db } from "@/lib/db";
-import type {
-  Activity,
-  ActivityGroup,
-  ActivityStatusEvent,
-  DailyEntry,
-  GroupStatusEvent,
-} from "@/lib/db/types";
+import type { Activity, ActivityGroup, DailyEntry } from "@/lib/db/types";
 import {
   shouldShowActivity,
   type TemporalVisibilityContext,
@@ -24,8 +18,6 @@ import {
 
 export interface StreakVisibilityDeps {
   groupById: Map<string, ActivityGroup>;
-  activityEventsById: Map<string, ActivityStatusEvent[]>;
-  groupEventsById: Map<string, GroupStatusEvent[]>;
 }
 
 export type TodayOverride = StreakEntryOverride;
@@ -47,19 +39,11 @@ function createVisibilityChecker(
 ): StreakVisibilityChecker {
   return (day: Date) => {
     if (!visibility) {
-      return shouldShowActivity(activity, day, undefined, {
-        viewDate: day,
-        activityEventsById: new Map(),
-        groupEventsById: new Map(),
-      });
+      return shouldShowActivity(activity, day, undefined, { viewDate: day });
     }
 
     const group = visibility.groupById.get(activity.group_id);
-    const temporal: TemporalVisibilityContext = {
-      viewDate: day,
-      activityEventsById: visibility.activityEventsById,
-      groupEventsById: visibility.groupEventsById,
-    };
+    const temporal: TemporalVisibilityContext = { viewDate: day };
     return shouldShowActivity(activity, day, group, temporal);
   };
 }

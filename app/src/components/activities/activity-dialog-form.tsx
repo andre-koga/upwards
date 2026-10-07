@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Archive } from "lucide-react";
 import { ArchiveActivityDialog } from "@/components/activities/archive-activity-dialog";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { resolveTracksTime, trackTimeRule } from "@/lib/activity/tracks-time";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
@@ -38,6 +42,7 @@ interface ActivityDialogFormProps {
 interface ActivityFormData extends RoutineFormData {
   name: string;
   completion_target: number | string;
+  tracks_time: boolean;
 }
 
 function computeFormDataFromInitial(
@@ -48,6 +53,7 @@ function computeFormDataFromInitial(
     name: initialData?.name || "",
     ...routineForm,
     completion_target: initialData?.completion_target ?? 1,
+    tracks_time: initialData?.tracks_time !== false,
   };
 }
 
@@ -59,6 +65,7 @@ export function ActivityDialogForm({
   onSaved,
   onArchived,
 }: ActivityDialogFormProps) {
+  const { t } = useTranslation("projects");
   const isEditing = Boolean(activity);
   const [formData, setFormData] = useState<ActivityFormData>(() =>
     computeFormDataFromInitial(activity)
@@ -95,6 +102,10 @@ export function ActivityDialogForm({
         1,
         parseInt(String(formData.completion_target)) || 1
       ),
+      // The routine decides when the switch cannot (avoid habits are never
+      // timed; time-only activities always are), so a stale switch can't leave
+      // a meaningless combination.
+      tracks_time: resolveTracksTime(routineConfig, formData.tracks_time),
     };
     const validationError = validateActivityData(payload);
     if (validationError) {
@@ -111,6 +122,7 @@ export function ActivityDialogForm({
           name: payload.name,
           routine: payload.routine,
           completion_target: payload.completion_target,
+          tracks_time: payload.tracks_time,
           updated_at: now(),
         });
       } else {
@@ -147,6 +159,9 @@ export function ActivityDialogForm({
           completion_target: payload.completion_target,
           is_archived: false,
           completed_at: null,
+          archived_at: null,
+          tracks_time: payload.tracks_time,
+          is_pinned: false,
           order_index: nextOrderIndex,
           created_at: timestamp,
           updated_at: timestamp,
@@ -245,6 +260,30 @@ export function ActivityDialogForm({
               }
               message="How many times you need to do this per day. 1 = simple checkbox."
             />
+          ) : null}
+
+          {trackTimeRule(buildRoutineString(formData)).canChoose ? (
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="activity-tracks-time" className="leading-snug">
+                  {t("activityForm.tracksTime.label")}
+                </Label>
+                <p
+                  id="activity-tracks-time-hint"
+                  className="text-xs leading-relaxed text-muted-foreground"
+                >
+                  {t("activityForm.tracksTime.hint")}
+                </p>
+              </div>
+              <Switch
+                id="activity-tracks-time"
+                aria-describedby="activity-tracks-time-hint"
+                checked={formData.tracks_time}
+                onCheckedChange={(next) =>
+                  setFormData({ ...formData, tracks_time: next })
+                }
+              />
+            </div>
           ) : null}
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}

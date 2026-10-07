@@ -13,6 +13,7 @@ import {
 } from "./sync-issues-store";
 import { hasPendingOperationForEntity } from "./unsynced-data";
 import { buildProjectionConflictPayloadFromOp } from "./projection-conflict-resolution";
+import type { ActivityPeriod } from "@/lib/db/types";
 import { maybeRecordTimelineOverlapInfo } from "./timeline-overlap";
 import { reconcileJournalDuplicatesForDate } from "@/lib/journal/dedupe-by-date";
 
@@ -23,9 +24,6 @@ export const OPS_MANAGED_SYNC_TABLES: SyncTable[] = [
   "memories",
   "activity_periods",
   "one_time_tasks",
-  "recurring_memos",
-  "activity_status_events",
-  "group_status_events",
   "activities",
   "activity_groups",
 ];
@@ -36,9 +34,6 @@ const SYNC_TABLE_TO_ENTITY_TYPE: Partial<Record<SyncTable, string>> = {
   memories: "memory",
   activity_periods: "activity_period",
   one_time_tasks: "one_time_task",
-  recurring_memos: "recurring_memo",
-  activity_status_events: "activity_status_event",
-  group_status_events: "group_status_event",
   activities: "activity",
   activity_groups: "activity_group",
 };
@@ -49,9 +44,6 @@ const ENTITY_TYPE_TO_SYNC_TABLE: Record<string, SyncTable> = {
   memory: "memories",
   activity_period: "activity_periods",
   one_time_task: "one_time_tasks",
-  recurring_memo: "recurring_memos",
-  activity_status_event: "activity_status_events",
-  group_status_event: "group_status_events",
   activity: "activities",
   activity_group: "activity_groups",
 };
@@ -62,19 +54,12 @@ const ENTITY_TYPE_TO_DEXIE_TABLE: Record<string, keyof typeof db> = {
   memory: "memories",
   activity_period: "activityPeriods",
   one_time_task: "oneTimeTasks",
-  recurring_memo: "recurringMemos",
-  activity_status_event: "activityStatusEvents",
-  group_status_event: "groupStatusEvents",
   activity: "activities",
   activity_group: "activityGroups",
 };
 
-/** Status/lifecycle events are append-only — no base_revision conflicts. */
-const APPEND_ONLY_ENTITY_TYPES = new Set([
-  "activity_status_event",
-  "group_status_event",
-  "journal_entry_revision",
-]);
+/** Append-only rows never conflict: no base_revision. */
+const APPEND_ONLY_ENTITY_TYPES = new Set(["journal_entry_revision"]);
 
 let suppressProjectionEnqueue = 0;
 
@@ -236,12 +221,11 @@ export async function applyAcceptedProjectionOp(
 
   if (
     op.entity_type === "activity_period" &&
-    typeof normalized.daily_entry_id === "string" &&
-    typeof normalized.activity_id === "string"
+    typeof normalized.activity_id === "string" &&
+    typeof normalized.start_time === "string"
   ) {
     void maybeRecordTimelineOverlapInfo(
-      normalized.daily_entry_id,
-      normalized.activity_id
+      normalized as unknown as ActivityPeriod
     );
   }
 

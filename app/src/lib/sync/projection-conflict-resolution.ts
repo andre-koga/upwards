@@ -21,7 +21,6 @@ const PROJECTION_FIELD_KEYS: Record<string, readonly string[]> = {
   memory: ["text_content", "photo_paths", "time_label", "deleted_at"],
   activity_period: [
     "activity_id",
-    "daily_entry_id",
     "start_time",
     "end_time",
     "note",
@@ -37,18 +36,18 @@ const PROJECTION_FIELD_KEYS: Record<string, readonly string[]> = {
     "order_index",
     "deleted_at",
   ],
-  recurring_memo: ["title", "routine", "is_pinned", "is_enabled", "deleted_at"],
   activity: [
     "name",
     "routine",
     "completion_target",
     "group_id",
     "order_index",
-    "completed_at",
-    "is_archived",
+    "archived_at",
+    "tracks_time",
+    "is_pinned",
     "deleted_at",
   ],
-  activity_group: ["name", "color", "order_index", "deleted_at"],
+  activity_group: ["name", "color", "order_index", "archived_at", "deleted_at"],
   activity_streak: ["activity_id", "date", "streak", "deleted_at"],
 };
 
@@ -130,7 +129,6 @@ function entityLabel(
   }
   if (entityType === "activity_period") return "Timeline session";
   if (entityType === "one_time_task") return "Memo";
-  if (entityType === "recurring_memo") return "Recurring memo";
   if (entityType === "activity_streak") return "Streak";
   if (entityType === "memory") {
     if (typeof fields.time_label === "string" && fields.time_label.trim()) {

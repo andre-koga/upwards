@@ -4,17 +4,13 @@ import type {
   Activity,
   ActivityGroup,
   ActivityPeriod,
-  ActivityStatusEvent,
   DailyEntry,
-  GroupStatusEvent,
   JournalEntry,
   JournalEntryRevision,
   Memory,
   OneTimeTask,
-  RecurringMemo,
 } from "@/lib/db/types";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
-import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 import { getCachedUserId } from "@/lib/supabase";
 import { getOrCreateDeviceId } from "./device-id";
 import { enqueuePendingOperation } from "./pending-operations";
@@ -206,10 +202,6 @@ export async function saveTimedPeriod(
   row: ActivityPeriod,
   baseRevision?: string | null
 ): Promise<void> {
-  if (isUntimedPeriod(row.start_time, row.end_time)) {
-    // Untimed completions are derived from counts; never store them as facts.
-    return;
-  }
   const existing = await db.activityPeriods.get(row.id);
   if (existing) {
     await db.activityPeriods.put(row);
@@ -266,69 +258,6 @@ export async function patchOneTimeTask(
     updated_at: patch.updated_at ?? now(),
   };
   await saveOneTimeTask(next, existing.updated_at);
-}
-
-export async function saveRecurringMemo(
-  row: RecurringMemo,
-  baseRevision?: string | null
-): Promise<void> {
-  const existing = await db.recurringMemos.get(row.id);
-  if (existing) {
-    await db.recurringMemos.put(row);
-  } else {
-    await db.recurringMemos.add(row);
-  }
-  await writeProjection(
-    "recurring_memos",
-    row as unknown as Record<string, unknown>,
-    baseRevision
-  );
-}
-
-export async function patchRecurringMemo(
-  id: string,
-  patch: Partial<RecurringMemo>
-): Promise<void> {
-  const existing = await db.recurringMemos.get(id);
-  if (!existing) return;
-  const next: RecurringMemo = {
-    ...existing,
-    ...patch,
-    updated_at: patch.updated_at ?? now(),
-  };
-  await saveRecurringMemo(next, existing.updated_at);
-}
-
-export async function saveActivityStatusEvent(
-  row: ActivityStatusEvent
-): Promise<void> {
-  const existing = await db.activityStatusEvents.get(row.id);
-  if (existing) {
-    await db.activityStatusEvents.put(row);
-  } else {
-    await db.activityStatusEvents.add(row);
-  }
-  await writeProjection(
-    "activity_status_events",
-    row as unknown as Record<string, unknown>,
-    null
-  );
-}
-
-export async function saveGroupStatusEvent(
-  row: GroupStatusEvent
-): Promise<void> {
-  const existing = await db.groupStatusEvents.get(row.id);
-  if (existing) {
-    await db.groupStatusEvents.put(row);
-  } else {
-    await db.groupStatusEvents.add(row);
-  }
-  await writeProjection(
-    "group_status_events",
-    row as unknown as Record<string, unknown>,
-    null
-  );
 }
 
 export async function applyCountDelta(input: {
@@ -428,21 +357,6 @@ export async function applyBreakDayChange(input: {
   });
   requestDebouncedSync();
   return { ...entry, is_break_day: input.isBreakDay, updated_at: timestamp };
-}
-
-export async function setCurrentActivityLocal(
-  date: string,
-  activityId: string | null
-): Promise<DailyEntry> {
-  const entry = await getOrCreateDailyEntryProjection(date);
-  const timestamp = now();
-  await withSuppressedProjectionEnqueue(async () => {
-    await db.dailyEntries.update(entry.id, {
-      current_activity_id: activityId,
-      updated_at: timestamp,
-    });
-  });
-  return { ...entry, current_activity_id: activityId, updated_at: timestamp };
 }
 
 export async function applyCompletionNote(input: {
@@ -566,24 +480,11 @@ export async function importBackup(
 
   await importRows(tables.activityGroups, "activity_groups", db.activityGroups);
   await importRows(tables.activities, "activities", db.activities);
-  await importRows(tables.recurringMemos, "recurring_memos", db.recurringMemos);
   await importRows(tables.oneTimeTasks, "one_time_tasks", db.oneTimeTasks);
   await importRows(
     tables.journalEntryRevisions,
     "journal_entry_revisions",
     db.journalEntryRevisions,
-    "append"
-  );
-  await importRows(
-    tables.activityStatusEvents,
-    "activity_status_events",
-    db.activityStatusEvents,
-    "append"
-  );
-  await importRows(
-    tables.groupStatusEvents,
-    "group_status_events",
-    db.groupStatusEvents,
     "append"
   );
 
@@ -642,21 +543,11 @@ export async function importBackup(
     summary[local ? "updated" : "inserted"] += 1;
   }
 
-  const dateByDailyId = new Map(
-    tables.dailyEntries.map((entry) => [entry.id, entry.date])
+  await importRows(
+    tables.activityPeriods,
+    "activity_periods",
+    db.activityPeriods
   );
-  const timedPeriods: ActivityPeriod[] = [];
-  for (const period of tables.activityPeriods) {
-    if (isUntimedPeriod(period.start_time, period.end_time)) continue;
-    const date = dateByDailyId.get(period.daily_entry_id);
-    if (date && !(await db.activityPeriods.get(period.id))) {
-      const entry = await getOrCreateDailyEntryProjection(date);
-      timedPeriods.push({ ...period, daily_entry_id: entry.id });
-    } else {
-      timedPeriods.push(period);
-    }
-  }
-  await importRows(timedPeriods, "activity_periods", db.activityPeriods);
 
   for (const row of tables.journalEntries) {
     const local =

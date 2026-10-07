@@ -5,6 +5,13 @@ import {
   type BackupDocument,
 } from "../format";
 import { migrateV4ToV5 } from "./v4-to-v5";
+import { migrateV5ToV6, type BackupDocumentV5 } from "./v5-to-v6";
+
+const V5_ONLY_TABLES = [
+  "recurringMemos",
+  "activityStatusEvents",
+  "groupStatusEvents",
+] as const;
 
 export type BackupFormatErrorCode = "unrecognized" | "newer_version";
 
@@ -32,11 +39,14 @@ function isLegacyLayout(raw: Record<string, unknown>): boolean {
   );
 }
 
-function normalizeCurrent(raw: Record<string, unknown>): BackupDocument {
-  const doc = raw as unknown as BackupDocument;
+function normalizeCurrent<T extends BackupDocument | BackupDocumentV5>(
+  raw: Record<string, unknown>,
+  tableNames: readonly string[]
+): T {
+  const doc = raw as unknown as T;
   const tables = asRecord(doc.tables);
   if (!tables) throw new BackupFormatError("unrecognized");
-  for (const name of BACKUP_TABLE_NAMES) {
+  for (const name of tableNames) {
     if (!Array.isArray(tables[name])) tables[name] = [];
   }
   return {
@@ -56,7 +66,7 @@ export function migrateBackupDocument(input: unknown): BackupDocument {
   const raw = asRecord(input);
   if (!raw) throw new BackupFormatError("unrecognized");
 
-  if (isLegacyLayout(raw)) return migrateV4ToV5(raw);
+  if (isLegacyLayout(raw)) return migrateV5ToV6(migrateV4ToV5(raw));
 
   if (raw.format !== BACKUP_FORMAT || typeof raw.format_version !== "number") {
     throw new BackupFormatError("unrecognized");
@@ -64,8 +74,16 @@ export function migrateBackupDocument(input: unknown): BackupDocument {
   if (raw.format_version > BACKUP_FORMAT_VERSION) {
     throw new BackupFormatError("newer_version");
   }
+  if (raw.format_version === 5) {
+    return migrateV5ToV6(
+      normalizeCurrent<BackupDocumentV5>(raw, [
+        ...BACKUP_TABLE_NAMES,
+        ...V5_ONLY_TABLES,
+      ])
+    );
+  }
   if (raw.format_version < BACKUP_FORMAT_VERSION) {
     throw new BackupFormatError("unrecognized");
   }
-  return normalizeCurrent(raw);
+  return normalizeCurrent<BackupDocument>(raw, BACKUP_TABLE_NAMES);
 }

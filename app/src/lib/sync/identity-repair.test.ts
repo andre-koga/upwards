@@ -131,14 +131,7 @@ describe("enqueueUnsyncedCurrentStateRows", () => {
     expect(enqueueMock.mock.calls[0][1]).toMatchObject({ id: "act-2" });
   });
 
-  it("skips untimed activity periods", async () => {
-    tables.activityPeriods.push({
-      id: "period-untimed",
-      start_time: "2026-08-01T10:00:00.000Z",
-      end_time: "2026-08-01T10:00:00.000Z",
-      updated_at: "2026-08-01T12:00:00.000Z",
-      synced_at: null,
-    });
+  it("enqueues unsynced activity periods", async () => {
     tables.activityPeriods.push({
       id: "period-timed",
       start_time: "2026-08-01T10:00:00.000Z",

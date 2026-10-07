@@ -2,18 +2,15 @@ import type {
   Activity,
   ActivityGroup,
   ActivityPeriod,
-  ActivityStatusEvent,
   DailyEntry,
-  GroupStatusEvent,
   JournalEntry,
   JournalEntryRevision,
   Memory,
   OneTimeTask,
-  RecurringMemo,
 } from "@/lib/db/types";
 
 export const BACKUP_FORMAT = "upwards-backup";
-export const BACKUP_FORMAT_VERSION = 5;
+export const BACKUP_FORMAT_VERSION = 6;
 export const CLIPS_FORMAT = "upwards-clips";
 export const CLIPS_FORMAT_VERSION = 1;
 
@@ -33,9 +30,6 @@ export interface BackupTables {
   journalEntryRevisions: JournalEntryRevision[];
   memories: Memory[];
   oneTimeTasks: OneTimeTask[];
-  recurringMemos: RecurringMemo[];
-  activityStatusEvents: ActivityStatusEvent[];
-  groupStatusEvents: GroupStatusEvent[];
 }
 
 export type BackupTableName = keyof BackupTables;
@@ -50,14 +44,14 @@ export const BACKUP_TABLE_NAMES = [
   "journalEntryRevisions",
   "memories",
   "oneTimeTasks",
-  "recurringMemos",
-  "activityStatusEvents",
-  "groupStatusEvents",
 ] as const satisfies readonly BackupTableName[];
 
 /**
  * Device-local infrastructure (logs, the pending-op queue, sync bookkeeping),
- * plus `memoPeriods`, which Dexie v7 emptied but never dropped.
+ * plus tables the app no longer reads or writes and Dexie has not dropped yet:
+ * `memoPeriods` (emptied in Dexie v7) and the recurring-memo and status-event
+ * tables the model cutover retired (their data lives on in `archived_at`,
+ * `deleted_at` and the converted activities). The baseline schema drops them.
  */
 export const NON_BACKUP_TABLE_NAMES = [
   "appLogs",
@@ -65,6 +59,9 @@ export const NON_BACKUP_TABLE_NAMES = [
   "syncIssues",
   "syncDevices",
   "memoPeriods",
+  "recurringMemos",
+  "activityStatusEvents",
+  "groupStatusEvents",
 ] as const;
 
 /**
@@ -125,9 +122,6 @@ export function emptyBackupTables(): BackupTables {
     journalEntryRevisions: [],
     memories: [],
     oneTimeTasks: [],
-    recurringMemos: [],
-    activityStatusEvents: [],
-    groupStatusEvents: [],
   };
 }
 

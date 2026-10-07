@@ -21,43 +21,31 @@ function periodsOverlap(a: ActivityPeriod, b: ActivityPeriod): boolean {
   return aStart < bEnd && bStart < aEnd;
 }
 
+/**
+ * Record an info issue when `period` overlaps another session of the same
+ * activity. Sessions are compared by their own times: nothing groups them by
+ * day, so the issue is keyed by the activity and the day the session started.
+ */
 export async function maybeRecordTimelineOverlapInfo(
-  dailyEntryId: string,
-  activityId: string
+  period: ActivityPeriod
 ): Promise<void> {
-  const periods = await db.activityPeriods
-    .where("daily_entry_id")
-    .equals(dailyEntryId)
-    .filter(
-      (row) =>
-        row.activity_id === activityId &&
-        !row.deleted_at &&
-        Boolean(row.start_time)
-    )
+  if (period.deleted_at || !period.start_time) return;
+
+  const others = await db.activityPeriods
+    .where("activity_id")
+    .equals(period.activity_id)
+    .filter((row) => row.id !== period.id && !row.deleted_at)
     .toArray();
+  if (!others.some((other) => periodsOverlap(period, other))) return;
 
-  if (periods.length < 2) return;
-
-  let hasOverlap = false;
-  for (let i = 0; i < periods.length; i += 1) {
-    for (let j = i + 1; j < periods.length; j += 1) {
-      if (periodsOverlap(periods[i], periods[j])) {
-        hasOverlap = true;
-        break;
-      }
-    }
-    if (hasOverlap) break;
-  }
-
-  if (!hasOverlap) return;
-
+  const issueKey = `${period.activity_id}:${period.start_time.slice(0, 10)}`;
   const existing = await db.syncIssues
     .filter(
       (issue) =>
         issue.kind === "info" &&
         issue.status === "open" &&
         issue.entity_type === "activity_period" &&
-        issue.entity_id === `${dailyEntryId}:${activityId}`
+        issue.entity_id === issueKey
     )
     .first();
   if (existing) return;
@@ -66,9 +54,9 @@ export async function maybeRecordTimelineOverlapInfo(
     kind: "info",
     title: "Overlapping timeline sessions",
     detail:
-      "Two or more timed sessions for the same activity overlap on this day. Review your timeline and edit or remove sessions if needed.",
+      "Two or more timed sessions for the same activity overlap. Review your timeline and edit or remove sessions if needed.",
     entity_type: "activity_period",
-    entity_id: `${dailyEntryId}:${activityId}`,
+    entity_id: issueKey,
     account_id: getCachedUserId(),
   });
 }

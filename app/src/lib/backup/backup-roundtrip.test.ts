@@ -49,6 +49,7 @@ import {
 import { remapBackupIdentity } from "./identity";
 import { importBackupFile } from "./import";
 import { migrateBackupDocument } from "./migrators";
+import { memoActivityId } from "./migrators/v5-to-v6";
 import { ZipBlobWriter } from "./zip";
 
 const USER = "44444444-4444-4444-8444-444444444444";
@@ -68,7 +69,6 @@ function dayRow(
     task_counts: {},
     paused_task_ids: [],
     is_break_day: false,
-    current_activity_id: null,
     completion_notes: {},
     completion_times: {},
     created_at: T0,
@@ -127,6 +127,7 @@ async function seed(userKey = USER) {
     color: "green",
     order_index: 0,
     is_archived: false,
+    archived_at: null,
     ...base,
   });
   for (const id of ["a1", "a2"]) {
@@ -138,6 +139,9 @@ async function seed(userKey = USER) {
       completion_target: 3,
       is_archived: false,
       completed_at: null,
+      archived_at: id === "a2" ? "2026-08-20T00:00:00.000Z" : null,
+      tracks_time: id === "a1",
+      is_pinned: id === "a1",
       order_index: 0,
       ...base,
     });
@@ -153,7 +157,7 @@ async function seed(userKey = USER) {
   ]);
   await db.activityPeriods.add({
     id: "p1",
-    daily_entry_id: naturalDailyEntryId(userKey, D1),
+    daily_entry_id: null,
     activity_id: "a1",
     start_time: "2026-09-01T06:00:00.000Z",
     end_time: "2026-09-01T06:30:00.000Z",
@@ -168,14 +172,6 @@ async function seed(userKey = USER) {
     time_label: "when I was six",
     ...base,
   });
-  await db.recurringMemos.add({
-    id: "r1",
-    title: "Water plants",
-    routine: "weekly",
-    is_pinned: false,
-    is_enabled: true,
-    ...base,
-  });
   await db.oneTimeTasks.add({
     id: "t1",
     date: null,
@@ -186,23 +182,7 @@ async function seed(userKey = USER) {
     due_date: D2,
     group_id: null,
     is_archived: false,
-    recurring_memo_id: "r1",
-    ...base,
-  });
-  await db.activityStatusEvents.add({
-    id: "e1",
-    entity_id: "a2",
-    status_type: "archived",
-    next_value: false,
-    effective_at: T0,
-    ...base,
-  });
-  await db.groupStatusEvents.add({
-    id: "ge1",
-    entity_id: "g1",
-    status_type: "archived",
-    next_value: false,
-    effective_at: T0,
+    recurring_memo_id: null,
     ...base,
   });
 }
@@ -427,7 +407,7 @@ describe("backup round trip", () => {
       version: 4,
       exportedAt: T0,
       activityGroups: [],
-      activities: [],
+      activities: [{ id: "a1", group_id: "g1", name: "Run", routine: "daily" }],
       dailyEntries: [{ id: "old-day", date: D1, task_counts: { a1: 1 } }],
       activityPeriods: [
         {
@@ -446,5 +426,235 @@ describe("backup round trip", () => {
     const day = await db.dailyEntries.get(naturalDailyEntryId(USER, D1));
     expect(day?.task_counts).toEqual({ a1: 1 });
     expect(day?.completion_times).toEqual({ a1: "2026-09-01T10:00:00.000Z" });
+  });
+
+  describe("restoring a file taken before the model cutover (format 5)", () => {
+    const row = {
+      created_at: "2026-05-01T00:00:00.000Z",
+      updated_at: "2026-05-01T00:00:00.000Z",
+      synced_at: null,
+      deleted_at: null,
+    };
+
+    function v5File(patch: Record<string, unknown> = {}) {
+      return {
+        format: "upwards-backup",
+        format_version: 5,
+        exported_at: "2026-10-01T12:00:00.000Z",
+        source_user_key: USER,
+        settings: null,
+        media: [],
+        tables: {
+          activityGroups: [
+            { id: "g1", name: "Health", is_archived: false, ...row },
+            { id: "g2", name: "Old", is_archived: true, ...row },
+          ],
+          activities: [
+            {
+              id: "a1",
+              group_id: "g1",
+              name: "Run",
+              routine: "daily",
+              completion_target: 1,
+              is_archived: false,
+              completed_at: null,
+              ...row,
+            },
+            {
+              id: "gone",
+              group_id: "g1",
+              name: "Stopped",
+              routine: "daily",
+              completion_target: 1,
+              is_archived: true,
+              completed_at: "2026-06-10T09:00:00.000Z",
+              ...row,
+            },
+            {
+              id: "hidden-used",
+              group_id: "g1",
+              name: null,
+              routine: null,
+              completion_target: 1,
+              is_archived: false,
+              completed_at: null,
+              ...row,
+            },
+            {
+              id: "hidden-empty",
+              group_id: "g2",
+              name: null,
+              routine: null,
+              completion_target: 1,
+              is_archived: false,
+              completed_at: null,
+              ...row,
+            },
+            {
+              id: "avoid",
+              group_id: "g1",
+              name: "No sugar",
+              routine: "never",
+              completion_target: 1,
+              is_archived: false,
+              completed_at: null,
+              ...row,
+            },
+          ],
+          dailyEntries: [
+            {
+              id: "d1",
+              date: D1,
+              task_counts: { a1: 1 },
+              paused_task_ids: [],
+              is_break_day: false,
+              current_activity_id: null,
+              completion_notes: {},
+              completion_times: {},
+              ...row,
+            },
+          ],
+          activityPeriods: [
+            {
+              id: "real",
+              daily_entry_id: "d1",
+              activity_id: "hidden-used",
+              start_time: "2026-09-01T06:00:00.000Z",
+              end_time: "2026-09-01T07:00:00.000Z",
+              note: null,
+              ...row,
+            },
+            {
+              id: "instant",
+              daily_entry_id: "d1",
+              activity_id: "a1",
+              start_time: "2026-09-01T08:15:00.000Z",
+              end_time: "2026-09-01T08:15:00.000Z",
+              note: "easy",
+              ...row,
+            },
+            {
+              id: "forgotten",
+              daily_entry_id: "d1",
+              activity_id: "a1",
+              start_time: "2026-09-01T20:00:00.000Z",
+              end_time: null,
+              note: null,
+              ...row,
+            },
+          ],
+          recurringMemos: [
+            {
+              id: "memo1",
+              title: "Take vitamins",
+              routine: "daily",
+              is_pinned: true,
+              is_enabled: true,
+              ...row,
+            },
+          ],
+          activityStatusEvents: [
+            {
+              id: "e1",
+              entity_id: "gone",
+              status_type: "archived",
+              next_value: true,
+              effective_at: "2026-06-11T00:00:00.000Z",
+              ...row,
+            },
+          ],
+          groupStatusEvents: [],
+          ...patch,
+        },
+      };
+    }
+
+    async function restored() {
+      await runImport(v5File());
+      return {
+        activities: new Map(
+          (await db.activities.toArray()).map((a) => [a.id, a])
+        ),
+        groups: await db.activityGroups.toArray(),
+        periods: await db.activityPeriods.toArray(),
+        day: await db.dailyEntries.get(naturalDailyEntryId(USER, D1)),
+      };
+    }
+
+    it("turns lifecycle events and flags into timestamps", async () => {
+      const { activities, groups } = await restored();
+      // The event's date wins over the old flag's own date.
+      expect(activities.get("gone")?.archived_at).toBe(
+        "2026-06-11T00:00:00.000Z"
+      );
+      expect(activities.get("a1")?.archived_at).toBeNull();
+      expect(groups.find((g) => g.id === "g2")?.archived_at).toBe(
+        row.updated_at
+      );
+    });
+
+    it("names an unnamed activity after its group, and deletes only an empty one", async () => {
+      const { activities } = await restored();
+      expect(activities.get("hidden-used")).toMatchObject({
+        name: "Health",
+        routine: "anytime",
+        tracks_time: true,
+        deleted_at: null,
+      });
+      expect(activities.get("hidden-empty")?.name).toBe("Old");
+      expect(activities.get("hidden-empty")?.deleted_at).not.toBeNull();
+    });
+
+    it("keeps avoid habits untimed and everything else timed", async () => {
+      const { activities } = await restored();
+      expect(activities.get("avoid")?.tracks_time).toBe(false);
+      expect(activities.get("a1")?.tracks_time).toBe(true);
+    });
+
+    it("turns a recurring memo into a check-only routine", async () => {
+      const { activities, groups } = await restored();
+      const routine = [...activities.values()].find(
+        (a) => a.name === "Take vitamins"
+      );
+      expect(routine).toMatchObject({
+        tracks_time: false,
+        is_pinned: true,
+        completion_target: 1,
+        routine: "daily",
+      });
+      expect(groups.find((g) => g.id === routine?.group_id)?.name).toBe(
+        "Routines"
+      );
+    });
+
+    it("gives routines the ids the server gave them, so a restore adds no duplicate", async () => {
+      const { activities } = await restored();
+      expect(activities.has(memoActivityId("memo1"))).toBe(true);
+    });
+
+    it("folds an instant into the completed day and drops the row", async () => {
+      const { periods, day } = await restored();
+      expect(periods.map((p) => p.id).sort()).toEqual(["forgotten", "real"]);
+      expect(day?.completion_times).toEqual({ a1: "2026-09-01T08:15:00.000Z" });
+      expect(day?.completion_notes).toEqual({ a1: "easy" });
+    });
+
+    it("closes a forgotten running session an hour after it began", async () => {
+      const { periods } = await restored();
+      expect(periods.find((p) => p.id === "forgotten")?.end_time).toBe(
+        "2026-09-01T21:00:00.000Z"
+      );
+    });
+
+    it("links no session to a day", async () => {
+      const { periods } = await restored();
+      expect(periods.every((p) => p.daily_entry_id == null)).toBe(true);
+    });
+
+    it("restoring the same file twice changes nothing the second time", async () => {
+      await runImport(v5File());
+      const second = await runImport(v5File());
+      expect(second.inserted + second.updated + second.countsAdded).toBe(0);
+    });
   });
 });

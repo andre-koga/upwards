@@ -60,8 +60,7 @@ function tableApi(rows: Array<Record<string, unknown>>) {
     },
     where: () => ({
       equals: (value: string) => ({
-        toArray: async () =>
-          rows.filter((r) => r.daily_entry_id === value),
+        toArray: async () => rows.filter((r) => r.daily_entry_id === value),
       }),
     }),
   };
@@ -129,7 +128,7 @@ describe("rekeyLocalRowsToCurrentUser", () => {
     expect(canonical!.deleted_at).toBeNull();
   });
 
-  it("re-keys a guest daily entry and carries its periods across", async () => {
+  it("re-keys a guest daily entry and leaves sessions untouched", async () => {
     const guestId = naturalDailyEntryId("guest:device-a", "2026-08-20");
     const canonicalId = naturalDailyEntryId("user-1", "2026-08-20");
 
@@ -143,7 +142,7 @@ describe("rekeyLocalRowsToCurrentUser", () => {
     });
     tables.activityPeriods.push({
       id: "period-1",
-      daily_entry_id: guestId,
+      daily_entry_id: null,
       activity_id: "activity-1",
       start_time: "2026-08-20T10:00:00.000Z",
       end_time: "2026-08-20T11:00:00.000Z",
@@ -156,8 +155,13 @@ describe("rekeyLocalRowsToCurrentUser", () => {
     const canonical = tables.dailyEntries.find((r) => r.id === canonicalId);
     expect(canonical).toBeDefined();
     expect(canonical!.task_counts).toEqual({ "activity-1": 2 });
-    // A period left pointing at the old id would be orphaned off the timeline.
-    expect(tables.activityPeriods[0]!.daily_entry_id).toBe(canonicalId);
+    // Sessions are found by time and link to no day, so re-keying a day has
+    // nothing to carry across and must not touch them.
+    expect(tables.activityPeriods).toHaveLength(1);
+    expect(tables.activityPeriods[0]!.daily_entry_id).toBeNull();
+    expect(tables.activityPeriods[0]!.updated_at).toBe(
+      "2026-08-20T10:00:00.000Z"
+    );
   });
 
   it("runs even after the one-shot cutover flag is already set", async () => {

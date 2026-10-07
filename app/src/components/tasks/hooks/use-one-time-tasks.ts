@@ -79,7 +79,6 @@ export function useOneTimeTasks(dateString: string) {
       options?: {
         due_date?: string | null;
         is_pinned?: boolean;
-        recurring_memo_id?: string | null;
       }
     ): Promise<boolean> => {
       const normalizedTitle = normalizeMemoTitle(title);
@@ -94,9 +93,7 @@ export function useOneTimeTasks(dateString: string) {
           order_index: null,
           is_pinned: options?.is_pinned ?? false,
           due_date: options?.due_date ?? null,
-          group_id: null,
           is_archived: false,
-          recurring_memo_id: options?.recurring_memo_id ?? null,
           created_at: n,
           updated_at: n,
           synced_at: null,
