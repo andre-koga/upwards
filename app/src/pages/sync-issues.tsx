@@ -26,7 +26,7 @@ import { syncEngine } from "@/lib/sync";
 import { getOrCreateDeviceId } from "@/lib/sync/device-id";
 import {
   discardPendingOperation,
-  listPendingOperations,
+  listUnsyncedOperations,
 } from "@/lib/sync/pending-operations";
 import { listSyncIssues, resolveSyncIssue } from "@/lib/sync/sync-issues-store";
 import { db } from "@/lib/db";
@@ -54,7 +54,9 @@ async function loadSyncIssuesData(): Promise<SyncIssuesData> {
   ] = await Promise.all([
     listSyncIssues({ kind: "conflict", status: "open" }),
     listSyncIssues({ kind: "conflict", status: "deferred" }),
-    listPendingOperations({ status: "pending" }),
+    // Includes rejected (`failed`) operations: they hold data the server never
+    // accepted, and they are what blocks this device from adopting a migration.
+    listUnsyncedOperations(),
     listSyncIssues({ kind: "error", status: "open" }),
     listSyncIssues({ status: "resolved", limit: 20 }),
     listSyncIssues({ kind: "info", status: "open" }),
