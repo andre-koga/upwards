@@ -13,8 +13,10 @@ type Row = Record<string, unknown>;
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-/** The balanced `{...}` starting at `start`, or null if it never closes. */
-function balancedObject(text: string, start: number): string | null {
+/** The balanced `{...}` or `[...]` starting at `start`, or null if it never closes. */
+function balanced(text: string, start: number): string | null {
+  const open = text[start];
+  const close = open === "{" ? "}" : "]";
   let depth = 0;
   let inString = false;
   for (let i = start; i < text.length; i += 1) {
@@ -24,9 +26,9 @@ function balancedObject(text: string, start: number): string | null {
       else if (ch === '"') inString = false;
     } else if (ch === '"') {
       inString = true;
-    } else if (ch === "{") {
+    } else if (ch === open) {
       depth += 1;
-    } else if (ch === "}") {
+    } else if (ch === close) {
       depth -= 1;
       if (depth === 0) return text.slice(start, i + 1);
     }
@@ -36,19 +38,23 @@ function balancedObject(text: string, start: number): string | null {
 
 /**
  * The rows of the query result in the CLI's output, or null if there are none.
- * pnpm and the CLI can print other text around the result (banners, upgrade
- * notices, stray braces), so every `{` is tried as a start until one parses
- * into an object with `rows`.
+ * The shape depends on the CLI version: 2.105 prints `{"rows": [...]}` and
+ * 2.114 (what CI pins) prints a bare array of rows. pnpm and the CLI can also
+ * print other text around the result, so every `{` or `[` is tried as a start
+ * until one parses into either shape.
  */
 function resultRows(text: string): Row[] | null {
-  for (let i = text.indexOf("{"); i >= 0; i = text.indexOf("{", i + 1)) {
-    const candidate = balancedObject(text, i);
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] !== "{" && text[i] !== "[") continue;
+    const candidate = balanced(text, i);
     if (!candidate) continue;
     try {
-      const parsed = JSON.parse(candidate) as { rows?: unknown };
-      if (Array.isArray(parsed.rows)) return parsed.rows as Row[];
+      const parsed: unknown = JSON.parse(candidate);
+      if (Array.isArray(parsed)) return parsed as Row[];
+      const rows = (parsed as { rows?: unknown }).rows;
+      if (Array.isArray(rows)) return rows as Row[];
     } catch {
-      // Not the result object; keep looking.
+      // Not the result; keep looking.
     }
   }
   return null;
