@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { CalendarDays, ChevronDown } from "lucide-react";
 
+import { FormCalendarDateField } from "@/components/forms/form-calendar-date-field";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,13 +20,24 @@ import {
   useHemisphere,
   useHolidayCalendars,
 } from "@/lib/holidays/use-holiday-calendars";
+import { parseBirthday } from "@/lib/holidays/birthday";
+import { todayDateString } from "@/lib/time-utils";
+import { getActiveLocaleTag } from "@/lib/i18n";
 import { useAccountSettings } from "@/lib/use-account-settings";
 import type { Hemisphere } from "@/lib/holidays/hemisphere";
+
+/** A birth date reads with its year: "17 May 1990" / "17 de maio de 1990". */
+const formatBirthDate = (date: Date) =>
+  date.toLocaleDateString(getActiveLocaleTag(), {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
 /** Holiday calendars and which seasons the month banners follow. */
 export function HolidaysCard() {
   const { t } = useTranslation("settings");
-  const { hemisphere: chosenHemisphere } = useAccountSettings();
+  const { hemisphere: chosenHemisphere, birthday } = useAccountSettings();
   const calendars = useHolidayCalendars();
   const hemisphere = useHemisphere();
 
@@ -38,6 +50,14 @@ export function HolidaysCard() {
     if (value === "auto") updateAccountSettings({ hemisphere: null });
     else if (value === "north" || value === "south")
       updateAccountSettings({ hemisphere: value as Hemisphere });
+  };
+
+  const setBirthday = (value: string) => {
+    // "" is the field's way of saying cleared. Anything else must be a real
+    // past date; the picker already prevents the rest, this is the backstop.
+    if (value === "") updateAccountSettings({ birthday: null });
+    else if (parseBirthday(value) && value <= todayDateString())
+      updateAccountSettings({ birthday: value });
   };
 
   const hemisphereLabel =
@@ -74,6 +94,22 @@ export function HolidaysCard() {
           />
         </div>
       ))}
+
+      <div className="border-t border-border pt-3">
+        <FormCalendarDateField
+          id="holiday-birthday"
+          label={t("holidays.birthday.label")}
+          value={birthday ?? ""}
+          onValueChange={setBirthday}
+          min="1900-01-01"
+          max={todayDateString()}
+          placeholder={t("holidays.birthday.placeholder")}
+          clearable
+          clearLabel={t("holidays.birthday.clear")}
+          formatValue={formatBirthDate}
+          message={t("holidays.birthday.hint")}
+        />
+      </div>
 
       <div className="space-y-1 border-t border-border pt-3">
         <Label className="leading-snug">{t("holidays.hemisphere.label")}</Label>

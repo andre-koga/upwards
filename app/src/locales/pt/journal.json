@@ -179,5 +179,11 @@
       "title": "Alterar {{date}}?",
       "summary": "Isso atualiza seu registro desse dia."
     }
+  },
+  "birthday": {
+    "banner": {
+      "plain": "Seu aniversário",
+      "withAge": "Seu {{ordinal}} aniversário"
+    }
   }
 }

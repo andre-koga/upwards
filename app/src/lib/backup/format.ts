@@ -81,6 +81,8 @@ export interface BackupSettings {
   dailyClip?: boolean | null;
   holidayCalendars?: string[] | null;
   hemisphere?: "north" | "south" | null;
+  /** Your own birth date; optional so older files still read. */
+  birthday?: string | null;
 }
 
 /** A storage object carried in the archive under `media/<bucket>/<path>`. */

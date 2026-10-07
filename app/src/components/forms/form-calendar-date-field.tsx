@@ -40,6 +40,12 @@ export interface FormCalendarDateFieldProps {
   messageClassName?: string;
   clearable?: boolean;
   clearLabel?: string;
+  /**
+   * How the chosen date reads on the button. Defaults to a short weekday and
+   * date, which suits "this week"; pass one with the year for dates far in the
+   * past or future, such as a birth date.
+   */
+  formatValue?: (date: Date) => string;
 }
 
 export function FormCalendarDateField({
@@ -59,6 +65,7 @@ export function FormCalendarDateField({
   messageClassName,
   clearable = false,
   clearLabel = "Clear date",
+  formatValue = formatWeekdayShortDate,
 }: FormCalendarDateFieldProps) {
   const { t } = useTranslation("nav");
   const [open, setOpen] = useState(false);
@@ -94,9 +101,7 @@ export function FormCalendarDateField({
     setOpen(false);
   };
 
-  const labelText = selectedDate
-    ? formatWeekdayShortDate(selectedDate)
-    : placeholder;
+  const labelText = selectedDate ? formatValue(selectedDate) : placeholder;
 
   return (
     <div className={cn("space-y-1", containerClassName)}>

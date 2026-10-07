@@ -103,6 +103,46 @@ describe("journal archive helpers", () => {
     );
   });
 
+  it("finds a day by your birthday, and only for the owner", () => {
+    const entry = makeEntry({ entry_date: "2026-05-17", title: "Dinner" });
+    const mine = {
+      birthday: "1990-05-17",
+      wording: {
+        withAge: (ordinal: string) => `Your ${ordinal} birthday`,
+        plain: "Your birthday",
+      },
+    };
+    expect(journalEntryMatchesQuery(entry, "birthday", "en", US, mine)).toBe(
+      true
+    );
+    expect(journalEntryMatchesQuery(entry, "36th", "en", US, mine)).toBe(true);
+    expect(journalEntryMatchesQuery(entry, "birthday", "en", US)).toBe(false);
+  });
+
+  it("puts a birthday banner in the feed on the right day", () => {
+    const feed = buildJournalArchiveFeed(
+      [
+        makeEntry({ entry_date: "2026-05-17", title: "A" }),
+        makeEntry({ entry_date: "2026-05-16", title: "B" }),
+      ],
+      "en",
+      [],
+      {
+        birthday: "1990-05-17",
+        wording: {
+          withAge: (ordinal: string) => `Your ${ordinal} birthday`,
+          plain: "Your birthday",
+        },
+      }
+    );
+    const banners = feed.filter((i) => i.kind === "holiday");
+    expect(banners).toHaveLength(1);
+    expect(banners[0]).toMatchObject({
+      name: "Your 36th birthday",
+      date: "2026-05-17",
+    });
+  });
+
   it("inserts month and holiday banners", () => {
     const feed = buildJournalArchiveFeed(
       [

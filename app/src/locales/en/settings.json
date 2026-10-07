@@ -359,6 +359,12 @@
       "auto": "Automatic ({{season}})",
       "north": "Northern Hemisphere",
       "south": "Southern Hemisphere"
+    },
+    "birthday": {
+      "label": "Your birthday",
+      "hint": "Shows as a banner in your journal on your birthday each year, with your age. Only you can see it, and it's never shared or sent to AI.",
+      "placeholder": "Not set",
+      "clear": "Remove birthday"
     }
   }
 }

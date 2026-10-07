@@ -11,6 +11,7 @@ import {
   updateAccountSettings,
   type AccountSettings,
 } from "@/lib/account-settings";
+import { parseBirthday } from "@/lib/holidays/birthday";
 import type { BackupSettings } from "./format";
 
 export function readBackupSettings(): BackupSettings {
@@ -20,6 +21,7 @@ export function readBackupSettings(): BackupSettings {
     dailyClip: account.dailyClip,
     holidayCalendars: account.holidayCalendars,
     hemisphere: account.hemisphere,
+    birthday: account.birthday,
   };
 }
 
@@ -41,6 +43,8 @@ function missingAccountSettings(
     (settings.hemisphere === "north" || settings.hemisphere === "south")
   )
     fill.hemisphere = settings.hemisphere;
+  if (current.birthday === null && parseBirthday(settings.birthday))
+    fill.birthday = settings.birthday;
   return fill;
 }
 

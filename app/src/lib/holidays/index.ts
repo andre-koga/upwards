@@ -7,6 +7,7 @@ import {
   type CalendarId,
 } from "./calendars";
 import { datesForRule } from "./rules";
+import { birthdayLabel, birthdayOn, type BirthdayWording } from "./birthday";
 
 export type { CalendarId } from "./calendars";
 export { CALENDAR_IDS, defaultCalendars, isCalendarId } from "./calendars";
@@ -94,4 +95,31 @@ export function toggleCalendar(
   // Keep the order the user switched them on in: the first one wins when two
   // holidays share a day, and it also picks the default hemisphere.
   return on ? [...without, calendar] : without;
+}
+
+/** Your own birth date plus the words to announce it in. */
+export interface BirthdayContext {
+  birthday: string | null;
+  wording: BirthdayWording;
+}
+
+/**
+ * What to announce on a day: your birthday (if it is), then the holiday (if
+ * there is one), joined when both fall together. Your birthday comes first
+ * because it is the more personal of the two.
+ */
+export function getSpecialDayName(
+  dateString: string,
+  locale: LocaleValue,
+  calendars: readonly CalendarId[],
+  birthday?: BirthdayContext
+): string | null {
+  const parts: string[] = [];
+  const age = birthday ? birthdayOn(dateString, birthday.birthday) : null;
+  if (birthday && age !== null) {
+    parts.push(birthdayLabel(age, locale, birthday.wording));
+  }
+  const holiday = getHolidayName(dateString, locale, calendars);
+  if (holiday) parts.push(holiday);
+  return parts.length > 0 ? parts.join(" · ") : null;
 }

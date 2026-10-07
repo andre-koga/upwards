@@ -179,5 +179,11 @@
       "title": "Change {{date}}?",
       "summary": "This updates your record for that day."
     }
+  },
+  "birthday": {
+    "banner": {
+      "plain": "Your birthday",
+      "withAge": "Your {{ordinal}} birthday"
+    }
   }
 }
