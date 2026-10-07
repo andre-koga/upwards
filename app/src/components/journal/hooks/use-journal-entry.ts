@@ -8,7 +8,6 @@ import type {
   LocationData,
 } from "@/lib/db/types";
 import {
-  getCompletionMetadata,
   isJournalEntryComplete,
   journalEntryFieldsHaveContent,
   journalStreakAsOf,
@@ -226,13 +225,10 @@ export function useJournalEntry(currentDate: Date) {
           }
         }
 
-        const completionMeta = getCompletionMetadata(fields, existing, n);
-
         if (existing) {
           const updatedEntry: JournalEntry = {
             ...existing,
             ...fields,
-            ...completionMeta,
             updated_at: n,
           };
 
@@ -251,9 +247,6 @@ export function useJournalEntry(currentDate: Date) {
             id: naturalJournalIdForDate(dateStr),
             entry_date: dateStr,
             ...fields,
-            ...completionMeta,
-            journal_entry_number: null,
-            journal_completion_streak: null,
             created_at: n,
             updated_at: n,
             synced_at: null,

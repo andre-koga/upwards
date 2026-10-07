@@ -6,7 +6,6 @@ import { withSuppressedProjectionEnqueue } from "./projection-sync";
 import { isSyncOperationsRpcMissing } from "./sync-operations";
 import { saveOpsRpcAvailable } from "./sync-storage";
 import { stripOpOwnedFields } from "./op-owned-fields";
-import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 import {
   readDataEpoch,
   recordObservedDataEpoch,
@@ -22,9 +21,6 @@ const SNAPSHOT_TABLES: SyncTable[] = [
   "journal_entry_revisions",
   "memories",
   "one_time_tasks",
-  "recurring_memos",
-  "activity_status_events",
-  "group_status_events",
 ];
 
 export interface SyncSnapshot {
@@ -37,9 +33,6 @@ export interface SyncSnapshot {
   journal_entry_revisions?: Record<string, unknown>[];
   memories?: Record<string, unknown>[];
   one_time_tasks?: Record<string, unknown>[];
-  recurring_memos?: Record<string, unknown>[];
-  activity_status_events?: Record<string, unknown>[];
-  group_status_events?: Record<string, unknown>[];
 }
 
 export interface PullSnapshotResult {
@@ -70,12 +63,6 @@ function snapshotRows(
       return snapshot.memories ?? [];
     case "one_time_tasks":
       return snapshot.one_time_tasks ?? [];
-    case "recurring_memos":
-      return snapshot.recurring_memos ?? [];
-    case "activity_status_events":
-      return snapshot.activity_status_events ?? [];
-    case "group_status_events":
-      return snapshot.group_status_events ?? [];
     default:
       return [];
   }
@@ -119,22 +106,12 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
   await withSuppressedProjectionEnqueue(async () => {
     for (const table of SNAPSHOT_TABLES) {
       const dexieKey = TABLE_MAP[table];
-      const incoming = snapshotRows(snapshot, table)
-        .map(
-          (row): Record<string, unknown> => ({
-            ...normalizeSyncRow(table, row),
-            synced_at:
-              typeof row.updated_at === "string" ? row.updated_at : null,
-          })
-        )
-        .filter((row) => {
-          if (table !== "activity_periods") return true;
-          const start =
-            typeof row.start_time === "string" ? row.start_time : "";
-          const end = typeof row.end_time === "string" ? row.end_time : null;
-          return !isUntimedPeriod(start, end);
-        });
-
+      const incoming = snapshotRows(snapshot, table).map(
+        (row): Record<string, unknown> => ({
+          ...normalizeSyncRow(table, row),
+          synced_at: typeof row.updated_at === "string" ? row.updated_at : null,
+        })
+      );
       if (incoming.length === 0) continue;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

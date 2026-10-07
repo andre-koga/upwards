@@ -68,8 +68,10 @@ export function remapBackupIdentity(
           UPWARDS_SYNC_NAMESPACE
         )
       : id;
-  const mapNullable = (kind: string, id: string | null): string | null =>
-    id ? mapId(kind, id) : null;
+  const mapNullable = (
+    kind: string,
+    id: string | null | undefined
+  ): string | null => (id ? mapId(kind, id) : null);
   const mapKeys = <T>(record: Record<string, T> | null): Record<string, T> =>
     Object.fromEntries(
       Object.entries(record ?? {}).map(([id, value]) => [
@@ -113,9 +115,8 @@ export function remapBackupIdentity(
     activityPeriods: t.activityPeriods.map((row) => ({
       ...row,
       id: mapId("activity_period", row.id),
-      daily_entry_id:
-        dailyIdByOldId.get(row.daily_entry_id) ??
-        mapId("daily_entry", row.daily_entry_id),
+      // Sessions are found by time; they carry no daily-entry link.
+      daily_entry_id: null,
       activity_id: mapId("activity", row.activity_id),
     })),
     journalEntries: t.journalEntries.map((row) => ({
@@ -140,20 +141,6 @@ export function remapBackupIdentity(
       id: mapId("one_time_task", row.id),
       group_id: mapNullable("activity_group", row.group_id),
       recurring_memo_id: mapNullable("recurring_memo", row.recurring_memo_id),
-    })),
-    recurringMemos: t.recurringMemos.map((row) => ({
-      ...row,
-      id: mapId("recurring_memo", row.id),
-    })),
-    activityStatusEvents: t.activityStatusEvents.map((row) => ({
-      ...row,
-      id: mapId("activity_status_event", row.id),
-      entity_id: mapId("activity", row.entity_id),
-    })),
-    groupStatusEvents: t.groupStatusEvents.map((row) => ({
-      ...row,
-      id: mapId("group_status_event", row.id),
-      entity_id: mapId("activity_group", row.entity_id),
     })),
   };
 

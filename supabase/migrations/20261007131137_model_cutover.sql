@@ -167,11 +167,14 @@ BEGIN
 
   -- 2d. Recurring memos become check-only activities ------------------------
   --
-  -- Ids are derived from the memo's id, so a re-run finds them again and
-  -- inserts nothing. They live in a "Routines" group the user can rename.
+  -- Ids are UUIDv5 of the memo's id (and of the user, for the group), in the
+  -- namespace the client uses for every natural id. So a re-run inserts nothing,
+  -- and restoring a backup taken before the cutover makes the client derive the
+  -- SAME ids instead of creating each routine a second time (A6b). They live in
+  -- a "Routines" group the user can rename.
   INSERT INTO activity_groups (id, user_id, name, color, order_index, is_archived,
                                created_at, updated_at)
-  SELECT md5('a6:routines-group:' || m.user_id::text)::uuid, m.user_id,
+  SELECT extensions.uuid_generate_v5('7e1b4c3a-9f20-4d8e-8c11-a1b2c3d4e5f6', 'a6:routines-group:' || m.user_id::text), m.user_id,
          'Routines', NULL, NULL, FALSE, now(), now()
   FROM recurring_memos m
   GROUP BY m.user_id
@@ -181,8 +184,8 @@ BEGIN
   INSERT INTO activities (id, user_id, group_id, name, routine, completion_target,
                           is_archived, order_index, tracks_time, is_pinned,
                           archived_at, created_at, updated_at, deleted_at)
-  SELECT md5('a6:memo:' || m.id::text)::uuid, m.user_id,
-         md5('a6:routines-group:' || m.user_id::text)::uuid,
+  SELECT extensions.uuid_generate_v5('7e1b4c3a-9f20-4d8e-8c11-a1b2c3d4e5f6', 'a6:memo:' || m.id::text), m.user_id,
+         extensions.uuid_generate_v5('7e1b4c3a-9f20-4d8e-8c11-a1b2c3d4e5f6', 'a6:routines-group:' || m.user_id::text),
          m.title, m.routine, 1,
          NOT COALESCE(m.is_enabled, TRUE), NULL, FALSE,
          COALESCE(m.is_pinned, FALSE),

@@ -1,13 +1,11 @@
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
-import { isHiddenGroupDefaultActivity } from "@/lib/activity/hidden-default";
 import { getActivityDisplayName } from "@/lib/activity/utils";
 import {
   dayBoundsMs,
   sessionShareOfDay,
   sessionsOnDay,
 } from "@/lib/activity/period-day-utils";
-import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 
 export interface TimelineSession {
   id: string;
@@ -60,12 +58,10 @@ function hasTimedOrRunningPeriodOnDay(
   dateString: string,
   nowMs: number
 ): boolean {
-  const timed = periods.filter(
-    (period) =>
-      period.activity_id === activityId &&
-      !isUntimedPeriod(period.start_time, period.end_time)
+  const forActivity = periods.filter(
+    (period) => period.activity_id === activityId
   );
-  return sessionsOnDay(timed, dateString, nowMs).length > 0;
+  return sessionsOnDay(forActivity, dateString, nowMs).length > 0;
 }
 
 function sessionFromActivity(
@@ -107,12 +103,7 @@ export function buildTimelineSessions(params: {
   const { startMs: dayStartMs, endMs: dayEndMs } = dayBoundsMs(dateString);
 
   const timedSessions = periods
-    .filter(
-      (period) =>
-        !!period.end_time &&
-        !period.deleted_at &&
-        !isUntimedPeriod(period.start_time, period.end_time)
-    )
+    .filter((period) => !!period.end_time && !period.deleted_at)
     .map((period) => {
       const activity = lookupActivityById.get(period.activity_id);
       const group = activity
@@ -150,7 +141,6 @@ export function buildTimelineSessions(params: {
   const derived: TimelineSession[] = [];
   for (const activity of lookupActivityById.values()) {
     if (activity.deleted_at) continue;
-    if (isHiddenGroupDefaultActivity(activity)) continue;
     const target =
       typeof activity.completion_target === "number"
         ? activity.completion_target

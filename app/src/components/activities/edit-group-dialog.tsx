@@ -58,13 +58,11 @@ export function EditGroupDialog({
           const updated: ActivityGroup = {
             ...group,
             name,
-            emoji: null,
             color,
             updated_at: updatedAt,
           };
           await patchActivityGroup(group.id, {
             name,
-            emoji: null,
             color,
             updated_at: updatedAt,
           });

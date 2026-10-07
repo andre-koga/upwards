@@ -10,7 +10,6 @@ import {
   isActivityArchived,
   buildGroupById,
   filterActiveActivities,
-  isHiddenGroupDefaultActivity,
   isScheduledRoutine,
 } from "@/lib/activity";
 import { Button } from "@/components/ui/button";
@@ -58,11 +57,7 @@ export default function TaskOrderPage() {
     ]);
     const groupById = buildGroupById(groups);
     return filterActiveActivities(allActivities, groupById)
-      .filter(
-        (activity) =>
-          !isHiddenGroupDefaultActivity(activity) &&
-          isScheduledRoutine(activity.routine ?? "")
-      )
+      .filter((activity) => isScheduledRoutine(activity.routine ?? ""))
       .sort(compareActivities);
   }, []);
 

@@ -1,5 +1,4 @@
 import { db, now } from "@/lib/db";
-import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 import {
   enqueueProjectionUpsertForTable,
   OPS_MANAGED_SYNC_TABLES,
@@ -47,23 +46,14 @@ async function remapDailyEntries(): Promise<void> {
     if (entry.id === canonical) continue;
 
     const existingCanonical = await db.dailyEntries.get(canonical);
-    const keep = existingCanonical && !existingCanonical.deleted_at
-      ? existingCanonical
-      : { ...entry, id: canonical };
+    const keep =
+      existingCanonical && !existingCanonical.deleted_at
+        ? existingCanonical
+        : { ...entry, id: canonical };
 
     await withSuppressedProjectionEnqueue(async () => {
       if (!existingCanonical) {
         await db.dailyEntries.add(keep);
-      }
-      const periods = await db.activityPeriods
-        .where("daily_entry_id")
-        .equals(entry.id)
-        .toArray();
-      for (const period of periods) {
-        await db.activityPeriods.update(period.id, {
-          daily_entry_id: canonical,
-          updated_at: now(),
-        });
       }
       await db.dailyEntries.delete(entry.id);
     });
@@ -80,21 +70,10 @@ async function remapDailyEntries(): Promise<void> {
   for (const [date, list] of byDate) {
     if (list.length < 2) continue;
     const canonicalId = naturalDailyEntryIdForDate(date);
-    const winner =
-      list.find((row) => row.id === canonicalId) ?? list[0]!;
+    const winner = list.find((row) => row.id === canonicalId) ?? list[0]!;
     await withSuppressedProjectionEnqueue(async () => {
       for (const extra of list) {
         if (extra.id === winner.id) continue;
-        const periods = await db.activityPeriods
-          .where("daily_entry_id")
-          .equals(extra.id)
-          .toArray();
-        for (const period of periods) {
-          await db.activityPeriods.update(period.id, {
-            daily_entry_id: winner.id,
-            updated_at: now(),
-          });
-        }
         await db.dailyEntries.delete(extra.id);
       }
     });
@@ -161,7 +140,6 @@ export async function repairNaturalIdentity(): Promise<void> {
   if (hasRepairedNaturalIdentity()) return;
   await remapDailyEntries();
   await remapJournals();
-  await dropLocalUntimedPeriods();
   markNaturalIdentityRepaired();
 }
 
@@ -183,37 +161,19 @@ export async function rekeyLocalRowsToCurrentUser(): Promise<void> {
   await remapJournals();
 }
 
-async function dropLocalUntimedPeriods(): Promise<void> {
-  const periods = await db.activityPeriods.toArray();
-  const untimedIds = periods
-    .filter((period) => isUntimedPeriod(period.start_time, period.end_time))
-    .map((period) => period.id);
-  if (untimedIds.length === 0) return;
-  await withSuppressedProjectionEnqueue(async () => {
-    await db.activityPeriods.bulkDelete(untimedIds);
-  });
-}
-
 export async function enqueueUnsyncedCurrentStateRows(): Promise<void> {
   if (hasEnqueuedCutoverRows()) return;
   const pendingIds = await listPendingEntityIds();
   for (const table of OPS_MANAGED_SYNC_TABLES) {
     const dexieTable = TABLE_MAP[table];
-    const rows: Array<Record<string, unknown>> = await (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      db[dexieTable] as any
-    ).toArray();
+    const rows: Array<Record<string, unknown>> =
+      await // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (db[dexieTable] as any).toArray();
     for (const row of rows) {
       const syncedAt = typeof row.synced_at === "string" ? row.synced_at : null;
       const updatedAt =
         typeof row.updated_at === "string" ? row.updated_at : null;
       if (syncedAt && updatedAt && updatedAt <= syncedAt) continue;
-      if (table === "activity_periods") {
-        const start = typeof row.start_time === "string" ? row.start_time : "";
-        const end = typeof row.end_time === "string" ? row.end_time : null;
-        if (end && start === end) continue;
-        if (isUntimedPeriod(start, end)) continue;
-      }
       // journal_entries is UNIQUE(user_id, entry_date) on the server, so a
       // local duplicate tombstone would collapse onto the surviving row for
       // that date and delete real content. The canonical row is enqueued by

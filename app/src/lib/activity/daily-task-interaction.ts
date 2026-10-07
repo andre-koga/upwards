@@ -1,4 +1,5 @@
 import type { Activity } from "@/lib/db/types";
+import { activityTracksTime } from "@/lib/activity/tracks-time";
 import {
   isActivityArchived,
   isDeletedAsOfActivity,
@@ -36,6 +37,8 @@ export function getDailyTaskInteractionState(
     !!activity.deleted_at || isDeletedAsOfActivity(activity, temporal);
   const isArchivedRetired =
     isActivityArchived(activity) && !activity.deleted_at;
+  // A check-only activity has no timer, whatever else is true of it.
+  const hasTimer = activityTracksTime(activity);
 
   if (isDeletedRetired) {
     return {
@@ -53,7 +56,7 @@ export function getDailyTaskInteractionState(
       retiredKind: "archived",
       canClickName: true,
       canEditCounts: true,
-      canUseTimer: true,
+      canUseTimer: hasTimer,
     };
   }
 
@@ -62,6 +65,6 @@ export function getDailyTaskInteractionState(
     retiredKind: null,
     canClickName: true,
     canEditCounts: true,
-    canUseTimer: true,
+    canUseTimer: hasTimer,
   };
 }

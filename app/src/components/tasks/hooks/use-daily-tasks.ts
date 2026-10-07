@@ -3,13 +3,7 @@ import { useTranslation } from "react-i18next";
 import { requestOldDayEdit } from "@/lib/journal/old-day-gate";
 import { db, newId, now } from "@/lib/db";
 import { toDateString, todayDateString } from "@/lib/time-utils";
-import type {
-  Activity,
-  ActivityGroup,
-  ActivityPeriod,
-  ActivityStatusEvent,
-  GroupStatusEvent,
-} from "@/lib/db/types";
+import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
 import {
   shouldShowActivity,
   formatTimerDisplay,
@@ -17,16 +11,12 @@ import {
   type TemporalVisibilityContext,
 } from "@/lib/activity";
 import { computeActivityStreaksForDate } from "@/lib/streak-utils";
-import {
-  getOrCreateDailyEntryProjection,
-  saveTimedPeriod,
-} from "@/lib/sync/mutate-synced";
+import { saveTimedPeriod } from "@/lib/sync/mutate-synced";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
 import { buildTimelineSessions } from "@/lib/activity/timeline-sessions";
 import { useDailyEntry } from "./use-daily-entry";
 import { useOneTimeTasks } from "./use-one-time-tasks";
 import { useActivityTracking } from "./use-activity-tracking";
-import { spawnRecurringMemosForToday } from "@/lib/memos/spawn-recurring-memos";
 
 interface UseDailyTasksParams {
   /** All habits (incl. soft-deleted/archived) for historical For Today + timeline. */
@@ -34,8 +24,6 @@ interface UseDailyTasksParams {
   groups: ActivityGroup[];
   lookupActivityById: Map<string, Activity>;
   lookupGroupById: Map<string, ActivityGroup>;
-  activityEventsById: Map<string, ActivityStatusEvent[]>;
-  groupEventsById: Map<string, GroupStatusEvent[]>;
   currentDate: Date;
   /** When this changes, daily entry / periods / tasks are reloaded (e.g. after sync). */
   refreshTrigger?: number;
@@ -48,8 +36,6 @@ export function useDailyTasks({
   groups,
   lookupActivityById,
   lookupGroupById,
-  activityEventsById,
-  groupEventsById,
   currentDate,
   refreshTrigger = 0,
   dayResetTick = 0,
@@ -66,21 +52,13 @@ export function useDailyTasks({
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const streakVisibilityDeps = useMemo(
-    () => ({
-      groupById: lookupGroupById,
-      activityEventsById,
-      groupEventsById,
-    }),
-    [lookupGroupById, activityEventsById, groupEventsById]
+    () => ({ groupById: lookupGroupById }),
+    [lookupGroupById]
   );
 
   const temporalForViewDate = useMemo<TemporalVisibilityContext>(
-    () => ({
-      viewDate: currentDate,
-      activityEventsById,
-      groupEventsById,
-    }),
-    [currentDate, activityEventsById, groupEventsById]
+    () => ({ viewDate: currentDate }),
+    [currentDate]
   );
 
   const {
@@ -89,10 +67,7 @@ export function useDailyTasks({
     pausedTaskIds,
     isBreakDay,
     loading,
-    currentActivityId,
-    setCurrentActivityId,
     loadDailyEntry,
-    getOrCreateDailyEntry,
     incrementTask,
     resetNeverTaskCount,
     toggleTaskPaused,
@@ -110,26 +85,15 @@ export function useDailyTasks({
     updateOneTimeTask,
   } = useOneTimeTasks(dateString);
 
-  const loadMemosWithSpawn = useCallback(async () => {
-    if (dateString === todayDateString()) {
-      await spawnRecurringMemosForToday();
-    }
-    await loadOneTimeTasks();
-  }, [dateString, loadOneTimeTasks]);
-
   const {
+    currentActivityId,
     activityPeriods,
     loadActivityPeriods,
     calculateActivityTime,
     getActivityElapsedMs: getActivityElapsedMsRaw,
     handleStartActivity,
     handleStopActivity,
-  } = useActivityTracking(
-    dateString,
-    currentActivityId,
-    setCurrentActivityId,
-    getOrCreateDailyEntry
-  );
+  } = useActivityTracking(dateString);
 
   const loadAllActivityPeriods = useCallback(async () => {
     try {
@@ -147,13 +111,13 @@ export function useDailyTasks({
     loadActivityPeriods();
     /* eslint-disable-next-line react-hooks/set-state-in-effect -- loading IndexedDB periods into local state for all-time activity totals */
     loadAllActivityPeriods();
-    void loadMemosWithSpawn();
+    void loadOneTimeTasks();
   }, [
     currentDate,
     loadDailyEntry,
     loadActivityPeriods,
     loadAllActivityPeriods,
-    loadMemosWithSpawn,
+    loadOneTimeTasks,
   ]);
 
   // When sync completes, refresh daily data without showing loading (avoids flash/scroll reset).
@@ -163,19 +127,19 @@ export function useDailyTasks({
     loadActivityPeriods();
     /* eslint-disable-next-line react-hooks/set-state-in-effect -- refreshing IndexedDB periods into local state after sync */
     loadAllActivityPeriods();
-    void loadMemosWithSpawn();
+    void loadOneTimeTasks();
   }, [
     refreshTrigger,
     loadDailyEntry,
     loadActivityPeriods,
     loadAllActivityPeriods,
-    loadMemosWithSpawn,
+    loadOneTimeTasks,
   ]);
 
   useEffect(() => {
     if (dayResetTick === 0) return;
-    void loadMemosWithSpawn();
-  }, [dayResetTick, loadMemosWithSpawn]);
+    void loadOneTimeTasks();
+  }, [dayResetTick, loadOneTimeTasks]);
 
   useEffect(() => {
     let cancelled = false;
@@ -297,22 +261,6 @@ export function useDailyTasks({
     [dailyActivities, calculateActivityTime]
   );
 
-  // Derive the truly running activity from open periods so UI
-  // doesn't depend solely on the persisted currentActivityId.
-  const resolvedCurrentActivityId = useMemo(() => {
-    const openPeriods = activityPeriods.filter((period) => !period.end_time);
-
-    if (openPeriods.length === 0) return null;
-
-    const latestOpen = [...openPeriods].sort(
-      (left, right) =>
-        new Date(right.start_time).getTime() -
-        new Date(left.start_time).getTime()
-    )[0];
-
-    return latestOpen?.activity_id ?? null;
-  }, [activityPeriods]);
-
   const hasOpenPeriod = useMemo(
     () => activityPeriods.some((period) => !period.end_time),
     [activityPeriods]
@@ -361,7 +309,7 @@ export function useDailyTasks({
   const getActivityDrawerElapsedMs = useCallback(
     (activityId: string): number => {
       const totalMs = calculateActivityTotalTime(activityId);
-      if (!isToday || resolvedCurrentActivityId !== activityId) {
+      if (!isToday || currentActivityId !== activityId) {
         return totalMs;
       }
 
@@ -376,7 +324,7 @@ export function useDailyTasks({
     [
       calculateActivityTotalTime,
       isToday,
-      resolvedCurrentActivityId,
+      currentActivityId,
       allActivityPeriods,
       nowMs,
     ]
@@ -411,11 +359,9 @@ export function useDailyTasks({
         t("oldDay.activity.summary", { ns: "journal" })
       );
       if (!confirmed) return;
-      const dailyEntry = await getOrCreateDailyEntryProjection(entryDateString);
-
       const period: ActivityPeriod = {
         id: newId(),
-        daily_entry_id: dailyEntry.id,
+        daily_entry_id: null,
         activity_id: activityId,
         start_time: startIso,
         end_time: endIso,
@@ -458,24 +404,23 @@ export function useDailyTasks({
   );
 
   const runningSession = useMemo(() => {
-    if (!resolvedCurrentActivityId) return null;
+    if (!currentActivityId) return null;
     const openPeriod = activityPeriods.find(
-      (p) => !p.end_time && p.activity_id === resolvedCurrentActivityId
+      (p) => !p.end_time && p.activity_id === currentActivityId
     );
     if (!openPeriod) return null;
-    const activity = lookupActivityById.get(resolvedCurrentActivityId);
+    const activity = lookupActivityById.get(currentActivityId);
     const groupId = activity?.group_id ?? null;
     if (!groupId) return null;
     return { sessionId: openPeriod.id, groupId };
-  }, [resolvedCurrentActivityId, activityPeriods, lookupActivityById]);
+  }, [currentActivityId, activityPeriods, lookupActivityById]);
 
   const currentActivityElapsedMs = useMemo(() => {
-    if (!resolvedCurrentActivityId) return 0;
+    if (!currentActivityId) return 0;
 
     const activePeriod = activityPeriods
       .filter(
-        (period) =>
-          period.activity_id === resolvedCurrentActivityId && !period.end_time
+        (period) => period.activity_id === currentActivityId && !period.end_time
       )
       .sort(
         (left, right) =>
@@ -489,7 +434,7 @@ export function useDailyTasks({
     // The running pill shows the session's full elapsed time, not its share
     // of this day.
     return Math.max(0, nowMs - startMs);
-  }, [resolvedCurrentActivityId, activityPeriods, nowMs]);
+  }, [currentActivityId, activityPeriods, nowMs]);
 
   return {
     isToday,
@@ -503,7 +448,7 @@ export function useDailyTasks({
     completionRate,
     totalTimeSpentMs,
     timelineSessions,
-    currentActivityId: resolvedCurrentActivityId,
+    currentActivityId,
     taskCounts,
     pausedTaskIds,
     isBreakDay,

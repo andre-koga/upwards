@@ -36,9 +36,6 @@ export function useDailyEntry(dateString: string) {
   const [pausedTaskIds, setPausedTaskIds] = useState<string[]>([]);
   const [isBreakDay, setIsBreakDay] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [currentActivityId, setCurrentActivityId] = useState<string | null>(
-    null
-  );
 
   // Refs let us compute the exact next persisted values without relying on
   // React state updater callbacks having run before awaiting persistence.
@@ -63,7 +60,6 @@ export function useDailyEntry(dateString: string) {
         setTaskCounts(nextCounts);
         setPausedTaskIds(nextPausedTaskIds);
         setIsBreakDay(normalizeBreakDay(entry ?? null));
-        setCurrentActivityId(entry?.current_activity_id || null);
         taskCountsRef.current = nextCounts;
         pausedTaskIdsRef.current = nextPausedTaskIds;
       } catch (error) {
@@ -238,8 +234,6 @@ export function useDailyEntry(dateString: string) {
     pausedTaskIds,
     isBreakDay,
     loading,
-    currentActivityId,
-    setCurrentActivityId,
     loadDailyEntry,
     getOrCreateDailyEntry,
     incrementTask,

@@ -1,21 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { db } from "@/lib/db";
-import type {
-  Activity,
-  ActivityGroup,
-  ActivityStatusEvent,
-  GroupStatusEvent,
-} from "@/lib/db/types";
+import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
   isActiveGroup,
   isActivityArchived,
   sortActivitiesByOrder,
   buildGroupById,
   filterActiveActivities,
-  buildActivityEventsByEntityId,
-  buildGroupEventsByEntityId,
-  loadAllActivityStatusEvents,
-  loadAllGroupStatusEvents,
 } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 import { syncEngine } from "@/lib/sync";
@@ -35,24 +26,10 @@ export function useTasksPageData({
   const [lookupActivities, setLookupActivities] = useState<Activity[]>([]);
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [lookupGroups, setLookupGroups] = useState<ActivityGroup[]>([]);
-  const [activityStatusEvents, setActivityStatusEvents] = useState<
-    ActivityStatusEvent[]
-  >([]);
-  const [groupStatusEvents, setGroupStatusEvents] = useState<
-    GroupStatusEvent[]
-  >([]);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const prevSyncingRef = useRef(false);
 
-  const activityEventsById = useMemo(
-    () => buildActivityEventsByEntityId(activityStatusEvents),
-    [activityStatusEvents]
-  );
-  const groupEventsById = useMemo(
-    () => buildGroupEventsByEntityId(groupStatusEvents),
-    [groupStatusEvents]
-  );
   const lookupActivityById = useMemo(
     () => new Map(lookupActivities.map((a) => [a.id, a])),
     [lookupActivities]
@@ -65,30 +42,25 @@ export function useTasksPageData({
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [allActivities, allGroups, activeGroups, actEvents, grpEvents] =
-        await Promise.all([
-          db.activities.toArray(),
-          db.activityGroups.toArray(),
-          db.activityGroups
-            .filter((g) => isActiveGroup(g))
-            .sortBy("created_at"),
-          loadAllActivityStatusEvents(),
-          loadAllGroupStatusEvents(),
-        ]);
+      const [allActivities, allGroups, activeGroups] = await Promise.all([
+        db.activities.toArray(),
+        db.activityGroups.toArray(),
+        db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
+      ]);
       const groupById = buildGroupById(activeGroups);
       setLookupActivities(sortActivitiesByOrder(allActivities));
       setActivities(
         sortActivitiesByOrder(
           filterActiveActivities(
-            allActivities.filter((a) => !a.deleted_at && !isActivityArchived(a)),
+            allActivities.filter(
+              (a) => !a.deleted_at && !isActivityArchived(a)
+            ),
             groupById
           )
         )
       );
       setLookupGroups(allGroups);
       setGroups(activeGroups);
-      setActivityStatusEvents(actEvents);
-      setGroupStatusEvents(grpEvents);
     } catch (error) {
       logError("Error loading data", error);
     } finally {
@@ -98,30 +70,25 @@ export function useTasksPageData({
 
   const loadDataInBackground = useCallback(async () => {
     try {
-      const [allActivities, allGroups, activeGroups, actEvents, grpEvents] =
-        await Promise.all([
-          db.activities.toArray(),
-          db.activityGroups.toArray(),
-          db.activityGroups
-            .filter((g) => isActiveGroup(g))
-            .sortBy("created_at"),
-          loadAllActivityStatusEvents(),
-          loadAllGroupStatusEvents(),
-        ]);
+      const [allActivities, allGroups, activeGroups] = await Promise.all([
+        db.activities.toArray(),
+        db.activityGroups.toArray(),
+        db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
+      ]);
       const groupById = buildGroupById(activeGroups);
       setLookupActivities(sortActivitiesByOrder(allActivities));
       setActivities(
         sortActivitiesByOrder(
           filterActiveActivities(
-            allActivities.filter((a) => !a.deleted_at && !isActivityArchived(a)),
+            allActivities.filter(
+              (a) => !a.deleted_at && !isActivityArchived(a)
+            ),
             groupById
           )
         )
       );
       setLookupGroups(allGroups);
       setGroups(activeGroups);
-      setActivityStatusEvents(actEvents);
-      setGroupStatusEvents(grpEvents);
     } catch (error) {
       logError("Error loading data", error);
     }
@@ -168,8 +135,6 @@ export function useTasksPageData({
     lookupActivities,
     groups,
     lookupGroups,
-    activityEventsById,
-    groupEventsById,
     lookupActivityById,
     lookupGroupById,
     loading,

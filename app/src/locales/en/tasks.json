@@ -9,8 +9,6 @@
     "pin": "Pin memo",
     "unpin": "Unpin memo",
     "due": "Due {{date}}",
-    "recurring": "Recurring",
-    "recurringMemo": "Recurring memo",
     "pinnedMarkIncomplete": "Pinned memo — mark incomplete",
     "pinnedMarkComplete": "Pinned memo — mark complete",
     "pinnedMemo": "Pinned memo",
@@ -40,18 +38,5 @@
   },
   "addTask": {
     "trigger": "Add one-time task"
-  },
-  "recurringMemo": {
-    "editTitle": "Edit recurring memo",
-    "newTitle": "New recurring memo",
-    "titleLabel": "Memo title",
-    "titlePlaceholder": "e.g. meds",
-    "repeat": "Repeat",
-    "paused": "Paused"
-  },
-  "recurringMemos": {
-    "title": "Recurring Memos",
-    "titleWithCount": "Recurring Memos ({{count}})",
-    "empty": "No recurring memos yet"
   }
 }

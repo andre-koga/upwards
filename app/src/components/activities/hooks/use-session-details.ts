@@ -1,15 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { db, now } from "@/lib/db";
-import type {
-  Activity,
-  ActivityGroup,
-  ActivityPeriod,
-  DailyEntry,
-} from "@/lib/db/types";
-import {
-  getOrCreateHiddenGroupDefaultActivity,
-  isHiddenGroupDefaultActivity,
-} from "@/lib/activity";
+import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
+import { activityTracksTime } from "@/lib/activity/tracks-time";
 import { dayBoundsMs } from "@/lib/activity/period-day-utils";
 import {
   toDateString,
@@ -24,7 +16,6 @@ import {
 } from "@/lib/time-utils";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import { normalizeSessionNote } from "@/lib/activity/session-note";
-import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 import { useTranslation } from "react-i18next";
 import { requestOldDayEdit } from "@/lib/journal/old-day-gate";
 import {
@@ -32,17 +23,13 @@ import {
   applyCountDelta,
   getOrCreateDailyEntryProjection,
   patchTimedPeriod,
-  setCurrentActivityLocal,
 } from "@/lib/sync/mutate-synced";
 import { parseDerivedUntimedSessionId } from "@/lib/activity/timeline-sessions";
-
-const NONE_ACTIVITY_VALUE = "__none__";
 
 interface SessionDetailsData {
   group: ActivityGroup;
   activity: Activity | null;
   period: ActivityPeriod;
-  entry: DailyEntry | undefined;
   derived?: boolean;
   derivedDate?: string;
 }
@@ -135,7 +122,7 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
             : new Date(dayBoundsMs(derived.date).startMs).toISOString();
         const virtualPeriod: ActivityPeriod = {
           id: sessionId,
-          daily_entry_id: entry?.id ?? "",
+          daily_entry_id: null,
           activity_id: derived.activityId,
           start_time: instant,
           end_time: instant,
@@ -147,26 +134,14 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         };
         setDetails({
           group,
-          activity:
-            activity &&
-            !activity.deleted_at &&
-            !isHiddenGroupDefaultActivity(activity)
-              ? activity
-              : null,
+          activity: activity && !activity.deleted_at ? activity : null,
           period: virtualPeriod,
-          entry,
           derived: true,
           derivedDate: derived.date,
         });
-        setGroupActivities(
-          activities.filter((item) => !isHiddenGroupDefaultActivity(item))
-        );
+        setGroupActivities(activities);
         setSelectedActivityId(
-          activity &&
-            !activity.deleted_at &&
-            !isHiddenGroupDefaultActivity(activity)
-            ? activity.id
-            : NONE_ACTIVITY_VALUE
+          activity && !activity.deleted_at ? activity.id : ""
         );
         setSelectedDate(fromDateString(derived.date));
         setStartTime("");
@@ -192,39 +167,31 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
         return;
       }
 
-      const [entry, activities] = await Promise.all([
-        db.dailyEntries.get(period.daily_entry_id),
-        db.activities
-          .filter((item) => item.group_id === group.id && !item.deleted_at)
-          .sortBy("created_at"),
-      ]);
+      // Timed sessions go on activities that have a timer; check-only ones
+      // can't be picked. The session's own activity stays listed regardless,
+      // so editing it never loses the current choice.
+      const activities = await db.activities
+        .filter(
+          (item) =>
+            item.group_id === group.id &&
+            !item.deleted_at &&
+            (activityTracksTime(item) || item.id === period.activity_id)
+        )
+        .sortBy("created_at");
 
       const logicalDateStr = toDateString(new Date(period.start_time));
 
       setDetails({
         group,
-        activity:
-          activity &&
-          !activity.deleted_at &&
-          !isHiddenGroupDefaultActivity(activity)
-            ? activity
-            : null,
+        activity: activity && !activity.deleted_at ? activity : null,
         period,
-        entry,
       });
-      setGroupActivities(
-        activities.filter((item) => !isHiddenGroupDefaultActivity(item))
-      );
+      setGroupActivities(activities);
       setSelectedActivityId(
-        activity &&
-          !activity.deleted_at &&
-          !isHiddenGroupDefaultActivity(activity)
-          ? activity.id
-          : NONE_ACTIVITY_VALUE
+        activity && !activity.deleted_at ? activity.id : ""
       );
       setSelectedDate(fromDateString(logicalDateStr));
-      const untimed = isUntimedPeriod(period.start_time, period.end_time);
-      setStartTime(untimed ? "" : formatTimeInput(period.start_time));
+      setStartTime(formatTimeInput(period.start_time));
       setEndTime(formatTimeInput(period.end_time));
       setNote(period.note ?? "");
       setLoading(false);
@@ -267,10 +234,10 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     }
   }, [details, finish, sessionId, t]);
 
-  const isUntimedSession =
-    details != null &&
-    (details.derived === true ||
-      isUntimedPeriod(details.period.start_time, details.period.end_time));
+  // Only completions derived from a check-only activity have a single instant;
+  // real sessions always have a span (zero-length ones were folded into
+  // completion times by the cutover).
+  const isUntimedSession = details?.derived === true;
 
   const handleSave = useCallback(async () => {
     if (!sessionId || !details) return;
@@ -320,11 +287,16 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       nextEndIso = resolved.endIso;
     }
 
+    if (!selectedActivityId) {
+      setError(t("sessionDetails.errorActivityRequired"));
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
 
-      // Ask before writing anything, including the hidden default activity.
+      // Ask before writing anything.
       const entryDateString = toDateString(new Date(nextStartIso));
       const { confirmed } = await requestOldDayEdit(
         entryDateString,
@@ -332,16 +304,12 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       );
       if (!confirmed) return;
 
-      const nextActivityId =
-        selectedActivityId === NONE_ACTIVITY_VALUE
-          ? (await getOrCreateHiddenGroupDefaultActivity(details.group)).id
-          : selectedActivityId;
-
-      const entry = await getOrCreateDailyEntryProjection(entryDateString);
+      const nextActivityId = selectedActivityId;
       const n = now();
       const sessionNote = normalizeSessionNote(note);
 
       if (details.derived) {
+        const entry = await getOrCreateDailyEntryProjection(entryDateString);
         const date = details.derivedDate ?? entryDateString;
         const currentCount = entry.task_counts?.[nextActivityId] ?? 0;
         await applyCountDelta({
@@ -359,24 +327,11 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
       } else {
         await patchTimedPeriod(sessionId, {
           activity_id: nextActivityId,
-          daily_entry_id: entry.id,
           start_time: nextStartIso,
           end_time: nextEndIso,
           note: sessionNote,
           updated_at: n,
         });
-      }
-
-      if (isRunning) {
-        await setCurrentActivityLocal(entryDateString, nextActivityId);
-        if (details.period.daily_entry_id !== entry.id) {
-          const oldEntry =
-            details.entry ??
-            (await db.dailyEntries.get(details.period.daily_entry_id));
-          if (oldEntry) {
-            await setCurrentActivityLocal(oldEntry.date, null);
-          }
-        }
       }
 
       onUpdatedRef.current?.();
@@ -426,7 +381,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   }, []);
 
   return {
-    NONE_ACTIVITY_VALUE,
     loading,
     saving,
     error,

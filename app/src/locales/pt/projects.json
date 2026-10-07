@@ -98,6 +98,13 @@
     "errorEndRequired": "Informe um horário de fim.",
     "errorStartRequired": "Informe um horário de início.",
     "errorSameTime": "O horário de fim deve ser diferente do horário de início.",
-    "spanWarning": "Esta sessão vai de {{startDay}} a {{endDay}} (passa da meia-noite)."
+    "spanWarning": "Esta sessão vai de {{startDay}} a {{endDay}} (passa da meia-noite).",
+    "errorActivityRequired": "Escolha uma atividade para esta sessão."
+  },
+  "activityForm": {
+    "tracksTime": {
+      "label": "Marcar tempo",
+      "hint": "Mostra um cronômetro nesta atividade. Desative para o que você só marca como feito, como remédios."
+    }
   }
 }

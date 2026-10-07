@@ -25,9 +25,9 @@ export function NewGroupDialog({
         const createdGroup: ActivityGroup = {
           id: newId(),
           name,
-          emoji: null,
           color,
           is_archived: false,
+          archived_at: null,
           order_index: null,
           created_at: timestamp,
           updated_at: timestamp,

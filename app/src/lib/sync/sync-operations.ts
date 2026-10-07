@@ -461,7 +461,9 @@ async function submitPendingOperationBatch(
 
   recordObservedDataEpoch(readDataEpoch(data));
   const results = (
-    Array.isArray(data) ? data : ((data as { results?: unknown })?.results ?? [])
+    Array.isArray(data)
+      ? data
+      : ((data as { results?: unknown })?.results ?? [])
   ) as SubmitSyncOperationResult[];
   const pendingByOperationId = new Map(
     pending.map((row) => [row.operation_id, row])
@@ -592,13 +594,10 @@ async function submitPendingOperationBatch(
 const SUBMIT_ENTITY_PRIORITY: Record<string, number> = {
   activity_group: 0,
   activity: 1,
-  recurring_memo: 2,
   journal_entry: 3,
   journal_entry_revision: 3,
   one_time_task: 4,
-  activity_status_event: 5,
-  group_status_event: 6,
-  activity_period: 7,
+  activity_period: 5,
 };
 
 function comparePendingForSubmit(

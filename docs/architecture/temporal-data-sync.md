@@ -489,9 +489,19 @@ Implementation (`app/src/lib/backup/`):
   delta. An import never lowers a count; lowering one is an ordinary edit.
 - **Current-state rows** (activities, groups, tasks, memories, compass,
   knowledge) are inserted when missing and updated only when the backup's
-  `updated_at` is newer. Status events are append-only and union by ID.
-  Pauses, break days, completion times, and notes are filled only when the
+  `updated_at` is newer. Pauses, break days, completion times, and notes are filled only when the
   account has none for that day.
+- **Files from before the cutover (format 5)** are converted on import by
+  `lib/backup/migrators/v5-to-v6.ts`, which applies the server migration's
+  rules: status events become `archived_at` / `deleted_at`, recurring memos
+  become check-only activities in a "Routines" group, unnamed group-default
+  activities are named and (when empty) deleted, zero-length sessions fold into
+  completion times, and sessions left running for over a day close after an
+  hour. Where the server used `now()`, the converter uses the file's
+  `exported_at`, so converting a file twice gives identical rows. Converted
+  routines get the same UUIDv5 ids the server gave them, so restoring into the
+  same account lands on the existing rows instead of duplicating them. The
+  retired tables are no longer exported (format 6).
 - **Journal conflicts** from a backup are ordinary journal conflicts with
   `source: "backup"` and a content fingerprint, so the same difference is
   recorded once. Resolving uses the device's synced row as the base revision.

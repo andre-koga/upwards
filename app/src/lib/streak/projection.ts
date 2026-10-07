@@ -24,7 +24,6 @@ function syntheticEntryFromOverride(override: StreakEntryOverride): DailyEntry {
     task_counts: override.taskCounts,
     paused_task_ids: override.pausedTaskIds,
     is_break_day: override.isBreakDay,
-    current_activity_id: null,
     completion_notes: null,
     completion_times: null,
     created_at: "",

@@ -1,23 +1,13 @@
 import i18n from "@/lib/i18n";
-import { db, now } from "@/lib/db";
-import type {
-  Activity,
-  ActivityGroup,
-  ActivityStatusEvent,
-  GroupStatusEvent,
-} from "@/lib/db/types";
+import { db } from "@/lib/db";
+import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { toDateString, todayDateString } from "@/lib/time-utils";
-import { isActivityStatusAsOf, isGroupStatusAsOf } from "./status-events";
 import {
-  isHiddenGroupDefaultActivity,
-  getOrCreateHiddenGroupDefaultActivity,
-} from "./hidden-default";
-import {
-  patchTimedPeriod,
-  setCurrentActivityLocal,
-} from "@/lib/sync/mutate-synced";
-
-export { isHiddenGroupDefaultActivity, getOrCreateHiddenGroupDefaultActivity };
+  isArchivedAsOf as entityArchivedAsOf,
+  isArchivedNow,
+  isDeletedAsOf as entityDeletedAsOf,
+} from "./lifecycle";
+import { closeOpenPeriods } from "./periods";
 
 type ParsedRoutine =
   | { type: "daily" }
@@ -129,57 +119,53 @@ export function getGroup(
   return groups.find((g) => g.id === groupId);
 }
 
-/** An activity is archived when its own flag is set, independent of the group. */
+/** A group's archive hides its activities, independent of their own state. */
 function isArchivedViaGroup(group: ActivityGroup | undefined | null): boolean {
-  return !!group?.is_archived && !group?.deleted_at;
+  return !!group && isArchivedNow(group);
 }
 
+/**
+ * What a day's list needs to decide visibility. Lifecycle is a timestamp on
+ * each row (`archived_at`, `deleted_at`), so the only context is which day.
+ */
 export interface TemporalVisibilityContext {
   viewDate: Date;
-  activityEventsById: Map<string, ActivityStatusEvent[]>;
-  groupEventsById: Map<string, GroupStatusEvent[]>;
 }
 
 function isArchivedViaGroupAsOf(
   group: ActivityGroup | undefined | null,
   ctx: TemporalVisibilityContext
 ): boolean {
-  if (!group) return false;
-  const events = ctx.groupEventsById.get(group.id) ?? [];
-  return isGroupStatusAsOf(events, "archived", ctx.viewDate, group);
+  return !!group && entityArchivedAsOf(group, ctx.viewDate);
 }
 
 export function isDeletedAsOfActivity(
   activity: Activity,
   ctx: TemporalVisibilityContext
 ): boolean {
-  const events = ctx.activityEventsById.get(activity.id) ?? [];
-  return isActivityStatusAsOf(events, "deleted", ctx.viewDate, activity);
+  return entityDeletedAsOf(activity, ctx.viewDate);
 }
 
 function isDeletedAsOfGroup(
   group: ActivityGroup | undefined | null,
   ctx: TemporalVisibilityContext
 ): boolean {
-  if (!group) return false;
-  const events = ctx.groupEventsById.get(group.id) ?? [];
-  return isGroupStatusAsOf(events, "deleted", ctx.viewDate, group);
+  return !!group && entityDeletedAsOf(group, ctx.viewDate);
 }
 
 export function isActivityArchived(activity: Activity): boolean {
-  return activity.is_archived === true || !!activity.completed_at;
+  return Boolean(activity.archived_at);
 }
 
 function isArchivedAsOf(
   activity: Activity,
   ctx: TemporalVisibilityContext
 ): boolean {
-  const events = ctx.activityEventsById.get(activity.id) ?? [];
-  return isActivityStatusAsOf(events, "archived", ctx.viewDate, activity);
+  return entityArchivedAsOf(activity, ctx.viewDate);
 }
 
 export function isActiveGroup(g: ActivityGroup): boolean {
-  return !g.is_archived && !g.deleted_at;
+  return !g.archived_at && !g.deleted_at;
 }
 
 export function buildGroupById(
@@ -189,7 +175,7 @@ export function buildGroupById(
 }
 
 /**
- * Filter activities to those that are active (not completed, not deleted) AND
+ * Filter activities to those that are active (not archived, not deleted) AND
  * whose parent group is also active (not archived, not deleted).
  */
 export function filterActiveActivities(
@@ -240,40 +226,25 @@ export async function stopCurrentActivity(options: {
   groupId?: string;
 }): Promise<void> {
   try {
-    const today = todayDateString();
-    const dailyEntry = await db.dailyEntries
-      .where("date")
-      .equals(today)
-      .filter((e) => !e.deleted_at)
-      .first();
-    if (!dailyEntry || !dailyEntry.current_activity_id) return;
+    const open = await db.activityPeriods
+      .filter((p) => !p.end_time && !p.deleted_at)
+      .toArray();
+    if (open.length === 0) return;
 
     let shouldStop = false;
     if (options.activityId) {
-      shouldStop = dailyEntry.current_activity_id === options.activityId;
+      shouldStop = open.some((p) => p.activity_id === options.activityId);
     } else if (options.groupId) {
-      const currentActivity = await db.activities.get(
-        dailyEntry.current_activity_id
+      const activities = await db.activities.bulkGet(
+        open.map((p) => p.activity_id)
       );
-      shouldStop = currentActivity?.group_id === options.groupId;
+      shouldStop = activities.some(
+        (activity) => activity?.group_id === options.groupId
+      );
     }
-
     if (!shouldStop) return;
 
-    const n = now();
-    const currentPeriod = await db.activityPeriods
-      .where("daily_entry_id")
-      .equals(dailyEntry.id)
-      .filter((p) => !p.end_time && !p.deleted_at)
-      .first();
-
-    if (currentPeriod) {
-      await patchTimedPeriod(currentPeriod.id, {
-        end_time: n,
-        updated_at: n,
-      });
-    }
-    await setCurrentActivityLocal(today, null);
+    await closeOpenPeriods();
   } catch (error) {
     console.error("Error stopping current activity:", error);
   }
@@ -344,7 +315,8 @@ export function isRoutineDueOnDate(
 
 /**
  * Determines whether an activity should appear on For Today for a viewed date.
- * Lifecycle uses status history; schedule/rules use the current activity row.
+ * Lifecycle is the archived/deleted timestamps on the row, so a past day still
+ * shows an item that existed then; schedule/rules use the current row.
  */
 export function shouldShowActivity(
   activity: Activity,
@@ -352,8 +324,6 @@ export function shouldShowActivity(
   group: ActivityGroup | undefined | null,
   temporal: TemporalVisibilityContext
 ): boolean {
-  if (isHiddenGroupDefaultActivity(activity)) return false;
-
   if (isArchivedAsOf(activity, temporal)) return false;
   if (isDeletedAsOfActivity(activity, temporal)) return false;
   if (isArchivedViaGroupAsOf(group, temporal)) return false;

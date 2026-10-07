@@ -1,5 +1,4 @@
 import { normalizeSessionNote } from "@/lib/activity/session-note";
-import { isUntimedPeriod } from "@/lib/activity/untimed-period";
 import {
   normalizeLegacyLocationRoute,
   normalizeLegacyVideoPath,
@@ -14,14 +13,19 @@ import type {
 } from "@/lib/db/types";
 import {
   BACKUP_FORMAT,
-  BACKUP_FORMAT_VERSION,
   BACKUP_TABLE_NAMES,
   emptyBackupTables,
-  type BackupDocument,
-  type BackupTables,
 } from "../format";
+import type { BackupDocumentV5, BackupTablesV5 } from "./v5-to-v6";
 
 type LegacyRow = Record<string, unknown>;
+
+/** Closed period whose start and end are the same instant: how old builds stored a completion. */
+function isUntimedPeriod(startTime: string, endTime: string | null): boolean {
+  if (!endTime) return false;
+  const startMs = new Date(startTime).getTime();
+  return Number.isFinite(startMs) && startMs === new Date(endTime).getTime();
+}
 
 const STORAGE_OWNER_RE =
   /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\//i;
@@ -86,7 +90,9 @@ function foldUntimedPeriods(
       timed.push(period);
       continue;
     }
-    const entry = byId.get(period.daily_entry_id);
+    const entry = period.daily_entry_id
+      ? byId.get(period.daily_entry_id)
+      : undefined;
     if (!entry || period.deleted_at) continue;
     const times = { ...(entry.completion_times ?? {}) };
     if (!times[period.activity_id]) {
@@ -103,7 +109,7 @@ function foldUntimedPeriods(
   return timed;
 }
 
-function inferSourceUserKey(tables: BackupTables): string | null {
+function inferSourceUserKey(tables: BackupTablesV5): string | null {
   const paths: string[] = [];
   for (const entry of tables.journalEntries) {
     paths.push(...(entry.photo_paths ?? []));
@@ -122,9 +128,19 @@ function inferSourceUserKey(tables: BackupTables): string | null {
  * Format 4 and earlier: camelCase table arrays at the top level plus
  * `exportedAt`. Versions 1–3 share the layout with fewer tables.
  */
-export function migrateV4ToV5(raw: LegacyRow): BackupDocument {
-  const tables = emptyBackupTables();
-  for (const name of BACKUP_TABLE_NAMES) {
+export function migrateV4ToV5(raw: LegacyRow): BackupDocumentV5 {
+  const tables: BackupTablesV5 = {
+    ...emptyBackupTables(),
+    recurringMemos: [],
+    activityStatusEvents: [],
+    groupStatusEvents: [],
+  };
+  for (const name of [
+    ...BACKUP_TABLE_NAMES,
+    "recurringMemos",
+    "activityStatusEvents",
+    "groupStatusEvents",
+  ] as const) {
     (tables[name] as unknown[]) = rows(raw[name]);
   }
 
@@ -157,7 +173,7 @@ export function migrateV4ToV5(raw: LegacyRow): BackupDocument {
 
   return {
     format: BACKUP_FORMAT,
-    format_version: BACKUP_FORMAT_VERSION,
+    format_version: 5,
     exported_at: str(raw.exportedAt) ?? new Date(0).toISOString(),
     source_user_key: inferSourceUserKey(tables),
     settings: null,
