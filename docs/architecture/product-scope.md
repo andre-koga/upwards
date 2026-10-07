@@ -369,14 +369,20 @@ photos.
     switch of its own: clearing the date removes it.
   - **Backup.** Included in the backup settings and filled in only when the
     device has none, like the other account settings.
-  - **Open decisions, to settle when this is built:**
-    - A 29 February birthday: show on 28 February in years without a leap day
-      (proposed), or on 1 March.
-    - Whether the birthday also appears on the Today screen on the day, or only
-      in the journal feed (proposed: feed only, until the redesigned Today in
-      B2 decides how special days look).
-    - Whether to offer a way to hide the age ("Your birthday" without the
-      number) for people who would rather not see it.
+  - **Shipped in A12.** The birth date is a field in Settings › Holidays, with
+    year and month dropdowns from 1900 and no future dates; it reads with its
+    year ("17 May 1990"). The banner joins the holiday banner when both fall on
+    one day ("Your 32nd birthday · Carnival"), birthday first, and archive
+    search finds a day by "birthday" or its ordinal ("36th").
+  - **Decided:** a 29 February birthday is shown on 28 February in years without
+    a leap day (never 1 March), so it appears every year. The day of birth and
+    earlier years show nothing. The birthday appears in the journal feed only;
+    the Today screen decides how special days look in B2. Hiding the age is
+    not offered: the age is the point of knowing the year, and clearing the date
+    removes the banner entirely.
+  - **Not included:** the birthday does not depend on a holiday calendar, so it
+    shows even when every calendar is off, and backups restore it only where the
+    device has none.
 - **Holiday banners get images too**, generated once with AI as static assets in
   one art direction shared with the month set: warm, natural, photographic or
   painterly, muted enough to sit on `--paper`, no text in the image, no pastel or

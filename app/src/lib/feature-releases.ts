@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-07-your-birthday",
+    date: "2026-10-07",
+    title: "Your birthday in the journal",
+    bullets: [
+      "Add your birthday in Settings and it shows up in your journal every year, like a holiday, with your age.",
+      "Only you can see it. It isn't shared with anyone or sent to AI.",
+      "If your birthday is on 29 February, it shows on 28 February in years without a leap day.",
+    ],
+  },
+  {
     id: "2026-10-06-holiday-calendars",
     date: "2026-10-06",
     title: "Holidays for where you are",

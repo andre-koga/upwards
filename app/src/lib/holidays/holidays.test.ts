@@ -3,6 +3,7 @@ import {
   defaultCalendars,
   getHolidayName,
   getHolidays,
+  getSpecialDayName,
   resolveCalendars,
   toggleCalendar,
 } from "./index";
@@ -197,5 +198,57 @@ describe("toggleCalendar", () => {
     const none = toggleCalendar(["US"], "US", false);
     expect(none).toEqual([]);
     expect(resolveCalendars(none, "en-US")).toEqual([]);
+  });
+});
+
+describe("getSpecialDayName", () => {
+  const wording = {
+    withAge: (ordinal: string) => `Your ${ordinal} birthday`,
+    plain: "Your birthday",
+  };
+  const birthday = (value: string | null) => ({ birthday: value, wording });
+
+  it("announces a birthday on an ordinary day", () => {
+    expect(
+      getSpecialDayName("2026-05-17", "en", ["US"], birthday("1990-05-17"))
+    ).toBe("Your 36th birthday");
+  });
+
+  it("shows nothing on a day that is neither", () => {
+    expect(
+      getSpecialDayName("2026-05-18", "en", ["US"], birthday("1990-05-17"))
+    ).toBeNull();
+  });
+
+  it("joins a birthday that falls on a holiday, birthday first", () => {
+    expect(
+      getSpecialDayName("2026-12-25", "en", ["US"], birthday("1990-12-25"))
+    ).toBe("Your 36th birthday · Christmas Day");
+  });
+
+  it("shows the birthday even when the user follows no holiday calendar", () => {
+    expect(
+      getSpecialDayName("2026-12-25", "en", [], birthday("1990-12-25"))
+    ).toBe("Your 36th birthday");
+  });
+
+  it("is the plain holiday behaviour when no birthday is given or set", () => {
+    expect(getSpecialDayName("2026-12-25", "en", ["US"])).toBe("Christmas Day");
+    expect(getSpecialDayName("2026-12-25", "en", ["US"], birthday(null))).toBe(
+      "Christmas Day"
+    );
+  });
+
+  it("uses the reader's language for both parts", () => {
+    const pt = {
+      birthday: "1990-12-25",
+      wording: {
+        withAge: (ordinal: string) => `Seu ${ordinal} aniversário`,
+        plain: "Seu aniversário",
+      },
+    };
+    expect(getSpecialDayName("2026-12-25", "pt", ["US"], pt)).toBe(
+      "Seu 36º aniversário · Natal"
+    );
   });
 });

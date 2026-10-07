@@ -134,6 +134,7 @@ describe("adoptRemoteAccountSettings", () => {
       dailyClip: false,
       holidayCalendars: ["US", "BR"],
       hemisphere: "south",
+      birthday: null,
     });
   });
 
@@ -166,5 +167,50 @@ describe("clearAccountSettings", () => {
     clearAccountSettings();
     expect(getAccountSettings()).toEqual(EMPTY_ACCOUNT_SETTINGS);
     expect(isAutoLocationOn()).toBe(false);
+  });
+});
+
+describe("birthday", () => {
+  it("starts unset", () => {
+    expect(getAccountSettings().birthday).toBeNull();
+  });
+
+  it("is saved to the account as a date", () => {
+    updateAccountSettings({ birthday: "1990-05-17" });
+    expect(getAccountSettings().birthday).toBe("1990-05-17");
+    expect(auth.upserts[0]).toMatchObject({ birthday: "1990-05-17" });
+  });
+
+  it("can be cleared, which saves null rather than leaving the old date", () => {
+    updateAccountSettings({ birthday: "1990-05-17" });
+    auth.upserts = [];
+    updateAccountSettings({ birthday: null });
+    expect(getAccountSettings().birthday).toBeNull();
+    expect(auth.upserts[0]).toMatchObject({ birthday: null });
+  });
+
+  it("ignores a value from the server that is not a real date", async () => {
+    await adoptRemoteAccountSettings({ birthday: "1994-02-29" });
+    expect(getAccountSettings().birthday).toBeNull();
+    await adoptRemoteAccountSettings({ birthday: "soon" });
+    expect(getAccountSettings().birthday).toBeNull();
+  });
+
+  it("is taken from the account, and uploaded when only this device has it", async () => {
+    await adoptRemoteAccountSettings({ birthday: "1990-05-17" });
+    expect(getAccountSettings().birthday).toBe("1990-05-17");
+
+    clearAccountSettings();
+    updateAccountSettings({ birthday: "1985-01-02" });
+    auth.upserts = [];
+    await adoptRemoteAccountSettings({ birthday: null });
+    expect(getAccountSettings().birthday).toBe("1985-01-02");
+    expect(auth.upserts[0]).toMatchObject({ birthday: "1985-01-02" });
+  });
+
+  it("is forgotten when the account changes", () => {
+    updateAccountSettings({ birthday: "1990-05-17" });
+    clearAccountSettings();
+    expect(getAccountSettings().birthday).toBeNull();
   });
 });

@@ -359,6 +359,12 @@
       "auto": "Automático ({{season}})",
       "north": "Hemisfério Norte",
       "south": "Hemisfério Sul"
+    },
+    "birthday": {
+      "label": "Seu aniversário",
+      "hint": "Aparece como uma faixa no seu diário no seu aniversário de cada ano, com a sua idade. Só você vê, e nunca é compartilhado nem enviado à IA.",
+      "placeholder": "Não definido",
+      "clear": "Remover aniversário"
     }
   }
 }

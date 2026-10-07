@@ -110,4 +110,59 @@ describe("user_profiles account settings", () => {
       .eq("user_id", user.userId);
     expect(error).not.toBeNull();
   });
+
+  it("stores a birthday as a plain date and leaves it null until entered", async () => {
+    const fresh = await createIsolatedUser();
+    await fresh.deviceA
+      .from("user_profiles")
+      .upsert({ user_id: fresh.userId, locale: "en" }, { onConflict: "user_id" });
+    const before = await fresh.deviceA
+      .from("user_profiles")
+      .select("birthday")
+      .eq("user_id", fresh.userId)
+      .single();
+    expect(before.data?.birthday).toBeNull();
+
+    const { error } = await fresh.deviceA
+      .from("user_profiles")
+      .update({ birthday: "1994-02-29" })
+      .eq("user_id", fresh.userId);
+    // 1994 is not a leap year, so Postgres refuses the date outright.
+    expect(error).not.toBeNull();
+
+    await fresh.deviceA
+      .from("user_profiles")
+      .update({ birthday: "1996-02-29" })
+      .eq("user_id", fresh.userId);
+    const after = await fresh.deviceB
+      .from("user_profiles")
+      .select("birthday")
+      .eq("user_id", fresh.userId)
+      .single();
+    expect(after.data?.birthday).toBe("1996-02-29");
+  });
+
+  it("rejects a birthday in the future or before 1900", async () => {
+    const future = new Date();
+    future.setFullYear(future.getFullYear() + 1);
+    for (const bad of [future.toISOString().slice(0, 10), "1899-12-31"]) {
+      const { error } = await user.deviceA
+        .from("user_profiles")
+        .update({ birthday: bad })
+        .eq("user_id", user.userId);
+      expect(error, bad).not.toBeNull();
+    }
+  });
+
+  it("keeps a birthday private to its owner", async () => {
+    await other.deviceA
+      .from("user_profiles")
+      .update({ birthday: "1990-05-17" })
+      .eq("user_id", other.userId);
+    const { data } = await user.deviceA
+      .from("user_profiles")
+      .select("birthday")
+      .eq("user_id", other.userId);
+    expect(data ?? []).toHaveLength(0);
+  });
 });

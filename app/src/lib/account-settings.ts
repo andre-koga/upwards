@@ -1,5 +1,6 @@
 import { getCachedUserId, supabase } from "@/lib/supabase";
 import { now } from "@/lib/db";
+import { parseBirthday } from "@/lib/holidays/birthday";
 
 /**
  * Account-level opt-ins (product-scope.md §2.5, §2.7, §2.8). They follow the
@@ -17,6 +18,8 @@ export interface AccountSettings {
   dailyClip: boolean | null;
   holidayCalendars: string[] | null;
   hemisphere: Hemisphere | null;
+  /** Your own birth date, `YYYY-MM-DD`. Personal data: never sent to the AI. */
+  birthday: string | null;
 }
 
 export const EMPTY_ACCOUNT_SETTINGS: AccountSettings = {
@@ -24,6 +27,7 @@ export const EMPTY_ACCOUNT_SETTINGS: AccountSettings = {
   dailyClip: null,
   holidayCalendars: null,
   hemisphere: null,
+  birthday: null,
 };
 
 const STORAGE_KEY = "upwards-account-settings";
@@ -34,10 +38,11 @@ export interface AccountSettingsRow {
   daily_clip: boolean | null;
   holiday_calendars: string[] | null;
   hemisphere: Hemisphere | null;
+  birthday: string | null;
 }
 
 export const ACCOUNT_SETTINGS_COLUMNS =
-  "auto_location,daily_clip,holiday_calendars,hemisphere";
+  "auto_location,daily_clip,holiday_calendars,hemisphere,birthday";
 
 export function toRow(
   settings: Partial<AccountSettings>
@@ -49,6 +54,7 @@ export function toRow(
   if (settings.holidayCalendars !== undefined)
     row.holiday_calendars = settings.holidayCalendars;
   if (settings.hemisphere !== undefined) row.hemisphere = settings.hemisphere;
+  if (settings.birthday !== undefined) row.birthday = settings.birthday;
   return row;
 }
 
@@ -64,6 +70,8 @@ function fromRow(row: Partial<AccountSettingsRow> | null): AccountSettings {
       row?.hemisphere === "north" || row?.hemisphere === "south"
         ? row.hemisphere
         : null,
+    // Only a real calendar date counts; anything else is treated as not set.
+    birthday: parseBirthday(row?.birthday) ? (row?.birthday ?? null) : null,
   };
 }
 
