@@ -9,8 +9,6 @@
     "pin": "Fixar memo",
     "unpin": "Desfixar memo",
     "due": "Prazo: {{date}}",
-    "recurring": "Recorrente",
-    "recurringMemo": "Memo recorrente",
     "pinnedMarkIncomplete": "Memo fixado — marcar como incompleto",
     "pinnedMarkComplete": "Memo fixado — marcar como concluído",
     "pinnedMemo": "Memo fixado",
@@ -40,18 +38,5 @@
   },
   "addTask": {
     "trigger": "Adicionar tarefa avulsa"
-  },
-  "recurringMemo": {
-    "editTitle": "Editar memo recorrente",
-    "newTitle": "Novo memo recorrente",
-    "titleLabel": "Título do memo",
-    "titlePlaceholder": "ex.: remédios",
-    "repeat": "Repetir",
-    "paused": "Pausado"
-  },
-  "recurringMemos": {
-    "title": "Memos recorrentes",
-    "titleWithCount": "Memos recorrentes ({{count}})",
-    "empty": "Ainda não há memos recorrentes"
   }
 }

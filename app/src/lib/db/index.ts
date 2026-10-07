@@ -924,6 +924,17 @@ class UpwardsDB extends Dexie {
     this.version(31).stores({
       journalEntryRevisions: "id, entry_date, created_at",
     });
+
+    // v32: model cutover (A6). Lifecycle is `archived_at`/`deleted_at` on the
+    // row, and sessions are found by time. Devices do not convert their own
+    // data: the server migration does, and a newer data epoch makes every
+    // device push and re-bootstrap from the converted snapshot.
+    this.version(32).stores({
+      activityGroups: "id, name, archived_at, deleted_at, created_at",
+      activities: "id, group_id, archived_at, deleted_at, created_at",
+      activityPeriods:
+        "id, daily_entry_id, activity_id, start_time, end_time, deleted_at",
+    });
   }
 }
 

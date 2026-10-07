@@ -24,6 +24,7 @@ function doc(source: string | null): BackupDocument {
     color: null,
     order_index: 0,
     is_archived: false,
+    archived_at: null,
     created_at: "t",
     updated_at: "t",
     synced_at: null,
@@ -37,6 +38,9 @@ function doc(source: string | null): BackupDocument {
     completion_target: 1,
     is_archived: false,
     completed_at: null,
+    archived_at: "2026-08-01T00:00:00.000Z",
+    tracks_time: true,
+    is_pinned: false,
     order_index: 0,
     created_at: "t",
     updated_at: "t",
@@ -59,7 +63,7 @@ function doc(source: string | null): BackupDocument {
   });
   tables.activityPeriods.push({
     id: "p1",
-    daily_entry_id: "legacy-day",
+    daily_entry_id: null,
     activity_id: "a1",
     start_time: "2026-09-01T08:00:00.000Z",
     end_time: "2026-09-01T09:00:00.000Z",
@@ -84,17 +88,6 @@ function doc(source: string | null): BackupDocument {
     journal_completion_streak: null,
     journal_completed_at: null,
     location: null,
-    created_at: "t",
-    updated_at: "t",
-    synced_at: null,
-    deleted_at: null,
-  });
-  tables.activityStatusEvents.push({
-    id: "e1",
-    entity_id: "a1",
-    status_type: "archived",
-    next_value: true,
-    effective_at: "t",
     created_at: "t",
     updated_at: "t",
     synced_at: null,
@@ -126,7 +119,8 @@ describe("remapBackupIdentity", () => {
     expect(out.dailyEntries[0].id).toBe(
       naturalDailyEntryId(TARGET, "2026-09-01")
     );
-    expect(out.activityPeriods[0].daily_entry_id).toBe(out.dailyEntries[0].id);
+    // Sessions carry no day link, whatever the file said.
+    expect(out.activityPeriods[0].daily_entry_id).toBeNull();
     expect(out.journalEntries[0].id).toBe(
       naturalJournalId(TARGET, "2026-09-01")
     );
@@ -147,7 +141,7 @@ describe("remapBackupIdentity", () => {
       activityId,
     ]);
     expect(out.activityPeriods[0].activity_id).toBe(activityId);
-    expect(out.activityStatusEvents[0].entity_id).toBe(activityId);
+    expect(out.activities[0].archived_at).toBe("2026-08-01T00:00:00.000Z");
     expect(out.journalEntries[0].photo_paths).toEqual([
       `${TARGET}/2026-09-01/a.jpg`,
     ]);

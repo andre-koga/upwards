@@ -37,7 +37,9 @@ export async function buildInsightPayload(): Promise<InsightPayload> {
   const endStr = toDateString(startOfDay(today));
 
   const [activities, dailyEntries, journalEntries] = await Promise.all([
-    db.activities.filter((a) => !a.is_archived && Boolean(a.name)).toArray(),
+    db.activities
+      .filter((a) => !a.archived_at && !a.deleted_at && Boolean(a.name))
+      .toArray(),
     db.dailyEntries
       .where("date")
       .between(startStr, endStr, true, true)

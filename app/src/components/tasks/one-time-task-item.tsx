@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import type { OneTimeTask } from "@/lib/db/types";
-import { Pin, RefreshCw } from "lucide-react";
+import { Pin } from "lucide-react";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { ArchiveMemoDialog } from "@/components/tasks/archive-memo-dialog";
@@ -221,25 +221,11 @@ function OneTimeTaskItem({
           >
             {task.title}
           </p>
-          {dueDateDisplay || task.recurring_memo_id ? (
-            <div className="flex items-center justify-between gap-2 px-3 pb-2">
-              {dueDateDisplay ? (
-                <span className="min-w-0 text-xs text-muted-foreground">
-                  {t("memo.due", { date: dueDateDisplay })}
-                </span>
-              ) : (
-                <span />
-              )}
-              {task.recurring_memo_id ? (
-                <span
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium leading-none text-muted-foreground shadow-sm"
-                  title={t("memo.recurringMemo")}
-                  aria-label={t("memo.recurringMemo")}
-                >
-                  <RefreshCw className="h-3 w-3 shrink-0" aria-hidden />
-                  {t("memo.recurring")}
-                </span>
-              ) : null}
+          {dueDateDisplay ? (
+            <div className="px-3 pb-2">
+              <span className="min-w-0 text-xs text-muted-foreground">
+                {t("memo.due", { date: dueDateDisplay })}
+              </span>
             </div>
           ) : null}
         </div>

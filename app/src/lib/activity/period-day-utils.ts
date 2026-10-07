@@ -47,12 +47,6 @@ export function sessionsOnDay<
     const endMs = session.end_time
       ? new Date(session.end_time).getTime()
       : null;
-    // ponytail: legacy zero-length rows are instants, so they need a
-    // half-open check. The A6 migration folds them into completion times,
-    // after which this branch can go.
-    if (endMs != null && startMs === endMs) {
-      return startMs >= day.startMs && startMs < day.endMs;
-    }
     return startMs < day.endMs && (endMs ?? nowMs) > day.startMs;
   });
 }

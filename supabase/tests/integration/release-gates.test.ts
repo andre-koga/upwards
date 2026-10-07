@@ -54,18 +54,26 @@ describe("sync release gates", () => {
   let admin: SupabaseClient;
   let original: { min_client_protocol: number; data_epoch: number };
 
+  let live: { min_client_protocol: number; data_epoch: number };
+
   beforeAll(async () => {
     admin = adminClient();
     original = await readConfig(admin);
+    live = original;
     user = await createIsolatedUser();
   });
 
+  // These tests exercise the gate mechanism (epoch, legacy response shapes,
+  // rejection), not production's current minimum. Each starts from a known
+  // baseline that accepts protocol 0 and up, and the real values come back
+  // afterwards.
   beforeEach(async () => {
-    await setConfig(admin, original);
+    await setConfig(admin, { min_client_protocol: 0, data_epoch: 0 });
+    original = { ...original, min_client_protocol: 0, data_epoch: 0 };
   });
 
   afterAll(async () => {
-    await setConfig(admin, original);
+    await setConfig(admin, live);
   });
 
   it("returns the data epoch from every gated RPC", async () => {

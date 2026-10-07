@@ -2,10 +2,14 @@ export interface ActivityGroup {
   id: string;
   name: string;
   /** Legacy sync column; always null — groups use color only in the UI. */
-  emoji: string | null;
+  /** Legacy sync column, always null and no longer written. */
+  emoji?: string | null;
   color: string | null;
   order_index: number | null;
+  /** Legacy flag, no longer read. Archive state is `archived_at`. */
   is_archived: boolean | null;
+  /** When the group was archived; null when it is not. Set on archive, cleared on restore. */
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;
@@ -18,13 +22,19 @@ export interface Activity {
   name: string | null; // null = group-default (timing the group without a specific activity)
   routine: string | null;
   completion_target: number | null;
-  /** True when the habit is archived; hides it from For Today until restored. */
+  /** Legacy flag, no longer read. Archive state is `archived_at`. */
   is_archived: boolean | null;
-  /**
-   * Legacy dual-write for archive. Set when `is_archived` is true so older
-   * sync paths that only know `completed_at` still hide the habit.
-   */
+  /** Legacy archive dual-write, no longer read or written. */
   completed_at: string | null;
+  /**
+   * When the activity was archived; null when it is not. Hides it from For Today
+   * from the next day on until it is restored (product-scope.md §2.10).
+   */
+  archived_at: string | null;
+  /** False for check-only activities: no timer, no sessions (§2.1). */
+  tracks_time: boolean;
+  /** The user's pin, overriding AI ordering (§2.1). The control arrives in B2. */
+  is_pinned: boolean;
   order_index: number | null;
   created_at: string;
   updated_at: string;
@@ -38,7 +48,8 @@ export interface DailyEntry {
   task_counts: Record<string, number> | null;
   paused_task_ids: string[] | null;
   is_break_day: boolean | null;
-  current_activity_id: string | null;
+  /** No longer written: the running session is the one with no end time. */
+  current_activity_id?: string | null;
   /** Notes on derived untimed completions, keyed by activity id. Not a period row. */
   completion_notes: Record<string, string> | null;
   /** Completion instants for derived untimed completions, keyed by activity id. */
@@ -51,7 +62,8 @@ export interface DailyEntry {
 
 export interface ActivityPeriod {
   id: string;
-  daily_entry_id: string;
+  /** Legacy link, no longer written or read: sessions are found by time. */
+  daily_entry_id: string | null;
   activity_id: string;
   start_time: string; // ISO string
   end_time: string | null; // ISO string
@@ -87,10 +99,14 @@ export interface JournalEntry {
   video_path: string | null;
   video_thumbnail: string | null;
   photo_paths: string[] | null;
-  is_journal_complete: boolean | null;
-  journal_entry_number: number | null;
-  journal_completion_streak: number | null;
-  journal_completed_at: string | null;
+  /** Derived (emoji, title and text present) and no longer written. */
+  is_journal_complete?: boolean | null;
+  /** No longer written. */
+  journal_entry_number?: number | null;
+  /** No longer written; the streak is derived on read. */
+  journal_completion_streak?: number | null;
+  /** Derived and no longer written. */
+  journal_completed_at?: string | null;
   /** Distinct places visited that day (unordered set; array order is display-only). */
   location: JournalLocationRoute | null;
   created_at: string;
@@ -141,10 +157,12 @@ export interface OneTimeTask {
   is_pinned: boolean | null;
   due_date: string | null; // YYYY-MM-DD, when memo is due
   /** Legacy column; kept for sync shape. Always null — memos are not tied to projects. */
-  group_id: string | null;
+  /** Always null and no longer written. */
+  group_id?: string | null;
   is_archived: boolean | null;
   /** Set when spawned from a recurring_memos preset. */
-  recurring_memo_id: string | null;
+  /** Recurring memos are gone; no longer written. */
+  recurring_memo_id?: string | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;

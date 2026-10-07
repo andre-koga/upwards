@@ -29,7 +29,6 @@ export async function getOrCreateDailyEntry(
     task_counts: {},
     paused_task_ids: [],
     is_break_day: false,
-    current_activity_id: null,
     completion_notes: {},
     completion_times: {},
     created_at: n,

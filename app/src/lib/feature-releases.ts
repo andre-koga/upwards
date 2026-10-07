@@ -12,6 +12,21 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-08-routines-and-timers",
+    date: "2026-10-08",
+    title: "Routines, and timers only where they belong",
+    bullets: [
+      "Recurring memos are now routines: ordinary activities you tick off each day, in a Routines group you can rename. Your existing ones were converted for you.",
+      "Each activity has a Track time switch. Turn it off for things you only check off, like medication, and the timer goes away.",
+      "Activities you archive or delete stay on the days you used them and disappear from the day after.",
+      "Sessions no longer belong to a single day, so one that runs past midnight shows on both days.",
+    ],
+    fixes: [
+      "Forgotten timers left running for more than a day were closed after an hour, so they no longer add hours to every day.",
+      "Restoring a backup from before this change now converts it the same way.",
+    ],
+  },
+  {
     id: "2026-10-07-your-birthday",
     date: "2026-10-07",
     title: "Your birthday in the journal",

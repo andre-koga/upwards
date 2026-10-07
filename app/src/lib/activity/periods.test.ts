@@ -15,12 +15,8 @@ let nowIso = "2026-08-01T12:00:00.000Z";
 vi.mock("@/lib/db", () => ({
   db: {
     activityPeriods: {
-      where: () => ({
-        equals: () => ({
-          filter: (predicate: (p: ActivityPeriod) => boolean) => ({
-            toArray: async () => periods.filter(predicate),
-          }),
-        }),
+      filter: (predicate: (p: ActivityPeriod) => boolean) => ({
+        toArray: async () => periods.filter(predicate),
       }),
     },
   },
@@ -33,12 +29,13 @@ vi.mock("@/lib/sync/mutate-synced", () => ({
   },
 }));
 
-const { closeOpenPeriods } = await import("./periods");
+const { closeOpenPeriods, fetchActivityPeriodsForDay } =
+  await import("./periods");
 
 function makePeriod(overrides: Partial<ActivityPeriod> = {}): ActivityPeriod {
   return {
     id: "period-1",
-    daily_entry_id: "entry-1",
+    daily_entry_id: null,
     activity_id: "activity-1",
     start_time: "2026-08-01T11:00:00.000Z",
     end_time: null,
@@ -58,10 +55,34 @@ describe("closeOpenPeriods", () => {
     nowIso = "2026-08-01T12:00:00.000Z";
   });
 
+  it("closes a session left open from an earlier day, since sessions belong to no day", async () => {
+    periods.push(
+      makePeriod({
+        start_time: "2026-07-30T22:00:00.000Z",
+      })
+    );
+
+    await closeOpenPeriods();
+
+    expect(patches).toHaveLength(1);
+    expect(patches[0].patch.end_time).toBe(nowIso);
+  });
+
+  it("leaves already-closed and deleted sessions alone", async () => {
+    periods.push(
+      makePeriod({ id: "closed", end_time: "2026-08-01T11:30:00.000Z" }),
+      makePeriod({ id: "deleted", deleted_at: "2026-08-01T11:10:00.000Z" })
+    );
+
+    await closeOpenPeriods();
+
+    expect(patches).toHaveLength(0);
+  });
+
   it("closes a real session without deleting it", async () => {
     periods.push(makePeriod({ start_time: "2026-08-01T11:00:00.000Z" }));
 
-    await closeOpenPeriods("entry-1");
+    await closeOpenPeriods();
 
     expect(patches).toHaveLength(1);
     expect(patches[0].patch.end_time).toBe(nowIso);
@@ -71,7 +92,7 @@ describe("closeOpenPeriods", () => {
   it("discards a genuine accidental tap under five seconds", async () => {
     periods.push(makePeriod({ start_time: "2026-08-01T11:59:58.000Z" }));
 
-    await closeOpenPeriods("entry-1");
+    await closeOpenPeriods();
 
     expect(patches[0].patch.deleted_at).toBe(nowIso);
   });
@@ -82,13 +103,14 @@ describe("closeOpenPeriods", () => {
     // negative, negative is < 5s, and a live session was tombstoned on every device.
     periods.push(makePeriod({ start_time: "2026-08-01T13:00:00.000Z" }));
 
-    await closeOpenPeriods("entry-1");
+    await closeOpenPeriods();
 
     expect(patches).toHaveLength(1);
     expect(patches[0].patch.deleted_at).toBeUndefined();
-    // Closed as zero-length rather than left inverted (end before start) or left
-    // open to run concurrently with the next session.
-    expect(patches[0].patch.end_time).toBe("2026-08-01T13:00:00.000Z");
+    // Closed one second after it started: not left inverted (end before start),
+    // not left open to run alongside the next session, and not zero-length (that
+    // shape no longer exists).
+    expect(patches[0].patch.end_time).toBe("2026-08-01T13:00:01.000Z");
   });
 
   it("keeps a short session that carries a note", async () => {
@@ -99,7 +121,7 @@ describe("closeOpenPeriods", () => {
       })
     );
 
-    await closeOpenPeriods("entry-1");
+    await closeOpenPeriods();
 
     expect(patches[0].patch.deleted_at).toBeUndefined();
   });
@@ -109,7 +131,7 @@ describe("closeOpenPeriods", () => {
       makePeriod({ start_time: "2026-08-01T11:59:58.000Z", note: "   " })
     );
 
-    await closeOpenPeriods("entry-1");
+    await closeOpenPeriods();
 
     expect(patches[0].patch.deleted_at).toBe(nowIso);
   });
@@ -120,10 +142,79 @@ describe("closeOpenPeriods", () => {
       makePeriod({ id: "exactly-five", start_time: "2026-08-01T11:59:55.000Z" })
     );
 
-    await closeOpenPeriods("entry-1");
+    await closeOpenPeriods();
 
     const byId = new Map(patches.map((p) => [p.id, p.patch]));
     expect(byId.get("just-under")?.deleted_at).toBe(nowIso);
     expect(byId.get("exactly-five")?.deleted_at).toBeUndefined();
+  });
+});
+
+describe("fetchActivityPeriodsForDay", () => {
+  // Local midnight-based so the test holds in any timezone the suite runs in.
+  const at = (day: number, hour: number, minute = 0) =>
+    new Date(2026, 7, day, hour, minute).toISOString();
+
+  beforeEach(() => {
+    periods.length = 0;
+  });
+
+  it("finds a session by its own times, with no daily entry anywhere", async () => {
+    periods.push(
+      makePeriod({
+        id: "morning",
+        daily_entry_id: null,
+        start_time: at(5, 9),
+        end_time: at(5, 10),
+      })
+    );
+
+    const found = await fetchActivityPeriodsForDay("2026-08-05");
+
+    expect(found.map((p) => p.id)).toEqual(["morning"]);
+  });
+
+  it("shows a session that crosses midnight on both days", async () => {
+    periods.push(
+      makePeriod({
+        id: "late",
+        start_time: at(5, 23, 30),
+        end_time: at(6, 0, 45),
+      })
+    );
+
+    expect((await fetchActivityPeriodsForDay("2026-08-05")).length).toBe(1);
+    expect((await fetchActivityPeriodsForDay("2026-08-06")).length).toBe(1);
+    expect((await fetchActivityPeriodsForDay("2026-08-04")).length).toBe(0);
+    expect((await fetchActivityPeriodsForDay("2026-08-07")).length).toBe(0);
+  });
+
+  it("excludes deleted sessions and sessions on other days", async () => {
+    periods.push(
+      makePeriod({
+        id: "gone",
+        start_time: at(5, 9),
+        end_time: at(5, 10),
+        deleted_at: at(5, 11),
+      }),
+      makePeriod({
+        id: "other-day",
+        start_time: at(9, 9),
+        end_time: at(9, 10),
+      })
+    );
+
+    expect(await fetchActivityPeriodsForDay("2026-08-05")).toEqual([]);
+  });
+
+  it("returns sessions in start order", async () => {
+    periods.push(
+      makePeriod({ id: "b", start_time: at(5, 14), end_time: at(5, 15) }),
+      makePeriod({ id: "a", start_time: at(5, 8), end_time: at(5, 9) })
+    );
+
+    const found = await fetchActivityPeriodsForDay("2026-08-05");
+
+    expect(found.map((p) => p.id)).toEqual(["a", "b"]);
   });
 });

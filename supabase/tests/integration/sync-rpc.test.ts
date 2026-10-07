@@ -433,7 +433,7 @@ describe("sync RPC integration", () => {
     expect(period).toBeNull();
   });
 
-  it("applies a timed period by creating missing daily_entry and activity shells", async () => {
+  it("stores a timed period without a daily-entry link and creates no daily-entry row", async () => {
     const periodId = newId();
     const activityId = newId();
     const dailyId = newId();
@@ -444,6 +444,8 @@ describe("sync RPC integration", () => {
         entityType: "activity_period",
         entityId: periodId,
         row: {
+          // A stale client may still send the link. Sessions stand alone now
+          // (product-scope.md §2.10), so it is ignored.
           daily_entry_id: dailyId,
           activity_id: activityId,
           start_time: "2026-08-25T15:00:00.000Z",
@@ -462,14 +464,15 @@ describe("sync RPC integration", () => {
       .maybeSingle();
     if (periodError) throw periodError;
     expect(period?.activity_id).toBe(activityId);
+    expect(period?.daily_entry_id).toBeNull();
 
     const { data: daily, error: dailyError } = await user.deviceA
       .from("daily_entries")
-      .select("id, date")
-      .eq("id", period?.daily_entry_id)
+      .select("id")
+      .eq("id", dailyId)
       .maybeSingle();
     if (dailyError) throw dailyError;
-    expect(daily).not.toBeNull();
+    expect(daily).toBeNull();
   });
 
   it("returns error for a bad op without aborting the rest of the batch", async () => {
@@ -495,9 +498,10 @@ describe("sync RPC integration", () => {
         operation_type: "projection.upsert",
         payload: {
           row: {
-            daily_entry_id: "not-a-uuid",
+            // A bad value the database refuses. (A bad daily_entry_id used to
+            // work for this, but sessions no longer carry that link.)
             activity_id: goodId,
-            start_time: "2026-08-25T15:00:00.000Z",
+            start_time: "not-a-timestamp",
             end_time: "2026-08-25T15:30:00.000Z",
           },
         },

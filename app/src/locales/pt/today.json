@@ -15,8 +15,6 @@
     "fromPreviousDay": "Do dia anterior",
     "continuesNextDay": "Continua no dia seguinte"
   },
-  "recurringMemosButton": "Recorrentes",
-  "manageRecurringMemos": "Gerenciar memos recorrentes",
   "archiveButton": "Arquivo",
   "viewArchivedMemos": "Ver memos arquivados",
   "breakDay": {

@@ -14,10 +14,11 @@ import type { ActivityGroup, Activity } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
 import {
+  activityTracksTime,
   getActivityDisplayName,
   isActiveGroup,
   isActivityArchived,
-  isHiddenGroupDefaultActivity,
+  isArchivedNow,
   sortActivitiesByOrder,
 } from "@/lib/activity";
 import GroupPill from "@/components/activities/group-pill";
@@ -49,9 +50,7 @@ async function loadActivityGroupLists(): Promise<{
 }> {
   const [active, archived] = await Promise.all([
     db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
-    db.activityGroups
-      .filter((g) => !!g.is_archived && !g.deleted_at)
-      .sortBy("created_at"),
+    db.activityGroups.filter((g) => isArchivedNow(g)).sortBy("created_at"),
   ]);
   return { active, archived };
 }
@@ -115,6 +114,7 @@ function DrawerActivityRow({
       color={group.color || DEFAULT_GROUP_COLOR}
       elapsedMs={elapsedMs}
       isRunning={isRunning}
+      showTimer={activityTracksTime(activity)}
       onNameClick={onEdit}
       onClick={onActivate}
       onManualEntry={onManualEntry}
@@ -211,12 +211,7 @@ export default function ActivityGroupsDrawer({
     if (!open || view !== "activities" || !selectedGroup) return;
     let cancelled = false;
     db.activities
-      .filter(
-        (a) =>
-          a.group_id === selectedGroup.id &&
-          !a.deleted_at &&
-          !isHiddenGroupDefaultActivity(a)
-      )
+      .filter((a) => a.group_id === selectedGroup.id && !a.deleted_at)
       .toArray()
       .then((list) => {
         if (!cancelled) {
@@ -641,7 +636,7 @@ export default function ActivityGroupsDrawer({
         />
       ) : null}
 
-      {editingGroup && !editingGroup.is_archived ? (
+      {editingGroup && !editingGroup.archived_at ? (
         <EditGroupDialog
           open={editingGroup !== null}
           onOpenChange={(nextOpen) => {
@@ -684,7 +679,7 @@ export default function ActivityGroupsDrawer({
         onUnarchived={async (t) => {
           if (t.type === "group") {
             setSelectedGroup((prev) =>
-              prev?.id === t.group.id ? { ...prev, is_archived: false } : prev
+              prev?.id === t.group.id ? { ...prev, archived_at: null } : prev
             );
           }
           try {

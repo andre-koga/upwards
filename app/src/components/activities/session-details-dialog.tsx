@@ -29,7 +29,6 @@ export default function SessionDetailsDialog({
   }, [onOpenChange]);
 
   const {
-    NONE_ACTIVITY_VALUE,
     loading,
     saving,
     error,
@@ -76,7 +75,6 @@ export default function SessionDetailsDialog({
             value={selectedActivityId}
             onValueChange={setSelectedActivityId}
             options={[
-              { value: NONE_ACTIVITY_VALUE, label: "None" },
               ...groupActivities.map((activity) => ({
                 value: activity.id,
                 label: getActivityDisplayName(activity, details.group),

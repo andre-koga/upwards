@@ -1,21 +1,31 @@
-import { useState, useCallback } from "react";
-import { now, newId } from "@/lib/db";
-import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
-import { closeOpenPeriods } from "@/lib/activity";
-import { sessionShareOfDay } from "@/lib/activity/period-day-utils";
-import { fetchActivityPeriodsForDay } from "@/lib/activity/untimed-period";
+import { useState, useCallback, useMemo } from "react";
+import { db, now, newId } from "@/lib/db";
+import type { ActivityPeriod } from "@/lib/db/types";
 import {
-  saveTimedPeriod,
-  setCurrentActivityLocal,
-} from "@/lib/sync/mutate-synced";
+  closeOpenPeriods,
+  fetchActivityPeriodsForDay,
+} from "@/lib/activity/periods";
+import { activityTracksTime } from "@/lib/activity/tracks-time";
+import { sessionShareOfDay } from "@/lib/activity/period-day-utils";
+import { saveTimedPeriod } from "@/lib/sync/mutate-synced";
 
-export function useActivityTracking(
-  dateString: string,
-  currentActivityId: string | null,
-  setCurrentActivityId: (id: string | null) => void,
-  getOrCreateDailyEntry: () => Promise<DailyEntry>
-) {
+export function useActivityTracking(dateString: string) {
   const [activityPeriods, setActivityPeriods] = useState<ActivityPeriod[]>([]);
+
+  /**
+   * What is running is whatever session has no end time. Nothing else records
+   * it, so it cannot disagree with the sessions themselves.
+   */
+  const currentActivityId = useMemo(() => {
+    const open = activityPeriods.filter((period) => !period.end_time);
+    if (open.length === 0) return null;
+    return open.reduce((latest, period) =>
+      new Date(period.start_time).getTime() >
+      new Date(latest.start_time).getTime()
+        ? period
+        : latest
+    ).activity_id;
+  }, [activityPeriods]);
 
   const loadActivityPeriods = useCallback(async () => {
     try {
@@ -74,14 +84,16 @@ export function useActivityTracking(
     async (activityId: string) => {
       if (currentActivityId === activityId) return;
       try {
-        const n = now();
-        const entry = await getOrCreateDailyEntry();
+        // Check-only activities have no timer, whichever control asked.
+        const activity = await db.activities.get(activityId);
+        if (!activityTracksTime(activity)) return;
 
-        await closeOpenPeriods(entry.id);
+        const n = now();
+        await closeOpenPeriods();
 
         const newPeriod: ActivityPeriod = {
           id: newId(),
-          daily_entry_id: entry.id,
+          daily_entry_id: null,
           activity_id: activityId,
           start_time: n,
           end_time: null,
@@ -92,44 +104,25 @@ export function useActivityTracking(
           deleted_at: null,
         };
         await saveTimedPeriod(newPeriod);
-        await setCurrentActivityLocal(dateString, activityId);
-
-        setCurrentActivityId(activityId);
         await loadActivityPeriods();
       } catch (error) {
         console.error("Error switching activity:", error);
       }
     },
-    [
-      currentActivityId,
-      dateString,
-      getOrCreateDailyEntry,
-      setCurrentActivityId,
-      loadActivityPeriods,
-    ]
+    [currentActivityId, loadActivityPeriods]
   );
 
   const handleStopActivity = useCallback(async () => {
     try {
-      const entry = await getOrCreateDailyEntry();
-
-      await closeOpenPeriods(entry.id);
-
-      await setCurrentActivityLocal(dateString, null);
-
-      setCurrentActivityId(null);
+      await closeOpenPeriods();
       await loadActivityPeriods();
     } catch (error) {
       console.error("Error stopping activity:", error);
     }
-  }, [
-    getOrCreateDailyEntry,
-    setCurrentActivityId,
-    loadActivityPeriods,
-    dateString,
-  ]);
+  }, [loadActivityPeriods]);
 
   return {
+    currentActivityId,
     activityPeriods,
     loadActivityPeriods,
     calculateActivityTime,

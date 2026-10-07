@@ -10,8 +10,7 @@ import FooterActionsBar from "./footer-actions-bar";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import ManualTimeEntryDialog from "./manual-time-entry-dialog";
 import { ArchivedMemosDialog } from "./archived-memos-dialog";
-import { RecurringMemosDialog } from "./recurring-memos-dialog";
-import { Palmtree, RefreshCw, Archive } from "lucide-react";
+import { Palmtree, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
@@ -64,8 +63,6 @@ export default function DailyTasksList({
     string | null
   >(null);
   const [archivedMemosDialogOpen, setArchivedMemosDialogOpen] = useState(false);
-  const [recurringMemosDialogOpen, setRecurringMemosDialogOpen] =
-    useState(false);
   const [activityToStartOnToday, setActivityToStartOnToday] = useState<
     string | null
   >(null);
@@ -157,19 +154,6 @@ export default function DailyTasksList({
           <div className="space-y-2">
             <SectionLabel>{t("sections.memos")}</SectionLabel>
             <div className="flex w-full gap-1.5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setRecurringMemosDialogOpen(true);
-                }}
-                className="h-7 min-w-0 flex-1 gap-1.5 rounded-full px-2.5 text-xs font-medium text-muted-foreground shadow-none"
-                aria-label={t("manageRecurringMemos")}
-              >
-                <RefreshCw className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                {t("recurringMemosButton")}
-              </Button>
               <Button
                 type="button"
                 variant="outline"
@@ -394,14 +378,6 @@ export default function DailyTasksList({
         archivedMemos={archivedMemos}
         onMemoRestored={() => {
           void loadArchivedMemos();
-        }}
-      />
-
-      <RecurringMemosDialog
-        open={recurringMemosDialogOpen}
-        onOpenChange={setRecurringMemosDialogOpen}
-        onPresetsChanged={() => {
-          void loadOneTimeTasks();
         }}
       />
 

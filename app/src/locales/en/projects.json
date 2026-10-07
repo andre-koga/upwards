@@ -98,6 +98,13 @@
     "errorEndRequired": "Please set an end time.",
     "errorStartRequired": "Please set a start time.",
     "errorSameTime": "End time must be different from start time.",
-    "spanWarning": "This session spans {{startDay}} and {{endDay}} (it crosses midnight)."
+    "spanWarning": "This session spans {{startDay}} and {{endDay}} (it crosses midnight).",
+    "errorActivityRequired": "Pick an activity for this session."
+  },
+  "activityForm": {
+    "tracksTime": {
+      "label": "Track time",
+      "hint": "Shows a timer on this activity. Turn it off for things you just check off, like medication."
+    }
   }
 }

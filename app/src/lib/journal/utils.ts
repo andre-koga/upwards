@@ -1,9 +1,4 @@
-import type {
-  JournalEntry,
-  JournalLocationRoute,
-  LocationData,
-} from "@/lib/db/types";
-import { isJournalEntryComplete } from "./streak";
+import type { JournalLocationRoute, LocationData } from "@/lib/db/types";
 
 /** Max great-circle distance (km) to treat two readings as the same place when city data is missing. */
 const SAME_PLACE_DISTANCE_KM = 10;
@@ -204,28 +199,4 @@ export interface JournalFields {
   location: JournalLocationRoute | null;
   video_thumbnail: string | null;
   photo_paths: string[] | null;
-}
-
-export interface JournalCompletionMetadata {
-  is_journal_complete: boolean;
-  journal_completed_at: string | null;
-}
-
-/**
- * Completion flag for a saved entry. Only the flag and its first-completion
- * time are stored; the streak and entry number are no longer written (the
- * streak is derived on read, see `./streak`).
- */
-export function getCompletionMetadata(
-  fields: JournalFields,
-  existing: JournalEntry | undefined,
-  timestamp: string
-): JournalCompletionMetadata {
-  const complete = isJournalEntryComplete(fields);
-  return {
-    is_journal_complete: complete,
-    journal_completed_at: complete
-      ? (existing?.journal_completed_at ?? timestamp)
-      : (existing?.journal_completed_at ?? null),
-  };
 }
