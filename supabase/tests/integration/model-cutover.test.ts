@@ -13,6 +13,33 @@ type Row = Record<string, unknown>;
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
+/**
+ * The first JSON object in the CLI's output. The CLI can print a notice after
+ * it (e.g. "a new version is available"), so parsing everything from the first
+ * brace to the end of the text is not safe.
+ */
+function firstJsonObject(text: string): string | null {
+  const start = text.indexOf("{");
+  if (start < 0) return null;
+  let depth = 0;
+  let inString = false;
+  for (let i = start; i < text.length; i += 1) {
+    const ch = text[i];
+    if (inString) {
+      if (ch === "\\") i += 1;
+      else if (ch === '"') inString = false;
+    } else if (ch === '"') {
+      inString = true;
+    } else if (ch === "{") {
+      depth += 1;
+    } else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
 /** Run SQL as the database owner and return the rows of the last statement. */
 function sql(statement: string): Row[] {
   try {
@@ -21,10 +48,10 @@ function sql(statement: string): Row[] {
       ["exec", "supabase", "db", "query", "--local", "--output-format", "json", statement],
       { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
     );
-    const start = out.indexOf("{");
+    const json = firstJsonObject(out);
     // Statements that return nothing (INSERT, UPDATE) print no JSON.
-    if (start < 0) return [];
-    return (JSON.parse(out.slice(start)) as { rows?: Row[] }).rows ?? [];
+    if (json === null) return [];
+    return (JSON.parse(json) as { rows?: Row[] }).rows ?? [];
   } catch (error) {
     // The CLI error repeats the whole statement; keep only its message.
     const text = String((error as { stdout?: string }).stdout ?? error);
