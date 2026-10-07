@@ -13,14 +13,8 @@ type Row = Record<string, unknown>;
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-/**
- * The first JSON object in the CLI's output. The CLI can print a notice after
- * it (e.g. "a new version is available"), so parsing everything from the first
- * brace to the end of the text is not safe.
- */
-function firstJsonObject(text: string): string | null {
-  const start = text.indexOf("{");
-  if (start < 0) return null;
+/** The balanced `{...}` starting at `start`, or null if it never closes. */
+function balancedObject(text: string, start: number): string | null {
   let depth = 0;
   let inString = false;
   for (let i = start; i < text.length; i += 1) {
@@ -40,6 +34,26 @@ function firstJsonObject(text: string): string | null {
   return null;
 }
 
+/**
+ * The rows of the query result in the CLI's output, or null if there are none.
+ * pnpm and the CLI can print other text around the result (banners, upgrade
+ * notices, stray braces), so every `{` is tried as a start until one parses
+ * into an object with `rows`.
+ */
+function resultRows(text: string): Row[] | null {
+  for (let i = text.indexOf("{"); i >= 0; i = text.indexOf("{", i + 1)) {
+    const candidate = balancedObject(text, i);
+    if (!candidate) continue;
+    try {
+      const parsed = JSON.parse(candidate) as { rows?: unknown };
+      if (Array.isArray(parsed.rows)) return parsed.rows as Row[];
+    } catch {
+      // Not the result object; keep looking.
+    }
+  }
+  return null;
+}
+
 /** Run SQL as the database owner and return the rows of the last statement. */
 function sql(statement: string): Row[] {
   try {
@@ -48,11 +62,19 @@ function sql(statement: string): Row[] {
       ["exec", "supabase", "db", "query", "--local", "--output-format", "json", statement],
       { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
     );
-    const json = firstJsonObject(out);
-    // Statements that return nothing (INSERT, UPDATE) print no JSON.
-    if (json === null) return [];
-    return (JSON.parse(json) as { rows?: Row[] }).rows ?? [];
+    const rows = resultRows(out);
+    if (rows) return rows;
+    // Statements that return nothing (INSERT, UPDATE) may print no JSON; a
+    // SELECT that does is a harness problem, so show what the CLI printed.
+    if (/^\s*select\b/i.test(statement)) {
+      throw new Error(`no result for query. CLI output:\n${out.slice(0, 1500)}`);
+    }
+    return [];
   } catch (error) {
+    // Our own diagnostic above already says what it needs to.
+    if (error instanceof Error && error.message.startsWith("no result")) {
+      throw error;
+    }
     // The CLI error repeats the whole statement; keep only its message.
     const text = String((error as { stdout?: string }).stdout ?? error);
     const message = /"message":"([^"]*)"/.exec(text)?.[1] ?? text.slice(-400);
