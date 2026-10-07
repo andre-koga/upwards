@@ -151,18 +151,26 @@ export function newId(): string {
   return crypto.randomUUID();
 }
 
+/** The protocol the current client sends; must match CLIENT_PROTOCOL in the app. */
+export const CLIENT_PROTOCOL = 2;
+
 export async function submitOps(
   client: SupabaseClient,
   ops: SyncOpInput[]
 ): Promise<SubmitResult[]> {
-  const { data, error } = await client.rpc("submit_sync_operations", { ops });
+  const { data, error } = await client.rpc("submit_sync_operations", {
+    ops,
+    p_client_protocol: CLIENT_PROTOCOL,
+  });
   if (error) throw error;
-  if (!Array.isArray(data)) {
+  // Protocol 1 and up wrap the results with the data epoch.
+  const results = (data as { results?: unknown } | null)?.results;
+  if (!Array.isArray(results)) {
     throw new Error(
-      `submit_sync_operations returned ${typeof data}, expected array`
+      `submit_sync_operations returned ${typeof data}, expected {results: []}`
     );
   }
-  return data as SubmitResult[];
+  return results as SubmitResult[];
 }
 
 export async function pullOps(
@@ -171,16 +179,19 @@ export async function pullOps(
 ): Promise<RemoteOp[]> {
   const { data, error } = await client.rpc("pull_sync_operations", {
     since_sequence: sinceSequence,
+    p_client_protocol: CLIENT_PROTOCOL,
   });
   if (error) throw error;
-  if (!data) return [];
-  return data as RemoteOp[];
+  const operations = (data as { operations?: unknown } | null)?.operations;
+  return Array.isArray(operations) ? (operations as RemoteOp[]) : [];
 }
 
 export async function pullSnapshot(
   client: SupabaseClient
 ): Promise<Record<string, unknown>> {
-  const { data, error } = await client.rpc("pull_sync_snapshot");
+  const { data, error } = await client.rpc("pull_sync_snapshot", {
+    p_client_protocol: CLIENT_PROTOCOL,
+  });
   if (error) throw error;
   if (!data || typeof data !== "object") {
     throw new Error("pull_sync_snapshot returned a non-object");
