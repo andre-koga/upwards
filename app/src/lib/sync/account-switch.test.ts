@@ -9,7 +9,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const clearLocalSyncData = vi.fn(async () => {});
-const hasLocalSyncableData = vi.fn(async () => false);
 const startAutoSync = vi.fn();
 let safety = {
   pendingOpCount: 0,
@@ -20,7 +19,6 @@ let lastSignedInUserId: string | null = null;
 
 vi.mock("./clear-local-sync-data", () => ({
   clearLocalSyncData: () => clearLocalSyncData(),
-  hasLocalSyncableData: () => hasLocalSyncableData(),
 }));
 
 vi.mock("./unsynced-data", () => ({
@@ -41,14 +39,12 @@ vi.mock("./sync-storage", () => ({
   },
 }));
 
-const { prepareSignedInSession, discardPreviousAccountData } = await import(
-  "./auth-handoff"
-);
+const { prepareSignedInSession, discardPreviousAccountData } =
+  await import("./account-switch");
 
-describe("account switch handoff", () => {
+describe("account switch", () => {
   beforeEach(() => {
     clearLocalSyncData.mockClear();
-    hasLocalSyncableData.mockClear();
     startAutoSync.mockClear();
     safety = {
       pendingOpCount: 0,
@@ -97,13 +93,12 @@ describe("account switch handoff", () => {
     expect(lastSignedInUserId).toBe("user-new");
   });
 
-  it("still asks a first-time guest with local data, and never wipes unprompted", async () => {
-    hasLocalSyncableData.mockResolvedValueOnce(true);
-
+  it("signs in on a fresh device without wiping or prompting", async () => {
     const result = await prepareSignedInSession("user-new");
 
-    expect(result).toBe("needs_guest_choice");
+    expect(result).toBe("ready");
     expect(clearLocalSyncData).not.toHaveBeenCalled();
+    expect(lastSignedInUserId).toBe("user-new");
   });
 
   it("goes straight to sync for a returning user on the same account", async () => {

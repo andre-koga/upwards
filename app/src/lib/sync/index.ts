@@ -34,7 +34,6 @@ import {
 } from "./sync-operations";
 import { recordSyncIssue, resolveOpenSyncErrors } from "./sync-issues-store";
 import { touchLocalDevice } from "./device-id";
-import { collapseDuplicatePendingProjectionUpserts } from "./pending-operations";
 import { getLocalSyncSafetyStatus } from "./unsynced-data";
 import {
   subscribeToRemoteSyncOperations,
@@ -42,11 +41,6 @@ import {
 } from "./realtime-sync";
 import { syncDeviceRegistry } from "./remote-device-sync";
 import { registerSyncScheduler, clearSyncScheduler } from "./sync-scheduler";
-import {
-  enqueueUnsyncedCurrentStateRows,
-  repairNaturalIdentity,
-  clearCutoverEnqueueFlag,
-} from "./identity-repair";
 import { pullAndApplySnapshot } from "./snapshot-sync";
 import {
   getObservedDataEpoch,
@@ -254,9 +248,6 @@ class SyncEngine {
 
   private async bootstrapProtocolV2(): Promise<boolean> {
     if (loadSyncProtocolV2()) return true;
-    await repairNaturalIdentity();
-    await collapseDuplicatePendingProjectionUpserts();
-    await enqueueUnsyncedCurrentStateRows();
     const pushResult = await pushPendingOperations();
     if (pushResult.skipped) return false;
     if (pushResult.failed) return false;
@@ -416,13 +407,6 @@ class SyncEngine {
     clearLastServerSyncAt();
     clearSyncProtocolV2();
     clearLastDataEpoch();
-    // Deliberately NOT clearing the natural-identity repair flag.
-    //
-    // The cutover is not idempotent (see the PROTOCOL_V2_KEY note in
-    // sync-storage.ts): re-running it re-derives IDs for rows that were already
-    // migrated. Clearing the flag here re-armed it for the next account on the
-    // device. A fresh install has no flag and still runs it once.
-    clearCutoverEnqueueFlag();
     this.setState({
       lastSyncAt: null,
       lastError: null,

@@ -483,19 +483,35 @@ designs:
 
 All of it is replaced by a single baseline schema plus a reset path for devices
 older than it:
-1. Before Dexie opens, read the installed IndexedDB version. If it predates the
-   baseline, first push whatever pending operations still submit.
+1. Before Dexie opens, read the installed IndexedDB version. v32 already holds
+   the cutover model, so Dexie upgrades it in place (the retired tables are
+   dropped, nothing is rewritten). Older databases, and rows with no
+   remembered account (data created signed out), take the reset path.
 2. Read every local row with raw IndexedDB and keep it as a recovery bundle
-   (same format as a data-only backup), offered for download.
+   (same format as a data-only backup), offered for download on Sync issues.
 3. Delete the local database, sign in, and bootstrap from the server snapshot.
 4. Import the recovery bundle through the idempotent backup import (§2.9).
    Anything that differs from the server lands on Sync issues; nothing is
-   silently dropped.
+   silently dropped. The bundle imports automatically only into the account
+   that owned it; data created signed out waits for the user to add it.
+
+The old queue is not replayed before the reset. Its operations are in shapes
+the server now rejects, a rejected op blocks the snapshot bootstrap, and the
+rows already carry every change the queue held, which the import re-applies
+as differences. The queue travels inside the bundle for inspection.
 
 Devices report their local schema version with their heartbeat. Because the
 audience is small (§4.1), the legacy modules are deleted in the same release
 as the baseline, right after a migration window. A device that missed the
 window simply takes the reset path when it next opens.
+
+**Same-date dedupe waits for server re-keying.** Deterministic IDs prevent new
+duplicates, but on 2026-10-08 production still held 340 of 384 live journal
+rows and 247 of 286 daily rows under pre-natural IDs. A write for one of those
+dates under its natural ID makes a second local row, and the reconcile pass
+merges it. `dedupe-by-date.ts` is therefore deleted in A8b, together with a
+server migration that re-keys those rows to their natural IDs and bumps
+`data_epoch` so every device re-bootstraps onto them.
 
 **Lifecycle as timestamps, not event logs.** Replace `activity_status_events`
 and `group_status_events` (archive / restore / delete toggles with
@@ -714,18 +730,31 @@ ship together in one window: A6a (server) and A6b (client).
 - Done when: a fresh install requires sign-in; a guest device signs in and keeps
   its data; signed-in offline use is unchanged.
 
-**A8. Baseline schema and legacy deletion** (§2.10). Migration window 2.
-- Dexie: collapse `lib/db/index.ts` to one baseline version. Pre-baseline
-  devices take the recovery path (push, recovery bundle in the A2 data-only
-  format, delete, snapshot, re-import).
-- Delete: `lib/sync/identity-repair.ts`, `lib/journal/dedupe-by-date.ts` and its
-  reconcile pass, the `sync-storage.ts` heal step, the cutover flags and
-  enqueue, and the guest code (`auth-handoff.ts`, `guest-handoff-emitter.ts`,
-  `rekey-guest-rows`, `auth-data-handoff-dialog.tsx`).
-- Supabase: drop the dead columns listed in §2.10. Keep the read-only legacy
-  tables.
-- Tests: a seeded old-version IndexedDB recovers with no double counts; the
-  suite passes with the modules deleted.
+**A8. Baseline schema and legacy deletion** (§2.10). Two PRs.
+
+**A8a. Client baseline** (no window: no server change, no protocol bump).
+- Dexie: collapse `lib/db/index.ts` to one baseline version (33). v32 upgrades
+  in place; older databases and unowned rows take the recovery path (recovery
+  bundle in the A2 data-only format, delete, snapshot, re-import), with the
+  bundle on Sync issues for import, download, and removal.
+- Delete: `lib/sync/identity-repair.ts`, the cutover flags and enqueue, and the
+  guest code (`guest-handoff-emitter.ts`, `rekey-guest-rows`, the guest half of
+  the handoff). The account-switch guard (§2.6) stays, as
+  `lib/sync/account-switch.ts` and `account-switch-dialog.tsx`.
+- Tests: a seeded old-version IndexedDB recovers with no double counts; a v32
+  database opens in place; the suite passes with the modules deleted.
+
+**A8b. Migration window 2: server cleanup.**
+- Supabase: re-key legacy journal and daily rows to their natural IDs, copy the
+  dead columns listed in §2.10 into a read-only legacy table, rewrite the
+  functions that still name them (`submit_sync_operations_existing`,
+  `apply_untimed_completion_time`, the archive-flag trigger), drop the columns
+  and `cutover_a6_convert`, and raise `min_client_protocol` and `data_epoch`.
+  Keep the read-only legacy tables.
+- Client: delete `lib/journal/dedupe-by-date.ts` and its reconcile pass, and
+  the dead fields from the row types; bump `CLIENT_PROTOCOL`.
+- Tests: re-keying is idempotent and leaves one row per date; integration
+  suite passes against the dropped columns.
 
 **A9. Account settings and opt-ins** (§2.5, §2.7).
 - `user_profile` columns from §2.7 and Settings toggles. Automatic location is

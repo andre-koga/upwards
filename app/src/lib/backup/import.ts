@@ -9,7 +9,10 @@ import {
 } from "@/lib/sync/mutate-synced";
 import { currentSyncUserKey } from "@/lib/sync/natural-ids";
 import { countUnsyncedOperations } from "@/lib/sync/pending-operations";
-import { loadLastAppliedSequence } from "@/lib/sync/sync-storage";
+import {
+  loadLastAppliedSequence,
+  loadSyncProtocolV2,
+} from "@/lib/sync/sync-storage";
 import {
   BACKUP_JSON_NAME,
   CLIPS_JSON_NAME,
@@ -88,6 +91,9 @@ export async function getImportReadiness(options: {
   const pendingCount = await countUnsyncedOperations();
   if (pendingCount > 0) return blocked("pending_changes", pendingCount);
   if (options.sync && state.lastError) return blocked("sync_failed");
+  // Without the snapshot, local state is not the account's, and every count
+  // would merge as its full value instead of the difference.
+  if (!loadSyncProtocolV2()) return blocked("sync_failed");
   return { ready: true, reason: null, pendingCount: 0 };
 }
 
@@ -254,7 +260,23 @@ export async function importBackupFile(
   onProgress?.({ phase: "reading", done: 0, total: 0 });
   const { json, entries } = await readSource(file);
   if (isClipsManifest(json)) return importClips(json, entries, onProgress);
+  return importDocument(json, entries, onProgress);
+}
 
+/** A data document already in memory (the recovery bundle). Same rules as a file. */
+export async function importBackupJson(
+  json: unknown
+): Promise<BackupImportResult> {
+  const readiness = await getImportReadiness({ sync: true });
+  if (!readiness.ready) throw new BackupImportBlockedError(readiness);
+  return importDocument(json, null);
+}
+
+async function importDocument(
+  json: unknown,
+  entries: Map<string, ZipEntry> | null,
+  onProgress?: ProgressListener
+): Promise<BackupImportResult> {
   let doc;
   try {
     doc = migrateBackupDocument(json);

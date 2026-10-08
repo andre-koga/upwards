@@ -20,19 +20,3 @@ export async function clearLocalSyncData(): Promise<void> {
   clearAccountSettings();
   syncEngine.resetAfterLocalClear();
 }
-
-/**
- * Returns true if any synced table contains at least one non-deleted row.
- * Used to detect whether a guest user has local data before first sign-in.
- */
-export async function hasLocalSyncableData(): Promise<boolean> {
-  for (const table of SYNC_TABLES) {
-    const dexieTable = db[TABLE_MAP[table]];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const count = await (dexieTable as any)
-      .filter((r: { deleted_at?: string | null }) => !r.deleted_at)
-      .count();
-    if (count > 0) return true;
-  }
-  return false;
-}

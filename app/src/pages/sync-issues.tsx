@@ -13,6 +13,7 @@ import {
 import { ConfirmFormDialog } from "@/components/forms";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { ConflictReviewCard } from "@/components/settings/conflict-review-card";
+import { RecoveryBundlesSection } from "@/components/settings/recovery-bundles-section";
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { SettingsSection } from "@/components/ui/settings-section";
@@ -210,6 +211,8 @@ export default function SyncIssuesPage() {
       ) : null}
 
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
+
+      <RecoveryBundlesSection />
 
       <SettingsSection
         title={t("syncIssues.sections.review.title")}
