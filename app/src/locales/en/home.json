@@ -9,11 +9,6 @@
     "description": "Connect an OpenAI-compatible key in Settings and Home will turn your recent activity, journal, and habit stats into a short summary and a few concrete recommendations.",
     "cta": "Go to Settings"
   },
-  "notSignedIn": {
-    "title": "Sign in to get insights",
-    "description": "AI insights need a signed-in sync account so your key can be stored securely.",
-    "cta": "Go to Settings"
-  },
   "insight": {
     "refreshedAt": "Refreshed {{time}}",
     "refresh": "Refresh insights",
@@ -24,5 +19,9 @@
   "error": {
     "generic": "Couldn't generate insights: {{error}}",
     "rateLimited": "You've hit today's AI insight limit — try again tomorrow."
+  },
+  "offline": {
+    "title": "AI insights need a connection",
+    "description": "Insights are made through your account, so they come back when you're online."
   }
 }

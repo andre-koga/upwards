@@ -9,26 +9,26 @@ import { Button } from "@/components/ui/button";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/use-auth";
 import { getAiSettingsStatus } from "@/lib/ai/settings-client";
-import { buildInsightPayload, fingerprintPayload } from "@/lib/ai/build-insight-payload";
+import {
+  buildInsightPayload,
+  fingerprintPayload,
+} from "@/lib/ai/build-insight-payload";
 import {
   getCachedInsight,
   isCacheFresh,
   setCachedInsight,
   type CachedInsight,
 } from "@/lib/ai/insight-cache";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { formatSyncTime } from "@/lib/time-utils";
 
-type ViewState =
-  | "loading"
-  | "not-signed-in"
-  | "not-configured"
-  | "ready"
-  | "error";
+type ViewState = "loading" | "offline" | "not-configured" | "ready" | "error";
 
 export default function HomePage() {
   const { t } = useTranslation("home");
   const { t: tNav } = useTranslation("nav");
   const { isAuthed } = useAuth();
+  const isOnline = useOnlineStatus();
   const [view, setView] = useState<ViewState>("loading");
   const [insight, setInsight] = useState<CachedInsight | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -66,11 +66,14 @@ export default function HomePage() {
   const load = useCallback(
     async (forceRefresh: boolean) => {
       if (!isSupabaseConfigured) {
-        setView("not-signed-in");
+        setView("offline");
         return;
       }
       if (!isAuthed) {
-        setView("not-signed-in");
+        // Signed in on this device but no usable session yet. Offline, that is
+        // the whole story. Online it is the first moments of a page load, so keep
+        // waiting: the session arrives and this runs again.
+        setView(isOnline ? "loading" : "offline");
         return;
       }
       setError(null);
@@ -107,7 +110,7 @@ export default function HomePage() {
         setRefreshing(false);
       }
     },
-    [isAuthed, generate]
+    [isAuthed, isOnline, generate]
   );
 
   useEffect(() => {
@@ -128,15 +131,12 @@ export default function HomePage() {
         </p>
       ) : null}
 
-      {view === "not-signed-in" ? (
-        <section className="space-y-3 rounded-xl border p-4">
-          <p className="text-sm font-medium">{t("notSignedIn.title")}</p>
+      {view === "offline" ? (
+        <section className="space-y-2 rounded-xl border p-4" role="status">
+          <p className="text-sm font-medium">{t("offline.title")}</p>
           <p className="text-sm text-muted-foreground">
-            {t("notSignedIn.description")}
+            {t("offline.description")}
           </p>
-          <Button asChild size="sm">
-            <Link to="/settings">{t("notSignedIn.cta")}</Link>
-          </Button>
         </section>
       ) : null}
 

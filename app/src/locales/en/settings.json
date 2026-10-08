@@ -105,8 +105,8 @@
     "saveFailure": "Couldn't save AI settings: {{error}}",
     "configuredWith": "Connected — using {{model}}",
     "notConfigured": "Not connected yet",
-    "notSignedIn": "Sign in to sync to set up AI insights.",
-    "syncNotConfigured": "Sync is not configured for this build."
+    "syncNotConfigured": "Sync is not configured for this build.",
+    "needsConnection": "AI insights need a connection. They come back when you're online."
   },
   "backup": {
     "title": "Backup",

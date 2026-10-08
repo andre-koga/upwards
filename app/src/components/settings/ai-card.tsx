@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Sparkles } from "lucide-react";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ const DEFAULT_MODEL = "gpt-4o-mini";
 export function AiCard() {
   const { t } = useTranslation("settings");
   const { isAuthed } = useAuth();
+  const isOnline = useOnlineStatus();
   const [status, setStatus] = useState<AiSettingsStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL);
@@ -123,7 +125,13 @@ export function AiCard() {
           {t("ai.syncNotConfigured")}
         </p>
       ) : !isAuthed ? (
-        <p className="text-sm text-muted-foreground">{t("ai.notSignedIn")}</p>
+        // Offline with a login that cannot refresh. Online, the session arrives
+        // a moment after load and this branch goes away, so say nothing yet.
+        isOnline ? null : (
+          <p className="text-sm text-muted-foreground">
+            {t("ai.needsConnection")}
+          </p>
+        )
       ) : (
         <>
           {status ? (
