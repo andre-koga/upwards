@@ -265,6 +265,17 @@ photos.
   while operations are unacknowledged, unless the user syncs, exports, or
   explicitly discards.
 - AI surfaces lose their "signed-out" state; "offline" replaces it.
+- **Shipped in A7:** the gate decides from what is stored on the device and
+  never waits on Supabase (`lib/auth-gate.ts`). With an expired access token and
+  no network, `getSession()` retries for about 25 seconds and then reports no
+  session although the refresh token is still stored, so waiting on it would
+  lock a signed-in user out of their own offline app. A stored session shows the
+  app; only a real `SIGNED_OUT` event, or a device with nothing stored, shows
+  sign-in. The password-reset pages stay reachable while signed out. The guest
+  prompt offers "save a backup first", which exports without syncing so guest
+  rows are not pushed before the user chooses. The AI surfaces' signed-out
+  branches are now unreachable and are removed with the redesign's AI work, not
+  here.
 
 ### 2.7 Places: automatic location is opt-in
 

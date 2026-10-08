@@ -38,8 +38,21 @@ export interface ExportResult {
   missingMedia: number;
 }
 
+export interface ExportOptions {
+  /**
+   * Push and pull first so the file reflects what the account holds (default).
+   * Off for the guest-data prompt: the device's rows are not the account's yet,
+   * and syncing would send them before the user has chosen what to do with them.
+   */
+  syncFirst?: boolean;
+}
+
 /** Push and pull first so the file reflects what the account holds. */
-async function syncBeforeExport(onProgress?: ProgressListener) {
+async function syncBeforeExport(
+  onProgress?: ProgressListener,
+  options?: ExportOptions
+) {
+  if (options?.syncFirst === false) return;
   if (!getCachedUserId() || !navigator.onLine) return;
   onProgress?.({ phase: "syncing", done: 0, total: 0 });
   await syncEngine.sync();
@@ -130,9 +143,10 @@ async function addMedia(
 }
 
 export async function exportDataOnly(
-  onProgress?: ProgressListener
+  onProgress?: ProgressListener,
+  options?: ExportOptions
 ): Promise<ExportResult> {
-  await syncBeforeExport(onProgress);
+  await syncBeforeExport(onProgress, options);
   onProgress?.({ phase: "collecting", done: 0, total: 0 });
   const zip = new ZipBlobWriter();
   zip.addJson(BACKUP_JSON_NAME, await buildBackupDocument());

@@ -5,6 +5,8 @@ import SyncStatus from "@/components/settings/sync-status";
 import { useAccountSettingsSync } from "@/lib/use-account-settings";
 import { OldDayEditDialog } from "@/components/journal/old-day-edit-dialog";
 import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
+import { SignInScreen } from "@/components/auth/sign-in-screen";
+import { useAuthGate } from "@/lib/use-auth-gate";
 import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
 import { UpdateRequiredDialog } from "@/components/pwa/update-required-dialog";
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -39,6 +41,13 @@ function PageLoadingFallback() {
   );
 }
 
+// Reachable without an account: the links in password emails land here, and a
+// signed-out visitor has to be able to ask for one.
+const PUBLIC_ROUTES = new Set([
+  "/settings/forgot-password",
+  "/settings/reset-password",
+]);
+
 // Pages that ship their own full-width, adaptive desktop layout — these
 // intentionally render outside the shared phone-frame shell instead of being
 // squeezed into its 430px card. See docs/architecture/ui-system-and-responsive-layout.md:
@@ -55,6 +64,11 @@ const FULL_BLEED_ROUTES = new Set([
 function AppShell() {
   const location = useLocation();
   const [noticeDismissed, setNoticeDismissed] = useState(false);
+  const gate = useAuthGate();
+  const showSignIn =
+    gate === "signed_out" && !PUBLIC_ROUTES.has(location.pathname);
+  const showLoading =
+    gate === "loading" && !PUBLIC_ROUTES.has(location.pathname);
 
   if (FULL_BLEED_ROUTES.has(location.pathname)) {
     return (
@@ -101,37 +115,43 @@ function AppShell() {
       )}
       <div className="min-h-dvh md:flex md:h-screen md:items-stretch md:justify-center md:gap-10 md:px-6 md:py-6">
         <main className="relative w-full bg-background md:h-full md:max-w-[430px] md:overflow-hidden md:rounded-2xl md:border md:border-border md:shadow-2xl md:[transform:translateZ(0)]">
-          <SyncStatus />
+          {showSignIn || showLoading ? null : <SyncStatus />}
           <div data-app-scroll className="md:h-full md:overflow-y-auto">
-            <Suspense fallback={<PageLoadingFallback />}>
-              <Routes>
-                <Route path="/" element={<TodayPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route
-                  path="/settings/forgot-password"
-                  element={<ForgotPasswordPage />}
-                />
-                <Route
-                  path="/settings/reset-password"
-                  element={<ResetPasswordPage />}
-                />
-                <Route
-                  path="/settings/task-order"
-                  element={<TaskOrderPage />}
-                />
-                <Route
-                  path="/settings/sync-issues"
-                  element={<SyncIssuesPage />}
-                />
-                <Route path="/whats-new" element={<WhatsNewPage />} />
-                <Route path="/journal" element={<JournalPage />} />
-                <Route path="/memories" element={<MemoriesPage />} />
-                <Route path="/logs" element={<LogsPage />} />
-                <Route path="/home" element={<HomePage />} />
-                {/* Developer tool for the daily-clip device spike; not linked anywhere. */}
-                <Route path="/clip-spike" element={<ClipSpikePage />} />
-              </Routes>
-            </Suspense>
+            {showSignIn ? (
+              <SignInScreen />
+            ) : showLoading ? (
+              <PageLoadingFallback />
+            ) : (
+              <Suspense fallback={<PageLoadingFallback />}>
+                <Routes>
+                  <Route path="/" element={<TodayPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route
+                    path="/settings/forgot-password"
+                    element={<ForgotPasswordPage />}
+                  />
+                  <Route
+                    path="/settings/reset-password"
+                    element={<ResetPasswordPage />}
+                  />
+                  <Route
+                    path="/settings/task-order"
+                    element={<TaskOrderPage />}
+                  />
+                  <Route
+                    path="/settings/sync-issues"
+                    element={<SyncIssuesPage />}
+                  />
+                  <Route path="/whats-new" element={<WhatsNewPage />} />
+                  <Route path="/journal" element={<JournalPage />} />
+                  <Route path="/memories" element={<MemoriesPage />} />
+                  <Route path="/logs" element={<LogsPage />} />
+                  <Route path="/home" element={<HomePage />} />
+                  {/* Developer tool for the daily-clip device spike; not linked anywhere. */}
+                  <Route path="/clip-spike" element={<ClipSpikePage />} />
+                </Routes>
+              </Suspense>
+            )}
           </div>
         </main>
       </div>

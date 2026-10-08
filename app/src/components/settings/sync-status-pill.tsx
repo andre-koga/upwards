@@ -1,4 +1,4 @@
-import { Cloud, CloudOff, RefreshCw, LogIn, AlertCircle } from "lucide-react";
+import { Cloud, CloudOff, RefreshCw, AlertCircle } from "lucide-react";
 import { syncEngine } from "@/lib/sync";
 import { formatSyncTime } from "@/lib/time-utils";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ interface SyncStatusPillProps {
   isOnline: boolean;
   isAuthed: boolean;
   onManualSync: () => void;
-  onToggleAuth: () => void;
 }
 
 export function SyncStatusPill({
@@ -16,7 +15,6 @@ export function SyncStatusPill({
   isOnline,
   isAuthed,
   onManualSync,
-  onToggleAuth,
 }: SyncStatusPillProps) {
   const canSync = isAuthed && isOnline;
   const lastSyncTime = formatSyncTime(syncState.lastSyncAt);
@@ -64,19 +62,6 @@ export function SyncStatusPill({
                   : lastSyncTime}
           </span>
         </Button>
-
-        {!isAuthed && (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onToggleAuth}
-            className="h-auto gap-1 bg-transparent px-1 py-0 text-xs text-muted-foreground shadow-none hover:bg-transparent active:bg-transparent"
-            title="Sign in to sync"
-            aria-label="Sign in to sync"
-          >
-            <LogIn className="h-3 w-3" aria-hidden />
-          </Button>
-        )}
       </div>
     </div>
   );
