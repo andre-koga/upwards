@@ -20,10 +20,8 @@ function doc(source: string | null): BackupDocument {
   tables.activityGroups.push({
     id: "g1",
     name: "Health",
-    emoji: null,
     color: null,
     order_index: 0,
-    is_archived: false,
     archived_at: null,
     created_at: "t",
     updated_at: "t",
@@ -36,8 +34,6 @@ function doc(source: string | null): BackupDocument {
     name: "Run",
     routine: "daily",
     completion_target: 1,
-    is_archived: false,
-    completed_at: null,
     archived_at: "2026-08-01T00:00:00.000Z",
     tracks_time: true,
     is_pinned: false,
@@ -53,7 +49,6 @@ function doc(source: string | null): BackupDocument {
     task_counts: { a1: 2 },
     paused_task_ids: ["a1"],
     is_break_day: false,
-    current_activity_id: "a1",
     completion_notes: { a1: "note" },
     completion_times: {},
     created_at: "t",
@@ -63,7 +58,6 @@ function doc(source: string | null): BackupDocument {
   });
   tables.activityPeriods.push({
     id: "p1",
-    daily_entry_id: null,
     activity_id: "a1",
     start_time: "2026-09-01T08:00:00.000Z",
     end_time: "2026-09-01T09:00:00.000Z",
@@ -83,10 +77,6 @@ function doc(source: string | null): BackupDocument {
     video_path: `${SOURCE}/2026-09-01/clip.mp4`,
     video_thumbnail: null,
     photo_paths: [`${SOURCE}/2026-09-01/a.jpg`],
-    is_journal_complete: false,
-    journal_entry_number: null,
-    journal_completion_streak: null,
-    journal_completed_at: null,
     location: null,
     created_at: "t",
     updated_at: "t",
@@ -119,11 +109,50 @@ describe("remapBackupIdentity", () => {
     expect(out.dailyEntries[0].id).toBe(
       naturalDailyEntryId(TARGET, "2026-09-01")
     );
-    // Sessions carry no day link, whatever the file said.
-    expect(out.activityPeriods[0].daily_entry_id).toBeNull();
     expect(out.journalEntries[0].id).toBe(
       naturalJournalId(TARGET, "2026-09-01")
     );
+  });
+
+  it("drops the columns the server no longer has from older files", () => {
+    const file = doc(TARGET);
+    Object.assign(file.tables.activityGroups[0], {
+      emoji: "🌱",
+      is_archived: true,
+    });
+    Object.assign(file.tables.activities[0], {
+      is_archived: true,
+      completed_at: "2026-08-01T00:00:00.000Z",
+    });
+    Object.assign(file.tables.dailyEntries[0], { current_activity_id: "a1" });
+    // Sessions carry no day link, whatever the file said.
+    Object.assign(file.tables.activityPeriods[0], { daily_entry_id: "d1" });
+    Object.assign(file.tables.journalEntries[0], {
+      is_journal_complete: true,
+      journal_entry_number: 3,
+      journal_completion_streak: 2,
+      journal_completed_at: "2026-09-01T20:00:00.000Z",
+    });
+    const out = remapBackupIdentity(file, TARGET).tables;
+    for (const [rows, columns] of [
+      [out.activityGroups, ["emoji", "is_archived"]],
+      [out.activities, ["is_archived", "completed_at"]],
+      [out.dailyEntries, ["current_activity_id"]],
+      [out.activityPeriods, ["daily_entry_id"]],
+      [
+        out.journalEntries,
+        [
+          "is_journal_complete",
+          "journal_entry_number",
+          "journal_completion_streak",
+          "journal_completed_at",
+        ],
+      ],
+    ] as const) {
+      for (const column of columns) expect(rows[0]).not.toHaveProperty(column);
+    }
+    // What the file meant still survives: archive state is archived_at.
+    expect(out.activities[0].archived_at).toBe("2026-08-01T00:00:00.000Z");
   });
 
   it("re-keys another account's rows and every reference consistently", () => {
@@ -136,7 +165,6 @@ describe("remapBackupIdentity", () => {
       activityId,
     ]);
     expect(out.dailyEntries[0].paused_task_ids).toEqual([activityId]);
-    expect(out.dailyEntries[0].current_activity_id).toBe(activityId);
     expect(Object.keys(out.dailyEntries[0].completion_notes ?? {})).toEqual([
       activityId,
     ]);

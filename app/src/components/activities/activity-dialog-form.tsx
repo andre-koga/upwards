@@ -157,8 +157,6 @@ export function ActivityDialogForm({
           name: payload.name,
           routine: payload.routine,
           completion_target: payload.completion_target,
-          is_archived: false,
-          completed_at: null,
           archived_at: null,
           tracks_time: payload.tracks_time,
           is_pinned: false,

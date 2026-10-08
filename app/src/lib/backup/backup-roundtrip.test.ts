@@ -94,10 +94,6 @@ function journalRow(
     video_path: null,
     video_thumbnail: null,
     photo_paths: [`${userKey}/${date}/a.jpg`],
-    is_journal_complete: true,
-    journal_entry_number: null,
-    journal_completion_streak: null,
-    journal_completed_at: null,
     location: null,
     created_at: T0,
     updated_at: T0,
@@ -123,10 +119,8 @@ async function seed(userKey = USER) {
   await db.activityGroups.add({
     id: "g1",
     name: "Health",
-    emoji: null,
     color: "green",
     order_index: 0,
-    is_archived: false,
     archived_at: null,
     ...base,
   });
@@ -137,8 +131,6 @@ async function seed(userKey = USER) {
       name: id === "a1" ? "Run" : "Read",
       routine: "daily",
       completion_target: 3,
-      is_archived: false,
-      completed_at: null,
       archived_at: id === "a2" ? "2026-08-20T00:00:00.000Z" : null,
       tracks_time: id === "a1",
       is_pinned: id === "a1",
@@ -157,7 +149,6 @@ async function seed(userKey = USER) {
   ]);
   await db.activityPeriods.add({
     id: "p1",
-    daily_entry_id: null,
     activity_id: "a1",
     start_time: "2026-09-01T06:00:00.000Z",
     end_time: "2026-09-01T06:30:00.000Z",
@@ -180,9 +171,6 @@ async function seed(userKey = USER) {
     order_index: 0,
     is_pinned: false,
     due_date: D2,
-    group_id: null,
-    is_archived: false,
-    recurring_memo_id: null,
     ...base,
   });
 }

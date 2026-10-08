@@ -152,7 +152,7 @@ export function newId(): string {
 }
 
 /** The protocol the current client sends; must match CLIENT_PROTOCOL in the app. */
-export const CLIENT_PROTOCOL = 2;
+export const CLIENT_PROTOCOL = 3;
 
 export async function submitOps(
   client: SupabaseClient,

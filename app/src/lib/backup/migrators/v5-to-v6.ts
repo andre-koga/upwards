@@ -5,10 +5,18 @@ import type {
   ActivityGroup,
   ActivityPeriod,
   ActivityStatusEvent,
-  DailyEntry,
   GroupStatusEvent,
   RecurringMemo,
 } from "@/lib/db/types";
+import {
+  withoutDroppedColumns,
+  type LegacyActivity,
+  type LegacyActivityGroup,
+  type LegacyActivityPeriod,
+  type LegacyDailyEntry,
+  type LegacyJournalEntry,
+  type LegacyOneTimeTask,
+} from "@/lib/db/legacy-shapes";
 import {
   BACKUP_FORMAT,
   BACKUP_FORMAT_VERSION,
@@ -21,7 +29,21 @@ import {
  * recurring memos, activities with no name, and zero-length sessions. This
  * file is the only place that still knows those shapes.
  */
-export interface BackupTablesV5 extends BackupTables {
+export interface BackupTablesV5 extends Omit<
+  BackupTables,
+  | "activityGroups"
+  | "activities"
+  | "activityPeriods"
+  | "dailyEntries"
+  | "journalEntries"
+  | "oneTimeTasks"
+> {
+  activityGroups: LegacyActivityGroup[];
+  activities: LegacyActivity[];
+  activityPeriods: LegacyActivityPeriod[];
+  dailyEntries: LegacyDailyEntry[];
+  journalEntries: LegacyJournalEntry[];
+  oneTimeTasks: LegacyOneTimeTask[];
   recurringMemos: RecurringMemo[];
   activityStatusEvents: ActivityStatusEvent[];
   groupStatusEvents: GroupStatusEvent[];
@@ -95,7 +117,7 @@ function deletedByEvents<
   );
 }
 
-function isZeroLength(period: ActivityPeriod): boolean {
+function isZeroLength(period: LegacyActivityPeriod): boolean {
   return (
     !!period.end_time &&
     new Date(period.start_time).getTime() ===
@@ -105,8 +127,8 @@ function isZeroLength(period: ActivityPeriod): boolean {
 
 /** Sessions: zero-length ones fold into the day; forgotten running ones close. */
 function convertPeriods(
-  periods: ActivityPeriod[],
-  entries: DailyEntry[],
+  periods: LegacyActivityPeriod[],
+  entries: LegacyDailyEntry[],
   activities: Map<string, Activity>,
   exportedAt: string
 ): ActivityPeriod[] {
@@ -114,7 +136,7 @@ function convertPeriods(
 
   // A zero-length session donates its time and note to the day only when that
   // day's count reached the target; the latest one wins.
-  const donors = new Map<string, ActivityPeriod>();
+  const donors = new Map<string, LegacyActivityPeriod>();
   for (const period of periods) {
     if (period.deleted_at || !isZeroLength(period)) continue;
     const key = `${period.daily_entry_id}:${period.activity_id}`;
@@ -154,8 +176,7 @@ function convertPeriods(
         !period.deleted_at &&
         exportedMs - new Date(period.start_time).getTime() > STALE_RUNNING_MS;
       return {
-        ...period,
-        daily_entry_id: null,
+        ...withoutDroppedColumns("activity_periods", period),
         end_time: stale
           ? new Date(
               new Date(period.start_time).getTime() + STALE_CLOSE_AFTER_MS
@@ -213,7 +234,7 @@ export function migrateV5ToV6(doc: BackupDocumentV5): BackupDocument {
         ? (archivedGroupEvents.get(group.id)?.effective_at ?? group.updated_at)
         : null;
     return {
-      ...group,
+      ...withoutDroppedColumns("activity_groups", group),
       archived_at: archivedAt,
       deleted_at:
         group.deleted_at ?? (deletedGroups.has(group.id) ? exportedAt : null),
@@ -253,7 +274,7 @@ export function migrateV5ToV6(doc: BackupDocumentV5): BackupDocument {
     }
 
     return {
-      ...activity,
+      ...withoutDroppedColumns("activities", activity),
       name,
       routine,
       archived_at: archivedAt,
@@ -272,7 +293,6 @@ export function migrateV5ToV6(doc: BackupDocumentV5): BackupDocument {
       name: "Routines",
       color: null,
       order_index: null,
-      is_archived: false,
       archived_at: null,
       created_at: exportedAt,
       updated_at: exportedAt,
@@ -287,8 +307,6 @@ export function migrateV5ToV6(doc: BackupDocumentV5): BackupDocument {
         name: memo.title,
         routine: memo.routine,
         completion_target: 1,
-        is_archived: !enabled,
-        completed_at: null,
         archived_at: enabled ? null : memo.updated_at,
         tracks_time: false,
         is_pinned: memo.is_pinned === true,
@@ -327,8 +345,16 @@ export function migrateV5ToV6(doc: BackupDocumentV5): BackupDocument {
       ...kept,
       activityGroups: groups,
       activities,
-      dailyEntries: entries,
+      dailyEntries: entries.map((row) =>
+        withoutDroppedColumns("daily_entries", row)
+      ),
       activityPeriods,
+      journalEntries: kept.journalEntries.map((row) =>
+        withoutDroppedColumns("journal_entries", row)
+      ),
+      oneTimeTasks: kept.oneTimeTasks.map((row) =>
+        withoutDroppedColumns("one_time_tasks", row)
+      ),
     },
   };
 }

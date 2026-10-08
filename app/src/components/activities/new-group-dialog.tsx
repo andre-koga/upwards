@@ -26,7 +26,6 @@ export function NewGroupDialog({
           id: newId(),
           name,
           color,
-          is_archived: false,
           archived_at: null,
           order_index: null,
           created_at: timestamp,

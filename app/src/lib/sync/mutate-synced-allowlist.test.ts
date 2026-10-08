@@ -15,7 +15,6 @@ const ALLOWED_SYNCED_WRITERS = new Set([
   "lib/sync/daily-entry-reconciliation.ts",
   "lib/db/daily-entry.ts",
   "lib/db/index.ts",
-  "lib/journal/dedupe-by-date.ts",
 ]);
 
 const WRITE_RE =

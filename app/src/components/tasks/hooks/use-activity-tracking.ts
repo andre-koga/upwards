@@ -93,7 +93,6 @@ export function useActivityTracking(dateString: string) {
 
         const newPeriod: ActivityPeriod = {
           id: newId(),
-          daily_entry_id: null,
           activity_id: activityId,
           start_time: n,
           end_time: null,

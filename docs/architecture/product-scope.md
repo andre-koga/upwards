@@ -506,12 +506,20 @@ as the baseline, right after a migration window. A device that missed the
 window simply takes the reset path when it next opens.
 
 **Same-date dedupe waits for server re-keying.** Deterministic IDs prevent new
-duplicates, but on 2026-10-08 production still held 340 of 384 live journal
-rows and 247 of 286 daily rows under pre-natural IDs. A write for one of those
-dates under its natural ID makes a second local row, and the reconcile pass
-merges it. `dedupe-by-date.ts` is therefore deleted in A8b, together with a
-server migration that re-keys those rows to their natural IDs and bumps
-`data_epoch` so every device re-bootstraps onto them.
+duplicates, but on 2026-10-08 production still held 340 of 384 journal rows
+and 247 of 286 daily rows under pre-natural IDs. A write for one of those
+dates under its natural ID made a second local row, and the reconcile pass
+merged it. A8b re-keys those rows on the server and deletes the pass:
+- The server keeps one row per (user, date), tombstones included, so the
+  natural ID never collides. Old → new IDs stay in `legacy_a8_rekeyed_ids`.
+- A journal op still queued under an old ID is translated on arrival, so an
+  offline delete still finds its row and other devices see the natural ID.
+  Daily ops need nothing: they are applied by date.
+- The `data_epoch` bump makes every device push, then re-bootstrap. The
+  snapshot retires a local journal or daily row only when the server holds
+  that date under another ID and the local row is synced, unedited, and has
+  no queued op or open conflict. Anything else stays, and reads prefer the
+  natural ID (`lib/journal/entry-for-date.ts`). Nothing merges or tombstones.
 
 **Lifecycle as timestamps, not event logs.** Replace `activity_status_events`
 and `group_status_events` (archive / restore / delete toggles with
@@ -755,6 +763,13 @@ ship together in one window: A6a (server) and A6b (client).
   the dead fields from the row types; bump `CLIENT_PROTOCOL`.
 - Tests: re-keying is idempotent and leaves one row per date; integration
   suite passes against the dropped columns.
+- Built as `20261008210000_baseline_cleanup.sql`. The dropped values are in
+  `legacy_a8_dropped_values`, the ID map in `legacy_a8_rekeyed_ids`; both are
+  closed to the API roles. `supabase/tests/a8b-rehearsal.sql` replays the
+  migration on seeded legacy rows and rolls back. Local rows and backup files
+  from before the window can still carry the dropped columns. They are
+  stripped on sync and on import (`DROPPED_COLUMNS` in `lib/db/legacy-shapes.ts`),
+  and the backup migrators read them through `Legacy*` row types.
 
 **A9. Account settings and opt-ins** (§2.5, §2.7).
 - `user_profile` columns from §2.7 and Settings toggles. Automatic location is

@@ -445,7 +445,7 @@ describe("sync RPC integration", () => {
         entityId: periodId,
         row: {
           // A stale client may still send the link. Sessions stand alone now
-          // (product-scope.md §2.10), so it is ignored.
+          // (product-scope.md §2.10) and the column is gone, so it is ignored.
           daily_entry_id: dailyId,
           activity_id: activityId,
           start_time: "2026-08-25T15:00:00.000Z",
@@ -459,12 +459,11 @@ describe("sync RPC integration", () => {
 
     const { data: period, error: periodError } = await user.deviceA
       .from("activity_periods")
-      .select("id, daily_entry_id, activity_id")
+      .select("id, activity_id")
       .eq("id", periodId)
       .maybeSingle();
     if (periodError) throw periodError;
     expect(period?.activity_id).toBe(activityId);
-    expect(period?.daily_entry_id).toBeNull();
 
     const { data: daily, error: dailyError } = await user.deviceA
       .from("daily_entries")

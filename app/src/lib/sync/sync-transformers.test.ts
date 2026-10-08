@@ -17,13 +17,14 @@ describe("sync transformers", () => {
     expect(isValidUuid(null)).toBe(false);
   });
 
-  it("normalizes invalid foreign keys to null and clears group emoji", () => {
+  it("normalizes invalid foreign keys and drops removed columns", () => {
     expect(
       normalizeSyncRow("activity_groups", {
         id: VALID_UUID,
         emoji: "🔥",
+        is_archived: true,
       })
-    ).toEqual({ id: VALID_UUID, emoji: null });
+    ).toEqual({ id: VALID_UUID });
 
     expect(
       normalizeSyncRow("activities", {
@@ -36,8 +37,17 @@ describe("sync transformers", () => {
       normalizeSyncRow("daily_entries", {
         id: VALID_UUID,
         current_activity_id: "bad",
-      }).current_activity_id
-    ).toBeNull();
+      })
+    ).toEqual({ id: VALID_UUID });
+
+    expect(
+      normalizeSyncRow("journal_entries", {
+        id: VALID_UUID,
+        title: "kept",
+        is_journal_complete: true,
+        journal_entry_number: 4,
+      })
+    ).toEqual({ id: VALID_UUID, title: "kept" });
   });
 
   it("builds remote rows and rejects invalid ids", () => {

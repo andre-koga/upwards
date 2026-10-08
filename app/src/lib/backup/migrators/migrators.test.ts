@@ -69,9 +69,11 @@ describe("migrateBackupDocument", () => {
     expect(doc.source_user_key).toBe(USER);
     expect(doc.tables.memories).toEqual([]);
 
+    // The legacy archive flags become archived_at and are not carried forward.
     const activity = doc.tables.activities[0];
-    expect(activity.is_archived).toBe(true);
-    expect(activity.completed_at).toBe("2026-07-01T00:00:00.000Z");
+    expect(activity.archived_at).toBe("2026-07-01T00:00:00.000Z");
+    expect(activity).not.toHaveProperty("is_archived");
+    expect(activity).not.toHaveProperty("completed_at");
 
     expect(doc.tables.activityPeriods.map((p) => p.id)).toEqual(["timed"]);
     expect(doc.tables.activityPeriods[0].note).toBeNull();
@@ -88,7 +90,7 @@ describe("migrateBackupDocument", () => {
       locations: [expect.objectContaining({ displayName: "Lisbon" })],
     });
     expect("youtube_url" in entry).toBe(false);
-    expect(doc.tables.oneTimeTasks[0].recurring_memo_id).toBeNull();
+    expect(doc.tables.oneTimeTasks[0]).not.toHaveProperty("recurring_memo_id");
   });
 
   it("accepts the current format and fills tables it lacks", () => {

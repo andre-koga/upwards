@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-10-one-entry-per-day",
+    date: "2026-10-10",
+    title: "One journal entry per day, everywhere",
+    bullets: [
+      "Older journal entries and days now use the same identity on every device, so a day can no longer show up twice.",
+      "After this update each device sends anything it hasn't synced yet, then reloads your account once. Nothing you wrote is lost: a day with changes still waiting to sync keeps them on this device until they're sent.",
+      "Devices still on an older version will ask you to update before they sync again.",
+    ],
+  },
+  {
     id: "2026-10-09-local-storage-baseline",
     date: "2026-10-09",
     title: "Simpler storage on this device",
