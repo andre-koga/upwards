@@ -1,10 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { tables } = vi.hoisted(() => ({
+const { tables, pending, conflicts } = vi.hoisted(() => ({
   tables: {
     journalEntries: [] as Array<Record<string, unknown>>,
     dailyEntries: [] as Array<Record<string, unknown>>,
   },
+  pending: [] as Array<{ entity_id: string }>,
+  conflicts: new Set<string>(),
+}));
+
+vi.mock("./pending-operations", () => ({
+  listUnsyncedOperations: async () => [...pending],
+}));
+
+vi.mock("./sync-issues-store", () => ({
+  listOpenConflictEntityIds: async () => new Set(conflicts),
 }));
 
 vi.mock("@/lib/supabase", () => ({
@@ -62,6 +72,8 @@ describe("applySyncSnapshot", () => {
   beforeEach(() => {
     tables.journalEntries.length = 0;
     tables.dailyEntries.length = 0;
+    pending.length = 0;
+    conflicts.clear();
   });
 
   it("clears a local tombstone when the server row is live", async () => {
@@ -269,5 +281,125 @@ describe("applySyncSnapshot", () => {
     expect(tables.journalEntries[0]!.deleted_at).toBe(
       "2026-08-27T00:00:00.000Z"
     );
+  });
+
+  describe("after the A8b re-key", () => {
+    const SYNCED = "2026-10-08T00:00:00.000Z";
+    const oldJournal = (extra: Record<string, unknown> = {}) => ({
+      id: "old-journal-id",
+      user_id: "user-1",
+      entry_date: "2026-01-01",
+      text_content: "kept text",
+      is_journal_complete: true,
+      journal_entry_number: 7,
+      deleted_at: null,
+      updated_at: SYNCED,
+      synced_at: SYNCED,
+      ...extra,
+    });
+    const serverJournal = {
+      id: "natural-journal-id",
+      user_id: "user-1",
+      entry_date: "2026-01-01",
+      text_content: "kept text",
+      deleted_at: null,
+      updated_at: SYNCED,
+    };
+
+    it("retires a synced local copy the server now holds under its natural id", async () => {
+      tables.journalEntries.push(oldJournal());
+      tables.dailyEntries.push({
+        id: "old-daily-id",
+        user_id: "user-1",
+        date: "2026-01-01",
+        task_counts: { a: 1 },
+        current_activity_id: "a",
+        updated_at: SYNCED,
+        synced_at: SYNCED,
+      });
+
+      await applySyncSnapshot({
+        server_sequence: 50,
+        journal_entries: [serverJournal],
+        daily_entries: [
+          {
+            id: "natural-daily-id",
+            user_id: "user-1",
+            date: "2026-01-01",
+            task_counts: { a: 1 },
+            updated_at: SYNCED,
+          },
+        ],
+      });
+
+      expect(tables.journalEntries.map((r) => r.id)).toEqual([
+        "natural-journal-id",
+      ]);
+      expect(tables.journalEntries[0]!.text_content).toBe("kept text");
+      expect(tables.dailyEntries.map((r) => r.id)).toEqual([
+        "natural-daily-id",
+      ]);
+    });
+
+    it.each([
+      ["never synced", { synced_at: null }],
+      [
+        "edited since its last sync",
+        { updated_at: "2026-10-09T00:00:00.000Z" },
+      ],
+    ])("keeps a local copy that was %s", async (_label, extra) => {
+      tables.journalEntries.push(oldJournal(extra));
+
+      await applySyncSnapshot({
+        server_sequence: 51,
+        journal_entries: [serverJournal],
+      });
+
+      expect(tables.journalEntries.map((r) => r.id).sort()).toEqual([
+        "natural-journal-id",
+        "old-journal-id",
+      ]);
+    });
+
+    it("keeps a local copy with a queued op or an open conflict", async () => {
+      tables.journalEntries.push(
+        oldJournal(),
+        oldJournal({ id: "conflicted-id", entry_date: "2026-01-02" })
+      );
+      pending.push({ entity_id: "old-journal-id" });
+      conflicts.add("conflicted-id");
+
+      await applySyncSnapshot({
+        server_sequence: 52,
+        journal_entries: [
+          serverJournal,
+          { ...serverJournal, id: "natural-2", entry_date: "2026-01-02" },
+        ],
+      });
+
+      expect(tables.journalEntries.map((r) => r.id).sort()).toEqual([
+        "conflicted-id",
+        "natural-2",
+        "natural-journal-id",
+        "old-journal-id",
+      ]);
+    });
+
+    it("strips dropped columns from a local row the snapshot updates", async () => {
+      tables.journalEntries.push(oldJournal({ id: "natural-journal-id" }));
+
+      await applySyncSnapshot({
+        server_sequence: 53,
+        journal_entries: [serverJournal],
+      });
+
+      expect(tables.journalEntries).toHaveLength(1);
+      expect(tables.journalEntries[0]).not.toHaveProperty(
+        "is_journal_complete"
+      );
+      expect(tables.journalEntries[0]).not.toHaveProperty(
+        "journal_entry_number"
+      );
+    });
   });
 });

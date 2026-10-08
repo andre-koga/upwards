@@ -1,3 +1,5 @@
+import { withoutDroppedColumns } from "@/lib/db/legacy-shapes";
+
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -31,34 +33,18 @@ export function normalizeSyncRow(
   table: SyncTable,
   row: Record<string, unknown>
 ): Record<string, unknown> {
-  const sanitized = { ...row };
-
-  if (table === "activity_groups") {
-    sanitized.emoji = null;
-  }
-
-  if (table === "one_time_tasks") {
-    sanitized.group_id = null;
-  }
+  // Rows written before the A8b window can still carry columns the server
+  // dropped; never send them, and never keep them from a pull.
+  const sanitized: Record<string, unknown> = withoutDroppedColumns(table, {
+    ...row,
+  });
 
   if (table === "activities" && !isValidUuid(sanitized.group_id)) {
     sanitized.group_id = null;
   }
 
-  if (
-    table === "daily_entries" &&
-    !isValidUuid(sanitized.current_activity_id)
-  ) {
-    sanitized.current_activity_id = null;
-  }
-
-  if (table === "activity_periods") {
-    if (!isValidUuid(sanitized.daily_entry_id)) {
-      sanitized.daily_entry_id = null;
-    }
-    if (!isValidUuid(sanitized.activity_id)) {
-      sanitized.activity_id = null;
-    }
+  if (table === "activity_periods" && !isValidUuid(sanitized.activity_id)) {
+    sanitized.activity_id = null;
   }
 
   return sanitized;

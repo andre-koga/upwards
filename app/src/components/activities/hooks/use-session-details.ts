@@ -122,7 +122,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
             : new Date(dayBoundsMs(derived.date).startMs).toISOString();
         const virtualPeriod: ActivityPeriod = {
           id: sessionId,
-          daily_entry_id: null,
           activity_id: derived.activityId,
           start_time: instant,
           end_time: instant,

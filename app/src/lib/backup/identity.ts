@@ -4,6 +4,7 @@ import {
   naturalDailyEntryId,
   naturalJournalId,
 } from "@/lib/sync/natural-ids";
+import { withoutDroppedColumns } from "@/lib/db/legacy-shapes";
 import type { BackupDocument, BackupTables } from "./format";
 
 /**
@@ -68,10 +69,6 @@ export function remapBackupIdentity(
           UPWARDS_SYNC_NAMESPACE
         )
       : id;
-  const mapNullable = (
-    kind: string,
-    id: string | null | undefined
-  ): string | null => (id ? mapId(kind, id) : null);
   const mapKeys = <T>(record: Record<string, T> | null): Record<string, T> =>
     Object.fromEntries(
       Object.entries(record ?? {}).map(([id, value]) => [
@@ -93,34 +90,32 @@ export function remapBackupIdentity(
 
   const tables: BackupTables = {
     activityGroups: t.activityGroups.map((row) => ({
-      ...row,
+      ...withoutDroppedColumns("activity_groups", row),
       id: mapId("activity_group", row.id),
     })),
     activities: t.activities.map((row) => ({
-      ...row,
+      ...withoutDroppedColumns("activities", row),
       id: mapId("activity", row.id),
       group_id: mapId("activity_group", row.group_id),
     })),
     dailyEntries: t.dailyEntries.map((row) => ({
-      ...row,
+      ...withoutDroppedColumns("daily_entries", row),
       id: dailyIdByOldId.get(row.id)!,
       task_counts: mapKeys(row.task_counts),
       paused_task_ids: (row.paused_task_ids ?? []).map((id) =>
         mapId("activity", id)
       ),
-      current_activity_id: mapNullable("activity", row.current_activity_id),
       completion_notes: mapKeys(row.completion_notes),
       completion_times: mapKeys(row.completion_times),
     })),
     activityPeriods: t.activityPeriods.map((row) => ({
-      ...row,
-      id: mapId("activity_period", row.id),
       // Sessions are found by time; they carry no daily-entry link.
-      daily_entry_id: null,
+      ...withoutDroppedColumns("activity_periods", row),
+      id: mapId("activity_period", row.id),
       activity_id: mapId("activity", row.activity_id),
     })),
     journalEntries: t.journalEntries.map((row) => ({
-      ...row,
+      ...withoutDroppedColumns("journal_entries", row),
       id: naturalJournalId(targetUserKey, row.entry_date),
       photo_paths: row.photo_paths ? row.photo_paths.map(owner) : null,
       video_path: row.video_path ? owner(row.video_path) : null,
@@ -137,10 +132,8 @@ export function remapBackupIdentity(
       photo_paths: row.photo_paths ? row.photo_paths.map(owner) : null,
     })),
     oneTimeTasks: t.oneTimeTasks.map((row) => ({
-      ...row,
+      ...withoutDroppedColumns("one_time_tasks", row),
       id: mapId("one_time_task", row.id),
-      group_id: mapNullable("activity_group", row.group_id),
-      recurring_memo_id: mapNullable("recurring_memo", row.recurring_memo_id),
     })),
   };
 

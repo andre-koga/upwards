@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { db, now, newId } from "@/lib/db";
+import { now, newId } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
 import type {
   JournalEntry,
@@ -10,10 +10,10 @@ import type {
 import {
   isJournalEntryComplete,
   journalEntryFieldsHaveContent,
+  journalEntryForDate,
   journalStreakAsOf,
   normalizeJournalLocationRoute,
   parseJournalLocationRoute,
-  reconcileJournalDuplicatesForDate,
   serializeJournalLocationRoute,
   toJournalVideoPath,
   type JournalFields,
@@ -103,18 +103,7 @@ export function useJournalEntry(currentDate: Date) {
           };
         }
 
-        const entries = await db.journalEntries
-          .where("entry_date")
-          .equals(dateStr)
-          .filter((e) => !e.deleted_at)
-          .toArray();
-        const entry =
-          entries.length > 1
-            ? await reconcileJournalDuplicatesForDate(dateStr, {
-                suppressSync: true,
-              })
-            : (entries[0] ?? null);
-        setJournalEntry(entry);
+        setJournalEntry(await journalEntryForDate(dateStr));
       } catch (error) {
         console.error("Error loading journal entry:", error);
       }
@@ -176,10 +165,7 @@ export function useJournalEntry(currentDate: Date) {
       const dateStr = toDateString(currentDate);
       const n = now();
       try {
-        const existing =
-          (await reconcileJournalDuplicatesForDate(dateStr, {
-            suppressSync: true,
-          })) ?? undefined;
+        const existing = (await journalEntryForDate(dateStr)) ?? undefined;
 
         if (
           !existing &&

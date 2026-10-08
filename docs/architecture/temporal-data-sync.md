@@ -315,8 +315,10 @@ it held, and the import re-applies them as differences.
 
 Devices report their local schema version with their heartbeat. Legacy repair
 modules (natural-ID repair, storage heal, cutover enqueue) were deleted in the
-baseline release. Same-date journal dedupe stays until the server re-keys
-the rows still on pre-natural IDs (product-scope.md §2.10, A8b).
+baseline release. Same-date journal dedupe went in the next window (A8b),
+after the server re-keyed the rows still on pre-natural IDs. A local copy left
+under an old ID is retired by the snapshot only once it is provably redundant:
+synced, unedited, no queued op, no open conflict (product-scope.md §2.10).
 
 ### Release gates and data migrations (2026-10-01)
 

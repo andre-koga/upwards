@@ -4,13 +4,13 @@ import {
   normalizeLegacyVideoPath,
 } from "@/lib/db/legacy-shapes";
 import type {
-  Activity,
-  ActivityPeriod,
-  DailyEntry,
-  JournalEntry,
-  Memory,
-  OneTimeTask,
-} from "@/lib/db/types";
+  LegacyActivity,
+  LegacyActivityPeriod,
+  LegacyDailyEntry,
+  LegacyJournalEntry,
+  LegacyOneTimeTask,
+} from "@/lib/db/legacy-shapes";
+import type { Memory } from "@/lib/db/types";
 import {
   BACKUP_FORMAT,
   BACKUP_TABLE_NAMES,
@@ -43,11 +43,11 @@ function str(value: unknown): string | null {
   return typeof value === "string" ? value : null;
 }
 
-function normalizeActivity(row: LegacyRow): Activity {
+function normalizeActivity(row: LegacyRow): LegacyActivity {
   const completedAt = str(row.completed_at);
   const archived = row.is_archived === true || Boolean(completedAt);
   return {
-    ...(row as unknown as Activity),
+    ...(row as unknown as LegacyActivity),
     is_archived: archived,
     completed_at: archived
       ? (completedAt ?? str(row.updated_at) ?? str(row.created_at))
@@ -55,14 +55,14 @@ function normalizeActivity(row: LegacyRow): Activity {
   };
 }
 
-function normalizeJournal(row: LegacyRow): JournalEntry {
+function normalizeJournal(row: LegacyRow): LegacyJournalEntry {
   const copy = { ...row };
   const videoPath =
     normalizeLegacyVideoPath(copy.video_path) ??
     normalizeLegacyVideoPath(copy.youtube_url);
   delete copy.youtube_url;
   return {
-    ...(copy as unknown as JournalEntry),
+    ...(copy as unknown as LegacyJournalEntry),
     video_path: videoPath,
     video_thumbnail: str(copy.video_thumbnail),
     photo_paths: Array.isArray(copy.photo_paths)
@@ -70,7 +70,7 @@ function normalizeJournal(row: LegacyRow): JournalEntry {
       : null,
     location: normalizeLegacyLocationRoute(
       copy.location
-    ) as JournalEntry["location"],
+    ) as LegacyJournalEntry["location"],
   };
 }
 
@@ -80,11 +80,11 @@ function normalizeJournal(row: LegacyRow): JournalEntry {
  * `completion_times`, so fold them into the day instead of importing them.
  */
 function foldUntimedPeriods(
-  periods: ActivityPeriod[],
-  dailyEntries: DailyEntry[]
-): ActivityPeriod[] {
+  periods: LegacyActivityPeriod[],
+  dailyEntries: LegacyDailyEntry[]
+): LegacyActivityPeriod[] {
   const byId = new Map(dailyEntries.map((entry) => [entry.id, entry]));
-  const timed: ActivityPeriod[] = [];
+  const timed: LegacyActivityPeriod[] = [];
   for (const period of periods) {
     if (!isUntimedPeriod(period.start_time, period.end_time)) {
       timed.push(period);
@@ -153,19 +153,19 @@ export function migrateV4ToV5(raw: LegacyRow): BackupDocumentV5 {
       : null,
   }));
   tables.oneTimeTasks = rows(raw.oneTimeTasks).map((row) => ({
-    ...(row as unknown as OneTimeTask),
+    ...(row as unknown as LegacyOneTimeTask),
     recurring_memo_id: str(row.recurring_memo_id),
   }));
   tables.dailyEntries = rows(raw.dailyEntries).map((row) => ({
-    ...(row as unknown as DailyEntry),
+    ...(row as unknown as LegacyDailyEntry),
     completion_notes:
-      (row.completion_notes as DailyEntry["completion_notes"]) ?? {},
+      (row.completion_notes as LegacyDailyEntry["completion_notes"]) ?? {},
     completion_times:
-      (row.completion_times as DailyEntry["completion_times"]) ?? {},
+      (row.completion_times as LegacyDailyEntry["completion_times"]) ?? {},
   }));
   tables.activityPeriods = foldUntimedPeriods(
     rows(raw.activityPeriods).map((row) => ({
-      ...(row as unknown as ActivityPeriod),
+      ...(row as unknown as LegacyActivityPeriod),
       note: normalizeSessionNote(str(row.note)),
     })),
     tables.dailyEntries

@@ -21,10 +21,6 @@ const JOURNAL_CONFLICT_FIELD_KEYS = [
   "video_path",
   "video_thumbnail",
   "photo_paths",
-  "is_journal_complete",
-  "journal_entry_number",
-  "journal_completion_streak",
-  "journal_completed_at",
   "location",
   "deleted_at",
 ] as const;
@@ -266,22 +262,6 @@ function patchJournalFromFields(
       fields.photo_paths !== undefined
         ? (fields.photo_paths as string[] | null)
         : existing.photo_paths,
-    is_journal_complete:
-      fields.is_journal_complete !== undefined
-        ? (fields.is_journal_complete as boolean | null)
-        : existing.is_journal_complete,
-    journal_entry_number:
-      fields.journal_entry_number !== undefined
-        ? (fields.journal_entry_number as number | null)
-        : existing.journal_entry_number,
-    journal_completion_streak:
-      fields.journal_completion_streak !== undefined
-        ? (fields.journal_completion_streak as number | null)
-        : existing.journal_completion_streak,
-    journal_completed_at:
-      fields.journal_completed_at !== undefined
-        ? (fields.journal_completed_at as string | null)
-        : existing.journal_completed_at,
     location:
       fields.location !== undefined
         ? (fields.location as JournalEntry["location"])
@@ -410,7 +390,7 @@ export function formatJournalConflictFieldValue(
       return `${locations.length} place${locations.length === 1 ? "" : "s"}`;
     }
   }
-  if (field === "is_bookmarked" || field === "is_journal_complete") {
+  if (field === "is_bookmarked") {
     if (value === true) return "Yes";
     if (value === false) return "No";
   }

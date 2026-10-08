@@ -1,11 +1,14 @@
 import { db } from "@/lib/db";
 import { supabase, getCachedUserId } from "@/lib/supabase";
+import { withoutDroppedColumns } from "@/lib/db/legacy-shapes";
 import { normalizeSyncRow, type SyncTable } from "./sync-transformers";
 import { CLIENT_PROTOCOL, TABLE_MAP } from "./sync-constants";
 import { withSuppressedProjectionEnqueue } from "./projection-sync";
 import { isSyncOperationsRpcMissing } from "./sync-operations";
 import { saveOpsRpcAvailable } from "./sync-storage";
 import { stripOpOwnedFields } from "./op-owned-fields";
+import { listUnsyncedOperations } from "./pending-operations";
+import { listOpenConflictEntityIds } from "./sync-issues-store";
 import {
   readDataEpoch,
   recordObservedDataEpoch,
@@ -99,6 +102,78 @@ function localRowHasContent(
   );
 }
 
+/** Tables with one row per (user, date) on the server. */
+const DATE_KEYED_TABLES: Partial<Record<SyncTable, "date" | "entry_date">> = {
+  daily_entries: "date",
+  journal_entries: "entry_date",
+};
+
+/**
+ * Local rows the server holds under another id.
+ *
+ * The server keeps one journal row and one daily row per (user, date),
+ * tombstones included, and the A8b window re-keyed the old ones to the id every
+ * device derives. So when the snapshot has a row for a date under a different
+ * id, a local row for that date no longer exists on the server: it is a stale
+ * copy, and the snapshot just delivered the real one.
+ *
+ * Only a copy is retired: the local row must be synced, with no queued op and no
+ * open conflict card. Anything else might hold work the server never got, so it
+ * stays (journalEntryForDate reads the natural row first meanwhile) until a later
+ * snapshot, after the push, can prove it redundant.
+ */
+async function retireSupersededLocalRows(
+  table: SyncTable,
+  dateField: "date" | "entry_date",
+  incoming: Array<Record<string, unknown>>,
+  existing: Array<Record<string, unknown>>
+): Promise<void> {
+  const serverIdByDate = new Map<string, string>();
+  for (const row of incoming) {
+    const date = row[dateField];
+    if (typeof date === "string" && typeof row.id === "string") {
+      serverIdByDate.set(date, row.id);
+    }
+  }
+
+  const stale = existing.filter((row) => {
+    const date = row[dateField];
+    if (typeof date !== "string" || typeof row.id !== "string") return false;
+    const serverId = serverIdByDate.get(date);
+    return serverId !== undefined && serverId !== row.id;
+  });
+  if (stale.length === 0) return;
+
+  const [pending, conflicts] = await Promise.all([
+    listUnsyncedOperations(),
+    listOpenConflictEntityIds(),
+  ]);
+  const busy = new Set(
+    pending.map((op) => op.entity_id).filter((id): id is string => !!id)
+  );
+  const ids = stale
+    .filter((row) => {
+      const id = row.id as string;
+      const syncedAt = typeof row.synced_at === "string" ? row.synced_at : null;
+      const updatedAt =
+        typeof row.updated_at === "string" ? row.updated_at : "";
+      return (
+        syncedAt !== null &&
+        updatedAt <= syncedAt &&
+        !busy.has(id) &&
+        !conflicts.has(id)
+      );
+    })
+    .map((row) => row.id as string);
+  if (ids.length === 0) return;
+
+  if (table === "journal_entries") {
+    await db.journalEntries.bulkDelete(ids);
+  } else {
+    await db.dailyEntries.bulkDelete(ids);
+  }
+}
+
 export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
   const userId = getCachedUserId();
   if (!userId) return;
@@ -137,7 +212,12 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
         if (!local) return row;
         // Counts, pauses, and break days belong to the semantic op stream.
         // Overwriting them here silently discards local completions.
-        const next = { ...local, ...stripOpOwnedFields(table, row) };
+        // Drop columns the server no longer has, so the re-bootstrap after the
+        // A8b window also cleans the local copy.
+        const next = withoutDroppedColumns(table, {
+          ...local,
+          ...stripOpOwnedFields(table, row),
+        });
 
         // Symmetry with the rule above. The merge lets incoming fields win, so an
         // incoming tombstone would delete a live local row — including one whose
@@ -160,6 +240,11 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
       });
 
       await localTable.bulkPut(merged);
+
+      const dateField = DATE_KEYED_TABLES[table];
+      if (dateField) {
+        await retireSupersededLocalRows(table, dateField, incoming, existing);
+      }
     }
   });
 }

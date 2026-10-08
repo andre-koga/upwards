@@ -15,7 +15,6 @@ import { hasPendingOperationForEntity } from "./unsynced-data";
 import { buildProjectionConflictPayloadFromOp } from "./projection-conflict-resolution";
 import type { ActivityPeriod } from "@/lib/db/types";
 import { maybeRecordTimelineOverlapInfo } from "./timeline-overlap";
-import { reconcileJournalDuplicatesForDate } from "@/lib/journal/dedupe-by-date";
 
 /** Current-state rows that sync via projection.upsert. Streaks are local-only. */
 export const OPS_MANAGED_SYNC_TABLES: SyncTable[] = [
@@ -209,15 +208,6 @@ export async function applyAcceptedProjectionOp(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db[dexieKey] as any).put(normalized);
-
-  if (op.entity_type === "journal_entry") {
-    const entryDate = normalized.entry_date;
-    if (typeof entryDate === "string") {
-      await reconcileJournalDuplicatesForDate(entryDate, {
-        preferredId: entityId,
-      });
-    }
-  }
 
   if (
     op.entity_type === "activity_period" &&

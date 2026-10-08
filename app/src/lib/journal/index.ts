@@ -5,4 +5,4 @@ export * from "./video-storage";
 export * from "./photo-storage";
 export * from "./photo-compression";
 export * from "./archive";
-export * from "./dedupe-by-date";
+export * from "./entry-for-date";

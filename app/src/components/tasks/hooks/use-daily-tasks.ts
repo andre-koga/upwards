@@ -361,7 +361,6 @@ export function useDailyTasks({
       if (!confirmed) return;
       const period: ActivityPeriod = {
         id: newId(),
-        daily_entry_id: null,
         activity_id: activityId,
         start_time: startIso,
         end_time: endIso,

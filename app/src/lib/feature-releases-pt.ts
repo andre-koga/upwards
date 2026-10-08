@@ -12,6 +12,14 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-10-one-entry-per-day": {
+    title: "Uma entrada de diário por dia, em todo lugar",
+    bullets: [
+      "Entradas de diário e dias mais antigos agora usam a mesma identidade em todos os dispositivos, então um dia não aparece mais duas vezes.",
+      "Depois desta atualização, cada dispositivo envia o que ainda não sincronizou e recarrega sua conta uma vez. Nada do que você escreveu se perde: um dia com mudanças ainda por sincronizar as mantém neste dispositivo até serem enviadas.",
+      "Dispositivos ainda numa versão antiga vão pedir para atualizar antes de sincronizar de novo.",
+    ],
+  },
   "2026-10-09-local-storage-baseline": {
     title: "Armazenamento mais simples neste dispositivo",
     bullets: [
