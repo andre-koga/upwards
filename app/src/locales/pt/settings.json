@@ -66,6 +66,19 @@
       "passwordTooShort": "A senha deve ter pelo menos 6 caracteres.",
       "passwordMismatch": "As senhas não coincidem.",
       "saveNewPassword": "Salvar nova senha"
+    },
+    "screen": {
+      "title": "Upwards",
+      "subtitle": "Entre para manter seus dias, diário e hábitos em um só lugar, em todos os dispositivos.",
+      "offline": "Você está offline. Entrar exige conexão na primeira vez; depois disso o Upwards funciona offline."
+    },
+    "handoff": {
+      "backup": {
+        "action": "Salvar antes um backup deste dispositivo",
+        "saved": "Backup salvo. Agora escolha abaixo.",
+        "hint": "Um arquivo com tudo o que está neste dispositivo, caso você queira depois. Nada é enviado nem removido.",
+        "failed": "Não foi possível salvar o backup. Tente de novo ou escolha abaixo se não precisar de um."
+      }
     }
   },
   "sync": {

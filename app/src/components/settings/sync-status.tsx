@@ -5,7 +5,6 @@ import { syncEngine } from "@/lib/sync";
 import { useAuth } from "@/lib/use-auth";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { SyncStatusPill } from "./sync-status-pill";
-import { AuthPopup } from "./auth-popup";
 import { logError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +15,6 @@ export default function SyncStatus() {
   const { isSupabaseConfigured, isAuthed } = useAuth();
   const isOnline = useOnlineStatus();
   const [isVisible, setIsVisible] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
   const hideTimerRef = useRef<number | null>(null);
   const prevIsSyncingRef = useRef(syncState.isSyncing);
 
@@ -35,13 +33,6 @@ export default function SyncStatus() {
       unsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    if (isAuthed) {
-      /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing with auth state */
-      setShowAuth(false);
-    }
-  }, [isAuthed]);
 
   useEffect(() => {
     const wasSyncing = prevIsSyncingRef.current;
@@ -94,15 +85,7 @@ export default function SyncStatus() {
         isOnline={isOnline}
         isAuthed={isAuthed}
         onManualSync={handleManualSync}
-        onToggleAuth={() => setShowAuth((prev) => !prev)}
       />
-
-      {showAuth && !isAuthed && (
-        <AuthPopup
-          onClose={() => setShowAuth(false)}
-          onSignedIn={() => setShowAuth(false)}
-        />
-      )}
 
       {isOnline && syncState.lastError && (
         <div className="absolute right-0 top-11 w-72 rounded-lg border border-red-500 bg-background p-3 shadow-xl">

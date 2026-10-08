@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-08-sign-in-required",
+    date: "2026-10-08",
+    title: "Sign in to use Upwards",
+    bullets: [
+      "Upwards now opens to a sign-in screen, so your days, journal and habits are always saved to your account and follow you to every device.",
+      "Once you're signed in, everything still works offline and syncs when you're back online. The first sign-in on a new device needs a connection.",
+      "If a device still holds data from before you had an account, you can save a backup of it before choosing whether to upload it or replace it with your account's data.",
+    ],
+  },
+  {
     id: "2026-10-08-routines-and-timers",
     date: "2026-10-08",
     title: "Routines, and timers only where they belong",

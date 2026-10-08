@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CloudUpload,
   CloudDownload,
+  Download,
   Loader2,
   TriangleAlert,
 } from "lucide-react";
+import { exportDataOnly } from "@/lib/backup/export";
+import { logError } from "@/lib/error-utils";
 import { FormDialog } from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import { onGuestHandoffNeeded } from "@/lib/sync/guest-handoff-emitter";
@@ -31,16 +35,36 @@ import { dialogPrimaryDestructiveClassName } from "@/components/forms/styles";
  *   account, so pushing them into this one would merge two people's data.
  */
 export function AuthDataHandoffDialog() {
+  const { t } = useTranslation("settings");
   const [request, setRequest] = useState<HandoffRequest | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [backup, setBackup] = useState<"idle" | "saving" | "saved" | "failed">(
+    "idle"
+  );
 
   useEffect(() => {
     return onGuestHandoffNeeded((next) => {
       setConfirmDiscard(false);
+      setBackup("idle");
       setRequest(next);
     });
   }, []);
+
+  // Offered before either choice because "use my account's data" replaces what
+  // is on this device. Does not sync first: these rows are not the account's yet,
+  // and syncing would send them before the user has decided.
+  const handleSaveBackup = async () => {
+    if (backup === "saving") return;
+    setBackup("saving");
+    try {
+      await exportDataOnly(undefined, { syncFirst: false });
+      setBackup("saved");
+    } catch (error) {
+      logError("Guest data backup failed", error);
+      setBackup("failed");
+    }
+  };
 
   const handleChoice = async (choice: GuestHandoffChoice) => {
     if (!request || loading) return;
@@ -159,6 +183,32 @@ export function AuthDataHandoffDialog() {
           </>
         ) : (
           <>
+            <Button
+              type="button"
+              variant="ghost"
+              className="flex h-auto w-full min-w-0 flex-col items-start gap-0.5 whitespace-normal rounded-xl border border-dashed px-4 py-3 text-left"
+              disabled={loading || backup === "saving"}
+              onClick={() => void handleSaveBackup()}
+            >
+              {backup === "saving" ? (
+                <Loader2 className="mb-1 h-4 w-4 shrink-0 animate-spin" />
+              ) : (
+                <Download className="mb-1 h-4 w-4 shrink-0" />
+              )}
+              <span className="w-full min-w-0 text-pretty text-sm font-semibold">
+                {backup === "saved"
+                  ? t("auth.handoff.backup.saved")
+                  : t("auth.handoff.backup.action")}
+              </span>
+              <span
+                className="w-full min-w-0 text-pretty text-xs text-muted-foreground"
+                role={backup === "failed" ? "alert" : undefined}
+              >
+                {backup === "failed"
+                  ? t("auth.handoff.backup.failed")
+                  : t("auth.handoff.backup.hint")}
+              </span>
+            </Button>
             <Button
               type="button"
               variant="outline"

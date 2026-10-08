@@ -66,6 +66,19 @@
       "passwordTooShort": "Password must be at least 6 characters.",
       "passwordMismatch": "Passwords do not match.",
       "saveNewPassword": "Save new password"
+    },
+    "screen": {
+      "title": "Upwards",
+      "subtitle": "Sign in to keep your days, journal and habits in one place, on every device.",
+      "offline": "You're offline. Signing in needs a connection the first time; after that Upwards works offline."
+    },
+    "handoff": {
+      "backup": {
+        "action": "Save a backup of this device first",
+        "saved": "Backup saved. Now choose below.",
+        "hint": "A file with everything on this device, in case you want it later. Nothing is sent or removed.",
+        "failed": "Couldn't save the backup. Try again, or choose below if you don't need one."
+      }
     }
   },
   "sync": {
