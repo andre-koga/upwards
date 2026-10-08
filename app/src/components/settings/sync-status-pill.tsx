@@ -32,7 +32,7 @@ export function SyncStatusPill({
             !isOnline
               ? "Offline"
               : !isAuthed
-                ? "Not signed in"
+                ? "Reconnecting to your account"
                 : syncState.isSyncing
                   ? "Syncing..."
                   : "Click to sync now"

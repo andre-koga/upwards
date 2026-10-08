@@ -105,8 +105,8 @@
     "saveFailure": "Não foi possível salvar as configurações de IA: {{error}}",
     "configuredWith": "Conectado — usando {{model}}",
     "notConfigured": "Ainda não conectado",
-    "notSignedIn": "Entre na sua conta de sincronização para configurar os insights de IA.",
-    "syncNotConfigured": "A sincronização não está configurada nesta versão."
+    "syncNotConfigured": "A sincronização não está configurada nesta versão.",
+    "needsConnection": "Os insights de IA precisam de conexão. Voltam quando você estiver online."
   },
   "backup": {
     "title": "Backup",

@@ -9,11 +9,6 @@
     "description": "Conecte uma chave compatível com OpenAI em Configurações e a Início transformará sua atividade, journal e estatísticas de hábitos recentes em um resumo curto e algumas recomendações concretas.",
     "cta": "Ir para Configurações"
   },
-  "notSignedIn": {
-    "title": "Entre para ver insights",
-    "description": "Os insights de IA precisam de uma conta de sincronização conectada para que sua chave seja armazenada com segurança.",
-    "cta": "Ir para Configurações"
-  },
   "insight": {
     "refreshedAt": "Atualizado {{time}}",
     "refresh": "Atualizar insights",
@@ -24,5 +19,9 @@
   "error": {
     "generic": "Não foi possível gerar insights: {{error}}",
     "rateLimited": "Você atingiu o limite diário de insights de IA — tente novamente amanhã."
+  },
+  "offline": {
+    "title": "Os insights de IA precisam de conexão",
+    "description": "Os insights são gerados pela sua conta, então voltam quando você estiver online."
   }
 }
