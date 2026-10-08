@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 import { describe, expect, it } from "vitest";
-import { db } from "@/lib/db";
+import { BASELINE_VERSION, db } from "@/lib/db";
 
 const row = {
   created_at: "2026-09-01T00:00:00.000Z",
@@ -9,10 +9,10 @@ const row = {
   deleted_at: null,
 };
 
-describe("local schema after the model cutover", () => {
-  it("opens at version 32", async () => {
+describe("baseline local schema", () => {
+  it("opens at the baseline version", async () => {
     await db.open();
-    expect(db.verno).toBe(32);
+    expect(db.verno).toBe(BASELINE_VERSION);
   });
 
   it("indexes archive state on activities and groups", async () => {

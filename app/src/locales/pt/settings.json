@@ -72,20 +72,26 @@
       "subtitle": "Entre para manter seus dias, diário e hábitos em um só lugar, em todos os dispositivos.",
       "offline": "Você está offline. Entrar exige conexão na primeira vez; depois disso o Upwards funciona offline."
     },
-    "handoff": {
-      "backup": {
-        "action": "Salvar antes um backup deste dispositivo",
-        "saved": "Backup salvo. Agora escolha abaixo.",
-        "hint": "Um arquivo com tudo o que está neste dispositivo, caso você queira depois. Nada é enviado nem removido.",
-        "failed": "Não foi possível salvar o backup. Tente de novo ou escolha abaixo se não precisar de um."
-      }
+    "accountSwitch": {
+      "title": "Alterações não salvas de outra conta",
+      "description": "Outra conta estava conectada neste dispositivo e deixou alterações que nunca chegaram à nuvem. Entrar aqui as apagaria. Entre de novo naquela conta para salvá-las antes, ou descarte-as para sempre.",
+      "keep": "Sair e manter as alterações",
+      "keepHint": "Nada é apagado. Entre de novo na outra conta para salvá-las, ou exporte um backup em Configurações.",
+      "discard": "Descartar as alterações e continuar",
+      "discardHint": "Apagar as alterações não salvas deste dispositivo e carregar os dados da sua conta",
+      "discardConfirm": "Toque de novo para apagá-las para sempre",
+      "discardConfirmHint": "Isso não pode ser desfeito."
     }
   },
   "sync": {
     "title": "Sincronização na nuvem",
     "description": "Seus dados são sincronizados automaticamente. Abra Problemas de sincronização para revisar conflitos ou erros.",
     "issuesLink": "Problemas de sincronização",
-    "issuesBadge": "{{count}} problemas de sincronização abertos"
+    "issuesBadge": "{{count}} problemas de sincronização abertos",
+    "recovery": {
+      "bootFailed": "O Upwards não conseguiu guardar os dados antigos deste dispositivo, então não os abriu. Nada foi apagado. Verifique se o navegador tem espaço de armazenamento e tente de novo.",
+      "retry": "Tentar de novo"
+    }
   },
   "ai": {
     "title": "Insights de IA",
@@ -215,6 +221,26 @@
       "info": {
         "title": "Avisos",
         "description": "Avisos de sincronização que não bloqueiam, mas podem precisar de atenção."
+      },
+      "recovery": {
+        "title": "Guardado de uma versão anterior",
+        "description": "Os dados deste dispositivo foram guardados à parte quando o app passou para o novo armazenamento. Traga-os para a sua conta; o que já existe lá é mesclado sem contar duas vezes, e diferenças no diário aparecem acima para revisão.",
+        "reason": {
+          "old_schema": "Guardado de uma versão antiga do app em {{when}}",
+          "unowned_data": "Guardado do uso sem conta em {{when}}"
+        },
+        "waiting": "Será adicionado à sua conta depois da próxima sincronização.",
+        "needsChoice": "Não é adicionado automaticamente, porque não foi criado nesta conta. Adicione se for seu.",
+        "blocked": "Aguardando este dispositivo terminar de sincronizar. Tente de novo quando estiver online e sincronizado.",
+        "failed": "Não foi possível adicionar. Continua guardado aqui: tente de novo ou baixe o arquivo.",
+        "imported": "Adicionado à sua conta em {{when}}.",
+        "import": "Adicionar à minha conta",
+        "download": "Baixar",
+        "remove": "Remover",
+        "removeDialog": {
+          "title": "Remover os dados guardados?",
+          "message": "Isso apaga a cópia guardada neste dispositivo. O que já foi adicionado à sua conta ou baixado continua onde está."
+        }
       }
     },
     "actions": {

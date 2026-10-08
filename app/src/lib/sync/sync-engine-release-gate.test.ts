@@ -78,11 +78,6 @@ vi.mock("./sync-scheduler", () => ({
   registerSyncScheduler: () => {},
   clearSyncScheduler: () => {},
 }));
-vi.mock("./identity-repair", () => ({
-  enqueueUnsyncedCurrentStateRows: async () => 0,
-  repairNaturalIdentity: async () => {},
-  clearCutoverEnqueueFlag: () => {},
-}));
 vi.mock("./release-gate", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./release-gate")>()),
   requeueClientOutdatedOperations: async () => 0,

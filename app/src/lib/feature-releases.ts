@@ -12,6 +12,15 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-09-local-storage-baseline",
+    date: "2026-10-09",
+    title: "Simpler storage on this device",
+    bullets: [
+      "Upwards now keeps its data on this device in one simpler format. Devices already up to date carry on as before.",
+      "A device last opened on a much older version, or holding data made without an account, keeps that data aside, loads your account, and adds it back without counting anything twice. You'll find it under Sync issues, where you can also download it.",
+    ],
+  },
+  {
     id: "2026-10-08-sign-in-required",
     date: "2026-10-08",
     title: "Sign in to use Upwards",

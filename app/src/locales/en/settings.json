@@ -72,20 +72,26 @@
       "subtitle": "Sign in to keep your days, journal and habits in one place, on every device.",
       "offline": "You're offline. Signing in needs a connection the first time; after that Upwards works offline."
     },
-    "handoff": {
-      "backup": {
-        "action": "Save a backup of this device first",
-        "saved": "Backup saved. Now choose below.",
-        "hint": "A file with everything on this device, in case you want it later. Nothing is sent or removed.",
-        "failed": "Couldn't save the backup. Try again, or choose below if you don't need one."
-      }
+    "accountSwitch": {
+      "title": "Unsaved changes from another account",
+      "description": "A different account was signed in on this device and left changes that never reached the cloud. Signing in here would erase them. Sign back in to that account to save them first, or discard them permanently.",
+      "keep": "Sign out and keep the changes",
+      "keepHint": "Nothing is deleted. Sign back in to the other account to save them, or export a backup from Settings.",
+      "discard": "Discard the changes and continue",
+      "discardHint": "Erase this device's unsaved changes and load your account's data",
+      "discardConfirm": "Tap again to permanently delete them",
+      "discardConfirmHint": "This cannot be undone."
     }
   },
   "sync": {
     "title": "Cloud sync",
     "description": "Your data syncs automatically. Open Sync issues to review conflicts or errors.",
     "issuesLink": "Sync issues",
-    "issuesBadge": "{{count}} open sync issues"
+    "issuesBadge": "{{count}} open sync issues",
+    "recovery": {
+      "bootFailed": "Upwards could not set aside this device’s older data, so it has not opened it. Nothing was deleted. Make sure the browser has storage space, then try again.",
+      "retry": "Try again"
+    }
   },
   "ai": {
     "title": "AI insights",
@@ -215,6 +221,26 @@
       "info": {
         "title": "Notes",
         "description": "Non-blocking sync notices that may need a quick look."
+      },
+      "recovery": {
+        "title": "Kept from an older version",
+        "description": "This device’s data was set aside when the app moved to its new storage. Bring it into your account; anything already there merges without counting twice, and journal differences appear above for review.",
+        "reason": {
+          "old_schema": "Saved from an older app version on {{when}}",
+          "unowned_data": "Saved from use without an account on {{when}}"
+        },
+        "waiting": "Will be added to your account after the next sync.",
+        "needsChoice": "Not added automatically, because it was not created in this account. Add it if it is yours.",
+        "blocked": "Waiting for this device to finish syncing. Try again once it is online and synced.",
+        "failed": "Could not be added. It is still kept here: try again or download it.",
+        "imported": "Added to your account on {{when}}.",
+        "import": "Add to my account",
+        "download": "Download",
+        "remove": "Remove",
+        "removeDialog": {
+          "title": "Remove the kept data?",
+          "message": "This deletes the copy kept on this device. Anything already added to your account or downloaded stays where it is."
+        }
       }
     },
     "actions": {

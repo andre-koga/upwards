@@ -46,22 +46,12 @@ export const BACKUP_TABLE_NAMES = [
   "oneTimeTasks",
 ] as const satisfies readonly BackupTableName[];
 
-/**
- * Device-local infrastructure (logs, the pending-op queue, sync bookkeeping),
- * plus tables the app no longer reads or writes and Dexie has not dropped yet:
- * `memoPeriods` (emptied in Dexie v7) and the recurring-memo and status-event
- * tables the model cutover retired (their data lives on in `archived_at`,
- * `deleted_at` and the converted activities). The baseline schema drops them.
- */
+/** Device-local infrastructure: logs, the pending-op queue, sync bookkeeping. */
 export const NON_BACKUP_TABLE_NAMES = [
   "appLogs",
   "syncPendingOperations",
   "syncIssues",
   "syncDevices",
-  "memoPeriods",
-  "recurringMemos",
-  "activityStatusEvents",
-  "groupStatusEvents",
 ] as const;
 
 /**

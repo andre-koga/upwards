@@ -4,7 +4,7 @@ import TodayPage from "@/pages/today";
 import SyncStatus from "@/components/settings/sync-status";
 import { useAccountSettingsSync } from "@/lib/use-account-settings";
 import { OldDayEditDialog } from "@/components/journal/old-day-edit-dialog";
-import { AuthDataHandoffDialog } from "@/components/settings/auth-data-handoff-dialog";
+import { AccountSwitchDialog } from "@/components/settings/account-switch-dialog";
 import { SignInScreen } from "@/components/auth/sign-in-screen";
 import { useAuthGate } from "@/lib/use-auth-gate";
 import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
@@ -164,7 +164,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppShell />
-      <AuthDataHandoffDialog />
+      <AccountSwitchDialog />
       <InstallAppPrompt />
       <UpdateRequiredDialog />
       <OldDayEditDialog />

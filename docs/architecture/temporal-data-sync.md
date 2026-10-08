@@ -296,19 +296,27 @@ New / empty device after pending push succeeds:
 ```
 
 Devices whose local IndexedDB predates the **baseline schema** do not run an
-upgrade chain or a natural-ID cutover. Before Dexie opens:
+upgrade chain or a natural-ID cutover. Before Dexie opens
+(`lib/db/recovery.ts`):
 
-1. Push whatever pending operations still submit.
+1. A v32 database already holds the cutover model and upgrades in place.
+   Anything older, and rows with no remembered account, take steps 2–4.
 2. Save every local row (raw IndexedDB read) as a recovery bundle in the
-   data-only backup format, and offer it for download.
+   data-only backup format, kept in its own IndexedDB database and offered for
+   import, download, and removal on Sync issues.
 3. Delete the local database and bootstrap from `pull_sync_snapshot`.
 4. Import the bundle through the idempotent backup import, which owns all
-   legacy row-shape migrations. Differences become Sync issues.
+   legacy row-shape migrations. Differences become Sync issues. The bundle
+   imports by itself only into the account that owned it.
+
+The old queue is not pushed first: its operations predate the protocol gate
+and would be rejected, which blocks the bootstrap. The rows carry every change
+it held, and the import re-applies them as differences.
 
 Devices report their local schema version with their heartbeat. Legacy repair
-modules (natural-ID repair, same-date journal dedupe, storage heal, cutover
-enqueue) are deleted in the baseline release, after a migration window (see
-below). Devices that missed the window take the reset path.
+modules (natural-ID repair, storage heal, cutover enqueue) were deleted in the
+baseline release. Same-date journal dedupe stays until the server re-keys
+the rows still on pre-natural IDs (product-scope.md §2.10, A8b).
 
 ### Release gates and data migrations (2026-10-01)
 

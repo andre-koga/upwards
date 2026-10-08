@@ -12,6 +12,13 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-09-local-storage-baseline": {
+    title: "Armazenamento mais simples neste dispositivo",
+    bullets: [
+      "O Upwards agora guarda os dados neste dispositivo num formato único e mais simples. Dispositivos já atualizados seguem como antes.",
+      "Um dispositivo aberto pela última vez numa versão bem antiga, ou com dados criados sem conta, guarda esses dados à parte, carrega sua conta e os adiciona de volta sem contar nada duas vezes. Você os encontra em Problemas de sincronização, onde também pode baixá-los.",
+    ],
+  },
   "2026-10-08-sign-in-required": {
     title: "Entre para usar o Upwards",
     bullets: [
