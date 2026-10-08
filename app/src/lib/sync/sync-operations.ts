@@ -22,6 +22,8 @@ import { buildProjectionConflictPayload } from "./projection-conflict-resolution
 import { saveOpsRpcAvailable } from "./sync-storage";
 import {
   applyAcceptedProjectionOp,
+  dexieTableForSyncTable,
+  entityTypeToSyncTable,
   isProjectionUpsertEntityType,
   withSuppressedProjectionEnqueue,
 } from "./projection-sync";
@@ -427,6 +429,77 @@ export async function applyAcceptedDailyEntryOp(
   }
 }
 
+/**
+ * The server has this exact version of the row, so say so on the row.
+ *
+ * Without this, `synced_at` only moved when a full snapshot rewrote the row, so
+ * every row edited since the last snapshot counted as "not in the cloud yet"
+ * forever. That blocked sign-out and the post-migration download with a count
+ * (423 on one device) while the queue was empty and the server held everything.
+ * The count is a safeguard against losing unsent data, so the fix is to make it
+ * accurate rather than to relax it.
+ *
+ * Only when the row is unchanged since the op was built: a newer edit has its own
+ * op and stays unsynced until that one is acknowledged.
+ */
+async function markRowSyncedAfterAck(
+  op: Awaited<ReturnType<typeof listPendingOperations>>[number]
+): Promise<void> {
+  if (op.entity_type === "daily_entry") {
+    await markDailyEntrySyncedAfterAck(op);
+    return;
+  }
+  if (op.operation_type !== "projection.upsert" || !op.entity_id) return;
+  const sent = asRecord(asRecord(op.payload).row).updated_at;
+  if (typeof sent !== "string") return;
+  const syncTable = entityTypeToSyncTable(op.entity_type);
+  const dexieKey = syncTable ? dexieTableForSyncTable(syncTable) : null;
+  if (!dexieKey) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const table = db[dexieKey] as any;
+  const row = await table.get(op.entity_id);
+  if (!row || row.updated_at !== sent) return;
+  await table.update(op.entity_id, { synced_at: sent });
+}
+
+/**
+ * A day's counts, pauses, break day and notes sync as separate operations, not
+ * as a row upsert. Once none is left waiting or rejected for that date, the
+ * server has everything this device did on the day.
+ *
+ * One transaction, so an edit queued while this runs cannot be marked as sent.
+ */
+async function markDailyEntrySyncedAfterAck(
+  op: Awaited<ReturnType<typeof listPendingOperations>>[number]
+): Promise<void> {
+  const date = asRecord(op.payload).date;
+  if (typeof date !== "string") return;
+  await db.transaction(
+    "rw",
+    db.syncPendingOperations,
+    db.dailyEntries,
+    async () => {
+      const entry = await db.dailyEntries
+        .where("date")
+        .equals(date)
+        .filter((row) => !row.deleted_at)
+        .first();
+      if (!entry) return;
+      const stillWaiting = await db.syncPendingOperations
+        .where("status")
+        .anyOf(["pending", "failed"])
+        .filter(
+          (row) =>
+            row.entity_type === "daily_entry" &&
+            asRecord(row.payload).date === date
+        )
+        .count();
+      if (stillWaiting > 0) return;
+      await db.dailyEntries.update(entry.id, { synced_at: entry.updated_at });
+    }
+  );
+}
+
 async function submitPendingOperationBatch(
   pending: Awaited<ReturnType<typeof listPendingOperations>>
 ): Promise<PushPendingOperationsResult> {
@@ -477,6 +550,7 @@ async function submitPendingOperationBatch(
 
     if (result.status === "accepted" || result.status === "duplicate") {
       await markOperationAcked(local.id);
+      await markRowSyncedAfterAck(local);
       settled += 1;
       continue;
     }
