@@ -66,17 +66,17 @@ BEGIN
 
   -- ── Groups ────────────────────────────────────────────────────────────────
   INSERT INTO activity_groups (
-    id, user_id, name, emoji, color, order_index, is_archived,
+    id, user_id, name, color, order_index, archived_at,
     created_at, updated_at, deleted_at
   ) VALUES
-    (g_health, v_user_id, 'Health', NULL, '#22c55e', 0, false, v_created_at, v_created_at, NULL),
-    (g_work,   v_user_id, 'Work',   NULL, '#3b82f6', 1, false, v_created_at, v_created_at, NULL),
-    (g_home,   v_user_id, 'Home',   NULL, '#f59e0b', 2, false, v_created_at, v_created_at, NULL),
-    (g_old,    v_user_id, 'Old project', NULL, '#6b7280', 3, true, v_created_at, v_archived_at, NULL);
+    (g_health, v_user_id, 'Health', '#22c55e', 0, NULL, v_created_at, v_created_at, NULL),
+    (g_work,   v_user_id, 'Work',   '#3b82f6', 1, NULL, v_created_at, v_created_at, NULL),
+    (g_home,   v_user_id, 'Home',   '#f59e0b', 2, NULL, v_created_at, v_created_at, NULL),
+    (g_old,    v_user_id, 'Old project', '#6b7280', 3, v_archived_at, v_created_at, v_archived_at, NULL);
 
   -- ── Activities ────────────────────────────────────────────────────────────
   INSERT INTO activities (
-    id, user_id, group_id, name, routine, completion_target, completed_at,
+    id, user_id, group_id, name, routine, completion_target, archived_at,
     order_index, created_at, updated_at, deleted_at
   ) VALUES
     (a_stretch, v_user_id, g_health, 'Morning stretch', 'daily', 1, NULL, 0, v_created_at, v_created_at, NULL),
@@ -179,22 +179,21 @@ BEGIN
 
     INSERT INTO daily_entries (
       id, user_id, date, task_counts, paused_task_ids, is_break_day,
-      current_activity_id, created_at, updated_at, deleted_at
+      created_at, updated_at, deleted_at
     ) VALUES (
       entry_id, v_user_id, d_text, counts, paused, is_break,
-      NULL, entry_ts, entry_ts, NULL
+      entry_ts, entry_ts, NULL
     );
   END LOOP;
 
   -- ── Closed timer periods on recent days ───────────────────────────────────
   INSERT INTO activity_periods (
-    id, user_id, daily_entry_id, activity_id, start_time, end_time,
+    id, user_id, activity_id, start_time, end_time,
     created_at, updated_at, deleted_at
   )
   SELECT
     ('00000000-0000-4000-8030-' || lpad(ord::text, 12, '0'))::uuid,
     v_user_id,
-    ('00000000-0000-4000-8020-' || lpad(days_ago::text, 12, '0'))::uuid,
     activity_id,
     (CURRENT_DATE - days_ago) + start_at,
     (CURRENT_DATE - days_ago) + end_at,
@@ -224,71 +223,14 @@ BEGIN
 
   INSERT INTO one_time_tasks (
     id, user_id, date, title, is_completed, order_index, is_pinned, due_date,
-    group_id, is_archived, recurring_memo_id, created_at, updated_at, deleted_at
+    is_archived, created_at, updated_at, deleted_at
   ) VALUES
-    ('00000000-0000-4000-8040-000000000001', v_user_id, NULL, 'Buy oat milk', false, 0, true, NULL, NULL, false, NULL, v_created_at, v_created_at, NULL),
-    ('00000000-0000-4000-8040-000000000002', v_user_id, NULL, 'Call dentist', false, 1, false, to_char(CURRENT_DATE, 'YYYY-MM-DD'), NULL, false, NULL, v_created_at, v_created_at, NULL),
-    ('00000000-0000-4000-8040-000000000003', v_user_id, NULL, 'Return library books', false, 2, false, NULL, NULL, false, NULL, v_created_at, v_created_at, NULL),
-    ('00000000-0000-4000-8040-000000000004', v_user_id, to_char(CURRENT_DATE - 1, 'YYYY-MM-DD'), 'Email landlord', true, 3, false, to_char(CURRENT_DATE - 1, 'YYYY-MM-DD'), NULL, false, NULL, v_created_at, (CURRENT_DATE - 1) + TIME '16:00', NULL),
-    ('00000000-0000-4000-8040-000000000005', v_user_id, NULL, 'Old shopping list', false, 4, false, NULL, NULL, true, NULL, v_created_at, v_created_at, NULL),
-    ('00000000-0000-4000-8040-000000000006', v_user_id, NULL, 'Daily standup notes', false, 5, false, to_char(CURRENT_DATE, 'YYYY-MM-DD'), NULL, false, rm_daily, v_created_at, now(), NULL);
-
-  -- ── Journal (15 days, no media) ───────────────────────────────────────────
-  INSERT INTO journal_entries (
-    id, user_id, entry_date, title, text_content, day_emoji, is_bookmarked,
-    is_journal_complete, journal_entry_number, journal_completion_streak,
-    journal_completed_at, location, created_at, updated_at, deleted_at
-  )
-  SELECT
-    ('00000000-0000-4000-8050-' || lpad(days_ago::text, 12, '0'))::uuid,
-    v_user_id,
-    to_char(CURRENT_DATE - days_ago, 'YYYY-MM-DD'),
-    title,
-    body,
-    emoji,
-    bookmarked,
-    complete,
-    CASE WHEN complete THEN dense_rank() OVER (
-      PARTITION BY complete ORDER BY days_ago DESC
-    ) END,
-    streak,
-    CASE WHEN complete THEN (CURRENT_DATE - days_ago) + TIME '21:30' END,
-    loc,
-    (CURRENT_DATE - days_ago) + TIME '21:00',
-    (CURRENT_DATE - days_ago) + TIME '21:30',
-    NULL
-  FROM (VALUES
-    (1,  'Quiet evening', 'Walked after dinner and stretched.', '😌', true, true, 3,
-      '{"locations":[{"displayName":"Austin, TX","city":"Austin","state":"Texas","country":"United States","countryCode":"US","lat":30.2672,"lon":-97.7431}]}'::jsonb),
-    (2,  'Deep work day', 'Two focused blocks before lunch.', '🧠', true, false, 2, NULL),
-    (3,  'Easy Friday', 'Gym and an early night.', '😴', true, false, 1, NULL),
-    (7,  'Draft only', 'Started writing and left it unfinished.', '✏️', false, false, NULL, NULL),
-    (10, 'Long walk', 'Along the river until sunset.', '🚶', true, true, 2,
-      '{"locations":[{"displayName":"Lady Bird Lake","city":"Austin","state":"Texas","country":"United States","countryCode":"US","lat":30.265,"lon":-97.753}]}'::jsonb),
-    (11, 'Catch-up', 'Cleared the inbox pile.', '✅', true, false, 1, NULL),
-    (14, 'Book club last meeting', 'Finished the novel and closed the habit.', '📚', true, true, 1, NULL),
-    (18, 'Rainy day', 'Cooked soup and stayed in.', '🌧️', true, false, 1, NULL),
-    (21, 'Notes', 'A few lines, not a full entry.', '📝', false, false, NULL, NULL),
-    (24, 'Weekend reset', 'Hike in the morning, chores after.', '🌲', true, false, 3, NULL),
-    (25, 'Friends over', 'Dinner at home.', '🍝', true, false, 2, NULL),
-    (26, 'Market morning', 'Farmers market then coffee.', '☕', true, false, 1,
-      '{"locations":[{"displayName":"Downtown Austin","city":"Austin","state":"Texas","country":"United States","countryCode":"US","lat":30.2711,"lon":-97.7437}]}'::jsonb),
-    (32, 'Travel day', 'Trains and a late arrival.', '🚆', true, false, 1,
-      '{"locations":[{"displayName":"Chicago, IL","city":"Chicago","state":"Illinois","country":"United States","countryCode":"US","lat":41.8781,"lon":-87.6298}]}'::jsonb),
-    (38, 'Ordinary Tuesday', 'Stretch, water, deep work. Nothing fancy.', '🙂', true, false, 1, NULL),
-    (42, 'Starting point', 'First week back into the routine.', '🌱', true, false, 1, NULL)
-  ) AS j(days_ago, title, body, emoji, complete, bookmarked, streak, loc);
-
-  -- ── Status events ─────────────────────────────────────────────────────────
-  INSERT INTO activity_status_events (
-    id, user_id, entity_id, status_type, next_value, effective_at,
-    created_at, updated_at, deleted_at
-  ) VALUES (
-    '00000000-0000-4000-8060-000000000001',
-    v_user_id, a_book, 'completed', true,
-    (CURRENT_DATE - 13) + TIME '00:00',
-    v_completed_at, v_completed_at, NULL
-  );
+    ('00000000-0000-4000-8040-000000000001', v_user_id, NULL, 'Buy oat milk', false, 0, true, NULL, false, v_created_at, v_created_at, NULL),
+    ('00000000-0000-4000-8040-000000000002', v_user_id, NULL, 'Call dentist', false, 1, false, to_char(CURRENT_DATE, 'YYYY-MM-DD'), false, v_created_at, v_created_at, NULL),
+    ('00000000-0000-4000-8040-000000000003', v_user_id, NULL, 'Return library books', false, 2, false, NULL, false, v_created_at, v_created_at, NULL),
+    ('00000000-0000-4000-8040-000000000004', v_user_id, to_char(CURRENT_DATE - 1, 'YYYY-MM-DD'), 'Email landlord', true, 3, false, to_char(CURRENT_DATE - 1, 'YYYY-MM-DD'), false, v_created_at, (CURRENT_DATE - 1) + TIME '16:00', NULL),
+    ('00000000-0000-4000-8040-000000000005', v_user_id, NULL, 'Old shopping list', false, 4, false, NULL, true, v_created_at, v_created_at, NULL),
+    ('00000000-0000-4000-8040-000000000006', v_user_id, NULL, 'Daily standup notes', false, 5, false, to_char(CURRENT_DATE, 'YYYY-MM-DD'), false, v_created_at, now(), NULL);
 
   INSERT INTO group_status_events (
     id, user_id, entity_id, status_type, next_value, effective_at,
