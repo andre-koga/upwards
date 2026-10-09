@@ -1,4 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  adaptCompletionParams,
+  buildCompletionBody,
+  initialCompletionParams,
+} from "../_shared/completion-params.ts";
 import { providerMessage, truncate } from "../_shared/provider-message.ts";
 
 const corsHeaders = {
@@ -21,7 +26,7 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
 // aggregated stats only, capped output tokens, and a hard daily call cap
 // per user so a buggy client can't burn through someone's key budget.
 const MAX_CALLS_PER_DAY = 20;
-const MAX_OUTPUT_TOKENS = 300;
+const MAX_PARAM_ATTEMPTS = 3;
 const REQUEST_TIMEOUT_MS = 20000;
 const MAX_RECOMMENDATIONS = 3;
 const MAX_RECOMMENDATION_LENGTH = 220;
@@ -146,26 +151,40 @@ Deno.serve(async (request) => {
 
   let completionText: string;
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    const response = await fetch(`${settings.base_url}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${settings.api_key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: settings.model,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        temperature: 0.4,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: JSON.stringify(statsPayload) },
-        ],
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
+    const messages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: JSON.stringify(statsPayload) },
+    ];
+    // Providers disagree about token and temperature parameters. Start from the
+    // likeliest shape and change only what the provider names as unsupported;
+    // each retry fixes one named problem, so this ends after a few attempts.
+    let params = initialCompletionParams(settings.base_url);
+    let response: Response | null = null;
+    for (let attempt = 0; attempt < MAX_PARAM_ATTEMPTS; attempt += 1) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        response = await fetch(`${settings.base_url}/chat/completions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${settings.api_key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(
+            buildCompletionBody(settings.model, messages, params),
+          ),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+      if (response.ok || response.status !== 400) break;
+      const detail = await response.clone().text();
+      const adapted = adaptCompletionParams(params, detail);
+      if (!adapted) break;
+      params = adapted;
+    }
+    if (!response) throw new Error("No response");
     if (!response.ok) {
       const detail = await response.text();
       console.error("AI provider error:", response.status, detail);
