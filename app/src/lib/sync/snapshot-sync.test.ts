@@ -385,6 +385,94 @@ describe("applySyncSnapshot", () => {
       ]);
     });
 
+    it("keeps both days when a local row held the natural id of the day before", async () => {
+      // Production has three of these: an older build gave a day the natural id
+      // of the previous date. The server re-keyed them, so 04-01 now owns the id
+      // this device holds on its 04-02 row.
+      tables.dailyEntries.push(
+        {
+          id: "local-0401",
+          user_id: "user-1",
+          date: "2026-04-01",
+          task_counts: { a: 1 },
+          updated_at: SYNCED,
+          synced_at: SYNCED,
+        },
+        {
+          id: "natural-0401",
+          user_id: "user-1",
+          date: "2026-04-02",
+          task_counts: { a: 9 },
+          updated_at: SYNCED,
+          synced_at: SYNCED,
+        }
+      );
+
+      await applySyncSnapshot({
+        server_sequence: 60,
+        daily_entries: [
+          {
+            id: "natural-0401",
+            user_id: "user-1",
+            date: "2026-04-01",
+            task_counts: { a: 1 },
+            updated_at: SYNCED,
+          },
+          {
+            id: "natural-0402",
+            user_id: "user-1",
+            date: "2026-04-02",
+            task_counts: { a: 9 },
+            updated_at: SYNCED,
+          },
+        ],
+      });
+
+      const byDate = Object.fromEntries(
+        tables.dailyEntries.map((r) => [r.date as string, r])
+      );
+      expect(tables.dailyEntries).toHaveLength(2);
+      expect(byDate["2026-04-01"]).toMatchObject({
+        id: "natural-0401",
+        task_counts: { a: 1 },
+      });
+      expect(byDate["2026-04-02"]).toMatchObject({
+        id: "natural-0402",
+        task_counts: { a: 9 },
+      });
+    });
+
+    it("does not overwrite unsynced work on a displaced row", async () => {
+      tables.dailyEntries.push({
+        id: "natural-0401",
+        user_id: "user-1",
+        date: "2026-04-02",
+        task_counts: { a: 9 },
+        updated_at: "2026-10-09T00:00:00.000Z",
+        synced_at: SYNCED,
+      });
+
+      await applySyncSnapshot({
+        server_sequence: 61,
+        daily_entries: [
+          {
+            id: "natural-0401",
+            user_id: "user-1",
+            date: "2026-04-01",
+            task_counts: {},
+            updated_at: SYNCED,
+          },
+        ],
+      });
+
+      // The edited row stays untouched; the incoming row waits for a later pass.
+      expect(tables.dailyEntries).toHaveLength(1);
+      expect(tables.dailyEntries[0]).toMatchObject({
+        date: "2026-04-02",
+        task_counts: { a: 9 },
+      });
+    });
+
     it("strips dropped columns from a local row the snapshot updates", async () => {
       tables.journalEntries.push(oldJournal({ id: "natural-journal-id" }));
 

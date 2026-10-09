@@ -127,7 +127,7 @@ async function retireSupersededLocalRows(
   dateField: "date" | "entry_date",
   incoming: Array<Record<string, unknown>>,
   existing: Array<Record<string, unknown>>
-): Promise<void> {
+): Promise<{ retired: Set<string>; blocked: Set<string> }> {
   const serverIdByDate = new Map<string, string>();
   for (const row of incoming) {
     const date = row[dateField];
@@ -142,7 +142,7 @@ async function retireSupersededLocalRows(
     const serverId = serverIdByDate.get(date);
     return serverId !== undefined && serverId !== row.id;
   });
-  if (stale.length === 0) return;
+  const none = { retired: new Set<string>(), blocked: new Set<string>() };
 
   const [pending, conflicts] = await Promise.all([
     listUnsyncedOperations(),
@@ -151,7 +151,7 @@ async function retireSupersededLocalRows(
   const busy = new Set(
     pending.map((op) => op.entity_id).filter((id): id is string => !!id)
   );
-  const ids = stale
+  const retirable = stale
     .filter((row) => {
       const id = row.id as string;
       const syncedAt = typeof row.synced_at === "string" ? row.synced_at : null;
@@ -165,13 +165,44 @@ async function retireSupersededLocalRows(
       );
     })
     .map((row) => row.id as string);
-  if (ids.length === 0) return;
 
-  if (table === "journal_entries") {
-    await db.journalEntries.bulkDelete(ids);
-  } else {
-    await db.dailyEntries.bulkDelete(ids);
+  // An incoming row whose id a different local row holds, for another date, must
+  // not be written over it: the merge would put this date's server fields on the
+  // other date's row. Production has three such pairs (an older build gave a day
+  // the natural id of the day before). When that local row is retired below the
+  // id is free; when it is not, the incoming row waits for a later pass.
+  const retired = new Set(retirable);
+  const localById = new Map(
+    existing
+      .filter(
+        (row): row is Record<string, unknown> & { id: string } =>
+          typeof row.id === "string"
+      )
+      .map((row) => [row.id, row])
+  );
+  const blocked = new Set<string>();
+  for (const row of incoming) {
+    if (typeof row.id !== "string") continue;
+    const holder = localById.get(row.id);
+    if (
+      holder &&
+      holder[dateField] !== row[dateField] &&
+      !retired.has(row.id)
+    ) {
+      blocked.add(row.id);
+    }
   }
+
+  if (stale.length === 0 && blocked.size === 0) return none;
+
+  if (retirable.length > 0) {
+    if (table === "journal_entries") {
+      await db.journalEntries.bulkDelete(retirable);
+    } else {
+      await db.dailyEntries.bulkDelete(retirable);
+    }
+  }
+  return { retired, blocked };
 }
 
 export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
@@ -191,8 +222,24 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const localTable = db[dexieKey] as any;
-      const existing: Array<Record<string, unknown>> =
-        await localTable.toArray();
+      let existing: Array<Record<string, unknown>> = await localTable.toArray();
+
+      // Retire superseded copies before writing anything, while every id still
+      // holds its own row's data (see retireSupersededLocalRows).
+      const dateField = DATE_KEYED_TABLES[table];
+      let blocked = new Set<string>();
+      if (dateField) {
+        const result = await retireSupersededLocalRows(
+          table,
+          dateField,
+          incoming,
+          existing
+        );
+        blocked = result.blocked;
+        existing = existing.filter(
+          (row) => typeof row.id !== "string" || !result.retired.has(row.id)
+        );
+      }
       const existingById = new Map(
         existing
           .filter(
@@ -206,45 +253,42 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
       // Rows the server has not seen may simply be unpushed local work, and the
       // pending-op gate cannot prove otherwise: an op the server rejected is
       // marked `failed`, not `pending`. Merge forward only.
-      const merged = incoming.map((row) => {
-        const local =
-          typeof row.id === "string" ? existingById.get(row.id) : undefined;
-        if (!local) return row;
-        // Counts, pauses, and break days belong to the semantic op stream.
-        // Overwriting them here silently discards local completions.
-        // Drop columns the server no longer has, so the re-bootstrap after the
-        // A8b window also cleans the local copy.
-        const next = withoutDroppedColumns(table, {
-          ...local,
-          ...stripOpOwnedFields(table, row),
+      const merged = incoming
+        .filter((row) => typeof row.id !== "string" || !blocked.has(row.id))
+        .map((row) => {
+          const local =
+            typeof row.id === "string" ? existingById.get(row.id) : undefined;
+          if (!local) return row;
+          // Counts, pauses, and break days belong to the semantic op stream.
+          // Overwriting them here silently discards local completions.
+          // Drop columns the server no longer has, so the re-bootstrap after the
+          // A8b window also cleans the local copy.
+          const next = withoutDroppedColumns(table, {
+            ...local,
+            ...stripOpOwnedFields(table, row),
+          });
+
+          // Symmetry with the rule above. The merge lets incoming fields win, so an
+          // incoming tombstone would delete a live local row — including one whose
+          // content has never been pushed, which is exactly the row a snapshot repair
+          // pass is least entitled to destroy. Production holds 54 journal tombstones
+          // (53 with text) that could arrive this way.
+          //
+          // Keeps the whole local row, not just `deleted_at`: a tombstoned server row
+          // usually has its content fields blanked too, so merging those in would
+          // leave an undeleted but empty row — the same loss by another route.
+          if (
+            row.deleted_at &&
+            !local.deleted_at &&
+            localRowHasContent(table, local)
+          ) {
+            return local;
+          }
+
+          return next;
         });
 
-        // Symmetry with the rule above. The merge lets incoming fields win, so an
-        // incoming tombstone would delete a live local row — including one whose
-        // content has never been pushed, which is exactly the row a snapshot repair
-        // pass is least entitled to destroy. Production holds 54 journal tombstones
-        // (53 with text) that could arrive this way.
-        //
-        // Keeps the whole local row, not just `deleted_at`: a tombstoned server row
-        // usually has its content fields blanked too, so merging those in would
-        // leave an undeleted but empty row — the same loss by another route.
-        if (
-          row.deleted_at &&
-          !local.deleted_at &&
-          localRowHasContent(table, local)
-        ) {
-          return local;
-        }
-
-        return next;
-      });
-
       await localTable.bulkPut(merged);
-
-      const dateField = DATE_KEYED_TABLES[table];
-      if (dateField) {
-        await retireSupersededLocalRows(table, dateField, incoming, existing);
-      }
     }
   });
 }
