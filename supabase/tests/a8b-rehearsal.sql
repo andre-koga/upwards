@@ -16,6 +16,14 @@ INSERT INTO activities (id, user_id, group_id, name, routine, is_archived, compl
 INSERT INTO daily_entries (id, user_id, date, task_counts, current_activity_id, created_at, updated_at) VALUES
   ('dddddddd-0000-0000-0000-000000000001', :u, '2026-01-01', '{"aaaaaaaa-0000-0000-0000-000000000002":2}', 'aaaaaaaa-0000-0000-0000-000000000002', now(), now()),
   (extensions.uuid_generate_v5('7e1b4c3a-9f20-4d8e-8c11-a1b2c3d4e5f6', 'daily:11111111-2222-3333-4444-555555555555:2026-01-02'), :u, '2026-01-02', '{}', NULL, now(), now());
+-- The production clash: an older build gave a day the natural id of the day
+-- before. 04-02 holds 04-01's natural id, 04-17 holds 04-16's, and 06-03 holds
+-- 05-31's, so a one-statement UPDATE hits the primary key.
+-- The row that needs the held id is stored first: the old single UPDATE fails
+-- only when it reaches that row before the holder, as it does in production.
+INSERT INTO daily_entries (id, user_id, date, task_counts, created_at, updated_at) VALUES
+  ('dddddddd-0000-0000-0000-000000000002', :u, '2026-04-01', '{"aaaaaaaa-0000-0000-0000-000000000002":1}', now(), now()),
+  (extensions.uuid_generate_v5('7e1b4c3a-9f20-4d8e-8c11-a1b2c3d4e5f6', 'daily:11111111-2222-3333-4444-555555555555:2026-04-01'), :u, '2026-04-02', '{"aaaaaaaa-0000-0000-0000-000000000002":9}', now(), now());
 INSERT INTO journal_entries (id, user_id, entry_date, text_content, is_journal_complete, journal_entry_number, deleted_at, created_at, updated_at) VALUES
   ('eeeeeeee-0000-0000-0000-000000000001', :u, '2026-01-01', 'kept text', true, 7, NULL, now(), now()),
   ('eeeeeeee-0000-0000-0000-000000000002', :u, '2026-01-03', 'tombstoned', false, 8, now(), now(), now());
@@ -33,6 +41,9 @@ FROM journal_entries WHERE user_id = :u
 UNION ALL SELECT 'daily', date, task_counts::text, deleted_at IS NOT NULL,
   id = extensions.uuid_generate_v5('7e1b4c3a-9f20-4d8e-8c11-a1b2c3d4e5f6', 'daily:'||user_id||':'||date)
 FROM daily_entries WHERE user_id = :u ORDER BY 1, 2;
+\echo '--- clash rows keep their own counts, on their own dates'
+SELECT date, task_counts::text, id = extensions.uuid_generate_v5('7e1b4c3a-9f20-4d8e-8c11-a1b2c3d4e5f6', 'daily:'||user_id||':'||date) AS natural
+FROM daily_entries WHERE user_id = :u AND date IN ('2026-04-01', '2026-04-02') ORDER BY date;
 \echo '--- id map'
 SELECT table_name, old_id FROM legacy_a8_rekeyed_ids WHERE user_id = :u ORDER BY 1, 2;
 \echo '--- dropped values kept'

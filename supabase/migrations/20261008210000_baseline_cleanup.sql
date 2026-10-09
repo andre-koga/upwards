@@ -911,8 +911,8 @@ ALTER TABLE one_time_tasks
 -- Every device derives a journal or daily-entry id from (user, date); rows from
 -- before that rule keep a random id, so a write for that date under its natural
 -- id makes a second local row. Both tables are UNIQUE (user_id, date) across
--- tombstones, so there is one row per date and the natural id cannot collide.
--- Same formula as lib/sync/natural-ids.ts.
+-- tombstones, so there is one row per date and, once every row has moved, each
+-- natural id is held by exactly one row. Same formula as lib/sync/natural-ids.ts.
 
 CREATE OR REPLACE FUNCTION a8_natural_id(kind TEXT, user_uuid UUID, day TEXT)
 RETURNS UUID
@@ -926,14 +926,26 @@ AS $$
   );
 $$;
 
+-- A primary key is checked row by row, so a single UPDATE fails when a row's
+-- natural id is still held by another row that has not moved yet. Production has
+-- three such pairs: daily rows created by an older build carry the natural id of
+-- the day before. So each table moves in two steps. Every row that is not on its
+-- natural id first goes to a temporary id derived from its own date (unique per
+-- user and date, so it cannot clash), then from there to its natural id. Both
+-- steps look only at the row itself, never at the map, so running the migration
+-- again finds nothing to move.
+
 INSERT INTO legacy_a8_rekeyed_ids (table_name, old_id, new_id, user_id)
 SELECT 'journal_entries', id, a8_natural_id('journal', user_id, entry_date), user_id
 FROM journal_entries
 WHERE id <> a8_natural_id('journal', user_id, entry_date)
 ON CONFLICT DO NOTHING;
 UPDATE journal_entries
-SET id = a8_natural_id('journal', user_id, entry_date)
+SET id = a8_natural_id('a8-tmp-journal', user_id, entry_date)
 WHERE id <> a8_natural_id('journal', user_id, entry_date);
+UPDATE journal_entries
+SET id = a8_natural_id('journal', user_id, entry_date)
+WHERE id = a8_natural_id('a8-tmp-journal', user_id, entry_date);
 
 INSERT INTO legacy_a8_rekeyed_ids (table_name, old_id, new_id, user_id)
 SELECT 'daily_entries', id, a8_natural_id('daily', user_id, date), user_id
@@ -941,8 +953,11 @@ FROM daily_entries
 WHERE id <> a8_natural_id('daily', user_id, date)
 ON CONFLICT DO NOTHING;
 UPDATE daily_entries
-SET id = a8_natural_id('daily', user_id, date)
+SET id = a8_natural_id('a8-tmp-daily', user_id, date)
 WHERE id <> a8_natural_id('daily', user_id, date);
+UPDATE daily_entries
+SET id = a8_natural_id('daily', user_id, date)
+WHERE id = a8_natural_id('a8-tmp-daily', user_id, date);
 
 DROP FUNCTION a8_natural_id(TEXT, UUID, TEXT);
 

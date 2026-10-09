@@ -515,6 +515,12 @@ merged it. A8b re-keys those rows on the server and deletes the pass:
 - A journal op still queued under an old ID is translated on arrival, so an
   offline delete still finds its row and other devices see the natural ID.
   Daily ops need nothing: they are applied by date.
+- The re-key moves each table in two steps (temporary id, then natural id)
+  because a primary key is checked row by row. Production has three daily rows
+  that hold the natural id of the day before, so a one-statement UPDATE failed
+  on them; the snapshot also retires superseded local rows before it writes, and
+  holds back an incoming row whose id a different local row still has, so those
+  dates cannot swap counts.
 - The `data_epoch` bump makes every device push, then re-bootstrap. The
   snapshot retires a local journal or daily row only when the server holds
   that date under another ID and the local row is synced, unedited, and has
