@@ -167,7 +167,7 @@ export default function FooterActionsBar({
                 navigate("/home");
               }}
             >
-              <Sparkles className="h-5 w-5 shrink-0 text-emerald-500" />
+              <Sparkles className="h-5 w-5 shrink-0 text-green" />
               {t("aiInsights")}
             </Button>
             <Button
@@ -191,7 +191,7 @@ export default function FooterActionsBar({
                 navigate("/memories");
               }}
             >
-              <ImageIcon className="h-5 w-5 shrink-0 text-amber-500" />
+              <ImageIcon className="h-5 w-5 shrink-0 text-gold-text" />
               {t("memories")}
             </Button>
           </div>

@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-11-warm-paper",
+    date: "2026-10-11",
+    title: "A warmer look",
+    bullets: [
+      "Upwards now uses warm paper tones and a deep green accent instead of plain black and white, in both light and dark mode.",
+      "Text is darker or lighter where it was hard to read, including secondary text, error messages and form borders.",
+      "Nothing moves or changes how it works. Set System, Light or Dark under Settings, Appearance.",
+    ],
+  },
+  {
     id: "2026-10-10-one-entry-per-day",
     date: "2026-10-10",
     title: "One journal entry per day, everywhere",

@@ -12,6 +12,14 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-11-warm-paper": {
+    title: "Um visual mais acolhedor",
+    bullets: [
+      "O Upwards agora usa tons de papel quente e um verde profundo no lugar do preto e branco puros, nos modos claro e escuro.",
+      "O texto ficou mais escuro ou mais claro onde era difícil de ler, incluindo texto secundário, mensagens de erro e bordas de campos.",
+      "Nada muda de lugar nem de funcionamento. Escolha Sistema, Claro ou Escuro em Configurações, Aparência.",
+    ],
+  },
   "2026-10-10-one-entry-per-day": {
     title: "Uma entrada de diário por dia, em todo lugar",
     bullets: [
