@@ -44,9 +44,9 @@ export function SyncStatusPill({
             syncState.isSyncing ? (
               <RefreshCw className="h-3.5 w-3.5 animate-spin" />
             ) : syncState.lastError ? (
-              <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+              <AlertCircle className="h-3.5 w-3.5 text-destructive" />
             ) : (
-              <Cloud className="h-3.5 w-3.5 text-green-500" />
+              <Cloud className="h-3.5 w-3.5 text-green" />
             )
           ) : (
             <CloudOff className="h-3.5 w-3.5" />

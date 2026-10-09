@@ -7,30 +7,51 @@
 @layer base {
   :root {
     color-scheme: light;
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    /* Brand palette (design-and-branding.md §2.3). HSL channels, so opacity
+       modifiers work: bg-paper/70. Change a value here and nowhere else. */
+    --canvas: 39 39% 93%;
+    --paper: 43 100% 99%;
+    --canvas-deep: 39 40% 89%;
+    --line: 37 28% 85%;
+    --line-strong: 40 10% 51%;
+    --ink: 157 21% 16%;
+    --ink-muted: 132 6% 35%;
+    --ink-faint: 113 4% 40%;
+    --sage: 120 20% 90%;
+    --green: 155 24% 32%;
+    --green-deep: 157 27% 21%;
+    --terracotta: 15 48% 54%;
+    --terracotta-text: 13 50% 41%;
+    --gold: 40 56% 52%;
+    --gold-text: 40 75% 28%;
+    --lavender: 255 18% 59%;
+
+    /* shadcn semantic variables, mapped onto the palette. */
+    --background: var(--canvas);
+    --foreground: var(--ink);
+    --card: var(--paper);
+    --card-foreground: var(--ink);
+    --popover: var(--paper);
+    --popover-foreground: var(--ink);
+    --primary: var(--green);
+    --primary-foreground: 43 100% 99%;
+    --secondary: var(--accent);
+    --secondary-foreground: var(--ink);
+    --muted: var(--canvas-deep);
+    --muted-foreground: var(--ink-muted);
+    --accent: 39 40% 89%;
+    --accent-foreground: var(--ink);
+    --destructive: 0 57% 46%;
+    --destructive-foreground: 43 100% 99%;
+    --border: var(--line);
+    --input: var(--line-strong);
+    --ring: var(--green);
+    --chart-1: var(--green);
+    --chart-2: var(--terracotta);
+    --chart-3: var(--gold);
+    --chart-4: var(--lavender);
+    --chart-5: var(--ink-muted);
+
     --radius: 0.5rem;
     /* Overlay stacking: chrome < sheet < dialog < popover < lightbox */
     --z-chrome: 40;
@@ -44,30 +65,50 @@
   }
   .dark {
     color-scheme: dark;
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Brand palette (design-and-branding.md §2.3). HSL channels, so opacity
+       modifiers work: bg-paper/70. Change a value here and nowhere else. */
+    --canvas: 135 9% 9%;
+    --paper: 132 8% 12%;
+    --canvas-deep: 120 9% 7%;
+    --line: 127 8% 19%;
+    --line-strong: 124 6% 50%;
+    --ink: 45 30% 89%;
+    --ink-muted: 108 6% 68%;
+    --ink-faint: 108 4% 56%;
+    --sage: 141 18% 18%;
+    --green: 151 23% 61%;
+    --green-deep: 147 26% 85%;
+    --terracotta: 16 64% 66%;
+    --terracotta-text: 16 64% 66%;
+    --gold: 42 63% 60%;
+    --gold-text: 42 63% 60%;
+    --lavender: 253 28% 74%;
+
+    /* shadcn semantic variables, mapped onto the palette. */
+    --background: var(--canvas);
+    --foreground: var(--ink);
+    --card: var(--paper);
+    --card-foreground: var(--ink);
+    --popover: var(--paper);
+    --popover-foreground: var(--ink);
+    --primary: var(--green);
+    --primary-foreground: 154 32% 9%;
+    --secondary: var(--accent);
+    --secondary-foreground: var(--ink);
+    --muted: var(--canvas-deep);
+    --muted-foreground: var(--ink-muted);
+    --accent: 129 8% 16%;
+    --accent-foreground: var(--ink);
+    --destructive: 5 78% 69%;
+    --destructive-foreground: 154 32% 9%;
+    --border: var(--line);
+    --input: var(--line-strong);
+    --ring: var(--green);
+    --chart-1: var(--green);
+    --chart-2: var(--terracotta);
+    --chart-3: var(--gold);
+    --chart-4: var(--lavender);
+    --chart-5: var(--ink-muted);
   }
 }
 

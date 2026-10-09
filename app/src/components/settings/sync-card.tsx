@@ -48,7 +48,7 @@ export function SyncCard() {
           <span className="flex-1">{t("sync.issuesLink")}</span>
           {openIssueCount > 0 ? (
             <span
-              className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-semibold text-white"
+              className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1.5 py-0.5 text-xs font-semibold text-destructive-foreground"
               aria-label={t("sync.issuesBadge", { count: openIssueCount })}
             >
               {openIssueCount}

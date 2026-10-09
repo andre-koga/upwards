@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
 
       {sent ? (
         <div className="space-y-3 rounded-xl border border-border p-4">
-          <p className="text-sm text-green-600 dark:text-green-500">
+          <p className="text-sm text-green">
             {t("auth.forgotPasswordPage.sent", { email: email.trim() })}
           </p>
           <Button variant="outline" className="w-full" asChild>

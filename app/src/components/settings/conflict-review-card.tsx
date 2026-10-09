@@ -292,7 +292,7 @@ function GenericConflictCard({
   return (
     <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
       <div className="flex items-start gap-2">
-        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-gold-text" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">{issue.title}</p>
           {issue.detail ? (
@@ -303,7 +303,7 @@ function GenericConflictCard({
           </p>
         </div>
       </div>
-      {error ? <p className="text-xs text-red-500">{error}</p> : null}
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
@@ -366,7 +366,7 @@ function JournalConflictCard({
   return (
     <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
       <div className="flex items-start gap-2">
-        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-gold-text" />
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm font-medium">{title}</p>
           <p className="text-sm text-muted-foreground">
@@ -388,7 +388,7 @@ function JournalConflictCard({
             <span>{formatWhen(issue.updated_at)}</span>
           </div>
           {hasBothChanged ? (
-            <p className="text-xs text-amber-700 dark:text-amber-400">
+            <p className="text-xs text-gold-text">
               {t("syncIssues.conflict.bothChangedHint")}
             </p>
           ) : canCombine ? (
@@ -455,7 +455,7 @@ function JournalConflictCard({
         {t("syncIssues.conflict.journal.consequence")}
       </p>
 
-      {error ? <p className="text-xs text-red-500">{error}</p> : null}
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
 
       <div className="flex flex-wrap gap-2">
         <Button
@@ -541,7 +541,7 @@ function ProjectionConflictCard({
   return (
     <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
       <div className="flex items-start gap-2">
-        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-gold-text" />
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm font-medium">{title}</p>
           <p className="text-sm text-muted-foreground">
@@ -556,7 +556,7 @@ function ProjectionConflictCard({
             <span>{formatWhen(issue.updated_at)}</span>
           </div>
           {hasBothChanged ? (
-            <p className="text-xs text-amber-700 dark:text-amber-400">
+            <p className="text-xs text-gold-text">
               {t("syncIssues.conflict.bothChangedHint")}
             </p>
           ) : canCombine ? (
@@ -621,7 +621,7 @@ function ProjectionConflictCard({
         {t("syncIssues.conflict.projection.consequence")}
       </p>
 
-      {error ? <p className="text-xs text-red-500">{error}</p> : null}
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
 
       <div className="flex flex-wrap gap-2">
         <Button
@@ -719,7 +719,7 @@ function DailyEntryCountReconciliationCard({
   return (
     <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
       <div className="flex items-start gap-2">
-        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-gold-text" />
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm font-medium">{issue.title}</p>
           <p className="text-sm text-muted-foreground">
@@ -779,7 +779,7 @@ function DailyEntryCountReconciliationCard({
         {t("syncIssues.conflict.dailyCounts.consequence")}
       </p>
 
-      {error ? <p className="text-xs text-red-500">{error}</p> : null}
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
 
       <div className="flex flex-wrap gap-2">
         <Button
