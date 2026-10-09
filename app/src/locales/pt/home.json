@@ -18,7 +18,11 @@
   },
   "error": {
     "generic": "Não foi possível gerar insights: {{error}}",
-    "rateLimited": "Você atingiu o limite diário de insights de IA — tente novamente amanhã."
+    "rateLimited": "Você atingiu o limite diário de insights de IA — tente novamente amanhã.",
+    "notConfigured": "A IA ainda não está configurada. Adicione sua chave em Configurações.",
+    "providerRejected": "Seu provedor de IA recusou o pedido ({{status}}): {{detail}}",
+    "providerUnreachable": "Não foi possível falar com seu provedor de IA. Confira a URL base em Configurações e tente de novo.",
+    "providerEmpty": "Seu provedor de IA respondeu vazio. Confira o nome do modelo em Configurações."
   },
   "offline": {
     "title": "Os insights de IA precisam de conexão",

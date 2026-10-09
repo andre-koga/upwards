@@ -243,6 +243,15 @@ photos.
 
   #### Phone spike (still to do)
 
+  > **Deferred (2026-10-09), not skipped.** The author has no iPhone, so this
+  > has not been run on one, and nothing is blocked on it today: the new clip
+  > format ships either way. Until it runs, **do not start B7** (month and year
+  > clip compilations) and treat iOS Safari clip *recording and playback* as
+  > unverified. Anyone with a recent iPhone can close this in about ten
+  > minutes: open `/clip-spike`, follow "Running the spike" above, and paste the
+  > report under "Spike results". An Android Chrome result alone does not
+  > replace it, because WebCodecs support and memory limits differ most on iOS.
+
   Needed: a recent iPhone (Safari) and a mid-range Android phone (Chrome).
   Record, per device: whether H.264 and AAC encoding are available, encode time
   against clip length, output size, whether the join of a month completed
@@ -829,5 +838,7 @@ Track B gets its own breakdown before it starts. Its shape:
   [`temporal-data-sync.md`](temporal-data-sync.md) before code.
 - **B6.** Conflict review rebuilt with the §2.10 resolution shapes, replacing
   the per-field card and resolvers.
-- **B7.** Month and year clip compilations, if the A10 spike passed.
+- **B7.** Month and year clip compilations, if the A10 spike passed. **The
+  iPhone spike has not been run** (deferred 2026-10-09, see §2.5); do not start
+  B7 until it has.
 - **B8.** Settings and sign-in restyled.

@@ -18,7 +18,11 @@
   },
   "error": {
     "generic": "Couldn't generate insights: {{error}}",
-    "rateLimited": "You've hit today's AI insight limit — try again tomorrow."
+    "rateLimited": "You've hit today's AI insight limit — try again tomorrow.",
+    "notConfigured": "AI isn't set up yet. Add your key in Settings.",
+    "providerRejected": "Your AI provider rejected the request ({{status}}): {{detail}}",
+    "providerUnreachable": "Couldn't reach your AI provider. Check the base URL in Settings, then try again.",
+    "providerEmpty": "Your AI provider answered with nothing. Check the model name in Settings."
   },
   "offline": {
     "title": "AI insights need a connection",
