@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { providerMessage, truncate } from "../_shared/provider-message.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,7 @@ const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
   throw new Error(
-    "Missing SUPABASE_URL, SUPABASE_ANON_KEY, or SUPABASE_SERVICE_ROLE_KEY"
+    "Missing SUPABASE_URL, SUPABASE_ANON_KEY, or SUPABASE_SERVICE_ROLE_KEY",
   );
 }
 
@@ -42,10 +43,6 @@ function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function truncate(value: string, max: number): string {
-  return value.length > max ? `${value.slice(0, max - 1)}…` : value;
-}
-
 interface InsightResult {
   summary: string;
   recommendations: string[];
@@ -57,10 +54,16 @@ function parseModelOutput(raw: string): InsightResult {
     parsed = JSON.parse(raw);
   } catch {
     // Model didn't return clean JSON — fall back to raw text as the summary.
-    return { summary: truncate(raw.trim(), MAX_SUMMARY_LENGTH), recommendations: [] };
+    return {
+      summary: truncate(raw.trim(), MAX_SUMMARY_LENGTH),
+      recommendations: [],
+    };
   }
   if (typeof parsed !== "object" || parsed === null) {
-    return { summary: truncate(raw.trim(), MAX_SUMMARY_LENGTH), recommendations: [] };
+    return {
+      summary: truncate(raw.trim(), MAX_SUMMARY_LENGTH),
+      recommendations: [],
+    };
   }
   const obj = parsed as Record<string, unknown>;
   const summary =
@@ -116,11 +119,15 @@ Deno.serve(async (request) => {
     .maybeSingle();
   if (settingsError) return json(500, { error: "Could not load AI settings" });
   if (!settings) {
-    return json(400, { error: "AI is not configured yet", code: "not_configured" });
+    return json(400, {
+      error: "AI is not configured yet",
+      code: "not_configured",
+    });
   }
 
   const today = todayUtc();
-  const callsToday = settings.calls_reset_at === today ? settings.calls_today : 0;
+  const callsToday =
+    settings.calls_reset_at === today ? settings.calls_today : 0;
   if (callsToday >= MAX_CALLS_PER_DAY) {
     return json(429, {
       error: "Daily AI insight limit reached — try again tomorrow",
@@ -162,17 +169,28 @@ Deno.serve(async (request) => {
     if (!response.ok) {
       const detail = await response.text();
       console.error("AI provider error:", response.status, detail);
-      return json(502, { error: "AI provider request failed" });
+      return json(502, {
+        error: "AI provider request failed",
+        code: "provider_rejected",
+        provider_status: response.status,
+        provider_message: providerMessage(detail, settings.api_key),
+      });
     }
     const data = await response.json();
     completionText = data?.choices?.[0]?.message?.content ?? "";
     if (!completionText) {
-      return json(502, { error: "AI provider returned an empty response" });
+      return json(502, {
+        error: "AI provider returned an empty response",
+        code: "provider_empty",
+      });
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Request failed";
     console.error("AI provider request threw:", message);
-    return json(502, { error: "Could not reach the AI provider" });
+    return json(502, {
+      error: "Could not reach the AI provider",
+      code: "provider_unreachable",
+    });
   }
 
   // Only increment the cap after a successful provider call.

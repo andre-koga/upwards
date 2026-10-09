@@ -14,6 +14,10 @@ import {
   fingerprintPayload,
 } from "@/lib/ai/build-insight-payload";
 import {
+  describeInsightError,
+  readInsightErrorBody,
+} from "@/lib/ai/insight-errors";
+import {
   getCachedInsight,
   isCacheFresh,
   setCachedInsight,
@@ -42,12 +46,17 @@ export default function HomePage() {
         { body: payload }
       );
       if (invokeError) {
-        throw new Error(invokeError.message || "Request failed");
+        // The generic message hides why the function refused; read the body.
+        throw new Error(
+          describeInsightError(
+            await readInsightErrorBody(invokeError),
+            invokeError.message,
+            t
+          )
+        );
       }
       if (typeof data?.error === "string") {
-        throw new Error(
-          data.code === "rate_limited" ? t("error.rateLimited") : data.error
-        );
+        throw new Error(describeInsightError(data, data.error, t));
       }
       const next: CachedInsight = {
         generatedAt: new Date().toISOString(),
