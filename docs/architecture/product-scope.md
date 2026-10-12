@@ -55,8 +55,9 @@ track time. The real gap was that every activity was timeable.
   routine, a target (`2` for twice-daily meds), counts, completion times, and a
   streak.
 - Activities also gain **`is_pinned`** (the user's override of AI ordering). The
-  field arrives with the data migrations; the pin control arrives with the
-  redesigned Today.
+  field arrived with the data migrations. The pin control is a switch in the
+  activity form, and a pinned row shows a pin glyph (B2a, 2026-10-12). A quick
+  pin on the row itself comes with the AI reasons in B2b.
 - One-time, idempotent migration: each `recurring_memo` becomes an activity with
   `tracks_time = false`, the same routine, `completion_target = 1`, pinned if it
   was pinned, archived if it was disabled. Migrated items go into a group named
@@ -836,6 +837,19 @@ Track B gets its own breakdown before it starts. Its shape:
   column until B2/B3 give each page its real two-column layout.
 - **B2.** Today: activity rows, the type question, the pin control, AI
   ordering with reasons and a no-AI fallback. Then remove the task-order page.
+  Split in two, like B1.
+  - **B2a (done 2026-10-12):** the type question (Habit / Avoid / Time only,
+    `lib/activity/activity-type.ts`) replaces the independent routine, target
+    and timer switches, and the activity form is now translated; the pin switch
+    and row marker; the no-AI order (pinned, then not yet done, then
+    `order_index`, `lib/activity/today-order.ts`); the task-order page, its
+    Settings card and its strings are gone (`/settings/task-order` redirects to
+    Settings). Rows reorder as items are completed: a done habit moves below the
+    open ones.
+  - **B2b (next):** AI ordering with a reason on each row, evidence named, the
+    not-configured / signed-out / loading / stale / rate-limited / error
+    states, and the quick pin. Needs an edge function and a prompt, so it gets
+    its own design and a manual deploy.
 - **B3.** Journal: one record across the journal and memory tables (the merge is
   UI-only; the tables stay separate). Feed, calendar, map, and gallery;
   previous versions with restore; generated month and holiday banners.

@@ -1,4 +1,5 @@
-import { Play, Plus, Square } from "lucide-react";
+import { Pin, Play, Plus, Square } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { formatTimerDisplay } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR, getContrastColor } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,8 @@ export interface ActivityPillProps {
   allowNameClickWhenReadOnly?: boolean;
   /** False for check-only activities: there is no timer, so none is drawn. */
   showTimer?: boolean;
+  /** Marks a pinned activity (kept above the rest of Today's list). */
+  pinned?: boolean;
   className?: string;
 }
 
@@ -38,8 +41,10 @@ export default function ActivityPill({
   readOnly = false,
   allowNameClickWhenReadOnly = false,
   showTimer = true,
+  pinned = false,
   className = "",
 }: ActivityPillProps) {
+  const { t } = useTranslation("projects");
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
   const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
@@ -80,6 +85,15 @@ export default function ActivityPill({
                 <span className="font-normal text-muted-foreground">Name…</span>
               )}
             </span>
+            {pinned ? (
+              <>
+                <Pin
+                  className="h-3 w-3 shrink-0 fill-current text-muted-foreground"
+                  aria-hidden
+                />
+                <span className="sr-only">{t("taskItem.pinned")}</span>
+              </>
+            ) : null}
           </span>
         </Button>
       </div>

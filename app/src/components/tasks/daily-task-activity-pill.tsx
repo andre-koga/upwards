@@ -41,6 +41,7 @@ export default function DailyTaskActivityPill({
       elapsedMs={timeSpent}
       isRunning={isCurrentActivity}
       showTimer={activityTracksTime(activity)}
+      pinned={activity.is_pinned === true}
       readOnly={interaction.isReadOnly}
       allowNameClickWhenReadOnly={
         interaction.isReadOnly && interaction.canClickName

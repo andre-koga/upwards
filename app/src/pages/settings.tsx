@@ -9,10 +9,7 @@ import { AuthCard } from "@/components/settings/auth-card";
 import { SyncCard } from "@/components/settings/sync-card";
 import { AiCard } from "@/components/settings/ai-card";
 import { BackupCard } from "@/components/settings/backup-card";
-import {
-  AboutCard,
-  TaskOrderCard,
-} from "@/components/settings/navigation-cards";
+import { AboutCard } from "@/components/settings/navigation-cards";
 import { useAuth } from "@/lib/use-auth";
 
 export default function SettingsPage() {
@@ -40,7 +37,6 @@ export default function SettingsPage() {
         </>
       )}
 
-      <TaskOrderCard />
       <BackupCard />
       <AboutCard />
 

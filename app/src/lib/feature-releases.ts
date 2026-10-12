@@ -12,6 +12,17 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-12-activity-types",
+    date: "2026-10-12",
+    title: "Simpler activities, pinning, and a calmer Today",
+    bullets: [
+      "Creating an activity now starts with one question: Habit, Avoid, or Time only. The schedule, count, and timer options appear only when they make sense.",
+      "You can pin an activity to the top of Today. Pinned activities show a small pin.",
+      "Today lists pinned activities first, then the ones you haven't finished, then the done ones.",
+      "The Task order page is gone. Pin what matters instead.",
+    ],
+  },
+  {
     id: "2026-10-12-adaptive-shell",
     date: "2026-10-12",
     title: "A real desktop layout and new navigation",

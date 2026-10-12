@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
@@ -21,6 +21,7 @@ import {
   type ActivityRetiredKind,
 } from "@/components/activities/activity-retired-info-dialog";
 import { todayDateString } from "@/lib/time-utils";
+import { orderActivitiesForToday } from "@/lib/activity/today-order";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -118,6 +119,12 @@ export default function DailyTasksList({
     handleStartActivity(activityId);
   }, [isToday, activityToStartOnToday, handleStartActivity]);
   const pausedTaskIdSet = new Set(pausedTaskIds);
+  // Pinned first, then not yet done, then the stored order. The AI ordering
+  // (B2b) replaces the middle of this; pins will still win.
+  const orderedActivities = useMemo(
+    () => orderActivitiesForToday(dailyActivities, taskCounts),
+    [dailyActivities, taskCounts]
+  );
   const manualEntryActivity = manualEntryActivityId
     ? (activities.find((item) => item.id === manualEntryActivityId) ?? null)
     : null;
@@ -200,7 +207,7 @@ export default function DailyTasksList({
               </p>
             )}
             {!loading &&
-              dailyActivities.map((activity) => (
+              orderedActivities.map((activity) => (
                 <ActivityTaskItem
                   key={activity.id}
                   activity={activity}

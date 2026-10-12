@@ -83,7 +83,8 @@
     "neverSlipHint": "Tap to add a slip. Hold to clear slips.",
     "pausedForDay": "Task paused for this day",
     "incrementHint": "{{count}} / {{target}} — click to increment",
-    "countTarget": "{{count}} / {{target}}"
+    "countTarget": "{{count}} / {{target}}",
+    "pinned": "Pinned"
   },
   "timeField": {
     "dialDescription": "Drag the dial or tap values to edit time.",
@@ -102,9 +103,43 @@
     "errorActivityRequired": "Pick an activity for this session."
   },
   "activityForm": {
+    "newTitle": "New activity",
+    "editTitle": "Edit activity",
+    "nameLabel": "Activity name",
+    "namePlaceholder": "e.g. Morning exercise, Read a book",
+    "typeLabel": "What kind of activity is this?",
+    "types": {
+      "habit": {
+        "label": "Habit",
+        "description": "Something you do on a schedule. Count it once or several times a day."
+      },
+      "avoid": {
+        "label": "Avoid",
+        "description": "Something you're trying not to do. You log slips; there's no timer."
+      },
+      "timeOnly": {
+        "label": "Time only",
+        "description": "No schedule or streak. You just want to time it."
+      }
+    },
+    "routineLabel": "Schedule",
+    "targetLabel": "Times per day",
+    "targetHint": "1 is a simple checkbox. More than 1 makes it a counter.",
     "tracksTime": {
       "label": "Track time",
       "hint": "Shows a timer on this activity. Turn it off for things you just check off, like medication."
-    }
+    },
+    "pin": {
+      "label": "Pin to the top",
+      "hint": "Pinned activities stay above the rest of Today's list."
+    },
+    "archive": "Archive activity",
+    "archiveYes": "Yes",
+    "archiveNo": "No",
+    "create": "Create activity",
+    "creating": "Creating…",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "cancel": "Cancel"
   }
 }
