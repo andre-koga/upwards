@@ -11,7 +11,7 @@ import type {
   OneTimeTask,
 } from "@/lib/db/types";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
-import { getCachedUserId } from "@/lib/supabase";
+import { getCachedUserId, getQueueAccountId } from "@/lib/supabase";
 import { getOrCreateDeviceId } from "./device-id";
 import { enqueuePendingOperation } from "./pending-operations";
 import {
@@ -377,10 +377,10 @@ export async function applyCompletionNote(input: {
       updated_at: timestamp,
     });
   });
-  if (getCachedUserId()) {
+  if (getQueueAccountId()) {
     await enqueuePendingOperation({
       operation_id: input.operationId ?? crypto.randomUUID(),
-      account_id: getCachedUserId(),
+      account_id: getQueueAccountId(),
       device_id: getOrCreateDeviceId(),
       entity_type: "daily_entry",
       entity_id: entry.id,

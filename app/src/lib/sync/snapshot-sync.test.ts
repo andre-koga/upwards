@@ -20,6 +20,7 @@ vi.mock("./sync-issues-store", () => ({
 vi.mock("@/lib/supabase", () => ({
   supabase: null,
   getCachedUserId: () => "user-1",
+  getQueueAccountId: () => "user-1",
 }));
 
 vi.mock("@/lib/db", () => {

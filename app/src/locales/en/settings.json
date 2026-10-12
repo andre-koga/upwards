@@ -36,7 +36,7 @@
     "resetEmailFailed": "Could not send reset email",
     "updatePasswordFailed": "Could not update password",
     "syncNotConfigured": "Sync is not configured for this build.",
-    "sessionPending": "Signed in on this device. Your session will be confirmed when you're back online, and sync resumes then.",
+    "sessionPending": "Signed in on this device, but the server hasn't confirmed your session yet. Changes you make are kept here and sent once it does.",
     "signOutBlocked": {
       "title": "Unsynced changes",
       "description": "You have {{total}} change(s) that have not reached the cloud yet ({{pending}} pending operations, {{unsynced}} unsynced rows). Try syncing again or discard local changes before signing out.",
@@ -82,6 +82,30 @@
       "discardHint": "Erase this device's unsaved changes and load your account's data",
       "discardConfirm": "Tap again to permanently delete them",
       "discardConfirmHint": "This cannot be undone."
+    },
+    "recovery": {
+      "check": "Check connection now",
+      "checking": "Checking…",
+      "signInAgain": "Sign in again",
+      "confirmTitle": "Sign in again?",
+      "confirmMessage": "Your journal, activities and any unsent changes stay on this device. You'll sign in with the same account and sync picks up where it stopped.",
+      "confirm": "Sign in again",
+      "cancel": "Cancel",
+      "result": {
+        "ok": "Session confirmed. Sync is resuming.",
+        "reached": "Server reached.",
+        "reach": {
+          "offline": "This device reports no connection.",
+          "unreachable": "Can't reach the server: {{detail}}",
+          "timeout": "The server did not answer in time ({{detail}})."
+        },
+        "refresh": {
+          "unreachable": "Server reached, but the sign-in request failed: {{detail}}",
+          "timeout": "Server reached, but the sign-in request timed out.",
+          "rejected": "The server refused this saved sign-in: {{detail}}. Use Sign in again.",
+          "other": "Sign-in check failed: {{detail}}"
+        }
+      }
     }
   },
   "sync": {

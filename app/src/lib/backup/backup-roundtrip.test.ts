@@ -16,6 +16,7 @@ vi.mock("@/lib/supabase", () => ({
   supabase: null,
   isSupabaseConfigured: false,
   getCachedUserId: () => auth.userId,
+  getQueueAccountId: () => auth.userId,
   getCachedSession: () => null,
 }));
 vi.mock("@/lib/sync/device-id", () => ({

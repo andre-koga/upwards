@@ -14,6 +14,7 @@ vi.stubGlobal("localStorage", {
 
 vi.mock("@/lib/supabase", () => ({
   getCachedUserId: () => auth.userId,
+  getQueueAccountId: () => auth.userId,
   supabase: {
     from: () => ({
       upsert: async (row: Record<string, unknown>) => {

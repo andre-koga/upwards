@@ -31,6 +31,7 @@ vi.mock("@/lib/supabase", () => ({
     }),
   },
   getCachedUserId: () => "user-1",
+  getQueueAccountId: () => "user-1",
 }));
 
 vi.mock("@/lib/sync/projection-sync", () => ({

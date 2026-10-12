@@ -1,4 +1,5 @@
 import { createClient, type Session } from "@supabase/supabase-js";
+import { authStorageKey, storedSessionUserId } from "@/lib/auth-gate";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -84,6 +85,23 @@ if (supabase) {
 /** Synchronous – returns the cached user id or null. */
 export function getCachedUserId(): string | null {
   return _cachedSession?.user?.id ?? null;
+}
+
+/**
+ * The account to record an offline edit against. This is the confirmed user
+ * when there is one, else the account in this project's stored session record.
+ *
+ * Edits made while supabase-js has not yet confirmed the session (offline after
+ * a long gap, or a refresh that keeps failing) must still be queued. Dropping
+ * them leaves rows marked unsynced with no operation behind them, which nothing
+ * ever pushes. Queued under the stored account, they go out as soon as the
+ * session is confirmed, and the server checks the account against the token.
+ */
+export function getQueueAccountId(): string | null {
+  const confirmed = getCachedUserId();
+  if (confirmed) return confirmed;
+  if (!isSupabaseConfigured || typeof localStorage === "undefined") return null;
+  return storedSessionUserId(localStorage, authStorageKey(supabaseUrl));
 }
 
 /** Synchronous – returns the cached session or null. */

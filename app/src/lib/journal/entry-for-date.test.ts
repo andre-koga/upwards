@@ -1,7 +1,10 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({ getCachedUserId: () => "user-1" }));
+vi.mock("@/lib/supabase", () => ({
+  getCachedUserId: () => "user-1",
+  getQueueAccountId: () => "user-1",
+}));
 
 import { db } from "@/lib/db";
 import { naturalJournalId } from "@/lib/sync/natural-ids";
