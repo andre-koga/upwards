@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  authStorageKey,
   hasStoredSession,
   initialGateState,
   isEmailLinkUrl,
@@ -162,5 +163,59 @@ describe("hasStoredSession", () => {
     expect(hasStoredSession(storage({ "sb-abcd-auth-token": "{}" }))).toBe(
       false
     );
+  });
+});
+
+describe("hasStoredSession for a given project", () => {
+  const entry = (id: string) =>
+    JSON.stringify({ refresh_token: "r", access_token: "a", user: { id } });
+  const storage = (entries: Record<string, string>) => {
+    const keys = Object.keys(entries);
+    return {
+      length: keys.length,
+      key: (i: number) => keys[i] ?? null,
+      getItem: (k: string) => entries[k] ?? null,
+    };
+  };
+
+  it("ignores a session another project left behind", () => {
+    // The app was pointed at a different Supabase project (or the local stack)
+    // since this record was written: supabase-js will never read it.
+    expect(
+      hasStoredSession(
+        storage({ "sb-oldproject-auth-token": entry("u1") }),
+        "sb-localhost-auth-token"
+      )
+    ).toBe(false);
+  });
+
+  it("accepts the session this project wrote, among others", () => {
+    expect(
+      hasStoredSession(
+        storage({
+          "sb-oldproject-auth-token": entry("u1"),
+          "sb-localhost-auth-token": entry("u2"),
+        }),
+        "sb-localhost-auth-token"
+      )
+    ).toBe(true);
+  });
+});
+
+describe("authStorageKey", () => {
+  it("is sb- plus the first host label, as supabase-js derives it", () => {
+    expect(authStorageKey("https://abcd1234.supabase.co")).toBe(
+      "sb-abcd1234-auth-token"
+    );
+    expect(authStorageKey("http://localhost:65421")).toBe(
+      "sb-localhost-auth-token"
+    );
+    expect(authStorageKey("http://127.0.0.1:54321")).toBe("sb-127-auth-token");
+  });
+
+  it("is null when there is no usable URL", () => {
+    expect(authStorageKey(undefined)).toBeNull();
+    expect(authStorageKey("")).toBeNull();
+    expect(authStorageKey("not a url")).toBeNull();
   });
 });
