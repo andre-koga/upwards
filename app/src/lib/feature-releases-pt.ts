@@ -12,6 +12,15 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-12-ai-order": {
+    title: "Ordene o Hoje com a sua IA",
+    bullets: [
+      "Em Hoje, toque em Ordenar com IA e a sua própria IA coloca as atividades que você ainda não terminou numa ordem sugerida. Cada uma ganha um motivo curto que cita os seus últimos 7 dias.",
+      "As atividades fixadas continuam sempre no topo, e as concluídas continuam indo para o fim. Toque em Voltar à minha ordem para desfazer.",
+      "Cada linha agora tem um botão de fixar, então você pode fixar ou desafixar sem abrir a atividade.",
+      "Sem uma chave de IA, o Hoje funciona exatamente como antes. A IA só roda quando você toca no botão, e só os nomes e as contagens das suas atividades são enviados.",
+    ],
+  },
   "2026-10-12-activity-types": {
     title: "Atividades mais simples, fixação e um Hoje mais calmo",
     bullets: [

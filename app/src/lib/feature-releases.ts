@@ -12,6 +12,17 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-12-ai-order",
+    date: "2026-10-12",
+    title: "Order Today with your AI",
+    bullets: [
+      "On Today, tap Order with AI and your own AI puts the activities you haven't finished in a suggested order. Each one gets a short reason that quotes your last 7 days.",
+      "Pinned activities always stay on top, and finished ones still move to the bottom. Tap Back to my order to undo it.",
+      "Every row now has a pin button, so you can pin or unpin without opening the activity.",
+      "Without an AI key, Today works exactly as before. The AI only runs when you tap the button, and only your activity names and counts are sent.",
+    ],
+  },
+  {
     id: "2026-10-12-activity-types",
     date: "2026-10-12",
     title: "Simpler activities, pinning, and a calmer Today",

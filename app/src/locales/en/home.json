@@ -22,7 +22,8 @@
     "notConfigured": "AI isn't set up yet. Add your key in Settings.",
     "providerRejected": "Your AI provider rejected the request ({{status}}): {{detail}}",
     "providerUnreachable": "Couldn't reach your AI provider. Check the base URL in Settings, then try again.",
-    "providerEmpty": "Your AI provider answered with nothing. Check the model name in Settings."
+    "providerEmpty": "Your AI provider answered with nothing. Check the model name in Settings.",
+    "providerInvalid": "The AI didn't return a usable answer. Try again in a moment."
   },
   "offline": {
     "title": "AI insights need a connection",

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
@@ -22,6 +22,11 @@ import {
 } from "@/components/activities/activity-retired-info-dialog";
 import { todayDateString } from "@/lib/time-utils";
 import { orderActivitiesForToday } from "@/lib/activity/today-order";
+import { getActivityDisplayName } from "@/lib/activity";
+import { now } from "@/lib/db";
+import { patchActivity } from "@/lib/sync/mutate-synced";
+import { AiOrderBar } from "./ai-order-bar";
+import { useAiTodayOrder } from "./hooks/use-ai-today-order";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -119,11 +124,34 @@ export default function DailyTasksList({
     handleStartActivity(activityId);
   }, [isToday, activityToStartOnToday, handleStartActivity]);
   const pausedTaskIdSet = new Set(pausedTaskIds);
-  // Pinned first, then not yet done, then the stored order. The AI ordering
-  // (B2b) replaces the middle of this; pins will still win.
+  const getName = useCallback(
+    (activity: Activity) =>
+      getActivityDisplayName(activity, getGroup(activity)),
+    [getGroup]
+  );
+  const aiOrder = useAiTodayOrder({
+    enabled: isToday,
+    today: todayDateString(),
+    activities: dailyActivities,
+    getName,
+    counts: taskCounts,
+    streaks: activityStreaks,
+  });
+  // Pinned first, then not yet done, then the AI's order when the person asked
+  // for one, else the stored order. Pins always win.
   const orderedActivities = useMemo(
-    () => orderActivitiesForToday(dailyActivities, taskCounts),
-    [dailyActivities, taskCounts]
+    () => orderActivitiesForToday(dailyActivities, taskCounts, aiOrder.ranking),
+    [dailyActivities, taskCounts, aiOrder.ranking]
+  );
+  const togglePin = useCallback(
+    async (activity: Activity) => {
+      await patchActivity(activity.id, {
+        is_pinned: activity.is_pinned !== true,
+        updated_at: now(),
+      });
+      onTasksDataChanged?.();
+    },
+    [onTasksDataChanged]
   );
   const manualEntryActivity = manualEntryActivityId
     ? (activities.find((item) => item.id === manualEntryActivityId) ?? null)
@@ -200,6 +228,18 @@ export default function DailyTasksList({
             <SectionLabel>{t("sections.forToday")}</SectionLabel>
           </div>
 
+          {!loading && aiOrder.canOrder ? (
+            <AiOrderBar
+              available={aiOrder.available}
+              loading={aiOrder.loading}
+              error={aiOrder.error}
+              generatedAt={aiOrder.generatedAt}
+              stale={aiOrder.stale}
+              onOrder={() => void aiOrder.rank()}
+              onReset={aiOrder.reset}
+            />
+          ) : null}
+
           <div className="flex-1 space-y-2">
             {loading && (
               <p className="py-4 text-center text-sm text-muted-foreground">
@@ -229,6 +269,8 @@ export default function DailyTasksList({
                   onShowRetiredInfo={(kind, activityName) =>
                     setRetiredInfo({ kind, activityName })
                   }
+                  onTogglePin={togglePin}
+                  reason={aiOrder.reasons.get(activity.id)}
                 />
               ))}
           </div>

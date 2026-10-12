@@ -52,6 +52,8 @@ export function describeInsightError(
       return t("error.providerUnreachable");
     case "provider_empty":
       return t("error.providerEmpty");
+    case "provider_invalid":
+      return t("error.providerInvalid");
     default:
       return body?.error || fallback || "Request failed";
   }

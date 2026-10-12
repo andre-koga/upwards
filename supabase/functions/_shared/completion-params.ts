@@ -36,18 +36,28 @@ export function initialCompletionParams(baseUrl: string): CompletionParams {
     : { tokenParam: "max_tokens", sendTemperature: true };
 }
 
+/** Output ceilings for a caller whose answer is longer than an insight. */
+export interface TokenCaps {
+  maxTokens: number;
+  maxCompletionTokens: number;
+}
+
 export function buildCompletionBody(
   model: string,
   messages: Array<{ role: string; content: string }>,
   params: CompletionParams,
+  caps: TokenCaps = {
+    maxTokens: OUTPUT_TOKEN_CAP,
+    maxCompletionTokens: COMPLETION_TOKEN_CAP,
+  },
 ): Record<string, unknown> {
   const body: Record<string, unknown> = {
     model,
     messages,
     [params.tokenParam]:
       params.tokenParam === "max_tokens"
-        ? OUTPUT_TOKEN_CAP
-        : COMPLETION_TOKEN_CAP,
+        ? caps.maxTokens
+        : caps.maxCompletionTokens,
   };
   if (params.sendTemperature) body.temperature = TEMPERATURE;
   return body;

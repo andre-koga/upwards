@@ -16,6 +16,8 @@ interface DailyTaskActivityPillProps {
   onStartActivity: (activityId: string) => void;
   onStopActivity: () => void;
   onManualEntry?: (activityId: string) => void;
+  /** Quick pin from the row; not offered on read-only days. */
+  onTogglePin?: (activity: Activity) => void;
 }
 
 export default function DailyTaskActivityPill({
@@ -30,6 +32,7 @@ export default function DailyTaskActivityPill({
   onStartActivity,
   onStopActivity,
   onManualEntry,
+  onTogglePin,
 }: DailyTaskActivityPillProps) {
   const groupColor = group?.color || DEFAULT_GROUP_COLOR;
   const canUseTimer = interaction.canUseTimer && !isPaused;
@@ -42,6 +45,11 @@ export default function DailyTaskActivityPill({
       isRunning={isCurrentActivity}
       showTimer={activityTracksTime(activity)}
       pinned={activity.is_pinned === true}
+      onTogglePin={
+        onTogglePin && !interaction.isReadOnly
+          ? () => onTogglePin(activity)
+          : undefined
+      }
       readOnly={interaction.isReadOnly}
       allowNameClickWhenReadOnly={
         interaction.isReadOnly && interaction.canClickName

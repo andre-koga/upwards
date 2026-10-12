@@ -22,7 +22,8 @@
     "notConfigured": "A IA ainda não está configurada. Adicione sua chave em Configurações.",
     "providerRejected": "Seu provedor de IA recusou o pedido ({{status}}): {{detail}}",
     "providerUnreachable": "Não foi possível falar com seu provedor de IA. Confira a URL base em Configurações e tente de novo.",
-    "providerEmpty": "Seu provedor de IA respondeu vazio. Confira o nome do modelo em Configurações."
+    "providerEmpty": "Seu provedor de IA respondeu vazio. Confira o nome do modelo em Configurações.",
+    "providerInvalid": "A IA não devolveu uma resposta utilizável. Tente de novo em instantes."
   },
   "offline": {
     "title": "Os insights de IA precisam de conexão",

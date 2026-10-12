@@ -84,7 +84,9 @@
     "pausedForDay": "Task paused for this day",
     "incrementHint": "{{count}} / {{target}} — click to increment",
     "countTarget": "{{count}} / {{target}}",
-    "pinned": "Pinned"
+    "pinned": "Pinned",
+    "pin": "Pin to top",
+    "unpin": "Unpin"
   },
   "timeField": {
     "dialDescription": "Drag the dial or tap values to edit time.",

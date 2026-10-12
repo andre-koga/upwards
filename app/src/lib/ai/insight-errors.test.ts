@@ -66,6 +66,7 @@ describe("describeInsightError", () => {
     ["not_configured", "error.notConfigured"],
     ["provider_unreachable", "error.providerUnreachable"],
     ["provider_empty", "error.providerEmpty"],
+    ["provider_invalid", "error.providerInvalid"],
   ])("maps %s to its own message", (code, key) => {
     expect(describeInsightError({ code }, "generic", t)).toBe(key);
   });

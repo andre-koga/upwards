@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Flame, X } from "lucide-react";
+import { Flame, Sparkles, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
   getActivityDisplayName,
@@ -39,6 +39,10 @@ interface ActivityTaskItemProps {
   onEdit: (activity: Activity) => void;
   /** Opens the shared retired-info dialog hosted by the task list. */
   onShowRetiredInfo: (kind: ActivityRetiredKind, activityName: string) => void;
+  /** Quick pin from the row. */
+  onTogglePin?: (activity: Activity) => void;
+  /** The AI's one-line reason for this row's place, naming its evidence. */
+  reason?: string;
 }
 
 function ActivityTaskItem({
@@ -60,6 +64,8 @@ function ActivityTaskItem({
   onManualEntry,
   onEdit,
   onShowRetiredInfo,
+  onTogglePin,
+  reason,
 }: ActivityTaskItemProps) {
   const { t } = useTranslation("projects");
   const neverPressTimeoutRef = useRef<number | null>(null);
@@ -106,130 +112,132 @@ function ActivityTaskItem({
   );
 
   return (
-    <div className="flex items-center gap-2">
-      {isNeverTask ? (
-        <Button
-          type="button"
-          variant="bare"
-          onClick={
-            canUpdateCount && onNeverIncrement
-              ? () => {
-                  if (longPressHandledRef.current) {
-                    longPressHandledRef.current = false;
-                    return;
+    <div className="flex items-start gap-2">
+      <div className="flex h-10 shrink-0 items-center">
+        {isNeverTask ? (
+          <Button
+            type="button"
+            variant="bare"
+            onClick={
+              canUpdateCount && onNeverIncrement
+                ? () => {
+                    if (longPressHandledRef.current) {
+                      longPressHandledRef.current = false;
+                      return;
+                    }
+                    onNeverIncrement(activity.id);
                   }
-                  onNeverIncrement(activity.id);
-                }
-              : undefined
-          }
-          onPointerDown={
-            canUpdateCount && onNeverReset && count > 0
-              ? () => {
-                  longPressHandledRef.current = false;
-                  clearNeverPressTimeout();
-                  neverPressTimeoutRef.current = window.setTimeout(() => {
-                    longPressHandledRef.current = true;
-                    onNeverReset(activity.id);
-                    neverPressTimeoutRef.current = null;
-                  }, 500);
-                }
-              : undefined
-          }
-          onPointerUp={clearNeverPressTimeout}
-          onPointerLeave={clearNeverPressTimeout}
-          onPointerCancel={clearNeverPressTimeout}
-          className={cn(
-            "flex h-7 min-w-[2.75rem] touch-manipulation items-center justify-center rounded-md border px-1 transition-colors",
-            canUpdateCount
-              ? "cursor-pointer"
-              : "cursor-default text-muted-foreground",
-            isComplete
-              ? "border-destructive bg-destructive text-destructive-foreground hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)]"
-              : count > 0
-                ? "border-destructive bg-[color-mix(in_srgb,hsl(var(--destructive))_18%,hsl(var(--background)))] text-destructive hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_28%,hsl(var(--background)))]"
-                : "border-destructive bg-transparent hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_12%,hsl(var(--background)))]"
-          )}
-          title={canUpdateCount ? t("taskItem.neverSlipHint") : undefined}
-          disabled={!canUpdateCount}
-        >
-          {!isComplete ? (
-            <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none text-muted-foreground">
-              <Flame className="h-3 w-3 fill-current" />
-              <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
-            </span>
-          ) : count === 1 ? (
-            <X className="h-3.5 w-3.5" aria-hidden="true" />
-          ) : count > 1 ? (
-            <span className="mt-0.5 font-mono text-xs font-semibold tabular-nums leading-none">
-              {count}
-            </span>
-          ) : null}
-        </Button>
-      ) : target <= 1 ? (
-        <TaskCheckbox
-          isComplete={isComplete}
-          isToday={canUpdateCount}
-          onClick={() => onIncrement(activity.id, target)}
-          title={isPaused ? t("taskItem.pausedForDay") : undefined}
-          completeContent={
-            <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-current" />
-              <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
-            </span>
-          }
-          className={cn(
-            (isBreakDay || isPaused) &&
-              (isComplete
-                ? "border-amber-500 bg-amber-500 text-amber-950"
-                : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-gold-text")
-          )}
-        />
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={
-            canUpdateCount
-              ? () => {
-                  onIncrement(activity.id, target);
-                }
-              : undefined
-          }
-          disabled={!canUpdateCount}
-          className={cn(
-            "h-7 min-h-[1.75rem] min-w-[2.75rem] rounded-full px-2 text-xs font-semibold shadow-none disabled:cursor-default",
-            isBreakDay || isPaused
-              ? isComplete
-                ? "border-amber-500 bg-amber-500 text-amber-950"
+                : undefined
+            }
+            onPointerDown={
+              canUpdateCount && onNeverReset && count > 0
+                ? () => {
+                    longPressHandledRef.current = false;
+                    clearNeverPressTimeout();
+                    neverPressTimeoutRef.current = window.setTimeout(() => {
+                      longPressHandledRef.current = true;
+                      onNeverReset(activity.id);
+                      neverPressTimeoutRef.current = null;
+                    }, 500);
+                  }
+                : undefined
+            }
+            onPointerUp={clearNeverPressTimeout}
+            onPointerLeave={clearNeverPressTimeout}
+            onPointerCancel={clearNeverPressTimeout}
+            className={cn(
+              "flex h-7 min-w-[2.75rem] touch-manipulation items-center justify-center rounded-md border px-1 transition-colors",
+              canUpdateCount
+                ? "cursor-pointer"
+                : "cursor-default text-muted-foreground",
+              isComplete
+                ? "border-destructive bg-destructive text-destructive-foreground hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)]"
                 : count > 0
-                  ? "border-[color-mix(in_srgb,rgb(245_158_11)_82%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_22%,hsl(var(--background)))] text-gold-text"
-                  : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-gold-text"
-              : isComplete
-                ? "border-primary bg-primary text-primary-foreground"
-                : count > 0
-                  ? "border-primary bg-[color-mix(in_srgb,hsl(var(--primary))_22%,hsl(var(--background)))] text-primary"
-                  : "border-line-strong text-muted-foreground"
-          )}
-          title={
-            canUpdateCount
-              ? t("taskItem.incrementHint", { count, target })
-              : t("taskItem.countTarget", { count, target })
-          }
-        >
-          {isComplete ? (
-            <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-current" />
-              <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
-            </span>
-          ) : (
-            <p className="pt-0.5 font-mono">
-              {count}/{target}
-            </p>
-          )}
-        </Button>
-      )}
+                  ? "border-destructive bg-[color-mix(in_srgb,hsl(var(--destructive))_18%,hsl(var(--background)))] text-destructive hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_28%,hsl(var(--background)))]"
+                  : "border-destructive bg-transparent hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_12%,hsl(var(--background)))]"
+            )}
+            title={canUpdateCount ? t("taskItem.neverSlipHint") : undefined}
+            disabled={!canUpdateCount}
+          >
+            {!isComplete ? (
+              <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none text-muted-foreground">
+                <Flame className="h-3 w-3 fill-current" />
+                <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
+              </span>
+            ) : count === 1 ? (
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : count > 1 ? (
+              <span className="mt-0.5 font-mono text-xs font-semibold tabular-nums leading-none">
+                {count}
+              </span>
+            ) : null}
+          </Button>
+        ) : target <= 1 ? (
+          <TaskCheckbox
+            isComplete={isComplete}
+            isToday={canUpdateCount}
+            onClick={() => onIncrement(activity.id, target)}
+            title={isPaused ? t("taskItem.pausedForDay") : undefined}
+            completeContent={
+              <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
+                <Flame className="h-3 w-3 fill-current" />
+                <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
+              </span>
+            }
+            className={cn(
+              (isBreakDay || isPaused) &&
+                (isComplete
+                  ? "border-amber-500 bg-amber-500 text-amber-950"
+                  : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-gold-text")
+            )}
+          />
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={
+              canUpdateCount
+                ? () => {
+                    onIncrement(activity.id, target);
+                  }
+                : undefined
+            }
+            disabled={!canUpdateCount}
+            className={cn(
+              "h-7 min-h-[1.75rem] min-w-[2.75rem] rounded-full px-2 text-xs font-semibold shadow-none disabled:cursor-default",
+              isBreakDay || isPaused
+                ? isComplete
+                  ? "border-amber-500 bg-amber-500 text-amber-950"
+                  : count > 0
+                    ? "border-[color-mix(in_srgb,rgb(245_158_11)_82%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_22%,hsl(var(--background)))] text-gold-text"
+                    : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-gold-text"
+                : isComplete
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : count > 0
+                    ? "border-primary bg-[color-mix(in_srgb,hsl(var(--primary))_22%,hsl(var(--background)))] text-primary"
+                    : "border-line-strong text-muted-foreground"
+            )}
+            title={
+              canUpdateCount
+                ? t("taskItem.incrementHint", { count, target })
+                : t("taskItem.countTarget", { count, target })
+            }
+          >
+            {isComplete ? (
+              <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
+                <Flame className="h-3 w-3 fill-current" />
+                <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
+              </span>
+            ) : (
+              <p className="pt-0.5 font-mono">
+                {count}/{target}
+              </p>
+            )}
+          </Button>
+        )}
+      </div>
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <DailyTaskActivityPill
           activity={activity}
           group={group}
@@ -242,7 +250,17 @@ function ActivityTaskItem({
           onStartActivity={onStartActivity}
           onStopActivity={onStopActivity}
           onManualEntry={onManualEntry}
+          onTogglePin={onTogglePin}
         />
+        {reason ? (
+          <p className="mt-1 flex items-start gap-1 px-4 text-[11px] leading-snug text-muted-foreground">
+            <Sparkles
+              className="mt-px h-3 w-3 shrink-0 text-gold-text"
+              aria-hidden
+            />
+            <span className="min-w-0">{reason}</span>
+          </p>
+        ) : null}
       </div>
     </div>
   );
