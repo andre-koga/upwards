@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { ThemeProvider } from "next-themes";
+import { ThemeColorSync } from "@/components/theme-color-sync";
 import App from "./App.tsx";
 import "./index.css";
 import { syncEngine } from "./lib/sync";
@@ -64,6 +65,7 @@ function startApp() {
   root.render(
     <React.StrictMode>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeColorSync />
         <App />
       </ThemeProvider>
     </React.StrictMode>

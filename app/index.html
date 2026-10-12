@@ -15,9 +15,18 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <!-- Keep Android's standalone-PWA system bar consistently black. -->
-    <meta name="theme-color" content="#000000" />
-    <meta name="color-scheme" content="dark" />
+    <!-- System bar follows the canvas; ThemeColorSync overrides for explicit Light/Dark. -->
+    <meta
+      name="theme-color"
+      content="#f4efe6"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#151916"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta name="color-scheme" content="light dark" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!--
