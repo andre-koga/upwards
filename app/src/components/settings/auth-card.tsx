@@ -23,6 +23,9 @@ function describeCheck(
       detail: result.reach.detail,
     });
   }
+  if (result.post && !result.post.ok) {
+    return t("auth.recovery.result.post", { detail: result.post.detail });
+  }
   if (!result.refresh) return t("auth.recovery.result.reached");
   if (result.refresh.ok) return t("auth.recovery.result.ok");
   return t(`auth.recovery.result.refresh.${result.refresh.reason}`, {
@@ -180,7 +183,7 @@ export function AuthCard() {
                 cancelLabel={t("auth.recovery.cancel")}
                 onConfirm={() => {
                   setSignInAgainOpen(false);
-                  void forgetSessionKeepData();
+                  forgetSessionKeepData();
                 }}
               />
             </>

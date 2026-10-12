@@ -101,10 +101,11 @@
         },
         "refresh": {
           "unreachable": "Server reached, but the sign-in request failed: {{detail}}",
-          "timeout": "Server reached, but the sign-in request timed out.",
+          "timeout": "Server reached, but the sign-in request did not finish in 12 s. The app is still retrying in the background.",
           "rejected": "The server refused this saved sign-in: {{detail}}. Use Sign in again.",
           "other": "Sign-in check failed: {{detail}}"
-        }
+        },
+        "post": "Server reached, but sign-in requests to it are failing: {{detail}}"
       }
     }
   },
