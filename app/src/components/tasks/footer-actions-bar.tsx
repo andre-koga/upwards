@@ -3,12 +3,10 @@ import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import { getActiveLocaleTag } from "@/lib/i18n";
 import {
-  BookOpen,
   CircleCheckBig,
   Folder,
   History,
   Image as ImageIcon,
-  Sparkles,
   Menu,
   MessageSquare,
   Settings,
@@ -147,6 +145,18 @@ export default function FooterActionsBar({
               className="h-11 w-full justify-start rounded-xl"
               onClick={() => {
                 setPathsDrawerOpen(false);
+                navigate("/memories");
+              }}
+            >
+              <ImageIcon className="h-4 w-4" />
+              {t("memories")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full justify-start rounded-xl"
+              onClick={() => {
+                setPathsDrawerOpen(false);
                 navigate("/settings");
               }}
             >
@@ -154,57 +164,16 @@ export default function FooterActionsBar({
               {t("settings")}
             </Button>
           </div>
-
-          <div className="my-2" role="separator" aria-hidden />
-
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
-              onClick={() => {
-                setPathsDrawerOpen(false);
-                navigate("/home");
-              }}
-            >
-              <Sparkles className="h-5 w-5 shrink-0 text-green" />
-              {t("aiInsights")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
-              onClick={() => {
-                setPathsDrawerOpen(false);
-                navigate("/journal");
-              }}
-            >
-              <BookOpen className="h-5 w-5 shrink-0 text-rose-500" />
-              {t("journal")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-[4.5rem] flex-1 flex-col gap-1.5 rounded-xl py-6 text-sm font-semibold"
-              onClick={() => {
-                setPathsDrawerOpen(false);
-                navigate("/memories");
-              }}
-            >
-              <ImageIcon className="h-5 w-5 shrink-0 text-gold-text" />
-              {t("memories")}
-            </Button>
-          </div>
         </SheetContent>
 
-        <div className="fixed bottom-0 left-0 right-0 z-[30] h-12 border-t border-border bg-background"></div>
-        <div className="fixed inset-x-2 bottom-4 z-[40] flex items-center gap-2 pb-2">
+        <div className="fixed bottom-[var(--app-tab-bar-h,0px)] left-0 right-0 z-[30] h-12 border-t border-border bg-background"></div>
+        <div className="fixed inset-x-2 bottom-[calc(var(--app-tab-bar-h,0px)+1rem)] z-[40] mx-auto flex items-center gap-2 pb-2 md:max-w-2xl md:px-4 lg:max-w-3xl">
           <SheetTrigger asChild>
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="h-10 w-10 rounded-full border-border bg-background shadow-lg"
+              className="h-10 w-10 rounded-full border-border bg-background shadow-lg md:hidden"
               onClick={() => {
                 if (!pathsDrawerOpen) {
                   setHasUnreadWhatsNew(hasUnreadWhatsNewRelease());

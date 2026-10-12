@@ -112,6 +112,19 @@
   }
 }
 
+@layer components {
+  /* Height the phone tab bar occupies. Fixed bottom controls add it to their
+     offset so they sit above the bar; it is 0 once the sidebar replaces it. */
+  .app-shell-tabs {
+    --app-tab-bar-h: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 768px) {
+    .app-shell-tabs {
+      --app-tab-bar-h: 0px;
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

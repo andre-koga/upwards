@@ -41,5 +41,48 @@
     "pending_other": "{{count}} alterações aguardando envio.",
     "action": "Atualizar agora",
     "updating": "Atualizando…"
+  },
+  "errorLogs": "Registros de erros",
+  "primaryNavigation": "Navegação principal",
+  "moreNavigation": "Mais",
+  "skipToContent": "Ir para o conteúdo",
+  "tabs": {
+    "home": "Início",
+    "today": "Hoje",
+    "journal": "Diário",
+    "you": "Você"
+  },
+  "palette": {
+    "open": "Buscar e comandos",
+    "title": "Paleta de comandos",
+    "description": "Vá para uma página ou execute um comando.",
+    "inputLabel": "Buscar comandos e páginas",
+    "placeholder": "Vá para uma página ou execute um comando…",
+    "empty": "Nada corresponde a “{{query}}”.",
+    "groups": {
+      "go": "Ir para",
+      "actions": "Ações",
+      "appearance": "Aparência"
+    },
+    "commands": {
+      "feedback": "Enviar feedback",
+      "syncIssues": "Problemas de sincronização",
+      "themeLight": "Usar aparência clara",
+      "themeDark": "Usar aparência escura",
+      "themeSystem": "Seguir a aparência do sistema"
+    },
+    "keywords": {
+      "home": "insights ia resumo",
+      "today": "tarefas cronômetro sessões dia atividades hoje",
+      "journal": "entradas diário reflexões fotos lugares",
+      "you": "configurações conta perfil idioma você",
+      "memories": "memória antigas passado",
+      "whatsNew": "novidades atualizações versões",
+      "errorLogs": "registros erros depuração logs",
+      "syncIssues": "conflitos pendentes sincronização revisão",
+      "feedback": "sugestão bug ideia",
+      "theme": "tema escuro claro modo aparência"
+    },
+    "openShort": "Buscar"
   }
 }

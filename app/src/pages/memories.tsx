@@ -241,7 +241,7 @@ export default function MemoriesPage() {
         type="button"
         variant="default"
         size="floatingNav"
-        className="fixed bottom-3 right-4 z-50 shadow-md"
+        className="fixed bottom-[calc(var(--app-tab-bar-h,0px)+0.75rem)] right-4 z-50 shadow-md"
         onClick={addMemory}
         title={t("add")}
         aria-label={t("add")}

@@ -41,5 +41,48 @@
     "pending_other": "{{count}} changes are waiting to upload.",
     "action": "Update now",
     "updating": "Updating…"
+  },
+  "errorLogs": "Error logs",
+  "primaryNavigation": "Primary navigation",
+  "moreNavigation": "More",
+  "skipToContent": "Skip to content",
+  "tabs": {
+    "home": "Home",
+    "today": "Today",
+    "journal": "Journal",
+    "you": "You"
+  },
+  "palette": {
+    "open": "Search and commands",
+    "title": "Command palette",
+    "description": "Jump to a page or run a command.",
+    "inputLabel": "Search commands and pages",
+    "placeholder": "Go to a page or run a command…",
+    "empty": "Nothing matches “{{query}}”.",
+    "groups": {
+      "go": "Go to",
+      "actions": "Actions",
+      "appearance": "Appearance"
+    },
+    "commands": {
+      "feedback": "Send feedback",
+      "syncIssues": "Sync issues",
+      "themeLight": "Use light appearance",
+      "themeDark": "Use dark appearance",
+      "themeSystem": "Follow system appearance"
+    },
+    "keywords": {
+      "home": "insights ai digest",
+      "today": "tasks timer sessions day activities",
+      "journal": "entries diary reflections photos places",
+      "you": "settings account profile language",
+      "memories": "memory old past",
+      "whatsNew": "changelog updates releases",
+      "errorLogs": "logs debug errors",
+      "syncIssues": "conflicts pending sync review",
+      "feedback": "request bug idea",
+      "theme": "theme dark light mode appearance"
+    },
+    "openShort": "Search"
   }
 }

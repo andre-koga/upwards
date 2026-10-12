@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-12-adaptive-shell",
+    date: "2026-10-12",
+    title: "A real desktop layout and new navigation",
+    bullets: [
+      "On a computer, Upwards now fills the window with a sidebar instead of showing a phone-sized frame. On a phone, the bottom bar has four tabs: Home, Today, Journal and You.",
+      "Press Ctrl+K (or ⌘K on a Mac) to jump to any page or switch appearance. Ctrl/⌘ plus 1 to 4 opens the tabs.",
+      "On a phone, the menu on Today now holds What's new, Feedback, Memories and Settings. Home and Journal moved to the tab bar. The You tab opens Settings for now.",
+    ],
+  },
+  {
     id: "2026-10-11-warm-paper",
     date: "2026-10-11",
     title: "A warmer look",
