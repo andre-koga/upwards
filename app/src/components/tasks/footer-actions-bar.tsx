@@ -6,7 +6,6 @@ import {
   CircleCheckBig,
   Folder,
   History,
-  Image as ImageIcon,
   Menu,
   MessageSquare,
   Settings,
@@ -138,18 +137,6 @@ export default function FooterActionsBar({
             >
               <MessageSquare className="h-4 w-4" />
               {t("feedback")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full justify-start rounded-xl"
-              onClick={() => {
-                setPathsDrawerOpen(false);
-                navigate("/memories");
-              }}
-            >
-              <ImageIcon className="h-4 w-4" />
-              {t("memories")}
             </Button>
             <Button
               type="button"

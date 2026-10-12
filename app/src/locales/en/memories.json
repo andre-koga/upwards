@@ -15,7 +15,8 @@
     "deletePermanently": "Delete permanently",
     "fallbackLabel": "Memory",
     "confirmTitle": "Delete memory permanently?",
-    "confirmMessage": "This will permanently remove the memory and its photos."
+    "confirmMessage": "This will permanently remove the memory and its photos.",
+    "empty": "Nothing in the trash."
   },
   "dialog": {
     "editTitle": "Edit memory",
@@ -35,6 +36,7 @@
       "maxPhotosReached": "Maximum {{count}} photos reached",
       "photoCount": "{{current}}/{{max}} photos",
       "removePhoto": "Remove photo {{index}}"
-    }
+    },
+    "whenHint": "Add a year, like \"summer 2019\", to place it in your timeline."
   }
 }

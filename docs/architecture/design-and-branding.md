@@ -218,6 +218,12 @@ Do not build separate Journal and Memories destinations. One archive, one search
 one browse surface, entries sorted by best-known date with imprecise entries
 grouped at their anchor.
 
+The anchor is read from the person's own words: the latest year, up to the
+current one, in the memory's `time_label`. Memories sit after that year's days
+in the feed; a label naming no year is undated and closes the feed. The label
+stays free text; do not ask for a date picker (that would make it an exact
+entry).
+
 ### 3.2 Canonical navigation
 
 Four primary destinations. This is a hard cap on the mobile tab bar.

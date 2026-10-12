@@ -40,7 +40,6 @@ export function usePaletteCommands(onOpenFeedback: () => void) {
     }));
 
     const secondaryKeywords: Record<string, string[]> = {
-      memories: k("memories"),
       whatsNew: k("whatsNew"),
       logs: k("errorLogs"),
     };

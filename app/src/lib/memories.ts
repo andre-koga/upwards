@@ -8,10 +8,3 @@ export function memoryHasContent(
 ): boolean {
   return Boolean(memory.text_content?.trim() || memory.photo_paths?.length);
 }
-
-/** Active memories, newest first. */
-export function sortMemories(memories: Memory[]): Memory[] {
-  return memories
-    .filter((memory) => !memory.deleted_at)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
-}

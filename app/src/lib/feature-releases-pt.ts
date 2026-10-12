@@ -12,6 +12,15 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-12-one-record": {
+    title: "Diário e memórias, juntos",
+    bullets: [
+      'Suas memórias agora ficam no Diário, no mesmo feed dos seus dias. Uma memória aparece depois dos dias do ano que você citou em "quando", como "verão de 2019". As que não têm ano vêm por último.',
+      "A busca, o filtro de ano e o filtro de fotos também valem para as memórias. Adicione uma memória com o botão + no topo do Diário.",
+      "Memórias excluídas vão para uma lixeira que você abre pelo Diário, e podem ser restauradas de lá.",
+      "A página separada de Memórias saiu. Links antigos abrem o Diário.",
+    ],
+  },
   "2026-10-12-ai-order": {
     title: "Ordene o Hoje com a sua IA",
     bullets: [

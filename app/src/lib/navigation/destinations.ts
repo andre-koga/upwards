@@ -3,7 +3,6 @@ import {
   CircleCheckBig,
   FileText,
   History,
-  Image as ImageIcon,
   Sparkles,
   UserRound,
   type LucideIcon,
@@ -59,15 +58,14 @@ export const TABS: readonly TabDestination[] = [
 ];
 
 export interface SecondaryDestination {
-  id: "memories" | "whatsNew" | "logs";
+  id: "whatsNew" | "logs";
   to: string;
   /** `nav` namespace key for the visible label. */
-  labelKey: "memories" | "whatsNew" | "errorLogs";
+  labelKey: "whatsNew" | "errorLogs";
   icon: LucideIcon;
 }
 
 export const SECONDARY_DESTINATIONS: readonly SecondaryDestination[] = [
-  { id: "memories", to: "/memories", labelKey: "memories", icon: ImageIcon },
   { id: "whatsNew", to: "/whats-new", labelKey: "whatsNew", icon: History },
   { id: "logs", to: "/logs", labelKey: "errorLogs", icon: FileText },
 ];
