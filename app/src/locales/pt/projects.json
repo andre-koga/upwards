@@ -83,7 +83,8 @@
     "neverSlipHint": "Toque para registrar um deslize. Segure para limpar os deslizes.",
     "pausedForDay": "Tarefa pausada para este dia",
     "incrementHint": "{{count}} / {{target}} — toque para aumentar",
-    "countTarget": "{{count}} / {{target}}"
+    "countTarget": "{{count}} / {{target}}",
+    "pinned": "Fixada"
   },
   "timeField": {
     "dialDescription": "Arraste o controle circular ou toque nos valores para editar o horário.",
@@ -102,9 +103,43 @@
     "errorActivityRequired": "Escolha uma atividade para esta sessão."
   },
   "activityForm": {
+    "newTitle": "Nova atividade",
+    "editTitle": "Editar atividade",
+    "nameLabel": "Nome da atividade",
+    "namePlaceholder": "ex.: Exercício matinal, Ler um livro",
+    "typeLabel": "Que tipo de atividade é esta?",
+    "types": {
+      "habit": {
+        "label": "Hábito",
+        "description": "Algo que você faz com uma frequência. Conte uma vez ou várias vezes por dia."
+      },
+      "avoid": {
+        "label": "Evitar",
+        "description": "Algo que você está tentando não fazer. Você registra os deslizes; não há cronômetro."
+      },
+      "timeOnly": {
+        "label": "Só tempo",
+        "description": "Sem agenda nem sequência. Você só quer cronometrar."
+      }
+    },
+    "routineLabel": "Frequência",
+    "targetLabel": "Vezes por dia",
+    "targetHint": "1 é uma caixa de seleção simples. Mais de 1 vira um contador.",
     "tracksTime": {
-      "label": "Marcar tempo",
-      "hint": "Mostra um cronômetro nesta atividade. Desative para o que você só marca como feito, como remédios."
-    }
+      "label": "Registrar tempo",
+      "hint": "Mostra um cronômetro nesta atividade. Desligue para coisas que você só marca, como remédios."
+    },
+    "pin": {
+      "label": "Fixar no topo",
+      "hint": "Atividades fixadas ficam acima do resto da lista de Hoje."
+    },
+    "archive": "Arquivar atividade",
+    "archiveYes": "Sim",
+    "archiveNo": "Não",
+    "create": "Criar atividade",
+    "creating": "Criando…",
+    "save": "Salvar alterações",
+    "saving": "Salvando…",
+    "cancel": "Cancelar"
   }
 }

@@ -344,18 +344,6 @@
       }
     }
   },
-  "taskOrder": {
-    "title": "Ordem das tarefas",
-    "description": "Reordene as tarefas agendadas exibidas na página inicial.",
-    "reorder": "Reordenar tarefas diárias",
-    "dailySorting": "Como ordenar tarefas diárias",
-    "loadingActivities": "Carregando atividades...",
-    "loadError": "Não foi possível carregar as atividades. Tente novamente.",
-    "empty": "Não há atividades agendadas para reordenar.",
-    "moveUp": "Mover para cima",
-    "moveDown": "Mover para baixo",
-    "savingOrder": "Salvando a ordem..."
-  },
   "about": {
     "title": "Sobre",
     "errorLogs": "Registros de erro",

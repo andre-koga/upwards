@@ -344,18 +344,6 @@
       }
     }
   },
-  "taskOrder": {
-    "title": "Task order",
-    "description": "Reorder scheduled tasks shown on the home page.",
-    "reorder": "Reorder daily tasks",
-    "dailySorting": "Daily task sorting",
-    "loadingActivities": "Loading activities...",
-    "loadError": "Couldn't load activities. Please try again.",
-    "empty": "No scheduled activities available to reorder.",
-    "moveUp": "Move up",
-    "moveDown": "Move down",
-    "savingOrder": "Saving order..."
-  },
   "about": {
     "title": "About",
     "errorLogs": "Error logs",

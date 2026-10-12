@@ -1,5 +1,11 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import TodayPage from "@/pages/today";
 import SyncStatus from "@/components/settings/sync-status";
 import { AppShell } from "@/components/layout/app-shell";
@@ -17,7 +23,6 @@ import { Analytics } from "@vercel/analytics/react";
 const SettingsPage = lazy(() => import("@/pages/settings"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
-const TaskOrderPage = lazy(() => import("@/pages/task-order"));
 const SyncIssuesPage = lazy(() => import("@/pages/sync-issues"));
 const WhatsNewPage = lazy(() => import("@/pages/whats-new"));
 const JournalPage = lazy(() => import("@/pages/journal"));
@@ -116,7 +121,11 @@ function AppFrame() {
               path="/settings/reset-password"
               element={<ResetPasswordPage />}
             />
-            <Route path="/settings/task-order" element={<TaskOrderPage />} />
+            {/* The task-order page was removed (B2); old links land on Settings. */}
+            <Route
+              path="/settings/task-order"
+              element={<Navigate to="/settings" replace />}
+            />
             <Route path="/settings/sync-issues" element={<SyncIssuesPage />} />
             <Route path="/whats-new" element={<WhatsNewPage />} />
             <Route path="/journal" element={<JournalPage />} />

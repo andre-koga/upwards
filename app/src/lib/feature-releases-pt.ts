@@ -12,6 +12,15 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-12-activity-types": {
+    title: "Atividades mais simples, fixação e um Hoje mais calmo",
+    bullets: [
+      "Criar uma atividade agora começa com uma pergunta: Hábito, Evitar ou Só tempo. As opções de frequência, contagem e cronômetro só aparecem quando fazem sentido.",
+      "Você pode fixar uma atividade no topo de Hoje. Atividades fixadas mostram um pequeno alfinete.",
+      "Hoje lista primeiro as atividades fixadas, depois as que você ainda não terminou e por último as concluídas.",
+      "A página Ordem das tarefas foi removida. Fixe o que é importante.",
+    ],
+  },
   "2026-10-12-adaptive-shell": {
     title: "Um layout de computador de verdade e nova navegação",
     bullets: [
