@@ -29,9 +29,7 @@ export function orderActivitiesForToday<T extends Orderable>(
     (counts[activity.id] ?? 0) >= (activity.completion_target ?? 1);
 
   const bands: T[][] = [[], [], [], []];
-  for (const activity of sortActivitiesByOrder(
-    activities as Activity[]
-  ) as T[]) {
+  for (const activity of sortActivitiesByOrder(activities)) {
     const band = (activity.is_pinned ? 0 : 2) + (isDone(activity) ? 1 : 0);
     bands[band].push(activity);
   }

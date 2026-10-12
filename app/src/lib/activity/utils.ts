@@ -196,7 +196,9 @@ export function isScheduledRoutine(routine: string): boolean {
 /**
  * Sort activities by order_index, then by created_at.
  */
-export function sortActivitiesByOrder(activities: Activity[]): Activity[] {
+export function sortActivitiesByOrder<
+  T extends Pick<Activity, "order_index" | "created_at">,
+>(activities: readonly T[]): T[] {
   return [...activities].sort((left, right) => {
     const leftOrder =
       typeof left.order_index === "number"
