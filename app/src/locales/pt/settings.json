@@ -101,10 +101,11 @@
         },
         "refresh": {
           "unreachable": "Servidor alcançado, mas a solicitação de login falhou: {{detail}}",
-          "timeout": "Servidor alcançado, mas a solicitação de login expirou.",
+          "timeout": "Servidor alcançado, mas a solicitação de login não terminou em 12 s. O app continua tentando em segundo plano.",
           "rejected": "O servidor recusou este login salvo: {{detail}}. Use Entrar novamente.",
           "other": "A verificação do login falhou: {{detail}}"
-        }
+        },
+        "post": "Servidor alcançado, mas as solicitações de login estão falhando: {{detail}}"
       }
     }
   },
