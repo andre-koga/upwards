@@ -95,10 +95,10 @@ export function authStorageKey(supabaseUrl: unknown): string | null {
  * session: supabase-js never reads it, so trusting it lets the user into the
  * app with no session, where sync, Home and sign-out all stall.
  */
-export function hasStoredSession(
+export function storedSessionUserId(
   storage: Pick<Storage, "length" | "key" | "getItem">,
   expectedKey?: string | null
-): boolean {
+): string | null {
   for (let i = 0; i < storage.length; i += 1) {
     const key = storage.key(i);
     if (!key || !SESSION_KEY.test(key)) continue;
@@ -108,12 +108,24 @@ export function hasStoredSession(
         refresh_token?: unknown;
         user?: { id?: unknown };
       } | null;
-      if (value && typeof value.refresh_token === "string" && value.user?.id) {
-        return true;
+      if (
+        value &&
+        typeof value.refresh_token === "string" &&
+        typeof value.user?.id === "string" &&
+        value.user.id
+      ) {
+        return value.user.id;
       }
     } catch {
       // Unreadable record: not a session.
     }
   }
-  return false;
+  return null;
+}
+
+export function hasStoredSession(
+  storage: Pick<Storage, "length" | "key" | "getItem">,
+  expectedKey?: string | null
+): boolean {
+  return storedSessionUserId(storage, expectedKey) !== null;
 }

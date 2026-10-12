@@ -28,6 +28,7 @@ vi.mock("@/lib/supabase", () => ({
   supabase: {},
   isSupabaseConfigured: true,
   getCachedUserId: () => "user-1",
+  getQueueAccountId: () => "user-1",
 }));
 
 vi.mock("@/lib/error-utils", async (importOriginal) => ({

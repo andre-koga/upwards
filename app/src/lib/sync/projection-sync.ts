@@ -3,7 +3,7 @@ import type { SyncTable } from "@/lib/sync/sync-transformers";
 import { normalizeSyncRow } from "@/lib/sync/sync-transformers";
 import { getOrCreateDeviceId } from "@/lib/sync/device-id";
 import { enqueuePendingOperation } from "@/lib/sync/pending-operations";
-import { getCachedUserId } from "@/lib/supabase";
+import { getCachedUserId, getQueueAccountId } from "@/lib/supabase";
 import { newId } from "@/lib/db";
 import { stripOpOwnedFields } from "@/lib/sync/op-owned-fields";
 import type { RemoteSyncOperation } from "./sync-operations";
@@ -119,7 +119,7 @@ export async function enqueueProjectionUpsertForTable(
   options?: { operationId?: string }
 ): Promise<void> {
   if (isProjectionEnqueueSuppressed()) return;
-  if (!getCachedUserId()) return;
+  if (!getQueueAccountId()) return;
   if (table === "daily_entries") return;
 
   const entityType = syncTableToEntityType(table);
@@ -140,7 +140,7 @@ export async function enqueueProjectionUpsertForTable(
 
   await enqueuePendingOperation({
     operation_id: options?.operationId ?? newId(),
-    account_id: getCachedUserId(),
+    account_id: getQueueAccountId(),
     device_id: getOrCreateDeviceId(),
     entity_type: entityType,
     entity_id: id,

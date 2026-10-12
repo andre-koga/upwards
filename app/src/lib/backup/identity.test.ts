@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({ getCachedUserId: () => null }));
+vi.mock("@/lib/supabase", () => ({
+  getCachedUserId: () => null,
+  getQueueAccountId: () => null,
+}));
 vi.mock("@/lib/sync/device-id", () => ({ getOrCreateDeviceId: () => "dev" }));
 
 import { naturalDailyEntryId, naturalJournalId } from "@/lib/sync/natural-ids";

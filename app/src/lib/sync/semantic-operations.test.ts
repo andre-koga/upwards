@@ -8,6 +8,7 @@ vi.mock("@/lib/sync/device-id", () => ({
 }));
 vi.mock("@/lib/supabase", () => ({
   getCachedUserId: () => "user-1",
+  getQueueAccountId: () => "user-1",
 }));
 
 const enqueuePendingOperation = vi.fn(async () => ({}) as never);

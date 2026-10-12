@@ -5,6 +5,7 @@ import {
   initialGateState,
   isEmailLinkUrl,
   nextGateState,
+  storedSessionUserId,
 } from "./auth-gate";
 
 const base = {
@@ -217,5 +218,46 @@ describe("authStorageKey", () => {
     expect(authStorageKey(undefined)).toBeNull();
     expect(authStorageKey("")).toBeNull();
     expect(authStorageKey("not a url")).toBeNull();
+  });
+});
+
+describe("storedSessionUserId", () => {
+  const record = (id: unknown) =>
+    JSON.stringify({ refresh_token: "r", access_token: "a", user: { id } });
+  const storage = (entries: Record<string, string>) => {
+    const keys = Object.keys(entries);
+    return {
+      length: keys.length,
+      key: (i: number) => keys[i] ?? null,
+      getItem: (k: string) => entries[k] ?? null,
+    };
+  };
+
+  it("returns the account of this project's stored session", () => {
+    expect(
+      storedSessionUserId(
+        storage({
+          "sb-other-auth-token": record("someone-else"),
+          "sb-mine-auth-token": record("me"),
+        }),
+        "sb-mine-auth-token"
+      )
+    ).toBe("me");
+  });
+
+  it("is null for another project's session, nothing, or a bad record", () => {
+    expect(
+      storedSessionUserId(
+        storage({ "sb-other-auth-token": record("x") }),
+        "sb-mine-auth-token"
+      )
+    ).toBeNull();
+    expect(storedSessionUserId(storage({}), "sb-mine-auth-token")).toBeNull();
+    expect(
+      storedSessionUserId(
+        storage({ "sb-mine-auth-token": record(42) }),
+        "sb-mine-auth-token"
+      )
+    ).toBeNull();
   });
 });

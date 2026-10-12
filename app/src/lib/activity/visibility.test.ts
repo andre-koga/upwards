@@ -5,6 +5,7 @@ vi.mock("@/lib/supabase", () => ({
   supabase: null,
   isSupabaseConfigured: false,
   getCachedUserId: () => null,
+  getQueueAccountId: () => null,
   getCachedSession: () => null,
 }));
 

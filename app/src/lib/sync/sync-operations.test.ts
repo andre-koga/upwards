@@ -51,6 +51,7 @@ vi.stubGlobal("localStorage", {
 vi.mock("@/lib/supabase", () => ({
   supabase: { rpc: (...args: unknown[]) => rpcMock(...args) },
   getCachedUserId: () => "user-1",
+  getQueueAccountId: () => "user-1",
 }));
 
 vi.mock("@/lib/activity/untimed-period", () => ({
