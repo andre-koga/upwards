@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import SyncStatus from "@/components/settings/sync-status";
+import { StorageStallNotice } from "@/components/settings/storage-stall-notice";
 import { AppShell } from "@/components/layout/app-shell";
 import { routeHidesNavigation } from "@/lib/navigation/destinations";
 import { useAccountSettingsSync } from "@/lib/use-account-settings";
@@ -108,37 +109,43 @@ function AppFrame() {
       ) : showLoading ? (
         <PageLoadingFallback />
       ) : (
-        <Suspense fallback={<PageLoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<TodayPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route
-              path="/settings/forgot-password"
-              element={<ForgotPasswordPage />}
-            />
-            <Route
-              path="/settings/reset-password"
-              element={<ResetPasswordPage />}
-            />
-            {/* The task-order page was removed (B2); old links land on Settings. */}
-            <Route
-              path="/settings/task-order"
-              element={<Navigate to="/settings" replace />}
-            />
-            <Route path="/settings/sync-issues" element={<SyncIssuesPage />} />
-            <Route path="/whats-new" element={<WhatsNewPage />} />
-            <Route path="/journal" element={<JournalPage />} />
-            {/* Memories joined the journal as one record (B3); old links land there. */}
-            <Route
-              path="/memories"
-              element={<Navigate to="/journal" replace />}
-            />
-            <Route path="/logs" element={<LogsPage />} />
-            <Route path="/home" element={<HomePage />} />
-            {/* Developer tool for the daily-clip device spike; not linked anywhere. */}
-            <Route path="/clip-spike" element={<ClipSpikePage />} />
-          </Routes>
-        </Suspense>
+        <>
+          <StorageStallNotice />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<TodayPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route
+                path="/settings/forgot-password"
+                element={<ForgotPasswordPage />}
+              />
+              <Route
+                path="/settings/reset-password"
+                element={<ResetPasswordPage />}
+              />
+              {/* The task-order page was removed (B2); old links land on Settings. */}
+              <Route
+                path="/settings/task-order"
+                element={<Navigate to="/settings" replace />}
+              />
+              <Route
+                path="/settings/sync-issues"
+                element={<SyncIssuesPage />}
+              />
+              <Route path="/whats-new" element={<WhatsNewPage />} />
+              <Route path="/journal" element={<JournalPage />} />
+              {/* Memories joined the journal as one record (B3); old links land there. */}
+              <Route
+                path="/memories"
+                element={<Navigate to="/journal" replace />}
+              />
+              <Route path="/logs" element={<LogsPage />} />
+              <Route path="/home" element={<HomePage />} />
+              {/* Developer tool for the daily-clip device spike; not linked anywhere. */}
+              <Route path="/clip-spike" element={<ClipSpikePage />} />
+            </Routes>
+          </Suspense>
+        </>
       )}
     </AppShell>
   );

@@ -57,6 +57,8 @@ export interface PushBeforeSignOutResult {
 
 export interface SyncState {
   isSyncing: boolean;
+  /** Epoch ms when the running sync began; null when idle. */
+  syncStartedAt: number | null;
   lastSyncAt: string | null;
   lastError: string | null;
   /** Incremented each time local data is wiped; subscribers can reload on change. */
@@ -73,6 +75,7 @@ type StateListener = (state: SyncState) => void;
 class SyncEngine {
   private state: SyncState = {
     isSyncing: false,
+    syncStartedAt: null,
     lastSyncAt: loadLastServerSyncAt(),
     lastError: null,
     localDataVersion: 0,
@@ -275,7 +278,11 @@ class SyncEngine {
       return;
     }
 
-    this.setState({ isSyncing: true, lastError: null });
+    this.setState({
+      isSyncing: true,
+      syncStartedAt: Date.now(),
+      lastError: null,
+    });
     let interruptedTransiently = false;
     try {
       await requeueClientOutdatedOperations();
@@ -338,7 +345,7 @@ class SyncEngine {
         this.setState({ lastError: msg });
       }
     } finally {
-      this.setState({ isSyncing: false });
+      this.setState({ isSyncing: false, syncStartedAt: null });
 
       const cleanSync =
         !this.state.lastError && !interruptedTransiently && this.canSync();

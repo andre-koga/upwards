@@ -126,7 +126,12 @@
       "unsentValue": "{{ops}} mudanças · {{rows}} linhas",
       "syncing": "Sincronizando há",
       "seconds": "{{count}} s",
-      "lastError": "Último erro"
+      "lastError": "Último erro",
+      "storage": "Armazenamento do aparelho",
+      "storageValue": {
+        "ok": "respondendo",
+        "stalled": "sem resposta"
+      }
     }
   },
   "ai": {
@@ -429,5 +434,10 @@
       "placeholder": "Não definido",
       "clear": "Remover aniversário"
     }
+  },
+  "storageStall": {
+    "title": "O armazenamento deste aparelho parou de responder",
+    "body": "Seus dados continuam salvos neste aparelho, inclusive um cronômetro em andamento. Feche o Upwards por completo (deslize-o para fora no seletor de apps) e abra de novo. O salvamento e a sincronização voltam quando o armazenamento responder.",
+    "reload": "Recarregar agora"
   }
 }

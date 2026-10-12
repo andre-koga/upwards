@@ -12,6 +12,7 @@ import {
 } from "./lib/sync/account-switch";
 import { prepareLocalDatabase } from "./lib/db/recovery";
 import { startRecoveryAutoImport } from "./lib/db/recovery-import";
+import { startLocalDatabaseWatch } from "./lib/db/health-watch";
 import i18n from "./lib/i18n";
 
 void (async () => {
@@ -42,6 +43,7 @@ for (const key of [
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 
 function startApp() {
+  startLocalDatabaseWatch();
   // Drive auto-sync from confirmed auth state — never start before session is known
   if (isSupabaseConfigured && supabase) {
     supabase.auth.onAuthStateChange((event, session) => {

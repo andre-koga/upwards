@@ -126,7 +126,12 @@
       "unsentValue": "{{ops}} changes · {{rows}} rows",
       "syncing": "Syncing for",
       "seconds": "{{count}} s",
-      "lastError": "Last error"
+      "lastError": "Last error",
+      "storage": "Device storage",
+      "storageValue": {
+        "ok": "responding",
+        "stalled": "not responding"
+      }
     }
   },
   "ai": {
@@ -429,5 +434,10 @@
       "placeholder": "Not set",
       "clear": "Remove birthday"
     }
+  },
+  "storageStall": {
+    "title": "This device's storage stopped responding",
+    "body": "Your data is still saved on this device, including a running timer. Close Upwards completely (swipe it away in the app switcher), then open it again. Saving and sync resume once storage answers.",
+    "reload": "Reload now"
   }
 }

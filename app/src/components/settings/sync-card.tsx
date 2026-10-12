@@ -10,6 +10,7 @@ import { getSyncIssuesSummary } from "@/lib/sync/sync-issues-summary";
 import { getLocalSyncSafetyStatus } from "@/lib/sync/unsynced-data";
 import { formatSyncTime } from "@/lib/time-utils";
 import { useAuth } from "@/lib/use-auth";
+import { useLocalDatabaseHealth } from "@/hooks/use-local-database-health";
 
 export function SyncCard() {
   const { t } = useTranslation("settings");
@@ -17,9 +18,8 @@ export function SyncCard() {
   const [openIssueCount, setOpenIssueCount] = useState(0);
   const [syncState, setSyncState] = useState(syncEngine.getState());
   const [unsent, setUnsent] = useState({ ops: 0, rows: 0 });
-  const [syncingSince, setSyncingSince] = useState<number | null>(() =>
-    syncEngine.getState().isSyncing ? Date.now() : null
-  );
+  const storageHealth = useLocalDatabaseHealth();
+  const syncingSince = syncState.syncStartedAt;
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
@@ -40,9 +40,6 @@ export function SyncCard() {
     void refresh();
     const unsubscribe = syncEngine.subscribe((next) => {
       setSyncState(next);
-      setSyncingSince((since) =>
-        next.isSyncing ? (since ?? Date.now()) : null
-      );
       void refresh();
     });
 
@@ -100,6 +97,18 @@ export function SyncCard() {
             })}
           </dd>
         </div>
+        {storageHealth !== "unknown" ? (
+          <div className="flex justify-between gap-3">
+            <dt>{t("sync.details.storage")}</dt>
+            <dd
+              className={
+                storageHealth === "stalled" ? "text-destructive" : undefined
+              }
+            >
+              {t(`sync.details.storageValue.${storageHealth}`)}
+            </dd>
+          </div>
+        ) : null}
         {syncingSince !== null ? (
           <div className="flex justify-between gap-3">
             <dt>{t("sync.details.syncing")}</dt>
