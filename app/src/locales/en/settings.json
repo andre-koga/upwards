@@ -116,6 +116,16 @@
     "recovery": {
       "bootFailed": "Upwards could not set aside this device’s older data, so it has not opened it. Nothing was deleted. Make sure the browser has storage space, then try again.",
       "retry": "Try again"
+    },
+    "details": {
+      "label": "Sync details",
+      "lastSync": "Last synced",
+      "never": "never",
+      "unsent": "Not sent yet",
+      "unsentValue": "{{ops}} changes · {{rows}} rows",
+      "syncing": "Syncing for",
+      "seconds": "{{count}} s",
+      "lastError": "Last error"
     }
   },
   "ai": {
