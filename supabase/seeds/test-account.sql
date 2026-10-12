@@ -232,6 +232,57 @@ BEGIN
     ('00000000-0000-4000-8040-000000000005', v_user_id, NULL, 'Old shopping list', false, 4, false, NULL, true, v_created_at, v_created_at, NULL),
     ('00000000-0000-4000-8040-000000000006', v_user_id, NULL, 'Daily standup notes', false, 5, false, to_char(CURRENT_DATE, 'YYYY-MM-DD'), false, v_created_at, now(), NULL);
 
+
+  -- ── Journal (15 days, no media) ───────────────────────────────────────────
+  INSERT INTO journal_entries (
+    id, user_id, entry_date, title, text_content, day_emoji, is_bookmarked,
+    location, created_at, updated_at, deleted_at
+  )
+  SELECT
+    ('00000000-0000-4000-8050-' || lpad(days_ago::text, 12, '0'))::uuid,
+    v_user_id,
+    to_char(CURRENT_DATE - days_ago, 'YYYY-MM-DD'),
+    title,
+    body,
+    emoji,
+    bookmarked,
+    loc,
+    (CURRENT_DATE - days_ago) + TIME '21:00',
+    (CURRENT_DATE - days_ago) + TIME '21:30',
+    NULL
+  FROM (VALUES
+    (1,  'Quiet evening', 'Walked after dinner and stretched.', '😌', true, true, 3,
+      '{"locations":[{"displayName":"Austin, TX","city":"Austin","state":"Texas","country":"United States","countryCode":"US","lat":30.2672,"lon":-97.7431}]}'::jsonb),
+    (2,  'Deep work day', 'Two focused blocks before lunch.', '🧠', true, false, 2, NULL),
+    (3,  'Easy Friday', 'Gym and an early night.', '😴', true, false, 1, NULL),
+    (7,  'Draft only', 'Started writing and left it unfinished.', '✏️', false, false, NULL, NULL),
+    (10, 'Long walk', 'Along the river until sunset.', '🚶', true, true, 2,
+      '{"locations":[{"displayName":"Lady Bird Lake","city":"Austin","state":"Texas","country":"United States","countryCode":"US","lat":30.265,"lon":-97.753}]}'::jsonb),
+    (11, 'Catch-up', 'Cleared the inbox pile.', '✅', true, false, 1, NULL),
+    (14, 'Book club last meeting', 'Finished the novel and closed the habit.', '📚', true, true, 1, NULL),
+    (18, 'Rainy day', 'Cooked soup and stayed in.', '🌧️', true, false, 1, NULL),
+    (21, 'Notes', 'A few lines, not a full entry.', '📝', false, false, NULL, NULL),
+    (24, 'Weekend reset', 'Hike in the morning, chores after.', '🌲', true, false, 3, NULL),
+    (25, 'Friends over', 'Dinner at home.', '🍝', true, false, 2, NULL),
+    (26, 'Market morning', 'Farmers market then coffee.', '☕', true, false, 1,
+      '{"locations":[{"displayName":"Downtown Austin","city":"Austin","state":"Texas","country":"United States","countryCode":"US","lat":30.2711,"lon":-97.7437}]}'::jsonb),
+    (32, 'Travel day', 'Trains and a late arrival.', '🚆', true, false, 1,
+      '{"locations":[{"displayName":"Chicago, IL","city":"Chicago","state":"Illinois","country":"United States","countryCode":"US","lat":41.8781,"lon":-87.6298}]}'::jsonb),
+    (38, 'Ordinary Tuesday', 'Stretch, water, deep work. Nothing fancy.', '🙂', true, false, 1, NULL),
+    (42, 'Starting point', 'First week back into the routine.', '🌱', true, false, 1, NULL)
+  ) AS j(days_ago, title, body, emoji, complete, bookmarked, streak, loc);
+
+  -- ── Status events ─────────────────────────────────────────────────────────
+  INSERT INTO activity_status_events (
+    id, user_id, entity_id, status_type, next_value, effective_at,
+    created_at, updated_at, deleted_at
+  ) VALUES (
+    '00000000-0000-4000-8060-000000000001',
+    v_user_id, a_book, 'completed', true,
+    (CURRENT_DATE - 13) + TIME '00:00',
+    v_completed_at, v_completed_at, NULL
+  );
+
   INSERT INTO group_status_events (
     id, user_id, entity_id, status_type, next_value, effective_at,
     created_at, updated_at, deleted_at
