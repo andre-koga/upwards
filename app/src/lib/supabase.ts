@@ -1,5 +1,6 @@
 import { createClient, type Session } from "@supabase/supabase-js";
 import { authStorageKey, storedSessionUserId } from "@/lib/auth-gate";
+import { fetchWithTimeout } from "@/lib/supabase-fetch";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -10,7 +11,9 @@ const isLocalSupabaseUrl =
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseKey);
 
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseKey)
+  ? createClient(supabaseUrl, supabaseKey, {
+      global: { fetch: fetchWithTimeout },
+    })
   : null;
 
 // ─── Reactive session cache ───────────────────────────────────────────────────

@@ -117,6 +117,16 @@
     "recovery": {
       "bootFailed": "O Upwards não conseguiu guardar os dados antigos deste dispositivo, então não os abriu. Nada foi apagado. Verifique se o navegador tem espaço de armazenamento e tente de novo.",
       "retry": "Tentar de novo"
+    },
+    "details": {
+      "label": "Detalhes da sincronização",
+      "lastSync": "Última sincronização",
+      "never": "nunca",
+      "unsent": "Ainda não enviado",
+      "unsentValue": "{{ops}} mudanças · {{rows}} linhas",
+      "syncing": "Sincronizando há",
+      "seconds": "{{count}} s",
+      "lastError": "Último erro"
     }
   },
   "ai": {

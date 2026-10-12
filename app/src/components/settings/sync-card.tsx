@@ -7,12 +7,20 @@ import { Button } from "@/components/ui/button";
 import { SettingsSection } from "@/components/ui/settings-section";
 import { syncEngine } from "@/lib/sync";
 import { getSyncIssuesSummary } from "@/lib/sync/sync-issues-summary";
+import { getLocalSyncSafetyStatus } from "@/lib/sync/unsynced-data";
+import { formatSyncTime } from "@/lib/time-utils";
 import { useAuth } from "@/lib/use-auth";
 
 export function SyncCard() {
   const { t } = useTranslation("settings");
   const { isAuthed } = useAuth();
   const [openIssueCount, setOpenIssueCount] = useState(0);
+  const [syncState, setSyncState] = useState(syncEngine.getState());
+  const [unsent, setUnsent] = useState({ ops: 0, rows: 0 });
+  const [syncingSince, setSyncingSince] = useState<number | null>(() =>
+    syncEngine.getState().isSyncing ? Date.now() : null
+  );
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     if (!isAuthed) return;
@@ -20,12 +28,21 @@ export function SyncCard() {
     let cancelled = false;
 
     const refresh = async () => {
-      const summary = await getSyncIssuesSummary();
-      if (!cancelled) setOpenIssueCount(summary.openTotal);
+      const [summary, safety] = await Promise.all([
+        getSyncIssuesSummary(),
+        getLocalSyncSafetyStatus(),
+      ]);
+      if (cancelled) return;
+      setOpenIssueCount(summary.openTotal);
+      setUnsent({ ops: safety.pendingOpCount, rows: safety.unsyncedRowCount });
     };
 
     void refresh();
-    const unsubscribe = syncEngine.subscribe(() => {
+    const unsubscribe = syncEngine.subscribe((next) => {
+      setSyncState(next);
+      setSyncingSince((since) =>
+        next.isSyncing ? (since ?? Date.now()) : null
+      );
       void refresh();
     });
 
@@ -34,6 +51,12 @@ export function SyncCard() {
       unsubscribe();
     };
   }, [isAuthed]);
+
+  useEffect(() => {
+    if (syncingSince === null) return;
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [syncingSince]);
 
   if (!isAuthed) return null;
 
@@ -56,6 +79,46 @@ export function SyncCard() {
           ) : null}
         </Link>
       </Button>
+      <dl
+        className="space-y-1 font-mono text-xs tabular-nums text-muted-foreground"
+        aria-label={t("sync.details.label")}
+      >
+        <div className="flex justify-between gap-3">
+          <dt>{t("sync.details.lastSync")}</dt>
+          <dd>
+            {syncState.lastSyncAt
+              ? formatSyncTime(syncState.lastSyncAt)
+              : t("sync.details.never")}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt>{t("sync.details.unsent")}</dt>
+          <dd>
+            {t("sync.details.unsentValue", {
+              ops: unsent.ops,
+              rows: unsent.rows,
+            })}
+          </dd>
+        </div>
+        {syncingSince !== null ? (
+          <div className="flex justify-between gap-3">
+            <dt>{t("sync.details.syncing")}</dt>
+            <dd>
+              {t("sync.details.seconds", {
+                count: Math.max(0, Math.round((nowMs - syncingSince) / 1000)),
+              })}
+            </dd>
+          </div>
+        ) : null}
+        {syncState.lastError ? (
+          <div className="space-y-0.5">
+            <dt>{t("sync.details.lastError")}</dt>
+            <dd className="break-words text-foreground">
+              {syncState.lastError}
+            </dd>
+          </div>
+        ) : null}
+      </dl>
     </SettingsSection>
   );
 }
