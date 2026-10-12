@@ -99,9 +99,7 @@ export default function SessionDetailsDialog({
             endReadOnlyValue={isRunningSession ? "Still running" : undefined}
           />
           {spanWarning && (
-            <p className="text-sm text-amber-600 dark:text-amber-400">
-              {spanWarning}
-            </p>
+            <p className="text-sm text-gold-text">{spanWarning}</p>
           )}
           {error && <p className="text-sm text-destructive">{error}</p>}
 

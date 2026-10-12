@@ -136,9 +136,7 @@ export function BackupCard() {
           <div
             className={cn(
               "space-y-1 text-xs",
-              message.tone === "error"
-                ? "text-destructive"
-                : "text-green-600 dark:text-green-500"
+              message.tone === "error" ? "text-destructive" : "text-green"
             )}
           >
             {message.lines.map((line) => (

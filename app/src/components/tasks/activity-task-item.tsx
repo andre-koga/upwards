@@ -181,7 +181,7 @@ function ActivityTaskItem({
             (isBreakDay || isPaused) &&
               (isComplete
                 ? "border-amber-500 bg-amber-500 text-amber-950"
-                : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-amber-500")
+                : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-gold-text")
           )}
         />
       ) : (
@@ -202,8 +202,8 @@ function ActivityTaskItem({
               ? isComplete
                 ? "border-amber-500 bg-amber-500 text-amber-950"
                 : count > 0
-                  ? "border-[color-mix(in_srgb,rgb(245_158_11)_82%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_22%,hsl(var(--background)))] text-amber-700"
-                  : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-amber-500"
+                  ? "border-[color-mix(in_srgb,rgb(245_158_11)_82%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_22%,hsl(var(--background)))] text-gold-text"
+                  : "border-[color-mix(in_srgb,rgb(245_158_11)_62%,hsl(var(--border)))] bg-[color-mix(in_srgb,rgb(245_158_11)_12%,hsl(var(--background)))] text-gold-text"
               : isComplete
                 ? "border-primary bg-primary text-primary-foreground"
                 : count > 0

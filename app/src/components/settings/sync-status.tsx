@@ -88,11 +88,11 @@ export default function SyncStatus() {
       />
 
       {isOnline && syncState.lastError && (
-        <div className="absolute right-0 top-11 w-72 rounded-lg border border-red-500 bg-background p-3 shadow-xl">
+        <div className="absolute right-0 top-11 w-72 rounded-lg border border-destructive bg-background p-3 shadow-xl">
           <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <div className="flex-1">
-              <p className="mb-1 text-xs font-semibold text-red-500">
+              <p className="mb-1 text-xs font-semibold text-destructive">
                 Sync Error
               </p>
               <p className="text-xs text-muted-foreground">
@@ -100,7 +100,7 @@ export default function SyncStatus() {
               </p>
               <Link
                 to="/settings/sync-issues"
-                className="mt-2 inline-block text-xs font-medium text-red-500 underline-offset-2 hover:underline"
+                className="mt-2 inline-block text-xs font-medium text-destructive underline-offset-2 hover:underline"
               >
                 View sync issues
               </Link>

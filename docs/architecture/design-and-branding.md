@@ -98,24 +98,60 @@ product chrome.
 
 ### 2.3 Palette
 
-Warm paper, not white. Defined once as CSS custom properties and consumed by
-name — never re-hardcode these hexes in components.
+Warm paper, not white. Defined once as CSS custom properties in
+`app/src/index.css` and consumed by name through Tailwind (`bg-paper`,
+`text-ink`, `border-line`) - never re-hardcode these values in components.
 
-| Token | Value | Use |
+**Mechanism.** Each token is stored as an HSL channel triplet (`43 100% 99%`),
+exactly like the shadcn variables, so opacity modifiers work (`bg-paper/70` is
+the frosted-glass recipe; a hex variable cannot do this in Tailwind 3). The
+shadcn semantic variables (`--background`, `--foreground`, `--border`,
+`--primary`, `--muted`, ...) are **mapped onto** this palette rather than
+replaced, so every existing shared primitive takes the brand without a rewrite.
+
+**Naming.** The brand tokens live beside the shadcn ones, so two names that the
+original table used would have collided and are renamed:
+
+| Brand role | Token | shadcn variable it feeds |
 |---|---|---|
-| `--ink` | `#21332c` | Primary text |
-| `--muted` | `#6e776f` | Secondary text |
-| `--faint` | `#9aa199` | Tertiary text, disabled, shortcut chips |
-| `--paper` | `#fffdf8` | Raised card surface |
-| `--canvas` | `#f4efe6` | Page background |
-| `--canvas-deep` | `#eee6d7` | Recessed/secondary blocks |
-| `--line` | `#e4dccf` | Hairline borders and rules |
-| `--sage` | `#e1ebe1` | Active nav, positive fills |
-| `--green` | `#3f6656` | Brand, primary action |
-| `--green-deep` | `#28453a` | Pressed states, text on light |
-| `--terracotta` | `#c36e52` | Attention, "now", pinned, due |
-| `--gold` | `#c99a3f` | AI accent sparkle, warnings |
-| `--lavender` | `#8d84a9` | Fourth categorical color |
+| Page background | `--canvas` | `--background` |
+| Raised card surface | `--paper` | `--card`, `--popover` |
+| Recessed block | `--canvas-deep` | `--muted`, `--secondary`, `--accent` |
+| Primary text | `--ink` | `--foreground` |
+| Secondary text | `--ink-muted` (was `--muted`) | `--muted-foreground` |
+| Tertiary text, shortcut chips | `--ink-faint` (was `--faint`) | - |
+| Hairlines and rules | `--line` | `--border` |
+| Form control border | `--line-strong` | `--input` |
+| Active nav, positive fill | `--sage` | - |
+| Brand, primary action | `--green` | `--primary`, `--ring` |
+| Pressed state, text on sage | `--green-deep` | - |
+| Attention fill (now, pinned, due) | `--terracotta` | - |
+| Attention text | `--terracotta-text` | - |
+| AI accent, warning fill | `--gold` | - |
+| Warning text | `--gold-text` | - |
+| Fourth categorical color (fill only) | `--lavender` | - |
+| Destructive | `--destructive` | `--destructive` |
+
+**Values (light).** Canvas `#f4efe6`, paper `#fffdf8`, canvas-deep `#eee6d7`,
+line `#e4dccf`, ink `#21332c`, sage `#e1ebe1`, green `#3f6656`, green-deep
+`#28453a`. Fills keep the original brand values. **Text roles are darker than
+the first draft** because the draft failed this document's own contrast rule
+(measured, WCAG): `--ink-muted` `#535d55` (was `#6e776f`, 4.05 on canvas and 3.74
+on canvas-deep), `--ink-faint` `#626a61` (was `#9aa199`, 2.3-2.6),
+`--terracotta-text` `#9c4a34` and `--gold-text` `#7d5a12` (the fill colors are
+3.2 and 2.5 as text). Form-control borders use `--line-strong` `#8f8777`
+(3.5:1 on paper) because hairlines are decoration and inputs are not.
+Lavender is a categorical fill only: it is below 4.5 as text on canvas-deep.
+
+**Values (dark).** The first draft had none. Canvas `#151916`, paper `#1c211d`,
+canvas-deep `#101310`, line `#2d352e`, line-strong `#788679`, ink `#ece8dc`,
+ink-muted `#aab2a8`, ink-faint `#8c948a`, sage `#26372c`, green `#86b39d`
+(lighter, so it reads on dark), green-deep `#cfe3d8` (text on sage), terracotta
+`#e08f72`, gold `#d9b25a`, lavender `#b3abd0`. Text roles are 5.2 or higher on
+every surface; the primary button is `#0f1d17` on green (7.4).
+
+Contrast is checked by a unit test (`palette-contrast.test.ts`) that reads the
+CSS, so a future edit to a token that breaks a pairing fails CI.
 
 Group/category colors are **user data**, not theme tokens. Render them as small
 dots, 2px bars, or tinted backgrounds at ~15% alpha. Never fill a whole card with
@@ -137,7 +173,7 @@ never assume a light background.
 | Card heading | `font-display` | `1.125rem`–`1.25rem` |
 | Body | sans | `0.875rem`, `leading-6` |
 | Secondary body | sans | `0.75rem`, `leading-5` |
-| Micro-label | `font-mono` | `0.64rem`, uppercase, `tracking-[0.14em]`, `--faint` |
+| Micro-label | `font-mono` | `0.64rem`, uppercase, `tracking-[0.14em]`, `--ink-faint` |
 | Data value | `font-mono` | `1.25rem`+, `tabular-nums` |
 | Keyboard chip | `font-mono` | `0.6rem` |
 
@@ -152,7 +188,7 @@ labels and metadata. Never use them for body copy.
   cards use `--line` borders, not shadows.
 - **Frosted glass** is reserved for floating and sticky chrome (bottom nav,
   sticky headers, toolbars, sheets) and for AI surfaces. Recipe:
-  `backdrop-blur-xl` + a translucent surface (`bg-[var(--paper)]/70`) + a
+  `backdrop-blur-xl` + a translucent surface (`bg-paper/70`) + a
   hairline top highlight (`border-white/40`) + a subtle grain overlay. Content
   cards stay opaque paper — glass on everything destroys legibility and reads
   cheap.

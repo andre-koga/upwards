@@ -158,7 +158,7 @@ export default function ManualTimeEntryDialog({
     >
       <FormStack>
         {isPastDay ? (
-          <p className="text-sm text-amber-600 dark:text-amber-400">
+          <p className="text-sm text-gold-text">
             {t("manualEntry.pastDayWarning")}
           </p>
         ) : null}
@@ -190,11 +190,7 @@ export default function ManualTimeEntryDialog({
           onNoteChange={setNote}
         />
 
-        {spanWarning && (
-          <p className="text-sm text-amber-600 dark:text-amber-400">
-            {spanWarning}
-          </p>
-        )}
+        {spanWarning && <p className="text-sm text-gold-text">{spanWarning}</p>}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 

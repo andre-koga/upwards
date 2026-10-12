@@ -94,7 +94,7 @@ export function SignInScreen() {
         {authError ? (
           <p
             role={confirmationSent ? "status" : "alert"}
-            className={`text-sm ${confirmationSent ? "text-green-600 dark:text-green-500" : "text-destructive"}`}
+            className={`text-sm ${confirmationSent ? "text-green" : "text-destructive"}`}
           >
             {authError}
           </p>

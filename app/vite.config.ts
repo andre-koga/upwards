@@ -83,7 +83,7 @@ export default defineConfig({
           "Plan your day, track habits and focused time, and reflect — all locally first.",
         categories: ["productivity", "lifestyle"],
         theme_color: "#000000",
-        background_color: "#ffffff",
+        background_color: "#f4efe6",
         // Keep Android's status and navigation bars visible while still
         // launching outside of the browser's URL bar.
         display: "standalone",

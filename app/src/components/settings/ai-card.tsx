@@ -181,7 +181,7 @@ export function AiCard() {
             <p
               className={
                 message.tone === "success"
-                  ? "text-xs text-green-600 dark:text-green-500"
+                  ? "text-xs text-green"
                   : "text-xs text-destructive"
               }
             >
