@@ -6,10 +6,7 @@ import {
   getCachedSession,
 } from "@/lib/supabase";
 import { getAuthRedirectUrl } from "@/lib/auth-redirect";
-import {
-  syncEngine,
-  type PushBeforeSignOutResult,
-} from "@/lib/sync";
+import { syncEngine, type PushBeforeSignOutResult } from "@/lib/sync";
 import { clearLocalSyncData } from "@/lib/sync/clear-local-sync-data";
 import { clearLastSignedInUserId } from "@/lib/sync/sync-storage";
 
@@ -32,7 +29,9 @@ export function isSignOutBlockedError(
 export function useAuth() {
   const { t } = useTranslation("settings");
   const [isAuthed, setIsAuthed] = useState(() => Boolean(getCachedSession()));
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(
+    () => getCachedSession()?.user?.email ?? null
+  );
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 

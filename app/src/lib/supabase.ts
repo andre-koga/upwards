@@ -1,4 +1,4 @@
-import { createClient, type Session } from "@supabase/supabase-js";
+import { createClient, processLock, type Session } from "@supabase/supabase-js";
 import { authStorageKey, storedSessionUserId } from "@/lib/auth-gate";
 import { fetchWithTimeout } from "@/lib/supabase-fetch";
 
@@ -13,6 +13,11 @@ export const isSupabaseConfigured = !!(supabaseUrl && supabaseKey);
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseKey, {
       global: { fetch: fetchWithTimeout },
+      // Not the default Web Locks lock: iOS can leave it held by a suspended
+      // or replaced instance of the app, and then every auth call (session,
+      // email, the token every sync request needs) waits forever with no
+      // error. An in-tab lock still serializes this tab's auth work.
+      auth: { lock: processLock },
     })
   : null;
 
