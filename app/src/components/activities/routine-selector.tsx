@@ -118,7 +118,7 @@ export default function RoutineSelector({
                 label={t("routine.toggleDay", { day: day.label })}
                 className="h-9 min-w-0 flex-1 rounded-md px-0 text-xs font-medium"
                 activeClassName="border-primary bg-primary text-primary-foreground"
-                inactiveClassName="border-input bg-background"
+                inactiveClassName="border-border bg-muted/60"
               >
                 {day.short}
               </FormToggleButton>

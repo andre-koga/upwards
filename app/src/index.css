@@ -13,10 +13,10 @@
     --paper: 43 100% 99%;
     --canvas-deep: 39 40% 89%;
     --line: 37 28% 85%;
-    --line-strong: 40 10% 51%;
-    --ink: 157 21% 16%;
-    --ink-muted: 132 6% 35%;
-    --ink-faint: 113 4% 40%;
+    --line-strong: 34 13% 49%;
+    --ink: 28 24% 14%;
+    --ink-muted: 30 11% 34%;
+    --ink-faint: 32 8% 39%;
     --sage: 120 20% 90%;
     --green: 155 24% 32%;
     --green-deep: 157 27% 21%;
@@ -67,15 +67,15 @@
     color-scheme: dark;
     /* Brand palette (design-and-branding.md §2.3). HSL channels, so opacity
        modifiers work: bg-paper/70. Change a value here and nowhere else. */
-    --canvas: 135 9% 9%;
-    --paper: 132 8% 12%;
-    --canvas-deep: 120 9% 7%;
-    --line: 127 8% 19%;
-    --line-strong: 124 6% 50%;
-    --ink: 45 30% 89%;
-    --ink-muted: 108 6% 68%;
-    --ink-faint: 108 4% 56%;
-    --sage: 141 18% 18%;
+    --canvas: 30 10% 9%;
+    --paper: 30 9% 12%;
+    --canvas-deep: 30 10% 7%;
+    --line: 30 8% 20%;
+    --line-strong: 32 8% 50%;
+    --ink: 40 30% 90%;
+    --ink-muted: 35 10% 68%;
+    --ink-faint: 35 7% 56%;
+    --sage: 145 12% 19%;
     --green: 151 23% 61%;
     --green-deep: 147 26% 85%;
     --terracotta: 16 64% 66%;
@@ -97,7 +97,7 @@
     --secondary-foreground: var(--ink);
     --muted: var(--canvas-deep);
     --muted-foreground: var(--ink-muted);
-    --accent: 129 8% 16%;
+    --accent: 30 8% 16%;
     --accent-foreground: var(--ink);
     --destructive: 5 78% 69%;
     --destructive-foreground: 154 32% 9%;

@@ -54,7 +54,7 @@ export default function ActivityPill({
       {/* Name / label side */}
       <div
         className={cn(
-          "flex min-w-0 flex-1 items-stretch overflow-hidden rounded-full border border-input bg-background",
+          "flex min-w-0 flex-1 items-stretch overflow-hidden rounded-full border border-border bg-muted/60",
           readOnly && !allowNameClickWhenReadOnly
             ? "pointer-events-none shadow-sm"
             : readOnly
