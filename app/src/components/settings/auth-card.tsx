@@ -94,11 +94,13 @@ export function AuthCard() {
           />
         </>
       ) : (
-        // Reachable only in a build with no Supabase: everywhere else the app
-        // shows the sign-in screen instead of Settings (product-scope.md §2.6).
+        // No Supabase: there is no account. Otherwise the person is signed in on
+        // this device but the session is not confirmed yet (offline, or the app
+        // is still starting): the app shows the sign-in screen when there is no
+        // session at all (product-scope.md §2.6).
         <p className="text-sm text-muted-foreground">
           {isSupabaseConfigured
-            ? t("auth.signOutBlocked.staySignedIn")
+            ? t("auth.sessionPending")
             : t("auth.syncNotConfigured")}
         </p>
       )}

@@ -73,16 +73,36 @@ export function isEmailLinkUrl(url: { hash: string; search: string }): boolean {
 const SESSION_KEY = /^sb-.+-auth-token$/;
 
 /**
+ * The key supabase-js stores this project's session under: `sb-` plus the first
+ * label of the host. Null when the URL is missing or unreadable.
+ */
+export function authStorageKey(supabaseUrl: unknown): string | null {
+  if (typeof supabaseUrl !== "string" || !supabaseUrl) return null;
+  try {
+    return `sb-${new URL(supabaseUrl).hostname.split(".")[0]}-auth-token`;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Whether a Supabase session record is stored. The record is kept when a refresh
  * fails for lack of network and only removed when the server rejects it, so its
  * presence is the right "signed in on this device" signal.
+ *
+ * Pass the key of the project this build talks to. A record left by another
+ * project (an earlier hosted project, or the local stack) is not this build's
+ * session: supabase-js never reads it, so trusting it lets the user into the
+ * app with no session, where sync, Home and sign-out all stall.
  */
 export function hasStoredSession(
-  storage: Pick<Storage, "length" | "key" | "getItem">
+  storage: Pick<Storage, "length" | "key" | "getItem">,
+  expectedKey?: string | null
 ): boolean {
   for (let i = 0; i < storage.length; i += 1) {
     const key = storage.key(i);
     if (!key || !SESSION_KEY.test(key)) continue;
+    if (expectedKey && key !== expectedKey) continue;
     try {
       const value = JSON.parse(storage.getItem(key) ?? "null") as {
         refresh_token?: unknown;

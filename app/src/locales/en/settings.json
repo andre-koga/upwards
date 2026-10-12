@@ -36,6 +36,7 @@
     "resetEmailFailed": "Could not send reset email",
     "updatePasswordFailed": "Could not update password",
     "syncNotConfigured": "Sync is not configured for this build.",
+    "sessionPending": "Signed in on this device. Your session will be confirmed when you're back online, and sync resumes then.",
     "signOutBlocked": {
       "title": "Unsynced changes",
       "description": "You have {{total}} change(s) that have not reached the cloud yet ({{pending}} pending operations, {{unsynced}} unsynced rows). Try syncing again or discard local changes before signing out.",

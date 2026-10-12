@@ -36,6 +36,7 @@
     "resetEmailFailed": "Não foi possível enviar o e-mail de redefinição",
     "updatePasswordFailed": "Não foi possível atualizar a senha",
     "syncNotConfigured": "A sincronização não está configurada nesta versão.",
+    "sessionPending": "Conectado neste dispositivo. Sua sessão será confirmada quando você voltar a ficar online, e a sincronização continua então.",
     "signOutBlocked": {
       "title": "Alterações não sincronizadas",
       "description": "Você tem {{total}} alteração(ões) que ainda não chegaram à nuvem ({{pending}} operações pendentes, {{unsynced}} linhas não sincronizadas). Tente sincronizar novamente ou descarte as alterações locais antes de sair.",
