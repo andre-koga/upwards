@@ -56,8 +56,8 @@ track time. The real gap was that every activity was timeable.
   streak.
 - Activities also gain **`is_pinned`** (the user's override of AI ordering). The
   field arrived with the data migrations. The pin control is a switch in the
-  activity form, and a pinned row shows a pin glyph (B2a, 2026-10-12). A quick
-  pin on the row itself comes with the AI reasons in B2b.
+  activity form, and a pinned row shows a pin glyph (B2a, 2026-10-12). Every row
+  on Today also has a pin button for pinning without opening the form (B2b).
 - One-time, idempotent migration: each `recurring_memo` becomes an activity with
   `tracks_time = false`, the same routine, `completion_target = 1`, pinned if it
   was pinned, archived if it was disabled. Migrated items go into a group named
@@ -846,10 +846,24 @@ Track B gets its own breakdown before it starts. Its shape:
     Settings card and its strings are gone (`/settings/task-order` redirects to
     Settings). Rows reorder as items are completed: a done habit moves below the
     open ones.
-  - **B2b (next):** AI ordering with a reason on each row, evidence named, the
-    not-configured / signed-out / loading / stale / rate-limited / error
-    states, and the quick pin. Needs an edge function and a prompt, so it gets
-    its own design and a manual deploy.
+  - **B2b (done 2026-10-12):** "Order with AI" on Today. The person asks; the
+    AI never runs on its own. A new edge function, `rank-today`, takes the name
+    and figures of each open, unpinned, non-avoid activity (up to 12): days
+    done of days active over the last seven full days, streak, minutes
+    tracked, done today. No journal text and no ids leave the device. It answers with an order and
+    one short reason per row. A reason is kept only if every number in it is one
+    of that row's own figures (`_shared/rank-today.ts`), so the line a person
+    reads is always backed by data they can check; anything else is dropped and
+    the row simply has no reason. The order is stored for the calendar day on
+    this device only, never synced, and applies only inside the
+    not-pinned / not-done band: pins stay first, done rows still sink, avoid
+    habits and rows added later follow in stored order. "Back to my order"
+    clears it. States: idle, loading, offline, not configured (with a Settings
+    link), rate limited, provider error, unusable answer, stale (older than
+    three hours, or an open row missing from it); the list is usable in all of
+    them. Ranking shares `user_ai_settings`' daily call allowance with
+    insights (20 a day). Every row also has a pin button (the quick pin). It
+    needs a manual `supabase functions deploy rank-today`.
 - **B3.** Journal: one record across the journal and memory tables (the merge is
   UI-only; the tables stay separate). Feed, calendar, map, and gallery;
   previous versions with restore; generated month and holiday banners.

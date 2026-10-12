@@ -107,3 +107,53 @@ describe("orderActivitiesForToday", () => {
     expect(list).toEqual(copy);
   });
 });
+
+describe("orderActivitiesForToday with an AI ranking", () => {
+  const list = () => [
+    activity("a", { order_index: 0 }),
+    activity("b", { order_index: 1 }),
+    activity("c", { order_index: 2 }),
+    activity("d", { order_index: 3 }),
+  ];
+
+  it("orders the open rows by the ranking", () => {
+    expect(
+      ids(orderActivitiesForToday(list(), {}, ["c", "a", "b", "d"]))
+    ).toEqual(["c", "a", "b", "d"]);
+  });
+
+  it("keeps pins first and done rows last, whatever the ranking says", () => {
+    const rows = [
+      activity("a", { order_index: 0 }),
+      activity("b", { order_index: 1, is_pinned: true }),
+      activity("c", { order_index: 2 }),
+      activity("d", { order_index: 3 }),
+    ];
+    expect(
+      ids(orderActivitiesForToday(rows, { c: 1 }, ["c", "d", "a", "b"]))
+    ).toEqual(["b", "d", "a", "c"]);
+  });
+
+  it("puts rows the ranking has not seen after it, in stored order", () => {
+    expect(ids(orderActivitiesForToday(list(), {}, ["d", "b"]))).toEqual([
+      "d",
+      "b",
+      "a",
+      "c",
+    ]);
+  });
+
+  it("ignores ids that are no longer on today's list", () => {
+    expect(ids(orderActivitiesForToday(list(), {}, ["gone", "b"]))).toEqual([
+      "b",
+      "a",
+      "c",
+      "d",
+    ]);
+  });
+
+  it("is the plain order with an empty or missing ranking", () => {
+    const plain = ids(orderActivitiesForToday(list(), {}));
+    expect(ids(orderActivitiesForToday(list(), {}, []))).toEqual(plain);
+  });
+});

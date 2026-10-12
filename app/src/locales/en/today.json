@@ -23,5 +23,26 @@
     "active": "Break Day Active",
     "markAsBreakDay": "Mark as Break Day",
     "helper": "Incomplete tasks won't affect streaks."
+  },
+  "aiOrder": {
+    "order": "Order with AI",
+    "orderAgain": "Order again",
+    "ordering": "Ordering…",
+    "orderedAt": "Ordered by AI at {{time}}",
+    "evidence": "Based on your last 7 days · your key, your model",
+    "stale": "Your list has changed since. Order again to include it.",
+    "reset": "Back to my order",
+    "setUp": "Set up AI",
+    "retry": "Try again",
+    "needsConnection": "Ordering with AI needs a connection.",
+    "error": {
+      "offline": "Ordering with AI needs a connection.",
+      "rateLimited": "You've hit today's AI limit — try again tomorrow.",
+      "notConfigured": "AI isn't set up yet. Add your key in Settings to order your day.",
+      "providerRejected": "Your AI provider rejected the request ({{status}}): {{detail}}",
+      "providerUnreachable": "Couldn't reach your AI provider. Check the base URL in Settings, then try again.",
+      "providerEmpty": "Your AI provider answered with nothing. Check the model name in Settings.",
+      "providerInvalid": "The AI didn't return a usable order. Try again in a moment."
+    }
   }
 }

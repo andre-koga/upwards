@@ -84,7 +84,9 @@
     "pausedForDay": "Tarefa pausada para este dia",
     "incrementHint": "{{count}} / {{target}} — toque para aumentar",
     "countTarget": "{{count}} / {{target}}",
-    "pinned": "Fixada"
+    "pinned": "Fixada",
+    "pin": "Fixar no topo",
+    "unpin": "Desafixar"
   },
   "timeField": {
     "dialDescription": "Arraste o controle circular ou toque nos valores para editar o horário.",

@@ -24,6 +24,8 @@ export interface ActivityPillProps {
   showTimer?: boolean;
   /** Marks a pinned activity (kept above the rest of Today's list). */
   pinned?: boolean;
+  /** Pins or unpins the activity from the row; omit where pinning is not offered. */
+  onTogglePin?: () => void;
   className?: string;
 }
 
@@ -42,6 +44,7 @@ export default function ActivityPill({
   allowNameClickWhenReadOnly = false,
   showTimer = true,
   pinned = false,
+  onTogglePin,
   className = "",
 }: ActivityPillProps) {
   const { t } = useTranslation("projects");
@@ -75,7 +78,12 @@ export default function ActivityPill({
           aria-label={nameAriaLabel}
           className="h-full min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center gap-0 rounded-none p-0 text-left text-sm font-medium shadow-none"
         >
-          <span className="flex min-h-0 min-w-0 flex-1 items-center gap-2 py-1 pl-4 pr-4">
+          <span
+            className={cn(
+              "flex min-h-0 min-w-0 flex-1 items-center gap-2 py-1 pl-4",
+              onTogglePin ? "pr-1" : "pr-4"
+            )}
+          >
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: color }}
@@ -85,7 +93,7 @@ export default function ActivityPill({
                 <span className="font-normal text-muted-foreground">Name…</span>
               )}
             </span>
-            {pinned ? (
+            {pinned && !onTogglePin ? (
               <>
                 <Pin
                   className="h-3 w-3 shrink-0 fill-current text-muted-foreground"
@@ -96,6 +104,27 @@ export default function ActivityPill({
             ) : null}
           </span>
         </Button>
+        {onTogglePin ? (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onTogglePin}
+            aria-pressed={pinned}
+            aria-label={pinned ? t("taskItem.unpin") : t("taskItem.pin")}
+            title={pinned ? t("taskItem.unpin") : t("taskItem.pin")}
+            className={cn(
+              "h-full min-h-0 w-8 shrink-0 rounded-none p-0 shadow-none",
+              pinned
+                ? "text-foreground"
+                : "text-muted-foreground/50 hover:text-foreground"
+            )}
+          >
+            <Pin
+              className={cn("h-3.5 w-3.5", pinned && "fill-current")}
+              aria-hidden
+            />
+          </Button>
+        ) : null}
       </div>
 
       {/* Timer / action side */}

@@ -62,6 +62,26 @@ describe("initialCompletionParams", () => {
 });
 
 describe("buildCompletionBody", () => {
+  it("uses a caller's own ceilings for a longer answer", () => {
+    const caps = { maxTokens: 600, maxCompletionTokens: 1200 };
+    expect(
+      buildCompletionBody(
+        "m",
+        messages,
+        { tokenParam: "max_tokens", sendTemperature: false },
+        caps
+      ).max_tokens
+    ).toBe(600);
+    expect(
+      buildCompletionBody(
+        "m",
+        messages,
+        { tokenParam: "max_completion_tokens", sendTemperature: false },
+        caps
+      ).max_completion_tokens
+    ).toBe(1200);
+  });
+
   it("sends exactly one token limit, with the cap for that parameter", () => {
     const legacy = buildCompletionBody("m", messages, {
       tokenParam: "max_tokens",

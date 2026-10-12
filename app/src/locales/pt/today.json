@@ -23,5 +23,26 @@
     "active": "Dia de descanso ativo",
     "markAsBreakDay": "Marcar como dia de descanso",
     "helper": "Tarefas incompletas não prejudicam suas sequências."
+  },
+  "aiOrder": {
+    "order": "Ordenar com IA",
+    "orderAgain": "Ordenar de novo",
+    "ordering": "Ordenando…",
+    "orderedAt": "Ordenado pela IA às {{time}}",
+    "evidence": "Com base nos seus últimos 7 dias · sua chave, seu modelo",
+    "stale": "Sua lista mudou desde então. Ordene de novo para incluí-la.",
+    "reset": "Voltar à minha ordem",
+    "setUp": "Configurar IA",
+    "retry": "Tentar de novo",
+    "needsConnection": "Ordenar com IA precisa de conexão.",
+    "error": {
+      "offline": "Ordenar com IA precisa de conexão.",
+      "rateLimited": "Você atingiu o limite diário de IA — tente novamente amanhã.",
+      "notConfigured": "A IA ainda não está configurada. Adicione sua chave em Configurações para ordenar seu dia.",
+      "providerRejected": "Seu provedor de IA recusou o pedido ({{status}}): {{detail}}",
+      "providerUnreachable": "Não foi possível falar com seu provedor de IA. Confira a URL base em Configurações e tente de novo.",
+      "providerEmpty": "Seu provedor de IA respondeu vazio. Confira o nome do modelo em Configurações.",
+      "providerInvalid": "A IA não devolveu uma ordem utilizável. Tente de novo em instantes."
+    }
   }
 }
