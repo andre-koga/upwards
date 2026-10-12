@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BookOpen, Search, X } from "lucide-react";
+import { BookOpen, Plus, Search, Trash2, X } from "lucide-react";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button";
 import { useJournalArchive } from "@/hooks/use-journal-archive";
 import JournalArchiveEntry from "@/components/journal/journal-archive-entry";
 import JournalArchiveBanner from "@/components/journal/journal-archive-banner";
+import JournalArchiveMemory from "@/components/journal/journal-archive-memory";
+import { DeletedMemoriesDialog } from "@/components/memories/deleted-memories-dialog";
+import { MemoryEditDialog } from "@/components/memories/memory-edit-dialog";
+import type { Memory } from "@/lib/db/types";
+import {
+  blankMemory,
+  saveMemoryValues,
+  trashMemory,
+  type MemoryValues,
+} from "@/lib/memories-actions";
 import JournalArchiveWorldMap, {
   type JournalArchiveMapClusterSelection,
 } from "@/components/journal/journal-archive-world-map";
@@ -42,6 +52,11 @@ export default function JournalPage() {
   const [searchInput, setSearchInput] = useState("");
   const [mapJumpDate, setMapJumpDate] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // `undefined` is closed; a memory is open for editing; `isNew` marks a blank.
+  const [editingMemory, setEditingMemory] = useState<
+    { memory: Memory; isNew: boolean } | undefined
+  >(undefined);
+  const [deletedOpen, setDeletedOpen] = useState(false);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -68,6 +83,8 @@ export default function JournalPage() {
     focusEntryDate,
     revealEntryDate,
     clearFocusEntryDate,
+    trashedMemories,
+    reload,
   } = useJournalArchive(filters);
 
   useLayoutEffect(() => {
@@ -143,6 +160,16 @@ export default function JournalPage() {
 
   const filtersActive = journalArchiveFiltersAreActive(filters);
 
+  const saveMemory = async (values: MemoryValues) => {
+    if (!editingMemory) return;
+    await saveMemoryValues(editingMemory.memory, values);
+    await reload();
+  };
+  const trashOneMemory = async (memory: Memory) => {
+    await trashMemory(memory);
+    await reload();
+  };
+
   return (
     <AppPageShell
       title={t("archive.title")}
@@ -185,6 +212,36 @@ export default function JournalPage() {
               pins={mapPins}
               onSelectCluster={handleWorldMapSelect}
             />
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 shrink-0 rounded-xl"
+            onClick={() =>
+              setEditingMemory({ memory: blankMemory(), isNew: true })
+            }
+            title={t("archive.memory.add")}
+            aria-label={t("archive.memory.add")}
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+          </Button>
+          {trashedMemories.length > 0 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11 shrink-0 rounded-xl text-muted-foreground"
+              onClick={() => setDeletedOpen(true)}
+              title={t("archive.memory.deleted", {
+                count: trashedMemories.length,
+              })}
+              aria-label={t("archive.memory.deleted", {
+                count: trashedMemories.length,
+              })}
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+            </Button>
           ) : null}
         </div>
 
@@ -250,6 +307,30 @@ export default function JournalPage() {
                 />
               );
             }
+            if (item.kind === "memories") {
+              return (
+                <p
+                  key={item.key}
+                  className="pt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {item.year === null
+                    ? t("archive.memory.groupUndated")
+                    : t("archive.memory.groupYear", { year: item.year })}
+                </p>
+              );
+            }
+            if (item.kind === "memory") {
+              return (
+                <JournalArchiveMemory
+                  key={item.memory.id}
+                  memory={item.memory}
+                  onEdit={(memory) =>
+                    setEditingMemory({ memory, isNew: false })
+                  }
+                  onTrash={(memory) => void trashOneMemory(memory)}
+                />
+              );
+            }
             return (
               <JournalArchiveEntry
                 key={item.entry.id}
@@ -272,6 +353,20 @@ export default function JournalPage() {
           )}
         </div>
       )}
+
+      <MemoryEditDialog
+        open={editingMemory !== undefined}
+        memory={editingMemory?.memory ?? null}
+        isNew={editingMemory?.isNew ?? false}
+        onOpenChange={(open) => !open && setEditingMemory(undefined)}
+        onSave={saveMemory}
+      />
+      <DeletedMemoriesDialog
+        open={deletedOpen}
+        onOpenChange={setDeletedOpen}
+        memories={trashedMemories}
+        onChanged={() => void reload()}
+      />
 
       <FloatingBackButton to="/" title={tNav("home")} />
     </AppPageShell>

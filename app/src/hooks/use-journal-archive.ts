@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { db } from "@/lib/db";
-import type { JournalEntry } from "@/lib/db/types";
+import type { JournalEntry, Memory } from "@/lib/db/types";
 import {
   JOURNAL_ARCHIVE_PAGE_SIZE,
   buildJournalArchiveFeed,
   collectJournalArchiveMapPins,
   collectJournalArchiveYears,
+  isArchiveRecord,
   journalArchiveFiltersKey,
   journalEntryHasContent,
   journalEntryMatchesFilters,
@@ -14,6 +15,11 @@ import {
   type JournalArchiveItem,
   type JournalArchiveMapPin,
 } from "@/lib/journal/archive";
+import {
+  collectMemoryYears,
+  memoryMatchesFilters,
+  recordMemories,
+} from "@/lib/journal/record";
 import type { LocaleValue } from "@/lib/i18n/locale-storage";
 import { logError } from "@/lib/error-utils";
 import {
@@ -28,6 +34,8 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
   const birthday = useBirthday();
 
   const [allEntries, setAllEntries] = useState<JournalEntry[]>([]);
+  const [allMemories, setAllMemories] = useState<Memory[]>([]);
+  const [trashedMemories, setTrashedMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [focusEntryDate, setFocusEntryDate] = useState<string | null>(null);
@@ -41,13 +49,18 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
 
   const loadEntries = useCallback(async () => {
     try {
-      const rows = await db.journalEntries
-        .filter((e) => journalEntryHasContent(e))
-        .toArray();
+      const [rows, memoryRows] = await Promise.all([
+        db.journalEntries.filter((e) => journalEntryHasContent(e)).toArray(),
+        db.memories.toArray(),
+      ]);
       setAllEntries(rows);
+      setAllMemories(recordMemories(memoryRows));
+      setTrashedMemories(memoryRows.filter((m) => Boolean(m.deleted_at)));
     } catch (err) {
       logError("Error loading journal archive", err);
       setAllEntries([]);
+      setAllMemories([]);
+      setTrashedMemories([]);
     } finally {
       setLoading(false);
     }
@@ -64,9 +77,21 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
     );
   }, [allEntries, filters, locale, calendars, birthday]);
 
+  const filteredMemories = useMemo(
+    () => allMemories.filter((m) => memoryMatchesFilters(m, filters)),
+    [allMemories, filters]
+  );
+
   const fullFeed = useMemo(
-    () => buildJournalArchiveFeed(filteredEntries, locale, calendars, birthday),
-    [filteredEntries, locale, calendars, birthday]
+    () =>
+      buildJournalArchiveFeed(
+        filteredEntries,
+        locale,
+        calendars,
+        birthday,
+        filteredMemories
+      ),
+    [filteredEntries, filteredMemories, locale, calendars, birthday]
   );
 
   const mapPins: JournalArchiveMapPin[] = useMemo(
@@ -74,10 +99,13 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
     [allEntries]
   );
 
-  const availableYears = useMemo(
-    () => collectJournalArchiveYears(allEntries),
-    [allEntries]
-  );
+  const availableYears = useMemo(() => {
+    const years = new Set([
+      ...collectJournalArchiveYears(allEntries),
+      ...collectMemoryYears(allMemories),
+    ]);
+    return [...years].sort((a, b) => b - a);
+  }, [allEntries, allMemories]);
 
   const entryDates = useMemo(() => {
     const dates = new Set<string>();
@@ -96,28 +124,28 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
   }, [allEntries]);
 
   const visibleCount = page * JOURNAL_ARCHIVE_PAGE_SIZE;
+  const totalMatching = filteredEntries.length + filteredMemories.length;
 
   const { visibleItems, hasMore } = useMemo(() => {
-    let entryCount = 0;
+    let recordCount = 0;
     const items: JournalArchiveItem[] = [];
     for (const item of fullFeed) {
-      if (item.kind === "entry") {
-        if (entryCount >= visibleCount) break;
-        entryCount += 1;
-      } else if (entryCount >= visibleCount) {
+      if (isArchiveRecord(item)) {
+        if (recordCount >= visibleCount) break;
+        recordCount += 1;
+      } else if (recordCount >= visibleCount) {
         break;
       }
       items.push(item);
     }
-    while (items.length > 0 && items[items.length - 1]?.kind !== "entry") {
+    while (items.length > 0 && !isArchiveRecord(items[items.length - 1])) {
       items.pop();
     }
-    const totalEntries = filteredEntries.length;
     return {
       visibleItems: items,
-      hasMore: entryCount < totalEntries,
+      hasMore: recordCount < totalMatching,
     };
-  }, [fullFeed, visibleCount, filteredEntries.length]);
+  }, [fullFeed, visibleCount, totalMatching]);
 
   const loadMore = useCallback(() => {
     setPage((n) => n + 1);
@@ -147,8 +175,9 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
     visibleItems,
     hasMore,
     loadMore,
-    totalMatching: filteredEntries.length,
-    totalEntries: allEntries.length,
+    totalMatching,
+    totalEntries: allEntries.length + allMemories.length,
+    trashedMemories,
     mapPins,
     availableYears,
     entryDates,

@@ -1,4 +1,5 @@
-import type { JournalEntry } from "@/lib/db/types";
+import type { JournalEntry, Memory } from "@/lib/db/types";
+import { groupMemoriesByYear, type MemoryGroup } from "./record";
 import {
   getSpecialDayName,
   type BirthdayContext,
@@ -155,7 +156,9 @@ export function journalArchiveFiltersAreActive(
   );
 }
 
-export function journalArchiveFiltersKey(filters: JournalArchiveFilters): string {
+export function journalArchiveFiltersKey(
+  filters: JournalArchiveFilters
+): string {
   const mapDates = filters.mapEntryDates
     ? [...filters.mapEntryDates].sort().join(",")
     : "";
@@ -312,16 +315,30 @@ export function formatJournalArchiveDateRangeLabel(
 export type JournalArchiveItem =
   | { kind: "month"; key: string; year: number; month: number }
   | { kind: "holiday"; key: string; name: string; date: string }
-  | { kind: "entry"; entry: JournalEntry; holiday: string | null };
+  | { kind: "entry"; entry: JournalEntry; holiday: string | null }
+  /** Heads a run of memories: the year they are placed at, or null if undated. */
+  | { kind: "memories"; key: string; year: number | null }
+  | { kind: "memory"; memory: Memory };
+
+/** Items that are a record in their own right (counted for paging). */
+export function isArchiveRecord(
+  item: JournalArchiveItem
+): item is Extract<JournalArchiveItem, { kind: "entry" | "memory" }> {
+  return item.kind === "entry" || item.kind === "memory";
+}
 
 /**
  * Build a newest-first feed with month and holiday banners.
+ *
+ * Memories (approximate dates) join the same feed: each year's memories follow
+ * that year's days, and memories whose label names no year close the feed.
  */
 export function buildJournalArchiveFeed(
   entries: JournalEntry[],
   locale: LocaleValue,
   calendars: readonly CalendarId[],
-  birthday?: BirthdayContext
+  birthday?: BirthdayContext,
+  memories: readonly Memory[] = []
 ): JournalArchiveItem[] {
   const sorted = [...entries].sort((a, b) =>
     b.entry_date.localeCompare(a.entry_date)
@@ -330,10 +347,33 @@ export function buildJournalArchiveFeed(
   const items: JournalArchiveItem[] = [];
   let lastMonthKey = "";
 
+  const pending = groupMemoriesByYear(memories);
+  const emitGroup = (group: MemoryGroup) => {
+    items.push({
+      kind: "memories",
+      key: `m-${group.year ?? "undated"}`,
+      year: group.year,
+    });
+    for (const memory of group.memories) items.push({ kind: "memory", memory });
+    lastMonthKey = "";
+  };
+  // Dated groups come out once the feed has moved past their year.
+  const flushThrough = (year: number) => {
+    while (
+      pending.length &&
+      pending[0].year !== null &&
+      pending[0].year > year
+    ) {
+      emitGroup(pending.shift() as MemoryGroup);
+    }
+  };
+
   for (const entry of sorted) {
     const year = Number(entry.entry_date.slice(0, 4));
     const month = Number(entry.entry_date.slice(5, 7));
     const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+
+    flushThrough(year);
 
     if (monthKey !== lastMonthKey) {
       items.push({ kind: "month", key: monthKey, year, month });
@@ -361,6 +401,8 @@ export function buildJournalArchiveFeed(
       holiday,
     });
   }
+
+  for (const group of pending) emitGroup(group);
 
   return items;
 }

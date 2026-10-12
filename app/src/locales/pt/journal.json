@@ -30,15 +30,15 @@
   },
   "archive": {
     "title": "Diário",
-    "subtitle": "Todos os dias que você escreveu, em um só lugar.",
+    "subtitle": "Todos os dias que você escreveu e todas as memórias que guardou, em um só lugar.",
     "searchPlaceholder": "Buscar por palavras, emoji, lugar, data…",
     "clearSearch": "Limpar busca",
     "loading": "Carregando seu diário…",
-    "empty": "Nenhuma entrada ainda",
-    "emptyHelper": "Escreva uma reflexão em Hoje e ela aparece aqui.",
-    "noResults": "Nenhum dia encontrado",
+    "empty": "Nada no seu diário ainda",
+    "emptyHelper": "Escreva uma reflexão em Hoje, ou adicione uma memória com o botão +, e ela aparece aqui.",
+    "noResults": "Nada encontrado",
     "noResultsHelper": "Tente outras palavras, filtros, um emoji ou uma data.",
-    "resultCount": "{{count}} dias encontrados",
+    "resultCount": "{{count}} encontrados",
     "loadingMore": "Carregando mais…",
     "end": "Você chegou ao começo.",
     "closePhoto": "Fechar",
@@ -106,6 +106,16 @@
         "yes": "Só dias com lugares",
         "no": "Excluir dias com lugares"
       }
+    },
+    "memory": {
+      "kicker": "Memória",
+      "untitled": "Memória",
+      "editNamed": "Editar memória: {{label}}",
+      "trash": "Mover memória para a lixeira",
+      "add": "Adicionar memória",
+      "deleted": "Memórias excluídas ({{count}})",
+      "groupYear": "Memórias · {{year}}",
+      "groupUndated": "Memórias sem data"
     }
   },
   "untitled": "Sem título",

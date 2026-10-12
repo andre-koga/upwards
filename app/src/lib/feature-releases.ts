@@ -12,6 +12,17 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-12-one-record",
+    date: "2026-10-12",
+    title: "Journal and memories, together",
+    bullets: [
+      'Your memories now live in the Journal, in the same feed as your days. A memory sits after the days of the year you mention in its "when", like "summer 2019". Ones with no year come last.',
+      "Search, the year filter and the photo filter cover memories too. Add a memory with the + button at the top of the Journal.",
+      "Deleted memories go to a trash you can open from the Journal, and can be restored from there.",
+      "The separate Memories page is gone. Old links open the Journal.",
+    ],
+  },
+  {
     id: "2026-10-12-ai-order",
     date: "2026-10-12",
     title: "Order Today with your AI",

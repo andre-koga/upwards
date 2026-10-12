@@ -866,7 +866,25 @@ Track B gets its own breakdown before it starts. Its shape:
     needs a manual `supabase functions deploy rank-today`.
 - **B3.** Journal: one record across the journal and memory tables (the merge is
   UI-only; the tables stay separate). Feed, calendar, map, and gallery;
-  previous versions with restore; generated month and holiday banners.
+  previous versions with restore; generated month and holiday banners. Shipped
+  in four slices:
+  - **B3a (done 2026-10-12):** one record. Memories appear in the Journal feed;
+    the Memories page and its destination are gone (`/memories` redirects to
+    `/journal`; the palette finds the Journal by "memories"). A memory has no
+    date field, so it is placed by the latest year (up to the current one) found
+    in its own `time_label`, using no schema change (`lib/journal/record.ts`).
+    Memories follow that year's days; ones naming no year close the feed.
+    Search covers a memory's text, label and year; the year filter and photo
+    filters apply; a filter that needs a bookmark, video or place leaves
+    memories out (they have none); a date window takes a memory only if it
+    covers the whole of its year. Add, edit and trash live in the Journal; the
+    trash has restore and permanent delete (`DeletedMemoriesDialog`). An
+    explicit anchor field would be a data-model decision for later.
+  - **B3b:** previous versions with restore and the muted "edited" note
+    (reads `journal_entry_revisions`).
+  - **B3c:** Calendar / Map / Gallery view modes, the real two-column desktop
+    layout, and record search in the palette.
+  - **B3d:** generated month and holiday banner images.
 - **B4.** Home: AI insight surfaces on the existing AI groundwork.
 - **B5.** You / compass and onboarding, including the one-time daily clip and
   location prompts. The compass needs a data-model pass in

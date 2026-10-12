@@ -3,7 +3,6 @@
   "whatsNewUnread": "What's new (unread updates)",
   "feedback": "Feedback / requests",
   "journal": "Journal",
-  "memories": "Memories",
   "aiInsights": "AI Home",
   "settings": "Settings",
   "openMoreActions": "Open more actions",
@@ -74,9 +73,8 @@
     "keywords": {
       "home": "insights ai digest",
       "today": "tasks timer sessions day activities",
-      "journal": "entries diary reflections photos places",
+      "journal": "entries diary reflections photos places memories",
       "you": "settings account profile language",
-      "memories": "memory old past",
       "whatsNew": "changelog updates releases",
       "errorLogs": "logs debug errors",
       "syncIssues": "conflicts pending sync review",

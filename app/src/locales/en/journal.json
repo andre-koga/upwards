@@ -30,15 +30,15 @@
   },
   "archive": {
     "title": "Journal",
-    "subtitle": "Every day you've written, in one place.",
+    "subtitle": "Every day you've written and every memory you've kept, in one place.",
     "searchPlaceholder": "Search by words, emoji, place, date…",
     "clearSearch": "Clear search",
     "loading": "Loading your journal…",
-    "empty": "No journal entries yet",
-    "emptyHelper": "Write a reflection on Today and it will show up here.",
-    "noResults": "No matching days",
+    "empty": "Nothing in your journal yet",
+    "emptyHelper": "Write a reflection on Today, or add a memory with the + button, and it will show up here.",
+    "noResults": "Nothing matches",
     "noResultsHelper": "Try different words, filters, an emoji, or a date.",
-    "resultCount": "{{count}} days found",
+    "resultCount": "{{count}} found",
     "loadingMore": "Loading more…",
     "end": "You've reached the beginning.",
     "closePhoto": "Close",
@@ -106,6 +106,16 @@
         "yes": "Only days with places",
         "no": "Exclude days with places"
       }
+    },
+    "memory": {
+      "kicker": "Memory",
+      "untitled": "Memory",
+      "editNamed": "Edit memory: {{label}}",
+      "trash": "Move memory to trash",
+      "add": "Add memory",
+      "deleted": "Deleted memories ({{count}})",
+      "groupYear": "Memories · {{year}}",
+      "groupUndated": "Undated memories"
     }
   },
   "untitled": "Untitled",

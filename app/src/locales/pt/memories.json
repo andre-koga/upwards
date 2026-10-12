@@ -15,7 +15,8 @@
     "deletePermanently": "Excluir permanentemente",
     "fallbackLabel": "Memória",
     "confirmTitle": "Excluir memória permanentemente?",
-    "confirmMessage": "Isso removerá permanentemente a memória e suas fotos."
+    "confirmMessage": "Isso removerá permanentemente a memória e suas fotos.",
+    "empty": "Nada na lixeira."
   },
   "dialog": {
     "editTitle": "Editar memória",
@@ -35,6 +36,7 @@
       "maxPhotosReached": "Limite de {{count}} fotos atingido",
       "photoCount": "{{current}}/{{max}} fotos",
       "removePhoto": "Remover foto {{index}}"
-    }
+    },
+    "whenHint": "Adicione um ano, como \"verão de 2019\", para colocá-la na sua linha do tempo."
   }
 }

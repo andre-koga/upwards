@@ -3,7 +3,6 @@
   "whatsNewUnread": "Novidades (atualizações não lidas)",
   "feedback": "Feedback e sugestões",
   "journal": "Diário",
-  "memories": "Memórias",
   "aiInsights": "Início IA",
   "settings": "Configurações",
   "openMoreActions": "Abrir mais ações",
@@ -74,9 +73,8 @@
     "keywords": {
       "home": "insights ia resumo",
       "today": "tarefas cronômetro sessões dia atividades hoje",
-      "journal": "entradas diário reflexões fotos lugares",
+      "journal": "entradas diário reflexões fotos lugares memórias lembranças",
       "you": "configurações conta perfil idioma você",
-      "memories": "memória antigas passado",
       "whatsNew": "novidades atualizações versões",
       "errorLogs": "registros erros depuração logs",
       "syncIssues": "conflitos pendentes sincronização revisão",

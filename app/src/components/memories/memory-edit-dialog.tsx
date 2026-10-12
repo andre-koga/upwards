@@ -21,6 +21,8 @@ import {
 interface Props {
   open: boolean;
   memory: Memory | null;
+  /** A memory that has not been saved yet: titled "New", confirmed with "Create". */
+  isNew?: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (
     values: Pick<Memory, "text_content" | "photo_paths" | "time_label">
@@ -30,6 +32,7 @@ interface Props {
 export function MemoryEditDialog({
   open,
   memory,
+  isNew = false,
   onOpenChange,
   onSave,
 }: Props) {
@@ -133,7 +136,7 @@ export function MemoryEditDialog({
     <FormDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={memory ? t("dialog.editTitle") : t("dialog.newTitle")}
+      title={memory && !isNew ? t("dialog.editTitle") : t("dialog.newTitle")}
     >
       <FormStack>
         <FormTextareaField
@@ -156,6 +159,7 @@ export function MemoryEditDialog({
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder={t("dialog.whenPlaceholder")}
+          message={t("dialog.whenHint")}
         />
         <input
           ref={inputRef}
@@ -207,7 +211,7 @@ export function MemoryEditDialog({
       </FormStack>
       <FormDialogActions
         onConfirm={() => void save()}
-        confirmLabel={memory ? t("dialog.save") : t("dialog.create")}
+        confirmLabel={memory && !isNew ? t("dialog.save") : t("dialog.create")}
         confirmDisabled={busy}
         secondaryAction={{
           label: t("dialog.cancel"),

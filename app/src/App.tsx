@@ -26,7 +26,6 @@ const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const SyncIssuesPage = lazy(() => import("@/pages/sync-issues"));
 const WhatsNewPage = lazy(() => import("@/pages/whats-new"));
 const JournalPage = lazy(() => import("@/pages/journal"));
-const MemoriesPage = lazy(() => import("@/pages/memories"));
 const LogsPage = lazy(() => import("@/pages/logs"));
 const RedesignPreviewPage = lazy(() => import("@/pages/redesign-preview"));
 const RedesignPreviewBPage = lazy(() => import("@/pages/redesign-preview-b"));
@@ -129,7 +128,11 @@ function AppFrame() {
             <Route path="/settings/sync-issues" element={<SyncIssuesPage />} />
             <Route path="/whats-new" element={<WhatsNewPage />} />
             <Route path="/journal" element={<JournalPage />} />
-            <Route path="/memories" element={<MemoriesPage />} />
+            {/* Memories joined the journal as one record (B3); old links land there. */}
+            <Route
+              path="/memories"
+              element={<Navigate to="/journal" replace />}
+            />
             <Route path="/logs" element={<LogsPage />} />
             <Route path="/home" element={<HomePage />} />
             {/* Developer tool for the daily-clip device spike; not linked anywhere. */}
