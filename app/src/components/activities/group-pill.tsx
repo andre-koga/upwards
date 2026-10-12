@@ -31,7 +31,7 @@ export default function GroupPill({
   return (
     <div className={base}>
       <div className="flex w-full gap-2">
-        <div className="flex min-w-0 flex-1 items-stretch overflow-hidden rounded-full border border-input bg-background">
+        <div className="flex min-w-0 flex-1 items-stretch overflow-hidden rounded-full border border-border bg-muted/60">
           <Button
             type="button"
             variant="ghost"

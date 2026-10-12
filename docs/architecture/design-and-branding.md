@@ -133,19 +133,23 @@ original table used would have collided and are renamed:
 | Destructive | `--destructive` | `--destructive` |
 
 **Values (light).** Canvas `#f4efe6`, paper `#fffdf8`, canvas-deep `#eee6d7`,
-line `#e4dccf`, ink `#21332c`, sage `#e1ebe1`, green `#3f6656`, green-deep
+line `#e4dccf`, ink `#2c231b` (warm brown-black, not green), sage `#e1ebe1`, green `#3f6656`, green-deep
 `#28453a`. Fills keep the original brand values. **Text roles are darker than
 the first draft** because the draft failed this document's own contrast rule
-(measured, WCAG): `--ink-muted` `#535d55` (was `#6e776f`, 4.05 on canvas and 3.74
-on canvas-deep), `--ink-faint` `#626a61` (was `#9aa199`, 2.3-2.6),
+(measured, WCAG): `--ink-muted` `#60574d` (was `#6e776f`, 4.05 on canvas and 3.74
+on canvas-deep), `--ink-faint` `#6b645b` (was `#9aa199`, 2.3-2.6),
 `--terracotta-text` `#9c4a34` and `--gold-text` `#7d5a12` (the fill colors are
-3.2 and 2.5 as text). Form-control borders use `--line-strong` `#8f8777`
-(3.5:1 on paper) because hairlines are decoration and inputs are not.
+3.2 and 2.5 as text). Text-input borders use `--line-strong` `#8d7f6d`
+(3:1 or better) because hairlines are decoration and inputs are not. Buttons,
+pills and rows are identified by their label and a tonal fill
+(`bg-muted/60`) with a `--border` hairline, so they do not carry a strong
+border; only text inputs, selects, the calendar field, and the unchecked task
+circle do.
 Lavender is a categorical fill only: it is below 4.5 as text on canvas-deep.
 
-**Values (dark).** The first draft had none. Canvas `#151916`, paper `#1c211d`,
-canvas-deep `#101310`, line `#2d352e`, line-strong `#788679`, ink `#ece8dc`,
-ink-muted `#aab2a8`, ink-faint `#8c948a`, sage `#26372c`, green `#86b39d`
+**Values (dark).** Neutrals are warm brown-black, not green-grey. Canvas `#191715`, paper `#211f1c`,
+canvas-deep `#141210`, line `#37332f`, line-strong `#8a8075`, ink `#ede8de`,
+ink-muted `#b6afa5`, ink-faint `#979087`, sage `#2b362f`, green `#86b39d`
 (lighter, so it reads on dark), green-deep `#cfe3d8` (text on sage), terracotta
 `#e08f72`, gold `#d9b25a`, lavender `#b3abd0`. Text roles are 5.2 or higher on
 every surface; the primary button is `#0f1d17` on green (7.4).

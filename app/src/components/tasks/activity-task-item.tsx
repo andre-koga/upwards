@@ -208,7 +208,7 @@ function ActivityTaskItem({
                 ? "border-primary bg-primary text-primary-foreground"
                 : count > 0
                   ? "border-primary bg-[color-mix(in_srgb,hsl(var(--primary))_22%,hsl(var(--background)))] text-primary"
-                  : "border-muted-foreground text-muted-foreground"
+                  : "border-line-strong text-muted-foreground"
           )}
           title={
             canUpdateCount
