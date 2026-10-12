@@ -12,6 +12,14 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-12-adaptive-shell": {
+    title: "Um layout de computador de verdade e nova navegação",
+    bullets: [
+      "No computador, o Upwards agora ocupa a janela inteira com uma barra lateral, em vez de mostrar uma moldura do tamanho de um celular. No celular, a barra inferior tem quatro abas: Início, Hoje, Diário e Você.",
+      "Pressione Ctrl+K (ou ⌘K no Mac) para ir a qualquer página ou trocar a aparência. Ctrl/⌘ com 1 a 4 abre as abas.",
+      "No celular, o menu em Hoje agora tem Novidades, Feedback, Memórias e Configurações. Início e Diário foram para a barra de abas. A aba Você abre as Configurações por enquanto.",
+    ],
+  },
   "2026-10-11-warm-paper": {
     title: "Um visual mais acolhedor",
     bullets: [

@@ -1,7 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Undo2, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  isTabRootPath,
+  routeHidesNavigation,
+} from "@/lib/navigation/destinations";
 
 const FLOATING_BACK_BUTTON_BASE =
   "border-border bg-background text-muted-foreground shadow-md";
@@ -26,10 +30,17 @@ export function FloatingBackButton({
   fixed = true,
   className,
 }: FloatingBackButtonProps) {
+  const { pathname } = useLocation();
   const Icon = icon === "settings" ? Settings : icon === "undo" ? Undo2 : X;
+  // The tab bar (phone) and sidebar (desktop) already lead to every tab root,
+  // so a corner button on a tab's own page would go nowhere new. On sub-pages
+  // it stays on the phone; the sidebar replaces it from `md`.
+  if (fixed && to !== undefined && isTabRootPath(pathname)) return null;
   const merged = cn(
     FLOATING_BACK_BUTTON_BASE,
-    fixed && "fixed bottom-3 left-4 z-50",
+    fixed &&
+      "fixed bottom-[calc(var(--app-tab-bar-h,0px)+0.75rem)] left-4 z-50",
+    fixed && !routeHidesNavigation(pathname) && "md:hidden",
     className
   );
 

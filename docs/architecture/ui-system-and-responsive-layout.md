@@ -71,16 +71,35 @@ The system is only partially standardized:
 
 ### Desktop behavior
 
-At `md`, `app/src/App.tsx` currently:
+**Updated 2026-10-12 (B1b).** The 430px phone frame and the "mobile experience"
+notice are gone. `components/layout/app-shell.tsx` now owns the frame:
 
-- Displays a "mobile experience" notice.
-- Limits the entire app to `430px`.
-- Centers the phone-shaped frame in the viewport.
-- Keeps mobile drawers, floating controls, and navigation unchanged.
-
-There is no wide-screen information architecture, persistent desktop
-navigation, or `lg`/`xl` page layout. This is a viewport simulation, not desktop
-support.
+- Below `md`: the document scrolls and a frosted four-tab bar (Home, Today,
+  Journal, You) floats at the bottom. `--app-tab-bar-h` (set on `.app-shell-tabs`
+  in `index.css`) is the bar's height; fixed bottom controls add it to their
+  offset, so the Today action bar, the corner back button, the Memories add
+  button, and the install prompt clear it.
+- `md` and up: a sidebar beside one content pane that owns scrolling
+  (`data-app-scroll`). The sidebar is an icon rail with tooltips at `md` and a
+  labelled list with shortcut chips at `lg`. The pane is a containing block for
+  `position: fixed` descendants (`transform: translateZ(0)`), so floating
+  controls stay inside it. Overlays portal to the body and cover the window.
+  The tab bar, the Today menu button, and the corner back buttons are hidden.
+- The page column is capped at `max-w-2xl` (`lg:max-w-3xl`) and centered.
+  **This is an interim cap, not the desktop layout.** The two-column pages
+  (Today in B2, Journal in B3, Settings and Sync issues in B6/B8) replace it
+  route by route; until then pages read as one readable column beside the
+  sidebar. Bottom sheets are capped at `max-w-xl` and centered from `md`.
+- `⌘/Ctrl+K` opens a command palette (a Dialog with a combobox/listbox; filter
+  logic in `lib/navigation/filter-commands.ts`). It covers destinations, send
+  feedback, and appearance. Searching the record (entries, memos, activities,
+  places) arrives with the Journal archive search (B3). `⌘/Ctrl+1`-`4` open the
+  tabs and are ignored while a dialog is open.
+- Destinations and which tab owns a route live in `lib/navigation/destinations.ts`.
+  The "You" tab opens Settings until the compass (B5) exists.
+- The primary nav and "more" list are `<nav>` landmarks, the active item has
+  `aria-current="page"`, a skip link precedes the sidebar, and the content pane
+  is `<main id="main-content">`.
 
 ## Component ownership model
 

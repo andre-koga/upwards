@@ -826,7 +826,14 @@ Track B gets its own breakdown before it starts. Its shape:
 - **B0.** Mock the screens the flagship lacks: previous versions, conflict
   review, the activity type question, sign-in, onboarding.
 - **B1.** Adaptive shell and navigation (Home / Today / Journal / You, `⌘K`).
-  Reconcile with the existing `cursor/adaptive-app-shell-5a78` branch first.
+  Done in two parts: B1a (palette, 2026-10-11) and B1b (shell, 2026-10-12; see
+  [`ui-system-and-responsive-layout.md`](ui-system-and-responsive-layout.md)).
+  From `cursor/adaptive-app-shell-5a78` only the tooltip and separator
+  primitives and the nav-rail idea were taken; that branch is built on removed
+  features (stats, friends) and stays unmerged. Not in B1b, on purpose: the
+  "You" tab opens Settings until B5, the palette searches destinations and
+  commands but not the record until B3, and the page column is a capped single
+  column until B2/B3 give each page its real two-column layout.
 - **B2.** Today: activity rows, the type question, the pin control, AI
   ordering with reasons and a no-AI fallback. Then remove the task-order page.
 - **B3.** Journal: one record across the journal and memory tables (the merge is

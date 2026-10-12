@@ -1,0 +1,127 @@
+import {
+  BookOpen,
+  CircleCheckBig,
+  FileText,
+  History,
+  Image as ImageIcon,
+  Sparkles,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
+
+// design-and-branding.md §3.2: four primary destinations, a hard cap on the
+// phone tab bar. Everything else is secondary and lives in the sidebar's
+// "more" list, the Today menu, or the command palette.
+
+export type TabId = "home" | "today" | "journal" | "you";
+
+export interface TabDestination {
+  id: TabId;
+  to: string;
+  /** `nav` namespace key for the visible label. */
+  labelKey: `tabs.${TabId}`;
+  icon: LucideIcon;
+  /** Digit used with ⌘/Ctrl: ⌘1 is the first tab. */
+  shortcut: string;
+}
+
+export const TABS: readonly TabDestination[] = [
+  {
+    id: "home",
+    to: "/home",
+    labelKey: "tabs.home",
+    icon: Sparkles,
+    shortcut: "1",
+  },
+  {
+    id: "today",
+    to: "/",
+    labelKey: "tabs.today",
+    icon: CircleCheckBig,
+    shortcut: "2",
+  },
+  {
+    id: "journal",
+    to: "/journal",
+    labelKey: "tabs.journal",
+    icon: BookOpen,
+    shortcut: "3",
+  },
+  // "You" is the compass (B5). Until it exists it opens Settings, which is
+  // where identity-level things (account, language, appearance) already live.
+  {
+    id: "you",
+    to: "/settings",
+    labelKey: "tabs.you",
+    icon: UserRound,
+    shortcut: "4",
+  },
+];
+
+export interface SecondaryDestination {
+  id: "memories" | "whatsNew" | "logs";
+  to: string;
+  /** `nav` namespace key for the visible label. */
+  labelKey: "memories" | "whatsNew" | "errorLogs";
+  icon: LucideIcon;
+}
+
+export const SECONDARY_DESTINATIONS: readonly SecondaryDestination[] = [
+  { id: "memories", to: "/memories", labelKey: "memories", icon: ImageIcon },
+  { id: "whatsNew", to: "/whats-new", labelKey: "whatsNew", icon: History },
+  { id: "logs", to: "/logs", labelKey: "errorLogs", icon: FileText },
+];
+
+/** Routes that open a tab directly. A back button on these goes nowhere new. */
+const TAB_ROOT_PATHS: ReadonlySet<string> = new Set(TABS.map((tab) => tab.to));
+
+export function isTabRootPath(pathname: string): boolean {
+  return TAB_ROOT_PATHS.has(normalize(pathname));
+}
+
+/** Which tab a route belongs to, so sub-pages keep their parent highlighted. */
+export function activeTabForPath(pathname: string): TabId | null {
+  const path = normalize(pathname);
+  if (path === "/") return "today";
+  if (path === "/home" || path.startsWith("/home/")) return "home";
+  if (
+    path === "/journal" ||
+    path.startsWith("/journal/") ||
+    path === "/memories" ||
+    path.startsWith("/memories/")
+  ) {
+    return "journal";
+  }
+  if (
+    path === "/settings" ||
+    path.startsWith("/settings/") ||
+    path === "/whats-new" ||
+    path === "/logs"
+  ) {
+    return "you";
+  }
+  return null;
+}
+
+/** The tab for a ⌘/Ctrl + digit shortcut, or null. */
+export function tabForShortcutKey(key: string): TabDestination | null {
+  return TABS.find((tab) => tab.shortcut === key) ?? null;
+}
+
+/**
+ * Routes that must render without app navigation: the sign-in gate and the
+ * password-recovery pages reached from an email link.
+ */
+export function routeHidesNavigation(pathname: string): boolean {
+  const path = normalize(pathname);
+  return (
+    path === "/settings/forgot-password" || path === "/settings/reset-password"
+  );
+}
+
+function normalize(pathname: string): string {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+}
