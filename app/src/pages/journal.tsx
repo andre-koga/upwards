@@ -1,10 +1,22 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BookOpen, Plus, Search, Trash2, X } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import {
+  BookOpen,
+  CalendarDays,
+  Images,
+  List,
+  MapPin,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useJournalArchive } from "@/hooks/use-journal-archive";
 import JournalArchiveEntry from "@/components/journal/journal-archive-entry";
 import JournalArchiveBanner from "@/components/journal/journal-archive-banner";
@@ -13,16 +25,23 @@ import { useJournalRevisionSummaries } from "@/hooks/use-journal-revision-summar
 import JournalArchiveMemory from "@/components/journal/journal-archive-memory";
 import { DeletedMemoriesDialog } from "@/components/memories/deleted-memories-dialog";
 import { MemoryEditDialog } from "@/components/memories/memory-edit-dialog";
-import type { Memory } from "@/lib/db/types";
+import type { JournalEntry, Memory } from "@/lib/db/types";
 import {
   blankMemory,
   saveMemoryValues,
   trashMemory,
   type MemoryValues,
 } from "@/lib/memories-actions";
-import JournalArchiveWorldMap, {
+import JournalArchiveMapView, {
   type JournalArchiveMapClusterSelection,
 } from "@/components/journal/journal-archive-world-map";
+import JournalArchiveCalendar from "@/components/journal/journal-archive-calendar";
+import JournalArchiveGallery from "@/components/journal/journal-archive-gallery";
+import {
+  DEFAULT_JOURNAL_VIEW,
+  parseJournalView,
+  type JournalView,
+} from "@/lib/journal/view-modes";
 import JournalArchiveSearchFilters from "@/components/journal/journal-archive-search-filters";
 import {
   DEFAULT_JOURNAL_ARCHIVE_FILTERS,
@@ -53,6 +72,23 @@ export default function JournalPage() {
   );
   const [searchInput, setSearchInput] = useState("");
   const [mapJumpDate, setMapJumpDate] = useState<string | null>(null);
+  const [jumpMemoryId, setJumpMemoryId] = useState<string | null>(null);
+  // The view lives in the address, so Back, a reload and a shared link all
+  // land on the same view of the record.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = parseJournalView(searchParams.get("view"));
+  const setView = (next: JournalView) =>
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === DEFAULT_JOURNAL_VIEW) params.delete("view");
+        else params.set("view", next);
+        return params;
+      },
+      { replace: true }
+    );
+  const focusDateParam = searchParams.get("focus");
+  const focusMemoryParam = searchParams.get("memory");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   // `undefined` is closed; a memory is open for editing; `isNew` marks a blank.
   const [editingMemory, setEditingMemory] = useState<
@@ -86,9 +122,14 @@ export default function JournalPage() {
     availableYears,
     entryDates,
     bookmarkedDates,
+    matchingEntries,
+    matchingMemories,
     focusEntryDate,
     revealEntryDate,
     clearFocusEntryDate,
+    focusMemoryId,
+    revealMemory,
+    clearFocusMemoryId,
     trashedMemories,
     reload,
   } = useJournalArchive(filters);
@@ -99,7 +140,7 @@ export default function JournalPage() {
 
   useEffect(() => {
     const node = sentinelRef.current;
-    if (!node || !hasMore) return;
+    if (view !== "feed" || !node || !hasMore) return;
 
     const root =
       document.querySelector<HTMLElement>("[data-app-scroll]") ?? null;
@@ -115,7 +156,7 @@ export default function JournalPage() {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [hasMore, loadMore, visibleItems.length]);
+  }, [view, hasMore, loadMore, visibleItems.length]);
 
   // Consume a pending map-jump request once filters allow it, then clear it
   // so it doesn't fire again on the next render.
@@ -127,6 +168,52 @@ export default function JournalPage() {
     setMapJumpDate(null);
   }, [mapJumpDate, filters, revealEntryDate]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  // The command palette sends people here with `?focus=<date>` or
+  // `?memory=<id>`. Show the whole record, then let the jump effects above and
+  // below find the card; the address is cleaned up so a reload does not jump
+  // again.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (loading || (!focusDateParam && !focusMemoryParam)) return;
+    setSearchInput("");
+    setFilters(DEFAULT_JOURNAL_ARCHIVE_FILTERS);
+    setMapJumpDate(focusDateParam);
+    setJumpMemoryId(focusMemoryParam);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("focus");
+        params.delete("memory");
+        params.delete("view");
+        return params;
+      },
+      { replace: true }
+    );
+  }, [loading, focusDateParam, focusMemoryParam, setSearchParams]);
+
+  useEffect(() => {
+    if (!jumpMemoryId) return;
+    if (journalArchiveFiltersAreActive(filters)) return;
+    revealMemory(jumpMemoryId);
+    setJumpMemoryId(null);
+  }, [jumpMemoryId, filters, revealMemory]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!focusMemoryId) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.querySelector<HTMLElement>(
+        `[data-journal-memory-id="${focusMemoryId}"]`
+      );
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      clearFocusMemoryId();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [focusMemoryId, visibleItems, clearFocusMemoryId]);
 
   useEffect(() => {
     if (!focusEntryDate) return;
@@ -147,6 +234,8 @@ export default function JournalPage() {
     selection: JournalArchiveMapClusterSelection
   ) => {
     setSearchInput("");
+    // Both outcomes read the days in the feed.
+    setView("feed");
     if (selection.entryDates.length <= 1) {
       // Single pin: clear filters and scroll to that day in the full feed.
       setFilters(DEFAULT_JOURNAL_ARCHIVE_FILTERS);
@@ -174,6 +263,25 @@ export default function JournalPage() {
   const trashOneMemory = async (memory: Memory) => {
     await trashMemory(memory);
     await reload();
+  };
+
+  const renderEntry = (entry: JournalEntry) => (
+    <JournalArchiveEntry
+      key={entry.id}
+      entry={entry}
+      highlighted={focusEntryDate === entry.entry_date}
+      revisions={revisionSummaries.get(entry.entry_date)}
+      onOpenVersions={setVersionsDate}
+    />
+  );
+
+  // Memories have no day and no place, so the Calendar and Map leave them out;
+  // the Gallery places their photos by the year in their own words.
+  const showMemoryInFeed = (memoryId: string) => {
+    setSearchInput("");
+    setFilters(DEFAULT_JOURNAL_ARCHIVE_FILTERS);
+    setJumpMemoryId(memoryId);
+    setView("feed");
   };
 
   return (
@@ -213,12 +321,6 @@ export default function JournalPage() {
             ) : null}
           </div>
 
-          {!loading && totalEntries > 0 ? (
-            <JournalArchiveWorldMap
-              pins={mapPins}
-              onSelectCluster={handleWorldMapSelect}
-            />
-          ) : null}
           <Button
             type="button"
             variant="outline"
@@ -275,91 +377,134 @@ export default function JournalPage() {
             {t("archive.emptyHelper")}
           </p>
         </div>
-      ) : totalMatching === 0 ? (
-        <div className="space-y-2 py-12 text-center">
-          <p className="font-crimson text-xl font-semibold">
-            {t("archive.noResults")}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {t("archive.noResultsHelper")}
-          </p>
-        </div>
       ) : (
-        <div className="space-y-3">
-          {filtersActive ? (
-            <p className="text-xs text-muted-foreground">
-              {t("archive.resultCount", { count: totalMatching })}
-            </p>
-          ) : null}
+        <Tabs
+          value={view}
+          onValueChange={(next) => setView(parseJournalView(next))}
+        >
+          <TabsList aria-label={t("archive.views.label")}>
+            <TabsTrigger value="feed">
+              <List aria-hidden />
+              {t("archive.views.feed")}
+            </TabsTrigger>
+            <TabsTrigger value="calendar">
+              <CalendarDays aria-hidden />
+              {t("archive.views.calendar")}
+            </TabsTrigger>
+            <TabsTrigger value="map">
+              <MapPin aria-hidden />
+              {t("archive.views.map")}
+            </TabsTrigger>
+            <TabsTrigger value="gallery">
+              <Images aria-hidden />
+              {t("archive.views.gallery")}
+            </TabsTrigger>
+          </TabsList>
 
-          {visibleItems.map((item) => {
-            if (item.kind === "month") {
-              return (
-                <JournalArchiveBanner
-                  key={item.key}
-                  variant="month"
-                  month={item.month}
-                  hemisphere={hemisphere}
-                  label={formatArchiveMonthLabel(item.year, item.month)}
-                />
-              );
-            }
-            if (item.kind === "holiday") {
-              return (
-                <JournalArchiveBanner
-                  key={item.key}
-                  variant="holiday"
-                  label={item.name}
-                />
-              );
-            }
-            if (item.kind === "memories") {
-              return (
-                <p
-                  key={item.key}
-                  className="pt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  {item.year === null
-                    ? t("archive.memory.groupUndated")
-                    : t("archive.memory.groupYear", { year: item.year })}
+          <TabsContent value="feed">
+            {totalMatching === 0 ? (
+              <div className="space-y-2 py-12 text-center">
+                <p className="font-crimson text-xl font-semibold">
+                  {t("archive.noResults")}
                 </p>
-              );
-            }
-            if (item.kind === "memory") {
-              return (
-                <JournalArchiveMemory
-                  key={item.memory.id}
-                  memory={item.memory}
-                  onEdit={(memory) =>
-                    setEditingMemory({ memory, isNew: false })
+                <p className="text-sm text-muted-foreground">
+                  {t("archive.noResultsHelper")}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filtersActive ? (
+                  <p className="text-xs text-muted-foreground">
+                    {t("archive.resultCount", { count: totalMatching })}
+                  </p>
+                ) : null}
+
+                {visibleItems.map((item) => {
+                  if (item.kind === "month") {
+                    return (
+                      <JournalArchiveBanner
+                        key={item.key}
+                        variant="month"
+                        month={item.month}
+                        hemisphere={hemisphere}
+                        label={formatArchiveMonthLabel(item.year, item.month)}
+                      />
+                    );
                   }
-                  onTrash={(memory) => void trashOneMemory(memory)}
-                />
-              );
-            }
-            return (
-              <JournalArchiveEntry
-                key={item.entry.id}
-                entry={item.entry}
-                highlighted={focusEntryDate === item.entry.entry_date}
-                revisions={revisionSummaries.get(item.entry.entry_date)}
-                onOpenVersions={setVersionsDate}
-              />
-            );
-          })}
+                  if (item.kind === "holiday") {
+                    return (
+                      <JournalArchiveBanner
+                        key={item.key}
+                        variant="holiday"
+                        label={item.name}
+                      />
+                    );
+                  }
+                  if (item.kind === "memories") {
+                    return (
+                      <p
+                        key={item.key}
+                        className="pt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
+                        {item.year === null
+                          ? t("archive.memory.groupUndated")
+                          : t("archive.memory.groupYear", { year: item.year })}
+                      </p>
+                    );
+                  }
+                  if (item.kind === "memory") {
+                    return (
+                      <JournalArchiveMemory
+                        key={item.memory.id}
+                        memory={item.memory}
+                        onEdit={(memory) =>
+                          setEditingMemory({ memory, isNew: false })
+                        }
+                        onTrash={(memory) => void trashOneMemory(memory)}
+                      />
+                    );
+                  }
+                  return renderEntry(item.entry);
+                })}
 
-          <div ref={sentinelRef} className="h-8" aria-hidden />
+                <div ref={sentinelRef} className="h-8" aria-hidden />
 
-          {hasMore ? (
-            <p className="pb-4 text-center text-xs text-muted-foreground">
-              {t("archive.loadingMore")}
-            </p>
-          ) : (
-            <p className="pb-4 text-center text-xs text-muted-foreground">
-              {t("archive.end")}
-            </p>
-          )}
-        </div>
+                {hasMore ? (
+                  <p className="pb-4 text-center text-xs text-muted-foreground">
+                    {t("archive.loadingMore")}
+                  </p>
+                ) : (
+                  <p className="pb-4 text-center text-xs text-muted-foreground">
+                    {t("archive.end")}
+                  </p>
+                )}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="calendar">
+            <JournalArchiveCalendar
+              entries={matchingEntries}
+              renderEntry={renderEntry}
+            />
+          </TabsContent>
+
+          <TabsContent value="map">
+            <JournalArchiveMapView
+              pins={mapPins}
+              onSelectCluster={handleWorldMapSelect}
+            />
+          </TabsContent>
+
+          <TabsContent value="gallery">
+            <JournalArchiveGallery
+              entries={matchingEntries}
+              memories={matchingMemories}
+              includeVideo={clipEnabled}
+              onShowMemory={showMemoryInFeed}
+            />
+          </TabsContent>
+        </Tabs>
       )}
 
       <MemoryEditDialog
@@ -375,7 +520,6 @@ export default function JournalPage() {
         memories={trashedMemories}
         onChanged={() => void reload()}
       />
-
       {versionsDate ? (
         <JournalVersionsDialog
           open

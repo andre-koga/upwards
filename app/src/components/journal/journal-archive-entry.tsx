@@ -7,7 +7,7 @@ import {
   getJournalVideoPlaybackUrl,
   normalizeJournalLocationRoute,
 } from "@/lib/journal";
-import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
+import { rememberJournalJumpDate } from "@/lib/journal/archive";
 import { fromDateString } from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -60,11 +60,7 @@ export default function JournalArchiveEntry({
   const isBookmarked = Boolean(entry.is_bookmarked);
 
   const openDay = () => {
-    try {
-      sessionStorage.setItem(JOURNAL_JUMP_DATE_KEY, entry.entry_date);
-    } catch {
-      // ignore quota / private mode
-    }
+    rememberJournalJumpDate(entry.entry_date);
     navigate("/");
   };
 

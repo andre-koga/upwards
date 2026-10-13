@@ -47,14 +47,34 @@
     "photoUnavailable": "Photo unavailable",
     "openVideo": "Play video",
     "morePhotos": "{{count}} more photos",
-    "openWorldMap": "Explore places on the map",
-    "closeWorldMap": "Close map",
     "worldMapTitle": "Where you've written",
-    "worldMapPreviewAria": "Miniature world map of journal places",
     "worldMapHint": "{{count}} days with places — tap a pin to jump, or a cluster to filter those days",
     "worldMapEmpty": "No mapped places yet. Add places on daily entries to see them here.",
     "mapPinAria": "{{place}} on {{date}}",
     "mapClusterAria": "{{count}} days near {{place}}",
+    "views": {
+      "label": "Ways to browse your journal",
+      "feed": "Feed",
+      "calendar": "Calendar",
+      "map": "Map",
+      "gallery": "Gallery"
+    },
+    "calendar": {
+      "hint": "Pick a day to read it here. A dot marks a day you wrote; a heart marks one you hearted.",
+      "noEntry": "No entry for {{date}} in this view.",
+      "openDay": "Open this day"
+    },
+    "gallery": {
+      "empty": "No photos here",
+      "emptyHelper": "Photos you add to a day or a memory gather here by month.",
+      "photoOf": "Photo from {{date}}",
+      "clipOf": "Clip from {{date}}",
+      "previous": "Previous",
+      "next": "Next",
+      "openDay": "Open this day",
+      "showMemory": "Show in Journal",
+      "clipOffline": "Connect to the internet to play this clip."
+    },
     "filters": {
       "clear": "Clear",
       "dates": {

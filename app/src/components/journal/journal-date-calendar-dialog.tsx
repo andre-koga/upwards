@@ -1,20 +1,8 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ComponentProps,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Heart } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import {
-  fromDateString,
-  toDateString,
-  todayDateString,
-} from "@/lib/time-utils";
+import JournalMarkedCalendar from "@/components/journal/journal-marked-calendar";
+import { fromDateString, todayDateString } from "@/lib/time-utils";
 
 export interface JournalDateCalendarDialogProps {
   open: boolean;
@@ -55,41 +43,6 @@ export function JournalDateCalendarDialog({
     onOpenChange(false);
   };
 
-  const calendarComponents = useMemo(
-    () => ({
-      DayButton: ({
-        day,
-        modifiers,
-        className,
-        ...props
-      }: ComponentProps<typeof CalendarDayButton>) => {
-        const d = day.date;
-        const dateStr = toDateString(d);
-        const isBookmarked = bookmarkedDates.has(dateStr);
-        const hasEntry = entryDates.has(dateStr);
-        return (
-          <CalendarDayButton
-            day={day}
-            modifiers={modifiers}
-            className={cn("relative", className)}
-            {...props}
-          >
-            {props.children}
-            {isBookmarked ? (
-              <Heart
-                className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 fill-red-600 text-red-600"
-                style={{ width: 10, height: 10 }}
-              />
-            ) : hasEntry ? (
-              <span className="pointer-events-none absolute bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-muted-foreground" />
-            ) : null}
-          </CalendarDayButton>
-        );
-      },
-    }),
-    [entryDates, bookmarkedDates]
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -97,7 +50,9 @@ export function JournalDateCalendarDialog({
         className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2"
       >
         <DialogTitle className="sr-only">{t("pickDate")}</DialogTitle>
-        <Calendar
+        <JournalMarkedCalendar
+          entryDates={entryDates}
+          bookmarkedDates={bookmarkedDates}
           mode="single"
           selected={currentDate}
           onSelect={handleDaySelect}
@@ -109,7 +64,6 @@ export function JournalDateCalendarDialog({
           endMonth={effectiveToday}
           fixedWeeks
           className="w-full [--cell-size:3rem]"
-          components={calendarComponents}
         />
       </DialogContent>
     </Dialog>

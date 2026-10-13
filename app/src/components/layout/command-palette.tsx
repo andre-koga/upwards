@@ -13,10 +13,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ShortcutChip } from "@/components/layout/shortcut-chip";
+import { useRecordCommands } from "@/components/layout/use-record-commands";
 
-export type PaletteGroup = "go" | "actions" | "appearance";
+export type PaletteGroup = "go" | "record" | "actions" | "appearance";
 
-const GROUP_ORDER: readonly PaletteGroup[] = ["go", "actions", "appearance"];
+const GROUP_ORDER: readonly PaletteGroup[] = [
+  "go",
+  "record",
+  "actions",
+  "appearance",
+];
 
 export interface PaletteCommand extends SearchableCommand {
   id: string;
@@ -24,6 +30,8 @@ export interface PaletteCommand extends SearchableCommand {
   icon: LucideIcon;
   /** Digit of the ⌘/Ctrl shortcut, shown as a hint. */
   shortcut?: string;
+  /** Quiet text after the label: where a journal result sits in the record. */
+  detail?: string;
   run: () => void;
 }
 
@@ -71,13 +79,16 @@ function PaletteBody({
   const [activeIndex, setActiveIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // Pages and commands are ranked by what was typed; journal results are
+  // already the matches, so they are added after ranking, not filtered again.
+  const { commands: recordCommands, searching } = useRecordCommands(query);
   const sections = useMemo(() => {
-    const ranked = filterCommands(commands, query);
+    const all = [...filterCommands(commands, query), ...recordCommands];
     return GROUP_ORDER.map((group) => ({
       group,
-      items: ranked.filter((c) => c.group === group),
+      items: all.filter((c) => c.group === group),
     })).filter((section) => section.items.length > 0);
-  }, [commands, query]);
+  }, [commands, query, recordCommands]);
 
   const flat = useMemo(
     () => sections.flatMap((section) => section.items),
@@ -137,6 +148,11 @@ function PaletteBody({
         }}
         className="h-12 w-full select-text border-b border-border bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground"
       />
+      <p role="status" className="sr-only">
+        {query.trim() && !searching
+          ? t("palette.resultCount", { count: flat.length })
+          : ""}
+      </p>
       <div
         id={listId}
         ref={listRef}
@@ -149,7 +165,9 @@ function PaletteBody({
             role="status"
             className="px-3 py-6 text-center text-sm text-muted-foreground"
           >
-            {t("palette.empty", { query: query.trim() })}
+            {searching
+              ? t("palette.searching")
+              : t("palette.empty", { query: query.trim() })}
           </p>
         ) : (
           sections.map((section) => {
@@ -189,6 +207,11 @@ function PaletteBody({
                     >
                       <Icon className="h-4 w-4 shrink-0" aria-hidden />
                       <span className="flex-1 truncate">{command.label}</span>
+                      {command.detail ? (
+                        <span className="shrink-0 text-xs opacity-80">
+                          {command.detail}
+                        </span>
+                      ) : null}
                       {command.shortcut ? (
                         <ShortcutChip keys={command.shortcut} />
                       ) : null}
