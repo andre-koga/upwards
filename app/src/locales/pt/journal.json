@@ -149,6 +149,28 @@
     "deleteConfirmDescription": "Remover \"{{name}}\" deste dia?",
     "save": "Salvar lugares"
   },
+  "versions": {
+    "title": "Versões anteriores",
+    "description": "Versões anteriores de {{date}}. Ao restaurar uma, a versão que ela substitui é guardada, então você sempre pode voltar.",
+    "open_one": "Ver a versão anterior deste dia",
+    "open_other": "Ver as {{count}} versões anteriores deste dia",
+    "loading": "Carregando versões anteriores...",
+    "loadError": "Não foi possível carregar as versões anteriores.",
+    "empty": "Nada por aqui ainda. Quando você altera um dia mais antigo, o texto e as fotos que ele tinha ficam guardados aqui.",
+    "replaced": "Substituída em {{when}}",
+    "sameAsNow": "Igual à atual",
+    "restore": "Restaurar",
+    "restoreLabel": "Restaurar a versão substituída em {{when}}",
+    "restoringChanges": "Restaurar altera: {{changes}}.",
+    "morePhotos": "+{{count}}",
+    "clip": "Clipe",
+    "notice": {
+      "restored": "Restaurada. A versão que ela substituiu está guardada nesta lista.",
+      "unchanged": "Este dia já está igual a essa versão.",
+      "missing": "Essa versão não está mais disponível.",
+      "error": "Não foi possível restaurar essa versão. Nada foi alterado."
+    }
+  },
   "oldDay": {
     "title": "Salvar alterações em {{date}}?",
     "reassurance": "A versão anterior é guardada e você pode recuperá-la depois.",

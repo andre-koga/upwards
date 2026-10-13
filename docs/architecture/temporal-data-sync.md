@@ -229,6 +229,9 @@ Actions and facts that accumulate over time remain recorded:
   replay reports `duplicate`), it has no `base_revision`, and RLS allows insert
   and select only. Revisions reference their entry by `entry_date`, not by a
   foreign key, because the journal is keyed by `(user_id, entry_date)`.
+  Restoring a previous version is also an overwrite, so it appends one more
+  revision holding the values it replaces; restoring writes the current journal
+  row like any other edit and deletes nothing.
 - Attachment added or removed
 
 Every sync operation still has a globally unique `operation_id`. Prefer

@@ -388,6 +388,8 @@ export function useJournalEntry(currentDate: Date) {
         ? isJournalEntryComplete(journalEntry)
         : false,
       videoThumbnail: journalEntry?.video_thumbnail ?? null,
+      /** Changes whenever the saved entry does; hosts use it to re-read what hangs off the entry. */
+      entryUpdatedAt: journalEntry?.updated_at ?? null,
       /** Parsed `journalEntries.location`; updates with `journalEntry` (not one effect behind draft state). */
       persistedLocationRoute,
       persistedLocations: persistedLocationRoute.locations,

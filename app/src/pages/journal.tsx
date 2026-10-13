@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useJournalArchive } from "@/hooks/use-journal-archive";
 import JournalArchiveEntry from "@/components/journal/journal-archive-entry";
 import JournalArchiveBanner from "@/components/journal/journal-archive-banner";
+import JournalVersionsDialog from "@/components/journal/journal-versions-dialog";
+import { useJournalRevisionSummaries } from "@/hooks/use-journal-revision-summaries";
 import JournalArchiveMemory from "@/components/journal/journal-archive-memory";
 import { DeletedMemoriesDialog } from "@/components/memories/deleted-memories-dialog";
 import { MemoryEditDialog } from "@/components/memories/memory-edit-dialog";
@@ -57,6 +59,10 @@ export default function JournalPage() {
     { memory: Memory; isNew: boolean } | undefined
   >(undefined);
   const [deletedOpen, setDeletedOpen] = useState(false);
+  // The day whose earlier versions are open, if any.
+  const [versionsDate, setVersionsDate] = useState<string | null>(null);
+  const { summaries: revisionSummaries, reload: reloadRevisions } =
+    useJournalRevisionSummaries();
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -336,6 +342,8 @@ export default function JournalPage() {
                 key={item.entry.id}
                 entry={item.entry}
                 highlighted={focusEntryDate === item.entry.entry_date}
+                revisions={revisionSummaries.get(item.entry.entry_date)}
+                onOpenVersions={setVersionsDate}
               />
             );
           })}
@@ -367,6 +375,18 @@ export default function JournalPage() {
         memories={trashedMemories}
         onChanged={() => void reload()}
       />
+
+      {versionsDate ? (
+        <JournalVersionsDialog
+          open
+          onOpenChange={(open) => !open && setVersionsDate(null)}
+          entryDate={versionsDate}
+          onRestored={() => {
+            void reload();
+            void reloadRevisions();
+          }}
+        />
+      ) : null}
 
       <FloatingBackButton to="/" title={tNav("home")} />
     </AppPageShell>

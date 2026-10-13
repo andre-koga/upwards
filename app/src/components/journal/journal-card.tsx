@@ -27,6 +27,8 @@ import JournalEditDialog from "@/components/journal/journal-edit-dialog";
 import JournalLocationsDialog from "@/components/journal/journal-locations-dialog";
 import JournalLocationMapPicker from "@/components/journal/journal-location-map-picker";
 import JournalMetaBar from "@/components/journal/journal-meta-bar";
+import JournalVersionsDialog from "@/components/journal/journal-versions-dialog";
+import { useJournalRevisionSummaries } from "@/hooks/use-journal-revision-summaries";
 import JournalPhotoStack from "@/components/journal/journal-photo-stack";
 import type { LocationData } from "@/lib/db/types";
 
@@ -45,6 +47,7 @@ export default function JournalCard({
   const [journalEditOpen, setJournalEditOpen] = useState(false);
   const [journalLocationsOpen, setJournalLocationsOpen] = useState(false);
   const [placesMapOpen, setPlacesMapOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
   const [suppressJournalOpenHitArea, setSuppressJournalOpenHitArea] =
     useState(false);
   const isOnline = useOnlineStatus();
@@ -58,6 +61,9 @@ export default function JournalCard({
   const clipEnabled = useAccountSettings().dailyClip === true;
   const dateString = toDateString(currentDate);
   const isCurrentDay = dateString === todayDateString();
+  // Re-read after each save: a confirmed edit to an old day appends a version.
+  const { summaries: revisionSummaries, reload: reloadRevisions } =
+    useJournalRevisionSummaries(journal.entryUpdatedAt);
 
   const videoPlaybackSrc = getJournalVideoPlaybackUrl(journal.draftVideoPath);
 
@@ -306,8 +312,26 @@ export default function JournalCard({
           />
         ) : null}
 
-        <JournalMetaBar journal={journal} onEditRequest={openJournalEditor} />
+        <JournalMetaBar
+          journal={journal}
+          onEditRequest={openJournalEditor}
+          revisions={revisionSummaries.get(dateString)}
+          onOpenVersions={() => setVersionsOpen(true)}
+        />
       </div>
+      {/* Outside the card: pointer events in a portal bubble through React, and
+          a long press here would otherwise heart the day. */}
+      {versionsOpen ? (
+        <JournalVersionsDialog
+          open
+          onOpenChange={(open) => !open && setVersionsOpen(false)}
+          entryDate={dateString}
+          onRestored={() => {
+            void loadJournalEntry({ background: true });
+            void reloadRevisions();
+          }}
+        />
+      ) : null}
     </>
   );
 }
