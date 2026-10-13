@@ -16,6 +16,8 @@ import JournalVideoSection from "@/components/journal/journal-video-section";
 import JournalLocationMapPicker from "@/components/journal/journal-location-map-picker";
 import MediaLightbox from "@/components/journal/media-lightbox";
 import JournalArchivePhotoGrid from "@/components/journal/journal-archive-photos";
+import JournalEditedNote from "@/components/journal/journal-edited-note";
+import type { RevisionSummary } from "@/lib/journal/revisions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -23,11 +25,16 @@ interface JournalArchiveEntryProps {
   entry: JournalEntry;
   /** Briefly emphasize the entry after jumping from the world map. */
   highlighted?: boolean;
+  /** Present when the day was changed after the fact and has earlier versions. */
+  revisions?: RevisionSummary;
+  onOpenVersions?: (entryDate: string) => void;
 }
 
 export default function JournalArchiveEntry({
   entry,
   highlighted = false,
+  revisions,
+  onOpenVersions,
 }: JournalArchiveEntryProps) {
   const { t } = useTranslation("journal");
   const navigate = useNavigate();
@@ -163,6 +170,15 @@ export default function JournalArchiveEntry({
               <JournalArchivePhotoGrid photoPaths={photoPaths} />
             </div>
           )}
+
+          {revisions && onOpenVersions ? (
+            <div className="px-1 pb-1">
+              <JournalEditedNote
+                summary={revisions}
+                onOpen={() => onOpenVersions(entry.entry_date)}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
 

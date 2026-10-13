@@ -155,9 +155,20 @@ to forbid editing. It is replaced with protection that does not block anyone:
   the session began. "Keep editing" grants nothing and leaves the draft. Timers
   are not day edits (starting from a past day starts today's session).
 - **Shipped in A5:** the lock is gone, the prompt, and the revisions
-  (recorded, synced, backed up). **Not yet:** the "Previous versions" list with
-  restore and the muted "edited" note, both in B3, which reads the revisions
-  A5 records.
+  (recorded, synced, backed up).
+- **Shipped in B3b:** the "Previous versions" list with restore, and the muted
+  "Edited 2 Oct 2026" note that opens it (`lib/journal/revisions.ts`,
+  `journal-versions-dialog.tsx`, `journal-edited-note.tsx`). The note shows on
+  the day's card and on its Journal feed entry, only when the day has versions;
+  its date is the moment the newest version was recorded, which is when the last
+  confirmed edit began. The list shows each version newest first, in the day's
+  editorial voice, with what restoring it would change. **Restoring is itself an
+  overwrite, so it keeps what it replaces as a new version** (no second
+  confirmation is needed, because nothing is lost and the way back is the same
+  list). A restore brings back the title, emoji, text, photos and clip only:
+  hearts and places are not part of a version and stay as they are. Nothing is
+  deleted by a restore, including photos the restored version no longer uses.
+  If the day's row is gone, restoring recreates it from the version.
 - An entry's date is always `entry_date`; editing never moves it in the record.
   A muted "edited 2 Oct 2026" note shows when an old entry was changed.
 - Remove `lib/journal/editable-window.ts` and the `isLockedHistoricalSession`
@@ -920,8 +931,10 @@ Track B gets its own breakdown before it starts. Its shape:
     covers the whole of its year. Add, edit and trash live in the Journal; the
     trash has restore and permanent delete (`DeletedMemoriesDialog`). An
     explicit anchor field would be a data-model decision for later.
-  - **B3b:** previous versions with restore and the muted "edited" note
-    (reads `journal_entry_revisions`).
+  - **B3b (done 2026-10-13):** previous versions with restore and the muted
+    "edited" note (reads `journal_entry_revisions`); see §2.3. The list opens
+    from the note in the day card and in the Journal feed; a command-palette
+    entry for it waits for record search in B3c.
   - **B3c:** Calendar / Map / Gallery view modes, the real two-column desktop
     layout, and record search in the palette.
   - **B3d:** generated month and holiday banner images.

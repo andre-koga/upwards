@@ -149,6 +149,28 @@
     "deleteConfirmDescription": "Remove \"{{name}}\" from this day?",
     "save": "Save places"
   },
+  "versions": {
+    "title": "Previous versions",
+    "description": "Earlier versions of {{date}}. Restoring one keeps the version it replaces, so you can always go back.",
+    "open_one": "See the earlier version of this day",
+    "open_other": "See the {{count}} earlier versions of this day",
+    "loading": "Loading earlier versions...",
+    "loadError": "Could not load earlier versions.",
+    "empty": "Nothing here yet. When you change an older day, the words and photos it had before are kept here.",
+    "replaced": "Replaced {{when}}",
+    "sameAsNow": "Same as now",
+    "restore": "Restore",
+    "restoreLabel": "Restore the version replaced {{when}}",
+    "restoringChanges": "Restoring changes: {{changes}}.",
+    "morePhotos": "+{{count}} more",
+    "clip": "Clip",
+    "notice": {
+      "restored": "Restored. The version it replaced is kept in this list.",
+      "unchanged": "This day already matches that version.",
+      "missing": "That version is no longer available.",
+      "error": "Could not restore that version. Nothing was changed."
+    }
+  },
   "oldDay": {
     "title": "Save changes to {{date}}?",
     "reassurance": "The earlier version is kept, and you can bring it back later.",
