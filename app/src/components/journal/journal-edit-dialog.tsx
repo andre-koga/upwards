@@ -260,7 +260,6 @@ export default function JournalEditDialog({
             autoFocus
             type="text"
             value={emoji}
-            maxLength={4}
             onChange={(e) => setEmoji(getFirstEmoji(e.target.value))}
             placeholder="🙂"
             className="h-16 w-16 rounded-full border bg-background text-center text-3xl placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
