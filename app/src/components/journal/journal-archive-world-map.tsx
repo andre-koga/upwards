@@ -6,10 +6,9 @@ import {
   type PointerEvent as ReactPointerEvent,
   type WheelEvent as ReactWheelEvent,
 } from "react";
-import { Expand, Globe2, ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import MediaLightbox from "@/components/journal/media-lightbox";
 import {
   clusterJournalArchiveMapPins,
   type JournalArchiveMapPin,
@@ -100,12 +99,6 @@ export interface JournalArchiveMapClusterSelection {
   placeLabel: string;
 }
 
-interface JournalArchiveWorldMapProps {
-  pins: JournalArchiveMapPin[];
-  onSelectCluster: (selection: JournalArchiveMapClusterSelection) => void;
-  className?: string;
-}
-
 interface WorldMapSurfaceProps {
   pins: JournalArchiveMapPin[];
   className?: string;
@@ -113,8 +106,11 @@ interface WorldMapSurfaceProps {
   fitBounds: boolean;
   interactive: boolean;
   fullscreen?: boolean;
-  showExpandButton?: boolean;
-  onOpenFullscreen?: () => void;
+  /**
+   * Whether the scroll wheel zooms the map. Off when the map sits inside a
+   * scrolling page, so scrolling past it still scrolls the page.
+   */
+  captureWheel?: boolean;
   onSelectCluster?: (selection: JournalArchiveMapClusterSelection) => void;
 }
 
@@ -125,8 +121,7 @@ function WorldMapSurface({
   fitBounds,
   interactive,
   fullscreen = false,
-  showExpandButton = false,
-  onOpenFullscreen,
+  captureWheel = interactive,
   onSelectCluster,
 }: WorldMapSurfaceProps) {
   const { t } = useTranslation("journal");
@@ -168,10 +163,7 @@ function WorldMapSurface({
   );
 
   const pinsKey = useMemo(
-    () =>
-      pins
-        .map((pin) => `${pin.entryId}:${pin.lat}:${pin.lon}`)
-        .join("|"),
+    () => pins.map((pin) => `${pin.entryId}:${pin.lat}:${pin.lon}`).join("|"),
     [pins]
   );
 
@@ -349,7 +341,7 @@ function WorldMapSurface({
   };
 
   const handleWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
-    if (!interactive) return;
+    if (!interactive || !captureWheel) return;
     event.stopPropagation();
     event.preventDefault();
     zoomBy(event.deltaY > 0 ? -1 : 1);
@@ -419,8 +411,8 @@ function WorldMapSurface({
                     ? "h-8 min-w-8 px-1.5"
                     : "h-7 w-7"
                   : isCluster
-                    ? "h-4 min-w-4 px-0.5 pointer-events-none"
-                    : "h-3 w-3 pointer-events-none"
+                    ? "pointer-events-none h-4 min-w-4 px-0.5"
+                    : "pointer-events-none h-3 w-3"
               )}
               style={{ left, top }}
               onPointerDown={(event) => {
@@ -437,7 +429,7 @@ function WorldMapSurface({
             >
               {fullscreen ? (
                 isCluster ? (
-                  <span className="leading-none tabular-nums" aria-hidden>
+                  <span className="tabular-nums leading-none" aria-hidden>
                     {count}
                   </span>
                 ) : (
@@ -446,7 +438,10 @@ function WorldMapSurface({
                   </span>
                 )
               ) : isCluster ? (
-                <span className="scale-75 leading-none tabular-nums" aria-hidden>
+                <span
+                  className="scale-75 tabular-nums leading-none"
+                  aria-hidden
+                >
                   {count}
                 </span>
               ) : null}
@@ -454,26 +449,6 @@ function WorldMapSurface({
           );
         })}
       </div>
-
-      {showExpandButton ? (
-        <Button
-          type="button"
-          variant="secondary"
-          size="icon"
-          className="absolute bottom-2 left-2 z-10 h-9 w-9 bg-background shadow-sm"
-          onPointerDown={stopControlPointer}
-          onPointerUp={stopControlPointer}
-          onPointerCancel={stopControlPointer}
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpenFullscreen?.();
-          }}
-          title={t("archive.openWorldMap")}
-          aria-label={t("archive.openWorldMap")}
-        >
-          <Expand className="h-4 w-4" aria-hidden />
-        </Button>
-      ) : null}
 
       {fullscreen ? (
         <div className="absolute bottom-3 right-3 z-10 flex flex-col overflow-hidden rounded-md border bg-background shadow-sm">
@@ -524,69 +499,33 @@ function WorldMapSurface({
 }
 
 /**
- * Compact globe control for the journal archive search row.
- * Opens a fullscreen world map of days with places; pin/cluster taps
- * jump to a day or filter the list to that location.
+ * The Map view of the record: every day with a place, on a map that fills the
+ * view. A pin opens that day in the feed; a cluster filters the feed to those
+ * days. Pins are buttons, so the map can be used without dragging it.
  */
-export default function JournalArchiveWorldMap({
+export default function JournalArchiveMapView({
   pins,
   onSelectCluster,
   className,
-}: JournalArchiveWorldMapProps) {
+}: {
+  pins: JournalArchiveMapPin[];
+  onSelectCluster: (selection: JournalArchiveMapClusterSelection) => void;
+  className?: string;
+}) {
   const { t } = useTranslation("journal");
-  const [fullscreenOpen, setFullscreenOpen] = useState(false);
-
-  const handleSelect = (selection: JournalArchiveMapClusterSelection) => {
-    setFullscreenOpen(false);
-    onSelectCluster(selection);
-  };
-
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setFullscreenOpen(true)}
-        className={cn(
-          "relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-border bg-muted shadow-none transition-opacity hover:opacity-90",
-          className
-        )}
-        title={t("archive.openWorldMap")}
-        aria-label={t("archive.openWorldMap")}
-      >
-        <WorldMapSurface
-          pins={pins}
-          className="h-full w-full"
-          ariaLabel={t("archive.worldMapPreviewAria")}
-          fitBounds={false}
-          interactive={false}
-        />
-        <span className="pointer-events-none absolute inset-0 flex items-end justify-end p-1">
-          <span className="rounded-full bg-background/90 p-0.5 text-muted-foreground shadow-sm">
-            <Globe2 className="h-3 w-3" aria-hidden />
-          </span>
-        </span>
-      </button>
-
-      <MediaLightbox
-        open={fullscreenOpen}
-        onOpenChange={setFullscreenOpen}
-        title={t("archive.worldMapTitle")}
-        closeLabel={t("archive.closeWorldMap")}
-        contentClassName="h-full max-h-full w-full max-w-none p-3 sm:p-6"
-        onPointerDownOutside={(event) => event.preventDefault()}
-      >
-        <div className="h-full min-h-0 w-full overflow-hidden rounded-xl border bg-background shadow-2xl">
-          <WorldMapSurface
-            pins={pins}
-            className="h-full rounded-none border-0"
-            ariaLabel={t("archive.worldMapTitle")}
-            fitBounds={pins.length > 0}
-            interactive
-            fullscreen
-            onSelectCluster={handleSelect}
-          />
-        </div>
-      </MediaLightbox>
-    </>
+    <WorldMapSurface
+      pins={pins}
+      className={cn(
+        "h-[min(65dvh,40rem)] min-h-72 rounded-xl border border-border",
+        className
+      )}
+      ariaLabel={t("archive.worldMapTitle")}
+      fitBounds={pins.length > 0}
+      interactive
+      fullscreen
+      captureWheel={false}
+      onSelectCluster={onSelectCluster}
+    />
   );
 }

@@ -92,9 +92,10 @@ notice are gone. `components/layout/app-shell.tsx` now owns the frame:
   sidebar. Bottom sheets are capped at `max-w-xl` and centered from `md`.
 - `⌘/Ctrl+K` opens a command palette (a Dialog with a combobox/listbox; filter
   logic in `lib/navigation/filter-commands.ts`). It covers destinations, send
-  feedback, and appearance. Searching the record (entries, memos, activities,
-  places) arrives with the Journal archive search (B3). `⌘/Ctrl+1`-`4` open the
-  tabs and are ignored while a dialog is open.
+  feedback, and appearance, and, from two characters typed, the journal record:
+  days and memories that match, newest first (B3c). Memos, activities and
+  sessions join once each has a destination that can open one item.
+  `⌘/Ctrl+1`-`4` open the tabs and are ignored while a dialog is open.
 - Destinations and which tab owns a route live in `lib/navigation/destinations.ts`.
   The "You" tab opens Settings until the compass (B5) exists.
 - The primary nav and "more" list are `<nav>` landmarks, the active item has

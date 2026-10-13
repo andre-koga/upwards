@@ -935,8 +935,39 @@ Track B gets its own breakdown before it starts. Its shape:
     "edited" note (reads `journal_entry_revisions`); see §2.3. The list opens
     from the note in the day card and in the Journal feed; a command-palette
     entry for it waits for record search in B3c.
-  - **B3c:** Calendar / Map / Gallery view modes, the real two-column desktop
-    layout, and record search in the palette.
+  - **B3c (done 2026-10-13):** the Calendar, Map and Gallery view modes, and
+    record search in the command palette. The two-column desktop layout moved
+    to B3c2 below, because it is built on these views.
+    - *Views.* A Feed / Calendar / Map / Gallery switcher under the search
+      (`ui/tabs.tsx`), kept in the address as `?view=` so Back, reload and a
+      shared link land on the same view. The search and the filter chips apply
+      to every view, so each shows the same slice of the one record.
+      **Calendar:** a month at a time with a dot on days that have something
+      written and a heart on hearted ones (the markers the date picker uses,
+      now `JournalMarkedCalendar`); picking a day reads it in place with the
+      feed's card, and a day with nothing offers to open it on Today.
+      **Map:** the places of the days in view on a map that fills the view
+      (the compact globe button and its fullscreen map are gone); a pin or
+      cluster switches to the Feed and shows those days. The scroll wheel is
+      not captured, so the page still scrolls past it. **Gallery:**
+      `lib/journal/view-modes.ts` groups every photo by the month of its day,
+      newest first, and clips too when the daily clip is on; photos from
+      memories follow the months, grouped by the year in their own words.
+      Each opens large with its day and a way to read it.
+    - *Memories in the views.* A memory has no day and no place, so the
+      Calendar and Map leave it out; the Gallery is the one view that places
+      its photos. This is a property of memories, not a dropped feature.
+    - *Palette.* `⌘K` now searches the record: days and memories that match
+      (the Journal search's own rules: title, text, emoji, places, date,
+      holiday) appear under "From your journal" after two characters, newest
+      first, with where each sits in the record. Choosing one opens the Journal
+      feed at that card (`/journal?focus=<date>` or `?memory=<id>`). It is a
+      local read, so it works offline. **Not in this slice:** memos,
+      activities and sessions in the palette; none has a destination that can
+      open a single item yet.
+  - **B3c2:** the real two-column desktop layout for the Journal (a reader or
+    the picked day beside the list, a context rail), replacing the interim
+    page-column cap on that route.
   - **B3d:** generated month and holiday banner images.
 - **B4.** Home: AI insight surfaces on the existing AI groundwork.
 - **B5.** You / compass and onboarding, including the one-time daily clip and

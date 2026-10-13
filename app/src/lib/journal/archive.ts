@@ -17,6 +17,19 @@ import { getActiveLocaleTag } from "@/lib/i18n";
 /** sessionStorage key used when jumping from the archive feed to a specific day. */
 export const JOURNAL_JUMP_DATE_KEY = "okhabit:journal-jump-date";
 
+/**
+ * Ask Today to open `date` the next time it loads. The caller then navigates to
+ * Today. Storage can be unavailable (private mode, full quota); the jump is a
+ * convenience, so that is ignored.
+ */
+export function rememberJournalJumpDate(date: string): void {
+  try {
+    sessionStorage.setItem(JOURNAL_JUMP_DATE_KEY, date);
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 export function journalEntryHasContent(entry: JournalEntry): boolean {
   if (entry.deleted_at) return false;
   if (entry.day_emoji?.trim()) return true;

@@ -12,8 +12,8 @@ function words(text: string): string[] {
 
 /**
  * The palette's commands: every destination, send feedback, and appearance.
- * Searching the record itself (entries, memos, activities, places) arrives
- * with the Journal archive search (B3); this is the navigation layer.
+ * Journal results (days and memories) come from `useRecordCommands`; this is
+ * the navigation layer.
  */
 export function usePaletteCommands(onOpenFeedback: () => void) {
   const { t } = useTranslation("nav");

@@ -54,12 +54,14 @@
   "palette": {
     "open": "Buscar e comandos",
     "title": "Paleta de comandos",
-    "description": "Vá para uma página ou execute um comando.",
-    "inputLabel": "Buscar comandos e páginas",
-    "placeholder": "Vá para uma página ou execute um comando…",
+    "description": "Vá para uma página, execute um comando ou encontre um dia ou uma memória do diário.",
+    "inputLabel": "Buscar páginas, comandos e o diário",
+    "placeholder": "Vá para uma página, execute um comando ou busque no diário…",
+    "searching": "Buscando no diário…",
     "empty": "Nada corresponde a “{{query}}”.",
     "groups": {
       "go": "Ir para",
+      "record": "Do seu diário",
       "actions": "Ações",
       "appearance": "Aparência"
     },
@@ -81,6 +83,8 @@
       "feedback": "sugestão bug ideia",
       "theme": "tema escuro claro modo aparência"
     },
+    "resultCount_one": "{{count}} resultado",
+    "resultCount_other": "{{count}} resultados",
     "openShort": "Buscar"
   }
 }

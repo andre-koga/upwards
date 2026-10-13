@@ -39,6 +39,7 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [focusEntryDate, setFocusEntryDate] = useState<string | null>(null);
+  const [focusMemoryId, setFocusMemoryId] = useState<string | null>(null);
   const filterKey = `${locale}\0${journalArchiveFiltersKey(filters)}`;
   const [activeFilterKey, setActiveFilterKey] = useState(filterKey);
 
@@ -94,9 +95,11 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
     [filteredEntries, filteredMemories, locale, calendars, birthday]
   );
 
+  // The map shows the days the search and filters leave in, like every other
+  // view of the record.
   const mapPins: JournalArchiveMapPin[] = useMemo(
-    () => collectJournalArchiveMapPins(allEntries),
-    [allEntries]
+    () => collectJournalArchiveMapPins(filteredEntries),
+    [filteredEntries]
   );
 
   const availableYears = useMemo(() => {
@@ -151,23 +154,47 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
     setPage((n) => n + 1);
   }, []);
 
+  // Where a record sits in the feed decides how many pages must be showing
+  // before it exists in the page. Days and memories are interleaved, so count
+  // both.
+  const pageNeededFor = useCallback(
+    (matches: (item: JournalArchiveItem) => boolean) => {
+      const index = fullFeed.filter(isArchiveRecord).findIndex(matches);
+      return index >= 0
+        ? Math.floor(index / JOURNAL_ARCHIVE_PAGE_SIZE) + 1
+        : null;
+    },
+    [fullFeed]
+  );
+
   const revealEntryDate = useCallback(
     (entryDate: string) => {
-      const dates = [...allEntries]
-        .sort((a, b) => b.entry_date.localeCompare(a.entry_date))
-        .map((entry) => entry.entry_date);
-      const index = dates.indexOf(entryDate);
-      if (index >= 0) {
-        const neededPage = Math.floor(index / JOURNAL_ARCHIVE_PAGE_SIZE) + 1;
-        setPage((current) => Math.max(current, neededPage));
-      }
+      const needed = pageNeededFor(
+        (item) => item.kind === "entry" && item.entry.entry_date === entryDate
+      );
+      if (needed !== null) setPage((current) => Math.max(current, needed));
       setFocusEntryDate(entryDate);
     },
-    [allEntries]
+    [pageNeededFor]
+  );
+
+  const revealMemory = useCallback(
+    (memoryId: string) => {
+      const needed = pageNeededFor(
+        (item) => item.kind === "memory" && item.memory.id === memoryId
+      );
+      if (needed !== null) setPage((current) => Math.max(current, needed));
+      setFocusMemoryId(memoryId);
+    },
+    [pageNeededFor]
   );
 
   const clearFocusEntryDate = useCallback(() => {
     setFocusEntryDate(null);
+  }, []);
+
+  const clearFocusMemoryId = useCallback(() => {
+    setFocusMemoryId(null);
   }, []);
 
   return {
@@ -182,9 +209,14 @@ export function useJournalArchive(filters: JournalArchiveFilters) {
     availableYears,
     entryDates,
     bookmarkedDates,
+    matchingEntries: filteredEntries,
+    matchingMemories: filteredMemories,
     focusEntryDate,
     revealEntryDate,
     clearFocusEntryDate,
+    focusMemoryId,
+    revealMemory,
+    clearFocusMemoryId,
     reload: loadEntries,
   };
 }

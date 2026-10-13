@@ -54,12 +54,14 @@
   "palette": {
     "open": "Search and commands",
     "title": "Command palette",
-    "description": "Jump to a page or run a command.",
-    "inputLabel": "Search commands and pages",
-    "placeholder": "Go to a page or run a command…",
+    "description": "Jump to a page, run a command, or find a day or memory in your journal.",
+    "inputLabel": "Search pages, commands and your journal",
+    "placeholder": "Go to a page, run a command, or search your journal…",
+    "searching": "Searching your journal…",
     "empty": "Nothing matches “{{query}}”.",
     "groups": {
       "go": "Go to",
+      "record": "From your journal",
       "actions": "Actions",
       "appearance": "Appearance"
     },
@@ -81,6 +83,8 @@
       "feedback": "request bug idea",
       "theme": "theme dark light mode appearance"
     },
+    "resultCount_one": "{{count}} result",
+    "resultCount_other": "{{count}} results",
     "openShort": "Search"
   }
 }
