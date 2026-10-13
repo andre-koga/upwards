@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { orderActivitiesForToday } from "./today-order";
+import {
+  canMoveActivity,
+  orderActivitiesForToday,
+  planActivityMove,
+} from "./today-order";
 
 let created = 0;
 function activity(
@@ -155,5 +159,131 @@ describe("orderActivitiesForToday with an AI ranking", () => {
   it("is the plain order with an empty or missing ranking", () => {
     const plain = ids(orderActivitiesForToday(list(), {}));
     expect(ids(orderActivitiesForToday(list(), {}, []))).toEqual(plain);
+  });
+});
+
+describe("orderActivitiesForToday with done habits kept in place", () => {
+  it("leaves a done habit where the stored order puts it", () => {
+    const list = [
+      activity("a", { order_index: 0 }),
+      activity("b", { order_index: 1 }),
+      activity("c", { order_index: 2 }),
+    ];
+    expect(
+      ids(
+        orderActivitiesForToday(list, { a: 1 }, undefined, { doneLast: false })
+      )
+    ).toEqual(["a", "b", "c"]);
+    expect(ids(orderActivitiesForToday(list, { a: 1 }))).toEqual([
+      "b",
+      "c",
+      "a",
+    ]);
+  });
+
+  it("still puts pins first", () => {
+    const list = [
+      activity("a", { order_index: 0 }),
+      activity("b", { order_index: 1, is_pinned: true }),
+    ];
+    expect(
+      ids(orderActivitiesForToday(list, {}, undefined, { doneLast: false }))
+    ).toEqual(["b", "a"]);
+  });
+
+  it("drops the AI ranking back to the stored order", () => {
+    const list = [
+      activity("a", { order_index: 0 }),
+      activity("b", { order_index: 1 }),
+      activity("c", { order_index: 2 }),
+    ];
+    expect(ids(orderActivitiesForToday(list, {}, ["c", "b", "a"]))).toEqual([
+      "c",
+      "b",
+      "a",
+    ]);
+    expect(ids(orderActivitiesForToday(list, {}))).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("planActivityMove", () => {
+  const rows = () => [
+    activity("a", { order_index: 0 }),
+    activity("b", { order_index: 2 }),
+    activity("hidden", { order_index: 3 }),
+    activity("c", { order_index: 5 }),
+  ];
+  const today = (all: ReturnType<typeof rows>) =>
+    all.filter((row) => row.id !== "hidden");
+
+  it("swaps the numbers of two distinct neighbours", () => {
+    const all = rows();
+    const shown = orderActivitiesForToday(today(all), {});
+    expect(planActivityMove(all, shown, "b", -1, {})).toEqual([
+      { id: "b", order_index: 0 },
+      { id: "a", order_index: 2 },
+    ]);
+    expect(planActivityMove(all, shown, "b", 1, {})).toEqual([
+      { id: "b", order_index: 5 },
+      { id: "c", order_index: 2 },
+    ]);
+  });
+
+  it("does nothing at the ends of the list", () => {
+    const all = rows();
+    const shown = orderActivitiesForToday(today(all), {});
+    expect(planActivityMove(all, shown, "a", -1, {})).toEqual([]);
+    expect(planActivityMove(all, shown, "c", 1, {})).toEqual([]);
+    expect(canMoveActivity(shown, "a", -1, {})).toBe(false);
+    expect(canMoveActivity(shown, "a", 1, {})).toBe(true);
+  });
+
+  it("does not cross a pin or done band", () => {
+    const all = [
+      activity("pin", { order_index: 0, is_pinned: true }),
+      activity("open", { order_index: 1 }),
+      activity("done", { order_index: 2 }),
+    ];
+    const counts = { done: 1 };
+    const shown = orderActivitiesForToday(all, counts);
+    expect(planActivityMove(all, shown, "open", -1, counts)).toEqual([]);
+    expect(planActivityMove(all, shown, "open", 1, counts)).toEqual([]);
+    expect(canMoveActivity(shown, "open", 1, counts)).toBe(false);
+
+    const inPlace = { doneLast: false };
+    const flat = orderActivitiesForToday(all, counts, undefined, inPlace);
+    expect(planActivityMove(all, flat, "open", 1, counts, inPlace)).toEqual([
+      { id: "open", order_index: 2 },
+      { id: "done", order_index: 1 },
+    ]);
+  });
+
+  it("renumbers when rows tie or have no number, writing only changes", () => {
+    const all = [
+      activity("a", { order_index: 0 }),
+      activity("b", { order_index: 1 }),
+      activity("c", { order_index: 1 }),
+      activity("avoid", { routine: "never" }),
+    ];
+    const shown = orderActivitiesForToday(all, {});
+    expect(ids(shown)).toEqual(["a", "b", "c", "avoid"]);
+
+    const patches = planActivityMove(all, shown, "c", -1, {});
+    const next = all.map((row) => ({
+      ...row,
+      order_index:
+        patches.find((patch) => patch.id === row.id)?.order_index ??
+        row.order_index,
+    }));
+    expect(ids(orderActivitiesForToday(next, {}))).toEqual([
+      "a",
+      "c",
+      "b",
+      "avoid",
+    ]);
+    expect(patches.find((patch) => patch.id === "a")).toBeUndefined();
+
+    const last = planActivityMove(all, shown, "avoid", -1, {});
+    expect(last.length).toBeGreaterThan(0);
   });
 });

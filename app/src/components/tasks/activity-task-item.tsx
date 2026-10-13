@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Flame, Sparkles, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Flame, Sparkles, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
   getActivityDisplayName,
@@ -43,6 +43,12 @@ interface ActivityTaskItemProps {
   onTogglePin?: (activity: Activity) => void;
   /** The AI's one-line reason for this row's place, naming its evidence. */
   reason?: string;
+  /** Present while reordering: step this row up or down within its band. */
+  reorder?: {
+    canMoveUp: boolean;
+    canMoveDown: boolean;
+    onMove: (activity: Activity, direction: -1 | 1) => void;
+  };
 }
 
 function ActivityTaskItem({
@@ -66,6 +72,7 @@ function ActivityTaskItem({
   onShowRetiredInfo,
   onTogglePin,
   reason,
+  reorder,
 }: ActivityTaskItemProps) {
   const { t } = useTranslation("projects");
   const neverPressTimeoutRef = useRef<number | null>(null);
@@ -262,6 +269,32 @@ function ActivityTaskItem({
           </p>
         ) : null}
       </div>
+      {reorder ? (
+        <div className="flex h-10 shrink-0 items-center gap-0.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="taskSm"
+            disabled={!reorder.canMoveUp}
+            onClick={() => reorder.onMove(activity, -1)}
+            aria-label={t("taskItem.moveUp", { name: activityDisplayName })}
+            title={t("taskItem.moveUp", { name: activityDisplayName })}
+          >
+            <ChevronUp className="h-4 w-4" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="taskSm"
+            disabled={!reorder.canMoveDown}
+            onClick={() => reorder.onMove(activity, 1)}
+            aria-label={t("taskItem.moveDown", { name: activityDisplayName })}
+            title={t("taskItem.moveDown", { name: activityDisplayName })}
+          >
+            <ChevronDown className="h-4 w-4" aria-hidden />
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -240,8 +240,12 @@ Projects/groups, Settings (appearance, language, holiday calendars,
 daily clip, automatic location, account, sync, AI key, backup), Sync issues,
 What's new, Feedback, and About (version, error logs, source link).
 
-There is no task-order screen. Today's order comes from the AI, with a reason on
-each task, and the user overrides it by pinning.
+There is no standalone task-order screen. Today's order is the person's own
+(a Reorder mode on the list itself, with up/down buttons per row), with pins on
+top. "Order with AI" is an optional, temporary view on top of it with a reason on
+each task; "Back to my order" returns to exactly what they set. Whether finished
+habits sink is a "Done last" preference. See [`product-scope.md`](product-scope.md)
+§2.11.
 
 Timeline/sessions are **not** a separate destination — they are a view mode
 inside Today, because a session belongs to a day.
@@ -288,7 +292,8 @@ first.
 - **Break day** toggle: marks a day as a break so misses don't break streaks.
 - **Memos** (one-time tasks): quick-add FAB, due date with relative labels, pin
   via long-press, edit/archive/delete, carry-forward of incomplete memos.
-- **AI ordering with a reason per task**, and **pinning** as the manual override.
+- **Manual order** (Reorder mode on Today), **pinning**, a **Done last** preference,
+  and **AI ordering with a reason per task** as a temporary view over the person's order.
 
 **Time tracking** (full rule set in [`product-scope.md`](product-scope.md) §2.2)
 - Start/stop with a **live running pill** (group color, elapsed clock, STOP).
@@ -354,7 +359,7 @@ first.
 named color palettes, the habit-quote footer, gradient washes on hearted
 entries, per-day activity pause, journal entry numbers, hidden group-default
 activities, timed ⇄ untimed session conversion, end-only manual entries, guest
-mode, the task-order screen, the 7-day edit lock, the configurable day-reset
+mode, the standalone task-order screen, the 7-day edit lock, the configurable day-reset
 hour, and per-field conflict merging. Do not design for them.
 
 ---
@@ -392,7 +397,8 @@ Match intensity to prominence. Only one tier-1 surface may be visible at a time.
 - **Always name the evidence.** "Based on 7 days", "6 weeks of data: 90% vs 40%".
 - **Always be actionable.** An AI surface that only states a fact is incomplete;
   attach "Add to today", "Answer now", or a prompt the user can tap.
-- **Always allow override.** AI-ordered lists need manual pinning. AI prompts need
+- **Always allow override.** AI-ordered lists need manual pinning, a manual order, and
+  a one-tap way back to it. AI prompts need
   dismissal. Check-ins need skipping.
 - **Always name the goal served.** Recommendations link back to a compass goal.
 - **Always disclose cost and ownership.** "your key, your model" stays visible.

@@ -36,7 +36,7 @@ with the product tradeoff that changed.
 | **Timed ⇄ untimed conversion** in session details | Untimed completions are derived from counts, not stored rows ([`temporal-data-sync.md`](temporal-data-sync.md) merge rule 7). "Converting" a session into a completion contradicts the model and is the source of most special cases. | Session details edit activity, start, end, and note, or delete. A completion's time is edited from the task itself. |
 | **End-only manual time entry** (meaning "untimed") | Same reason: it is a hidden second way to create a completion. | Manual entry requires start and end. To record "done at 9pm" without a duration, check the task and set its completion time. |
 | **Guest mode** (using the app without an account) | The AI needs an account, and the guest identity, rekeying, and guest→account handoff are among the most fragile code paths. | An account is required. See §2.6 for the one-time migration. Afterwards, delete `lib/sync/auth-handoff.ts`, `guest-handoff-emitter.ts`, `rekey-guest-rows`, `components/settings/auth-data-handoff-dialog.tsx`, and the `guest:{device_id}` identity. |
-| **Standalone Task Order page** (`pages/task-order.tsx`) | Ordering is now done by the AI with an explanation per task, and the user overrides by pinning. A separate global up/down list is a second, competing ordering system. | Remove the page and its Settings entry. Fallback order when the AI is not configured: pinned → not yet done → existing `order_index`. `order_index` stays in the schema but is no longer editable. |
+| **Standalone Task Order page** (`pages/task-order.tsx`) | A separate global up/down screen, away from the list it orders, is a second place to manage order. The AI's order and pins already live on Today, so manual ordering belongs there too (see §2.11). | Remove the page and its Settings entry. `/settings/task-order` redirects to Settings. Manual ordering returns **inline on Today** as a reorder mode, not as a screen: §2.11. |
 | **Configurable day-reset hour** (default 4 AM, up to 8 AM) | A day that ends at an arbitrary hour forces every date calculation through an "effective today" layer: render-time clipping of sessions, boundary labels, and logical-day math in streaks, the journal, memos, and AI aggregation. The setting also lives in device `localStorage`, so two devices could disagree about which day it is. | Days always end at local midnight. Delete `lib/session/day-reset.ts` and `components/settings/day-reset-card.tsx`, and reduce `lib/activity/period-day-utils.ts` to the single midnight-based overlap helper (§2.2). `getEffectiveToday()` becomes the plain local date. The day timer (`hooks/use-day-reset-timer.ts`) becomes a UI-only midnight timer that rolls Today over and runs memo carry-forward. No rewrite of past facts: counts, break days, and journal entries stay on the dates they were recorded on. **Behavior change:** because the old default was 4 AM, anything done between midnight and 4 AM now belongs to the new day. The lifted edit lock (§2.3) makes it easy to log a late-night item on yesterday instead. |
 | **Per-field conflict merging** | Choosing field by field between two versions of a habit is precision nobody needs for a rare, low-stakes conflict, and it costs about 1,600 lines. | Whole-item choice, plus "keep both" for journal text. See §2.10. |
 | **Error Logs and GitHub link in the main menu** | Developer tools in a personal-life app's primary navigation. | Both move to Settings › About. The `/logs` route stays for support. |
@@ -54,7 +54,7 @@ track time. The real gap was that every activity was timeable.
   creates sessions, and never appears in session pickers. It still has a
   routine, a target (`2` for twice-daily meds), counts, completion times, and a
   streak.
-- Activities also gain **`is_pinned`** (the user's override of AI ordering). The
+- Activities also gain **`is_pinned`** (keeps a habit at the top of Today, whatever else orders the list). The
   field arrived with the data migrations. The pin control is a switch in the
   activity form, and a pinned row shows a pin glyph (B2a, 2026-10-12). Every row
   on Today also has a pin button for pinning without opening the form (B2b).
@@ -583,6 +583,43 @@ per-field keep-mine / keep-theirs / combine UI and its two resolvers (about
 Each resolution is an ordinary operation through `mutateSynced`, so it syncs
 and can be revised like any edit.
 
+### 2.11 Today's order: yours first, the AI as a view
+
+The person has the final say over the order of "For today", and gets three
+tools for it that do not compete: their own order, pins, and the AI.
+
+- **Their order is `order_index`.** It is a current-state field like any other
+  definition field ([`temporal-data-sync.md`](temporal-data-sync.md)): editing it
+  overwrites the latest value, syncs field by field, and appends no history.
+  It is editable again, from Today, not from a separate screen. The standalone
+  Task Order page stays removed (§1).
+- **Reorder mode.** A "Reorder" button on Today (today only, two or more habits)
+  puts an up and a down button on every row, each named for its habit, so
+  touch and keyboard use the same control. A row moves one step inside its band
+  and never across one: pins stay above the rest, and, when done habits sink,
+  done rows stay below open ones. Two rows with different numbers swap them;
+  ties, and rows with no number (avoid habits, duplicates made offline),
+  renumber the sequence densely and write only the rows whose number changed.
+  Each move is a normal synced definition edit.
+- **"Done last" is a display preference** on Today, on by default (the old
+  behaviour). Off, a finished habit stays where the order puts it, so ticking a
+  row never moves it. Pins still come first. It is kept in `localStorage` on the
+  device, like the theme: it changes how the list is shown, not any record, so it
+  does not sync and needs no migration. It applies to every day's list.
+- **The AI is a view on top, never a rewrite.** "Order with AI" still only runs
+  when asked and still reorders the unpinned, open band for the day on this
+  device. It never writes `order_index`. "Back to my order" drops the view and
+  the list is exactly as the person left it. Because the AI's order is
+  temporary, Reorder is off while it is in view, with the reason shown and the
+  way back one tap away; this keeps the person's own order from being replaced
+  by accident. Taking the AI's order as one's own would be a deliberate, separate
+  action, and is not built.
+- **Fallback with no AI** is unchanged in shape: pinned, then not yet done (or
+  everything, when done habits stay), then `order_index`. The app is fully
+  usable with no API key.
+- A new habit still takes the next free number at the end of the scheduled
+  sequence, so it appears last until moved.
+
 ## 3. Kept on purpose
 
 These were considered and stay because they serve the record, the compass, or
@@ -864,6 +901,9 @@ Track B gets its own breakdown before it starts. Its shape:
     them. Ranking shares `user_ai_settings`' daily call allowance with
     insights (20 a day). Every row also has a pin button (the quick pin). It
     needs a manual `supabase functions deploy rank-today`.
+  - **B2c (done 2026-10-13):** manual order and "Done last" on Today, §2.11.
+    The order the person sets is `order_index`, edited again from the list; the
+    "done rows still sink" rule became a preference.
 - **B3.** Journal: one record across the journal and memory tables (the merge is
   UI-only; the tables stay separate). Feed, calendar, map, and gallery;
   previous versions with restore; generated month and holiday banners. Shipped

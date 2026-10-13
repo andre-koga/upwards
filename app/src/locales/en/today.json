@@ -24,6 +24,14 @@
     "markAsBreakDay": "Mark as Break Day",
     "helper": "Incomplete tasks won't affect streaks."
   },
+  "order": {
+    "reorder": "Reorder",
+    "doneReordering": "Done",
+    "reorderHint": "Move habits up or down. Pinned habits stay on top.",
+    "reorderBlockedByAi": "Go back to your order to reorder by hand.",
+    "doneLast": "Done last",
+    "doneLastHint": "Finished habits move to the bottom. Turn off to keep them where they are."
+  },
   "aiOrder": {
     "order": "Order with AI",
     "orderAgain": "Order again",
