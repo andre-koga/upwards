@@ -24,6 +24,14 @@
     "markAsBreakDay": "Marcar como dia de descanso",
     "helper": "Tarefas incompletas não prejudicam suas sequências."
   },
+  "order": {
+    "reorder": "Reordenar",
+    "doneReordering": "Concluir",
+    "reorderHint": "Mova os hábitos para cima ou para baixo. Os fixados ficam no topo.",
+    "reorderBlockedByAi": "Volte à sua ordem para reordenar à mão.",
+    "doneLast": "Feitos por último",
+    "doneLastHint": "Os hábitos concluídos vão para o fim. Desative para mantê-los onde estão."
+  },
   "aiOrder": {
     "order": "Ordenar com IA",
     "orderAgain": "Ordenar de novo",

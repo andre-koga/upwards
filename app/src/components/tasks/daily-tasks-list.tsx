@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
@@ -21,11 +21,18 @@ import {
   type ActivityRetiredKind,
 } from "@/components/activities/activity-retired-info-dialog";
 import { todayDateString } from "@/lib/time-utils";
-import { orderActivitiesForToday } from "@/lib/activity/today-order";
+import {
+  canMoveActivity,
+  orderActivitiesForToday,
+  planActivityMove,
+} from "@/lib/activity/today-order";
+import { setDoneLast, useDoneLast } from "@/lib/today-order-preference";
 import { getActivityDisplayName } from "@/lib/activity";
 import { now } from "@/lib/db";
+import { logError } from "@/lib/error-utils";
 import { patchActivity } from "@/lib/sync/mutate-synced";
 import { AiOrderBar } from "./ai-order-bar";
+import { TodayOrderBar } from "./today-order-bar";
 import { useAiTodayOrder } from "./hooks/use-ai-today-order";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
@@ -137,11 +144,66 @@ export default function DailyTasksList({
     counts: taskCounts,
     streaks: activityStreaks,
   });
-  // Pinned first, then not yet done, then the AI's order when the person asked
-  // for one, else the stored order. Pins always win.
+  const doneLast = useDoneLast();
+  const orderOptions = useMemo(() => ({ doneLast }), [doneLast]);
+  // Pinned first, then not yet done (unless done habits stay in place), then
+  // the AI's order while the person is looking at one, else their own stored
+  // order. Pins always win.
   const orderedActivities = useMemo(
-    () => orderActivitiesForToday(dailyActivities, taskCounts, aiOrder.ranking),
-    [dailyActivities, taskCounts, aiOrder.ranking]
+    () =>
+      orderActivitiesForToday(
+        dailyActivities,
+        taskCounts,
+        aiOrder.ranking,
+        orderOptions
+      ),
+    [dailyActivities, taskCounts, aiOrder.ranking, orderOptions]
+  );
+  const aiOrderInView = aiOrder.generatedAt !== null;
+  const [reorderRequested, setReorderRequested] = useState(false);
+  const reordering = isToday && reorderRequested && !aiOrderInView;
+  const moveInFlight = useRef(false);
+
+  // A reload after a move hands back fresh rows; until then a second tap would
+  // plan against the old order and undo the first.
+  useEffect(() => {
+    moveInFlight.current = false;
+  }, [orderedActivities]);
+
+  const moveActivity = useCallback(
+    async (activity: Activity, direction: -1 | 1) => {
+      if (moveInFlight.current) return;
+      const patches = planActivityMove(
+        activities,
+        orderedActivities,
+        activity.id,
+        direction,
+        taskCounts,
+        orderOptions
+      );
+      if (patches.length === 0) return;
+      moveInFlight.current = true;
+      try {
+        const updated_at = now();
+        for (const patch of patches) {
+          await patchActivity(patch.id, {
+            order_index: patch.order_index,
+            updated_at,
+          });
+        }
+        onTasksDataChanged?.();
+      } catch (error) {
+        moveInFlight.current = false;
+        logError("Error reordering activities", error);
+      }
+    },
+    [
+      activities,
+      orderedActivities,
+      taskCounts,
+      orderOptions,
+      onTasksDataChanged,
+    ]
   );
   const togglePin = useCallback(
     async (activity: Activity) => {
@@ -240,6 +302,17 @@ export default function DailyTasksList({
             />
           ) : null}
 
+          {!loading && dailyActivities.length > 1 ? (
+            <TodayOrderBar
+              canReorder={isToday}
+              reordering={reordering}
+              reorderBlockedByAi={aiOrderInView}
+              onToggleReorder={() => setReorderRequested((value) => !value)}
+              doneLast={doneLast}
+              onDoneLastChange={setDoneLast}
+            />
+          ) : null}
+
           <div className="flex-1 space-y-2">
             {loading && (
               <p className="py-4 text-center text-sm text-muted-foreground">
@@ -271,6 +344,28 @@ export default function DailyTasksList({
                   }
                   onTogglePin={togglePin}
                   reason={aiOrder.reasons.get(activity.id)}
+                  reorder={
+                    reordering
+                      ? {
+                          canMoveUp: canMoveActivity(
+                            orderedActivities,
+                            activity.id,
+                            -1,
+                            taskCounts,
+                            orderOptions
+                          ),
+                          canMoveDown: canMoveActivity(
+                            orderedActivities,
+                            activity.id,
+                            1,
+                            taskCounts,
+                            orderOptions
+                          ),
+                          onMove: (item, direction) =>
+                            void moveActivity(item, direction),
+                        }
+                      : undefined
+                  }
                 />
               ))}
           </div>

@@ -40,12 +40,12 @@ Treat that document as binding repository guidance. Non-negotiables:
   (`exact` vs `approximate`), not two destinations.
 - **Scope is decided in `docs/architecture/product-scope.md`.** Every kept
   feature (counters, never/avoid habits, check-only activities, streak flames,
-  break days, memos, AI ordering with pins, start/stop time tracking, the
+  break days, memos, manual order and AI ordering with pins, start/stop time tracking, the
   sessions timeline, journal photos/places/opt-in daily clip, holiday and month
   banners, groups lifecycle, day navigation, en/pt, sync conflict review, backup,
   BYO-key AI) must be represented. Removed features (named palettes, quote
   footer, hearted-entry gradients, per-day pause, entry numbers, hidden group
-  activities, timed⇄untimed conversion, guest mode, task-order screen, 7-day
+  activities, timed⇄untimed conversion, guest mode, standalone task-order screen, 7-day
   edit lock, configurable day-reset hour — days end at midnight) must not be
   designed for. Changing either list requires updating
   `product-scope.md` first.

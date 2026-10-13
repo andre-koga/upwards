@@ -86,7 +86,9 @@
     "countTarget": "{{count}} / {{target}}",
     "pinned": "Fixada",
     "pin": "Fixar no topo",
-    "unpin": "Desafixar"
+    "unpin": "Desafixar",
+    "moveUp": "Mover {{name}} para cima",
+    "moveDown": "Mover {{name}} para baixo"
   },
   "timeField": {
     "dialDescription": "Arraste o controle circular ou toque nos valores para editar o horário.",

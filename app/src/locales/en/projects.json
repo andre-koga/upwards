@@ -86,7 +86,9 @@
     "countTarget": "{{count}} / {{target}}",
     "pinned": "Pinned",
     "pin": "Pin to top",
-    "unpin": "Unpin"
+    "unpin": "Unpin",
+    "moveUp": "Move {{name}} up",
+    "moveDown": "Move {{name}} down"
   },
   "timeField": {
     "dialDescription": "Drag the dial or tap values to edit time.",
