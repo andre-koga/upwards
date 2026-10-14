@@ -5,6 +5,12 @@
     "previousDay": "Previous day",
     "nextDay": "Next day"
   },
+  "running": {
+    "label": "Running",
+    "stop": "Stop",
+    "stopNamed": "Stop {{name}}",
+    "edit": "Edit running session: {{name}}"
+  },
   "sections": {
     "memos": "Memos",
     "forToday": "For Today",

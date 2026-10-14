@@ -2,8 +2,8 @@ import { memo, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import type { OneTimeTask } from "@/lib/db/types";
-import { Pin } from "lucide-react";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
+import { PinToggle } from "@/components/tasks/pin-toggle";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { ArchiveMemoDialog } from "@/components/tasks/archive-memo-dialog";
 import { DeleteMemoDialog } from "@/components/tasks/delete-memo-dialog";
@@ -67,14 +67,12 @@ function OneTimeTaskItem({
   const [draftDueDate, setDraftDueDate] = useState<string | null>(
     task.due_date
   );
-  const [draftPinned, setDraftPinned] = useState(!!task.is_pinned);
   const [saving, setSaving] = useState(false);
 
   const handleOpenEdit = (open: boolean) => {
     if (open) {
       setDraftTitle(task.title);
       setDraftDueDate(task.due_date);
-      setDraftPinned(!!task.is_pinned);
       setArchiveConfirmOpen(false);
     }
     setEditOpen(open);
@@ -86,7 +84,6 @@ function OneTimeTaskItem({
     const success = await onUpdate(task.id, {
       title: draftTitle.trim(),
       due_date: draftDueDate || null,
-      is_pinned: draftPinned,
     });
     if (success) setEditOpen(false);
     setSaving(false);
@@ -178,11 +175,6 @@ function OneTimeTaskItem({
           isComplete={!!task.is_completed}
           isToday={isToday}
           onClick={() => onToggle(task)}
-          incompleteContent={
-            task.is_pinned ? (
-              <Pin className="h-3 w-3 fill-current" aria-hidden />
-            ) : undefined
-          }
           title={
             task.is_pinned
               ? isToday
@@ -229,6 +221,14 @@ function OneTimeTaskItem({
             </div>
           ) : null}
         </div>
+
+        <PinToggle
+          pinned={!!task.is_pinned}
+          onToggle={isToday ? handleTogglePin : undefined}
+          pinLabel={t("memo.pin")}
+          unpinLabel={t("memo.unpin")}
+          pinnedLabel={t("memo.pinnedMemo")}
+        />
       </div>
 
       <MemoEditDialog
@@ -238,8 +238,6 @@ function OneTimeTaskItem({
         onTitleChange={setDraftTitle}
         dueDate={draftDueDate}
         onDueDateChange={setDraftDueDate}
-        isPinned={draftPinned}
-        onPinnedChange={setDraftPinned}
         onConfirm={handleSave}
         onDelete={handleDelete}
         onArchive={handleArchiveClick}

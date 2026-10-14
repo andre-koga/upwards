@@ -248,12 +248,7 @@ export default function JournalEditDialog({
   const canAddMorePhotos = photoCount < MAX_PHOTOS;
 
   return (
-    <FormDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("editTitle")}
-      contentClassName="w-[22rem]"
-    >
+    <FormDialog open={open} onOpenChange={onOpenChange} title={t("editTitle")}>
       <FormStack>
         <div className="flex items-center justify-center">
           <input
@@ -333,25 +328,25 @@ export default function JournalEditDialog({
                   </FormControlButton>
                 ) : null}
                 {clipEnabled ? (
-                <FormControlButton
-                  className="min-w-0 flex-1"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingVideo || uploadingPhotos}
-                  title={
-                    videoPath.trim().length > 0
+                  <FormControlButton
+                    className="min-w-0 flex-1"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingVideo || uploadingPhotos}
+                    title={
+                      videoPath.trim().length > 0
+                        ? t("upload.replaceVideo")
+                        : t("upload.addVideo")
+                    }
+                  >
+                    {uploadingVideo ? (
+                      <Loader2 className="animate-spin" aria-hidden />
+                    ) : (
+                      <Video aria-hidden />
+                    )}
+                    {videoPath.trim().length > 0
                       ? t("upload.replaceVideo")
-                      : t("upload.addVideo")
-                  }
-                >
-                  {uploadingVideo ? (
-                    <Loader2 className="animate-spin" aria-hidden />
-                  ) : (
-                    <Video aria-hidden />
-                  )}
-                  {videoPath.trim().length > 0
-                    ? t("upload.replaceVideo")
-                    : t("upload.addVideo")}
-                </FormControlButton>
+                      : t("upload.addVideo")}
+                  </FormControlButton>
                 ) : null}
 
                 <FormControlButton

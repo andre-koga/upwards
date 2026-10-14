@@ -89,7 +89,7 @@ export default function MediaLightbox({
       <DialogContent
         tabIndex={-1}
         overlayClassName="z-[var(--z-lightbox)] bg-black/80 motion-reduce:data-[state=open]:animate-none motion-reduce:data-[state=closed]:animate-none"
-        className="z-[var(--z-lightbox)] flex h-full max-h-full w-full max-w-none items-center justify-center gap-0 overflow-x-hidden overflow-y-hidden rounded-none border-0 bg-transparent p-0 shadow-none motion-reduce:data-[state=closed]:animate-none motion-reduce:data-[state=open]:animate-none data-[size=default]:sm:max-w-none"
+        className="z-[var(--z-lightbox)] flex h-full max-h-full w-full max-w-none items-center justify-center gap-0 overflow-x-hidden overflow-y-hidden rounded-none border-0 bg-transparent p-0 shadow-none motion-reduce:data-[state=closed]:animate-none motion-reduce:data-[state=open]:animate-none sm:max-w-none"
         onOpenAutoFocus={(event) => {
           // Keep focus on the dialog surface rather than a control so
           // arrow-key gallery navigation works immediately after opening.

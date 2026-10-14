@@ -321,7 +321,7 @@ export function FormTimeField({
           size="sm"
           data-no-swipe
           overlayClassName="z-[85] bg-black/50 backdrop-blur-none"
-          className="z-[90] rounded-2xl p-4"
+          className="z-[90] rounded-2xl p-4 sm:max-w-sm"
           onTouchStart={(event) => event.stopPropagation()}
           onTouchMove={(event) => event.stopPropagation()}
           onTouchEnd={(event) => event.stopPropagation()}

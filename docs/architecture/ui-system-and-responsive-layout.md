@@ -85,6 +85,12 @@ notice are gone. `components/layout/app-shell.tsx` now owns the frame:
   corners but sit in a thin side gutter on phones: `AppPageShell` and Today use
   `px-2` below `md` (the page title keeps a wider inset) and `p-4` from `md`.
   Pages should get this from `AppPageShell`, not by adding their own padding.
+  While a session is running, Today shows it in the sticky header row itself
+  (`RunningActivityBar`: name, clock, Stop; tapping the name opens the session).
+  The date control is centered when nothing runs; with a session it tightens and
+  moves to the start so the card takes the rest of the row. It keeps the
+  group-colour fill and glow the running pill has always had, a deliberate
+  exception recorded in `design-and-branding.md` §2.3 (2026-10-14).
 - `md` and up: a sidebar beside one content pane that owns scrolling
   (`data-app-scroll`). The sidebar is an icon rail with tooltips at `md` and a
   labelled list with shortcut chips at `lg`. The pane is a containing block for
@@ -253,6 +259,16 @@ Accessibility is a release requirement for shared UI migrations.
 - Charts expose keyboard-focusable data or an equivalent accessible summary.
 - Tooltips can be triggered by focus and remain available long enough to read.
 - Focus indicators are consistent and visible against every theme.
+
+### Dialog width
+
+Modals are sized by `DialogContent`'s `size`, as plain classes a caller can
+override with `sm:max-w-*`: on phones they run to 24px from each edge; from `sm`
+`size="sm"` (the default for `FormDialog`) is up to `max-w-md` and
+`size="default"` up to `max-w-xl`. Do not pin a fixed `w-80`/`w-96`, and do not
+add `data-size` selectors: they out-rank a caller's override, which is why every
+form modal used to be stuck at 320px (2026-10-14). Compact pickers (calendar,
+time dial) opt into `sm:max-w-sm` on purpose.
 
 ### Pointer, touch, and motion
 

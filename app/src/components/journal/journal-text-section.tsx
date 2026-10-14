@@ -48,15 +48,15 @@ export default function JournalTextSection({
 
   return (
     <>
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <span
-          className={`shrink-0 text-5xl leading-none ${emoji ? "" : "opacity-40 grayscale"}`}
+          className={`flex h-12 w-12 shrink-0 items-center justify-center text-4xl leading-none ${emoji ? "" : "opacity-40 grayscale"}`}
           aria-hidden
         >
           {emoji || "🙂"}
         </span>
         <h2
-          className={`min-w-0 flex-1 break-words font-display text-3xl font-semibold leading-tight tracking-[-0.02em] ${
+          className={`flex min-h-12 min-w-0 flex-1 items-center break-words font-display text-3xl font-semibold leading-tight tracking-[-0.02em] ${
             title ? "" : "text-muted-foreground"
           }`}
         >

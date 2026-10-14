@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { Activity, ActivityGroup } from "@/lib/db/types";
+import type { Activity } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
 import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
-import ActiveActivityPill from "./active-activity-pill";
 import AssignActivityDialog from "./assign-activity-dialog";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import ManualTimeEntryDialog from "./manual-time-entry-dialog";
@@ -30,8 +29,11 @@ import { getActivityDisplayName } from "@/lib/activity";
 import { now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
 import { patchActivity } from "@/lib/sync/mutate-synced";
-import { AiOrderBar } from "./ai-order-bar";
-import { TodayOrderBar } from "./today-order-bar";
+import {
+  TodayOrderControls,
+  TodayOrderStatus,
+  type TodayOrderState,
+} from "./today-order-controls";
 import { useAiTodayOrder } from "./hooks/use-ai-today-order";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
@@ -39,9 +41,7 @@ export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 interface DailyTasksListProps {
   /** Active habits — used for starting new tracking. */
   activities: Activity[];
-  /** All habits — used for timeline / running pill labels on historical days. */
-  lookupActivities: Activity[];
-  lookupGroups: ActivityGroup[];
+  /**  */
   daily: DailyTasksState;
   currentDate: Date;
   onDateChange: (date: Date) => void;
@@ -50,8 +50,6 @@ interface DailyTasksListProps {
 
 export default function DailyTasksList({
   activities,
-  lookupActivities,
-  lookupGroups,
   daily,
   currentDate,
   onDateChange,
@@ -103,8 +101,6 @@ export default function DailyTasksList({
     toggleBreakDay,
     handleStartActivity,
     handleStopActivity,
-    runningSession,
-    currentActivityElapsedMs,
     loadActivityPeriods,
     getActivityElapsedMs,
     addManualActivityPeriod,
@@ -235,6 +231,23 @@ export default function DailyTasksList({
     }
   };
 
+  const orderState: TodayOrderState = {
+    aiCanOrder: aiOrder.canOrder,
+    aiAvailable: aiOrder.available,
+    aiLoading: aiOrder.loading,
+    aiError: aiOrder.error,
+    aiGeneratedAt: aiOrder.generatedAt,
+    aiStale: aiOrder.stale,
+    onAiOrder: () => void aiOrder.rank(),
+    onAiReset: aiOrder.reset,
+    canArrange: dailyActivities.length > 1,
+    canReorder: isToday,
+    reordering,
+    onToggleReorder: () => setReorderRequested((value) => !value),
+    doneLast,
+    onDoneLastChange: setDoneLast,
+  };
+
   return (
     <div className="flex flex-col gap-3 md:gap-5">
       {(oneTimeTasks.length > 0 || isToday) && (
@@ -276,33 +289,11 @@ export default function DailyTasksList({
       )}
 
       {(loading || dailyActivities.length > 0) && (
-        <TodaySection label={t("sections.forToday")}>
-          {!loading && (aiOrder.canOrder || dailyActivities.length > 1) ? (
-            <div className="space-y-2 border-b border-border px-4 py-3">
-              {aiOrder.canOrder ? (
-                <AiOrderBar
-                  available={aiOrder.available}
-                  loading={aiOrder.loading}
-                  error={aiOrder.error}
-                  generatedAt={aiOrder.generatedAt}
-                  stale={aiOrder.stale}
-                  onOrder={() => void aiOrder.rank()}
-                  onReset={aiOrder.reset}
-                />
-              ) : null}
-
-              {dailyActivities.length > 1 ? (
-                <TodayOrderBar
-                  canReorder={isToday}
-                  reordering={reordering}
-                  reorderBlockedByAi={aiOrderInView}
-                  onToggleReorder={() => setReorderRequested((value) => !value)}
-                  doneLast={doneLast}
-                  onDoneLastChange={setDoneLast}
-                />
-              ) : null}
-            </div>
-          ) : null}
+        <TodaySection
+          label={t("sections.forToday")}
+          aside={loading ? null : <TodayOrderControls {...orderState} />}
+        >
+          {loading ? null : <TodayOrderStatus {...orderState} />}
 
           {loading && (
             <p className="px-4 py-4 text-center text-sm text-muted-foreground">
@@ -389,7 +380,7 @@ export default function DailyTasksList({
         </TodaySection>
       )}
 
-      {(currentActivityId || timelineSessions.length > 0) && (
+      {timelineSessions.length > 0 && (
         <TodaySection
           label={t("sections.timeline")}
           aside={
@@ -404,22 +395,6 @@ export default function DailyTasksList({
           }
         >
           <div className="space-y-1 p-2">
-            <ActiveActivityPill
-              currentActivityId={currentActivityId}
-              activities={lookupActivities}
-              groups={lookupGroups}
-              elapsedMs={currentActivityElapsedMs}
-              onStop={handleStopActivity}
-              onEdit={
-                runningSession
-                  ? () =>
-                      setEditingSession({
-                        groupId: runningSession.groupId,
-                        sessionId: runningSession.sessionId,
-                      })
-                  : undefined
-              }
-            />
             {timelineSessions.map((session) => {
               const isUnknown = !session.groupId;
               return (

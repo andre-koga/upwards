@@ -15,6 +15,8 @@ import {
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/journal/journal-card";
 import TodayHeader from "@/components/tasks/today-header";
+import RunningActivityBar from "@/components/tasks/running-activity-bar";
+import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 import TodayQuickActions from "@/components/tasks/today-quick-actions";
 import { useTodayPage } from "@/hooks/use-today-page";
 import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
@@ -56,6 +58,7 @@ export default function TodayPage() {
   } | null>(null);
 
   const [dayResetTick, setDayResetTick] = useState(0);
+  const [editingRunningSession, setEditingRunningSession] = useState(false);
 
   // Re-render at midnight so the swipe "today" boundary updates live.
   const handleDayReset = useCallback(() => {
@@ -252,15 +255,31 @@ export default function TodayPage() {
         </div>
       )}
 
-      <TodayHeader
-        currentDate={currentDate}
-        onDateChange={setCurrentDate}
-        onPreviousDay={goToPreviousDay}
-        onNextDay={goToNextDay}
-        entryDates={entryDates}
-        bookmarkedDates={bookmarkedDates}
-        loadJournalMeta={loadJournalMeta}
-      />
+      <div className="sticky top-0 z-[var(--z-chrome)] border-b border-border bg-background/85 backdrop-blur-md">
+        <TodayHeader
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+          onPreviousDay={goToPreviousDay}
+          onNextDay={goToNextDay}
+          entryDates={entryDates}
+          bookmarkedDates={bookmarkedDates}
+          loadJournalMeta={loadJournalMeta}
+          running={Boolean(dailyTasks.currentActivityId)}
+        >
+          <RunningActivityBar
+            currentActivityId={dailyTasks.currentActivityId}
+            activities={lookupActivities}
+            groups={lookupGroups}
+            elapsedMs={dailyTasks.currentActivityElapsedMs}
+            onStop={dailyTasks.handleStopActivity}
+            onEdit={
+              dailyTasks.runningSession
+                ? () => setEditingRunningSession(true)
+                : undefined
+            }
+          />
+        </TodayHeader>
+      </div>
 
       <div className="space-y-3 px-2 py-3 md:space-y-5 md:p-4">
         <JournalCard
@@ -272,8 +291,6 @@ export default function TodayPage() {
 
         <DailyTasksList
           activities={activities}
-          lookupActivities={lookupActivities}
-          lookupGroups={lookupGroups}
           daily={dailyTasks}
           currentDate={currentDate}
           onDateChange={setCurrentDate}
@@ -282,6 +299,20 @@ export default function TodayPage() {
           }}
         />
       </div>
+
+      {editingRunningSession && dailyTasks.runningSession ? (
+        <SessionDetailsDialog
+          groupId={dailyTasks.runningSession.groupId}
+          sessionId={dailyTasks.runningSession.sessionId}
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditingRunningSession(false);
+          }}
+          onSessionUpdated={() => {
+            void dailyTasks.loadActivityPeriods();
+          }}
+        />
+      ) : null}
 
       <TodayQuickActions
         currentDate={currentDate}

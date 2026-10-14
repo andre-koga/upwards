@@ -128,14 +128,10 @@
     },
     "routineLabel": "Schedule",
     "targetLabel": "Times per day",
-    "targetHint": "1 is a simple checkbox. More than 1 makes it a counter.",
+    "targetHint": "1 is a checkbox. More than 1 makes it a counter.",
     "tracksTime": {
       "label": "Track time",
-      "hint": "Shows a timer on this activity. Turn it off for things you just check off, like medication."
-    },
-    "pin": {
-      "label": "Pin to the top",
-      "hint": "Pinned activities stay above the rest of Today's list."
+      "hint": "Shows a timer. Turn off for things you only check off, like medication."
     },
     "archive": "Archive activity",
     "archiveYes": "Yes",

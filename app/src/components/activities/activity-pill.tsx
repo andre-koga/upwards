@@ -1,5 +1,4 @@
-import { Pin, Play, Plus, Square } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Play, Plus, Square } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR, getContrastColor } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
@@ -22,10 +21,6 @@ export interface ActivityPillProps {
   allowNameClickWhenReadOnly?: boolean;
   /** False for check-only activities: there is no timer, so none is drawn. */
   showTimer?: boolean;
-  /** Marks a pinned activity (kept above the rest of Today's list). */
-  pinned?: boolean;
-  /** Pins or unpins the activity from the row; omit where pinning is not offered. */
-  onTogglePin?: () => void;
   /**
    * `pill` is a self-contained rounded control. `row` drops the box and the
    * full rounding so the pill can sit in a divided list (Today).
@@ -48,16 +43,14 @@ export default function ActivityPill({
   readOnly = false,
   allowNameClickWhenReadOnly = false,
   showTimer = true,
-  pinned = false,
-  onTogglePin,
   appearance = "pill",
   className = "",
 }: ActivityPillProps) {
-  const { t } = useTranslation("projects");
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
   const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
   const row = appearance === "row";
+  const hasManualEntry = !readOnly && Boolean(onManualEntry);
 
   return (
     <div
@@ -85,13 +78,15 @@ export default function ActivityPill({
           onClick={nameInteractive ? onNameClick : undefined}
           title={nameTitle}
           aria-label={nameAriaLabel}
-          className="h-full min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center gap-0 rounded-none p-0 text-left text-sm font-medium shadow-none"
+          className={cn(
+            "h-full min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center gap-0 p-0 text-left text-sm font-medium shadow-none",
+            row ? "rounded-md" : "rounded-none"
+          )}
         >
           <span
             className={cn(
               "flex min-h-0 min-w-0 flex-1 items-center gap-2 py-1",
-              row ? "pl-2" : "pl-4",
-              onTogglePin ? "pr-1" : row ? "pr-2" : "pr-4"
+              row ? "pl-2 pr-2" : "pl-4 pr-4"
             )}
           >
             <span
@@ -103,44 +98,14 @@ export default function ActivityPill({
                 <span className="font-normal text-muted-foreground">Name…</span>
               )}
             </span>
-            {pinned && !onTogglePin ? (
-              <>
-                <Pin
-                  className="h-3 w-3 shrink-0 fill-current text-muted-foreground"
-                  aria-hidden
-                />
-                <span className="sr-only">{t("taskItem.pinned")}</span>
-              </>
-            ) : null}
           </span>
         </Button>
-        {onTogglePin ? (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onTogglePin}
-            aria-pressed={pinned}
-            aria-label={pinned ? t("taskItem.unpin") : t("taskItem.pin")}
-            title={pinned ? t("taskItem.unpin") : t("taskItem.pin")}
-            className={cn(
-              "h-full min-h-0 w-8 shrink-0 rounded-none p-0 shadow-none",
-              pinned
-                ? "text-foreground"
-                : "text-muted-foreground/50 hover:text-foreground"
-            )}
-          >
-            <Pin
-              className={cn("h-3.5 w-3.5", pinned && "fill-current")}
-              aria-hidden
-            />
-          </Button>
-        ) : null}
       </div>
 
       {/* Timer / action side */}
       {showTimer ? (
         <div className="flex h-full min-h-0 items-stretch">
-          {!readOnly && onManualEntry ? (
+          {hasManualEntry ? (
             <Button
               type="button"
               variant="outline"
@@ -148,7 +113,7 @@ export default function ActivityPill({
               className={cn(
                 "relative h-full shrink-0 shadow-none",
                 row
-                  ? "w-9 rounded-md border-transparent bg-transparent text-muted-foreground"
+                  ? "w-9 rounded-l-md rounded-r-none border-r-0 text-muted-foreground"
                   : "-mr-4 w-12 rounded-l-full border-r-0 pr-6"
               )}
               title="Add manual time entry"
@@ -193,11 +158,20 @@ export default function ActivityPill({
               onClick={onClick}
               className={cn(
                 "relative h-full shrink-0 gap-1.5 font-semibold shadow-none",
-                row ? "rounded-md px-3" : "rounded-full px-4"
+                row
+                  ? cn(
+                      "rounded-md border border-border px-3",
+                      hasManualEntry && "rounded-l-none"
+                    )
+                  : "rounded-full px-4"
               )}
               style={
                 isRunning
-                  ? { backgroundColor: color, color: textColor }
+                  ? {
+                      backgroundColor: color,
+                      borderColor: color,
+                      color: textColor,
+                    }
                   : undefined
               }
             >

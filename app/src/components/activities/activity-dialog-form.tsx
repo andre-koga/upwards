@@ -4,7 +4,11 @@ import { Archive } from "lucide-react";
 import { ArchiveActivityDialog } from "@/components/activities/archive-activity-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
 import {
   ACTIVITY_TYPES,
@@ -35,7 +39,10 @@ import {
   FormField,
   FormStack,
 } from "@/components/forms";
-import { dialogFieldLabelClassName } from "@/components/forms/styles";
+import {
+  dialogFieldClassName,
+  dialogFieldLabelClassName,
+} from "@/components/forms/styles";
 import { patchActivity, saveActivity } from "@/lib/sync/mutate-synced";
 
 interface ActivityDialogFormProps {
@@ -53,7 +60,6 @@ interface ActivityFormData extends RoutineFormData {
   type: ActivityType;
   completion_target: number | string;
   tracks_time: boolean;
-  is_pinned: boolean;
 }
 
 /** i18n key segment for each type (the type ids use a hyphen). */
@@ -78,7 +84,6 @@ function computeFormDataFromInitial(
     ...routineForm,
     completion_target: initialData?.completion_target ?? 1,
     tracks_time: initialData?.tracks_time !== false,
-    is_pinned: initialData?.is_pinned === true,
   };
 }
 
@@ -148,7 +153,6 @@ export function ActivityDialogForm({
           routine: payload.routine,
           completion_target: payload.completion_target,
           tracks_time: payload.tracks_time,
-          is_pinned: formData.is_pinned,
           updated_at: now(),
         });
       } else {
@@ -185,7 +189,7 @@ export function ActivityDialogForm({
           completion_target: payload.completion_target,
           archived_at: null,
           tracks_time: payload.tracks_time,
-          is_pinned: formData.is_pinned,
+          is_pinned: false,
           order_index: nextOrderIndex,
           created_at: timestamp,
           updated_at: timestamp,
@@ -241,48 +245,30 @@ export function ActivityDialogForm({
             autoFocus
           />
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <p id="activity-type-label" className={dialogFieldLabelClassName}>
               {t("activityForm.typeLabel")}
             </p>
-            <RadioGroup
+            <SegmentedControl
               aria-labelledby="activity-type-label"
+              aria-describedby="activity-type-description"
               value={formData.type}
               onValueChange={(value) =>
                 setFormData({ ...formData, type: value as ActivityType })
               }
             >
-              {ACTIVITY_TYPES.map((type) => {
-                const key = TYPE_KEY[type];
-                const selected = formData.type === type;
-                return (
-                  <Label
-                    key={type}
-                    htmlFor={`activity-type-${type}`}
-                    className={cn(
-                      "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors",
-                      selected
-                        ? "border-primary bg-sage/60"
-                        : "border-border bg-muted/60 hover:bg-muted"
-                    )}
-                  >
-                    <RadioGroupItem
-                      id={`activity-type-${type}`}
-                      value={type}
-                      className="mt-0.5"
-                    />
-                    <span className="min-w-0 space-y-0.5">
-                      <span className="block text-sm font-medium leading-snug">
-                        {t(`activityForm.types.${key}.label`)}
-                      </span>
-                      <span className="block text-xs font-normal leading-relaxed text-muted-foreground">
-                        {t(`activityForm.types.${key}.description`)}
-                      </span>
-                    </span>
-                  </Label>
-                );
-              })}
-            </RadioGroup>
+              {ACTIVITY_TYPES.map((type) => (
+                <SegmentedControlItem key={type} value={type}>
+                  {t(`activityForm.types.${TYPE_KEY[type]}.label`)}
+                </SegmentedControlItem>
+              ))}
+            </SegmentedControl>
+            <p
+              id="activity-type-description"
+              className="text-xs leading-relaxed text-muted-foreground"
+            >
+              {t(`activityForm.types.${TYPE_KEY[formData.type]}.description`)}
+            </p>
           </div>
 
           {formData.type === "habit" ? (
@@ -316,24 +302,41 @@ export function ActivityDialogForm({
                 />
               </div>
 
-              <FormField
-                id="activity-completion-target"
-                label={t("activityForm.targetLabel")}
-                type="number"
-                min={1}
-                max={100}
-                value={formData.completion_target}
-                onChange={(event) =>
-                  setFormData({
-                    ...formData,
-                    completion_target:
-                      event.target.value === ""
-                        ? ""
-                        : parseInt(event.target.value),
-                  })
-                }
-                message={t("activityForm.targetHint")}
-              />
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="activity-completion-target">
+                    {t("activityForm.targetLabel")}
+                  </Label>
+                  <p
+                    id="activity-completion-target-hint"
+                    className="text-xs leading-relaxed text-muted-foreground"
+                  >
+                    {t("activityForm.targetHint")}
+                  </p>
+                </div>
+                <Input
+                  id="activity-completion-target"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={100}
+                  aria-describedby="activity-completion-target-hint"
+                  value={formData.completion_target}
+                  onChange={(event) =>
+                    setFormData({
+                      ...formData,
+                      completion_target:
+                        event.target.value === ""
+                          ? ""
+                          : parseInt(event.target.value),
+                    })
+                  }
+                  className={cn(
+                    dialogFieldClassName,
+                    "h-10 w-20 shrink-0 text-center"
+                  )}
+                />
+              </div>
 
               <SwitchRow
                 id="activity-tracks-time"
@@ -346,16 +349,6 @@ export function ActivityDialogForm({
               />
             </>
           ) : null}
-
-          <SwitchRow
-            id="activity-pinned"
-            label={t("activityForm.pin.label")}
-            hint={t("activityForm.pin.hint")}
-            checked={formData.is_pinned}
-            onCheckedChange={(next) =>
-              setFormData({ ...formData, is_pinned: next })
-            }
-          />
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
