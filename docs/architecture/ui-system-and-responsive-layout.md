@@ -81,9 +81,10 @@ notice are gone. `components/layout/app-shell.tsx` now owns the frame:
   button, and the install prompt clear it. Today has no full-width bottom bar:
   day navigation is a sticky frosted header at the top, and Projects and the
   quick memo are one small frosted dock (`TodayQuickActions`) above the tab bar,
-  kept at the bottom for thumb reach (2026-10-14). On phones Today's cards run
-  edge to edge (hairlines top and bottom, no side margin or radius); from `md`
-  they become rounded cards inside the column.
+  kept at the bottom for thumb reach (2026-10-14). Cards keep their rounded
+  corners but sit in a thin side gutter on phones: `AppPageShell` and Today use
+  `px-2` below `md` (the page title keeps a wider inset) and `p-4` from `md`.
+  Pages should get this from `AppPageShell`, not by adding their own padding.
 - `md` and up: a sidebar beside one content pane that owns scrolling
   (`data-app-scroll`). The sidebar is an icon rail with tooltips at `md` and a
   labelled list with shortcut chips at `lg`. The pane is a containing block for

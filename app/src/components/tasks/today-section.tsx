@@ -24,7 +24,7 @@ export function TodaySection({
   return (
     <section
       className={cn(
-        "overflow-hidden border-y border-border bg-card md:rounded-xl md:border",
+        "overflow-hidden rounded-xl border border-border bg-card",
         className
       )}
     >
