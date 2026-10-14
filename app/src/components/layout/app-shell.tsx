@@ -1,11 +1,13 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import FeedbackDialog from "@/components/tasks/feedback-dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { TabBar } from "@/components/layout/tab-bar";
+import { routeUsesWideColumn } from "@/lib/navigation/destinations";
 import { useAppShortcuts } from "@/components/layout/use-app-shortcuts";
 import { usePaletteCommands } from "@/components/layout/use-palette-commands";
 
@@ -30,6 +32,8 @@ interface AppShellProps {
  */
 export function AppShell({ navigation, chrome, children }: AppShellProps) {
   const { t } = useTranslation("nav");
+  const { pathname } = useLocation();
+  const wideColumn = routeUsesWideColumn(pathname);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -68,7 +72,12 @@ export function AppShell({ navigation, chrome, children }: AppShellProps) {
         >
           {chrome}
           <div data-app-scroll className="md:h-full md:overflow-y-auto">
-            <div className="mx-auto w-full pb-[var(--app-tab-bar-h,0px)] md:max-w-2xl lg:max-w-3xl">
+            <div
+              className={cn(
+                "mx-auto w-full pb-[var(--app-tab-bar-h,0px)] md:max-w-2xl",
+                wideColumn ? "lg:max-w-6xl" : "lg:max-w-3xl"
+              )}
+            >
               {children}
             </div>
           </div>

@@ -965,9 +965,22 @@ Track B gets its own breakdown before it starts. Its shape:
       local read, so it works offline. **Not in this slice:** memos,
       activities and sessions in the palette; none has a destination that can
       open a single item yet.
-  - **B3c2:** the real two-column desktop layout for the Journal (a reader or
-    the picked day beside the list, a context rail), replacing the interim
-    page-column cap on that route.
+  - **B3c2 (done 2026-10-14):** the real two-column Journal at `lg`. The
+    Journal route leaves the reading-width cap (`routeUsesWideColumn`) and
+    puts a reader in a sticky rail beside the list: choosing a day in the Feed,
+    or picking one in the Calendar, reads it there at full size (the day's
+    words in serif, every photo, places, clip, the "Edited" note and its
+    versions) with "Open this day" to edit it on Today. The list rows become
+    scannable (words trimmed, photos counted, the media left to the reader),
+    and the Feed always has a day open: the one picked, else the newest. The
+    Calendar's picked day moves from under the grid into the rail, so it is
+    never shown twice. The Map and the Gallery take the full width instead of
+    a rail. The rail is 21rem at `lg` and 24rem from `xl`; below `lg` nothing
+    changes (cards are whole, a card opens the day on Today, the Calendar reads
+    the day under the grid). Memories keep their own card and edit dialog; they
+    are not read in the rail. The `j`/`k` row shortcuts are not wired yet; the
+    cards and the Calendar are real buttons and a grid, so every choice has a
+    keyboard path.
   - **B3d:** generated month and holiday banner images.
 - **B4.** Home: AI insight surfaces on the existing AI groundwork.
 - **B5.** You / compass and onboarding, including the one-time daily clip and

@@ -46,6 +46,8 @@
     "nextPhoto": "Próxima foto",
     "photoUnavailable": "Foto indisponível",
     "openVideo": "Reproduzir vídeo",
+    "photoCount_one": "{{count}} foto",
+    "photoCount_other": "{{count}} fotos",
     "morePhotos": "Mais {{count}} fotos",
     "worldMapTitle": "Onde você escreveu",
     "worldMapHint": "{{count}} dias com lugares — toque em um pino para ir, ou em um agrupamento para filtrar",
@@ -168,6 +170,12 @@
     "deleteConfirmTitle": "Remover lugar",
     "deleteConfirmDescription": "Remover \"{{name}}\" deste dia?",
     "save": "Salvar lugares"
+  },
+  "reader": {
+    "rail": "Dia selecionado",
+    "label": "{{date}}",
+    "hint": "Escolha um dia para lê-lo aqui.",
+    "openDay": "Abrir este dia"
   },
   "versions": {
     "title": "Versões anteriores",

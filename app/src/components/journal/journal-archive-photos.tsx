@@ -12,8 +12,11 @@ interface LightboxState {
 
 export default function JournalArchivePhotoGrid({
   photoPaths,
+  previewLimit = 2,
 }: {
   photoPaths: string[];
+  /** How many photos show before the rest collapse into a "+N" tile. */
+  previewLimit?: number;
 }) {
   const { t } = useTranslation("journal");
   const pathsKey = photoPaths.join("\0");
@@ -27,7 +30,6 @@ export default function JournalArchivePhotoGrid({
 
   if (photoPaths.length === 0) return null;
 
-  const previewLimit = 2;
   const previewPaths = photoPaths.slice(0, previewLimit);
   const hiddenCount = Math.max(0, photoPaths.length - previewLimit);
   const singlePreview = previewPaths.length === 1;

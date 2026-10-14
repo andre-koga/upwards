@@ -87,9 +87,12 @@ notice are gone. `components/layout/app-shell.tsx` now owns the frame:
   The tab bar, the Today menu button, and the corner back buttons are hidden.
 - The page column is capped at `max-w-2xl` (`lg:max-w-3xl`) and centered.
   **This is an interim cap, not the desktop layout.** The two-column pages
-  (Today in B2, Journal in B3, Settings and Sync issues in B6/B8) replace it
-  route by route; until then pages read as one readable column beside the
-  sidebar. Bottom sheets are capped at `max-w-xl` and centered from `md`.
+  replace it route by route (`routeUsesWideColumn` in
+  `lib/navigation/destinations.ts` lists the ones that have; the shell widens to
+  `lg:max-w-6xl` for them). **The Journal has (B3c2):** a list and a sticky
+  reader rail at `lg`, the whole width for its Map and Gallery views. Today,
+  Settings and Sync issues follow (B2, B6/B8); until then they read as one
+  readable column beside the sidebar. Bottom sheets are capped at `max-w-xl` and centered from `md`.
 - `⌘/Ctrl+K` opens a command palette (a Dialog with a combobox/listbox; filter
   logic in `lib/navigation/filter-commands.ts`). It covers destinations, send
   feedback, and appearance, and, from two characters typed, the journal record:

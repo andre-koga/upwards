@@ -228,7 +228,7 @@ function GalleryTile({
           : "archive.gallery.photoOf",
         { date }
       )}
-      className="relative block aspect-square w-full overflow-hidden rounded-md bg-muted"
+      className="relative block aspect-square h-auto w-full overflow-hidden rounded-md bg-muted"
     >
       {src ? (
         <img

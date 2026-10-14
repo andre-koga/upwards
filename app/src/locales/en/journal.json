@@ -46,6 +46,8 @@
     "nextPhoto": "Next photo",
     "photoUnavailable": "Photo unavailable",
     "openVideo": "Play video",
+    "photoCount_one": "{{count}} photo",
+    "photoCount_other": "{{count}} photos",
     "morePhotos": "{{count}} more photos",
     "worldMapTitle": "Where you've written",
     "worldMapHint": "{{count}} days with places — tap a pin to jump, or a cluster to filter those days",
@@ -168,6 +170,12 @@
     "deleteConfirmTitle": "Remove place",
     "deleteConfirmDescription": "Remove \"{{name}}\" from this day?",
     "save": "Save places"
+  },
+  "reader": {
+    "rail": "Selected day",
+    "label": "{{date}}",
+    "hint": "Choose a day to read it here.",
+    "openDay": "Open this day"
   },
   "versions": {
     "title": "Previous versions",
