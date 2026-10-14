@@ -262,7 +262,7 @@ export default function TodayPage() {
         loadJournalMeta={loadJournalMeta}
       />
 
-      <div className="space-y-4 py-4 md:space-y-5 md:px-4">
+      <div className="space-y-3 px-2 py-3 md:space-y-5 md:p-4">
         <JournalCard
           key={toDateString(currentDate)}
           currentDate={currentDate}

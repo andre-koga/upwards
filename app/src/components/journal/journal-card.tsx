@@ -204,7 +204,7 @@ export default function JournalCard({
   return (
     <>
       <div
-        className="overflow-hidden border-y border-border bg-card md:rounded-3xl md:border"
+        className="overflow-hidden rounded-2xl border border-border bg-card md:rounded-3xl"
         onPointerDown={handleJournalPointerDown}
         onPointerUp={handleJournalPointerEnd}
         onPointerLeave={handleJournalPointerEnd}

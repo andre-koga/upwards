@@ -1,15 +1,7 @@
-import { Languages, ChevronDown } from "lucide-react";
+import { Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { SettingsSelect } from "@/components/settings/settings-select";
 import { SettingsSection } from "@/components/ui/settings-section";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { LOCALE_OPTIONS, isLocaleValue } from "@/lib/i18n/locale-storage";
@@ -30,32 +22,12 @@ export function LanguageCard() {
   return (
     <SettingsSection title={t("language.title")} icon={Languages}>
       <div className="space-y-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-between px-3"
-            >
-              <span className="text-sm">{activeOption.label}</span>
-              <ChevronDown size={16} className="text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-52"
-            align="start"
-            sideOffset={6}
-          >
-            <DropdownMenuLabel>{t("language.current")}</DropdownMenuLabel>
-            <DropdownMenuRadioGroup value={locale} onValueChange={handleChange}>
-              {LOCALE_OPTIONS.map((option) => (
-                <DropdownMenuRadioItem key={option.value} value={option.value}>
-                  {option.label}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SettingsSelect
+          ariaLabel={t("language.title")}
+          value={activeOption.value}
+          onValueChange={handleChange}
+          options={LOCALE_OPTIONS}
+        />
         {LOCALE_OPTIONS.length < 2 && (
           <p className="text-xs text-muted-foreground">
             {t("language.comingSoon")}

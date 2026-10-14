@@ -1,16 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 
 import { FormCalendarDateField } from "@/components/forms/form-calendar-date-field";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { SettingsSelect } from "@/components/settings/settings-select";
 import { Label } from "@/components/ui/label";
 import { SettingsSection } from "@/components/ui/settings-section";
 import { Switch } from "@/components/ui/switch";
@@ -59,13 +51,6 @@ export function HolidaysCard() {
     else if (parseBirthday(value) && value <= todayDateString())
       updateAccountSettings({ birthday: value });
   };
-
-  const hemisphereLabel =
-    chosenHemisphere === null
-      ? t("holidays.hemisphere.auto", {
-          season: t(`holidays.hemisphere.${hemisphere}`),
-        })
-      : t(`holidays.hemisphere.${chosenHemisphere}`);
 
   return (
     <SettingsSection
@@ -116,44 +101,21 @@ export function HolidaysCard() {
         <p className="text-xs leading-relaxed text-muted-foreground">
           {t("holidays.hemisphere.hint")}
         </p>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-between px-3"
-              aria-label={t("holidays.hemisphere.label")}
-            >
-              <span className="text-sm">{hemisphereLabel}</span>
-              <ChevronDown size={16} className="text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-52"
-            align="start"
-            sideOffset={6}
-          >
-            <DropdownMenuLabel>
-              {t("holidays.hemisphere.label")}
-            </DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={chosenHemisphere ?? "auto"}
-              onValueChange={setHemisphere}
-            >
-              <DropdownMenuRadioItem value="auto">
-                {t("holidays.hemisphere.auto", {
-                  season: t(`holidays.hemisphere.${hemisphere}`),
-                })}
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="north">
-                {t("holidays.hemisphere.north")}
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="south">
-                {t("holidays.hemisphere.south")}
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SettingsSelect
+          ariaLabel={t("holidays.hemisphere.label")}
+          value={chosenHemisphere ?? "auto"}
+          onValueChange={setHemisphere}
+          options={[
+            {
+              value: "auto",
+              label: t("holidays.hemisphere.auto", {
+                season: t(`holidays.hemisphere.${hemisphere}`),
+              }),
+            },
+            { value: "north", label: t("holidays.hemisphere.north") },
+            { value: "south", label: t("holidays.hemisphere.south") },
+          ]}
+        />
       </div>
     </SettingsSection>
   );
