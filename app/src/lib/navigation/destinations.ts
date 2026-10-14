@@ -101,6 +101,16 @@ export function activeTabForPath(pathname: string): TabId | null {
   return null;
 }
 
+/**
+ * Routes with a real two-column layout at `lg`. Every other page reads as one
+ * capped column beside the sidebar (ui-system-and-responsive-layout.md); these
+ * take the width and place a context rail beside the main column themselves.
+ */
+export function routeUsesWideColumn(pathname: string): boolean {
+  const path = normalize(pathname);
+  return path === "/journal" || path.startsWith("/journal/");
+}
+
 /** The tab for a ⌘/Ctrl + digit shortcut, or null. */
 export function tabForShortcutKey(key: string): TabDestination | null {
   return TABS.find((tab) => tab.shortcut === key) ?? null;

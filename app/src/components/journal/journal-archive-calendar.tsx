@@ -15,8 +15,16 @@ import {
 interface JournalArchiveCalendarProps {
   /** The days the current search and filters leave in. */
   entries: readonly JournalEntry[];
-  /** How a day is shown once picked: the same card the feed uses. */
+  /** The picked day. The page owns it, so the calendar and the reader agree. */
+  selected: string | null;
+  onSelect: (date: string | null) => void;
+  /** How a day is shown under the calendar: the same card the feed uses. */
   renderEntry: (entry: JournalEntry) => ReactNode;
+  /**
+   * False when a reader beside the calendar shows the picked day, so it is not
+   * shown twice.
+   */
+  showDetail: boolean;
 }
 
 /**
@@ -26,7 +34,10 @@ interface JournalArchiveCalendarProps {
  */
 export default function JournalArchiveCalendar({
   entries,
+  selected,
+  onSelect,
   renderEntry,
+  showDetail,
 }: JournalArchiveCalendarProps) {
   const { t } = useTranslation("journal");
   const navigate = useNavigate();
@@ -59,21 +70,20 @@ export default function JournalArchiveCalendar({
     for (const date of entryDates) if (!newest || date > newest) newest = date;
     return fromDateString(newest ?? today);
   });
-  const [selected, setSelected] = useState<string | null>(null);
   const detailRef = useRef<HTMLDivElement | null>(null);
 
   // On a phone the picked day lands below the calendar, out of sight. Bring it
   // up once it has rendered, clear of the floating tab bar; reduced motion
   // gets a jump instead of a glide.
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || !showDetail) return;
     detailRef.current?.scrollIntoView({
       block: "nearest",
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
         : "smooth",
     });
-  }, [selected]);
+  }, [selected, showDetail]);
 
   const selectedEntry = selected ? (byDate.get(selected) ?? null) : null;
 
@@ -89,7 +99,7 @@ export default function JournalArchiveCalendar({
         bookmarkedDates={bookmarkedDates}
         mode="single"
         selected={selected ? fromDateString(selected) : undefined}
-        onSelect={(date) => setSelected(date ? toDateString(date) : null)}
+        onSelect={(date) => onSelect(date ? toDateString(date) : null)}
         month={month}
         onMonthChange={setMonth}
         disabled={{ after: fromDateString(today) }}
@@ -100,36 +110,38 @@ export default function JournalArchiveCalendar({
         className="w-full rounded-xl border border-border [--cell-size:2.75rem] md:[--cell-size:3.25rem]"
       />
 
-      <div
-        ref={detailRef}
-        aria-live="polite"
-        className="scroll-mb-[calc(var(--app-tab-bar-h,0px)+1rem)]"
-      >
-        {selected === null ? (
-          <p className="px-1 text-sm text-muted-foreground">
-            {t("archive.calendar.hint")}
-          </p>
-        ) : selectedEntry ? (
-          renderEntry(selectedEntry)
-        ) : (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border p-3">
-            <p className="text-sm text-muted-foreground">
-              {t("archive.calendar.noEntry", {
-                date: `${formatWeekdayShortDate(fromDateString(selected))} ${fromDateString(selected).getFullYear()}`,
-              })}
+      {showDetail ? (
+        <div
+          ref={detailRef}
+          aria-live="polite"
+          className="scroll-mb-[calc(var(--app-tab-bar-h,0px)+1rem)]"
+        >
+          {selected === null ? (
+            <p className="px-1 text-sm text-muted-foreground">
+              {t("archive.calendar.hint")}
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-11 md:h-8"
-              onClick={() => openDay(selected)}
-            >
-              {t("archive.calendar.openDay")}
-            </Button>
-          </div>
-        )}
-      </div>
+          ) : selectedEntry ? (
+            renderEntry(selectedEntry)
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border p-3">
+              <p className="text-sm text-muted-foreground">
+                {t("archive.calendar.noEntry", {
+                  date: `${formatWeekdayShortDate(fromDateString(selected))} ${fromDateString(selected).getFullYear()}`,
+                })}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-11 md:h-8"
+                onClick={() => openDay(selected)}
+              >
+                {t("archive.calendar.openDay")}
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

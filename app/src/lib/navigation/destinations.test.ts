@@ -4,6 +4,7 @@ import {
   activeTabForPath,
   isTabRootPath,
   routeHidesNavigation,
+  routeUsesWideColumn,
   tabForShortcutKey,
 } from "./destinations";
 
@@ -67,5 +68,16 @@ describe("routeHidesNavigation", () => {
     expect(routeHidesNavigation("/settings/forgot-password")).toBe(true);
     expect(routeHidesNavigation("/settings/reset-password")).toBe(true);
     expect(routeHidesNavigation("/settings")).toBe(false);
+  });
+});
+
+describe("routeUsesWideColumn", () => {
+  it("is true for the Journal and false for pages that read as one column", () => {
+    expect(routeUsesWideColumn("/journal")).toBe(true);
+    expect(routeUsesWideColumn("/journal/")).toBe(true);
+    expect(routeUsesWideColumn("/")).toBe(false);
+    expect(routeUsesWideColumn("/home")).toBe(false);
+    expect(routeUsesWideColumn("/settings")).toBe(false);
+    expect(routeUsesWideColumn("/journaling")).toBe(false);
   });
 });
