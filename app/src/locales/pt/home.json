@@ -4,19 +4,71 @@
     "subtitle": "O que sua última semana está realmente mostrando."
   },
   "loading": "Carregando…",
+  "worksWithout": "Todo o resto do Início funciona sem isso.",
   "setup": {
     "title": "Adicione sua chave de IA para ver insights",
-    "description": "Conecte uma chave compatível com OpenAI em Configurações e a Início transformará sua atividade, journal e estatísticas de hábitos recentes em um resumo curto e algumas recomendações concretas.",
+    "description": "Conecte uma chave compatível com OpenAI em Configurações e o Início transformará sua atividade, diário e estatísticas de hábitos recentes em um resumo curto e algumas sugestões concretas.",
     "cta": "Ir para Configurações"
   },
-  "insight": {
-    "refreshedAt": "Atualizado {{time}}",
-    "refresh": "Atualizar insights",
-    "refreshing": "Atualizando…",
-    "recommendationsTitle": "Vale a pena agir",
+  "hero": {
+    "label": "Insight de IA",
+    "labelOlder": "Insight de IA · anterior",
+    "refreshedAt": "atualizado {{time}}",
+    "refreshing": "atualizando…",
+    "refresh": "Atualizar insight",
+    "openToday": "Abrir Hoje",
+    "seeNumbers": "Ver os números",
+    "hideNumbers": "Ocultar os números",
     "basedOn": "Com base nos últimos 7 dias · sua chave, seu modelo"
   },
+  "notice": {
+    "stale": "Isto foi escrito com números que já mudaram. Um novo está a caminho, ou atualize você mesmo.",
+    "offline": "Você está offline, então este é o último insight que tínhamos. Ele se atualiza quando você voltar."
+  },
+  "evidence": {
+    "title": "Do que isto foi feito",
+    "completion": "{{percent}}% das intenções cumpridas em {{days}} dias",
+    "activity": "{{name}}: {{done}} de {{total}} dias, sequência {{streak}}",
+    "journal": "Diário: {{entries}} escritos esta semana, sequência {{streak}}",
+    "sent": "Só estes números foram enviados ao seu provedor de IA. Os nomes dos seus hábitos vão junto; seu diário e suas tarefas nunca."
+  },
+  "digest": {
+    "title": "Vale a pena agir hoje",
+    "subtitle": "Dos seus próprios últimos 7 dias. Sem precisar de IA.",
+    "allClear": "Nada está escorregando e nenhuma sequência está em risco. Siga em frente.",
+    "nothingYet": "Adicione um hábito em Hoje e o que vale a pena agir aparecerá aqui.",
+    "openToday": "Abrir Hoje",
+    "pin": "Fixar no topo",
+    "pinLabel": "Fixar {{name}} no topo de Hoje",
+    "pinned": "Fixado",
+    "streakAtRisk": {
+      "title_one": "Mantenha {{name}}: sequência de {{count}} dia",
+      "title_other": "Mantenha {{name}}: sequência de {{count}} dias",
+      "evidence": "sequência {{streak}} · hoje {{done}} de {{target}}"
+    },
+    "slipping": {
+      "title": "{{name}} tem escorregado",
+      "evidence": "feito em {{done}} dos últimos {{total}} dias"
+    },
+    "journalStreak": {
+      "title_one": "Hoje ainda não foi escrito: sequência de {{count}} dia no diário",
+      "title_other": "Hoje ainda não foi escrito: sequência de {{count}} dias no diário",
+      "evidence_one": "{{count}} dia seguido, até ontem",
+      "evidence_other": "{{count}} dias seguidos, até ontem",
+      "action": "Escrever hoje"
+    }
+  },
+  "suggestions": {
+    "title": "Sua IA sugere",
+    "openToday": "Abrir Hoje",
+    "written": "Escrito pelo seu modelo a partir dos números acima. Trate como uma sugestão.",
+    "stale": "Escrito com números anteriores. Atualize o insight para ver sugestões atuais."
+  },
   "error": {
+    "title": "Não foi possível gerar um insight",
+    "rateLimitedTitle": "Limite de insights de hoje atingido",
+    "unknown": "Algo deu errado. Tente de novo em instantes.",
+    "offline": "Os insights precisam de conexão.",
     "generic": "Não foi possível gerar insights: {{error}}",
     "rateLimited": "Você atingiu o limite diário de insights de IA — tente novamente amanhã.",
     "notConfigured": "A IA ainda não está configurada. Adicione sua chave em Configurações.",

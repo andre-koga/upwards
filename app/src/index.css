@@ -62,6 +62,29 @@
     --z-dialog: 80;
     --z-popover: 90;
     --z-lightbox: 100;
+
+    /* The AI gradient (design-and-branding.md §4.1). Defined once, here, and
+       used only through lib/ai/ai-visual.ts. The stops are fixed colors, not
+       theme tokens: the surface is dark in light and dark mode alike, so the
+       near-white text on it (--on-ai) keeps its contrast in both. */
+    --ai-gradient: radial-gradient(
+      120% 140% at 0% 0%,
+      #3f6656 0%,
+      #2c5246 32%,
+      #1f3f52 58%,
+      #4a3b63 78%,
+      #a4643f 100%
+    );
+    --ai-gradient-linear: linear-gradient(
+      90deg,
+      #3f6656,
+      #1f3f52,
+      #8d84a9,
+      #c99a3f
+    );
+    --on-ai: 43 62% 96%;
+    /* Dark green for text on a --on-ai fill, such as a button on the gradient. */
+    --ai-ink: 154 27% 21%;
   }
   .dark {
     color-scheme: dark;

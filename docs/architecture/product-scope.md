@@ -1001,7 +1001,52 @@ Track B gets its own breakdown before it starts. Its shape:
     cards and the Calendar are real buttons and a grid, so every choice has a
     keyboard path.
   - **B3d:** generated month and holiday banner images.
-- **B4.** Home: AI insight surfaces on the existing AI groundwork.
+- **B4.** Home: AI insight surfaces on the existing AI groundwork. Split in
+  two, like B2.
+  - **B4a (done 2026-10-14):** the Home screen, its states, and a digest that
+    needs no key.
+    - *The insight hero* is the screen's one tier-1 surface
+      (`home-insight-hero.tsx`): the AI summary as a serif headline on the
+      shared gradient, with near-white text in light and dark alike. It names
+      its evidence ("Based on the last 7 days, your key, your model"), can show
+      the exact figures it was made from (recovered from the insight's
+      fingerprint, so nothing is stored twice) and says that only those figures
+      were sent, habit names included and journal and tasks never; it says when
+      it is older, and refreshes by button or `R`. **The gradient is now a
+      token:** `--ai-gradient`, `--ai-gradient-linear`, `--on-ai` in
+      `index.css`, used through `lib/ai/ai-visual.ts`. Until now only the mock
+      pages had it.
+    - *States.* Each has a screen and none blocks the rest of Home: loading;
+      offline (with the last insight kept, marked older, if there is one);
+      not configured (a Settings link); rate-limited (the last insight stays,
+      with a plain notice); provider error (with retry); stale (numbers changed
+      since). When there is no insight the digest leads and the AI is an offer
+      below it, never a gate in front of it.
+    - *The digest* ("Worth acting on today", `lib/home/digest.ts`) is computed
+      on the device with no AI: a long streak not yet done today, a journal
+      streak with today unwritten, a habit done on few of the last seven days.
+      Each row shows its figures and has an action: pin the habit to the top of
+      Today (the normal synced pin), open Today, or write today. A metric with
+      nothing to do about it is not shown, so a quiet week says so instead of
+      listing numbers.
+    - *One account of the week.* `lib/ai/habit-facts.ts` is now the single
+      source for the digest, the figures sent to the AI, and (through
+      `loadRankRequest`) the ordering on Today. Building it exposed two defects
+      in the figures the AI was being sent, both fixed: a streak was read "as
+      of today", and an unfinished today counts as a loss, so every habit read
+      zero; and a missed day with no record was not counted at all (daily rows
+      have not been created empty since A6), so a habit done 1 day in 7 read
+      as 1 of 1. Streaks are now the run going into today, and a due day with
+      no record counts as a miss. Avoid habits are no longer in the figures:
+      they have no action to do or miss.
+    - *Not in B4a, on purpose.* The AI's suggestions are still the model's own
+      sentences, listed apart from the digest and labelled as the model's; they
+      do not yet name an activity or carry an action beyond opening Today, and
+      they do not yet name a goal (there is no compass until B5). B4b makes them
+      grounded and actionable. Home keeps its single reading column at `lg`: the
+      rail it would take is the compass teaser and stats, which wait for B5.
+  - **B4b:** grounded suggestions: each tied to one of the person's activities,
+    its figures checked as `rank-today` checks them, with a real action.
 - **B5.** You / compass and onboarding, including the one-time daily clip and
   location prompts. The compass needs a data-model pass in
   [`temporal-data-sync.md`](temporal-data-sync.md) before code.

@@ -405,6 +405,12 @@ aiGradient       // radial, green → teal → plum → warm amber: full-bleed A
 aiGradientLinear // linear: badges, hairline accents, 1.5px borders
 ```
 
+They live as CSS variables (`--ai-gradient`, `--ai-gradient-linear`, and
+`--on-ai` for the text on them) in `app/src/index.css` and are used through
+`app/src/lib/ai/ai-visual.ts`. The stops are fixed colors, not theme tokens: the
+surface is dark in light and dark mode alike, so its near-white text keeps its
+contrast in both.
+
 ### 4.2 Intensity tiers
 
 Match intensity to prominence. Only one tier-1 surface may be visible at a time.
