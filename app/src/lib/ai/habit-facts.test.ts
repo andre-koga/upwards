@@ -22,7 +22,11 @@ vi.mock("@/lib/time-utils", async (importOriginal) => {
 
 import { db } from "@/lib/db";
 import type { Activity, DailyEntry } from "@/lib/db/types";
-import { buildInsightPayload } from "./build-insight-payload";
+import {
+  MAX_INSIGHT_ACTIVITIES,
+  parseInsightRequest,
+} from "../../../../supabase/functions/_shared/insight";
+import { buildInsightRequest } from "./build-insight-payload";
 import { loadHabitFacts } from "./habit-facts";
 
 const TODAY = "2026-10-14";
@@ -121,18 +125,19 @@ describe("loadHabitFacts", () => {
   });
 });
 
-describe("buildInsightPayload", () => {
+describe("buildInsightRequest", () => {
   it("tells the model the same week the screen shows", async () => {
     await db.activities.add(activity("run"));
     await db.dailyEntries.bulkAdd(
       [1, 2, 3, 4, 5, 6, 7].map((n) => entryOn(day(-n), { run: 1 }))
     );
 
-    const payload = await buildInsightPayload();
+    const { payload } = await buildInsightRequest();
     const [habit] = await loadHabitFacts(TODAY);
 
     expect(payload.activities).toEqual([
       {
+        key: "1",
         name: "run",
         targetPerDay: 1,
         completedDays: habit.figures.daysDone,
@@ -149,10 +154,52 @@ describe("buildInsightPayload", () => {
     // One done day and six with no row at all: 1 of 7, not 1 of 1.
     await db.dailyEntries.add(entryOn(day(-1), { run: 1 }));
 
-    const payload = await buildInsightPayload();
+    const { payload } = await buildInsightRequest();
 
     expect(payload.activities[0].completedDays).toBe(1);
     expect(payload.activities[0].totalDays).toBe(7);
     expect(payload.completionRate).toBe(0.14);
+  });
+
+  it("keys each habit and keeps the ids on the device, out of the payload", async () => {
+    await db.activities.bulkAdd([activity("run"), activity("read")]);
+
+    const { payload, habits } = await buildInsightRequest();
+
+    expect(payload.activities.map((a) => a.key)).toEqual(["1", "2"]);
+    // The key-to-habit map is returned beside the payload, never inside it.
+    expect(habits.map((h) => h.key)).toEqual(["1", "2"]);
+    expect(new Set(habits.map((h) => h.id))).toEqual(new Set(["run", "read"]));
+    const sent = JSON.stringify(payload);
+    expect(sent).not.toContain('"id"');
+    expect(sent).not.toContain("run-id");
+    // Each key points at the habit whose figures it carries.
+    for (const entry of payload.activities) {
+      expect(habits.find((h) => h.key === entry.key)?.name).toBe(entry.name);
+    }
+  });
+
+  it("sends no more habits than the function accepts", async () => {
+    await db.activities.bulkAdd(
+      Array.from({ length: MAX_INSIGHT_ACTIVITIES + 5 }, (_, i) =>
+        activity(`h${i}`)
+      )
+    );
+
+    const { payload, habits } = await buildInsightRequest();
+
+    expect(payload.activities).toHaveLength(MAX_INSIGHT_ACTIVITIES);
+    expect(habits).toHaveLength(MAX_INSIGHT_ACTIVITIES);
+  });
+
+  it("produces a payload the function accepts", async () => {
+    await db.activities.bulkAdd([activity("run"), activity("read")]);
+    await db.dailyEntries.add(entryOn(day(-1), { run: 1 }));
+
+    const { payload } = await buildInsightRequest();
+
+    expect(
+      parseInsightRequest(JSON.parse(JSON.stringify(payload)))
+    ).not.toBeNull();
   });
 });

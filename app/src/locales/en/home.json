@@ -19,7 +19,9 @@
     "openToday": "Open Today",
     "seeNumbers": "See the numbers",
     "hideNumbers": "Hide the numbers",
-    "basedOn": "Based on the last 7 days · your key, your model"
+    "basedOn": "Based on the last 7 days · your key, your model",
+    "fallbackSummary": "{{percent}}% of your intentions were met over the last {{days}} days.",
+    "fallbackNoFigures": "Here is where your week stands."
   },
   "notice": {
     "stale": "This was written from numbers that have since changed. A fresh one is on its way, or refresh it yourself.",
@@ -62,7 +64,13 @@
     "title": "Your AI suggests",
     "openToday": "Open Today",
     "written": "Written by your model from the numbers above. Treat it as a suggestion.",
-    "stale": "Written from older numbers. Refresh the insight for current suggestions."
+    "stale": "Written from older numbers. Refresh the insight for current suggestions.",
+    "evidence": "done {{done}} of {{total}} days · streak {{streak}}",
+    "dismiss": "Set aside",
+    "dismissLabel": "Set aside the suggestion about {{name}}",
+    "allDismissed": "You've set these aside. A new insight brings new suggestions.",
+    "inactive": "This habit is archived or removed, so there's nothing to do here.",
+    "grounded": "Written by your model. Each one is about a single habit and may cite only that habit's own figures; anything else it said was left out."
   },
   "error": {
     "title": "Couldn't make an insight",

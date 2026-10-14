@@ -82,4 +82,58 @@ describe("insight-cache", () => {
     );
     expect(getCachedInsight()).toBeNull();
   });
+
+  it("round-trips suggestions tied to a habit", () => {
+    const suggestions = [
+      {
+        key: "1",
+        activityId: "id-run",
+        name: "Run",
+        text: "Shoes by the door.",
+      },
+    ];
+    setCachedInsight({
+      generatedAt: new Date().toISOString(),
+      fingerprint: "fp-2",
+      summary: "Steady.",
+      recommendations: [],
+      suggestions,
+    });
+    expect(getCachedInsight()?.suggestions).toEqual(suggestions);
+  });
+
+  it("still reads an insight cached before suggestions were tied to a habit", () => {
+    localStorage.setItem(
+      "okhabit:ai_insight_cache",
+      JSON.stringify({
+        generatedAt: new Date().toISOString(),
+        fingerprint: "old",
+        summary: "Old.",
+        recommendations: ["Sleep earlier"],
+      })
+    );
+    const cached = getCachedInsight();
+    expect(cached?.recommendations).toEqual(["Sleep earlier"]);
+    expect(cached?.suggestions).toBeUndefined();
+  });
+
+  it("drops a malformed suggestion without losing the insight", () => {
+    localStorage.setItem(
+      "okhabit:ai_insight_cache",
+      JSON.stringify({
+        generatedAt: new Date().toISOString(),
+        fingerprint: "fp",
+        summary: "Fine.",
+        recommendations: [],
+        suggestions: [
+          { key: "1", activityId: "a", name: "Run", text: "Good." },
+          { key: "2", text: "No habit." },
+          "nope",
+        ],
+      })
+    );
+    expect(getCachedInsight()?.suggestions).toEqual([
+      { key: "1", activityId: "a", name: "Run", text: "Good." },
+    ]);
+  });
 });
