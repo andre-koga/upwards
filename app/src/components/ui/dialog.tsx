@@ -134,7 +134,10 @@ function DialogContent({
         data-slot="dialog-content"
         data-size={size}
         className={cn(
-          "fixed left-1/2 z-[var(--z-dialog)] grid max-h-[min(90dvh,100svh-1rem)] w-full max-w-[calc(100%-2rem)] gap-4 overflow-y-auto rounded-xl border bg-background p-6 shadow-lg data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-lg",
+          "fixed left-1/2 z-[var(--z-dialog)] grid max-h-[min(90dvh,100svh-1rem)] w-full max-w-[calc(100%-3rem)] gap-4 overflow-y-auto rounded-xl border bg-background p-6 shadow-lg",
+          // Widths are plain classes (not data-size selectors) so a caller's
+          // `sm:max-w-*` replaces them instead of fighting them.
+          size === "sm" ? "sm:max-w-md" : "sm:max-w-xl",
           dialogSurfaceMotionClassName,
           className
         )}

@@ -87,7 +87,6 @@ export default function FeedbackDialog({
       onOpenChange={handleOpenChange}
       title={t("feedbackDialog.title")}
       description={t("feedbackDialog.description")}
-      contentClassName="w-80"
     >
       <FormStack className="space-y-2">
         <FormTextareaField

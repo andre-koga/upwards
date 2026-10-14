@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import type { ActivityRetiredKind } from "@/components/activities/activity-retired-info-dialog";
 import DailyTaskActivityPill from "@/components/tasks/daily-task-activity-pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
+import { PinToggle } from "@/components/tasks/pin-toggle";
 
 interface ActivityTaskItemProps {
   activity: Activity;
@@ -222,7 +223,7 @@ function ActivityTaskItem({
                   ? "border-primary bg-primary text-primary-foreground"
                   : count > 0
                     ? "border-primary bg-[color-mix(in_srgb,hsl(var(--primary))_22%,hsl(var(--background)))] text-primary"
-                    : "border-line-strong text-muted-foreground"
+                    : "border-border text-muted-foreground"
             )}
             title={
               canUpdateCount
@@ -257,7 +258,6 @@ function ActivityTaskItem({
           onStartActivity={onStartActivity}
           onStopActivity={onStopActivity}
           onManualEntry={onManualEntry}
-          onTogglePin={onTogglePin}
         />
         {reason ? (
           <p className="mt-1 flex items-start gap-1 px-2 text-[11px] leading-snug text-muted-foreground">
@@ -295,6 +295,19 @@ function ActivityTaskItem({
           </Button>
         </div>
       ) : null}
+      <div className="flex h-10 shrink-0 items-center">
+        <PinToggle
+          pinned={activity.is_pinned === true}
+          onToggle={
+            onTogglePin && !interaction.isReadOnly
+              ? () => onTogglePin(activity)
+              : undefined
+          }
+          pinLabel={t("taskItem.pin")}
+          unpinLabel={t("taskItem.unpin")}
+          pinnedLabel={t("taskItem.pinned")}
+        />
+      </div>
     </div>
   );
 }

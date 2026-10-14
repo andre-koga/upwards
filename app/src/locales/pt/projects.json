@@ -128,14 +128,10 @@
     },
     "routineLabel": "Frequência",
     "targetLabel": "Vezes por dia",
-    "targetHint": "1 é uma caixa de seleção simples. Mais de 1 vira um contador.",
+    "targetHint": "1 é uma caixa de seleção. Mais de 1 vira um contador.",
     "tracksTime": {
       "label": "Registrar tempo",
-      "hint": "Mostra um cronômetro nesta atividade. Desligue para coisas que você só marca, como remédios."
-    },
-    "pin": {
-      "label": "Fixar no topo",
-      "hint": "Atividades fixadas ficam acima do resto da lista de Hoje."
+      "hint": "Mostra um cronômetro. Desligue para coisas que você só marca, como remédios."
     },
     "archive": "Arquivar atividade",
     "archiveYes": "Sim",

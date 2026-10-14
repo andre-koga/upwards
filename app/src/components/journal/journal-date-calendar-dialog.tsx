@@ -47,7 +47,7 @@ export function JournalDateCalendarDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         size="sm"
-        className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2"
+        className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2 sm:max-w-sm"
       >
         <DialogTitle className="sr-only">{t("pickDate")}</DialogTitle>
         <JournalMarkedCalendar

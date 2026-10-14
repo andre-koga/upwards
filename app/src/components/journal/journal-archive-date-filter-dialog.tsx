@@ -151,7 +151,7 @@ export default function JournalArchiveDateFilterDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         size="sm"
-        className="w-[calc(100vw-2rem)] max-w-sm gap-3 overflow-hidden rounded-2xl p-3"
+        className="w-[calc(100vw-2rem)] max-w-sm gap-3 overflow-hidden rounded-2xl p-3 sm:max-w-sm"
       >
         <DialogHeader className="space-y-1 px-1 text-left">
           <DialogTitle className="font-crimson text-xl">

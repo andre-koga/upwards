@@ -121,7 +121,7 @@ original table used would have collided and are renamed:
 | Secondary text | `--ink-muted` (was `--muted`) | `--muted-foreground` |
 | Tertiary text, shortcut chips | `--ink-faint` (was `--faint`) | - |
 | Hairlines and rules | `--line` | `--border` |
-| Form control border | `--line-strong` | `--input` |
+| Switch track (control borders use `--line`) | `--line-strong` | `--input` |
 | Active nav, positive fill | `--sage` | - |
 | Brand, primary action | `--green` | `--primary`, `--ring` |
 | Pressed state, text on sage | `--green-deep` | - |
@@ -139,12 +139,21 @@ the first draft** because the draft failed this document's own contrast rule
 (measured, WCAG): `--ink-muted` `#60574d` (was `#6e776f`, 4.05 on canvas and 3.74
 on canvas-deep), `--ink-faint` `#6b645b` (was `#9aa199`, 2.3-2.6),
 `--terracotta-text` `#9c4a34` and `--gold-text` `#7d5a12` (the fill colors are
-3.2 and 2.5 as text). Text-input borders use `--line-strong` `#8d7f6d`
-(3:1 or better) because hairlines are decoration and inputs are not. Buttons,
-pills and rows are identified by their label and a tonal fill
-(`bg-muted/60`) with a `--border` hairline, so they do not carry a strong
-border; only text inputs, selects, the calendar field, and the unchecked task
-circle do.
+3.2 and 2.5 as text). **One border strength everywhere (changed 2026-10-14).** Controls (text
+inputs, textareas, selects, the calendar field, outlined and dashed buttons,
+chips, toggle buttons, the unchecked task circle) and containers (cards,
+sections, dividers, tooltips) all draw their edge with the same `--line`
+hairline, as `border-border`. The earlier rule gave text inputs the stronger
+`--line-strong` for 3:1 contrast and left buttons on the hairline; that put two
+edge brightnesses side by side in one form, and when it was made uniform at the
+strong value it read as too loud. **Tradeoff accepted:** a text input's edge is
+now below WCAG 1.4.11's 3:1 non-text contrast. Inputs are identified by their
+label, placeholder and the 2px focus ring (which stays at full contrast), not by
+their edge alone. `--line-strong` and `--input` remain as tokens (the unchecked
+switch track uses `--input`) but no component border uses them. If a contrast
+audit requires the stronger edge back, change `--border`-on-controls in one
+place (`border-border` in `components/ui/*` and `forms/styles.ts`), not per
+component. Disabled controls keep the hairline on a muted fill.
 Lavender is a categorical fill only: it is below 4.5 as text on canvas-deep.
 
 **Values (dark).** Neutrals are warm brown-black, not green-grey. Canvas `#191715`, paper `#211f1c`,
@@ -160,6 +169,13 @@ CSS, so a future edit to a token that breaks a pairing fails CI.
 Group/category colors are **user data**, not theme tokens. Render them as small
 dots, 2px bars, or tinted backgrounds at ~15% alpha. Never fill a whole card with
 a user's group color.
+**One exception (2026-10-14): the running-session bar.** While a timer runs,
+Today shows a card in its sticky header row, beside the date control, filled with that group's color and a soft
+glow of the same color, with text chosen for contrast (`getContrastColor`). It is
+the only live, time-critical surface in the app, and the color is what makes a
+running timer unmistakable from across the room. The tradeoff accepted: one
+saturated, user-colored surface, only while a session runs, and never in a list
+or on any content card. It does not use the AI gradient.
 
 The app ships **System / Light / Dark** and nothing else. The nine named color
 palettes were removed deliberately ([`product-scope.md`](product-scope.md) §1):
@@ -301,7 +317,8 @@ first.
 - **Per-activity streak flame** rendered inside the checkbox or counter.
 - **Break day** toggle: marks a day as a break so misses don't break streaks.
 - **Memos** (one-time tasks): quick-add FAB, due date with relative labels, pin
-  via long-press, edit/archive/delete, carry-forward of incomplete memos.
+  from the pin button at the row's far right (long-press still works as a
+  shortcut), edit/archive/delete, carry-forward of incomplete memos.
 - **Manual order** (Reorder mode on Today), **pinning**, a **Done last** preference,
   and **AI ordering with a reason per task** as a temporary view over the person's order.
 

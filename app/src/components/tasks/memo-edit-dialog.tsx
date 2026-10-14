@@ -21,8 +21,12 @@ interface MemoEditDialogProps {
   onTitleChange: (value: string) => void;
   dueDate: string | null;
   onDueDateChange: (value: string | null) => void;
-  isPinned: boolean;
-  onPinnedChange: (value: boolean) => void;
+  /**
+   * A new memo has no row to pin from yet, so the add dialog offers the pin.
+   * An existing memo is pinned from its row; omit both here.
+   */
+  isPinned?: boolean;
+  onPinnedChange?: (value: boolean) => void;
   onConfirm: () => void;
   onDelete?: () => void;
   onArchive?: () => void;
@@ -38,7 +42,7 @@ export function MemoEditDialog({
   onTitleChange,
   dueDate,
   onDueDateChange,
-  isPinned,
+  isPinned = false,
   onPinnedChange,
   onConfirm,
   onDelete,
@@ -63,7 +67,6 @@ export function MemoEditDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={dialogTitle ?? t("memo.editTitle")}
-      contentClassName="w-80"
       headerEnd={
         onArchive ? (
           <Button
@@ -107,13 +110,15 @@ export function MemoEditDialog({
             placeholder={t("memo.dueDate")}
             clearable
           />
-          <FormToggleButton
-            toggled={isPinned}
-            onToggle={onPinnedChange}
-            label={isPinned ? t("memo.unpin") : t("memo.pin")}
-          >
-            <Pin className={isPinned ? "h-4 w-4 fill-current" : "h-4 w-4"} />
-          </FormToggleButton>
+          {onPinnedChange ? (
+            <FormToggleButton
+              toggled={isPinned}
+              onToggle={onPinnedChange}
+              label={isPinned ? t("memo.unpin") : t("memo.pin")}
+            >
+              <Pin className={isPinned ? "h-4 w-4 fill-current" : "h-4 w-4"} />
+            </FormToggleButton>
+          ) : null}
         </FormRow>
       </FormStack>
       <FormDialogActions

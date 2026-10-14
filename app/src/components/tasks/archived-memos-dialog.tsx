@@ -74,7 +74,6 @@ export function ArchivedMemosDialog({
           : t("memo.archivedDialog.title")
       }
       size="default"
-      contentClassName="w-96"
     >
       <div className="max-h-96 space-y-1 overflow-y-auto">
         {archivedMemos.length === 0 ? (

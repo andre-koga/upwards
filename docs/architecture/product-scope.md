@@ -58,6 +58,13 @@ track time. The real gap was that every activity was timeable.
   field arrived with the data migrations. The pin control is a switch in the
   activity form, and a pinned row shows a pin glyph (B2a, 2026-10-12). Every row
   on Today also has a pin button for pinning without opening the form (B2b).
+  Habits and memos pin the same way (2026-10-14): one `PinToggle` at the far
+  right of the row, outside the row's own box, on both. The activity form no longer has a pin
+  switch (the row's button replaces it), and its type question is a three-way
+  segmented control with one line of description for the chosen type instead of
+  three tall option cards. A memo's edit dialog no
+  longer carries a pin switch (the add dialog keeps one, because a new memo has
+  no row yet). Long-press on a memo still pins it, as a shortcut.
 - One-time, idempotent migration: each `recurring_memo` becomes an activity with
   `tracks_time = false`, the same routine, `completion_target = 1`, pinned if it
   was pinned, archived if it was disabled. Migrated items go into a group named
