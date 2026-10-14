@@ -205,24 +205,34 @@ labels and metadata. Never use them for body copy.
 
 ### 3.1 Journal and Memories are one thing
 
-A memory is a journal entry whose date is imprecise. The data model makes this
-explicit: `Memory` is `{text_content, photo_paths, time_label}` with **no date**,
-while `JournalEntry` carries `entry_date`. They must be presented as one
-continuous record with a **date precision** dimension:
+A memory is a journal entry about something that is hard to date. The data
+model keeps them apart: `Memory` is `{text_content, photo_paths, time_label}`
+plus the usual `created_at`, with **no event date**, while `JournalEntry`
+carries `entry_date`. They must be presented as one continuous record in which
+every item has two dates, and only one of them places it:
 
-- `exact` — a specific day (today's journal).
-- `approximate` — a free-text period in the user's own words ("when I was six",
-  "around COVID"), optionally anchored to a year or range for sorting.
+- A **day** is placed on `entry_date`, the day it describes.
+- A **memory** is placed on **the day it was remembered**: the local calendar
+  day it was written down (`created_at`). That is a fact the app knows exactly,
+  so a memory is never guessed into a year, never filed under a heading, and
+  never pushed to the end of the feed. Editing a memory later does not move it.
+- A memory's `time_label` is the person's own words for when it *happened*
+  ("when I was six", "Summer 2019"). It is the memory's title, it is searchable,
+  and it is not parsed or used for placement. The label stays free text; do not
+  ask for a date picker.
 
 Do not build separate Journal and Memories destinations. One archive, one search,
-one browse surface, entries sorted by best-known date with imprecise entries
-grouped at their anchor.
+one browse surface, newest first, with each memory standing on the day it
+surfaced, after that day's entry if there is one.
 
-The anchor is read from the person's own words: the latest year, up to the
-current one, in the memory's `time_label`. Memories sit after that year's days
-in the feed; a label naming no year is undated and closes the feed. The label
-stays free text; do not ask for a date picker (that would make it an exact
-entry).
+**Why this replaced "approximate dates, anchored by year" (changed 2026-10-14).**
+The earlier rule read a year out of the label and put memories after that
+year's days, with unlabelled ones closing the feed. That buried them in past
+years and at the end, where people rarely scroll, and it placed them by a date
+the person had not given. Placing by the day they were remembered lets the record
+surface memories gradually, on the day each came back, among the days it came
+back on, which is how a journal is read. The cost is that memories cannot be
+browsed by when they happened; that is what the label and search are for.
 
 ### 3.2 Canonical navigation
 

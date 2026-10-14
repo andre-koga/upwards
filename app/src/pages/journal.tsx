@@ -51,6 +51,7 @@ import {
   journalArchiveFiltersAreActive,
   type JournalArchiveFilters,
 } from "@/lib/journal/archive";
+import { memoriesByDate, memoryRememberedDate } from "@/lib/journal/record";
 import { useAccountSettings } from "@/lib/use-account-settings";
 import { useHemisphere } from "@/lib/holidays/use-holiday-calendars";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
@@ -203,8 +204,10 @@ export default function JournalPage() {
     if (!jumpMemoryId) return;
     if (journalArchiveFiltersAreActive(filters)) return;
     revealMemory(jumpMemoryId);
+    const jumped = matchingMemories.find((m) => m.id === jumpMemoryId);
+    if (jumped) setSelectedDate(memoryRememberedDate(jumped));
     setJumpMemoryId(null);
-  }, [jumpMemoryId, filters, revealMemory]);
+  }, [jumpMemoryId, filters, revealMemory, matchingMemories]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
@@ -280,25 +283,33 @@ export default function JournalPage() {
     !loading &&
     totalEntries > 0 &&
     (view === "feed" || view === "calendar");
-  const firstEntryDate =
-    visibleItems.find(
-      (item): item is Extract<typeof item, { kind: "entry" }> =>
-        item.kind === "entry"
-    )?.entry.entry_date ?? null;
+  // The newest record in the feed, a day or a memory, is the day opened first.
+  const firstRecordDate = (() => {
+    for (const item of visibleItems) {
+      if (item.kind === "entry") return item.entry.entry_date;
+      if (item.kind === "memory") return item.date;
+    }
+    return null;
+  })();
+  const memoriesOnDate = memoriesByDate(matchingMemories);
   const pickedInView =
     selectedDate !== null &&
-    matchingEntries.some((entry) => entry.entry_date === selectedDate);
+    (matchingEntries.some((entry) => entry.entry_date === selectedDate) ||
+      memoriesOnDate.has(selectedDate));
   // The Feed always has something open: the day picked, else the newest. The
   // Calendar keeps an empty day so it can say so.
   const readerDate =
     pickedInView || (view === "calendar" && selectedDate)
       ? selectedDate
       : view === "feed"
-        ? firstEntryDate
+        ? firstRecordDate
         : null;
   const readerEntry = readerDate
     ? (matchingEntries.find((entry) => entry.entry_date === readerDate) ?? null)
     : null;
+  const readerMemories = readerDate
+    ? (memoriesOnDate.get(readerDate) ?? [])
+    : [];
 
   const renderEntry = (entry: JournalEntry) => (
     <JournalArchiveEntry
@@ -313,8 +324,18 @@ export default function JournalPage() {
     />
   );
 
-  // Memories have no day and no place, so the Calendar and Map leave them out;
-  // the Gallery places their photos by the year in their own words.
+  // A memory stands on the day it was remembered, so it appears in the Feed,
+  // the Calendar and the reader. It has no place, so the Map leaves it out.
+  const renderMemory = (memory: Memory, showDate: boolean) => (
+    <JournalArchiveMemory
+      key={memory.id}
+      memory={memory}
+      showDate={showDate}
+      onEdit={(m) => setEditingMemory({ memory: m, isNew: false })}
+      onTrash={(m) => void trashOneMemory(m)}
+    />
+  );
+
   const showMemoryInFeed = (memoryId: string) => {
     setSearchInput("");
     setFilters(DEFAULT_JOURNAL_ARCHIVE_FILTERS);
@@ -488,31 +509,8 @@ export default function JournalPage() {
                           />
                         );
                       }
-                      if (item.kind === "memories") {
-                        return (
-                          <p
-                            key={item.key}
-                            className="pt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
-                            {item.year === null
-                              ? t("archive.memory.groupUndated")
-                              : t("archive.memory.groupYear", {
-                                  year: item.year,
-                                })}
-                          </p>
-                        );
-                      }
                       if (item.kind === "memory") {
-                        return (
-                          <JournalArchiveMemory
-                            key={item.memory.id}
-                            memory={item.memory}
-                            onEdit={(memory) =>
-                              setEditingMemory({ memory, isNew: false })
-                            }
-                            onTrash={(memory) => void trashOneMemory(memory)}
-                          />
-                        );
+                        return renderMemory(item.memory, true);
                       }
                       return renderEntry(item.entry);
                     })}
@@ -535,9 +533,11 @@ export default function JournalPage() {
               <TabsContent value="calendar">
                 <JournalArchiveCalendar
                   entries={matchingEntries}
+                  memories={matchingMemories}
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   renderEntry={renderEntry}
+                  renderMemory={(memory) => renderMemory(memory, false)}
                   showDetail={!showRail}
                 />
               </TabsContent>
@@ -569,6 +569,8 @@ export default function JournalPage() {
             <JournalReader
               date={readerDate}
               entry={readerEntry}
+              memories={readerMemories}
+              renderMemory={(memory) => renderMemory(memory, false)}
               revisions={
                 readerDate ? revisionSummaries.get(readerDate) : undefined
               }

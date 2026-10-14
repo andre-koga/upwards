@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { JournalEntry, Memory } from "@/lib/db/types";
-import {
-  buildGalleryMemoryGroups,
-  buildGalleryMonths,
-  parseJournalView,
-} from "./view-modes";
+import { buildGalleryMonths, parseJournalView } from "./view-modes";
 
 function entry(date: string, over: Partial<JournalEntry> = {}): JournalEntry {
   return {
@@ -38,7 +34,23 @@ describe("parseJournalView", () => {
   });
 });
 
+function memory(id: string, over: Partial<Memory> = {}): Memory {
+  return {
+    id,
+    text_content: "A moment",
+    photo_paths: null,
+    time_label: null,
+    created_at: "2026-10-12T12:00:00.000Z",
+    updated_at: "2026-10-12T12:00:00.000Z",
+    synced_at: null,
+    deleted_at: null,
+    ...over,
+  };
+}
+
 describe("buildGalleryMonths", () => {
+  const photos = { includeVideo: false };
+
   it("groups photos by month, newest first, keeping each day's order", () => {
     const months = buildGalleryMonths(
       [
@@ -46,7 +58,8 @@ describe("buildGalleryMonths", () => {
         entry("2026-10-12", { photo_paths: ["b1.jpg", "b2.jpg"] }),
         entry("2026-10-03", { photo_paths: ["c.jpg"] }),
       ],
-      { includeVideo: false }
+      [],
+      photos
     );
 
     expect(months.map((m) => m.key)).toEqual(["2026-10", "2026-09"]);
@@ -69,7 +82,8 @@ describe("buildGalleryMonths", () => {
         }),
         entry("2026-10-10", { photo_paths: ["  ", "kept.jpg"] }),
       ],
-      { includeVideo: false }
+      [],
+      photos
     );
     expect(months).toHaveLength(1);
     expect(months[0].items.map((i) => i.path)).toEqual(["kept.jpg"]);
@@ -84,14 +98,14 @@ describe("buildGalleryMonths", () => {
       }),
     ];
 
-    const withClips = buildGalleryMonths(entries, { includeVideo: true });
+    const withClips = buildGalleryMonths(entries, [], { includeVideo: true });
     expect(withClips[0].items.map((i) => i.kind)).toEqual(["video", "photo"]);
     expect(withClips[0].items[0]).toMatchObject({
       path: "u/clip.mp4",
       poster: "data:image/jpeg;base64,xx",
     });
 
-    const without = buildGalleryMonths(entries, { includeVideo: false });
+    const without = buildGalleryMonths(entries, [], photos);
     expect(without[0].items.map((i) => i.kind)).toEqual(["photo"]);
   });
 
@@ -101,66 +115,75 @@ describe("buildGalleryMonths", () => {
         entry("2026-10-12", { photo_paths: ["same.jpg"] }),
         entry("2026-10-11", { photo_paths: ["same.jpg"] }),
       ],
-      { includeVideo: false }
+      [],
+      photos
     );
     const keys = months.flatMap((m) => m.items.map((i) => i.key));
     expect(new Set(keys).size).toBe(2);
   });
 
   it("returns nothing for an empty record", () => {
-    expect(buildGalleryMonths([], { includeVideo: true })).toEqual([]);
+    expect(buildGalleryMonths([], [], { includeVideo: true })).toEqual([]);
   });
-});
 
-describe("buildGalleryMemoryGroups", () => {
-  function memory(id: string, over: Partial<Memory> = {}): Memory {
-    return {
-      id,
-      text_content: "A moment",
-      photo_paths: null,
-      time_label: null,
-      created_at: "2026-01-01T00:00:00.000Z",
-      updated_at: "2026-01-01T00:00:00.000Z",
-      synced_at: null,
-      deleted_at: null,
-      ...over,
-    };
-  }
-
-  it("groups memory photos by the year in their own words, undated last", () => {
-    const groups = buildGalleryMemoryGroups(
-      [
-        memory("a", { time_label: "Summer 2019", photo_paths: ["a1.jpg"] }),
-        memory("b", { time_label: "when I was six", photo_paths: ["b1.jpg"] }),
-        memory("c", {
-          time_label: "Winter 2024",
-          photo_paths: ["c1.jpg", "c2.jpg"],
-        }),
-      ],
-      2026
-    );
-
-    expect(groups.map((g) => g.year)).toEqual([2024, 2019, null]);
-    expect(groups[0].items.map((i) => i.path)).toEqual(["c1.jpg", "c2.jpg"]);
-    expect(groups[0].items[0]).toMatchObject({
-      memoryId: "c",
-      entryDate: null,
-      caption: "Winter 2024",
+  describe("with memories", () => {
+    it("puts a memory's photos on the day it was remembered, after that day's own", () => {
+      const months = buildGalleryMonths(
+        [entry("2026-10-12", { photo_paths: ["day.jpg"] })],
+        [memory("m", { photo_paths: ["mem.jpg"] })],
+        photos
+      );
+      expect(months).toHaveLength(1);
+      expect(months[0].items.map((i) => i.path)).toEqual([
+        "day.jpg",
+        "mem.jpg",
+      ]);
+      expect(months[0].items[1]).toMatchObject({
+        memoryId: "m",
+        entryDate: "2026-10-12",
+      });
     });
-  });
 
-  it("skips memories without photos and trashed ones", () => {
-    const groups = buildGalleryMemoryGroups(
-      [
-        memory("none", { time_label: "2020" }),
-        memory("gone", {
-          time_label: "2020",
-          photo_paths: ["x.jpg"],
-          deleted_at: "2026-02-01T00:00:00.000Z",
-        }),
-      ],
-      2026
-    );
-    expect(groups).toEqual([]);
+    it("gives a memory-only day its month, ignoring the label's year", () => {
+      const months = buildGalleryMonths(
+        [entry("2026-10-12", { photo_paths: ["day.jpg"] })],
+        [
+          memory("m", {
+            photo_paths: ["mem.jpg"],
+            time_label: "Summer 2019",
+            created_at: "2026-08-20T12:00:00.000Z",
+          }),
+        ],
+        photos
+      );
+      expect(months.map((m) => m.key)).toEqual(["2026-10", "2026-08"]);
+      expect(months[1].items[0]).toMatchObject({
+        memoryId: "m",
+        caption: "Summer 2019",
+      });
+    });
+
+    it("lists a day's memories latest first, and skips ones without photos or trashed", () => {
+      const months = buildGalleryMonths(
+        [],
+        [
+          memory("early", {
+            photo_paths: ["e.jpg"],
+            created_at: "2026-10-12T08:00:00.000Z",
+          }),
+          memory("late", {
+            photo_paths: ["l.jpg"],
+            created_at: "2026-10-12T20:00:00.000Z",
+          }),
+          memory("none"),
+          memory("gone", {
+            photo_paths: ["x.jpg"],
+            deleted_at: "2026-10-13T00:00:00.000Z",
+          }),
+        ],
+        photos
+      );
+      expect(months[0].items.map((i) => i.path)).toEqual(["l.jpg", "e.jpg"]);
+    });
   });
 });

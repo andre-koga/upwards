@@ -11,17 +11,13 @@ import {
   formatArchiveMonthLabel,
   rememberJournalJumpDate,
 } from "@/lib/journal/archive";
-import {
-  buildGalleryMemoryGroups,
-  buildGalleryMonths,
-  type GalleryItem,
-} from "@/lib/journal/view-modes";
+import { buildGalleryMonths, type GalleryItem } from "@/lib/journal/view-modes";
 import { formatWeekdayShortDate, fromDateString } from "@/lib/time-utils";
 
 interface JournalArchiveGalleryProps {
   /** The days the current search and filters leave in. */
   entries: readonly JournalEntry[];
-  /** Photos from memories follow the months, grouped by the year they name. */
+  /** Memory photos stand on the day each memory was remembered. */
   memories: readonly Memory[];
   /** Clips appear only when the daily clip is on. */
   includeVideo: boolean;
@@ -32,12 +28,6 @@ interface JournalArchiveGalleryProps {
 function dayLabel(entryDate: string): string {
   const date = fromDateString(entryDate);
   return `${formatWeekdayShortDate(date)} ${date.getFullYear()}`;
-}
-
-/** Where an item sits in the record: its date, or a memory's own words. */
-function itemWhen(item: GalleryItem, memoryFallback: string): string {
-  if (item.entryDate) return dayLabel(item.entryDate);
-  return item.caption ?? memoryFallback;
 }
 
 /**
@@ -55,20 +45,10 @@ export default function JournalArchiveGallery({
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
   const months = useMemo(
-    () => buildGalleryMonths(entries, { includeVideo }),
-    [entries, includeVideo]
+    () => buildGalleryMonths(entries, memories, { includeVideo }),
+    [entries, memories, includeVideo]
   );
-  const memoryGroups = useMemo(
-    () => buildGalleryMemoryGroups(memories),
-    [memories]
-  );
-  const items = useMemo(
-    () => [
-      ...months.flatMap((m) => m.items),
-      ...memoryGroups.flatMap((g) => g.items),
-    ],
-    [months, memoryGroups]
-  );
+  const items = useMemo(() => months.flatMap((m) => m.items), [months]);
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   const openIndex = openKey ? items.findIndex((i) => i.key === openKey) : -1;
@@ -118,32 +98,6 @@ export default function JournalArchiveGallery({
         );
       })}
 
-      {memoryGroups.map((group) => {
-        const headingId = `gallery-${group.key}`;
-        return (
-          <section key={group.key} aria-labelledby={headingId}>
-            <h2
-              id={headingId}
-              className="pb-2 font-display text-lg font-semibold tracking-tight"
-            >
-              {group.year === null
-                ? t("archive.memory.groupUndated")
-                : t("archive.memory.groupYear", { year: group.year })}
-            </h2>
-            <ul className="grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5">
-              {group.items.map((item) => (
-                <li key={item.key}>
-                  <GalleryTile
-                    item={item}
-                    onOpen={() => setOpenKey(item.key)}
-                  />
-                </li>
-              ))}
-            </ul>
-          </section>
-        );
-      })}
-
       <MediaLightbox
         open={open !== null}
         onOpenChange={(next) => {
@@ -155,7 +109,7 @@ export default function JournalArchiveGallery({
                 open.kind === "video"
                   ? "archive.gallery.clipOf"
                   : "archive.gallery.photoOf",
-                { date: itemWhen(open, t("archive.memory.untitled")) }
+                { date: dayLabel(open.entryDate) }
               )
             : t("archive.title")
         }
@@ -173,8 +127,8 @@ export default function JournalArchiveGallery({
             <div className="flex flex-wrap items-center justify-center gap-3 rounded-xl bg-black/60 px-4 py-2 text-white">
               <p className="text-sm">
                 {open.emoji ? <span aria-hidden>{open.emoji} </span> : null}
-                {open.entryDate && open.caption ? `${open.caption} · ` : ""}
-                {itemWhen(open, t("archive.memory.untitled"))}
+                {open.caption ? `${open.caption} · ` : ""}
+                {dayLabel(open.entryDate)}
               </p>
               <Button
                 type="button"
@@ -187,10 +141,8 @@ export default function JournalArchiveGallery({
                     onShowMemory(open.memoryId);
                     return;
                   }
-                  if (open.entryDate) {
-                    rememberJournalJumpDate(open.entryDate);
-                    navigate("/");
-                  }
+                  rememberJournalJumpDate(open.entryDate);
+                  navigate("/");
                 }}
               >
                 {open.memoryId
@@ -213,7 +165,7 @@ function GalleryTile({
   onOpen: () => void;
 }) {
   const { t } = useTranslation("journal");
-  const date = itemWhen(item, t("archive.memory.untitled"));
+  const date = dayLabel(item.entryDate);
   const src =
     item.kind === "photo" ? getJournalPhotoUrl(item.path) : item.poster;
 
@@ -290,7 +242,7 @@ function GalleryMedia({
       key={item.key}
       src={url}
       alt={t("archive.gallery.photoOf", {
-        date: itemWhen(item, t("archive.memory.untitled")),
+        date: dayLabel(item.entryDate),
       })}
       className="max-h-[75dvh] max-w-[90dvw] rounded-lg object-contain shadow-2xl"
       draggable={false}

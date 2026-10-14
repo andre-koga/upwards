@@ -35,8 +35,8 @@ function memory(id: string, over: Partial<Memory> = {}): Memory {
     text_content: "A moment",
     photo_paths: null,
     time_label: null,
-    created_at: "2026-01-01T00:00:00.000Z",
-    updated_at: "2026-01-01T00:00:00.000Z",
+    created_at: "2026-01-01T12:00:00.000Z",
+    updated_at: "2026-01-01T12:00:00.000Z",
     synced_at: null,
     deleted_at: null,
     ...over,
@@ -97,13 +97,18 @@ describe("searchRecordRows", () => {
     expect(hits[1].emoji).toBe("🙂");
   });
 
-  it("finds memories by their words and by when they happened", () => {
+  it("finds memories by their words, their label and the day remembered", () => {
     const memories = [
       memory("m1", {
         text_content: "Learning to swim",
         time_label: "when I was six",
+        created_at: "2026-10-14T12:00:00.000Z",
       }),
-      memory("m2", { text_content: "Road trip", time_label: "Summer 2019" }),
+      memory("m2", {
+        text_content: "Road trip",
+        time_label: "Summer 2019",
+        created_at: "2026-09-02T12:00:00.000Z",
+      }),
     ];
 
     const byText = searchRecordRows([], memories, "swim", ctx);
@@ -111,13 +116,40 @@ describe("searchRecordRows", () => {
       expect.objectContaining({
         kind: "memory",
         id: "m1",
-        title: "Learning to swim",
-        detail: "when I was six",
+        // The label names it; the detail says when it was remembered.
+        title: "when I was six",
+        detail: "Wed, Oct 14 2026",
       }),
     ]);
     expect(
       searchRecordRows([], memories, "2019", ctx).map((h) => h.id)
     ).toEqual(["m2"]);
+    expect(
+      searchRecordRows([], memories, "2026-09-02", ctx).map((h) => h.id)
+    ).toEqual(["m2"]);
+  });
+
+  it("names a memory by its first line when it has no label", () => {
+    const hits = searchRecordRows(
+      [],
+      [memory("m", { text_content: "Learning to swim\nat the lake" })],
+      "swim",
+      ctx
+    );
+    expect(hits[0].title).toBe("Learning to swim");
+  });
+
+  it("lists memories latest remembered first", () => {
+    const hits = searchRecordRows(
+      [],
+      [
+        memory("old", { created_at: "2026-01-05T12:00:00.000Z" }),
+        memory("new", { created_at: "2026-06-05T12:00:00.000Z" }),
+      ],
+      "moment",
+      ctx
+    );
+    expect(hits.map((h) => h.id)).toEqual(["new", "old"]);
   });
 
   it("leaves out trashed and empty memories", () => {

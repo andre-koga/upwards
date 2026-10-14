@@ -1,5 +1,9 @@
 import type { JournalEntry, Memory } from "@/lib/db/types";
-import { groupMemoriesByYear, type MemoryGroup } from "./record";
+import {
+  formatSearchableDate,
+  memoriesByDate,
+  memoryRememberedDate,
+} from "./record";
 import {
   getSpecialDayName,
   type BirthdayContext,
@@ -51,16 +55,6 @@ function locationSearchText(entry: JournalEntry): string {
       [l.displayName, l.city, l.state, l.country].filter(Boolean).join(" ")
     )
     .join(" ");
-}
-
-function formatSearchableDate(entryDate: string): string {
-  const date = fromDateString(entryDate);
-  return date.toLocaleDateString(getActiveLocaleTag(), {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 }
 
 /** Case-insensitive match across title, text, emoji, locations, date, holiday. */
@@ -329,9 +323,8 @@ export type JournalArchiveItem =
   | { kind: "month"; key: string; year: number; month: number }
   | { kind: "holiday"; key: string; name: string; date: string }
   | { kind: "entry"; entry: JournalEntry; holiday: string | null }
-  /** Heads a run of memories: the year they are placed at, or null if undated. */
-  | { kind: "memories"; key: string; year: number | null }
-  | { kind: "memory"; memory: Memory };
+  /** A memory, on the day it was remembered (`date`). */
+  | { kind: "memory"; memory: Memory; date: string };
 
 /** Items that are a record in their own right (counted for paging). */
 export function isArchiveRecord(
@@ -343,8 +336,9 @@ export function isArchiveRecord(
 /**
  * Build a newest-first feed with month and holiday banners.
  *
- * Memories (approximate dates) join the same feed: each year's memories follow
- * that year's days, and memories whose label names no year close the feed.
+ * Memories join the same feed on the day they were remembered, after that
+ * day's entry if there is one. A day with only a memory is still a day in the
+ * feed: it gets its month and holiday banners like any other.
  */
 export function buildJournalArchiveFeed(
   entries: JournalEntry[],
@@ -353,69 +347,51 @@ export function buildJournalArchiveFeed(
   birthday?: BirthdayContext,
   memories: readonly Memory[] = []
 ): JournalArchiveItem[] {
-  const sorted = [...entries].sort((a, b) =>
-    b.entry_date.localeCompare(a.entry_date)
-  );
+  const entriesByDate = new Map<string, JournalEntry[]>();
+  for (const entry of entries) {
+    const list = entriesByDate.get(entry.entry_date) ?? [];
+    list.push(entry);
+    entriesByDate.set(entry.entry_date, list);
+  }
+  const memoriesOnDate = memoriesByDate(memories);
+  const dates = [
+    ...new Set([...entriesByDate.keys(), ...memoriesOnDate.keys()]),
+  ].sort((a, b) => b.localeCompare(a));
 
   const items: JournalArchiveItem[] = [];
   let lastMonthKey = "";
 
-  const pending = groupMemoriesByYear(memories);
-  const emitGroup = (group: MemoryGroup) => {
-    items.push({
-      kind: "memories",
-      key: `m-${group.year ?? "undated"}`,
-      year: group.year,
-    });
-    for (const memory of group.memories) items.push({ kind: "memory", memory });
-    lastMonthKey = "";
-  };
-  // Dated groups come out once the feed has moved past their year.
-  const flushThrough = (year: number) => {
-    while (
-      pending.length &&
-      pending[0].year !== null &&
-      pending[0].year > year
-    ) {
-      emitGroup(pending.shift() as MemoryGroup);
-    }
-  };
-
-  for (const entry of sorted) {
-    const year = Number(entry.entry_date.slice(0, 4));
-    const month = Number(entry.entry_date.slice(5, 7));
+  for (const date of dates) {
+    const year = Number(date.slice(0, 4));
+    const month = Number(date.slice(5, 7));
     const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-
-    flushThrough(year);
 
     if (monthKey !== lastMonthKey) {
       items.push({ kind: "month", key: monthKey, year, month });
       lastMonthKey = monthKey;
     }
 
-    const holiday = getSpecialDayName(
-      entry.entry_date,
-      locale,
-      calendars,
-      birthday
-    );
+    const holiday = getSpecialDayName(date, locale, calendars, birthday);
     if (holiday) {
       items.push({
         kind: "holiday",
-        key: `h-${entry.entry_date}-${holiday}`,
+        key: `h-${date}-${holiday}`,
         name: holiday,
-        date: entry.entry_date,
+        date,
       });
     }
 
-    items.push({
-      kind: "entry",
-      entry,
-      holiday,
-    });
+    for (const entry of entriesByDate.get(date) ?? []) {
+      items.push({ kind: "entry", entry, holiday });
+    }
+    for (const memory of memoriesOnDate.get(date) ?? []) {
+      items.push({
+        kind: "memory",
+        memory,
+        date: memoryRememberedDate(memory),
+      });
+    }
   }
-
-  for (const group of pending) emitGroup(group);
 
   return items;
 }

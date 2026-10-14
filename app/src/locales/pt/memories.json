@@ -37,6 +37,6 @@
       "photoCount": "{{current}}/{{max}} fotos",
       "removePhoto": "Remover foto {{index}}"
     },
-    "whenHint": "Adicione um ano, como \"verão de 2019\", para colocá-la na sua linha do tempo."
+    "whenHint": "Ela aparece no dia em que você a adiciona. Estas são só as suas palavras para quando aconteceu."
   }
 }
