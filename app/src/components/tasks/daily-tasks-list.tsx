@@ -236,7 +236,7 @@ export default function DailyTasksList({
   };
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4 md:gap-5">
       {(oneTimeTasks.length > 0 || isToday) && (
         <TodaySection
           label={t("sections.memos")}

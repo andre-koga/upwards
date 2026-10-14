@@ -15,6 +15,7 @@ import {
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/journal/journal-card";
 import TodayHeader from "@/components/tasks/today-header";
+import TodayQuickActions from "@/components/tasks/today-quick-actions";
 import { useTodayPage } from "@/hooks/use-today-page";
 import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
 import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
@@ -218,7 +219,7 @@ export default function TodayPage() {
 
   return (
     <div
-      className="pb-8"
+      className="pb-24"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -259,19 +260,9 @@ export default function TodayPage() {
         entryDates={entryDates}
         bookmarkedDates={bookmarkedDates}
         loadJournalMeta={loadJournalMeta}
-        currentActivityId={dailyTasks.currentActivityId}
-        activities={activities}
-        getActivityDrawerElapsedMs={dailyTasks.getActivityDrawerElapsedMs}
-        onStartActivity={dailyTasks.handleStartActivity}
-        onStopActivity={dailyTasks.handleStopActivity}
-        onAddManualActivityPeriod={dailyTasks.addManualActivityPeriod}
-        onAddQuickMemo={dailyTasks.createOneTimeTask}
-        onTasksDataChanged={() => {
-          void refreshTasksData();
-        }}
       />
 
-      <div className="space-y-5 p-4">
+      <div className="space-y-4 py-4 md:space-y-5 md:px-4">
         <JournalCard
           key={toDateString(currentDate)}
           currentDate={currentDate}
@@ -291,6 +282,20 @@ export default function TodayPage() {
           }}
         />
       </div>
+
+      <TodayQuickActions
+        currentDate={currentDate}
+        currentActivityId={dailyTasks.currentActivityId}
+        activities={activities}
+        getActivityDrawerElapsedMs={dailyTasks.getActivityDrawerElapsedMs}
+        onStartActivity={dailyTasks.handleStartActivity}
+        onStopActivity={dailyTasks.handleStopActivity}
+        onAddManualActivityPeriod={dailyTasks.addManualActivityPeriod}
+        onAddQuickMemo={dailyTasks.createOneTimeTask}
+        onTasksDataChanged={() => {
+          void refreshTasksData();
+        }}
+      />
     </div>
   );
 }
