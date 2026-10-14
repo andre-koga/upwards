@@ -17,6 +17,16 @@ export interface InsightErrorBody {
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
+/** A failed insight request that keeps the function's `code`, so the page can react to it. */
+export class InsightRequestError extends Error {
+  readonly code: string | null;
+  constructor(message: string, code: string | null) {
+    super(message);
+    this.name = "InsightRequestError";
+    this.code = code;
+  }
+}
+
 /** The JSON body of a failed function call, or null when there is none. */
 export async function readInsightErrorBody(
   error: unknown

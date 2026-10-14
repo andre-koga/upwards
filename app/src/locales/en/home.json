@@ -4,19 +4,71 @@
     "subtitle": "What your last week is actually telling you."
   },
   "loading": "Loading…",
+  "worksWithout": "Everything else on Home works without this.",
   "setup": {
     "title": "Add your AI key to get insights",
-    "description": "Connect an OpenAI-compatible key in Settings and Home will turn your recent activity, journal, and habit stats into a short summary and a few concrete recommendations.",
+    "description": "Connect an OpenAI-compatible key in Settings and Home will turn your recent activity, journal, and habit stats into a short summary and a few concrete suggestions.",
     "cta": "Go to Settings"
   },
-  "insight": {
-    "refreshedAt": "Refreshed {{time}}",
-    "refresh": "Refresh insights",
-    "refreshing": "Refreshing…",
-    "recommendationsTitle": "Worth acting on",
+  "hero": {
+    "label": "AI insight",
+    "labelOlder": "AI insight · older",
+    "refreshedAt": "refreshed {{time}}",
+    "refreshing": "refreshing…",
+    "refresh": "Refresh insight",
+    "openToday": "Open Today",
+    "seeNumbers": "See the numbers",
+    "hideNumbers": "Hide the numbers",
     "basedOn": "Based on the last 7 days · your key, your model"
   },
+  "notice": {
+    "stale": "This was written from numbers that have since changed. A fresh one is on its way, or refresh it yourself.",
+    "offline": "You're offline, so this is the last insight we had. It will refresh when you're back."
+  },
+  "evidence": {
+    "title": "What this was made from",
+    "completion": "{{percent}}% of intentions met over {{days}} days",
+    "activity": "{{name}}: {{done}} of {{total}} days, streak {{streak}}",
+    "journal": "Journal: {{entries}} written this week, streak {{streak}}",
+    "sent": "Only these numbers were sent to your AI provider. Names of your habits are included; your journal and tasks never are."
+  },
+  "digest": {
+    "title": "Worth acting on today",
+    "subtitle": "From your own last 7 days. No AI needed.",
+    "allClear": "Nothing is slipping and no streak is at risk. Carry on.",
+    "nothingYet": "Add a habit on Today and what's worth acting on will show up here.",
+    "openToday": "Open Today",
+    "pin": "Pin to top",
+    "pinLabel": "Pin {{name}} to the top of Today",
+    "pinned": "Pinned",
+    "streakAtRisk": {
+      "title_one": "Keep {{name}} going: {{count}}-day streak",
+      "title_other": "Keep {{name}} going: {{count}}-day streak",
+      "evidence": "streak {{streak}} · today {{done}} of {{target}}"
+    },
+    "slipping": {
+      "title": "{{name}} has been slipping",
+      "evidence": "done {{done}} of the last {{total}} days"
+    },
+    "journalStreak": {
+      "title_one": "Today is unwritten: {{count}}-day journal streak",
+      "title_other": "Today is unwritten: {{count}}-day journal streak",
+      "evidence_one": "{{count}} day in a row, up to yesterday",
+      "evidence_other": "{{count}} days in a row, up to yesterday",
+      "action": "Write today"
+    }
+  },
+  "suggestions": {
+    "title": "Your AI suggests",
+    "openToday": "Open Today",
+    "written": "Written by your model from the numbers above. Treat it as a suggestion.",
+    "stale": "Written from older numbers. Refresh the insight for current suggestions."
+  },
   "error": {
+    "title": "Couldn't make an insight",
+    "rateLimitedTitle": "Insight limit reached for today",
+    "unknown": "Something went wrong. Try again in a moment.",
+    "offline": "Insights need a connection.",
     "generic": "Couldn't generate insights: {{error}}",
     "rateLimited": "You've hit today's AI insight limit — try again tomorrow.",
     "notConfigured": "AI isn't set up yet. Add your key in Settings.",
