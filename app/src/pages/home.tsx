@@ -10,6 +10,7 @@ import HomeInsightHero from "@/components/home/home-insight-hero";
 import HomeInsightState from "@/components/home/home-insight-state";
 import { useHomeDigest } from "@/hooks/use-home-digest";
 import { useHomeInsight } from "@/hooks/use-home-insight";
+import { parseInsightFigures } from "@/lib/ai/build-insight-payload";
 import { patchActivity } from "@/lib/sync/mutate-synced";
 
 /** True while the key press belongs to something else: a field, or an open dialog. */
@@ -88,8 +89,14 @@ export default function HomePage() {
           />
           {digestSection}
           <HomeAiSuggestions
-            suggestions={insight.recommendations}
+            suggestions={insight.suggestions ?? []}
+            legacy={insight.recommendations}
+            generatedAt={insight.generatedAt}
+            figures={parseInsightFigures(insight.fingerprint)}
+            habits={digest?.habits ?? []}
             stale={stale}
+            pendingId={pendingPin}
+            onPin={(id) => void pin(id)}
           />
         </>
       ) : (

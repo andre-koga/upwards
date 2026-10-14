@@ -1045,8 +1045,48 @@ Track B gets its own breakdown before it starts. Its shape:
       they do not yet name a goal (there is no compass until B5). B4b makes them
       grounded and actionable. Home keeps its single reading column at `lg`: the
       rail it would take is the compass teaser and stats, which wait for B5.
-  - **B4b:** grounded suggestions: each tied to one of the person's activities,
-    its figures checked as `rank-today` checks them, with a real action.
+  - **B4b (done 2026-10-14):** grounded suggestions with real actions.
+    - *Each suggestion is about one of the person's habits.* The request now
+      keys every habit (`"1"`, `"2"`...); the model answers with
+      `{summary, suggestions: [{key, text}]}`, and the key is resolved back to a
+      habit on the device. **Habit ids never leave the device**: the key-to-habit
+      map is returned beside the payload and stored with the insight, not sent.
+    - *The server keeps only what the figures back*
+      (`supabase/functions/_shared/insight.ts`, the same discipline as
+      `rank-today`). A number in a suggestion must be one of that habit's own
+      figures (days done, days possible, streak, target, days missed, the
+      share, or digits in the habit's own name); a number from a different habit
+      is dropped. A number in the summary must be a figure from the request. A
+      suggestion about a key never sent, a second one for the same habit, and
+      anything past three are dropped. A suggestion needs no number: good advice
+      often has none, so its evidence is the habit it names, whose figures the
+      app prints beneath it. An answer with nothing left after grounding is
+      valid and just says less; an answer that is not the shape asked for is
+      `provider_invalid`, and still counts against the daily allowance, as the
+      provider was paid for it.
+    - *The headline is never invented.* When the model's summary is dropped, the
+      hero says what the numbers say for certain ("50% of your intentions were
+      met over the last 7 days"), computed from the same figures.
+    - *Actions.* Each suggestion can pin its habit to the top of Today (the
+      normal synced pin) or open Today if it is pinned already, and can be set
+      aside. Set aside is per insight, not for good: a new insight is new
+      advice. A suggestion whose habit was archived or deleted since says so
+      instead of offering an action that cannot work.
+    - *Deploy order.* The app tolerates an unredeployed function: with no
+      `suggestions` field in the answer it shows the older plain
+      recommendations, labelled as the model's, with no action. The function
+      still returns `recommendations` (the same texts) for an app from before
+      this change; remove it once no such version is in use. **Needs a manual
+      `supabase functions deploy generate-ai-insights`.**
+    - *Fixed on the way.* Home hid a perfectly good cached insight whenever the
+      first network call failed, because it was only put on screen after the
+      settings check. The last insight now shows at once (marked older when the
+      numbers have changed) and a failed request costs a notice, not the
+      insight. The insights function now uses the shared `requestCompletion`
+      the ranking function uses, instead of its own copy of the retry loop.
+    - *Still not here.* No suggestion names a **goal**: there is no compass
+      until B5, and design-and-branding §4.3 asks recommendations to link back to
+      one. The tier-2 and tier-3 gradient treatments wait for the same reason.
 - **B5.** You / compass and onboarding, including the one-time daily clip and
   location prompts. The compass needs a data-model pass in
   [`temporal-data-sync.md`](temporal-data-sync.md) before code.

@@ -8,6 +8,8 @@
  * (design-and-branding.md §4.3, "Never fabricate"). Pure, with no Deno APIs, so
  * the app's unit tests import it directly.
  */
+import { extractJson } from "./model-json.ts";
+
 export const MAX_RANK_ITEMS = 12;
 export const MAX_REASON_LENGTH = 90;
 const MAX_NAME_LENGTH = 60;
@@ -158,12 +160,6 @@ export function groundedReason(raw: unknown, item: RankItem): string | null {
   const allowed = allowedNumbers(item);
   if (!matches.every((value) => allowed.has(Number(value)))) return null;
   return truncate(text, MAX_REASON_LENGTH);
-}
-
-function extractJson(raw: string): unknown {
-  const text = raw.trim();
-  const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text);
-  return JSON.parse(fenced ? fenced[1] : text);
 }
 
 /**

@@ -19,7 +19,9 @@
     "openToday": "Abrir Hoje",
     "seeNumbers": "Ver os números",
     "hideNumbers": "Ocultar os números",
-    "basedOn": "Com base nos últimos 7 dias · sua chave, seu modelo"
+    "basedOn": "Com base nos últimos 7 dias · sua chave, seu modelo",
+    "fallbackSummary": "{{percent}}% das suas intenções foram cumpridas nos últimos {{days}} dias.",
+    "fallbackNoFigures": "Veja como está a sua semana."
   },
   "notice": {
     "stale": "Isto foi escrito com números que já mudaram. Um novo está a caminho, ou atualize você mesmo.",
@@ -62,7 +64,13 @@
     "title": "Sua IA sugere",
     "openToday": "Abrir Hoje",
     "written": "Escrito pelo seu modelo a partir dos números acima. Trate como uma sugestão.",
-    "stale": "Escrito com números anteriores. Atualize o insight para ver sugestões atuais."
+    "stale": "Escrito com números anteriores. Atualize o insight para ver sugestões atuais.",
+    "evidence": "feito em {{done}} de {{total}} dias · sequência {{streak}}",
+    "dismiss": "Deixar de lado",
+    "dismissLabel": "Deixar de lado a sugestão sobre {{name}}",
+    "allDismissed": "Você deixou estas de lado. Um novo insight traz novas sugestões.",
+    "inactive": "Este hábito foi arquivado ou removido, então não há o que fazer aqui.",
+    "grounded": "Escrito pelo seu modelo. Cada uma é sobre um único hábito e só pode citar os números desse hábito; o que ele disse além disso foi deixado de fora."
   },
   "error": {
     "title": "Não foi possível gerar um insight",

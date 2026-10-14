@@ -5,9 +5,13 @@ import { useAuth } from "@/lib/use-auth";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { getAiSettingsStatus } from "@/lib/ai/settings-client";
 import {
-  buildInsightPayload,
+  buildInsightRequest,
   fingerprintPayload,
 } from "@/lib/ai/build-insight-payload";
+import {
+  readInsightAnswer,
+  type InsightRequestHabit,
+} from "@/lib/ai/insight-response";
 import {
   InsightRequestError,
   describeInsightError,
@@ -65,7 +69,8 @@ export function useHomeInsight(): HomeInsight {
   const generate = useCallback(
     async (
       fingerprint: string,
-      payload: Record<string, unknown>
+      payload: Record<string, unknown>,
+      habits: readonly InsightRequestHabit[]
     ): Promise<CachedInsight> => {
       if (!supabase) throw new InsightRequestError(t("error.offline"), null);
       const { data, error } = await supabase.functions.invoke(
@@ -86,13 +91,13 @@ export function useHomeInsight(): HomeInsight {
           typeof data.code === "string" ? data.code : null
         );
       }
+      const answer = readInsightAnswer(data, habits);
       const next: CachedInsight = {
         generatedAt: new Date().toISOString(),
         fingerprint,
-        summary: typeof data?.summary === "string" ? data.summary : "",
-        recommendations: Array.isArray(data?.recommendations)
-          ? data.recommendations.filter((r: unknown) => typeof r === "string")
-          : [],
+        summary: answer.summary,
+        recommendations: answer.legacyRecommendations,
+        suggestions: answer.suggestions,
       };
       setCachedInsight(next);
       return next;
@@ -125,6 +130,18 @@ export function useHomeInsight(): HomeInsight {
 
       setNotice(null);
       try {
+        // The numbers are local, so read them first: the last insight can then be
+        // shown at once, with the right "older" flag, before any network call.
+        // A request that fails after this costs a notice, never the insight.
+        const { payload, habits } = await buildInsightRequest();
+        const fingerprint = fingerprintPayload(payload);
+        const fresh = !forceRefresh && isCacheFresh(cached, fingerprint);
+        if (cached) {
+          setInsight(cached);
+          setStale(!isCacheFresh(cached, fingerprint));
+          setPhase("ready");
+        }
+
         const status = await getAiSettingsStatus();
         if (!isCurrent()) return;
         if (!status.configured) {
@@ -132,24 +149,12 @@ export function useHomeInsight(): HomeInsight {
           setPhase("not-configured");
           return;
         }
-        const payload = await buildInsightPayload();
-        const fingerprint = fingerprintPayload(payload);
-        if (!forceRefresh && isCacheFresh(cached, fingerprint)) {
-          setInsight(cached);
-          setStale(false);
-          setPhase("ready");
-          return;
-        }
-        if (cached) {
-          // Show the older insight at once, marked as such, while a new one loads.
-          setInsight(cached);
-          setStale(!isCacheFresh(cached, fingerprint));
-          setPhase("ready");
-        }
+        if (fresh) return;
         setRefreshing(true);
         const next = await generate(
           fingerprint,
-          payload as unknown as Record<string, unknown>
+          payload as unknown as Record<string, unknown>,
+          habits
         );
         if (!isCurrent()) return;
         setInsight(next);
