@@ -255,6 +255,12 @@ Accessibility is a release requirement for shared UI migrations.
 
 ### Pointer, touch, and motion
 
+- A choice among a few options (theme, language, hemisphere, form selects) uses
+  the shared `Select`; Settings wraps it as `SettingsSelect`. Do not use
+  `DropdownMenu` for choosing a value: Radix opens its trigger on pointer-down,
+  so a finger that lands on it to start a scroll opens the menu. `Select` opens
+  a touch on release. `DropdownMenu` is for menus of actions (2026-10-14).
+
 - Primary controls should provide approximately `44px` touch targets.
 - Smaller visual controls need sufficient hit area and separation.
 - Hover behavior must not be the only way to discover or invoke an action.
