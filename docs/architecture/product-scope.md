@@ -921,16 +921,24 @@ Track B gets its own breakdown before it starts. Its shape:
   in four slices:
   - **B3a (done 2026-10-12):** one record. Memories appear in the Journal feed;
     the Memories page and its destination are gone (`/memories` redirects to
-    `/journal`; the palette finds the Journal by "memories"). A memory has no
-    date field, so it is placed by the latest year (up to the current one) found
-    in its own `time_label`, using no schema change (`lib/journal/record.ts`).
-    Memories follow that year's days; ones naming no year close the feed.
-    Search covers a memory's text, label and year; the year filter and photo
-    filters apply; a filter that needs a bookmark, video or place leaves
-    memories out (they have none); a date window takes a memory only if it
-    covers the whole of its year. Add, edit and trash live in the Journal; the
-    trash has restore and permanent delete (`DeletedMemoriesDialog`). An
-    explicit anchor field would be a data-model decision for later.
+    `/journal`; the palette finds the Journal by "memories"). Add, edit and
+    trash live in the Journal; the trash has restore and permanent delete
+    (`DeletedMemoriesDialog`). A filter that needs a bookmark, video or place
+    leaves memories out (they have none).
+    **Placement was revised on 2026-10-14.** B3a first placed a memory at the
+    latest year found in its own `time_label`, after that year's days, with
+    unlabelled ones closing the feed. A memory now stands on **the day it was
+    remembered**: the local day of `created_at`, after that day's entry if there
+    is one, with the month and holiday banners a day with an entry gets. The
+    label ("when I was six") is the memory's title and stays searchable, but it
+    is no longer parsed or used for placement. Why: the year rule buried
+    memories in past years and at the end of the feed and dated them by a guess;
+    placing them where they surfaced shows them gradually, as they come back.
+    The cost is that memories cannot be browsed by when they happened. The
+    date window, the year filter and search all use the remembered day. No
+    schema change: `created_at` already exists, and editing a memory does not
+    move it. An explicit event-date field would still be a data-model decision
+    for later.
   - **B3b (done 2026-10-13):** previous versions with restore and the muted
     "edited" note (reads `journal_entry_revisions`); see §2.3. The list opens
     from the note in the day card and in the Journal feed; a command-palette
@@ -951,16 +959,19 @@ Track B gets its own breakdown before it starts. Its shape:
       cluster switches to the Feed and shows those days. The scroll wheel is
       not captured, so the page still scrolls past it. **Gallery:**
       `lib/journal/view-modes.ts` groups every photo by the month of its day,
-      newest first, and clips too when the daily clip is on; photos from
-      memories follow the months, grouped by the year in their own words.
-      Each opens large with its day and a way to read it.
-    - *Memories in the views.* A memory has no day and no place, so the
-      Calendar and Map leave it out; the Gallery is the one view that places
-      its photos. This is a property of memories, not a dropped feature.
+      newest first, and clips too when the daily clip is on. (Memory photos
+      stood in separate year groups here; since 2026-10-14 they stand on the
+      day each memory was remembered, see B3a.) Each opens large with its day
+      and a way to read it.
+    - *Memories in the views.* (Revised 2026-10-14.) A memory has no place, so
+      the Map leaves it out. It stands on the day it was remembered, so the
+      Feed, the Calendar (a memory marks its day with the same dot) and the
+      Gallery all show it there.
     - *Palette.* `⌘K` now searches the record: days and memories that match
       (the Journal search's own rules: title, text, emoji, places, date,
       holiday) appear under "From your journal" after two characters, newest
-      first, with where each sits in the record. Choosing one opens the Journal
+      first, with where each sits in the record (for a memory, the day it was
+      remembered, titled by its label). Choosing one opens the Journal
       feed at that card (`/journal?focus=<date>` or `?memory=<id>`). It is a
       local read, so it works offline. **Not in this slice:** memos,
       activities and sessions in the palette; none has a destination that can
@@ -977,8 +988,9 @@ Track B gets its own breakdown before it starts. Its shape:
     never shown twice. The Map and the Gallery take the full width instead of
     a rail. The rail is 21rem at `lg` and 24rem from `xl`; below `lg` nothing
     changes (cards are whole, a card opens the day on Today, the Calendar reads
-    the day under the grid). Memories keep their own card and edit dialog; they
-    are not read in the rail. The `j`/`k` row shortcuts are not wired yet; the
+    the day under the grid). Memories keep their own card and edit dialog; since
+    2026-10-14 the rail shows the memories remembered on the day it is reading,
+    beneath its entry (or alone under the date, when the day has none). The `j`/`k` row shortcuts are not wired yet; the
     cards and the Calendar are real buttons and a grid, so every choice has a
     keyboard path.
   - **B3d:** generated month and holiday banner images.

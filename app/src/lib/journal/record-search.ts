@@ -8,7 +8,11 @@ import {
   journalEntryHasContent,
   journalEntryMatchesQuery,
 } from "./archive";
-import { memoryMatchesFilters, recordMemories } from "./record";
+import {
+  memoryMatchesFilters,
+  memoryRememberedDate,
+  recordMemories,
+} from "./record";
 
 /** Fewest characters before the palette searches the record at all. */
 export const RECORD_SEARCH_MIN_LENGTH = 2;
@@ -18,7 +22,7 @@ export interface RecordHit {
   /** A day's `entry_date`, or a memory's id. */
   id: string;
   title: string;
-  /** Where it sits in the record: the date, or the memory's own words for when. */
+  /** Where it sits in the record: the day, or for a memory the day it was remembered. */
   detail: string;
   emoji: string | null;
 }
@@ -55,19 +59,26 @@ function entryHit(entry: JournalEntry, ctx: RecordSearchContext): RecordHit {
 }
 
 function memoryHit(memory: Memory, ctx: RecordSearchContext): RecordHit {
+  const date = fromDateString(memoryRememberedDate(memory));
+  // The person's own words for when it happened name it ("when I was six");
+  // without them, its first line does.
   return {
     kind: "memory",
     id: memory.id,
-    title: clip(firstLine(memory.text_content)) || ctx.untitledMemory,
-    detail: memory.time_label?.trim() ?? "",
+    title:
+      clip(memory.time_label?.trim() ?? "") ||
+      clip(firstLine(memory.text_content)) ||
+      ctx.untitledMemory,
+    detail: `${formatWeekdayShortDate(date)} ${date.getFullYear()}`,
     emoji: null,
   };
 }
 
 /**
  * Days and memories that match what was typed, with the same rules the Journal
- * search uses (title, text, emoji, places, date, holiday). Days come newest
- * first, then memories; the two share `limit` so neither crowds the other out.
+ * search uses (title, text, emoji, places, date, holiday; for a memory its
+ * words, its label and the day it was remembered). Days come newest first, then
+ * memories; the two share `limit` so neither crowds the other out.
  */
 export function searchRecordRows(
   entries: readonly JournalEntry[],
@@ -92,9 +103,9 @@ export function searchRecordRows(
         )
     )
     .sort((a, b) => b.entry_date.localeCompare(a.entry_date));
-  const kept = recordMemories(memories).filter((memory) =>
-    memoryMatchesFilters(memory, memoryFilters)
-  );
+  const kept = recordMemories(memories)
+    .filter((memory) => memoryMatchesFilters(memory, memoryFilters))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
   const memoryQuota = Math.min(kept.length, Math.max(2, Math.floor(limit / 3)));
   const dayQuota = Math.min(days.length, limit - memoryQuota);

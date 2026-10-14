@@ -1,5 +1,5 @@
 import type { JournalEntry, Memory } from "@/lib/db/types";
-import { groupMemoriesByYear } from "./record";
+import { memoryRememberedDate, recordMemories } from "./record";
 
 /** The four ways to browse the one record (design-and-branding.md §3.3). */
 const JOURNAL_VIEWS = ["feed", "calendar", "map", "gallery"] as const;
@@ -22,8 +22,8 @@ export interface GalleryItem {
   path: string;
   /** A clip's stored poster (a data URL), when one was generated. */
   poster: string | null;
-  /** The day it belongs to; null for a memory, whose date is approximate. */
-  entryDate: string | null;
+  /** The day it stands on: the day itself, or the day a memory was remembered. */
+  entryDate: string;
   /** The memory it belongs to; null for a day. */
   memoryId: string | null;
   /** The day's emoji. */
@@ -43,19 +43,23 @@ export interface GalleryMonth {
 
 /**
  * Every photo, and every clip when the daily clip is on, grouped by the month
- * of the day it belongs to, newest first. Within a day the clip leads and the
- * photos keep the order they were added in, as on the day itself.
+ * of the day it stands on, newest first. A memory's photos stand on the day it
+ * was remembered, after that day's own media. Within a day the clip leads and
+ * the photos keep the order they were added in, as on the day itself.
  */
 export function buildGalleryMonths(
   entries: readonly JournalEntry[],
+  memories: readonly Memory[],
   options: { includeVideo: boolean }
 ): GalleryMonth[] {
-  const sorted = [...entries]
-    .filter((entry) => !entry.deleted_at)
-    .sort((a, b) => b.entry_date.localeCompare(a.entry_date));
+  const byDate = new Map<string, GalleryItem[]>();
+  const add = (date: string, items: GalleryItem[]) => {
+    if (items.length === 0) return;
+    byDate.set(date, [...(byDate.get(date) ?? []), ...items]);
+  };
 
-  const months: GalleryMonth[] = [];
-  for (const entry of sorted) {
+  for (const entry of entries) {
+    if (entry.deleted_at) continue;
     const items: GalleryItem[] = [];
     const base = {
       entryDate: entry.entry_date,
@@ -83,9 +87,38 @@ export function buildGalleryMonths(
         poster: null,
       });
     }
-    if (items.length === 0) continue;
+    add(entry.entry_date, items);
+  }
 
-    const key = entry.entry_date.slice(0, 7);
+  // Latest remembered first within a day, so the gallery reads like the feed.
+  const orderedMemories = [...recordMemories(memories)].sort(
+    (a, b) =>
+      b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id)
+  );
+  for (const memory of orderedMemories) {
+    const date = memoryRememberedDate(memory);
+    add(
+      date,
+      (memory.photo_paths ?? [])
+        .filter((path) => path.trim())
+        .map(
+          (path): GalleryItem => ({
+            key: `memory:${memory.id}:photo:${path}`,
+            kind: "photo",
+            path,
+            poster: null,
+            entryDate: date,
+            memoryId: memory.id,
+            emoji: null,
+            caption: memory.time_label?.trim() || null,
+          })
+        )
+    );
+  }
+
+  const months: GalleryMonth[] = [];
+  for (const date of [...byDate.keys()].sort((a, b) => b.localeCompare(a))) {
+    const key = date.slice(0, 7);
     let month = months[months.length - 1];
     if (!month || month.key !== key) {
       month = {
@@ -96,50 +129,7 @@ export function buildGalleryMonths(
       };
       months.push(month);
     }
-    month.items.push(...items);
+    month.items.push(...(byDate.get(date) ?? []));
   }
   return months;
-}
-
-export interface GalleryMemoryGroup {
-  key: string;
-  /** The year the memories are placed at, or null for undated ones. */
-  year: number | null;
-  items: GalleryItem[];
-}
-
-/**
- * Photos from memories, grouped the way the feed places them: by the year in
- * their own words, newest first, undated last. A memory has no month, so these
- * follow the months rather than being given one.
- */
-export function buildGalleryMemoryGroups(
-  memories: readonly Memory[],
-  maxYear = new Date().getFullYear()
-): GalleryMemoryGroup[] {
-  return groupMemoriesByYear(
-    memories.filter((memory) => !memory.deleted_at),
-    maxYear
-  )
-    .map((group) => ({
-      key: `memories-${group.year ?? "undated"}`,
-      year: group.year,
-      items: group.memories.flatMap((memory) =>
-        (memory.photo_paths ?? [])
-          .filter((path) => path.trim())
-          .map(
-            (path): GalleryItem => ({
-              key: `memory:${memory.id}:photo:${path}`,
-              kind: "photo",
-              path,
-              poster: null,
-              entryDate: null,
-              memoryId: memory.id,
-              emoji: null,
-              caption: memory.time_label?.trim() || null,
-            })
-          )
-      ),
-    }))
-    .filter((group) => group.items.length > 0);
 }

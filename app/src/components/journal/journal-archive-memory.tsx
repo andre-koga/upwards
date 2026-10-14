@@ -3,28 +3,41 @@ import { useTranslation } from "react-i18next";
 import type { Memory } from "@/lib/db/types";
 import JournalArchivePhotoGrid from "@/components/journal/journal-archive-photos";
 import { Button } from "@/components/ui/button";
+import { memoryRememberedDate } from "@/lib/journal/record";
+import { getActiveLocaleTag } from "@/lib/i18n";
+import { fromDateString } from "@/lib/time-utils";
 
 interface JournalArchiveMemoryProps {
   memory: Memory;
   onEdit: (memory: Memory) => void;
   onTrash: (memory: Memory) => void;
+  /**
+   * Show the day it was remembered on in the left rail, as a day does. Off
+   * where the day is already the heading, such as the reader.
+   */
+  showDate?: boolean;
 }
 
 /**
- * A memory in the record: an entry whose date is approximate. It is the same
- * editorial card as a day, but the left rail shows a mark instead of a day
- * number and the border is dashed, because the "when" is the person's own words
- * ("when I was six"), not a date.
+ * A memory in the record. It stands on the day it was remembered, so the left
+ * rail carries that day like a day does, plus a mark and the word "Memory"; the
+ * border is dashed, and the heading is the person's own words for when it
+ * happened ("when I was six").
  */
 export default function JournalArchiveMemory({
   memory,
   onEdit,
   onTrash,
+  showDate = true,
 }: JournalArchiveMemoryProps) {
   const { t } = useTranslation("journal", { keyPrefix: "archive.memory" });
   const label = memory.time_label?.trim();
   const text = memory.text_content?.trim();
   const photoPaths = memory.photo_paths ?? [];
+  const date = fromDateString(memoryRememberedDate(memory));
+  const weekday = date.toLocaleDateString(getActiveLocaleTag(), {
+    weekday: "short",
+  });
 
   return (
     <article
@@ -32,7 +45,17 @@ export default function JournalArchiveMemory({
       className="py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
     >
       <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
-        <div className="flex w-12 shrink-0 flex-col items-center gap-1 pt-2">
+        <div className="flex w-12 shrink-0 flex-col items-center gap-1 pt-1">
+          {showDate ? (
+            <>
+              <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground">
+                {date.getDate()}
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                {weekday}
+              </span>
+            </>
+          ) : null}
           <span
             className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground"
             aria-hidden

@@ -37,6 +37,6 @@
       "photoCount": "{{current}}/{{max}} photos",
       "removePhoto": "Remove photo {{index}}"
     },
-    "whenHint": "Add a year, like \"summer 2019\", to place it in your timeline."
+    "whenHint": "It is placed on the day you add it. This is just your own words for when it happened."
   }
 }

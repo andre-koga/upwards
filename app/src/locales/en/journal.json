@@ -135,9 +135,7 @@
       "editNamed": "Edit memory: {{label}}",
       "trash": "Move memory to trash",
       "add": "Add memory",
-      "deleted": "Deleted memories ({{count}})",
-      "groupYear": "Memories · {{year}}",
-      "groupUndated": "Undated memories"
+      "deleted": "Deleted memories ({{count}})"
     }
   },
   "untitled": "Untitled",

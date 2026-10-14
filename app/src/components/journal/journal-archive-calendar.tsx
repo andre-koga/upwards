@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import type { JournalEntry } from "@/lib/db/types";
+import type { JournalEntry, Memory } from "@/lib/db/types";
 import JournalMarkedCalendar from "@/components/journal/journal-marked-calendar";
 import { Button } from "@/components/ui/button";
 import { rememberJournalJumpDate } from "@/lib/journal/archive";
+import { memoriesByDate } from "@/lib/journal/record";
 import {
   formatWeekdayShortDate,
   fromDateString,
@@ -15,11 +16,14 @@ import {
 interface JournalArchiveCalendarProps {
   /** The days the current search and filters leave in. */
   entries: readonly JournalEntry[];
+  /** Memories, which stand on the day they were remembered. */
+  memories: readonly Memory[];
   /** The picked day. The page owns it, so the calendar and the reader agree. */
   selected: string | null;
   onSelect: (date: string | null) => void;
   /** How a day is shown under the calendar: the same card the feed uses. */
   renderEntry: (entry: JournalEntry) => ReactNode;
+  renderMemory: (memory: Memory) => ReactNode;
   /**
    * False when a reader beside the calendar shows the picked day, so it is not
    * shown twice.
@@ -34,9 +38,11 @@ interface JournalArchiveCalendarProps {
  */
 export default function JournalArchiveCalendar({
   entries,
+  memories,
   selected,
   onSelect,
   renderEntry,
+  renderMemory,
   showDetail,
 }: JournalArchiveCalendarProps) {
   const { t } = useTranslation("journal");
@@ -47,7 +53,12 @@ export default function JournalArchiveCalendar({
     () => new Map(entries.map((entry) => [entry.entry_date, entry])),
     [entries]
   );
-  const entryDates = useMemo(() => new Set(byDate.keys()), [byDate]);
+  const memoriesOnDate = useMemo(() => memoriesByDate(memories), [memories]);
+  // A day with a memory is a day with something written, like any other.
+  const entryDates = useMemo(
+    () => new Set([...byDate.keys(), ...memoriesOnDate.keys()]),
+    [byDate, memoriesOnDate]
+  );
   const bookmarkedDates = useMemo(
     () =>
       new Set(
@@ -86,6 +97,7 @@ export default function JournalArchiveCalendar({
   }, [selected, showDetail]);
 
   const selectedEntry = selected ? (byDate.get(selected) ?? null) : null;
+  const selectedMemories = selected ? (memoriesOnDate.get(selected) ?? []) : [];
 
   const openDay = (date: string) => {
     rememberJournalJumpDate(date);
@@ -120,8 +132,11 @@ export default function JournalArchiveCalendar({
             <p className="px-1 text-sm text-muted-foreground">
               {t("archive.calendar.hint")}
             </p>
-          ) : selectedEntry ? (
-            renderEntry(selectedEntry)
+          ) : selectedEntry || selectedMemories.length > 0 ? (
+            <div className="space-y-3">
+              {selectedEntry ? renderEntry(selectedEntry) : null}
+              {selectedMemories.map(renderMemory)}
+            </div>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border p-3">
               <p className="text-sm text-muted-foreground">

@@ -135,9 +135,7 @@
       "editNamed": "Editar memória: {{label}}",
       "trash": "Mover memória para a lixeira",
       "add": "Adicionar memória",
-      "deleted": "Memórias excluídas ({{count}})",
-      "groupYear": "Memórias · {{year}}",
-      "groupUndated": "Memórias sem data"
+      "deleted": "Memórias excluídas ({{count}})"
     }
   },
   "untitled": "Sem título",
