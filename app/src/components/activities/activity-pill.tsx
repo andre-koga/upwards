@@ -26,6 +26,11 @@ export interface ActivityPillProps {
   pinned?: boolean;
   /** Pins or unpins the activity from the row; omit where pinning is not offered. */
   onTogglePin?: () => void;
+  /**
+   * `pill` is a self-contained rounded control. `row` drops the box and the
+   * full rounding so the pill can sit in a divided list (Today).
+   */
+  appearance?: "pill" | "row";
   className?: string;
 }
 
@@ -45,28 +50,32 @@ export default function ActivityPill({
   showTimer = true,
   pinned = false,
   onTogglePin,
+  appearance = "pill",
   className = "",
 }: ActivityPillProps) {
   const { t } = useTranslation("projects");
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
   const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
+  const row = appearance === "row";
 
   return (
     <div
       className={cn(
-        "relative flex h-10 w-full items-stretch gap-2 overflow-hidden rounded-full",
+        "relative flex h-10 w-full items-stretch gap-2",
+        !row && "overflow-hidden rounded-full",
         className
       )}
     >
       {/* Name / label side */}
       <div
         className={cn(
-          "flex min-w-0 flex-1 items-stretch overflow-hidden rounded-full border border-border bg-muted/60",
+          "flex min-w-0 flex-1 items-stretch overflow-hidden",
+          row ? "rounded-md" : "rounded-full border border-border bg-muted/60",
           readOnly && !allowNameClickWhenReadOnly
-            ? "pointer-events-none shadow-sm"
+            ? cn("pointer-events-none", !row && "shadow-sm")
             : readOnly
-              ? "shadow-sm"
+              ? !row && "shadow-sm"
               : "shadow-none"
         )}
       >
@@ -80,8 +89,9 @@ export default function ActivityPill({
         >
           <span
             className={cn(
-              "flex min-h-0 min-w-0 flex-1 items-center gap-2 py-1 pl-4",
-              onTogglePin ? "pr-1" : "pr-4"
+              "flex min-h-0 min-w-0 flex-1 items-center gap-2 py-1",
+              row ? "pl-2" : "pl-4",
+              onTogglePin ? "pr-1" : row ? "pr-2" : "pr-4"
             )}
           >
             <span
@@ -135,7 +145,12 @@ export default function ActivityPill({
               type="button"
               variant="outline"
               onClick={onManualEntry}
-              className="relative -mr-4 h-full w-12 shrink-0 rounded-l-full border-r-0 pr-6 shadow-none"
+              className={cn(
+                "relative h-full shrink-0 shadow-none",
+                row
+                  ? "w-9 rounded-md border-transparent bg-transparent text-muted-foreground"
+                  : "-mr-4 w-12 rounded-l-full border-r-0 pr-6"
+              )}
               title="Add manual time entry"
               aria-label="Add manual time entry"
             >
@@ -146,7 +161,8 @@ export default function ActivityPill({
           {readOnly ? (
             <div
               className={cn(
-                "relative flex h-full shrink-0 items-center justify-center gap-1.5 rounded-full border bg-background px-4 text-xs font-semibold",
+                "relative flex h-full shrink-0 items-center justify-center gap-1.5 border bg-background text-xs font-semibold",
+                row ? "rounded-md px-3" : "rounded-full px-4",
                 isRunning ? "border-2" : "border-border text-muted-foreground"
               )}
               style={
@@ -175,7 +191,10 @@ export default function ActivityPill({
               type="button"
               variant="secondary"
               onClick={onClick}
-              className="relative h-full shrink-0 gap-1.5 rounded-full px-4 font-semibold shadow-none"
+              className={cn(
+                "relative h-full shrink-0 gap-1.5 font-semibold shadow-none",
+                row ? "rounded-md px-3" : "rounded-full px-4"
+              )}
               style={
                 isRunning
                   ? { backgroundColor: color, color: textColor }

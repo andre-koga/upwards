@@ -195,7 +195,7 @@ function OneTimeTaskItem({
         />
 
         <div
-          className="flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-xl border border-border"
+          className="flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={isToday ? handleMemoClick : undefined}
           onPointerDown={isToday ? handleMemoPointerDown : undefined}
           onPointerUp={isToday ? handleMemoPointerUp : undefined}
@@ -215,14 +215,14 @@ function OneTimeTaskItem({
           tabIndex={isToday ? 0 : undefined}
         >
           <p
-            className={`min-w-0 flex-1 whitespace-pre-wrap break-words px-3 py-2 text-left text-sm font-medium ${
+            className={`min-w-0 flex-1 whitespace-pre-wrap break-words px-2 py-1.5 text-left text-sm font-medium ${
               task.is_completed ? "text-muted-foreground line-through" : ""
             }`}
           >
             {task.title}
           </p>
           {dueDateDisplay ? (
-            <div className="px-3 pb-2">
+            <div className="px-2 pb-1.5">
               <span className="min-w-0 text-xs text-muted-foreground">
                 {t("memo.due", { date: dueDateDisplay })}
               </span>

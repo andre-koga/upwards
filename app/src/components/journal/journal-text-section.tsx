@@ -1,9 +1,14 @@
+import type { ReactNode } from "react";
 import { Flame, MapPin, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { LocationData } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
 
 interface JournalTextSectionProps {
+  /** The day's emoji; a quiet placeholder shows until one is chosen. */
+  emoji?: string;
+  /** Sits at the end of the heading row (the photo stack). */
+  trailing?: ReactNode;
   title: string;
   text: string;
   /** Distinct places visited that day (unordered). */
@@ -17,6 +22,8 @@ interface JournalTextSectionProps {
 }
 
 export default function JournalTextSection({
+  emoji,
+  trailing,
   title,
   text,
   locations,
@@ -41,8 +48,33 @@ export default function JournalTextSection({
 
   return (
     <>
+      <div className="flex items-start gap-3">
+        <span
+          className={`shrink-0 text-5xl leading-none ${emoji ? "" : "opacity-40 grayscale"}`}
+          aria-hidden
+        >
+          {emoji || "🙂"}
+        </span>
+        <h2
+          className={`min-w-0 flex-1 break-words font-display text-3xl font-semibold leading-tight tracking-[-0.02em] ${
+            title ? "" : "text-muted-foreground"
+          }`}
+        >
+          {title || t("untitled")}
+        </h2>
+        {trailing ? <div className="shrink-0 pr-1">{trailing}</div> : null}
+      </div>
+
+      <p
+        className={`w-full whitespace-pre-wrap text-left font-display text-lg leading-relaxed ${
+          text ? "" : "italic text-muted-foreground"
+        }`}
+      >
+        {text || t("noReflection")}
+      </p>
+
       {showMetaRow && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           {hasLocations
             ? locations!.map((loc, index) => {
                 const label = loc.displayName;
@@ -107,22 +139,6 @@ export default function JournalTextSection({
           )}
         </div>
       )}
-
-      <p
-        className={`pb-2 text-left font-crimson text-3xl font-bold ${
-          title ? "" : "text-muted-foreground"
-        } ${showMetaRow ? "pt-2" : "pt-3"}`}
-      >
-        {title || t("untitled")}
-      </p>
-
-      <p
-        className={`w-full whitespace-pre-wrap text-left font-crimson text-base leading-relaxed ${
-          text ? "text-muted-foreground" : "italic text-muted-foreground"
-        }`}
-      >
-        {text || t("noReflection")}
-      </p>
     </>
   );
 }

@@ -24,7 +24,7 @@ export default function JournalMetaBar({
 }: JournalMetaBarProps) {
   const { t } = useTranslation("journal");
   return (
-    <div className="relative flex items-center justify-end gap-2 p-4">
+    <div className="relative flex items-center justify-end gap-2 px-3 pb-3 pt-1">
       {revisions && onOpenVersions ? (
         <JournalEditedNote
           summary={revisions}

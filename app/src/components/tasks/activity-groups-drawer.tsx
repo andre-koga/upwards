@@ -32,7 +32,7 @@ import { DeleteConfirmDialog } from "@/components/activities/delete-confirm-dial
 import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
 import ManualTimeEntryDialog from "@/components/tasks/manual-time-entry-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -142,6 +142,10 @@ interface ActivityGroupsDrawerProps {
   triggerTitle?: string;
   triggerLabel?: string;
   triggerIcon?: LucideIcon;
+  /** Defaults to the primary (filled) button. */
+  triggerVariant?: ButtonProps["variant"];
+  /** Defaults to the floating round button, or `default` when labelled. */
+  triggerSize?: ButtonProps["size"];
   floating?: boolean;
 }
 
@@ -158,6 +162,8 @@ export default function ActivityGroupsDrawer({
   triggerTitle,
   triggerLabel,
   triggerIcon: TriggerIcon = Plus,
+  triggerVariant = "default",
+  triggerSize,
   floating = true,
 }: ActivityGroupsDrawerProps) {
   const { t } = useTranslation("projects");
@@ -549,8 +555,8 @@ export default function ActivityGroupsDrawer({
         <SheetTrigger asChild>
           <Button
             type="button"
-            variant="default"
-            size={triggerLabel ? "default" : "floatingNav"}
+            variant={triggerVariant}
+            size={triggerSize ?? (triggerLabel ? "default" : "floatingNav")}
             title={
               triggerLabel || !open
                 ? resolvedTriggerTitle
@@ -561,15 +567,13 @@ export default function ActivityGroupsDrawer({
                 ? resolvedTriggerTitle
                 : t("drawer.closePicker")
             }
-            className={[
+            className={cn(
               !triggerLabel &&
                 floating &&
                 "fixed bottom-2 right-2 z-[60] gap-0 px-0 shadow-md",
               triggerLabel && "rounded-full shadow-md",
-              triggerClassName,
-            ]
-              .filter(Boolean)
-              .join(" ")}
+              triggerClassName
+            )}
           >
             {triggerLabel ? (
               <span className="flex items-center justify-center gap-2">
