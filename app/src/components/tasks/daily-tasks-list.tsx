@@ -6,13 +6,12 @@ import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import ActiveActivityPill from "./active-activity-pill";
 import AssignActivityDialog from "./assign-activity-dialog";
-import FooterActionsBar from "./footer-actions-bar";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import ManualTimeEntryDialog from "./manual-time-entry-dialog";
 import { ArchivedMemosDialog } from "./archived-memos-dialog";
 import { Palmtree, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SectionLabel } from "@/components/ui/section-label";
+import { TodayRow, TodaySection } from "./today-section";
 import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
@@ -38,7 +37,7 @@ import { useAiTodayOrder } from "./hooks/use-ai-today-order";
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
 interface DailyTasksListProps {
-  /** Active habits — used for starting new tracking from the footer. */
+  /** Active habits — used for starting new tracking. */
   activities: Activity[];
   /** All habits — used for timeline / running pill labels on historical days. */
   lookupActivities: Activity[];
@@ -46,9 +45,6 @@ interface DailyTasksListProps {
   daily: DailyTasksState;
   currentDate: Date;
   onDateChange: (date: Date) => void;
-  entryDates: Set<string>;
-  bookmarkedDates: Set<string>;
-  loadJournalMeta: () => Promise<void>;
   onTasksDataChanged?: () => void;
 }
 
@@ -59,9 +55,6 @@ export default function DailyTasksList({
   daily,
   currentDate,
   onDateChange,
-  entryDates,
-  bookmarkedDates,
-  loadJournalMeta,
   onTasksDataChanged,
 }: DailyTasksListProps) {
   const { t } = useTranslation("today");
@@ -99,7 +92,6 @@ export default function DailyTasksList({
     isBreakDay,
     oneTimeTasks,
     archivedMemos,
-    createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
     updateOneTimeTask,
@@ -115,7 +107,6 @@ export default function DailyTasksList({
     currentActivityElapsedMs,
     loadActivityPeriods,
     getActivityElapsedMs,
-    getActivityDrawerElapsedMs,
     addManualActivityPeriod,
     formatTimerDisplay,
   } = daily;
@@ -245,84 +236,83 @@ export default function DailyTasksList({
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-5">
       {(oneTimeTasks.length > 0 || isToday) && (
-        <div className="mb-4 space-y-2">
-          <div className="space-y-2">
-            <SectionLabel>{t("sections.memos")}</SectionLabel>
-            <div className="flex w-full gap-1.5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void loadArchivedMemos();
-                  setArchivedMemosDialogOpen(true);
-                }}
-                className="h-7 min-w-0 flex-1 gap-1.5 rounded-full px-2.5 text-xs font-medium text-muted-foreground shadow-none"
-                aria-label={t("viewArchivedMemos")}
-              >
-                <Archive className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                {t("archiveButton")}
-              </Button>
-            </div>
-          </div>
-          {oneTimeTasks.map((task) => (
-            <OneTimeTaskItem
-              key={task.id}
-              task={task}
-              isToday={isToday}
-              onToggle={toggleOneTimeTask}
-              onDelete={deleteOneTimeTask}
-              onUpdate={updateOneTimeTask}
-              onArchive={() => {
-                void loadOneTimeTasks();
+        <TodaySection
+          label={t("sections.memos")}
+          aside={
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
                 void loadArchivedMemos();
+                setArchivedMemosDialogOpen(true);
               }}
-            />
+              className="-mr-2 h-8 gap-1.5 px-2 text-xs font-medium text-muted-foreground"
+              aria-label={t("viewArchivedMemos")}
+            >
+              <Archive className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              {t("archiveButton")}
+            </Button>
+          }
+        >
+          {oneTimeTasks.map((task) => (
+            <TodayRow key={task.id}>
+              <OneTimeTaskItem
+                task={task}
+                isToday={isToday}
+                onToggle={toggleOneTimeTask}
+                onDelete={deleteOneTimeTask}
+                onUpdate={updateOneTimeTask}
+                onArchive={() => {
+                  void loadOneTimeTasks();
+                  void loadArchivedMemos();
+                }}
+              />
+            </TodayRow>
           ))}
-        </div>
+        </TodaySection>
       )}
 
       {(loading || dailyActivities.length > 0) && (
-        <>
-          <div className="mb-2">
-            <SectionLabel>{t("sections.forToday")}</SectionLabel>
-          </div>
+        <TodaySection label={t("sections.forToday")}>
+          {!loading && (aiOrder.canOrder || dailyActivities.length > 1) ? (
+            <div className="space-y-2 border-b border-border px-4 py-3">
+              {aiOrder.canOrder ? (
+                <AiOrderBar
+                  available={aiOrder.available}
+                  loading={aiOrder.loading}
+                  error={aiOrder.error}
+                  generatedAt={aiOrder.generatedAt}
+                  stale={aiOrder.stale}
+                  onOrder={() => void aiOrder.rank()}
+                  onReset={aiOrder.reset}
+                />
+              ) : null}
 
-          {!loading && aiOrder.canOrder ? (
-            <AiOrderBar
-              available={aiOrder.available}
-              loading={aiOrder.loading}
-              error={aiOrder.error}
-              generatedAt={aiOrder.generatedAt}
-              stale={aiOrder.stale}
-              onOrder={() => void aiOrder.rank()}
-              onReset={aiOrder.reset}
-            />
+              {dailyActivities.length > 1 ? (
+                <TodayOrderBar
+                  canReorder={isToday}
+                  reordering={reordering}
+                  reorderBlockedByAi={aiOrderInView}
+                  onToggleReorder={() => setReorderRequested((value) => !value)}
+                  doneLast={doneLast}
+                  onDoneLastChange={setDoneLast}
+                />
+              ) : null}
+            </div>
           ) : null}
 
-          {!loading && dailyActivities.length > 1 ? (
-            <TodayOrderBar
-              canReorder={isToday}
-              reordering={reordering}
-              reorderBlockedByAi={aiOrderInView}
-              onToggleReorder={() => setReorderRequested((value) => !value)}
-              doneLast={doneLast}
-              onDoneLastChange={setDoneLast}
-            />
-          ) : null}
-
-          <div className="flex-1 space-y-2">
-            {loading && (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                {t("loading")}
-              </p>
-            )}
-            {!loading &&
-              orderedActivities.map((activity) => (
+          {loading && (
+            <p className="px-4 py-4 text-center text-sm text-muted-foreground">
+              {t("loading")}
+            </p>
+          )}
+          {!loading &&
+            orderedActivities.map((activity) => (
+              <TodayRow key={activity.id}>
                 <ActivityTaskItem
-                  key={activity.id}
                   activity={activity}
                   group={getGroup(activity)}
                   count={taskCounts[activity.id] || 0}
@@ -367,39 +357,43 @@ export default function DailyTasksList({
                       : undefined
                   }
                 />
-              ))}
-          </div>
+              </TodayRow>
+            ))}
 
-          <div className="mt-4 flex flex-col items-center justify-center gap-1">
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+            {isBreakDay ? (
+              <span />
+            ) : (
+              <p className="min-w-0 text-xs text-muted-foreground">
+                {t("breakDay.helper")}
+              </p>
+            )}
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => {
                 void toggleBreakDay();
               }}
               className={cn(
-                "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default",
+                "shrink-0 gap-1.5 rounded-full px-3 text-xs font-medium shadow-none",
                 isBreakDay ? "text-gold-text" : "text-muted-foreground"
               )}
+              aria-pressed={isBreakDay}
               title={isBreakDay ? t("breakDay.unset") : t("breakDay.set")}
             >
-              <Palmtree className="h-3.5 w-3.5" />
+              <Palmtree className="h-3.5 w-3.5" aria-hidden />
               {isBreakDay ? t("breakDay.active") : t("breakDay.markAsBreakDay")}
             </Button>
-            {!isBreakDay && (
-              <p className="text-center text-[11px] text-muted-foreground">
-                {t("breakDay.helper")}
-              </p>
-            )}
           </div>
-        </>
+        </TodaySection>
       )}
 
       {(currentActivityId || timelineSessions.length > 0) && (
-        <div className="mt-6 space-y-2">
-          <div className="ml-1 mr-1.5 flex items-center justify-between">
-            <SectionLabel>{t("sections.timeline")}</SectionLabel>
-            <span className="text-xs text-muted-foreground">
+        <TodaySection
+          label={t("sections.timeline")}
+          aside={
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
               {formatTimerDisplay(
                 timelineSessions.reduce(
                   (total, session) => total + session.intervalMs,
@@ -407,72 +401,59 @@ export default function DailyTasksList({
                 )
               )}
             </span>
+          }
+        >
+          <div className="space-y-1 p-2">
+            <ActiveActivityPill
+              currentActivityId={currentActivityId}
+              activities={lookupActivities}
+              groups={lookupGroups}
+              elapsedMs={currentActivityElapsedMs}
+              onStop={handleStopActivity}
+              onEdit={
+                runningSession
+                  ? () =>
+                      setEditingSession({
+                        groupId: runningSession.groupId,
+                        sessionId: runningSession.sessionId,
+                      })
+                  : undefined
+              }
+            />
+            {timelineSessions.map((session) => {
+              const isUnknown = !session.groupId;
+              return (
+                <ActivityTimelineItem
+                  key={session.id}
+                  activityName={session.name}
+                  groupColor={session.groupColor}
+                  intervalMs={session.intervalMs}
+                  activityId={session.activityId || ""}
+                  note={session.note}
+                  untimed={session.untimed}
+                  completedAtIso={session.completedAtIso}
+                  fromPreviousDay={session.fromPreviousDay}
+                  continuesNextDay={session.continuesNextDay}
+                  onClick={
+                    isUnknown
+                      ? () => openAssignDialog(session.id, session.intervalMs)
+                      : () =>
+                          setEditingSession({
+                            groupId: session.groupId,
+                            sessionId: session.id,
+                          })
+                  }
+                  onStartActivity={
+                    !isUnknown && !session.untimed
+                      ? handleStartActivityFromPastDay
+                      : undefined
+                  }
+                />
+              );
+            })}
           </div>
-          <ActiveActivityPill
-            currentActivityId={currentActivityId}
-            activities={lookupActivities}
-            groups={lookupGroups}
-            elapsedMs={currentActivityElapsedMs}
-            onStop={handleStopActivity}
-            onEdit={
-              runningSession
-                ? () =>
-                    setEditingSession({
-                      groupId: runningSession.groupId,
-                      sessionId: runningSession.sessionId,
-                    })
-                : undefined
-            }
-          />
-          {timelineSessions.map((session) => {
-            const isUnknown = !session.groupId;
-            return (
-              <ActivityTimelineItem
-                key={session.id}
-                activityName={session.name}
-                groupColor={session.groupColor}
-                intervalMs={session.intervalMs}
-                activityId={session.activityId || ""}
-                note={session.note}
-                untimed={session.untimed}
-                completedAtIso={session.completedAtIso}
-                fromPreviousDay={session.fromPreviousDay}
-                continuesNextDay={session.continuesNextDay}
-                onClick={
-                  isUnknown
-                    ? () => openAssignDialog(session.id, session.intervalMs)
-                    : () =>
-                        setEditingSession({
-                          groupId: session.groupId,
-                          sessionId: session.id,
-                        })
-                }
-                onStartActivity={
-                  !isUnknown && !session.untimed
-                    ? handleStartActivityFromPastDay
-                    : undefined
-                }
-              />
-            );
-          })}
-        </div>
+        </TodaySection>
       )}
-
-      <FooterActionsBar
-        currentDate={currentDate}
-        onDateChange={onDateChange}
-        entryDates={entryDates}
-        bookmarkedDates={bookmarkedDates}
-        loadJournalMeta={loadJournalMeta}
-        currentActivityId={currentActivityId}
-        activities={activities}
-        getActivityDrawerElapsedMs={getActivityDrawerElapsedMs}
-        onStartActivity={handleStartActivity}
-        onStopActivity={handleStopActivity}
-        onAddManualActivityPeriod={addManualActivityPeriod}
-        onAddQuickMemo={createOneTimeTask}
-        onTasksDataChanged={onTasksDataChanged}
-      />
 
       {assignPeriodId && (
         <AssignActivityDialog

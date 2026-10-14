@@ -71,6 +71,7 @@ export default function DailyTaskActivityPill({
           ? () => onManualEntry(activity.id)
           : undefined
       }
+      appearance="row"
       nameClassName={isDayComplete ? "line-through text-muted-foreground" : ""}
     />
   );

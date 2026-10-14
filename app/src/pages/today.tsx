@@ -1,4 +1,10 @@
-import { useState, useRef, type TouchEvent, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  type TouchEvent,
+  useCallback,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -8,6 +14,7 @@ import {
 } from "@/lib/time-utils";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import JournalCard from "@/components/journal/journal-card";
+import TodayHeader from "@/components/tasks/today-header";
 import { useTodayPage } from "@/hooks/use-today-page";
 import { useDayResetTimer } from "@/hooks/use-day-reset-timer";
 import { JOURNAL_JUMP_DATE_KEY } from "@/lib/journal/archive";
@@ -54,6 +61,53 @@ export default function TodayPage() {
     setDayResetTick((t) => t + 1);
   }, []);
   useDayResetTimer(handleDayReset);
+
+  const goToPreviousDay = useCallback(() => {
+    setCurrentDate((prev) => {
+      const next = new Date(prev);
+      next.setDate(next.getDate() - 1);
+      return next;
+    });
+  }, []);
+
+  // Days stop at today: there is nothing to record tomorrow.
+  const goToNextDay = useCallback(() => {
+    setCurrentDate((prev) => {
+      if (toDateString(prev) === todayDateString()) return prev;
+      const next = new Date(prev);
+      next.setDate(next.getDate() + 1);
+      return next;
+    });
+  }, []);
+
+  // Arrow keys step through days, unless something else owns the keyboard.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (event.isComposing || event.defaultPrevented) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+        return;
+      }
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest(
+          "input, textarea, select, [contenteditable='true'], [role='slider'], [role='tab'], [role='menu'], [role='listbox']"
+        )
+      ) {
+        return;
+      }
+      if (
+        document.querySelector('[role="dialog"], [role="alertdialog"]') !== null
+      ) {
+        return;
+      }
+      if (event.key === "ArrowLeft") goToPreviousDay();
+      else goToNextDay();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [goToPreviousDay, goToNextDay]);
 
   const {
     journal,
@@ -155,25 +209,16 @@ export default function TodayPage() {
     if (absX < absY * SWIPE_DIRECTION_RATIO) return;
 
     if (deltaX > 0) {
-      setCurrentDate((prev) => {
-        const next = new Date(prev);
-        next.setDate(next.getDate() - 1);
-        return next;
-      });
+      goToPreviousDay();
       return;
     }
 
-    setCurrentDate((prev) => {
-      if (toDateString(prev) === todayDateString()) return prev;
-      const next = new Date(prev);
-      next.setDate(next.getDate() + 1);
-      return next;
-    });
+    goToNextDay();
   };
 
   return (
     <div
-      className="pb-36"
+      className="pb-8"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -183,7 +228,7 @@ export default function TodayPage() {
       }}
     >
       {swipeFeedback && (
-        <div className="pointer-events-none fixed inset-x-0 top-3 z-50 flex justify-center px-3">
+        <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center px-3">
           <div
             className="flex h-8 items-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs font-medium shadow-sm backdrop-blur-sm"
             style={{
@@ -206,14 +251,34 @@ export default function TodayPage() {
         </div>
       )}
 
-      <JournalCard
-        key={toDateString(currentDate)}
+      <TodayHeader
         currentDate={currentDate}
-        journal={journal}
+        onDateChange={setCurrentDate}
+        onPreviousDay={goToPreviousDay}
+        onNextDay={goToNextDay}
+        entryDates={entryDates}
+        bookmarkedDates={bookmarkedDates}
         loadJournalMeta={loadJournalMeta}
+        currentActivityId={dailyTasks.currentActivityId}
+        activities={activities}
+        getActivityDrawerElapsedMs={dailyTasks.getActivityDrawerElapsedMs}
+        onStartActivity={dailyTasks.handleStartActivity}
+        onStopActivity={dailyTasks.handleStopActivity}
+        onAddManualActivityPeriod={dailyTasks.addManualActivityPeriod}
+        onAddQuickMemo={dailyTasks.createOneTimeTask}
+        onTasksDataChanged={() => {
+          void refreshTasksData();
+        }}
       />
 
-      <div className="p-3">
+      <div className="space-y-5 p-4">
+        <JournalCard
+          key={toDateString(currentDate)}
+          currentDate={currentDate}
+          journal={journal}
+          loadJournalMeta={loadJournalMeta}
+        />
+
         <DailyTasksList
           activities={activities}
           lookupActivities={lookupActivities}
@@ -221,9 +286,6 @@ export default function TodayPage() {
           daily={dailyTasks}
           currentDate={currentDate}
           onDateChange={setCurrentDate}
-          entryDates={entryDates}
-          bookmarkedDates={bookmarkedDates}
-          loadJournalMeta={loadJournalMeta}
           onTasksDataChanged={() => {
             void refreshTasksData();
           }}

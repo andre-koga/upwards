@@ -204,7 +204,7 @@ export default function JournalCard({
   return (
     <>
       <div
-        className="mb-2 overflow-hidden"
+        className="overflow-hidden rounded-3xl border border-border bg-card"
         onPointerDown={handleJournalPointerDown}
         onPointerUp={handleJournalPointerEnd}
         onPointerLeave={handleJournalPointerEnd}
@@ -229,25 +229,12 @@ export default function JournalCard({
             />
           ) : null}
 
-          <div className="pointer-events-none relative z-10 mx-auto -mt-10 h-20 w-full max-w-2xl px-4">
-            <div className="pointer-events-auto absolute bottom-0 left-4">
-              {journal.draftEmoji ? (
-                <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl">
-                  {journal.draftEmoji}
-                </span>
-              ) : (
-                <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl text-muted-foreground">
-                  🙂
-                </span>
-              )}
-            </div>
-            <div className="pointer-events-auto absolute bottom-1 right-4">
-              <JournalPhotoStack photoPaths={journal.draftPhotoPaths} />
-            </div>
-          </div>
-
-          <div className="mx-auto max-w-2xl space-y-3 px-5">
+          <div className="space-y-3 px-5 pb-2 pt-5">
             <JournalTextSection
+              emoji={journal.draftEmoji}
+              trailing={
+                <JournalPhotoStack photoPaths={journal.draftPhotoPaths} />
+              }
               title={journal.draftTitle}
               text={journal.draftText}
               locations={

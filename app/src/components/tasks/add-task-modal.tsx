@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import {
   clearQuickMemoSessionDraft,
   getQuickMemoSessionDraft,
@@ -25,6 +25,10 @@ interface AddTaskModalProps {
   /** Shown next to the icon inside the trigger (wider layouts). */
   triggerLabel?: string;
   icon?: LucideIcon;
+  /** Defaults to the primary (filled) button. */
+  triggerVariant?: ButtonProps["variant"];
+  /** Defaults to the floating round button, or `default` when labelled. */
+  triggerSize?: ButtonProps["size"];
   disabled?: boolean;
   floating?: boolean;
 }
@@ -35,6 +39,8 @@ export default function AddTaskModal({
   triggerTitle,
   triggerLabel,
   icon: Icon = Plus,
+  triggerVariant = "default",
+  triggerSize,
   disabled = false,
   floating = true,
 }: AddTaskModalProps) {
@@ -108,8 +114,8 @@ export default function AddTaskModal({
 
       <Button
         type="button"
-        variant="default"
-        size={triggerLabel ? "default" : "floatingNav"}
+        variant={triggerVariant}
+        size={triggerSize ?? (triggerLabel ? "default" : "floatingNav")}
         onClick={() => handleOpenChange(!open)}
         disabled={disabled}
         title={resolvedTriggerTitle}

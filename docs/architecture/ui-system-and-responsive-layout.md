@@ -77,14 +77,16 @@ notice are gone. `components/layout/app-shell.tsx` now owns the frame:
 - Below `md`: the document scrolls and a frosted four-tab bar (Home, Today,
   Journal, You) floats at the bottom. `--app-tab-bar-h` (set on `.app-shell-tabs`
   in `index.css`) is the bar's height; fixed bottom controls add it to their
-  offset, so the Today action bar, the corner back button, the Memories add
-  button, and the install prompt clear it.
+  offset, so the corner back button, the Memories add
+  button, and the install prompt clear it. Today no longer has a bottom action
+  bar: its day navigation and actions live in a sticky frosted header at the
+  top, so the tab bar is the only thing at the bottom edge (2026-10-14).
 - `md` and up: a sidebar beside one content pane that owns scrolling
   (`data-app-scroll`). The sidebar is an icon rail with tooltips at `md` and a
   labelled list with shortcut chips at `lg`. The pane is a containing block for
   `position: fixed` descendants (`transform: translateZ(0)`), so floating
   controls stay inside it. Overlays portal to the body and cover the window.
-  The tab bar, the Today menu button, and the corner back buttons are hidden.
+  The tab bar, the Today header's menu button, and the corner back buttons are hidden.
 - The page column is capped at `max-w-2xl` (`lg:max-w-3xl`) and centered.
   **This is an interim cap, not the desktop layout.** The two-column pages
   replace it route by route (`routeUsesWideColumn` in
