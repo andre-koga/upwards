@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { GitMerge, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
-import type { SyncIssue } from "@/lib/db/types";
+import {
+  ChoiceButton,
+  ConflictFrame,
+  type ConflictBusy,
+} from "@/components/settings/conflict-card-parts";
+import { formatWhen } from "@/components/settings/conflict-format";
+import { JournalConflictCard } from "@/components/settings/journal-conflict-card";
+import { ProjectionConflictCard } from "@/components/settings/projection-conflict-card";
 import { db } from "@/lib/db";
-import type { ConflictResolutionChoice } from "@/lib/sync/field-diff";
+import type { SyncIssue } from "@/lib/db/types";
+import { rememberJournalJumpDate } from "@/lib/journal/archive";
+import { requestJournalEdit } from "@/lib/journal/edit-request";
+import type { ConflictChoice } from "@/lib/sync/field-diff";
 import {
   deferJournalConflict,
-  formatJournalConflictFieldValue,
   isJournalConflictPayload,
   refreshJournalConflictPayload,
   resolveJournalConflict,
@@ -16,207 +24,87 @@ import {
 } from "@/lib/sync/journal-conflict-resolution";
 import {
   deferProjectionConflict,
-  formatProjectionConflictFieldValue,
   isProjectionConflictPayload,
   refreshProjectionConflictPayload,
-  resolveProjectionConflict,
   resolveGenericProjectionConflictKeepLocal,
+  resolveProjectionConflict,
   type ProjectionConflictPayload,
 } from "@/lib/sync/projection-conflict-resolution";
-import {
-  deferDailyEntryCountReconciliation,
-  isDailyEntryCountReconciliationPayload,
-  resolveDailyEntryCountReconciliation,
-  type DailyEntryCountReconciliationPayload,
-} from "@/lib/sync/daily-entry-reconciliation";
 import { deferSyncIssue, resolveSyncIssue } from "@/lib/sync/sync-issues-store";
-import { cn } from "@/lib/utils";
-
-function formatWhen(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString();
-  } catch {
-    return iso;
-  }
-}
-
-function fieldLabel(
-  field: string,
-  t: (key: string, options?: Record<string, unknown>) => string,
-  namespace: "journal" | "projection"
-): string {
-  const prefix =
-    namespace === "journal"
-      ? "syncIssues.conflict.journal.fields"
-      : "syncIssues.conflict.projection.fields";
-  return t(`${prefix}.${field}`, {
-    defaultValue: field,
-  });
-}
-
-function projectionEntityLabel(
-  entityType: string,
-  t: (key: string, options?: Record<string, unknown>) => string
-): string {
-  return t(`syncIssues.conflict.projection.entity.${entityType}`, {
-    defaultValue: entityType.replace(/_/g, " "),
-  });
-}
 
 interface ConflictReviewCardProps {
   issue: SyncIssue;
   onResolved: () => void;
 }
 
+interface Refreshed {
+  issueId: string;
+  journal: JournalConflictPayload | null;
+  projection: ProjectionConflictPayload | null;
+}
+
+/**
+ * One conflict on the Sync issues page, in the shape its kind calls for
+ * (product-scope.md §2.10): a journal day is kept as mine, theirs or both; an
+ * activity, group, memo or session is kept as one whole version or the other.
+ * Anything with no usable payload falls back to a plain card that can keep this
+ * device's version.
+ */
 export function ConflictReviewCard({
   issue,
   onResolved,
 }: ConflictReviewCardProps) {
   const { t } = useTranslation("settings");
-  const [busy, setBusy] = useState<
-    ConflictResolutionChoice | "defer" | "use_suggested" | null
-  >(null);
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState<ConflictBusy>(null);
   const [error, setError] = useState<string | null>(null);
-  const [journalPayload, setJournalPayload] =
-    useState<JournalConflictPayload | null>(() =>
-      isJournalConflictPayload(issue.payload) ? issue.payload : null
-    );
-  const [projectionPayload, setProjectionPayload] =
-    useState<ProjectionConflictPayload | null>(() =>
-      isProjectionConflictPayload(issue.payload) ? issue.payload : null
-    );
-  const [dailyCountPayload, setDailyCountPayload] =
-    useState<DailyEntryCountReconciliationPayload | null>(() =>
-      isDailyEntryCountReconciliationPayload(issue.payload)
-        ? issue.payload
-        : null
-    );
+  const [refreshed, setRefreshed] = useState<Refreshed | null>(null);
 
-  // Re-derive local payload state whenever the issue prop changes, then kick
-  // off an async refresh against the latest local data. This resets state
-  // synchronously in the effect body (not just in response to an external
-  // system), which trips the set-state-in-effect rule, but the reset and the
-  // refresh must stay atomic with `issue` changing.
-  /* eslint-disable react-hooks/set-state-in-effect */
+  const storedJournal = isJournalConflictPayload(issue.payload)
+    ? issue.payload
+    : null;
+  const storedProjection = isProjectionConflictPayload(issue.payload)
+    ? issue.payload
+    : null;
+
+  // Show what is stored at once, then swap in the freshest this device can
+  // read. State is set only when the read finishes, never in the effect body.
   useEffect(() => {
-    if (isJournalConflictPayload(issue.payload)) {
-      setProjectionPayload(null);
-      setDailyCountPayload(null);
-      let cancelled = false;
-      const initial = issue.payload;
-      setJournalPayload(initial);
-      void refreshJournalConflictPayload(initial).then((next) => {
-        if (!cancelled) setJournalPayload(next);
+    let cancelled = false;
+    if (storedJournal) {
+      void refreshJournalConflictPayload(storedJournal).then((next) => {
+        if (!cancelled) {
+          setRefreshed({ issueId: issue.id, journal: next, projection: null });
+        }
       });
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (isProjectionConflictPayload(issue.payload)) {
-      setJournalPayload(null);
-      setDailyCountPayload(null);
-      let cancelled = false;
-      const initial = issue.payload;
-      setProjectionPayload(initial);
-      void refreshProjectionConflictPayload(initial).then((next) => {
-        if (!cancelled) setProjectionPayload(next);
+    } else if (storedProjection) {
+      void refreshProjectionConflictPayload(storedProjection).then((next) => {
+        if (!cancelled) {
+          setRefreshed({ issueId: issue.id, journal: null, projection: next });
+        }
       });
-      return () => {
-        cancelled = true;
-      };
     }
+    return () => {
+      cancelled = true;
+    };
+  }, [issue.id, storedJournal, storedProjection]);
 
-    if (isDailyEntryCountReconciliationPayload(issue.payload)) {
-      setJournalPayload(null);
-      setProjectionPayload(null);
-      setDailyCountPayload(issue.payload);
-      return;
-    }
+  const current = refreshed?.issueId === issue.id ? refreshed : null;
+  const journalPayload = storedJournal
+    ? (current?.journal ?? storedJournal)
+    : null;
+  const projectionPayload = storedProjection
+    ? (current?.projection ?? storedProjection)
+    : null;
 
-    setJournalPayload(null);
-    setProjectionPayload(null);
-    setDailyCountPayload(null);
-  }, [issue]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const handleResolveJournal = async (choice: ConflictResolutionChoice) => {
-    setBusy(choice);
+  const run = async (
+    working: ConflictBusy,
+    action: () => Promise<void>
+  ): Promise<void> => {
+    setBusy(working);
     setError(null);
     try {
-      await resolveJournalConflict(issue, choice);
-      onResolved();
-    } catch (err) {
-      console.error("Journal conflict resolution failed", err);
-      setError(t("syncIssues.conflict.resolveFailed"));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const handleResolveProjection = async (choice: ConflictResolutionChoice) => {
-    setBusy(choice);
-    setError(null);
-    try {
-      await resolveProjectionConflict(issue, choice);
-      onResolved();
-    } catch (err) {
-      console.error("Projection conflict resolution failed", err);
-      setError(t("syncIssues.conflict.resolveFailed"));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const handleResolveDailyCounts = async (
-    choice: "keep_local" | "keep_remote" | "use_suggested"
-  ) => {
-    setBusy(choice);
-    setError(null);
-    try {
-      await resolveDailyEntryCountReconciliation(issue, choice);
-      onResolved();
-    } catch (err) {
-      console.error("Daily count reconciliation failed", err);
-      setError(t("syncIssues.conflict.resolveFailed"));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const handleDefer = async () => {
-    setBusy("defer");
-    setError(null);
-    try {
-      if (journalPayload) {
-        await deferJournalConflict({ ...issue, payload: journalPayload });
-      } else if (projectionPayload) {
-        await deferProjectionConflict({ ...issue, payload: projectionPayload });
-      } else if (dailyCountPayload) {
-        await deferDailyEntryCountReconciliation(issue);
-      } else {
-        await deferSyncIssue(issue.id);
-      }
-      onResolved();
-    } catch (err) {
-      console.error("Conflict defer failed", err);
-      setError(t("syncIssues.conflict.resolveFailed"));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const handleKeepMineGeneric = async () => {
-    setBusy("keep_local");
-    setError(null);
-    try {
-      if (projectionPayload || issue.entity_type) {
-        await resolveGenericProjectionConflictKeepLocal(issue);
-      } else {
-        await resolveSyncIssue(issue.id);
-      }
-      onResolved();
+      await action();
     } catch (err) {
       console.error("Conflict resolution failed", err);
       setError(t("syncIssues.conflict.resolveFailed"));
@@ -225,18 +113,36 @@ export function ConflictReviewCard({
     }
   };
 
-  if (dailyCountPayload) {
-    return (
-      <DailyEntryCountReconciliationCard
-        issue={issue}
-        payload={dailyCountPayload}
-        busy={busy}
-        error={error}
-        onResolve={(choice) => void handleResolveDailyCounts(choice)}
-        onDefer={() => void handleDefer()}
-      />
-    );
-  }
+  const resolveJournal = (choice: ConflictChoice) =>
+    run(choice, async () => {
+      await resolveJournalConflict(issue, choice);
+      onResolved();
+      if (choice !== "keep_both" || !journalPayload) return;
+      // The joined day is saved. Open it for editing, so it can be trimmed.
+      const day = await db.journalEntries.get(journalPayload.entity_id);
+      if (!day) return;
+      requestJournalEdit(day);
+      rememberJournalJumpDate(day.entry_date);
+      navigate("/");
+    });
+
+  const resolveProjection = (choice: Exclude<ConflictChoice, "keep_both">) =>
+    run(choice, async () => {
+      await resolveProjectionConflict(issue, choice);
+      onResolved();
+    });
+
+  const defer = () =>
+    run("defer", async () => {
+      if (journalPayload) {
+        await deferJournalConflict({ ...issue, payload: journalPayload });
+      } else if (projectionPayload) {
+        await deferProjectionConflict({ ...issue, payload: projectionPayload });
+      } else {
+        await deferSyncIssue(issue.id);
+      }
+      onResolved();
+    });
 
   if (journalPayload) {
     return (
@@ -245,8 +151,8 @@ export function ConflictReviewCard({
         payload={journalPayload}
         busy={busy}
         error={error}
-        onResolve={(choice) => void handleResolveJournal(choice)}
-        onDefer={() => void handleDefer()}
+        onResolve={(choice) => void resolveJournal(choice)}
+        onDefer={() => void defer()}
       />
     );
   }
@@ -258,572 +164,57 @@ export function ConflictReviewCard({
         payload={projectionPayload}
         busy={busy}
         error={error}
-        onResolve={(choice) => void handleResolveProjection(choice)}
-        onDefer={() => void handleDefer()}
+        onResolve={(choice) => void resolveProjection(choice)}
+        onDefer={() => void defer()}
       />
     );
   }
 
   return (
-    <GenericConflictCard
-      issue={issue}
-      busy={busy}
-      error={error}
-      onKeepMine={() => void handleKeepMineGeneric()}
-      onDefer={() => void handleDefer()}
-    />
-  );
-}
-
-function GenericConflictCard({
-  issue,
-  busy,
-  error,
-  onKeepMine,
-  onDefer,
-}: {
-  issue: SyncIssue;
-  busy: string | null;
-  error: string | null;
-  onKeepMine: () => void;
-  onDefer: () => void;
-}) {
-  const { t } = useTranslation("settings");
-  return (
-    <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
-      <div className="flex items-start gap-2">
-        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-gold-text" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">{issue.title}</p>
+    <ConflictFrame
+      title={
+        <>
+          <h3 className="text-sm font-medium">{issue.title}</h3>
           {issue.detail ? (
-            <p className="mt-1 text-sm text-muted-foreground">{issue.detail}</p>
+            <p className="text-sm text-muted-foreground">{issue.detail}</p>
           ) : null}
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {formatWhen(issue.updated_at)}
           </p>
-        </div>
-      </div>
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy != null}
-          onClick={onKeepMine}
-        >
-          {busy === "keep_local" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {t("syncIssues.conflict.actions.keepMine")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy != null}
-          onClick={onDefer}
-        >
-          {t("syncIssues.conflict.actions.defer")}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function JournalConflictCard({
-  issue,
-  payload,
-  busy,
-  error,
-  onResolve,
-  onDefer,
-}: {
-  issue: SyncIssue;
-  payload: JournalConflictPayload;
-  busy: string | null;
-  error: string | null;
-  onResolve: (choice: ConflictResolutionChoice) => void;
-  onDefer: () => void;
-}) {
-  const { t } = useTranslation("settings");
-  const title =
-    payload.entity_label?.trim() ||
-    (payload.entry_date
-      ? t("syncIssues.conflict.journal.untitledWithDate", {
-          date: payload.entry_date,
-        })
-      : issue.title) ||
-    t("syncIssues.conflict.journal.untitled");
-  const fieldsToShow =
-    payload.differing_fields.length > 0
-      ? payload.differing_fields
-      : Object.keys(payload.local.fields);
-  const canCombine =
-    payload.remote != null && payload.both_changed_fields.length === 0;
-  const hasBothChanged = payload.both_changed_fields.length > 0;
-  const isDeferred = issue.status === "deferred";
-  const fromBackup = payload.source === "backup";
-
-  return (
-    <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
-      <div className="flex items-start gap-2">
-        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-gold-text" />
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-sm font-medium">{title}</p>
-          <p className="text-sm text-muted-foreground">
-            {fromBackup
-              ? t("syncIssues.conflict.journal.backupSummary")
-              : t("syncIssues.conflict.journal.summary")}
-          </p>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {payload.entry_date ? (
-              <span>
-                {t("syncIssues.conflict.journal.entryDate", {
-                  date: payload.entry_date,
-                })}
-              </span>
-            ) : null}
-            {isDeferred ? (
-              <span>{t("syncIssues.conflict.deferredBadge")}</span>
-            ) : null}
-            <span>{formatWhen(issue.updated_at)}</span>
-          </div>
-          {hasBothChanged ? (
-            <p className="text-xs text-gold-text">
-              {t("syncIssues.conflict.bothChangedHint")}
-            </p>
-          ) : canCombine ? (
-            <p className="text-xs text-muted-foreground">
-              {t("syncIssues.conflict.combinableHint")}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="overflow-x-auto rounded-md border border-border">
-        <table className="w-full min-w-[20rem] text-left text-xs">
-          <thead className="bg-muted/50 text-muted-foreground">
-            <tr>
-              <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.columns.field")}
-              </th>
-              <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.columns.yours")}
-              </th>
-              <th className="px-2 py-1.5 font-medium">
-                {fromBackup
-                  ? t("syncIssues.conflict.columns.backup")
-                  : t("syncIssues.conflict.columns.theirs")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {fieldsToShow.map((field) => {
-              const isHot = payload.both_changed_fields.includes(field);
-              return (
-                <tr
-                  key={field}
-                  className={cn(
-                    "border-t border-border",
-                    isHot && "bg-amber-500/10"
-                  )}
-                >
-                  <td className="px-2 py-1.5 font-medium">
-                    {fieldLabel(field, t, "journal")}
-                  </td>
-                  <td className="whitespace-pre-wrap px-2 py-1.5">
-                    {formatJournalConflictFieldValue(
-                      field,
-                      payload.local.fields[field]
-                    )}
-                  </td>
-                  <td className="whitespace-pre-wrap px-2 py-1.5">
-                    {payload.remote
-                      ? formatJournalConflictFieldValue(
-                          field,
-                          payload.remote.fields[field]
-                        )
-                      : t("syncIssues.conflict.unknownRemote")}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        {t("syncIssues.conflict.journal.consequence")}
-      </p>
-
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
-
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="default"
-          size="sm"
-          disabled={busy != null}
-          onClick={() => onResolve("keep_local")}
-        >
-          {busy === "keep_local" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {t("syncIssues.conflict.actions.keepMine")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy != null || !payload.remote}
-          onClick={() => onResolve("keep_remote")}
-        >
-          {busy === "keep_remote" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {fromBackup
-            ? t("syncIssues.conflict.actions.keepBackup")
-            : t("syncIssues.conflict.actions.keepTheirs")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy != null || !payload.remote}
-          onClick={() => onResolve("combine")}
-          title={
-            hasBothChanged
-              ? t("syncIssues.conflict.combineWithPreferenceHint")
-              : undefined
-          }
-        >
-          {busy === "combine" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {t("syncIssues.conflict.actions.combine")}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={busy != null}
-          onClick={onDefer}
-        >
-          {t("syncIssues.conflict.actions.defer")}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function ProjectionConflictCard({
-  issue,
-  payload,
-  busy,
-  error,
-  onResolve,
-  onDefer,
-}: {
-  issue: SyncIssue;
-  payload: ProjectionConflictPayload;
-  busy: string | null;
-  error: string | null;
-  onResolve: (choice: ConflictResolutionChoice) => void;
-  onDefer: () => void;
-}) {
-  const { t } = useTranslation("settings");
-  const entityKind = projectionEntityLabel(payload.entity_type, t);
-  const title = payload.entity_label?.trim() || issue.title || entityKind;
-  const fieldsToShow =
-    payload.differing_fields.length > 0
-      ? payload.differing_fields
-      : Object.keys(payload.local.fields);
-  const canCombine =
-    payload.remote != null && payload.both_changed_fields.length === 0;
-  const hasBothChanged = payload.both_changed_fields.length > 0;
-  const isDeferred = issue.status === "deferred";
-
-  return (
-    <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
-      <div className="flex items-start gap-2">
-        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-gold-text" />
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-sm font-medium">{title}</p>
-          <p className="text-sm text-muted-foreground">
-            {t("syncIssues.conflict.projection.summary", {
-              entity: entityKind,
-            })}
-          </p>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {isDeferred ? (
-              <span>{t("syncIssues.conflict.deferredBadge")}</span>
-            ) : null}
-            <span>{formatWhen(issue.updated_at)}</span>
-          </div>
-          {hasBothChanged ? (
-            <p className="text-xs text-gold-text">
-              {t("syncIssues.conflict.bothChangedHint")}
-            </p>
-          ) : canCombine ? (
-            <p className="text-xs text-muted-foreground">
-              {t("syncIssues.conflict.combinableHint")}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="overflow-x-auto rounded-md border border-border">
-        <table className="w-full min-w-[20rem] text-left text-xs">
-          <thead className="bg-muted/50 text-muted-foreground">
-            <tr>
-              <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.columns.field")}
-              </th>
-              <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.columns.yours")}
-              </th>
-              <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.columns.theirs")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {fieldsToShow.map((field) => {
-              const isHot = payload.both_changed_fields.includes(field);
-              return (
-                <tr
-                  key={field}
-                  className={cn(
-                    "border-t border-border",
-                    isHot && "bg-amber-500/10"
-                  )}
-                >
-                  <td className="px-2 py-1.5 font-medium">
-                    {fieldLabel(field, t, "projection")}
-                  </td>
-                  <td className="whitespace-pre-wrap px-2 py-1.5">
-                    {formatProjectionConflictFieldValue(
-                      field,
-                      payload.local.fields[field]
-                    )}
-                  </td>
-                  <td className="whitespace-pre-wrap px-2 py-1.5">
-                    {payload.remote
-                      ? formatProjectionConflictFieldValue(
-                          field,
-                          payload.remote.fields[field]
-                        )
-                      : t("syncIssues.conflict.unknownRemote")}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        {t("syncIssues.conflict.projection.consequence")}
-      </p>
-
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
-
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="default"
-          size="sm"
-          disabled={busy != null}
-          onClick={() => onResolve("keep_local")}
-        >
-          {busy === "keep_local" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {t("syncIssues.conflict.actions.keepMine")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy != null || !payload.remote}
-          onClick={() => onResolve("keep_remote")}
-        >
-          {busy === "keep_remote" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {t("syncIssues.conflict.actions.keepTheirs")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy != null || !payload.remote}
-          onClick={() => onResolve("combine")}
-          title={
-            hasBothChanged
-              ? t("syncIssues.conflict.combineWithPreferenceHint")
-              : undefined
-          }
-        >
-          {busy === "combine" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {t("syncIssues.conflict.actions.combine")}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={busy != null}
-          onClick={onDefer}
-        >
-          {t("syncIssues.conflict.actions.defer")}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function DailyEntryCountReconciliationCard({
-  issue,
-  payload,
-  busy,
-  error,
-  onResolve,
-  onDefer,
-}: {
-  issue: SyncIssue;
-  payload: DailyEntryCountReconciliationPayload;
-  busy: string | null;
-  error: string | null;
-  onResolve: (choice: "keep_local" | "keep_remote" | "use_suggested") => void;
-  onDefer: () => void;
-}) {
-  const { t } = useTranslation("settings");
-  const [activityNames, setActivityNames] = useState<Record<string, string>>(
-    {}
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const ids = payload.differing_activities;
-      const entries = await Promise.all(
-        ids.map(async (id) => {
-          const activity = await db.activities.get(id);
-          return [id, activity?.name?.trim() || id] as const;
-        })
-      );
-      if (!cancelled) {
-        setActivityNames(Object.fromEntries(entries));
+        </>
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [payload.differing_activities]);
-
-  const isDeferred = issue.status === "deferred";
-
-  return (
-    <div className="space-y-3 rounded-lg border border-amber-500/40 bg-background p-3">
-      <div className="flex items-start gap-2">
-        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-gold-text" />
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-sm font-medium">{issue.title}</p>
-          <p className="text-sm text-muted-foreground">
-            {t("syncIssues.conflict.dailyCounts.summary", {
-              date: payload.date,
-            })}
-          </p>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {isDeferred ? (
-              <span>{t("syncIssues.conflict.deferredBadge")}</span>
-            ) : null}
-            <span>{formatWhen(issue.updated_at)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto rounded-md border border-border">
-        <table className="w-full min-w-[20rem] text-left text-xs">
-          <thead className="bg-muted/50 text-muted-foreground">
-            <tr>
-              <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.dailyCounts.columns.habit")}
-              </th>
-              <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.columns.yours")}
-              </th>
-              <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.columns.theirs")}
-              </th>
-              <th className="px-2 py-1.5 font-medium">
-                {t("syncIssues.conflict.dailyCounts.columns.suggested")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {payload.differing_activities.map((activityId) => (
-              <tr key={activityId} className="border-t border-border">
-                <td className="px-2 py-1.5 font-medium">
-                  {activityNames[activityId] ?? activityId}
-                </td>
-                <td className="px-2 py-1.5">
-                  {payload.local_counts[activityId] ?? 0}
-                </td>
-                <td className="px-2 py-1.5">
-                  {payload.remote_counts[activityId] ?? 0}
-                </td>
-                <td className="px-2 py-1.5">
-                  {payload.suggested_counts[activityId] ?? 0}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        {t("syncIssues.conflict.dailyCounts.consequence")}
-      </p>
-
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
-
+    >
+      {error ? (
+        <p role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button
-          variant="default"
-          size="sm"
-          disabled={busy != null}
-          onClick={() => onResolve("keep_local")}
+        <ChoiceButton
+          busy={busy}
+          mine="keep_local"
+          onClick={() =>
+            void run("keep_local", async () => {
+              if (issue.entity_type) {
+                await resolveGenericProjectionConflictKeepLocal(issue);
+              } else {
+                await resolveSyncIssue(issue.id);
+              }
+              onResolved();
+            })
+          }
         >
-          {busy === "keep_local" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {t("syncIssues.conflict.actions.keepMine")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy != null}
-          onClick={() => onResolve("keep_remote")}
-        >
-          {busy === "keep_remote" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {t("syncIssues.conflict.actions.keepTheirs")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy != null}
-          onClick={() => onResolve("use_suggested")}
-        >
-          {busy === "use_suggested" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : null}
-          {t("syncIssues.conflict.dailyCounts.useSuggested")}
-        </Button>
-        <Button
+          {t("syncIssues.conflict.actions.keepThisDevice")}
+        </ChoiceButton>
+        <ChoiceButton
+          busy={busy}
+          mine="defer"
           variant="ghost"
-          size="sm"
-          disabled={busy != null}
-          onClick={onDefer}
+          onClick={() => void defer()}
         >
           {t("syncIssues.conflict.actions.defer")}
-        </Button>
+        </ChoiceButton>
       </div>
-    </div>
+    </ConflictFrame>
   );
 }

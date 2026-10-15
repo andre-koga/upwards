@@ -348,9 +348,15 @@ describe("backup round trip", () => {
     expect((await db.journalEntries.get(journalId))?.text_content).toBe(
       "A good day"
     );
-    const [op] = await pendingOps();
-    expect(op.operation_type).toBe("projection.upsert");
-    expect(op.base_revision).toBe("2026-09-03T00:00:00.000Z");
+    const ops = await pendingOps();
+    const op = ops.find((o) => o.entity_type === "journal_entry");
+    expect(op?.operation_type).toBe("projection.upsert");
+    expect(op?.base_revision).toBe("2026-09-03T00:00:00.000Z");
+    // Choosing the backup leaves this device's text out, so it is kept as a
+    // previous version rather than lost.
+    expect(
+      ops.filter((o) => o.entity_type === "journal_entry_revision")
+    ).toHaveLength(1);
   });
 
   it("re-keys a backup from another account and stays idempotent", async () => {

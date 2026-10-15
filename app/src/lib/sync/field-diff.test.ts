@@ -1,92 +1,63 @@
 import { describe, expect, it } from "vitest";
-import {
-  analyzeDefinitionFieldDiffs,
-  combineDefinitionFields,
-  formatConflictFieldValue,
-} from "./field-diff";
+import { differingFields, formatConflictFieldValue } from "./field-diff";
 
-/**
- * Coverage ported from conflict-resolution.test.ts, which was deleted with the
- * definition-conflict subsystem. These functions are not definition-specific — the
- * journal and projection conflict resolvers are their real consumers — so their
- * tests had to survive the deletion.
- */
-
-describe("analyzeDefinitionFieldDiffs", () => {
-  it("marks one-side changes as auto-combinable when base is known", () => {
-    const analysis = analyzeDefinitionFieldDiffs(
-      { name: "Mine", routine: "daily", completion_target: 1 },
-      { name: "Base", routine: "weekly:1", completion_target: 1 },
-      { name: "Base", routine: "daily", completion_target: 1 }
-    );
-
-    expect(analysis.differing_fields).toEqual(["name", "routine"]);
-    expect(analysis.auto_combinable_fields).toEqual(["name", "routine"]);
-    expect(analysis.both_changed_fields).toEqual([]);
+describe("differingFields", () => {
+  it("lists only the fields whose values differ, in a stable order", () => {
+    expect(
+      differingFields(
+        { name: "Run", routine: "daily", color: "green" },
+        { name: "Jog", routine: "daily", color: "blue" }
+      )
+    ).toEqual(["color", "name"]);
   });
 
-  it("detects both-changed fields", () => {
-    const analysis = analyzeDefinitionFieldDiffs(
-      { name: "Mine", routine: "daily" },
-      { name: "Theirs", routine: "never" },
-      { name: "Base", routine: "daily" }
-    );
-
-    expect(analysis.both_changed_fields).toEqual(["name"]);
-    expect(analysis.auto_combinable_fields).toEqual(["routine"]);
+  it("is empty when the versions agree", () => {
+    expect(differingFields({ name: "Run" }, { name: "Run" })).toEqual([]);
   });
 
-  it("treats every difference as both-changed when there is no ancestor", () => {
-    // No base means no way to tell who moved, so nothing may be auto-combined.
-    const analysis = analyzeDefinitionFieldDiffs(
-      { name: "Mine" },
-      { name: "Theirs" },
-      null
-    );
-
-    expect(analysis.both_changed_fields).toEqual(["name"]);
-    expect(analysis.auto_combinable_fields).toEqual([]);
-  });
-});
-
-describe("combineDefinitionFields", () => {
-  it("takes each one-side change and prefers local on overlap", () => {
-    const combined = combineDefinitionFields(
-      { name: "Mine", routine: "daily", completion_target: 3 },
-      { name: "Theirs", routine: "weekly:1", completion_target: 1 },
-      { name: "Base", routine: "daily", completion_target: 1 },
-      { preferLocalOnConflict: true }
-    );
-
-    expect(combined).toEqual({
-      name: "Mine",
-      routine: "weekly:1",
-      completion_target: 3,
-    });
+  it("treats a missing value and an empty one as the same", () => {
+    expect(
+      differingFields(
+        { note: null, title: "" },
+        { note: undefined, title: null }
+      )
+    ).toEqual([]);
   });
 
-  it("prefers remote on overlap when asked", () => {
-    const combined = combineDefinitionFields(
-      { name: "Mine" },
-      { name: "Theirs" },
-      { name: "Base" },
-      { preferLocalOnConflict: false }
-    );
+  it("compares lists and objects by content, not identity", () => {
+    expect(
+      differingFields(
+        { photo_paths: ["a", "b"], location: { locations: [] } },
+        { photo_paths: ["a", "b"], location: { locations: [] } }
+      )
+    ).toEqual([]);
+    expect(
+      differingFields({ photo_paths: ["a", "b"] }, { photo_paths: ["b", "a"] })
+    ).toEqual(["photo_paths"]);
+  });
 
-    expect(combined).toEqual({ name: "Theirs" });
+  it("counts a field only one side has as different", () => {
+    expect(differingFields({ a: 1 }, { b: 2 })).toEqual(["a", "b"]);
+  });
+
+  it("lists every field this device has when the other version is unavailable", () => {
+    expect(differingFields({ name: "Run", note: undefined }, null)).toEqual([
+      "name",
+    ]);
   });
 });
 
 describe("formatConflictFieldValue", () => {
-  it("renders empty values as a dash rather than 'null'", () => {
+  it("shows a dash for nothing", () => {
     expect(formatConflictFieldValue(null)).toBe("—");
-    expect(formatConflictFieldValue(undefined)).toBe("—");
     expect(formatConflictFieldValue("")).toBe("—");
+    expect(formatConflictFieldValue(undefined)).toBe("—");
   });
 
-  it("passes scalars through and serializes anything else", () => {
-    expect(formatConflictFieldValue("daily")).toBe("daily");
+  it("shows strings and numbers as they are, and anything else as JSON", () => {
+    expect(formatConflictFieldValue("Run")).toBe("Run");
     expect(formatConflictFieldValue(3)).toBe("3");
-    expect(formatConflictFieldValue({ a: 1 })).toBe('{"a":1}');
+    expect(formatConflictFieldValue(0)).toBe("0");
+    expect(formatConflictFieldValue(["a"])).toBe('["a"]');
   });
 });
