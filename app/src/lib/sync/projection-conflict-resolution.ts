@@ -1,17 +1,16 @@
 import { db, now } from "@/lib/db";
 import type { SyncIssue } from "@/lib/db/types";
 import {
-  analyzeDefinitionFieldDiffs,
-  combineDefinitionFields,
+  differingFields,
   formatConflictFieldValue,
-  type ConflictResolutionChoice,
+  type ConflictChoice,
 } from "@/lib/sync/field-diff";
 import { getOrCreateDeviceId } from "@/lib/sync/device-id";
 import {
-  enqueueProjectionUpsertForTable,
   entityTypeToSyncTable,
   dexieTableForSyncTable,
 } from "@/lib/sync/projection-sync";
+import { applyConflictResolution } from "@/lib/sync/mutate-synced";
 import { deferSyncIssue } from "@/lib/sync/sync-issues-store";
 import { normalizeSyncRow } from "@/lib/sync/sync-transformers";
 import { getCachedUserId, supabase } from "@/lib/supabase";
@@ -67,10 +66,9 @@ export interface ProjectionConflictPayload {
   remote: ProjectionConflictSnapshot | null;
   base: ProjectionConflictSnapshot | null;
   differing_fields: string[];
-  auto_combinable_fields: string[];
-  both_changed_fields: string[];
   resolution?: {
-    choice: ConflictResolutionChoice | "defer";
+    /** Older issues also carry "combine", which per-field merging used to offer. */
+    choice: Exclude<ConflictChoice, "keep_both"> | "combine" | "defer";
     resolved_at: string;
     resulting_updated_at?: string | null;
   };
@@ -184,7 +182,7 @@ export async function buildProjectionConflictPayload(params: {
     params.localRow ??
     (await loadLocalProjectionRow(params.entity_type, params.entity_id));
   if (!localRow) {
-    throw new Error("Local row not found for projection conflict");
+    throw new Error("The row for this conflict is no longer on this device");
   }
 
   const remoteRow =
@@ -206,12 +204,6 @@ export async function buildProjectionConflictPayload(params: {
       )
     : null;
 
-  const diff = analyzeDefinitionFieldDiffs(
-    local.fields,
-    remote?.fields ?? null,
-    null
-  );
-
   return {
     kind: "projection_conflict",
     entity_type: params.entity_type,
@@ -220,7 +212,7 @@ export async function buildProjectionConflictPayload(params: {
     local,
     remote,
     base: null,
-    ...diff,
+    differing_fields: differingFields(local.fields, remote?.fields ?? null),
   };
 }
 
@@ -242,56 +234,31 @@ export async function buildProjectionConflictPayloadFromOp(
 export async function refreshProjectionConflictPayload(
   payload: ProjectionConflictPayload
 ): Promise<ProjectionConflictPayload> {
-  return buildProjectionConflictPayload({
+  const refreshed = await buildProjectionConflictPayload({
     entity_type: payload.entity_type,
     entity_id: payload.entity_id,
     localDeviceId: payload.local.device_id,
     remoteDeviceId: payload.remote?.device_id ?? null,
     baseRevision: payload.local.base_revision,
   });
-}
-
-async function applyResolvedProjectionFields(
-  entityType: string,
-  entityId: string,
-  fields: Record<string, unknown>,
-  remoteUpdatedAt: string | null
-): Promise<string> {
-  const table = entityTypeToSyncTable(entityType);
-  if (!table) throw new Error(`Unknown projection entity type: ${entityType}`);
-
-  const dexieKey = dexieTableForSyncTable(table);
-  if (!dexieKey) throw new Error(`Missing Dexie table for ${entityType}`);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const existing = await (db as any)[dexieKey].get(entityId);
-  if (!existing) {
-    throw new Error("Local row not found for projection conflict resolution");
-  }
-
-  const ts = now();
-  const next = {
-    ...existing,
-    ...fields,
-    id: entityId,
-    updated_at: ts,
+  // Offline (or the row is gone from the server), the other version cannot be
+  // fetched again. The copy captured when the conflict arose is still the other
+  // version to choose, so keep it rather than leave nothing to keep.
+  if (refreshed.remote || !payload.remote) return refreshed;
+  return {
+    ...refreshed,
+    remote: payload.remote,
+    differing_fields: differingFields(
+      refreshed.local.fields,
+      payload.remote.fields
+    ),
   };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (db as any)[dexieKey].put(next);
-  await enqueueProjectionUpsertForTable(
-    table,
-    next as Record<string, unknown>,
-    remoteUpdatedAt ?? existing.updated_at
-  );
-
-  return next.updated_at;
 }
 
 async function markProjectionIssueResolved(
   issue: SyncIssue,
   payload: ProjectionConflictPayload,
-  choice: ConflictResolutionChoice | "defer",
+  choice: Exclude<ConflictChoice, "keep_both"> | "defer",
   resultingUpdatedAt: string | null
 ): Promise<void> {
   const ts = now();
@@ -312,42 +279,36 @@ async function markProjectionIssueResolved(
   });
 }
 
+/**
+ * Resolve an activity, group, memo or timeline session by keeping one whole
+ * version: this device's or the other's (product-scope.md §2.10). The kept
+ * version is written as an ordinary edit made on the other side's revision, so
+ * it syncs and can be revised like any edit. There is no per-field choice.
+ */
 export async function resolveProjectionConflict(
   issue: SyncIssue,
-  choice: ConflictResolutionChoice
+  choice: Exclude<ConflictChoice, "keep_both">
 ): Promise<void> {
   if (!isProjectionConflictPayload(issue.payload)) {
     throw new Error("Conflict issue is missing a projection conflict payload");
   }
+  // A second tap, or a second tab, must not write the choice twice.
+  if ((await db.syncIssues.get(issue.id))?.status === "resolved") return;
 
   const payload = await refreshProjectionConflictPayload(issue.payload);
   const remoteFields = payload.remote?.fields ?? null;
-  let chosenFields: Record<string, unknown>;
-
-  if (choice === "keep_local") {
-    chosenFields = payload.local.fields;
-  } else if (choice === "keep_remote") {
-    if (!remoteFields) {
-      throw new Error("Remote version is unavailable for this conflict");
-    }
-    chosenFields = remoteFields;
-  } else if (!remoteFields) {
-    throw new Error("Remote version is unavailable to combine");
-  } else {
-    chosenFields = combineDefinitionFields(
-      payload.local.fields,
-      remoteFields,
-      null,
-      { preferLocalOnConflict: true }
-    );
+  if (choice === "keep_remote" && !remoteFields) {
+    throw new Error("The other version is unavailable for this conflict");
   }
+  const chosenFields =
+    choice === "keep_local" ? payload.local.fields : (remoteFields ?? {});
 
-  const resultingUpdatedAt = await applyResolvedProjectionFields(
-    payload.entity_type,
-    payload.entity_id,
-    chosenFields,
-    payload.remote?.updated_at ?? null
-  );
+  const resultingUpdatedAt = await applyConflictResolution({
+    entityType: payload.entity_type,
+    entityId: payload.entity_id,
+    fields: chosenFields,
+    baseRevision: payload.remote?.updated_at ?? null,
+  });
 
   await markProjectionIssueResolved(issue, payload, choice, resultingUpdatedAt);
 }
