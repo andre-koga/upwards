@@ -11,6 +11,7 @@ import SyncStatus from "@/components/settings/sync-status";
 import { AppShell } from "@/components/layout/app-shell";
 import { routeHidesNavigation } from "@/lib/navigation/destinations";
 import { useAccountSettingsSync } from "@/lib/use-account-settings";
+import { SetupPrompt } from "@/components/onboarding/setup-prompt";
 import { OldDayEditDialog } from "@/components/journal/old-day-edit-dialog";
 import { AccountSwitchDialog } from "@/components/settings/account-switch-dialog";
 import { SignInScreen } from "@/components/auth/sign-in-screen";
@@ -150,6 +151,7 @@ export default function App() {
     <BrowserRouter>
       <AppFrame />
       <AccountSwitchDialog />
+      <SetupPrompt />
       <InstallAppPrompt />
       <UpdateRequiredDialog />
       <OldDayEditDialog />

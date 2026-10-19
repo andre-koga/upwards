@@ -445,5 +445,23 @@
     "ai": "AI",
     "data": "Your data",
     "about": "About"
+  },
+  "setup": {
+    "autoLocation": {
+      "label": "Add where I am to today",
+      "hint": "Upwards asks your device for the nearest city and adds it to today's journal. If you leave this off, it never asks. You can still add places by searching."
+    },
+    "dailyClip": {
+      "label": "A short clip each day",
+      "hint": "Record one clip of up to 10 seconds a day, next to your photos. If you leave this off, the app shows no video. Photos are always there."
+    },
+    "save": "Save choices",
+    "notNow": "Not now",
+    "title_one": "One quick choice",
+    "title_other": "Two quick choices",
+    "description_one": "It's off until you say so, and you can change it any time in Settings.",
+    "description_other": "Both are off until you say so, and you can change either one any time in Settings.",
+    "footer_one": "We won't ask again. You'll find this under Settings, then Journal.",
+    "footer_other": "We won't ask again. You'll find these under Settings, then Journal."
   }
 }

@@ -201,8 +201,8 @@ text) stays.
 Video stays but stops being a default part of every day. Some people only want
 photos.
 
-- **Daily clip** is a setting, off by default and offered once during
-  onboarding. When off, the day shows no video slot, and the feed's video filter
+- **Daily clip** is a setting, off by default and offered once in the setup
+  prompt (B5a). When off, the day shows no video slot, and the feed's video filter
   and the Gallery's video posters are hidden. When on: one clip per day, 10
   second cap, as today. Photos (up to 8) are always available.
 - **Fix the stored format now.** Today's `lib/journal/video-compression.ts`
@@ -313,8 +313,8 @@ photos.
 - Manual place search, up to 5 places per day, the per-day map, and the world map
   all stay.
 - Automatic location and the daily clip (§2.5) start as plain Settings toggles.
-  Friendly one-time prompts arrive with the redesign's onboarding; nothing here
-  waits on onboarding.
+  The friendly one-time prompt for both arrived with B5a (see the Track B
+  list); nothing here waited on it.
 - Account settings (`auto_location`, `daily_clip`, `holiday_calendars`,
   `hemisphere`) live on the existing `user_profiles` row so they follow the
   account across devices. Each column is nullable: `null` means "never chosen",
@@ -1087,9 +1087,41 @@ Track B gets its own breakdown before it starts. Its shape:
     - *Still not here.* No suggestion names a **goal**: there is no compass
       until B5, and design-and-branding §4.3 asks recommendations to link back to
       one. The tier-2 and tier-3 gradient treatments wait for the same reason.
-- **B5.** You / compass and onboarding, including the one-time daily clip and
-  location prompts. The compass needs a data-model pass in
-  [`temporal-data-sync.md`](temporal-data-sync.md) before code.
+- **B5.** You / compass and onboarding. Split in two.
+  - **B5a (done 2026-10-19): the one-time setup prompt.** One small dialog asks
+    about the two choices that are off until chosen: adding where you are to
+    today (§2.7), and the daily clip (§2.5). Each is a switch, both start off,
+    and both stay in Settings > Journal afterwards, so this is a friendly place
+    to decide and never the only one.
+    - *It asks only what is unanswered, and only once the account has spoken.*
+      `null` is "never chosen" and is the only state that is asked about; an
+      explicit `false` is a choice. A new device starts with nothing stored while
+      the account may already hold the answers, so asking before the account's
+      row is read would re-ask someone who chose on another device. The device
+      therefore waits (`hasAccountAnswered`, set only after the row is adopted
+      and the clip default is inferred from existing clips, so the question is
+      not asked in the gap between the two) and is cleared on sign-out and
+      account change. If the account cannot be reached, nothing is asked: not
+      knowing is not the same as never having been asked.
+    - *"Not now" is an answer.* Closing the dialog, Escape, and "Not now" all
+      record the unanswered questions as off, so the person is never asked
+      twice. Nothing is turned on, and no browser permission is requested,
+      until they flip a switch: turning location on asks the browser then, as in
+      Settings, and stays off if it is refused.
+    - *It never stacks.* It waits while the "update required" dialog is up, and
+      for the rest of the session once the account-switch choice has been
+      raised (that dialog cannot be dismissed, and a second modal over it is
+      worse than one skipped prompt). It is not shown on the password-reset
+      screens.
+    - *An existing account with unanswered settings sees it once*, not a
+      "welcome": the copy says only what the two choices do. The title and
+      footer follow the number of questions left.
+    - Not a tour, a checklist or a sequence of screens. The first run needs no
+      setup beyond signing in, so a longer onboarding would be a gate in front
+      of an app that already works; nothing else here asks to be taught.
+  - **B5b: the compass and the real "You" tab.** Still to do. The compass needs
+    a data-model pass in [`temporal-data-sync.md`](temporal-data-sync.md) before
+    code, and the "You" tab opens Settings until then.
 - **B6 (done 2026-10-15).** Conflict review rebuilt with the §2.10 resolution
   shapes, replacing the per-field card and resolvers.
   - *Two shapes, as decided.* An **activity, group, memo or session** shows both
@@ -1182,7 +1214,7 @@ Track B gets its own breakdown before it starts. Its shape:
     and go to it; signed in (a link opened from inside the app) they go to
     Account and sync as before. After a reset, the button continues to the app
     rather than to Settings.
-  - *Not here.* Onboarding and the one-time daily-clip and location prompts
-    (B5). A sign-in that is not an email and password (a magic link or a
+  - *Not here.* The one-time daily-clip and location prompt (B5a, which
+    followed) and the compass (B5b). A sign-in that is not an email and password (a magic link or a
     provider) is a separate product decision. The settings cards keep their
     contents; this slice moves and frames them rather than redesigning each.

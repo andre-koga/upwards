@@ -31,9 +31,13 @@ import {
   clearAccountSettings,
   EMPTY_ACCOUNT_SETTINGS,
   getAccountSettings,
+  hasAccountAnswered,
   isAutoLocationOn,
   isDailyClipOn,
+  markAccountAnswered,
+  markAccountUnanswered,
   mergeAccountSettings,
+  subscribeAccountSettings,
   updateAccountSettings,
 } from "./account-settings";
 
@@ -213,5 +217,40 @@ describe("birthday", () => {
     updateAccountSettings({ birthday: "1990-05-17" });
     clearAccountSettings();
     expect(getAccountSettings().birthday).toBeNull();
+  });
+});
+
+describe("whether the account has answered", () => {
+  it("is false until the account's settings are read", () => {
+    expect(hasAccountAnswered()).toBe(false);
+  });
+
+  it("tells subscribers when it becomes true, once", () => {
+    let calls = 0;
+    const stop = subscribeAccountSettings(() => calls++);
+    markAccountAnswered();
+    markAccountAnswered();
+    stop();
+    expect(hasAccountAnswered()).toBe(true);
+    expect(calls).toBe(1);
+  });
+
+  it("is forgotten on sign-out, so the next person is heard from first", () => {
+    markAccountAnswered();
+    markAccountUnanswered();
+    expect(hasAccountAnswered()).toBe(false);
+  });
+
+  it("is forgotten when the account changes", () => {
+    markAccountAnswered();
+    clearAccountSettings();
+    expect(hasAccountAnswered()).toBe(false);
+  });
+
+  it("does not become true just because settings were adopted", async () => {
+    // The caller marks it after inferring defaults, so a question is not asked
+    // in the gap between adopting the row and inferring from the record.
+    await adoptRemoteAccountSettings({ auto_location: null, daily_clip: null });
+    expect(hasAccountAnswered()).toBe(false);
   });
 });

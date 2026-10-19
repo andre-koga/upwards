@@ -445,5 +445,23 @@
     "ai": "IA",
     "data": "Seus dados",
     "about": "Sobre"
+  },
+  "setup": {
+    "autoLocation": {
+      "label": "Adicionar onde estou ao dia de hoje",
+      "hint": "O Upwards pergunta ao seu dispositivo a cidade mais próxima e a adiciona ao diário de hoje. Se você deixar desativado, ele nunca pergunta. Você ainda pode adicionar lugares pela busca."
+    },
+    "dailyClip": {
+      "label": "Um vídeo curto por dia",
+      "hint": "Grave um vídeo de até 10 segundos por dia, junto das suas fotos. Se você deixar desativado, o app não mostra vídeo. As fotos estão sempre disponíveis."
+    },
+    "save": "Salvar escolhas",
+    "notNow": "Agora não",
+    "title_one": "Uma escolha rápida",
+    "title_other": "Duas escolhas rápidas",
+    "description_one": "Começa desativada até você decidir, e você pode mudar quando quiser nas Configurações.",
+    "description_other": "Ambas começam desativadas até você decidir, e você pode mudar qualquer uma quando quiser nas Configurações.",
+    "footer_one": "Não vamos perguntar de novo. Você encontra isto em Configurações, depois Diário.",
+    "footer_other": "Não vamos perguntar de novo. Você encontra isto em Configurações, depois Diário."
   }
 }
