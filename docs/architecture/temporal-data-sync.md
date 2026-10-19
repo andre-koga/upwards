@@ -498,6 +498,45 @@ change edits the `*_ungated` RPC bodies; it does not recreate the one-argument
 signatures. The local schema gains the `compassItems` store in a new, additive
 Dexie version; no existing store changes.
 
+**Built (B5b-1, 2026-10-19).** The table is `compass_items`, the entity type
+`compass_item`, the local store `compassItems` (Dexie version 34, additive), the
+backup format 7 (a `v6-to-v7` migrator gives an older file an empty compass), and
+the sync protocol 4. Three things the build settled that the plan above did not
+say, and that the next current-state table will meet too:
+
+1. **Conflicts are decided on real timestamps, and a create that meets an
+   existing row is a conflict.** The server flags a conflict when its row is
+   strictly newer than the client's `base_revision`, compared as `timestamptz`
+   ("newer", not "different": see Merge rules, "How the server decides an edit
+   is stale"). Postgres renders a timestamp as
+   `2026-10-19 10:00:00+00` and the client sends `2026-10-19T10:00:00.000Z`;
+   compared as text a space sorts below `T`, so the answer depends on the date
+   part alone. An op with no base that finds the row already there is a
+   conflict, not an overwrite: the north star has one id on every device, so two
+   devices that write it offline both arrive with no base, and the second must
+   be reviewed. A conflicting op is logged but not applied.
+2. **A new table needs `GRANT SELECT ... TO authenticated`.** Row-level
+   security alone is not enough. The one-off grant in `20260825190200` covered
+   only the tables that existed then, so any later table is unreadable by the
+   API role until it is granted. The sync RPCs hide this (they run as the table
+   owner), but conflict review reads the other device's version straight from
+   the table. `compass_items` is granted `SELECT` only: the client never writes
+   it directly, and there is no delete.
+3. **An op for another account's row is refused, not skipped.** An upsert
+   guarded by `WHERE user_id = uid` that matches nothing still reports success,
+   and the device would mark the op acknowledged. The owner is checked first and
+   the op comes back as an error.
+
+**Bugs found while building this, fixed separately.** Three defects in the
+older paths were found by the same tests and repaired in #125 (they change live
+behavior, so they were reviewed on their own): the generic projection path
+accepted a stale edit made on the same calendar day (silent last-write-wins);
+the `memory` branch flagged every edit as a conflict; and `memories` had no
+`SELECT` grant, so conflict review could not read its remote rows. See "How the
+server decides an edit is stale" under Merge rules.
+`supabase/tests/integration/compass.test.ts` and `conflict-detection.test.ts`
+are the patterns to copy.
+
 **Required tests.** Two devices both write the north star offline and end with
 one row and a reviewable conflict. Two devices each add a goal and both end with
 two. A stale-base goal edit becomes a Sync issue. Archive, delete and restore

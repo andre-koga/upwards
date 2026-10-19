@@ -19,10 +19,10 @@ import {
 } from "@/lib/db/legacy-shapes";
 import {
   BACKUP_FORMAT,
-  BACKUP_FORMAT_VERSION,
   type BackupDocument,
   type BackupTables,
 } from "../format";
+import type { BackupDocumentV6 } from "./v6-to-v7";
 
 /**
  * Format 5 carried the model the cutover retired: lifecycle as an event log,
@@ -37,6 +37,7 @@ export interface BackupTablesV5 extends Omit<
   | "dailyEntries"
   | "journalEntries"
   | "oneTimeTasks"
+  | "compassItems"
 > {
   activityGroups: LegacyActivityGroup[];
   activities: LegacyActivity[];
@@ -187,7 +188,7 @@ function convertPeriods(
     });
 }
 
-export function migrateV5ToV6(doc: BackupDocumentV5): BackupDocument {
+export function migrateV5ToV6(doc: BackupDocumentV5): BackupDocumentV6 {
   const t = doc.tables;
   const exportedAt = doc.exported_at;
 
@@ -340,7 +341,7 @@ export function migrateV5ToV6(doc: BackupDocumentV5): BackupDocument {
   return {
     ...doc,
     format: BACKUP_FORMAT,
-    format_version: BACKUP_FORMAT_VERSION,
+    format_version: 6,
     tables: {
       ...kept,
       activityGroups: groups,

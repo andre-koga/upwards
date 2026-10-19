@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -83,13 +84,13 @@ export function loadSupabaseEnv(): {
     statusOutput = execFileSync(
       "pnpm",
       ["exec", "supabase", "status", "-o", "env"],
-      { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
+      { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
     );
   } catch (error) {
     const detail =
       error instanceof Error ? error.message : "supabase status failed";
     throw new Error(
-      `Local Supabase is not reachable. Start it with \`pnpm supabase start\`, then retry. (${detail})`
+      `Local Supabase is not reachable. Start it with \`pnpm supabase start\`, then retry. (${detail})`,
     );
   }
 
@@ -107,7 +108,7 @@ export function loadSupabaseEnv(): {
 
   if (!url || !anonKey || !serviceRoleKey) {
     throw new Error(
-      "Could not resolve SUPABASE_URL, anon key, and service role key from env or `supabase status`."
+      "Could not resolve SUPABASE_URL, anon key, and service role key from env or `supabase status`.",
     );
   }
 
@@ -151,12 +152,28 @@ export function newId(): string {
   return crypto.randomUUID();
 }
 
-/** The protocol the current client sends; must match CLIENT_PROTOCOL in the app. */
-export const CLIENT_PROTOCOL = 3;
+/**
+ * The protocol the current client sends. Read from the app's own constant so
+ * the two cannot drift: a hand-kept copy went stale the day a migration raised
+ * the server minimum, and every test then failed with `client_outdated`.
+ */
+function readClientProtocol(): number {
+  const source = readFileSync(
+    join(repoRoot, "app/src/lib/sync/sync-constants.ts"),
+    "utf8",
+  );
+  const match = /export const CLIENT_PROTOCOL = (\d+);/.exec(source);
+  if (!match) {
+    throw new Error("Could not read CLIENT_PROTOCOL from sync-constants.ts");
+  }
+  return Number(match[1]);
+}
+
+export const CLIENT_PROTOCOL = readClientProtocol();
 
 export async function submitOps(
   client: SupabaseClient,
-  ops: SyncOpInput[]
+  ops: SyncOpInput[],
 ): Promise<SubmitResult[]> {
   const { data, error } = await client.rpc("submit_sync_operations", {
     ops,
@@ -167,7 +184,7 @@ export async function submitOps(
   const results = (data as { results?: unknown } | null)?.results;
   if (!Array.isArray(results)) {
     throw new Error(
-      `submit_sync_operations returned ${typeof data}, expected {results: []}`
+      `submit_sync_operations returned ${typeof data}, expected {results: []}`,
     );
   }
   return results as SubmitResult[];
@@ -175,7 +192,7 @@ export async function submitOps(
 
 export async function pullOps(
   client: SupabaseClient,
-  sinceSequence = 0
+  sinceSequence = 0,
 ): Promise<RemoteOp[]> {
   const { data, error } = await client.rpc("pull_sync_operations", {
     since_sequence: sinceSequence,
@@ -187,7 +204,7 @@ export async function pullOps(
 }
 
 export async function pullSnapshot(
-  client: SupabaseClient
+  client: SupabaseClient,
 ): Promise<Record<string, unknown>> {
   const { data, error } = await client.rpc("pull_sync_snapshot", {
     p_client_protocol: CLIENT_PROTOCOL,

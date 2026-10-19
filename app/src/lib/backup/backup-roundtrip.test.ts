@@ -39,7 +39,11 @@ import type {
 } from "@/lib/db/types";
 import { importBackup } from "@/lib/sync/mutate-synced";
 import { resolveJournalConflict } from "@/lib/sync/journal-conflict-resolution";
-import { naturalDailyEntryId, naturalJournalId } from "@/lib/sync/natural-ids";
+import {
+  naturalDailyEntryId,
+  naturalJournalId,
+  naturalNorthStarId,
+} from "@/lib/sync/natural-ids";
 import { buildBackupDocument } from "./export";
 import {
   BACKUP_JSON_NAME,
@@ -164,6 +168,49 @@ async function seed(userKey = USER) {
     time_label: "when I was six",
     ...base,
   });
+  await db.compassItems.bulkAdd([
+    {
+      id: naturalNorthStarId(userKey),
+      kind: "north_star",
+      text: "Someone who finishes what they start",
+      question: null,
+      activity_id: null,
+      group_id: null,
+      archived_at: null,
+      ...base,
+    },
+    {
+      id: "c-goal",
+      kind: "goal",
+      text: "Run more",
+      question: null,
+      activity_id: "a1",
+      group_id: null,
+      archived_at: null,
+      ...base,
+    },
+    {
+      id: "c-aside",
+      kind: "identity",
+      text: "Patient",
+      question: null,
+      activity_id: null,
+      group_id: null,
+      archived_at: T0,
+      ...base,
+    },
+    {
+      id: "c-gone",
+      kind: "knowledge",
+      text: "A deleted answer",
+      question: "What does a good day look like?",
+      activity_id: null,
+      group_id: null,
+      archived_at: null,
+      ...base,
+      deleted_at: T0,
+    },
+  ]);
   await db.oneTimeTasks.add({
     id: "t1",
     date: null,
@@ -377,6 +424,81 @@ describe("backup round trip", () => {
     const journal = await db.journalEntries.get(naturalJournalId(OTHER, D1));
     expect(journal?.photo_paths).toEqual([`${OTHER}/${D1}/a.jpg`]);
     expect(second.inserted + second.updated + second.countsAdded).toBe(0);
+  });
+
+  it("carries the whole compass, set-aside and deleted rows included", async () => {
+    await seed();
+    const file = await exportDoc();
+    expect(file.tables.compassItems).toHaveLength(4);
+    await clearAll();
+    await runImport(file);
+
+    const rows = await db.compassItems.toArray();
+    expect(rows).toHaveLength(4);
+    expect(rows.find((r) => r.id === "c-aside")?.archived_at).toBe(T0);
+    expect(rows.find((r) => r.id === "c-gone")?.deleted_at).toBe(T0);
+    expect(rows.find((r) => r.id === "c-gone")?.text).toBe("A deleted answer");
+    expect(rows.find((r) => r.id === "c-goal")?.activity_id).toBe("a1");
+  });
+
+  it("queues each imported compass row once, and nothing the second time", async () => {
+    await seed();
+    const file = await exportDoc();
+    await clearAll();
+    await runImport(file);
+    const compassOps = (await pendingOps()).filter(
+      (op) => op.entity_type === "compass_item"
+    );
+    expect(compassOps).toHaveLength(4);
+    await runImport(file);
+    expect(
+      (await pendingOps()).filter((op) => op.entity_type === "compass_item")
+    ).toHaveLength(4);
+  });
+
+  it("never overwrites a newer compass row with an older backup", async () => {
+    await seed();
+    const file = await exportDoc();
+    await db.compassItems.update("c-goal", {
+      text: "Run a marathon",
+      updated_at: "2026-10-01T00:00:00.000Z",
+    });
+    const summary = await runImport(file);
+    expect((await db.compassItems.get("c-goal"))?.text).toBe("Run a marathon");
+    expect(summary.keptNewer).toBeGreaterThanOrEqual(1);
+  });
+
+  it("takes a newer backup row and bases the change on the version it replaces", async () => {
+    await seed();
+    const file = await exportDoc();
+    const goal = file.tables.compassItems.find((r) => r.id === "c-goal")!;
+    goal.text = "Run a half marathon";
+    goal.updated_at = "2026-10-02T00:00:00.000Z";
+    await runImport(file);
+    expect((await db.compassItems.get("c-goal"))?.text).toBe(
+      "Run a half marathon"
+    );
+    const op = (await pendingOps()).find(
+      (o) => o.entity_type === "compass_item" && o.entity_id === "c-goal"
+    );
+    expect(op?.base_revision).toBe(T0);
+  });
+
+  it("gives another account its own north star and keeps goals pointed at the re-keyed habit", async () => {
+    await seed();
+    const file = await exportDoc();
+    await clearAll();
+    auth.userId = OTHER;
+    await runImport(file, OTHER);
+    await runImport(file, OTHER);
+
+    const rows = await db.compassItems.toArray();
+    expect(rows).toHaveLength(4);
+    const star = rows.find((r) => r.kind === "north_star")!;
+    expect(star.id).toBe(naturalNorthStarId(OTHER));
+    expect(rows.map((r) => r.id)).not.toContain("c-goal");
+    const run = (await db.activities.toArray()).find((a) => a.name === "Run")!;
+    expect(rows.find((r) => r.text === "Run more")?.activity_id).toBe(run.id);
   });
 
   it("imports a data-only zip file end to end", async () => {

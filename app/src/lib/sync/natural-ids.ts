@@ -10,7 +10,8 @@ export function syncUserKey(
   deviceId?: string | null
 ): string {
   if (userId && userId.length > 0) return userId;
-  const device = deviceId && deviceId.length > 0 ? deviceId : getOrCreateDeviceId();
+  const device =
+    deviceId && deviceId.length > 0 ? deviceId : getOrCreateDeviceId();
   return `guest:${device}`;
 }
 
@@ -26,6 +27,11 @@ export function naturalDailyEntryId(userKey: string, date: string): string {
   return uuidv5(`daily:${userKey}:${date}`, UPWARDS_SYNC_NAMESPACE);
 }
 
+/** One north star per person, so every device computes the same row id. */
+export function naturalNorthStarId(userKey: string): string {
+  return uuidv5(`compass:north_star:${userKey}`, UPWARDS_SYNC_NAMESPACE);
+}
+
 export function naturalJournalIdForDate(date: string): string {
   return naturalJournalId(currentSyncUserKey(), date);
 }
@@ -33,4 +39,3 @@ export function naturalJournalIdForDate(date: string): string {
 export function naturalDailyEntryIdForDate(date: string): string {
   return naturalDailyEntryId(currentSyncUserKey(), date);
 }
-

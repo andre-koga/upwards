@@ -127,6 +127,31 @@ export interface Memory {
   deleted_at: string | null;
 }
 
+export type CompassKind = "north_star" | "identity" | "goal" | "knowledge";
+
+/**
+ * One thing a person has written about who they are becoming
+ * (temporal-data-sync.md, "Compass"). Current state: edits overwrite, archive
+ * and delete are lifecycle timestamps, and nothing here is ever "done".
+ */
+export interface CompassItem {
+  id: string;
+  kind: CompassKind;
+  /** The words: the north star, an identity word, a goal, or a knowledge answer. */
+  text: string;
+  /** Knowledge only: what was asked. */
+  question: string | null;
+  /** Goal only: the habit it is measured by. A plain reference, not a foreign key. */
+  activity_id: string | null;
+  /** Goal only: the group it is measured by. At most one of the two is set. */
+  group_id: string | null;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  archived_at: string | null;
+  deleted_at: string | null;
+}
+
 export interface OneTimeTask {
   id: string;
   date: string | null; // YYYY-MM-DD, completion date when done

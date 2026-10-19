@@ -135,8 +135,9 @@ export function migrateV4ToV5(raw: LegacyRow): BackupDocumentV5 {
     activityStatusEvents: [],
     groupStatusEvents: [],
   };
+  // A format 4 file predates the compass, so it has no such table to read.
   for (const name of [
-    ...BACKUP_TABLE_NAMES,
+    ...BACKUP_TABLE_NAMES.filter((table) => table !== "compassItems"),
     "recurringMemos",
     "activityStatusEvents",
     "groupStatusEvents",

@@ -18,6 +18,14 @@ import type { RemoteSyncOperation } from "./sync-operations";
 
 const PROJECTION_FIELD_KEYS: Record<string, readonly string[]> = {
   memory: ["text_content", "photo_paths", "time_label", "deleted_at"],
+  compass_item: [
+    "text",
+    "question",
+    "activity_id",
+    "group_id",
+    "archived_at",
+    "deleted_at",
+  ],
   activity_period: [
     "activity_id",
     "start_time",
@@ -128,6 +136,12 @@ function entityLabel(
   if (entityType === "activity_period") return "Timeline session";
   if (entityType === "one_time_task") return "Memo";
   if (entityType === "activity_streak") return "Streak";
+  if (entityType === "compass_item") {
+    if (typeof fields.text === "string" && fields.text.trim()) {
+      return fields.text.trim();
+    }
+    return "Compass";
+  }
   if (entityType === "memory") {
     if (typeof fields.time_label === "string" && fields.time_label.trim()) {
       return fields.time_label.trim();
