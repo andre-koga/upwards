@@ -6,30 +6,11 @@ import { Label } from "@/components/ui/label";
 import { SettingsSection } from "@/components/ui/settings-section";
 import { Switch } from "@/components/ui/switch";
 import { updateAccountSettings } from "@/lib/account-settings";
+import {
+  requestLocationPermission,
+  type LocationProblem,
+} from "@/lib/location-permission";
 import { useAccountSettings } from "@/lib/use-account-settings";
-
-type LocationProblem = "denied" | "unsupported" | null;
-
-/**
- * Asks the browser for location permission once, so the prompt appears while the
- * user is looking at the switch they just flipped, not later on Today. Resolves
- * to the problem, if any.
- */
-function requestLocationPermission(): Promise<LocationProblem> {
-  if (typeof navigator === "undefined" || !navigator.geolocation) {
-    return Promise.resolve("unsupported");
-  }
-  return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      () => resolve(null),
-      (error) =>
-        // Only an explicit refusal blocks. A timeout or an unavailable fix is
-        // not a refusal, and the setting can still be on.
-        resolve(error.code === error.PERMISSION_DENIED ? "denied" : null),
-      { timeout: 10_000, maximumAge: 5 * 60_000 }
-    );
-  });
-}
 
 export function PrivacyOptInsCard() {
   const { t } = useTranslation("settings");

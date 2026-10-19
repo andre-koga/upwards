@@ -110,6 +110,13 @@ function read(): AccountSettings {
 }
 
 let snapshot: AccountSettings = read();
+/**
+ * Whether the account's own row has been read on this device since it was
+ * signed in. Until it has, a `null` here may only mean "this device has not
+ * heard yet", not "never chosen", so nothing should ask the person a question
+ * the account may already have answered.
+ */
+let accountHasAnswered = false;
 const listeners = new Set<() => void>();
 
 function commit(next: AccountSettings) {
@@ -124,6 +131,28 @@ function commit(next: AccountSettings) {
 
 export function getAccountSettings(): AccountSettings {
   return snapshot;
+}
+
+export function hasAccountAnswered(): boolean {
+  return accountHasAnswered;
+}
+
+/**
+ * Call once the account's row is adopted and every default that could be
+ * inferred from it has been (see `inferDailyClip`), so a question is never
+ * asked in the gap between the two.
+ */
+export function markAccountAnswered(): void {
+  if (accountHasAnswered) return;
+  accountHasAnswered = true;
+  for (const listener of listeners) listener();
+}
+
+/** A session ended: the next one has to be heard from before anything is asked. */
+export function markAccountUnanswered(): void {
+  if (!accountHasAnswered) return;
+  accountHasAnswered = false;
+  for (const listener of listeners) listener();
 }
 
 export function subscribeAccountSettings(listener: () => void): () => void {
@@ -160,6 +189,7 @@ export async function adoptRemoteAccountSettings(
 
 /** Forget this device's copy, e.g. on sign-out or switching accounts. */
 export function clearAccountSettings(): void {
+  accountHasAnswered = false;
   commit(EMPTY_ACCOUNT_SETTINGS);
 }
 

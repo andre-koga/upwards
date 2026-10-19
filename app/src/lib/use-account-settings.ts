@@ -5,6 +5,9 @@ import {
   ACCOUNT_SETTINGS_COLUMNS,
   adoptRemoteAccountSettings,
   getAccountSettings,
+  hasAccountAnswered,
+  markAccountAnswered,
+  markAccountUnanswered,
   subscribeAccountSettings,
   updateAccountSettings,
   type AccountSettings,
@@ -17,6 +20,15 @@ export function useAccountSettings(): AccountSettings {
     subscribeAccountSettings,
     getAccountSettings,
     getAccountSettings
+  );
+}
+
+/** True once this device has read the account's settings (see `hasAccountAnswered`). */
+export function useAccountAnswered(): boolean {
+  return useSyncExternalStore(
+    subscribeAccountSettings,
+    hasAccountAnswered,
+    hasAccountAnswered
   );
 }
 
@@ -47,6 +59,7 @@ async function loadFromAccount(): Promise<void> {
   }
   await adoptRemoteAccountSettings(data as Partial<AccountSettingsRow> | null);
   await inferDailyClip();
+  markAccountAnswered();
 }
 
 /**
@@ -60,6 +73,7 @@ export function useAccountSettingsSync(): void {
 
     void loadFromAccount();
     const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") markAccountUnanswered();
       if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
         void loadFromAccount();
       }
