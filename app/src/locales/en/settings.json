@@ -298,9 +298,6 @@
     },
     "conflict": {
       "deferredBadge": "Deferred",
-      "bothChangedHint": "Both sides changed some of the same fields. Combine will keep your value for those.",
-      "combinableHint": "These changes touch different fields and can be combined cleanly.",
-      "combineWithPreferenceHint": "Fields edited on both sides will keep your value.",
       "unknownRemote": "Unavailable",
       "resolveFailed": "Could not apply that choice. Try again.",
       "columns": {
@@ -312,9 +309,11 @@
       "actions": {
         "keepMine": "Keep mine",
         "keepTheirs": "Keep theirs",
-        "combine": "Combine",
+        "keepBoth": "Keep both",
+        "keepThisDevice": "Keep this device's",
+        "keepTheOther": "Keep the other",
         "defer": "Decide later",
-        "keepBackup": "Keep backup"
+        "keepBackup": "Keep the backup"
       },
       "journal": {
         "summary": "Two versions of this journal entry need a decision.",
@@ -324,32 +323,35 @@
         "entryDate": "Date: {{date}}",
         "consequence": "Your choice updates this journal entry and syncs it to your other devices.",
         "fields": {
-          "entry_date": "Date",
-          "title": "Title",
-          "text_content": "Text",
-          "day_emoji": "Emoji",
           "is_bookmarked": "Bookmarked",
           "video_path": "Video",
-          "video_thumbnail": "Video thumbnail",
           "photo_paths": "Photos",
-          "is_journal_complete": "Complete",
-          "journal_entry_number": "Entry number",
-          "journal_completion_streak": "Completion streak",
-          "journal_completed_at": "Completed at",
           "location": "Places",
           "deleted_at": "Deleted"
-        }
+        },
+        "mine": "Mine",
+        "theirs": "Other device",
+        "backup": "Backup",
+        "changed": "changed {{when}}",
+        "noText": "No words written.",
+        "none": "None",
+        "yes": "Yes",
+        "no": "No",
+        "photoCount_one": "{{count}} photo",
+        "photoCount_other": "{{count}} photos",
+        "bothHint": "Keep both joins the two texts with a divider, combines the photos and places, and opens the result so you can trim it. Whichever you do not keep stays in this day's previous versions."
       },
       "projection": {
         "summary": "Two versions of this {{entity}} need a decision.",
-        "consequence": "Your choice updates this item and syncs it to your other devices.",
+        "consequence": "Your choice keeps one whole version and syncs it to your other devices.",
         "entity": {
           "activity_period": "timeline session",
           "one_time_task": "memo",
           "recurring_memo": "recurring memo",
           "activity": "activity",
           "activity_group": "group",
-          "activity_streak": "streak"
+          "activity_streak": "streak",
+          "memory": "memory"
         },
         "fields": {
           "activity_id": "Activity",
@@ -372,17 +374,10 @@
           "color": "Color",
           "streak": "Streak",
           "deleted_at": "Deleted"
-        }
+        },
+        "tableCaption": "The two versions of this {{entity}}, field by field"
       },
-      "dailyCounts": {
-        "summary": "Habit counts for {{date}} differ between this device and the cloud.",
-        "consequence": "Your choice updates today's counts on this device and syncs them.",
-        "useSuggested": "Use suggested merge",
-        "columns": {
-          "habit": "Habit",
-          "suggested": "Suggested"
-        }
-      }
+      "differs": "differs"
     }
   },
   "about": {

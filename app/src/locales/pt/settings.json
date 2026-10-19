@@ -298,9 +298,6 @@
     },
     "conflict": {
       "deferredBadge": "Adiado",
-      "bothChangedHint": "Os dois lados alteraram alguns dos mesmos campos. Combinar manterá o seu valor nesses casos.",
-      "combinableHint": "Essas alterações tocam campos diferentes e podem ser combinadas sem conflito.",
-      "combineWithPreferenceHint": "Campos editados nos dois lados manterão o seu valor.",
       "unknownRemote": "Indisponível",
       "resolveFailed": "Não foi possível aplicar essa escolha. Tente novamente.",
       "columns": {
@@ -312,7 +309,9 @@
       "actions": {
         "keepMine": "Manter o meu",
         "keepTheirs": "Manter o deles",
-        "combine": "Combinar",
+        "keepBoth": "Manter os dois",
+        "keepThisDevice": "Manter o deste dispositivo",
+        "keepTheOther": "Manter o outro",
         "defer": "Decidir depois",
         "keepBackup": "Manter o do backup"
       },
@@ -324,32 +323,35 @@
         "entryDate": "Data: {{date}}",
         "consequence": "Sua escolha atualiza esta entrada e sincroniza com seus outros dispositivos.",
         "fields": {
-          "entry_date": "Data",
-          "title": "Título",
-          "text_content": "Texto",
-          "day_emoji": "Emoji",
           "is_bookmarked": "Favorito",
           "video_path": "Vídeo",
-          "video_thumbnail": "Miniatura do vídeo",
           "photo_paths": "Fotos",
-          "is_journal_complete": "Concluído",
-          "journal_entry_number": "Número da entrada",
-          "journal_completion_streak": "Sequência de conclusão",
-          "journal_completed_at": "Concluído em",
           "location": "Lugares",
           "deleted_at": "Excluído"
-        }
+        },
+        "mine": "Meu",
+        "theirs": "Outro dispositivo",
+        "backup": "Backup",
+        "changed": "alterado {{when}}",
+        "noText": "Nada escrito.",
+        "none": "Nenhum",
+        "yes": "Sim",
+        "no": "Não",
+        "photoCount_one": "{{count}} foto",
+        "photoCount_other": "{{count}} fotos",
+        "bothHint": "Manter os dois junta os dois textos com um divisor, combina as fotos e os lugares e abre o resultado para você ajustar. O que você não manter fica nas versões anteriores deste dia."
       },
       "projection": {
         "summary": "Duas versões deste(a) {{entity}} precisam de uma decisão.",
-        "consequence": "Sua escolha atualiza este item e sincroniza com seus outros dispositivos.",
+        "consequence": "Sua escolha mantém uma versão inteira e a sincroniza com seus outros dispositivos.",
         "entity": {
           "activity_period": "sessão da linha do tempo",
           "one_time_task": "memo",
           "recurring_memo": "memo recorrente",
           "activity": "atividade",
           "activity_group": "grupo",
-          "activity_streak": "sequência"
+          "activity_streak": "sequência",
+          "memory": "memória"
         },
         "fields": {
           "activity_id": "Atividade",
@@ -372,17 +374,10 @@
           "color": "Cor",
           "streak": "Sequência",
           "deleted_at": "Excluído"
-        }
+        },
+        "tableCaption": "As duas versões deste(a) {{entity}}, campo a campo"
       },
-      "dailyCounts": {
-        "summary": "As contagens de hábitos de {{date}} diferem entre este dispositivo e a nuvem.",
-        "consequence": "Sua escolha atualiza as contagens de hoje neste dispositivo e as sincroniza.",
-        "useSuggested": "Usar mesclagem sugerida",
-        "columns": {
-          "habit": "Hábito",
-          "suggested": "Sugerido"
-        }
-      }
+      "differs": "diferente"
     }
   },
   "about": {

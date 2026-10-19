@@ -11,8 +11,6 @@ const ALLOWED_SYNCED_WRITERS = new Set([
   "lib/sync/sync-operations.ts",
   "lib/sync/snapshot-sync.ts",
   "lib/sync/clear-local-sync-data.ts",
-  "lib/sync/journal-conflict-resolution.ts",
-  "lib/sync/daily-entry-reconciliation.ts",
   "lib/db/daily-entry.ts",
   "lib/db/index.ts",
 ]);

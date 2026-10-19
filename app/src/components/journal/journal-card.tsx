@@ -7,6 +7,11 @@ import {
   type PointerEvent,
 } from "react";
 import { toDateString, todayDateString } from "@/lib/time-utils";
+import {
+  clearJournalEditRequest,
+  draftMatchesRequest,
+  peekJournalEditRequest,
+} from "@/lib/journal/edit-request";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import {
   getJournalVideoPlaybackUrl,
@@ -128,6 +133,29 @@ export default function JournalCard({
     if (!isCurrentDay) return;
     detectLocation();
   }, [detectLocation, isCurrentDay]);
+
+  // "Keep both" in conflict review joins two versions of this day and asks for
+  // it to open for editing. The editor reads its starting values once, as it
+  // opens, so it waits until the draft holds the joined day; opened on the empty
+  // draft this page starts with, saving would blank the day.
+  const { draftTitle, draftText, draftPhotoPaths } = journal;
+  useEffect(() => {
+    if (!isJournalLoaded) return;
+    const request = peekJournalEditRequest(dateString);
+    if (!request) return;
+    if (
+      !draftMatchesRequest(request, {
+        title: draftTitle,
+        text: draftText,
+        photoCount: draftPhotoPaths.length,
+      })
+    ) {
+      return;
+    }
+    clearJournalEditRequest();
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- opens the editor once the loaded draft matches the request */
+    setJournalEditOpen(true);
+  }, [isJournalLoaded, dateString, draftTitle, draftText, draftPhotoPaths]);
 
   useEffect(() => {
     return () => {

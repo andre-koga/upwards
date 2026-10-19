@@ -1,121 +1,48 @@
 /**
- * Field-level three-way diff and merge, shared by every conflict flow.
+ * Which fields of two versions of one row differ, and how to show a value.
  *
- * Extracted from conflict-resolution.ts, which was named for the definition
- * conflicts it was written for but had become the host of the generic engine: the
- * journal and projection conflict resolvers both import from here, so this is not
- * definition-specific code and did not belong in a module being deleted.
- *
- * The "definition" naming is kept on the exported functions to avoid a rename
- * touching every call site; the behaviour is table-agnostic.
+ * Conflict review shows two whole versions and lets the person keep one
+ * (product-scope.md §2.10). There is no per-field choice and no automatic merge
+ * here: working out which side "won" each field needs a common ancestor the app
+ * does not keep, and a wrong guess would silently drop someone's edit.
  */
 
+function isEmpty(value: unknown): boolean {
+  return value == null || value === "";
+}
+
 function valuesEqual(a: unknown, b: unknown): boolean {
-  if (Object.is(a, b)) return true;
-  if (a == null && b == null) return true;
-  return String(a ?? "") === String(b ?? "");
+  if (isEmpty(a) || isEmpty(b)) return isEmpty(a) && isEmpty(b);
+  if (typeof a === "object" || typeof b === "object") {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  return String(a) === String(b);
 }
 
-export interface FieldDiffAnalysis {
-  differing_fields: string[];
-  auto_combinable_fields: string[];
-  both_changed_fields: string[];
-}
-
-/** Compare local vs remote fields relative to an optional common ancestor. */
-export function analyzeDefinitionFieldDiffs(
+/**
+ * The field names whose values differ between this device's version and the
+ * other. With no other version (it could not be fetched), every field this
+ * device has a value for is listed, so the review still has something to show.
+ */
+export function differingFields(
   localFields: Record<string, unknown>,
-  remoteFields: Record<string, unknown> | null,
-  baseFields: Record<string, unknown> | null
-): FieldDiffAnalysis {
+  remoteFields: Record<string, unknown> | null
+): string[] {
   const keys = new Set([
     ...Object.keys(localFields),
     ...Object.keys(remoteFields ?? {}),
-    ...Object.keys(baseFields ?? {}),
   ]);
-
-  const differing_fields: string[] = [];
-  const auto_combinable_fields: string[] = [];
-  const both_changed_fields: string[] = [];
-
-  for (const key of [...keys].sort()) {
-    const localVal = localFields[key];
-    const remoteVal = remoteFields?.[key];
-    const baseVal = baseFields?.[key];
-
-    if (remoteFields == null) {
-      if (baseFields != null && !valuesEqual(localVal, baseVal)) {
-        differing_fields.push(key);
-        auto_combinable_fields.push(key);
-      } else if (baseFields == null && localVal !== undefined) {
-        differing_fields.push(key);
-      }
-      continue;
-    }
-
-    if (valuesEqual(localVal, remoteVal)) continue;
-    differing_fields.push(key);
-
-    const localChanged =
-      baseFields != null ? !valuesEqual(localVal, baseVal) : true;
-    const remoteChanged =
-      baseFields != null ? !valuesEqual(remoteVal, baseVal) : true;
-
-    if (localChanged && remoteChanged) {
-      both_changed_fields.push(key);
-    } else {
-      auto_combinable_fields.push(key);
-    }
-  }
-
-  return { differing_fields, auto_combinable_fields, both_changed_fields };
+  return [...keys]
+    .sort()
+    .filter((key) =>
+      remoteFields == null
+        ? localFields[key] !== undefined
+        : !valuesEqual(localFields[key], remoteFields[key])
+    );
 }
 
-/** Merge fields: one-side change wins; both-changed prefers local by default. */
-export function combineDefinitionFields(
-  localFields: Record<string, unknown>,
-  remoteFields: Record<string, unknown>,
-  baseFields: Record<string, unknown> | null,
-  options?: { preferLocalOnConflict?: boolean }
-): Record<string, unknown> {
-  const preferLocal = options?.preferLocalOnConflict !== false;
-  const keys = new Set([
-    ...Object.keys(localFields),
-    ...Object.keys(remoteFields),
-    ...Object.keys(baseFields ?? {}),
-  ]);
-  const result: Record<string, unknown> = {};
-
-  for (const key of keys) {
-    const localVal = localFields[key];
-    const remoteVal = remoteFields[key];
-    const baseVal = baseFields?.[key];
-
-    if (valuesEqual(localVal, remoteVal)) {
-      result[key] = localVal;
-      continue;
-    }
-
-    if (baseFields != null) {
-      const localChanged = !valuesEqual(localVal, baseVal);
-      const remoteChanged = !valuesEqual(remoteVal, baseVal);
-      if (localChanged && !remoteChanged) {
-        result[key] = localVal;
-        continue;
-      }
-      if (remoteChanged && !localChanged) {
-        result[key] = remoteVal;
-        continue;
-      }
-    }
-
-    result[key] = preferLocal ? localVal : remoteVal;
-  }
-
-  return result;
-}
-
-export type ConflictResolutionChoice = "keep_local" | "keep_remote" | "combine";
+/** What a person chooses to keep. Journal days also offer `keep_both`. */
+export type ConflictChoice = "keep_local" | "keep_remote" | "keep_both";
 
 /** Format a field value for display in the conflict UI. */
 export function formatConflictFieldValue(value: unknown): string {

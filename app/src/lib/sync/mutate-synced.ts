@@ -15,7 +15,9 @@ import { getCachedUserId, getQueueAccountId } from "@/lib/supabase";
 import { getOrCreateDeviceId } from "./device-id";
 import { enqueuePendingOperation } from "./pending-operations";
 import {
+  dexieTableForSyncTable,
   enqueueProjectionUpsertForTable,
+  entityTypeToSyncTable,
   withSuppressedProjectionEnqueue,
 } from "./projection-sync";
 import { requestDebouncedSync } from "./sync-scheduler";
@@ -155,6 +157,74 @@ export async function recordJournalRevision(
     options
   );
   requestDebouncedSync();
+}
+
+/** Fields a resolution never rewrites: identity and bookkeeping, not content. */
+const CONFLICT_PROTECTED_FIELDS = new Set([
+  "id",
+  "created_at",
+  "updated_at",
+  "synced_at",
+  "entry_date",
+]);
+
+/**
+ * Apply the version a person kept in conflict review (product-scope.md §2.10)
+ * as an ordinary current-state edit: the chosen fields are written to the local
+ * row and queued as one projection upsert made on the other side's revision, so
+ * it syncs, wins that revision, and can be revised like any edit.
+ *
+ * `keepAsRevisions` are previous versions of content this choice leaves out
+ * (journal only). They are recorded first, so choosing a side is never the end
+ * of the other side's words. Returns the new row's `updated_at`.
+ */
+export async function applyConflictResolution(input: {
+  entityType: string;
+  entityId: string;
+  fields: Record<string, unknown>;
+  /**
+   * The other side's `updated_at`: the revision this edit is made on. Null when
+   * the other side was never on the server (a backup file); the row this device
+   * last synced is then the base. An edit with no base would be a blind
+   * overwrite, which is what a base revision exists to prevent.
+   */
+  baseRevision: string | null;
+  keepAsRevisions?: JournalEntryRevision[];
+}): Promise<string> {
+  const table = entityTypeToSyncTable(input.entityType);
+  const dexieKey = table ? dexieTableForSyncTable(table) : null;
+  if (!table || !dexieKey) {
+    throw new Error(`Unknown conflict entity type: ${input.entityType}`);
+  }
+  const dexieTable = db[dexieKey] as unknown as Table<Record<string, unknown>>;
+  const existing = await dexieTable.get(input.entityId);
+  if (!existing) {
+    throw new Error("The row for this conflict is no longer on this device");
+  }
+
+  for (const revision of input.keepAsRevisions ?? []) {
+    await recordJournalRevision(revision);
+  }
+
+  const content: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input.fields)) {
+    if (value !== undefined && !CONFLICT_PROTECTED_FIELDS.has(key)) {
+      content[key] = value;
+    }
+  }
+  const next = {
+    ...existing,
+    ...content,
+    id: input.entityId,
+    updated_at: now(),
+  };
+  await dexieTable.put(next);
+  await writeProjection(
+    table,
+    next,
+    input.baseRevision ?? (existing.updated_at as string | null)
+  );
+  return next.updated_at;
 }
 
 export async function saveMemory(

@@ -1090,8 +1090,64 @@ Track B gets its own breakdown before it starts. Its shape:
 - **B5.** You / compass and onboarding, including the one-time daily clip and
   location prompts. The compass needs a data-model pass in
   [`temporal-data-sync.md`](temporal-data-sync.md) before code.
-- **B6.** Conflict review rebuilt with the §2.10 resolution shapes, replacing
-  the per-field card and resolvers.
+- **B6 (done 2026-10-15).** Conflict review rebuilt with the §2.10 resolution
+  shapes, replacing the per-field card and resolvers.
+  - *Two shapes, as decided.* An **activity, group, memo or session** shows both
+    whole versions in a ruled table with the differing fields listed, and keeps
+    one: "Keep this device's" or "Keep the other". A **journal day** shows the
+    two versions side by side in the day's own serif voice, each part that
+    differs marked "differs", and keeps "mine", "theirs" or "both". There is no
+    per-field choice and no automatic merge: the app does not keep a common
+    ancestor, and guessing which side "won" a field would drop someone's edit.
+    The old three-way diff, the "combine" action and its hints are gone.
+  - *"Keep both"* (`lib/journal/keep-both.ts`) joins the two texts with a divider
+    (identical texts are not repeated; a text that only extends the other is kept
+    alone), unions photos and places, keeps a heart set on either side, and keeps
+    this device's title, emoji and clip, with the other's filling in only where
+    this device has none. **No words are dropped to fit the editor's 300
+    characters**: the joined text may run over, and is then opened for editing so
+    the person trims it. Photos (8) and places (5) have hard caps, so past those
+    the oldest photos are dropped; the editor would refuse to hold more.
+  - *It is saved, then opened.* "Keep both" saves the joined day and resolves the
+    conflict immediately, then opens the day on Today in the editor
+    (`lib/journal/edit-request.ts`). The editor takes its starting values once,
+    as it opens, so the request records what the day should contain and Today
+    opens the editor only when its draft matches; opened on the empty draft
+    Today starts with, saving would blank the day. A request nothing answers
+    expires after two minutes instead of opening something stale later.
+  - *Nothing is final.* A single choice keeps the side it leaves out as a
+    **previous version** of the day (§2.3), so choosing "mine" never ends the
+    other device's words. This is new: the old resolver overwrote the row with
+    nothing kept. "Keep both" leaves nothing out and records none.
+  - *One command.* Every resolution goes through
+    `applyConflictResolution` in `mutate-synced.ts` as an ordinary current-state
+    edit made on the other side's revision, so it syncs and can be revised like
+    any edit. The two resolvers and the old daily-count reconciliation no longer
+    write synced tables themselves; their entries are off the allow-list that
+    guards this. A resolution made on no server revision (a backup's) uses the
+    row this device last synced as its base: an edit with no base is the blind
+    overwrite a base revision exists to prevent. It is also idempotent: a second
+    tap, or a second tab, writes the choice once.
+  - *Other fixes.* Offline, the other version of a conflict could not be fetched
+    again and the card lost it; the copy captured when the conflict arose is now
+    kept. Phones get 44px buttons and the two versions stack. Conflict cards
+    use the paper card and hairlines, not an amber warning box.
+  - *Removed, and what it cost.* The per-field diff and merge, the "combine"
+    path in both resolvers, the hints that explained it, and
+    `daily-entry-reconciliation.ts` (nothing had created one since before the
+    baseline schema, so its card could never appear). **The source did not get
+    much smaller**: about 1,130 lines out and 1,100 in, a net of -26. The
+    829-line card is now three small components, and "keep both" and the editor
+    hand-off are new code. The saving §2.10 estimated (about 1,600 lines) was for
+    dropping per-field choice and the generic engine; this slice drops the
+    behaviour but spends part of the saving on the one thing the old UI could not
+    do, which is keeping the left-out side as a previous version. Tests grew by
+    about 700 lines, since the old ones mocked the database away and could not
+    show that a resolution queues a real operation.
+  - *Not done.* Issues recorded before this change keep their stored payloads;
+    they open normally (the extra fields are ignored) and a stored "combine" in a
+    resolved issue's history still reads. Memos and sessions use the activity
+    card; they have no card of their own.
 - **B7.** Month and year clip compilations, if the A10 spike passed. **The
   iPhone spike has not been run** (deferred 2026-10-09, see §2.5); do not start
   B7 until it has.
