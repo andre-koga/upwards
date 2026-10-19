@@ -1122,9 +1122,13 @@ Track B gets its own breakdown before it starts. Its shape:
   - **B5b: the compass and the real "You" tab.** The data model was decided
     on 2026-10-19 in [`temporal-data-sync.md`](temporal-data-sync.md) (Compass);
     the product shape was decided with it. Built in two steps:
-    - **B5b-1: the data.** The `compass_items` table, sync, snapshot, conflict
-      review, backup and the AI-privacy test. No new screen. It bumps the sync
-      protocol, so it ships in a coordinated migration window (§4.1).
+    - **B5b-1 (done 2026-10-19): the data.** The `compass_items` table, sync,
+      snapshot, conflict review, backup (format 7) and the AI-privacy test. No
+      new screen. It raises the sync protocol to 4, so it ships in a
+      coordinated migration window (§4.1); the migration raises
+      `min_client_protocol` and leaves `data_epoch` alone, since no existing
+      data is converted. What the build found is recorded in
+      [`temporal-data-sync.md`](temporal-data-sync.md), "Compass".
     - **B5b-2: the "You" page**, then the tab stops opening Settings.
     - *In the first slice, all written by the person:* a north star; a few
       identity words; goals; and a knowledge map of dated question-and-answer

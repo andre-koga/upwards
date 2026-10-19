@@ -3,6 +3,7 @@ import {
   UPWARDS_SYNC_NAMESPACE,
   naturalDailyEntryId,
   naturalJournalId,
+  naturalNorthStarId,
 } from "@/lib/sync/natural-ids";
 import { withoutDroppedColumns } from "@/lib/db/legacy-shapes";
 import type { BackupDocument, BackupTables } from "./format";
@@ -130,6 +131,17 @@ export function remapBackupIdentity(
       ...row,
       id: mapId("memory", row.id),
       photo_paths: row.photo_paths ? row.photo_paths.map(owner) : null,
+    })),
+    // The north star is one row per person, so it takes the target account's
+    // id like the journal does; the rest are re-keyed by their old ids.
+    compassItems: t.compassItems.map((row) => ({
+      ...row,
+      id:
+        row.kind === "north_star"
+          ? naturalNorthStarId(targetUserKey)
+          : mapId("compass_item", row.id),
+      activity_id: row.activity_id ? mapId("activity", row.activity_id) : null,
+      group_id: row.group_id ? mapId("activity_group", row.group_id) : null,
     })),
     oneTimeTasks: t.oneTimeTasks.map((row) => ({
       ...withoutDroppedColumns("one_time_tasks", row),

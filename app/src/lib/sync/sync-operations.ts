@@ -670,6 +670,7 @@ const SUBMIT_ENTITY_PRIORITY: Record<string, number> = {
   journal_entry: 3,
   journal_entry_revision: 3,
   one_time_task: 4,
+  compass_item: 4,
   activity_period: 5,
 };
 

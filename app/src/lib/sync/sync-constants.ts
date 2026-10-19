@@ -8,7 +8,7 @@ export const EPOCH = "1970-01-01T00:00:00.000Z";
  * operation shapes or table semantics change, and raise the server minimum in
  * the same migration window (docs/architecture/product-scope.md §4.1).
  */
-export const CLIENT_PROTOCOL = 3;
+export const CLIENT_PROTOCOL = 4;
 export const DEBOUNCE_SYNC_MS = 5_000;
 export const REMOTE_DEBOUNCE_SYNC_MS = 1_000;
 export const DEFAULT_PERIODIC_SYNC_MS = 5 * 60_000;
@@ -25,6 +25,7 @@ export const SYNC_TABLES: SyncTable[] = [
   "journal_entries",
   "journal_entry_revisions",
   "memories",
+  "compass_items",
   "one_time_tasks",
 ];
 
@@ -42,5 +43,6 @@ export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
   journal_entries: "journalEntries",
   journal_entry_revisions: "journalEntryRevisions",
   memories: "memories",
+  compass_items: "compassItems",
   one_time_tasks: "oneTimeTasks",
 };

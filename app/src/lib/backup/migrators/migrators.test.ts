@@ -93,6 +93,35 @@ describe("migrateBackupDocument", () => {
     expect(doc.tables.oneTimeTasks[0]).not.toHaveProperty("recurring_memo_id");
   });
 
+  it("gives a format 6 file an empty compass and changes nothing else", () => {
+    const doc = migrateBackupDocument({
+      format: BACKUP_FORMAT,
+      format_version: 6,
+      exported_at: "2026-10-01T00:00:00.000Z",
+      source_user_key: USER,
+      settings: null,
+      media: [],
+      tables: {
+        activityGroups: [],
+        activities: [{ id: "a1", name: "Run" }],
+        dailyEntries: [],
+        activityPeriods: [],
+        journalEntries: [],
+        journalEntryRevisions: [],
+        memories: [{ id: "m1" }],
+        oneTimeTasks: [],
+      },
+    });
+    expect(doc.format_version).toBe(BACKUP_FORMAT_VERSION);
+    expect(doc.tables.compassItems).toEqual([]);
+    expect(doc.tables.activities).toEqual([{ id: "a1", name: "Run" }]);
+    expect(doc.tables.memories).toEqual([{ id: "m1" }]);
+  });
+
+  it("brings a format 4 file all the way to a compass-aware document", () => {
+    expect(migrateBackupDocument(v4File()).tables.compassItems).toEqual([]);
+  });
+
   it("accepts the current format and fills tables it lacks", () => {
     const doc = migrateBackupDocument({
       format: BACKUP_FORMAT,

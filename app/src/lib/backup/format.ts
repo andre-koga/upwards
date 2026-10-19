@@ -6,11 +6,12 @@ import type {
   JournalEntry,
   JournalEntryRevision,
   Memory,
+  CompassItem,
   OneTimeTask,
 } from "@/lib/db/types";
 
 export const BACKUP_FORMAT = "upwards-backup";
-export const BACKUP_FORMAT_VERSION = 6;
+export const BACKUP_FORMAT_VERSION = 7;
 export const CLIPS_FORMAT = "upwards-clips";
 export const CLIPS_FORMAT_VERSION = 1;
 
@@ -29,6 +30,7 @@ export interface BackupTables {
   journalEntries: JournalEntry[];
   journalEntryRevisions: JournalEntryRevision[];
   memories: Memory[];
+  compassItems: CompassItem[];
   oneTimeTasks: OneTimeTask[];
 }
 
@@ -43,6 +45,7 @@ export const BACKUP_TABLE_NAMES = [
   "journalEntries",
   "journalEntryRevisions",
   "memories",
+  "compassItems",
   "oneTimeTasks",
 ] as const satisfies readonly BackupTableName[];
 
@@ -111,6 +114,7 @@ export function emptyBackupTables(): BackupTables {
     journalEntries: [],
     journalEntryRevisions: [],
     memories: [],
+    compassItems: [],
     oneTimeTasks: [],
   };
 }

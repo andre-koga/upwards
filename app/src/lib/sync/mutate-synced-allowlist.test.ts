@@ -16,7 +16,7 @@ const ALLOWED_SYNCED_WRITERS = new Set([
 ]);
 
 const WRITE_RE =
-  /\bdb\.(journalEntries|journalEntryRevisions|dailyEntries|activities|activityGroups|activityPeriods|oneTimeTasks|recurringMemos|activityStatusEvents|groupStatusEvents)\.(add|put|update|delete|bulkPut|bulkAdd|bulkDelete)\b/;
+  /\bdb\.(journalEntries|journalEntryRevisions|dailyEntries|activities|activityGroups|activityPeriods|oneTimeTasks|compassItems|recurringMemos|activityStatusEvents|groupStatusEvents)\.(add|put|update|delete|bulkPut|bulkAdd|bulkDelete)\b/;
 
 const FORBIDDEN_LWW_RE =
   /\b(runPushInternal|runPull|opsSyncActive)\b|from ["']\.\/sync-push["']|from ["']\.\/sync-pull["']/;
