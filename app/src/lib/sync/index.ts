@@ -34,7 +34,7 @@ import {
 } from "./sync-operations";
 import { recordSyncIssue, resolveOpenSyncErrors } from "./sync-issues-store";
 import { touchLocalDevice } from "./device-id";
-import { getLocalSyncSafetyStatus } from "./unsynced-data";
+import { getLocalSyncSafetyStatus, hasServerSyncedRows } from "./unsynced-data";
 import {
   subscribeToRemoteSyncOperations,
   unsubscribeFromRemoteSyncOperations,
@@ -247,6 +247,23 @@ class SyncEngine {
     }
   }
 
+  /**
+   * The cursor and flags live in localStorage and the rows in IndexedDB, and the
+   * browser can lose one without the other. A cursor that says "caught up" over
+   * a database holding nothing from the server would make every pull start after
+   * data this device no longer has, so the account would stay empty. Dropping the
+   * flag sends the next bootstrap back to the snapshot, behind the same
+   * unsynced-data gate as any first download.
+   */
+  private async dropStaleBootstrapFlag(): Promise<void> {
+    if (!loadSyncProtocolV2() || loadLastAppliedSequence() === 0) return;
+    if (await hasServerSyncedRows()) return;
+    recordBreadcrumb("bootstrap.flag_dropped", {
+      syncCursor: loadLastAppliedSequence(),
+    });
+    clearSyncProtocolV2();
+  }
+
   private async bootstrapProtocolV2(): Promise<boolean> {
     if (loadSyncProtocolV2()) return true;
     const pushResult = await pushPendingOperations();
@@ -280,6 +297,7 @@ class SyncEngine {
     let interruptedTransiently = false;
     try {
       await requeueClientOutdatedOperations();
+      await this.dropStaleBootstrapFlag();
       const alreadyV2 = loadSyncProtocolV2();
       const bootstrapped = await this.bootstrapProtocolV2();
       if (!alreadyV2 && !bootstrapped) recordBreadcrumb("bootstrap.incomplete");

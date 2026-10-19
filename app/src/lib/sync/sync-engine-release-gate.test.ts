@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   pull: vi.fn(),
   snapshot: vi.fn(),
   safety: vi.fn(),
+  hasServerRows: vi.fn(),
   deviceRegistry: vi.fn(),
   recordSyncIssue: vi.fn(),
 }));
@@ -56,6 +57,7 @@ vi.mock("./snapshot-sync", () => ({
 
 vi.mock("./unsynced-data", () => ({
   getLocalSyncSafetyStatus: () => mocks.safety(),
+  hasServerSyncedRows: () => mocks.hasServerRows(),
 }));
 
 vi.mock("./remote-device-sync", () => ({
@@ -103,6 +105,7 @@ describe("sync engine release gates", () => {
       mocks.pull,
       mocks.snapshot,
       mocks.safety,
+      mocks.hasServerRows,
       mocks.deviceRegistry,
       mocks.recordSyncIssue,
     ]) {
@@ -111,6 +114,7 @@ describe("sync engine release gates", () => {
     mocks.push.mockResolvedValue({ failed: false });
     mocks.pull.mockResolvedValue({ maxSequence: 5 });
     mocks.safety.mockResolvedValue({ hasUnsyncedData: false });
+    mocks.hasServerRows.mockResolvedValue(true);
     mocks.snapshot.mockResolvedValue({ sequence: 9, dataEpoch: 1 });
   });
 
@@ -155,6 +159,52 @@ describe("sync engine release gates", () => {
     await syncEngine.sync();
 
     expect(mocks.calls).toEqual(["push", "pull"]);
+  });
+
+  /** A device whose cursor says it is caught up, on the server's current epoch. */
+  async function caughtUpDevice() {
+    const loaded = await loadEngine();
+    loaded.gate.resetObservedDataEpochForTests();
+    loaded.storage.saveLastAppliedSequence(3019);
+    loaded.storage.saveLastDataEpoch(1);
+    loaded.gate.recordObservedDataEpoch(1);
+    return loaded;
+  }
+
+  it("downloads the snapshot again when the cursor says synced but no row ever came from the server", async () => {
+    // The cursor and flags live in localStorage, the rows in IndexedDB, and the
+    // browser can lose one without the other. Pulling "after sequence N" then
+    // finds nothing and the account stays empty for good.
+    const { syncEngine, storage: syncStorage } = await caughtUpDevice();
+    mocks.hasServerRows.mockResolvedValue(false);
+    mocks.snapshot.mockResolvedValue({ sequence: 3020, dataEpoch: 1 });
+
+    await syncEngine.sync();
+
+    expect(mocks.calls).toContain("snapshot");
+    expect(syncStorage.loadLastAppliedSequence()).toBe(3020);
+    expect(syncStorage.loadSyncProtocolV2()).toBe(true);
+  });
+
+  it("leaves a device that holds server rows alone", async () => {
+    const { syncEngine } = await caughtUpDevice();
+
+    await syncEngine.sync();
+
+    expect(mocks.calls).toEqual(["push", "pull"]);
+  });
+
+  it("holds that download while the device has unsynced data, then runs it", async () => {
+    const { syncEngine } = await caughtUpDevice();
+    mocks.hasServerRows.mockResolvedValue(false);
+    mocks.safety.mockResolvedValue({ hasUnsyncedData: true });
+
+    await syncEngine.sync();
+    expect(mocks.calls).not.toContain("snapshot");
+
+    mocks.safety.mockResolvedValue({ hasUnsyncedData: false });
+    await syncEngine.sync();
+    expect(mocks.calls).toContain("snapshot");
   });
 
   it("stops syncing and requires an update when the build is turned away", async () => {

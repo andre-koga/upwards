@@ -206,8 +206,11 @@ async function retireSupersededLocalRows(
 }
 
 export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
-  const userId = getCachedUserId();
-  if (!userId) return;
+  // The caller records the download as done once this returns, so a skipped
+  // apply must throw: returning quietly left a cursor with no rows behind it.
+  if (!getCachedUserId()) {
+    throw new Error("snapshot not applied: no signed-in user");
+  }
 
   await withSuppressedProjectionEnqueue(async () => {
     for (const table of SNAPSHOT_TABLES) {

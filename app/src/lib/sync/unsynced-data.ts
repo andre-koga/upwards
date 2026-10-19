@@ -21,13 +21,28 @@ async function countUnsyncedRows(): Promise<number> {
       .filter(
         (row: { synced_at?: string | null; updated_at?: string }) =>
           !row.synced_at ||
-          (typeof row.updated_at === "string" &&
-            row.updated_at > row.synced_at)
+          (typeof row.updated_at === "string" && row.updated_at > row.synced_at)
       )
       .count();
     total += count;
   }
   return total;
+}
+
+/**
+ * Whether any row on this device came from the server or was acknowledged by it.
+ * Every snapshot, remote op and accepted push marks its row `synced_at`, so a
+ * device that has synced before always has one.
+ */
+export async function hasServerSyncedRows(): Promise<boolean> {
+  for (const table of SYNC_TABLES) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const row = await (db[TABLE_MAP[table]] as any)
+      .filter((r: { synced_at?: string | null }) => Boolean(r.synced_at))
+      .first();
+    if (row) return true;
+  }
+  return false;
 }
 
 /**

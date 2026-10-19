@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { tables, pending, conflicts } = vi.hoisted(() => ({
+const { tables, pending, conflicts, session } = vi.hoisted(() => ({
+  session: { userId: "user-1" as string | null },
   tables: {
     journalEntries: [] as Array<Record<string, unknown>>,
     dailyEntries: [] as Array<Record<string, unknown>>,
@@ -19,8 +20,8 @@ vi.mock("./sync-issues-store", () => ({
 
 vi.mock("@/lib/supabase", () => ({
   supabase: null,
-  getCachedUserId: () => "user-1",
-  getQueueAccountId: () => "user-1",
+  getCachedUserId: () => session.userId,
+  getQueueAccountId: () => session.userId,
 }));
 
 vi.mock("@/lib/db", () => {
@@ -75,6 +76,29 @@ describe("applySyncSnapshot", () => {
     tables.dailyEntries.length = 0;
     pending.length = 0;
     conflicts.clear();
+    session.userId = "user-1";
+  });
+
+  it("fails instead of returning when the session is gone, so the caller never records a download that wrote nothing", async () => {
+    // The user id is a cache that every auth event overwrites. On a phone the
+    // snapshot request can outlast a token refresh, so the apply may start with
+    // no user. Returning quietly let the caller save the cursor and flags for a
+    // snapshot that was never written, and every later pull then started after it.
+    session.userId = null;
+
+    await expect(
+      applySyncSnapshot({
+        server_sequence: 42,
+        journal_entries: [
+          {
+            id: "j1",
+            entry_date: "2026-08-20",
+            updated_at: "2026-08-27T00:00:00.000Z",
+          },
+        ],
+      })
+    ).rejects.toThrow(/no signed-in user/);
+    expect(tables.journalEntries).toHaveLength(0);
   });
 
   it("clears a local tombstone when the server row is live", async () => {

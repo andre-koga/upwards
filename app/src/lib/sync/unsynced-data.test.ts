@@ -46,7 +46,7 @@ import { db } from "@/lib/db";
 import type { Activity } from "@/lib/db/types";
 import { enqueuePendingOperation } from "./pending-operations";
 import { pushPendingOperations } from "./sync-operations";
-import { getLocalSyncSafetyStatus } from "./unsynced-data";
+import { getLocalSyncSafetyStatus, hasServerSyncedRows } from "./unsynced-data";
 
 const T1 = "2026-10-01T10:00:00.000Z";
 const T2 = "2026-10-05T10:00:00.000Z";
@@ -99,6 +99,18 @@ describe("what counts as unsynced", () => {
     verdicts.set(op!.operation_id, verdict);
     await pushPendingOperations();
   }
+
+  it("tells a device that never synced from one that lost what it had", async () => {
+    // Rows made here and not yet acknowledged are not server data; a row the
+    // server delivered or acknowledged is.
+    expect(await hasServerSyncedRows()).toBe(false);
+
+    await db.activities.add(activity({ id: "mine", synced_at: null }));
+    expect(await hasServerSyncedRows()).toBe(false);
+
+    await db.activities.add(activity({ id: "theirs", synced_at: T1 }));
+    expect(await hasServerSyncedRows()).toBe(true);
+  });
 
   it("does not count an edited row once its operation was acknowledged", async () => {
     // The bug: edit a row (updated_at moves past synced_at), push it, server
