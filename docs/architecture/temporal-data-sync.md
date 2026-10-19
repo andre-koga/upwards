@@ -432,6 +432,78 @@ Resolution shapes:
 Every resolution is an ordinary `mutateSynced` operation. Per-field merge
 choices are not offered.
 
+## Compass (decided 2026-10-19, B5b)
+
+The compass is what a person writes about who they are becoming: a north star,
+a few words of identity, goals, and things the app has learned about them. It
+is prose the person owns, so it is **current state**, never a fact stream, and
+it follows the checklist below.
+
+**Classification.**
+
+| Thing | Class | Why |
+|---|---|---|
+| North star, identity words, goals, knowledge entries | Current-state, OCC `base_revision` | Written and edited by the person; a concurrent edit of the same row must be reviewable. |
+| A goal's progress or evidence ("done 4 of the last 7 days") | Local projection | Computed on read from daily facts and the linked activity; never stored, never synced. |
+| "What works for you" (strategies) | Local projection, **not in this slice** | Derived from the person's own data, so it is never a row. It waits for the AI work that can show its evidence. |
+
+**One table, `compass_items`, one entity type, `compass_item`.** A kind column
+instead of four tables keeps one sync wiring, one backup path, one conflict
+shape. Columns: `id`, `user_id`, `kind` (`north_star` | `identity` | `goal` |
+`knowledge`), `text`, `question` (knowledge only), `activity_id` / `group_id`
+(goal only, at most one, both nullable), `created_at`, `updated_at`,
+`archived_at`, `deleted_at`. Length limits are enforced by the server
+constraint and the client together: north star 200, identity word 40, goal 120,
+knowledge answer 1000, knowledge question 200. No manual order: goals and
+knowledge list by `created_at`.
+
+**Identity.** The north star is unique by meaning, so it takes a deterministic
+UUID from `(user_id, 'north_star')`, like the journal: two devices that write it
+offline converge on one row and conflict on its text, instead of minting two.
+Every other kind is keyed by its own UUID, so two devices adding an identity
+word or a goal offline merge by union.
+
+**Lifecycle.** `archived_at` is "set aside", shown in a collapsed list with a
+restore action, and counts nothing against the person: nothing here is ever
+"done" (design-and-branding.md). `deleted_at` is a tombstone with an in-app
+restore, never a hard delete. A goal's link to an activity or group is a plain
+reference; if that activity is archived or deleted the goal keeps its words and
+its evidence line reads "this habit is archived", not an error.
+
+**Merge.** `projection.upsert` with `base_revision` = the row's `updated_at`.
+A stale base is a reviewable conflict resolved as a whole row (keep this
+device's or the other), through the same Sync issues card as activities and
+memos; no per-field merging. Text is never silently last-write-wins.
+
+**Privacy: the AI does not read the compass in this slice.** No compass field
+may appear in any AI request payload; a test pins this the way
+`birthday-privacy.test.ts` pins the birthday. When the AI work arrives it
+reads the compass only behind an account setting, `ai_reads_compass`, on the
+existing `user_profiles` row, **off by default** and `null` meaning never
+chosen. That setting is introduced with the first feature that reads, not
+before: a switch that controls nothing is a promise the app cannot yet keep.
+
+**Backup.** Every column is in the backup (format version bump with a migrator
+from the previous one), as a current-state row: inserted when missing, updated
+only when the backup's `updated_at` is newer, tombstones and `archived_at`
+carried. The coverage test that fails when a user-owned Dexie table is missing
+from the backup must include `compassItems`.
+
+**Protocol and rollout.** This adds a table, an entity type in the operation log
+and a key in the snapshot, so older builds cannot apply it. It therefore bumps
+`CLIENT_PROTOCOL` and raises `app_config.min_client_protocol`, and ships in a
+coordinated migration window (product-scope.md §4.1): everyone synced with
+nothing pending, a backup taken, client and server deployed together. The server
+change edits the `*_ungated` RPC bodies; it does not recreate the one-argument
+signatures. The local schema gains the `compassItems` store in a new, additive
+Dexie version; no existing store changes.
+
+**Required tests.** Two devices both write the north star offline and end with
+one row and a reviewable conflict. Two devices each add a goal and both end with
+two. A stale-base goal edit becomes a Sync issue. Archive, delete and restore
+round-trip through backup. A compass field in an AI payload fails the privacy
+test.
+
 ## Adding a synced field (required checklist)
 
 Before storing a new column or entity, classify it:
@@ -500,8 +572,8 @@ Implementation (`app/src/lib/backup/`):
   new import gets new IDs, so dedupe never swallows a real change.
 - **Counts merge to the maximum** of local and backup and are sent as that
   delta. An import never lowers a count; lowering one is an ordinary edit.
-- **Current-state rows** (activities, groups, tasks, memories, compass,
-  knowledge) are inserted when missing and updated only when the backup's
+- **Current-state rows** (activities, groups, tasks, memories, compass
+  items) are inserted when missing and updated only when the backup's
   `updated_at` is newer. Pauses, break days, completion times, and notes are filled only when the
   account has none for that day.
 - **Files from before the cutover (format 5)** are converted on import by

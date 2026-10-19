@@ -1119,9 +1119,32 @@ Track B gets its own breakdown before it starts. Its shape:
     - Not a tour, a checklist or a sequence of screens. The first run needs no
       setup beyond signing in, so a longer onboarding would be a gate in front
       of an app that already works; nothing else here asks to be taught.
-  - **B5b: the compass and the real "You" tab.** Still to do. The compass needs
-    a data-model pass in [`temporal-data-sync.md`](temporal-data-sync.md) before
-    code, and the "You" tab opens Settings until then.
+  - **B5b: the compass and the real "You" tab.** The data model was decided
+    on 2026-10-19 in [`temporal-data-sync.md`](temporal-data-sync.md) (Compass);
+    the product shape was decided with it. Built in two steps:
+    - **B5b-1: the data.** The `compass_items` table, sync, snapshot, conflict
+      review, backup and the AI-privacy test. No new screen. It bumps the sync
+      protocol, so it ships in a coordinated migration window (§4.1).
+    - **B5b-2: the "You" page**, then the tab stops opening Settings.
+    - *In the first slice, all written by the person:* a north star; a few
+      identity words; goals; and a knowledge map of dated question-and-answer
+      entries they add themselves ("Tell me something" is a note to yourself,
+      not a chat). Nothing needs an AI key.
+    - *A goal's progress is evidence, never a percentage.* A goal may be linked
+      to one activity or group, and then shows what the record says ("done 4 of
+      the last 7 days", from the same habit facts Home uses). Unlinked goals show
+      no number. A hand-set slider and an invented score are both out: the
+      design manifesto's "never fabricate" and "nothing is ever done".
+    - *"What works for you" is not in this slice.* It is derived from the
+      person's own data and has to show its evidence, so it waits for the AI work
+      that can.
+    - *The AI does not read the compass yet.* When it does, that is an account
+      setting, off by default, introduced with the first feature that reads it.
+    - *The check-in questions ("A few questions to deepen your compass") are a
+      separate follow-up* once the manual compass has shipped.
+    - *The "You" page keeps the secondary links the mock shows* (Settings,
+      What's new, Feedback, Error logs): the tab stops being Settings, so
+      nothing may become unreachable.
 - **B6 (done 2026-10-15).** Conflict review rebuilt with the §2.10 resolution
   shapes, replacing the per-field card and resolvers.
   - *Two shapes, as decided.* An **activity, group, memo or session** shows both
