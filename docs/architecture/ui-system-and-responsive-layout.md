@@ -102,9 +102,12 @@ notice are gone. `components/layout/app-shell.tsx` now owns the frame:
   replace it route by route (`routeUsesWideColumn` in
   `lib/navigation/destinations.ts` lists the ones that have; the shell widens to
   `lg:max-w-6xl` for them). **The Journal has (B3c2):** a list and a sticky
-  reader rail at `lg`, the whole width for its Map and Gallery views. Today,
-  Settings and Sync issues follow (B2, B6/B8); until then they read as one
-  readable column beside the sidebar. Bottom sheets are capped at `max-w-xl` and centered from `md`.
+  reader rail at `lg`, the whole width for its Map and Gallery views. **Settings
+  has panel navigation (B8)**: a rail beside the open panel at `lg`, a strip on
+  a phone; it keeps the capped column, with the rail and panel inside it. Today
+  and Sync issues follow (B2, B6); until then they read as one readable column
+  beside the sidebar. Bottom sheets are capped at `max-w-xl` and centered from
+  `md`.
 - `⌘/Ctrl+K` opens a command palette (a Dialog with a combobox/listbox; filter
   logic in `lib/navigation/filter-commands.ts`). It covers destinations, send
   feedback, and appearance, and, from two characters typed, the journal record:

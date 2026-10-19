@@ -66,12 +66,16 @@
       "confirmPassword": "Confirm password",
       "passwordTooShort": "Password must be at least 6 characters.",
       "passwordMismatch": "Passwords do not match.",
-      "saveNewPassword": "Save new password"
+      "saveNewPassword": "Save new password",
+      "continue": "Continue"
     },
     "screen": {
-      "title": "Upwards",
-      "subtitle": "Sign in to keep your days, journal and habits in one place, on every device.",
-      "offline": "You're offline. Signing in needs a connection the first time; after that Upwards works offline."
+      "title": "Sign in",
+      "subtitle": "Keep your days, journal and habits in one place, on every device.",
+      "offline": "You're offline. Signing in needs a connection the first time; after that Upwards works offline.",
+      "newHere": "New here?",
+      "createAccount": "Create an account",
+      "note": "Your days stay on this device and sync to your account."
     },
     "accountSwitch": {
       "title": "Unsaved changes from another account",
@@ -107,7 +111,8 @@
         },
         "post": "Server reached, but sign-in requests to it are failing: {{detail}}"
       }
-    }
+    },
+    "backToSignIn": "Back to sign in"
   },
   "sync": {
     "title": "Cloud sync",
@@ -436,5 +441,14 @@
       "placeholder": "Not set",
       "clear": "Remove birthday"
     }
+  },
+  "panels": {
+    "label": "Settings sections",
+    "general": "General",
+    "journal": "Journal",
+    "account": "Account and sync",
+    "ai": "AI",
+    "data": "Your data",
+    "about": "About"
   }
 }

@@ -1055,4 +1055,38 @@ Track B gets its own breakdown before it starts. Its shape:
 - **B7.** Month and year clip compilations, if the A10 spike passed. **The
   iPhone spike has not been run** (deferred 2026-10-09, see §2.5); do not start
   B7 until it has.
-- **B8.** Settings and sign-in restyled.
+- **B8 (done 2026-10-19).** Settings and sign-in restyled.
+  - *Settings is six panels, not one long list.* General (appearance,
+    language), Journal (places and daily clip, holiday calendars and birthday),
+    Account and sync (sign-in, cloud sync), AI, Your data (backup and restore)
+    and About. At `lg` they are a rail beside the open panel, as
+    `ui-system-and-responsive-layout.md` asked for ("Settings navigation beside
+    the selected panel"); on a phone they are a strip that scrolls sideways and
+    keeps the open one in view. The panel is in the address (`/settings?panel=ai`),
+    so Back, a reload, and links from elsewhere land on it: Home's "Go to
+    Settings" opens AI, Today's "Set up" opens AI, and Sync issues' back arrow
+    returns to Account and sync. An unknown or unavailable panel opens General.
+    The page was 2,700px of ten stacked cards; the longest panel is now 866px.
+    With no account service in the build, the Account and AI panels are not
+    offered rather than shown empty. Nothing was dropped: every card is in a
+    panel (`lib/settings/panels.ts`).
+  - *Sign-in and the two recovery screens share one frame* (`AuthShell`): the
+    `upwards` wordmark (§2.2 of the design doc, built as a component for the
+    first time; the flagship mock had it, the app did not), a large serif title,
+    and an opaque paper card, centred in one column. Sign in is the one primary
+    action and "Create an account" is a quiet second one, because most visits
+    are a return and two equal buttons ask for a choice every time. Inputs and
+    buttons are 44px on a phone. "Forgot password?" is a real tap target. No
+    glass and no AI gradient: this is chrome for a person who is not in the app
+    yet.
+  - *The recovery screens no longer point at an app the person cannot reach.*
+    Signed out, "Forgot password" and "Reset password" used a floating back
+    button and a link to Settings, a page a signed-out person cannot open, so
+    both led to the sign-in screen by accident. They now say "Back to sign in"
+    and go to it; signed in (a link opened from inside the app) they go to
+    Account and sync as before. After a reset, the button continues to the app
+    rather than to Settings.
+  - *Not here.* Onboarding and the one-time daily-clip and location prompts
+    (B5). A sign-in that is not an email and password (a magic link or a
+    provider) is a separate product decision. The settings cards keep their
+    contents; this slice moves and frames them rather than redesigning each.

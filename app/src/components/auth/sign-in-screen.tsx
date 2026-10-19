@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { CloudOff } from "lucide-react";
 
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +15,9 @@ const passwordId = "sign-in-password";
 
 /**
  * What an unauthenticated visitor sees instead of the app (product-scope.md
- * §2.6). A minimal full-screen version of the old settings auth card until the
- * redesign's onboarding replaces it.
+ * §2.6). One primary action, and making an account as a quiet second one: most
+ * visits are a return, and two equal buttons ask the person to choose between
+ * them every time.
  */
 export function SignInScreen() {
   const { t } = useTranslation("settings");
@@ -46,27 +48,37 @@ export function SignInScreen() {
   const confirmationSent = authError === t("auth.checkEmail");
 
   return (
-    <div className="flex min-h-dvh flex-col justify-center px-6 py-12">
-      <header className="mb-8 space-y-2">
-        <h1 className="font-display text-4xl tracking-tight">
-          {t("auth.screen.title")}
-        </h1>
-        <p className="text-pretty text-muted-foreground">
-          {t("auth.screen.subtitle")}
-        </p>
-      </header>
-
+    <AuthShell
+      title={t("auth.screen.title")}
+      description={t("auth.screen.subtitle")}
+      footer={
+        <>
+          <p>
+            <Link
+              to="/settings/forgot-password"
+              className="inline-flex min-h-11 items-center underline underline-offset-2 hover:text-foreground"
+            >
+              {t("auth.forgotPassword")}
+            </Link>
+          </p>
+          <p className="text-xs">{t("auth.screen.note")}</p>
+        </>
+      }
+    >
       {!isOnline ? (
         <div
           role="status"
-          className="mb-4 flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground"
+          className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground"
         >
           <CloudOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>{t("auth.screen.offline")}</span>
         </div>
       ) : null}
 
-      <form onSubmit={handleSignIn} className="space-y-4">
+      <form
+        onSubmit={handleSignIn}
+        className="space-y-4 rounded-2xl border border-border bg-card p-5"
+      >
         <div className="space-y-2">
           <Label htmlFor={emailId}>{t("auth.email")}</Label>
           <Input
@@ -74,6 +86,7 @@ export function SignInScreen() {
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
+            className="h-11 md:h-10"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -85,6 +98,7 @@ export function SignInScreen() {
             id={passwordId}
             type="password"
             autoComplete="current-password"
+            className="h-11 md:h-10"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -100,34 +114,27 @@ export function SignInScreen() {
           </p>
         ) : null}
 
-        <div className="flex gap-2">
-          <Button
-            type="submit"
-            disabled={authLoading || !isOnline}
-            className="flex-1"
-          >
-            {authLoading ? "…" : t("auth.signIn")}
-          </Button>
+        <Button
+          type="submit"
+          disabled={authLoading || !isOnline}
+          className="h-11 w-full md:h-10"
+        >
+          {authLoading ? "…" : t("auth.signIn")}
+        </Button>
+
+        <div className="flex flex-wrap items-center justify-center gap-x-1 text-sm text-muted-foreground">
+          <span>{t("auth.screen.newHere")}</span>
           <Button
             type="button"
-            variant="outline"
+            variant="link"
             disabled={authLoading || !isOnline}
-            className="flex-1"
+            className="h-11 px-1 md:h-10"
             onClick={() => void handleSignUp()}
           >
-            {authLoading ? "…" : t("auth.signUp")}
+            {t("auth.screen.createAccount")}
           </Button>
         </div>
       </form>
-
-      <p className="mt-6 text-center">
-        <Link
-          to="/settings/forgot-password"
-          className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
-        >
-          {t("auth.forgotPassword")}
-        </Link>
-      </p>
-    </div>
+    </AuthShell>
   );
 }

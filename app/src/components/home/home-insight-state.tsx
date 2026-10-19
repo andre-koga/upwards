@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { InsightNotice } from "@/hooks/use-home-insight";
+import { settingsPanelPath } from "@/lib/settings/panels";
 
 type State =
   | { phase: "loading" }
@@ -58,7 +59,7 @@ export default function HomeInsightState({
             {t("setup.description")}
           </p>
           <Button asChild size="sm" className="h-11 md:h-8">
-            <Link to="/settings">{t("setup.cta")}</Link>
+            <Link to={settingsPanelPath("ai")}>{t("setup.cta")}</Link>
           </Button>
         </>
       ) : null}

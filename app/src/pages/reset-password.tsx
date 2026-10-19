@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
+import { settingsPanelPath } from "@/lib/settings/panels";
 import { useAuth } from "@/lib/use-auth";
 
 const passwordId = "reset-password-new";
@@ -60,8 +61,13 @@ export default function ResetPasswordPage() {
   const { t: tCommon } = useTranslation("common");
   const { t: tNav } = useTranslation("nav");
   const navigate = useNavigate();
-  const { isSupabaseConfigured, authLoading, authError, updatePassword } =
-    useAuth();
+  const {
+    isSupabaseConfigured,
+    isAuthed,
+    authLoading,
+    authError,
+    updatePassword,
+  } = useAuth();
   const [checkingLink, setCheckingLink] = useState(() =>
     Boolean(supabase && isSupabaseConfigured)
   );
@@ -125,95 +131,92 @@ export default function ResetPasswordPage() {
     }
   };
 
+  const linkClass =
+    "inline-flex min-h-11 items-center underline underline-offset-2 hover:text-foreground";
+  // Signed out, the way back is sign-in at the root. Signed in, it is Settings.
+  const back = isAuthed ? (
+    <Link to={settingsPanelPath("account")} className={linkClass}>
+      {tNav("backToSettings")}
+    </Link>
+  ) : (
+    <Link to="/" className={linkClass}>
+      {t("auth.backToSignIn")}
+    </Link>
+  );
+
   if (!isSupabaseConfigured) {
     return (
-      <div className="space-y-3 p-4 pb-24">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {t("auth.resetPasswordPage.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("auth.syncNotConfigured")}
-          </p>
-        </header>
-        <FloatingBackButton to="/settings" title={tNav("settings")} />
-      </div>
+      <AuthShell
+        title={t("auth.resetPasswordPage.title")}
+        description={t("auth.syncNotConfigured")}
+        footer={back}
+      >
+        {null}
+      </AuthShell>
     );
   }
 
   if (checkingLink) {
     return (
-      <div className="space-y-3 p-4 pb-24">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {t("auth.resetPasswordPage.title")}
-          </h1>
-        </header>
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          {t("auth.resetPasswordPage.verifying")}
-        </p>
-        <FloatingBackButton to="/settings" title={tNav("settings")} />
-      </div>
+      <AuthShell
+        title={t("auth.resetPasswordPage.title")}
+        description={t("auth.resetPasswordPage.verifying")}
+      >
+        {null}
+      </AuthShell>
     );
   }
 
   if (!linkValid && !done) {
     return (
-      <div className="space-y-3 p-4 pb-24">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {t("auth.resetPasswordPage.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("auth.resetPasswordPage.invalidLink")}
-          </p>
-        </header>
-        <Button variant="outline" className="w-full" asChild>
+      <AuthShell
+        title={t("auth.resetPasswordPage.title")}
+        description={t("auth.resetPasswordPage.invalidLink")}
+        footer={back}
+      >
+        <Button asChild className="h-11 w-full md:h-10">
           <Link to="/settings/forgot-password">
             {t("auth.resetPasswordPage.requestNewLink")}
           </Link>
         </Button>
-        <FloatingBackButton to="/settings" title={tNav("settings")} />
-      </div>
+      </AuthShell>
     );
   }
 
   if (done) {
     return (
-      <div className="space-y-3 p-4 pb-24">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {t("auth.resetPasswordPage.updatedTitle")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("auth.resetPasswordPage.updatedDescription")}
-          </p>
-        </header>
+      <AuthShell
+        title={t("auth.resetPasswordPage.updatedTitle")}
+        description={t("auth.resetPasswordPage.updatedDescription")}
+      >
         <Button
-          className="w-full"
-          onClick={() => navigate("/settings", { replace: true })}
+          className="h-11 w-full md:h-10"
+          onClick={() =>
+            navigate(isAuthed ? settingsPanelPath("account") : "/", {
+              replace: true,
+            })
+          }
         >
-          {t("auth.resetPasswordPage.goToSettings")}
+          {isAuthed
+            ? t("auth.resetPasswordPage.goToSettings")
+            : t("auth.resetPasswordPage.continue")}
         </Button>
-        <FloatingBackButton to="/settings" title={tNav("settings")} />
-      </div>
+      </AuthShell>
     );
   }
 
   const errorMessage = localError ?? authError;
 
   return (
-    <div className="space-y-3 p-4 pb-24">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">
-          {t("auth.resetPasswordPage.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("auth.resetPasswordPage.chooseDescription")}
-        </p>
-      </header>
-
-      <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border p-4">
+    <AuthShell
+      title={t("auth.resetPasswordPage.title")}
+      description={t("auth.resetPasswordPage.chooseDescription")}
+      footer={back}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-2xl border border-border bg-card p-5"
+      >
         <div className="space-y-2">
           <Label htmlFor={passwordId}>
             {t("auth.resetPasswordPage.newPassword")}
@@ -222,6 +225,7 @@ export default function ResetPasswordPage() {
             id={passwordId}
             type="password"
             autoComplete="new-password"
+            className="h-11 md:h-10"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -236,6 +240,7 @@ export default function ResetPasswordPage() {
             id={confirmId}
             type="password"
             autoComplete="new-password"
+            className="h-11 md:h-10"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             required
@@ -244,17 +249,21 @@ export default function ResetPasswordPage() {
         </div>
 
         {errorMessage && (
-          <p className="text-xs text-destructive">{errorMessage}</p>
+          <p role="alert" className="text-sm text-destructive">
+            {errorMessage}
+          </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={authLoading}>
+        <Button
+          type="submit"
+          className="h-11 w-full md:h-10"
+          disabled={authLoading}
+        >
           {authLoading
             ? tCommon("saving")
             : t("auth.resetPasswordPage.saveNewPassword")}
         </Button>
       </form>
-
-      <FloatingBackButton to="/settings" title={tNav("settings")} />
-    </div>
+    </AuthShell>
   );
 }

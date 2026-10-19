@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { settingsPanelPath } from "@/lib/settings/panels";
 import { useAuth } from "@/lib/use-auth";
 
 const emailId = "forgot-password-email";
@@ -16,6 +17,7 @@ export default function ForgotPasswordPage() {
   const { t: tNav } = useTranslation("nav");
   const {
     isSupabaseConfigured,
+    isAuthed,
     authLoading,
     authError,
     setAuthError,
@@ -36,46 +38,55 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  // Signed out, the way back is the sign-in screen at the root. Signed in
+  // (a link opened from inside the app), it is Settings.
+  const back = isAuthed ? (
+    <Link
+      to={settingsPanelPath("account")}
+      className="inline-flex min-h-11 items-center underline underline-offset-2 hover:text-foreground"
+    >
+      {tNav("backToSettings")}
+    </Link>
+  ) : (
+    <Link
+      to="/"
+      className="inline-flex min-h-11 items-center underline underline-offset-2 hover:text-foreground"
+    >
+      {t("auth.backToSignIn")}
+    </Link>
+  );
+
   if (!isSupabaseConfigured) {
     return (
-      <div className="space-y-3 p-4 pb-24">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {t("auth.forgotPasswordPage.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("auth.syncNotConfigured")}
-          </p>
-        </header>
-        <FloatingBackButton to="/settings" title={tNav("settings")} />
-      </div>
+      <AuthShell
+        title={t("auth.forgotPasswordPage.title")}
+        description={t("auth.syncNotConfigured")}
+        footer={back}
+      >
+        {null}
+      </AuthShell>
     );
   }
 
   return (
-    <div className="space-y-3 p-4 pb-24">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">
-          {t("auth.forgotPasswordPage.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("auth.forgotPasswordPage.description")}
-        </p>
-      </header>
-
+    <AuthShell
+      title={t("auth.forgotPasswordPage.title")}
+      description={t("auth.forgotPasswordPage.description")}
+      footer={back}
+    >
       {sent ? (
-        <div className="space-y-3 rounded-xl border border-border p-4">
+        <div
+          role="status"
+          className="rounded-2xl border border-border bg-card p-5"
+        >
           <p className="text-sm text-green">
             {t("auth.forgotPasswordPage.sent", { email: email.trim() })}
           </p>
-          <Button variant="outline" className="w-full" asChild>
-            <Link to="/settings">{tNav("backToSettings")}</Link>
-          </Button>
         </div>
       ) : (
         <form
           onSubmit={handleSubmit}
-          className="space-y-3 rounded-xl border p-4"
+          className="space-y-4 rounded-2xl border border-border bg-card p-5"
         >
           <div className="space-y-2">
             <Label htmlFor={emailId}>{tCommon("email")}</Label>
@@ -84,29 +95,30 @@ export default function ForgotPasswordPage() {
               type="email"
               autoComplete="email"
               placeholder={tCommon("emailPlaceholder")}
+              className="h-11 md:h-10"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
-          {authError && <p className="text-xs text-destructive">{authError}</p>}
+          {authError && (
+            <p role="alert" className="text-sm text-destructive">
+              {authError}
+            </p>
+          )}
 
-          <Button type="submit" className="w-full" disabled={authLoading}>
+          <Button
+            type="submit"
+            className="h-11 w-full md:h-10"
+            disabled={authLoading}
+          >
             {authLoading
               ? t("auth.forgotPasswordPage.sending")
               : t("auth.forgotPasswordPage.sendLink")}
           </Button>
         </form>
       )}
-
-      <p className="text-center text-xs text-muted-foreground">
-        <Link to="/settings" className="underline underline-offset-2">
-          {tNav("backToSettings")}
-        </Link>
-      </p>
-
-      <FloatingBackButton to="/settings" title={tNav("settings")} />
-    </div>
+    </AuthShell>
   );
 }
