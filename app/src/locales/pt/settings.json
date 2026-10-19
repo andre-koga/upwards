@@ -385,6 +385,13 @@
     "errorLogs": "Registros de erro",
     "github": "Código-fonte"
   },
+  "deviceReport": {
+    "title": "Dados deste aparelho",
+    "hint": "Conta o que está guardado neste celular, sem o texto das entradas. Envie quando o app parecer vazio.",
+    "check": "Verificar este aparelho",
+    "copy": "Copiar",
+    "copied": "Copiado"
+  },
   "optIns": {
     "title": "Privacidade e extras",
     "description": "Ambos começam desativados até você ativar, e acompanham sua conta nos outros dispositivos.",

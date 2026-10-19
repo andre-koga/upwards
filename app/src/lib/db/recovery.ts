@@ -10,6 +10,7 @@ import {
   clearSyncProtocolV2,
   loadLastSignedInUserId,
 } from "@/lib/sync/sync-storage";
+import { recordBreadcrumb } from "@/lib/breadcrumbs";
 import { LOCAL_DB_NAME, MIN_UPGRADABLE_VERSION } from "./index";
 
 /**
@@ -233,6 +234,10 @@ export async function prepareLocalDatabase(): Promise<RecoveryBundle | null> {
     idb.close();
   }
 
+  recordBreadcrumb("db.deleted", {
+    reason: bundle?.reason ?? "no_rows",
+    savedBundle: bundle !== null,
+  });
   await deleteDatabase(LOCAL_DB_NAME);
   // The next sync must bootstrap from the snapshot, not resume a cursor that
   // described the deleted rows.

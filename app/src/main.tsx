@@ -11,6 +11,7 @@ import {
   prepareSignedInSession,
 } from "./lib/sync/account-switch";
 import { prepareLocalDatabase } from "./lib/db/recovery";
+import { recordDeviceState } from "./lib/breadcrumbs";
 import { startRecoveryAutoImport } from "./lib/db/recovery-import";
 import i18n from "./lib/i18n";
 
@@ -42,6 +43,11 @@ for (const key of [
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 
 function startApp() {
+  void recordDeviceState("boot");
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible")
+      void recordDeviceState("resume");
+  });
   // Drive auto-sync from confirmed auth state — never start before session is known
   if (isSupabaseConfigured && supabase) {
     supabase.auth.onAuthStateChange((event, session) => {

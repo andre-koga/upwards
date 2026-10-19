@@ -7,6 +7,9 @@ import { AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { collectDeviceReport } from "@/lib/device-report";
 
 interface LogItemProps {
   log: AppLog;
@@ -68,6 +71,59 @@ async function deleteOldLogs() {
   } catch (error) {
     console.error("Failed to delete old logs:", error);
   }
+}
+
+function DeviceReportSection() {
+  const { t } = useTranslation("settings");
+  const [report, setReport] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const check = async () => {
+    setBusy(true);
+    setCopied(false);
+    setReport(await collectDeviceReport());
+    setBusy(false);
+  };
+
+  const copy = async () => {
+    if (!report) return;
+    try {
+      await navigator.clipboard.writeText(report);
+      setCopied(true);
+    } catch {
+      // Clipboard blocked: the report stays on screen to select by hand.
+    }
+  };
+
+  return (
+    <section className="mt-6 space-y-2">
+      <h2 className="text-xs font-medium text-muted-foreground">
+        {t("deviceReport.title")}
+      </h2>
+      <p className="text-xs text-muted-foreground">{t("deviceReport.hint")}</p>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void check()}
+          disabled={busy}
+        >
+          {t("deviceReport.check")}
+        </Button>
+        {report && (
+          <Button variant="outline" size="sm" onClick={() => void copy()}>
+            {copied ? t("deviceReport.copied") : t("deviceReport.copy")}
+          </Button>
+        )}
+      </div>
+      {report && (
+        <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border bg-card p-2 font-mono text-xs tabular-nums text-muted-foreground">
+          {report}
+        </pre>
+      )}
+    </section>
+  );
 }
 
 export default function ErrorLogsPage() {
@@ -154,6 +210,8 @@ export default function ErrorLogsPage() {
           ))}
         </div>
       )}
+
+      <DeviceReportSection />
 
       <FloatingBackButton to="/" title="Home" />
     </AppPageShell>

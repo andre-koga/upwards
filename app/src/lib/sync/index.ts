@@ -41,6 +41,7 @@ import {
 } from "./realtime-sync";
 import { syncDeviceRegistry } from "./remote-device-sync";
 import { registerSyncScheduler, clearSyncScheduler } from "./sync-scheduler";
+import { recordBreadcrumb } from "@/lib/breadcrumbs";
 import { pullAndApplySnapshot } from "./snapshot-sync";
 import {
   getObservedDataEpoch,
@@ -281,6 +282,7 @@ class SyncEngine {
       await requeueClientOutdatedOperations();
       const alreadyV2 = loadSyncProtocolV2();
       const bootstrapped = await this.bootstrapProtocolV2();
+      if (!alreadyV2 && !bootstrapped) recordBreadcrumb("bootstrap.incomplete");
       const pushOpsResult = await pushPendingOperations();
       if (pushOpsResult.skipped === true) {
         const msg =
@@ -332,6 +334,9 @@ class SyncEngine {
       } else if (isTransientNetworkError(err)) {
         interruptedTransiently = true;
         console.warn("[sync] interrupted (transient):", err);
+        // Transient failures are deliberately kept out of Sync issues, so this
+        // is the only record that a sync did not finish.
+        recordBreadcrumb("sync.transient", { message: getErrorMessage(err) });
       } else {
         const msg = getErrorMessage(err, ERROR_MESSAGES.SYNC);
         logError("Sync failed", err);

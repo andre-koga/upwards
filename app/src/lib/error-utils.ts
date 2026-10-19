@@ -1,4 +1,5 @@
 import { db, newId, now } from "@/lib/db";
+import { recordBreadcrumb } from "@/lib/breadcrumbs";
 
 /**
  * Extract a user-facing error message from an unknown error.
@@ -77,6 +78,8 @@ export function logError(context: string, err: unknown): void {
       });
     } catch (e) {
       console.error("Failed to store error log:", e);
+      // The database that holds Error logs is the thing that failed.
+      recordBreadcrumb("log.store_failed", { context, message });
     }
   })();
 }

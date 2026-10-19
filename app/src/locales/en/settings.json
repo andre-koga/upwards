@@ -385,6 +385,13 @@
     "errorLogs": "Error logs",
     "github": "Source code"
   },
+  "deviceReport": {
+    "title": "This device's data",
+    "hint": "Counts what is stored on this phone, with no entry text. Send it when the app looks empty.",
+    "check": "Check this device",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
   "optIns": {
     "title": "Privacy and extras",
     "description": "Both are off until you turn them on, and they follow your account to your other devices.",
