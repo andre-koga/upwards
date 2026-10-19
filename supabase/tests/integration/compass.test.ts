@@ -98,6 +98,19 @@ describe("compass items", () => {
     expect((await stored(user, id))?.text).toBe("From A");
   });
 
+  it("accepts offline edits collapsed into one, whose base is the device's own earlier edit", async () => {
+    // The client keeps only the newest of several pending edits, and that edit's
+    // base is the previous local edit (T1), which the server has never seen.
+    // The server holds T0, older than the base, so the edit is not stale.
+    const id = newId();
+    await submitOps(user.deviceA, [itemOp("a", id)]);
+    const [collapsed] = await submitOps(user.deviceA, [
+      itemOp("a", id, { text: "After two offline edits", updated_at: T2 }, T1),
+    ]);
+    expect(collapsed.status).toBe("accepted");
+    expect((await stored(user, id))?.text).toBe("After two offline edits");
+  });
+
   it("never lets a second create of the same row overwrite the first", async () => {
     // The north star has one id on every device, so two devices that write it
     // offline both arrive with no base revision.

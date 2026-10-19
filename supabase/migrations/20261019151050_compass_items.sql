@@ -78,8 +78,11 @@ CREATE POLICY "Users can update their own compass items"
 -- when changing the behavior; do not recreate the one-argument signatures.
 --
 -- Compass ops are current-state upserts with optimistic concurrency:
---   * a stale base_revision is a conflict, compared as a real timestamp (the
---     text form differs between Postgres and the client's ISO string);
+--   * a stale base_revision is a conflict: the server's row is strictly NEWER
+--     than the base. Compared as a real timestamp (the text form differs
+--     between Postgres and the client's ISO string), and "newer", not
+--     "different": the client collapses several offline edits into one op whose
+--     base is its own previous edit, a version the server has never seen;
 --   * an op with no base that meets a row that already exists is a conflict
 --     too. The north star has one id on every device, so two devices that write
 --     it offline both arrive with no base; the second must be reviewed, never
@@ -159,7 +162,7 @@ BEGIN
       END IF;
 
       op_status := 'accepted';
-      IF remote_ts IS NOT NULL AND (base_ts IS NULL OR remote_ts <> base_ts) THEN
+      IF remote_ts IS NOT NULL AND (base_ts IS NULL OR remote_ts > base_ts) THEN
         op_status := 'conflict';
       END IF;
 

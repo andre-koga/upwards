@@ -505,8 +505,10 @@ the sync protocol 4. Three things the build settled that the plan above did not
 say, and that the next current-state table will meet too:
 
 1. **Conflicts are decided on real timestamps, and a create that meets an
-   existing row is a conflict.** The server compares `updated_at` to the
-   client's `base_revision` as `timestamptz`. Postgres renders a timestamp as
+   existing row is a conflict.** The server flags a conflict when its row is
+   strictly newer than the client's `base_revision`, compared as `timestamptz`
+   ("newer", not "different": see Merge rules, "How the server decides an edit
+   is stale"). Postgres renders a timestamp as
    `2026-10-19 10:00:00+00` and the client sends `2026-10-19T10:00:00.000Z`;
    compared as text a space sorts below `T`, so the answer depends on the date
    part alone. An op with no base that finds the row already there is a
