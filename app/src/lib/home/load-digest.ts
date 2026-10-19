@@ -11,6 +11,12 @@ export interface HomeDigest {
   items: DigestItem[];
   /** How many habits the digest read, so "nothing to act on" can be told from "nothing yet". */
   trackedHabits: number;
+  /**
+   * The habits that exist and can be acted on right now. An AI suggestion made
+   * earlier may name one that has since been archived or deleted; this is how
+   * its action knows.
+   */
+  habits: Array<{ id: string; pinned: boolean }>;
 }
 
 /**
@@ -39,5 +45,6 @@ export async function loadHomeDigest(today: string): Promise<HomeDigest> {
     items: buildDigest({ habits, journal }),
     trackedHabits: habits.filter((habit) => habit.figures.type === "habit")
       .length,
+    habits: habits.map((habit) => ({ id: habit.id, pinned: habit.pinned })),
   };
 }

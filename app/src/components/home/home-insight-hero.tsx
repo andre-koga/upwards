@@ -35,6 +35,16 @@ export default function HomeInsightHero({
   const { t } = useTranslation("home");
   const [showNumbers, setShowNumbers] = useState(false);
   const figures = parseInsightFigures(insight.fingerprint);
+  // The AI's own sentence only when its figures backed it; otherwise what the
+  // numbers say for certain, so the hero is never empty and never invented.
+  const headline =
+    insight.summary ||
+    (figures
+      ? t("hero.fallbackSummary", {
+          percent: Math.round(figures.completionRate * 100),
+          days: parseInt(figures.range, 10) || 7,
+        })
+      : t("hero.fallbackNoFigures"));
   const noticeText =
     notice?.kind === "offline"
       ? t("notice.offline")
@@ -105,7 +115,7 @@ export default function HomeInsightHero({
           id="home-insight-heading"
           className="mt-5 max-w-lg font-display text-[clamp(1.7rem,4.4vw,2.5rem)] leading-[1.12] tracking-[-0.02em]"
         >
-          {insight.summary}
+          {headline}
         </h2>
 
         {noticeText ? (

@@ -1,10 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requestCompletion } from "../_shared/chat-completion.ts";
 import {
-  adaptCompletionParams,
-  buildCompletionBody,
-  initialCompletionParams,
-} from "../_shared/completion-params.ts";
-import { providerMessage, truncate } from "../_shared/provider-message.ts";
+  MAX_SUGGESTIONS,
+  insightSystemPrompt,
+  insightUserMessage,
+  parseInsight,
+  parseInsightRequest,
+} from "../_shared/insight.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,14 +28,15 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
 // aggregated stats only, capped output tokens, and a hard daily call cap
 // per user so a buggy client can't burn through someone's key budget.
 const MAX_CALLS_PER_DAY = 20;
-const MAX_PARAM_ATTEMPTS = 3;
-const REQUEST_TIMEOUT_MS = 20000;
-const MAX_RECOMMENDATIONS = 3;
-const MAX_RECOMMENDATION_LENGTH = 220;
-const MAX_SUMMARY_LENGTH = 300;
-// Aggregated stats payload only — never raw journal/task text. Cap its size
-// defensively since it is untrusted client input.
+// Up to 12 habits of figures; the body is untrusted client input.
 const MAX_PAYLOAD_BYTES = 4000;
+// A one-sentence summary and up to MAX_SUGGESTIONS short suggestions, about 40
+// tokens each. `max_completion_tokens` also counts hidden reasoning, so it gets
+// the same headroom the other calls do.
+const INSIGHT_TOKEN_CAPS = {
+  maxTokens: 150 + MAX_SUGGESTIONS * 60,
+  maxCompletionTokens: 1200,
+};
 
 const json = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), {
@@ -46,42 +49,6 @@ const json = (status: number, body: Record<string, unknown>) =>
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-interface InsightResult {
-  summary: string;
-  recommendations: string[];
-}
-
-function parseModelOutput(raw: string): InsightResult {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    // Model didn't return clean JSON — fall back to raw text as the summary.
-    return {
-      summary: truncate(raw.trim(), MAX_SUMMARY_LENGTH),
-      recommendations: [],
-    };
-  }
-  if (typeof parsed !== "object" || parsed === null) {
-    return {
-      summary: truncate(raw.trim(), MAX_SUMMARY_LENGTH),
-      recommendations: [],
-    };
-  }
-  const obj = parsed as Record<string, unknown>;
-  const summary =
-    typeof obj.summary === "string"
-      ? truncate(obj.summary.trim(), MAX_SUMMARY_LENGTH)
-      : "";
-  const recommendations = Array.isArray(obj.recommendations)
-    ? obj.recommendations
-        .filter((item): item is string => typeof item === "string")
-        .slice(0, MAX_RECOMMENDATIONS)
-        .map((item) => truncate(item.trim(), MAX_RECOMMENDATION_LENGTH))
-    : [];
-  return { summary, recommendations };
 }
 
 Deno.serve(async (request) => {
@@ -109,12 +76,14 @@ Deno.serve(async (request) => {
   if (bodyText.length > MAX_PAYLOAD_BYTES) {
     return json(413, { error: "Payload too large" });
   }
-  let statsPayload: unknown;
+  let body: unknown;
   try {
-    statsPayload = bodyText ? JSON.parse(bodyText) : {};
+    body = bodyText ? JSON.parse(bodyText) : {};
   } catch {
     return json(400, { error: "Invalid JSON body" });
   }
+  const insightRequest = parseInsightRequest(body);
+  if (!insightRequest) return json(400, { error: "Invalid insight request" });
 
   const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey);
   const { data: settings, error: settingsError } = await adminClient
@@ -140,79 +109,17 @@ Deno.serve(async (request) => {
     });
   }
 
-  const systemPrompt =
-    "You are a terse habit coach. You receive aggregated statistics about a " +
-    "user's habits, tasks, and journaling — never raw journal text. Reply with " +
-    "compact JSON only, matching exactly: " +
-    '{"summary": string, "recommendations": string[]}. ' +
-    `The summary is one sentence. Provide at most ${MAX_RECOMMENDATIONS} short, ` +
-    "specific, actionable recommendations grounded only in the numbers given. " +
-    "No preamble, no markdown, JSON only.";
+  const outcome = await requestCompletion(
+    settings,
+    [
+      { role: "system", content: insightSystemPrompt() },
+      { role: "user", content: insightUserMessage(insightRequest) },
+    ],
+    INSIGHT_TOKEN_CAPS,
+  );
+  if (!outcome.ok) return json(outcome.status, outcome.body);
 
-  let completionText: string;
-  try {
-    const messages = [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: JSON.stringify(statsPayload) },
-    ];
-    // Providers disagree about token and temperature parameters. Start from the
-    // likeliest shape and change only what the provider names as unsupported;
-    // each retry fixes one named problem, so this ends after a few attempts.
-    let params = initialCompletionParams(settings.base_url);
-    let response: Response | null = null;
-    for (let attempt = 0; attempt < MAX_PARAM_ATTEMPTS; attempt += 1) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-      try {
-        response = await fetch(`${settings.base_url}/chat/completions`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${settings.api_key}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(
-            buildCompletionBody(settings.model, messages, params),
-          ),
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timer);
-      }
-      if (response.ok || response.status !== 400) break;
-      const detail = await response.clone().text();
-      const adapted = adaptCompletionParams(params, detail);
-      if (!adapted) break;
-      params = adapted;
-    }
-    if (!response) throw new Error("No response");
-    if (!response.ok) {
-      const detail = await response.text();
-      console.error("AI provider error:", response.status, detail);
-      return json(502, {
-        error: "AI provider request failed",
-        code: "provider_rejected",
-        provider_status: response.status,
-        provider_message: providerMessage(detail, settings.api_key),
-      });
-    }
-    const data = await response.json();
-    completionText = data?.choices?.[0]?.message?.content ?? "";
-    if (!completionText) {
-      return json(502, {
-        error: "AI provider returned an empty response",
-        code: "provider_empty",
-      });
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Request failed";
-    console.error("AI provider request threw:", message);
-    return json(502, {
-      error: "Could not reach the AI provider",
-      code: "provider_unreachable",
-    });
-  }
-
-  // Only increment the cap after a successful provider call.
+  // The provider answered, so the call counts, whatever the answer is worth.
   const { error: updateError } = await adminClient
     .from("user_ai_settings")
     .update({ calls_today: callsToday + 1, calls_reset_at: today })
@@ -221,6 +128,22 @@ Deno.serve(async (request) => {
     console.error("Could not update AI call counter:", updateError.message);
   }
 
-  const insight = parseModelOutput(completionText);
-  return json(200, insight);
+  // Only what the figures back is sent on. An answer that is not the shape
+  // asked for is an error; one with nothing left after grounding is valid and
+  // simply says less, and the app falls back to what it can say for certain.
+  const insight = parseInsight(outcome.text, insightRequest);
+  if (!insight) {
+    console.error("AI insight was not usable, length:", outcome.text.length);
+    return json(502, {
+      error: "The AI did not return a usable insight",
+      code: "provider_invalid",
+    });
+  }
+  return json(200, {
+    summary: insight.summary,
+    suggestions: insight.suggestions,
+    // The same texts as plain strings, for an app version from before
+    // suggestions were tied to a habit. Drop once no such version is in use.
+    recommendations: insight.suggestions.map((suggestion) => suggestion.text),
+  });
 });

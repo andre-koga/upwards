@@ -1,11 +1,31 @@
+import type { InsightSuggestion } from "@/lib/ai/insight-response";
+
 const CACHE_KEY = "okhabit:ai_insight_cache";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 export interface CachedInsight {
   generatedAt: string; // ISO timestamp
   fingerprint: string;
+  /** Empty when the AI gave none its figures back; Home then says it itself. */
   summary: string;
+  /**
+   * Plain suggestions that name no habit: from an insight made before
+   * suggestions were tied to one. Empty for a new insight.
+   */
   recommendations: string[];
+  /** Absent in an insight cached before suggestions were tied to a habit. */
+  suggestions?: InsightSuggestion[];
+}
+
+function isSuggestion(value: unknown): value is InsightSuggestion {
+  const v = value as Partial<InsightSuggestion> | null;
+  return (
+    !!v &&
+    typeof v.key === "string" &&
+    typeof v.activityId === "string" &&
+    typeof v.name === "string" &&
+    typeof v.text === "string"
+  );
 }
 
 /** Local-only cache — never synced. */
@@ -22,7 +42,13 @@ export function getCachedInsight(): CachedInsight | null {
     ) {
       return null;
     }
-    return parsed;
+    // A malformed suggestions list is dropped, not the whole insight.
+    return {
+      ...parsed,
+      suggestions: Array.isArray(parsed.suggestions)
+        ? parsed.suggestions.filter(isSuggestion)
+        : undefined,
+    };
   } catch {
     return null;
   }

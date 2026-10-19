@@ -7,10 +7,14 @@ import {
 } from "@/lib/time-utils";
 import { journalStreakAsOf } from "@/lib/journal/streak";
 import { loadHabitFacts } from "@/lib/ai/habit-facts";
+import type { InsightRequestHabit } from "@/lib/ai/insight-response";
+import { MAX_INSIGHT_ACTIVITIES } from "../../../../supabase/functions/_shared/insight";
 
 const RANGE_DAYS = 7;
 
 export interface ActivityInsightStat {
+  /** Short key the model echoes back; the habit's id never leaves the device. */
+  key: string;
   name: string;
   targetPerDay: number;
   completedDays: number;
@@ -34,7 +38,11 @@ export interface InsightPayload {
  * or task text. This is the main token-budget control point: keep this
  * payload small and numeric.
  */
-export async function buildInsightPayload(): Promise<InsightPayload> {
+export async function buildInsightRequest(): Promise<{
+  payload: InsightPayload;
+  /** Which habit each key stands for, kept on this device. */
+  habits: InsightRequestHabit[];
+}> {
   const today = todayDateString();
   // The journal window is the seven days ending today.
   const startStr = toDateString(
@@ -42,9 +50,11 @@ export async function buildInsightPayload(): Promise<InsightPayload> {
   );
 
   // The habits come from the same facts Home's digest reads, so what the model
-  // is told and what the screen shows are one account of the week.
-  const habits = await loadHabitFacts(today);
-  const activityStats: ActivityInsightStat[] = habits.map((habit) => ({
+  // is told and what the screen shows are one account of the week. Past the
+  // server's limit the rest are left out, in their stored order.
+  const habits = (await loadHabitFacts(today)).slice(0, MAX_INSIGHT_ACTIVITIES);
+  const activityStats: ActivityInsightStat[] = habits.map((habit, index) => ({
+    key: String(index + 1),
     name: habit.name,
     targetPerDay: habit.figures.target,
     completedDays: habit.figures.daysDone,
@@ -72,19 +82,26 @@ export async function buildInsightPayload(): Promise<InsightPayload> {
     .sort((a, b) => (a.entry_date < b.entry_date ? 1 : -1))[0];
 
   return {
-    // Habits cover the seven full days before today; the journal, seven days ending today.
-    range: `${RANGE_DAYS}d`,
-    activities: activityStats,
-    journal: {
-      entriesThisWeek: journalEntries.filter((e) =>
-        Boolean(e.text_content?.trim())
-      ).length,
-      streak: latestJournal
-        ? await journalStreakAsOf(latestJournal.entry_date)
-        : 0,
-      bookmarkedCount: journalEntries.filter((e) => e.is_bookmarked).length,
+    payload: {
+      // Habits cover the seven full days before today; the journal, seven days ending today.
+      range: `${RANGE_DAYS}d`,
+      activities: activityStats,
+      journal: {
+        entriesThisWeek: journalEntries.filter((e) =>
+          Boolean(e.text_content?.trim())
+        ).length,
+        streak: latestJournal
+          ? await journalStreakAsOf(latestJournal.entry_date)
+          : 0,
+        bookmarkedCount: journalEntries.filter((e) => e.is_bookmarked).length,
+      },
+      completionRate,
     },
-    completionRate,
+    habits: habits.map((habit, index) => ({
+      key: String(index + 1),
+      id: habit.id,
+      name: habit.name,
+    })),
   };
 }
 
