@@ -66,12 +66,16 @@
       "confirmPassword": "Confirmar senha",
       "passwordTooShort": "A senha deve ter pelo menos 6 caracteres.",
       "passwordMismatch": "As senhas não coincidem.",
-      "saveNewPassword": "Salvar nova senha"
+      "saveNewPassword": "Salvar nova senha",
+      "continue": "Continuar"
     },
     "screen": {
-      "title": "Upwards",
-      "subtitle": "Entre para manter seus dias, diário e hábitos em um só lugar, em todos os dispositivos.",
-      "offline": "Você está offline. Entrar exige conexão na primeira vez; depois disso o Upwards funciona offline."
+      "title": "Entrar",
+      "subtitle": "Mantenha seus dias, diário e hábitos em um só lugar, em todos os seus dispositivos.",
+      "offline": "Você está offline. Entrar exige conexão na primeira vez; depois disso o Upwards funciona offline.",
+      "newHere": "Primeira vez aqui?",
+      "createAccount": "Criar uma conta",
+      "note": "Seus dias ficam neste dispositivo e sincronizam com a sua conta."
     },
     "accountSwitch": {
       "title": "Alterações não salvas de outra conta",
@@ -107,7 +111,8 @@
         },
         "post": "Servidor alcançado, mas as solicitações de login estão falhando: {{detail}}"
       }
-    }
+    },
+    "backToSignIn": "Voltar para entrar"
   },
   "sync": {
     "title": "Sincronização na nuvem",
@@ -436,5 +441,14 @@
       "placeholder": "Não definido",
       "clear": "Remover aniversário"
     }
+  },
+  "panels": {
+    "label": "Seções das configurações",
+    "general": "Geral",
+    "journal": "Diário",
+    "account": "Conta e sincronização",
+    "ai": "IA",
+    "data": "Seus dados",
+    "about": "Sobre"
   }
 }

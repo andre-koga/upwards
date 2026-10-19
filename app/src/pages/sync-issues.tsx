@@ -31,6 +31,7 @@ import {
 } from "@/lib/sync/pending-operations";
 import { listSyncIssues, resolveSyncIssue } from "@/lib/sync/sync-issues-store";
 import { db } from "@/lib/db";
+import { settingsPanelPath } from "@/lib/settings/panels";
 
 interface SyncIssuesData {
   conflicts: SyncIssue[];
@@ -435,7 +436,10 @@ export default function SyncIssuesPage() {
         onConfirm={() => void handleDiscardPending()}
       />
 
-      <FloatingBackButton to="/settings" title={tNav("settings")} />
+      <FloatingBackButton
+        to={settingsPanelPath("account")}
+        title={tNav("settings")}
+      />
     </AppPageShell>
   );
 }

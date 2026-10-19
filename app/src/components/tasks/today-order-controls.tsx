@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { getActiveLocaleTag } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { AiOrderError } from "./hooks/use-ai-today-order";
+import { settingsPanelPath } from "@/lib/settings/panels";
 
 export interface TodayOrderState {
   /** The AI ordering control is offered (an AI key may or may not be set up). */
@@ -196,7 +197,10 @@ export function TodayOrderStatus(props: TodayOrderState) {
           {notConfigured ? (
             <>
               {" "}
-              <Link to="/settings" className="font-sans underline">
+              <Link
+                to={settingsPanelPath("ai")}
+                className="font-sans underline"
+              >
                 {tAi("setUp")}
               </Link>
             </>
