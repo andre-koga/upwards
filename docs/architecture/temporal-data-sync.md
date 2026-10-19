@@ -527,16 +527,15 @@ say, and that the next current-state table will meet too:
    and the device would mark the op acknowledged. The owner is checked first and
    the op comes back as an error.
 
-**Known gaps found while building this, not fixed here** (they change live
-behavior and need their own review): (a) the generic projection path compares
-`updated_at::TEXT > base_revision`, so a stale edit to a task, activity or group
-made on the same calendar day as the version it replaces is accepted rather than
-flagged, which is the silent last-write-wins this document forbids; (b) the
-`memory` branch uses `IS DISTINCT FROM` on the same text, so a correctly based
-edit is flagged as a conflict; (c) `memories` and `journal_entry_revisions`
-carry no `SELECT` grant, so conflict review cannot read their remote rows.
-`supabase/tests/integration/compass.test.ts` covers the right behavior for the
-compass and is the pattern to copy when these are repaired.
+**Bugs found while building this, fixed separately.** Three defects in the
+older paths were found by the same tests and repaired in #125 (they change live
+behavior, so they were reviewed on their own): the generic projection path
+accepted a stale edit made on the same calendar day (silent last-write-wins);
+the `memory` branch flagged every edit as a conflict; and `memories` had no
+`SELECT` grant, so conflict review could not read its remote rows. See "How the
+server decides an edit is stale" under Merge rules.
+`supabase/tests/integration/compass.test.ts` and `conflict-detection.test.ts`
+are the patterns to copy.
 
 **Required tests.** Two devices both write the north star offline and end with
 one row and a reviewable conflict. Two devices each add a goal and both end with
