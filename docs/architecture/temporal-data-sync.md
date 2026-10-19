@@ -396,6 +396,30 @@ sync error.
 Do not invent a silent client-clock last-write-wins policy for journal text
 or for conflicts the user has not reviewed.
 
+### How the server decides an edit is stale
+
+A current-state edit carries `base_revision`: the `updated_at` of the version
+the person was looking at. The server flags a conflict when its own row is
+**strictly newer** than that base, and it compares them as timestamps, never as
+text (`sync_row_is_newer`). Two reasons, both learned the hard way:
+
+- Postgres renders `2026-10-19 10:00:00+00` and the client sends
+  `2026-10-19T10:00:00.000Z`. A space sorts below `T`, so a text comparison
+  answered from the date part alone: a stale edit made on the same calendar day
+  was accepted (silent last-write-wins), or, with `IS DISTINCT FROM`, every
+  edit was flagged. Fixed in `20261019152147_fix_conflict_detection.sql`.
+- It is "newer", not "different". The client collapses several offline edits
+  into one operation, and that operation's base is the device's own previous
+  edit, a version the server has never seen. The server's row is older than that
+  base, so it is not stale; an exact-match test would flag it.
+
+The server stores the client's `updated_at` as sent (`server_updated_at` is a
+separate column), which is what makes the comparison meaningful. A new
+current-state table follows the same rule, and needs `GRANT SELECT` to the API
+role because conflict review reads the other version straight from the table.
+The tests in `supabase/tests/integration/conflict-detection.test.ts` are the
+pattern.
+
 The server is the only merge authority. The client applies already-accepted
 ops; it does not invent a second merge.
 
