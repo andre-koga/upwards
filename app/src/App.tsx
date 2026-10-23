@@ -34,6 +34,7 @@ const RedesignPreviewCPage = lazy(() => import("@/pages/redesign-preview-c"));
 const RedesignPreviewDPage = lazy(() => import("@/pages/redesign-preview-d"));
 const RedesignFlagshipPage = lazy(() => import("@/pages/redesign-flagship"));
 const HomePage = lazy(() => import("@/pages/home"));
+const YouPage = lazy(() => import("@/pages/you"));
 const ClipSpikePage = lazy(() => import("@/pages/clip-spike"));
 
 function PageLoadingFallback() {
@@ -136,6 +137,7 @@ function AppFrame() {
             />
             <Route path="/logs" element={<LogsPage />} />
             <Route path="/home" element={<HomePage />} />
+            <Route path="/you" element={<YouPage />} />
             {/* Developer tool for the daily-clip device spike; not linked anywhere. */}
             <Route path="/clip-spike" element={<ClipSpikePage />} />
           </Routes>

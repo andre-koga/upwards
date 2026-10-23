@@ -1,0 +1,107 @@
+{
+  "eyebrow": "Sua bússola",
+  "title": "Quem você está se tornando",
+  "subtitle": "Você escreve isto. Cresce com você, e nunca fica pronto. Nada aqui precisa de uma chave de IA.",
+  "loading": "Carregando…",
+  "northStar": {
+    "label": "Estrela-guia",
+    "empty": "Uma frase para a direção que você está seguindo.",
+    "write": "Escrever uma estrela-guia",
+    "edit": "Editar estrela-guia",
+    "setAside": "Deixar a estrela-guia de lado",
+    "quote": "“{{text}}”",
+    "field": "Estrela-guia",
+    "placeholder": "A direção que você está seguindo",
+    "dialogTitle": "Estrela-guia",
+    "save": "Salvar"
+  },
+  "identity": {
+    "label": "Algumas palavras",
+    "empty": "Palavras para quem você é agora. Elas podem mudar.",
+    "add": "Adicionar uma palavra",
+    "placeholder": "Uma palavra",
+    "remove": "Deixar {{word}} de lado"
+  },
+  "goals": {
+    "label": "Metas",
+    "empty": "Algo em direção ao qual você está indo. Uma meta não recebe uma nota.",
+    "add": "Nova meta",
+    "edit": "Editar {{name}}",
+    "setAside": "Deixar {{name}} de lado",
+    "delete": "Excluir {{name}}",
+    "dialogNew": "Nova meta",
+    "dialogEdit": "Editar meta",
+    "textLabel": "Meta",
+    "textPlaceholder": "Para onde você está indo",
+    "linkLabel": "Medida por",
+    "linkNone": "Nada — sem número",
+    "linkHint": "Opcional. Uma meta ligada mostra o que o seu registro diz, nunca uma porcentagem.",
+    "habitOption": "Hábito · {{name}}",
+    "groupOption": "Grupo · {{name}}",
+    "save": "Salvar",
+    "evidenceDone": "{{name}} · feito em {{done}} dos últimos {{active}} dias",
+    "evidenceTracked": "{{name}} · registrado em {{done}} dos últimos {{active}} dias",
+    "evidenceQuiet": "{{name}} · sem dias previstos nos últimos 7 dias",
+    "archivedHabit": "Este hábito está arquivado.",
+    "archivedGroup": "Este grupo está arquivado.",
+    "missingHabit": "Este hábito não está neste aparelho.",
+    "missingGroup": "Este grupo não está neste aparelho.",
+    "uncounted": "{{name}} não entra como feito ou perdido."
+  },
+  "knowledge": {
+    "label": "Mapa do que você sabe",
+    "count_one": "{{count}} coisa que você contou para si",
+    "count_other": "{{count}} coisas que você contou para si",
+    "promptTitle": "Me conta uma coisa",
+    "promptHint": "Uma nota para você. Não é uma conversa, e não é enviada a lugar nenhum.",
+    "questionLabel": "O que provocou isso",
+    "questionPlaceholder": "Opcional",
+    "answerLabel": "O que você quer lembrar",
+    "answerPlaceholder": "Tenho tentado ler antes de dormir…",
+    "save": "Adicionar ao mapa",
+    "empty": "Nada aqui ainda. Adicione uma nota quando quiser.",
+    "edit": "Editar esta nota",
+    "setAside": "Deixar esta nota de lado",
+    "delete": "Excluir esta nota",
+    "dialogEdit": "Editar nota",
+    "quote": "“{{text}}”"
+  },
+  "aside": {
+    "label": "De lado",
+    "hint": "Continua aqui. Nada nesta página fica pronto.",
+    "restore": "Trazer {{name}} de volta",
+    "delete": "Excluir {{name}}",
+    "kinds": {
+      "north_star": "Estrela-guia",
+      "identity": "Palavra",
+      "goal": "Meta",
+      "knowledge": "Nota"
+    }
+  },
+  "deleted": {
+    "label": "Excluídos",
+    "restore": "Restaurar {{name}}",
+    "confirmTitle": "Excluir isto?",
+    "confirmMessage": "“{{name}}” sai da bússola e fica em Excluídos, de onde você pode trazer de volta.",
+    "confirm": "Excluir",
+    "cancel": "Cancelar"
+  },
+  "links": {
+    "label": "Também aqui",
+    "settingsHint": "Aparência, conta, sincronização, IA",
+    "whatsNewHint": "Mudanças recentes",
+    "feedbackHint": "Um pedido ou um problema",
+    "logsHint": "O que este aparelho registrou"
+  },
+  "actions": {
+    "edit": "Editar",
+    "setAside": "Deixar de lado",
+    "delete": "Excluir"
+  },
+  "errors": {
+    "empty": "Escreva algo primeiro.",
+    "too_long": "Isso é maior do que este campo aceita.",
+    "link_conflict": "Ligue um hábito ou um grupo, não os dois.",
+    "save": "Não foi possível salvar. Tente de novo."
+  }
+}

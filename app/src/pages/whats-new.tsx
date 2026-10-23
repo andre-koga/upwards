@@ -61,7 +61,7 @@ export default function WhatsNewPage() {
         })}
       </ol>
 
-      <FloatingBackButton to="/" title={t("home")} />
+      <FloatingBackButton to="/you" title={t("tabs.you")} />
     </AppPageShell>
   );
 }
