@@ -16,8 +16,18 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     date: "2026-10-23",
     title: "Cleaner tab screens",
     bullets: [
-      "Home and Journal no longer repeat a big title and subtitle under the top bar. The tab you picked names the screen, the same way Today already worked.",
+      "Home, Journal, and You no longer repeat a big title and subtitle under the top bar. The tab you picked names the screen, the same way Today already worked.",
       "Journal keeps search, filters, and feed or calendar or map or gallery switches in a sticky strip at the top while you scroll.",
+    ],
+  },
+  {
+    id: "2026-10-23-compass",
+    date: "2026-10-23",
+    title: "Your compass",
+    bullets: [
+      "The You tab is now your compass: a north star, a few words for who you are, goals, and notes you tell yourself. Nothing here needs an AI key.",
+      "A goal can point at a habit or a group. It then shows what your record says, like done 4 of the last 7 days. It never shows a percentage.",
+      "Settings, What's new, Feedback and Error logs are still on that page.",
     ],
   },
   {

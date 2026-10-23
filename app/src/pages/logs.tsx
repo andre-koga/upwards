@@ -127,6 +127,7 @@ function DeviceReportSection() {
 }
 
 export default function ErrorLogsPage() {
+  const { t: tNav } = useTranslation("nav");
   const [logs, setLogs] = useState<AppLog[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -213,7 +214,7 @@ export default function ErrorLogsPage() {
 
       <DeviceReportSection />
 
-      <FloatingBackButton to="/" title="Home" />
+      <FloatingBackButton to="/you" title={tNav("tabs.you")} />
     </AppPageShell>
   );
 }

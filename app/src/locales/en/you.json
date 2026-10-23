@@ -1,0 +1,107 @@
+{
+  "eyebrow": "Your compass",
+  "title": "Who you're becoming",
+  "subtitle": "You write this. It grows as you do, and it's never finished. Nothing here needs an AI key.",
+  "loading": "Loading…",
+  "northStar": {
+    "label": "North star",
+    "empty": "One sentence for the direction you're heading.",
+    "write": "Write a north star",
+    "edit": "Edit north star",
+    "setAside": "Set the north star aside",
+    "quote": "“{{text}}”",
+    "field": "North star",
+    "placeholder": "The direction you're heading",
+    "dialogTitle": "North star",
+    "save": "Save"
+  },
+  "identity": {
+    "label": "A few words",
+    "empty": "Words for who you are right now. They can change.",
+    "add": "Add a word",
+    "placeholder": "A word",
+    "remove": "Set aside {{word}}"
+  },
+  "goals": {
+    "label": "Goals",
+    "empty": "Something you're moving toward. A goal doesn't get a score.",
+    "add": "New goal",
+    "edit": "Edit {{name}}",
+    "setAside": "Set aside {{name}}",
+    "delete": "Delete {{name}}",
+    "dialogNew": "New goal",
+    "dialogEdit": "Edit goal",
+    "textLabel": "Goal",
+    "textPlaceholder": "What you're moving toward",
+    "linkLabel": "Measured by",
+    "linkNone": "Nothing — no number",
+    "linkHint": "Optional. A linked goal shows what your record says, never a percentage.",
+    "habitOption": "Habit · {{name}}",
+    "groupOption": "Group · {{name}}",
+    "save": "Save",
+    "evidenceDone": "{{name}} · done {{done}} of the last {{active}} days",
+    "evidenceTracked": "{{name}} · tracked on {{done}} of the last {{active}} days",
+    "evidenceQuiet": "{{name}} · not due in the last 7 days",
+    "archivedHabit": "This habit is archived.",
+    "archivedGroup": "This group is archived.",
+    "missingHabit": "This habit isn't on this device.",
+    "missingGroup": "This group isn't on this device.",
+    "uncounted": "{{name}} isn't counted as done or missed."
+  },
+  "knowledge": {
+    "label": "Knowledge map",
+    "count_one": "{{count}} thing you've told yourself",
+    "count_other": "{{count}} things you've told yourself",
+    "promptTitle": "Tell me something",
+    "promptHint": "A note to yourself. It isn't a chat, and it isn't sent anywhere.",
+    "questionLabel": "What prompted it",
+    "questionPlaceholder": "Optional",
+    "answerLabel": "What you want to remember",
+    "answerPlaceholder": "I've been trying to read before bed…",
+    "save": "Add to the map",
+    "empty": "Nothing here yet. Add a note whenever you want.",
+    "edit": "Edit this note",
+    "setAside": "Set this note aside",
+    "delete": "Delete this note",
+    "dialogEdit": "Edit note",
+    "quote": "“{{text}}”"
+  },
+  "aside": {
+    "label": "Set aside",
+    "hint": "Still here. Nothing on this page is finished.",
+    "restore": "Bring back {{name}}",
+    "delete": "Delete {{name}}",
+    "kinds": {
+      "north_star": "North star",
+      "identity": "Word",
+      "goal": "Goal",
+      "knowledge": "Note"
+    }
+  },
+  "deleted": {
+    "label": "Deleted",
+    "restore": "Restore {{name}}",
+    "confirmTitle": "Delete this?",
+    "confirmMessage": "“{{name}}” leaves the compass and stays in Deleted, where you can bring it back.",
+    "confirm": "Delete",
+    "cancel": "Cancel"
+  },
+  "links": {
+    "label": "Also here",
+    "settingsHint": "Appearance, account, sync, AI",
+    "whatsNewHint": "Recent changes",
+    "feedbackHint": "A request or a problem",
+    "logsHint": "What this device recorded"
+  },
+  "actions": {
+    "edit": "Edit",
+    "setAside": "Set aside",
+    "delete": "Delete"
+  },
+  "errors": {
+    "empty": "Write something first.",
+    "too_long": "That's longer than this field can hold.",
+    "link_conflict": "Link a habit or a group, not both.",
+    "save": "Couldn't save that. Try again."
+  }
+}

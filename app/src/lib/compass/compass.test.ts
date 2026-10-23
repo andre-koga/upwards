@@ -136,9 +136,11 @@ describe("the north star", () => {
     await setNorthStar("Second");
     const ops = await queue();
     expect(ops).toHaveLength(2);
-    expect(ops[0].operation_type).toBe("projection.upsert");
-    expect(ops[0].base_revision).toBeNull();
-    expect(ops[1].base_revision).toBe(created.updated_at);
+    // Two writes in the same millisecond are not ordered by created_at.
+    const create = ops.find((op) => op.base_revision == null);
+    const edit = ops.find((op) => op.base_revision != null);
+    expect(create?.operation_type).toBe("projection.upsert");
+    expect(edit?.base_revision).toBe(created.updated_at);
   });
 
   it("is brought back by writing it again after it was set aside or deleted", async () => {
@@ -223,9 +225,12 @@ describe("editing", () => {
   it("overwrites the row and bases the operation on the version it replaced", async () => {
     const goal = await addGoal("Walk daily");
     await editCompassItem(goal.id, { text: "Walk every day" });
-    const [create, edit] = await queue();
-    expect(create.base_revision).toBeNull();
-    expect(edit.base_revision).toBe(goal.updated_at);
+    const ops = await queue();
+    expect(ops).toHaveLength(2);
+    const create = ops.find((op) => op.base_revision == null);
+    const edit = ops.find((op) => op.base_revision != null);
+    expect(create).toBeDefined();
+    expect(edit?.base_revision).toBe(goal.updated_at);
     expect(await db.compassItems.get(goal.id)).toMatchObject({
       text: "Walk every day",
     });

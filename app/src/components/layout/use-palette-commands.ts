@@ -2,7 +2,14 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "next-themes";
-import { MessageSquare, Monitor, Moon, RefreshCcw, Sun } from "lucide-react";
+import {
+  MessageSquare,
+  Monitor,
+  Moon,
+  RefreshCcw,
+  Settings,
+  Sun,
+} from "lucide-react";
 import { SECONDARY_DESTINATIONS, TABS } from "@/lib/navigation/destinations";
 import type { PaletteCommand } from "@/components/layout/command-palette";
 
@@ -43,6 +50,15 @@ export function usePaletteCommands(onOpenFeedback: () => void) {
       whatsNew: k("whatsNew"),
       logs: k("errorLogs"),
     };
+    go.push({
+      id: "go-settings",
+      group: "go",
+      label: t("settings"),
+      keywords: k("settings"),
+      icon: Settings,
+      run: () => navigate("/settings"),
+    });
+
     for (const item of SECONDARY_DESTINATIONS) {
       go.push({
         id: `go-${item.id}`,
