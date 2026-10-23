@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Sparkles } from "lucide-react";
 
-import { AppPageShell } from "@/components/layout/app-page-shell";
-import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { TabPageShell } from "@/components/layout/tab-page-shell";
 import HomeAiSuggestions from "@/components/home/home-ai-suggestions";
 import HomeDigest from "@/components/home/home-digest";
 import HomeInsightHero from "@/components/home/home-insight-hero";
@@ -28,7 +26,6 @@ function keyIsForSomethingElse(event: KeyboardEvent): boolean {
 }
 
 export default function HomePage() {
-  const { t } = useTranslation("home");
   const { t: tNav } = useTranslation("nav");
   const { phase, insight, stale, refreshing, notice, refresh } =
     useHomeInsight();
@@ -72,12 +69,7 @@ export default function HomePage() {
   ) : null;
 
   return (
-    <AppPageShell
-      title={t("page.title")}
-      titleIcon={<Sparkles className="size-5 text-primary" aria-hidden />}
-      subtitle={t("page.subtitle")}
-      className="space-y-4"
-    >
+    <TabPageShell title={tNav("tabs.home")} contentClassName="space-y-4">
       {showInsight ? (
         <>
           <HomeInsightHero
@@ -101,8 +93,6 @@ export default function HomePage() {
         </>
       ) : (
         <>
-          {/* No insight to lead with: the digest is the screen, and the AI is
-              an offer below it, never a gate in front of it. */}
           {digestSection}
           <HomeInsightState
             state={
@@ -116,8 +106,6 @@ export default function HomePage() {
           />
         </>
       )}
-
-      <FloatingBackButton to="/" title={tNav("home")} />
-    </AppPageShell>
+    </TabPageShell>
   );
 }

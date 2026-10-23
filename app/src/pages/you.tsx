@@ -6,6 +6,7 @@ import { KnowledgeSection } from "@/components/compass/knowledge-section";
 import { NorthStarSection } from "@/components/compass/north-star-section";
 import { ParkedSection } from "@/components/compass/parked-section";
 import { YouLinks } from "@/components/compass/you-links";
+import { TabPageShell } from "@/components/layout/tab-page-shell";
 import { useCompassPage } from "@/hooks/use-compass-page";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
 
@@ -16,6 +17,7 @@ import { scrollAppToTop } from "@/lib/scroll-app-to-top";
  */
 export default function YouPage() {
   const { t } = useTranslation("you");
+  const { t: tNav } = useTranslation("nav");
   const { ready, snapshot, activities, groups, weeks } = useCompassPage();
 
   useLayoutEffect(() => {
@@ -23,19 +25,7 @@ export default function YouPage() {
   }, []);
 
   return (
-    <div className="space-y-8 px-2 py-4 pb-24 md:p-4 md:pb-24">
-      <header className="space-y-2 px-2 md:px-0">
-        <p className="font-mono text-[0.64rem] uppercase tracking-[0.14em] text-muted-foreground">
-          {t("eyebrow")}
-        </p>
-        <h1 className="max-w-md font-display text-[clamp(1.9rem,4vw,2.5rem)] font-semibold leading-[1.05] tracking-[-0.03em]">
-          {t("title")}
-        </h1>
-        <p className="max-w-md text-sm leading-6 text-muted-foreground">
-          {t("subtitle")}
-        </p>
-      </header>
-
+    <TabPageShell title={tNav("tabs.you")} contentClassName="space-y-8">
       {ready ? (
         <>
           <NorthStarSection northStar={snapshot.northStar} />
@@ -59,6 +49,6 @@ export default function YouPage() {
       )}
 
       <YouLinks />
-    </div>
+    </TabPageShell>
   );
 }
