@@ -94,7 +94,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <FloatingBackButton to="/" title={tNav("home")} />
+      <FloatingBackButton to="/you" title={tNav("tabs.you")} />
     </AppPageShell>
   );
 }

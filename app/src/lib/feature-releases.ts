@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-23-compass",
+    date: "2026-10-23",
+    title: "Your compass",
+    bullets: [
+      "The You tab is now your compass: a north star, a few words for who you are, goals, and notes you tell yourself. Nothing here needs an AI key.",
+      "A goal can point at a habit or a group. It then shows what your record says, like done 4 of the last 7 days. It never shows a percentage.",
+      "Settings, What's new, Feedback and Error logs are still on that page.",
+    ],
+  },
+  {
     id: "2026-10-12-one-record",
     date: "2026-10-12",
     title: "Journal and memories, together",

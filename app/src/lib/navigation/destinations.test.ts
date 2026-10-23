@@ -30,6 +30,7 @@ describe("activeTabForPath", () => {
     ["/home", "home"],
     ["/journal", "journal"],
     ["/memories", "journal"],
+    ["/you", "you"],
     ["/settings", "you"],
     ["/settings/sync-issues", "you"],
     ["/whats-new", "you"],
@@ -48,7 +49,8 @@ describe("activeTabForPath", () => {
 describe("isTabRootPath", () => {
   it("is true only for routes that open a tab directly", () => {
     expect(isTabRootPath("/")).toBe(true);
-    expect(isTabRootPath("/settings")).toBe(true);
+    expect(isTabRootPath("/you")).toBe(true);
+    expect(isTabRootPath("/settings")).toBe(false);
     expect(isTabRootPath("/settings/sync-issues")).toBe(false);
     expect(isTabRootPath("/memories")).toBe(false);
   });

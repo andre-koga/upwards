@@ -46,11 +46,10 @@ export const TABS: readonly TabDestination[] = [
     icon: BookOpen,
     shortcut: "3",
   },
-  // "You" is the compass (B5). Until it exists it opens Settings, which is
-  // where identity-level things (account, language, appearance) already live.
+  // The compass (B5b-2). Settings stays reachable from that page.
   {
     id: "you",
-    to: "/settings",
+    to: "/you",
     labelKey: "tabs.you",
     icon: UserRound,
     shortcut: "4",
@@ -91,6 +90,8 @@ export function activeTabForPath(pathname: string): TabId | null {
     return "journal";
   }
   if (
+    path === "/you" ||
+    path.startsWith("/you/") ||
     path === "/settings" ||
     path.startsWith("/settings/") ||
     path === "/whats-new" ||

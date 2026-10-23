@@ -1129,7 +1129,18 @@ Track B gets its own breakdown before it starts. Its shape:
       `min_client_protocol` and leaves `data_epoch` alone, since no existing
       data is converted. What the build found is recorded in
       [`temporal-data-sync.md`](temporal-data-sync.md), "Compass".
-    - **B5b-2: the "You" page**, then the tab stops opening Settings.
+    - **B5b-2 (done 2026-10-23): the "You" page**, then the tab stops opening Settings.
+      The tab opens `/you`. Settings, What's new, Feedback and Error logs stay
+      on the page, and Settings is a command in the palette, so nothing that
+      lived on the tab becomes unreachable. On a phone, Back on Settings,
+      What's new and Error logs returns here.
+      North star, identity words, goals and the knowledge map are written by
+      the person. A goal links to one habit or one group and then shows the
+      same week Home uses ("done 4 of the last 7 days", or "tracked on" for a
+      time-only habit). No percentage and no bar. An archived or deleted link
+      says so and keeps the words. An avoid habit is not given a done count.
+      Set aside and Deleted both restore. Check-ins, "What works for you", and
+      letting the AI read the compass stay out, as decided below.
     - *In the first slice, all written by the person:* a north star; a few
       identity words; goals; and a knowledge map of dated question-and-answer
       entries they add themselves ("Tell me something" is a note to yourself,

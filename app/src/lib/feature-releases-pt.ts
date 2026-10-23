@@ -12,6 +12,14 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-23-compass": {
+    title: "Sua bússola",
+    bullets: [
+      "A aba Você agora é a sua bússola: uma estrela-guia, algumas palavras sobre quem você é, metas e notas que você conta para si. Nada disso precisa de uma chave de IA.",
+      "Uma meta pode apontar para um hábito ou um grupo. Ela então mostra o que o seu registro diz, como feito em 4 dos últimos 7 dias. Ela nunca mostra uma porcentagem.",
+      "Configurações, Novidades, Feedback e sugestões e Registros de erros continuam nessa página.",
+    ],
+  },
   "2026-10-12-one-record": {
     title: "Diário e memórias, juntos",
     bullets: [
