@@ -74,7 +74,8 @@ export default function SyncStatus() {
   return (
     <div
       className={cn(
-        "fixed right-3 top-3 z-50 transition-[visibility] duration-300",
+        // Below the sticky day header (h-14) so a running timer on the right is not covered.
+        "fixed right-3 top-16 z-50 transition-[visibility] duration-300",
         isVisible
           ? "pointer-events-auto visible"
           : "pointer-events-none invisible"
