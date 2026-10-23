@@ -12,6 +12,15 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-23-tab-chrome",
+    date: "2026-10-23",
+    title: "Cleaner tab screens",
+    bullets: [
+      "Home and Journal no longer repeat a big title and subtitle under the top bar. The tab you picked names the screen, the same way Today already worked.",
+      "Journal keeps search, filters, and feed or calendar or map or gallery switches in a sticky strip at the top while you scroll.",
+    ],
+  },
+  {
     id: "2026-10-12-one-record",
     date: "2026-10-12",
     title: "Journal and memories, together",

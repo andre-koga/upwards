@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
-  BookOpen,
   CalendarDays,
   Images,
   List,
@@ -12,8 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { FloatingBackButton } from "@/components/ui/floating-back-button";
-import { AppPageShell } from "@/components/layout/app-page-shell";
+import { TabPageShell } from "@/components/layout/tab-page-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -344,130 +342,133 @@ export default function JournalPage() {
   };
 
   return (
-    <AppPageShell
-      title={t("archive.title")}
-      subtitle={t("archive.subtitle")}
-      titleIcon={<BookOpen className="h-6 w-6" />}
-      className="space-y-3"
-    >
-      <div
-        className={cn(
-          showRail &&
-            "lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start lg:gap-x-6 xl:grid-cols-[minmax(0,1fr)_24rem] xl:gap-x-8"
-        )}
+    <>
+      <Tabs
+        value={view}
+        onValueChange={(next) => setView(parseJournalView(next))}
       >
-        <div className="min-w-0 space-y-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="relative min-w-0 flex-1">
-                <Search
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <Input
-                  type="search"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder={t("archive.searchPlaceholder")}
-                  className="h-11 rounded-xl pl-9 pr-10"
-                  aria-label={t("archive.searchPlaceholder")}
-                />
-                {searchInput ? (
+        <TabPageShell
+          title={tNav("tabs.journal")}
+          contentClassName="space-y-3"
+          stickyChrome={
+            <div className="space-y-2 px-2 py-3 md:px-4">
+              <div className="flex items-center gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <Search
+                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <Input
+                    type="search"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder={t("archive.searchPlaceholder")}
+                    className="h-11 rounded-xl pl-9 pr-10"
+                    aria-label={t("archive.searchPlaceholder")}
+                  />
+                  {searchInput ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full"
+                      onClick={() => setSearchInput("")}
+                      title={t("archive.clearSearch")}
+                      aria-label={t("archive.clearSearch")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-11 w-11 shrink-0 rounded-xl"
+                  onClick={() =>
+                    setEditingMemory({ memory: blankMemory(), isNew: true })
+                  }
+                  title={t("archive.memory.add")}
+                  aria-label={t("archive.memory.add")}
+                >
+                  <Plus className="h-4 w-4" aria-hidden />
+                </Button>
+                {trashedMemories.length > 0 ? (
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full"
-                    onClick={() => setSearchInput("")}
-                    title={t("archive.clearSearch")}
-                    aria-label={t("archive.clearSearch")}
+                    className="h-11 w-11 shrink-0 rounded-xl text-muted-foreground"
+                    onClick={() => setDeletedOpen(true)}
+                    title={t("archive.memory.deleted", {
+                      count: trashedMemories.length,
+                    })}
+                    aria-label={t("archive.memory.deleted", {
+                      count: trashedMemories.length,
+                    })}
                   >
-                    <X className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" aria-hidden />
                   </Button>
                 ) : null}
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-11 w-11 shrink-0 rounded-xl"
-                onClick={() =>
-                  setEditingMemory({ memory: blankMemory(), isNew: true })
-                }
-                title={t("archive.memory.add")}
-                aria-label={t("archive.memory.add")}
-              >
-                <Plus className="h-4 w-4" aria-hidden />
-              </Button>
-              {trashedMemories.length > 0 ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-11 w-11 shrink-0 rounded-xl text-muted-foreground"
-                  onClick={() => setDeletedOpen(true)}
-                  title={t("archive.memory.deleted", {
-                    count: trashedMemories.length,
-                  })}
-                  aria-label={t("archive.memory.deleted", {
-                    count: trashedMemories.length,
-                  })}
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden />
-                </Button>
+              {!loading && totalEntries > 0 ? (
+                <JournalArchiveSearchFilters
+                  filters={filters}
+                  onChange={setFilters}
+                  availableYears={availableYears}
+                  entryDates={entryDates}
+                  bookmarkedDates={bookmarkedDates}
+                />
+              ) : null}
+
+              {!loading && totalEntries > 0 ? (
+                <TabsList aria-label={t("archive.views.label")}>
+                  <TabsTrigger value="feed">
+                    <List aria-hidden />
+                    {t("archive.views.feed")}
+                  </TabsTrigger>
+                  <TabsTrigger value="calendar">
+                    <CalendarDays aria-hidden />
+                    {t("archive.views.calendar")}
+                  </TabsTrigger>
+                  <TabsTrigger value="map">
+                    <MapPin aria-hidden />
+                    {t("archive.views.map")}
+                  </TabsTrigger>
+                  <TabsTrigger value="gallery">
+                    <Images aria-hidden />
+                    {t("archive.views.gallery")}
+                  </TabsTrigger>
+                </TabsList>
               ) : null}
             </div>
-
-            {!loading && totalEntries > 0 ? (
-              <JournalArchiveSearchFilters
-                filters={filters}
-                onChange={setFilters}
-                availableYears={availableYears}
-                entryDates={entryDates}
-                bookmarkedDates={bookmarkedDates}
-              />
-            ) : null}
-          </div>
-
-          {loading ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              {t("archive.loading")}
-            </p>
-          ) : totalEntries === 0 ? (
-            <div className="space-y-2 py-12 text-center">
-              <p className="font-crimson text-xl font-semibold">
-                {t("archive.empty")}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {t("archive.emptyHelper")}
-              </p>
-            </div>
-          ) : (
-            <Tabs
-              value={view}
-              onValueChange={(next) => setView(parseJournalView(next))}
-            >
-              <TabsList aria-label={t("archive.views.label")}>
-                <TabsTrigger value="feed">
-                  <List aria-hidden />
-                  {t("archive.views.feed")}
-                </TabsTrigger>
-                <TabsTrigger value="calendar">
-                  <CalendarDays aria-hidden />
-                  {t("archive.views.calendar")}
-                </TabsTrigger>
-                <TabsTrigger value="map">
-                  <MapPin aria-hidden />
-                  {t("archive.views.map")}
-                </TabsTrigger>
-                <TabsTrigger value="gallery">
-                  <Images aria-hidden />
-                  {t("archive.views.gallery")}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="feed">
+          }
+        >
+          <div
+            className={cn(
+              showRail &&
+                "lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start lg:gap-x-6 xl:grid-cols-[minmax(0,1fr)_24rem] xl:gap-x-8"
+            )}
+          >
+            <div className="min-w-0 space-y-3">
+              {loading ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">
+                  {t("archive.loading")}
+                </p>
+              ) : totalEntries === 0 ? (
+                <div className="space-y-2 py-12 text-center">
+                  <p className="font-crimson text-xl font-semibold">
+                    {t("archive.empty")}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("archive.emptyHelper")}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <TabsContent value="feed">
                 {totalMatching === 0 ? (
                   <div className="space-y-2 py-12 text-center">
                     <p className="font-crimson text-xl font-semibold">
@@ -549,36 +550,38 @@ export default function JournalPage() {
                 />
               </TabsContent>
 
-              <TabsContent value="gallery">
-                <JournalArchiveGallery
-                  entries={matchingEntries}
-                  memories={matchingMemories}
-                  includeVideo={clipEnabled}
-                  onShowMemory={showMemoryInFeed}
-                />
-              </TabsContent>
-            </Tabs>
-          )}
-        </div>
+                  <TabsContent value="gallery">
+                    <JournalArchiveGallery
+                      entries={matchingEntries}
+                      memories={matchingMemories}
+                      includeVideo={clipEnabled}
+                      onShowMemory={showMemoryInFeed}
+                    />
+                  </TabsContent>
+                </>
+              )}
+            </div>
 
-        {showRail ? (
-          <aside
-            aria-label={t("reader.rail")}
-            className="lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto"
-          >
-            <JournalReader
-              date={readerDate}
-              entry={readerEntry}
-              memories={readerMemories}
-              renderMemory={(memory) => renderMemory(memory, false)}
-              revisions={
-                readerDate ? revisionSummaries.get(readerDate) : undefined
-              }
-              onOpenVersions={setVersionsDate}
-            />
-          </aside>
-        ) : null}
-      </div>
+            {showRail ? (
+              <aside
+                aria-label={t("reader.rail")}
+                className="lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto"
+              >
+                <JournalReader
+                  date={readerDate}
+                  entry={readerEntry}
+                  memories={readerMemories}
+                  renderMemory={(memory) => renderMemory(memory, false)}
+                  revisions={
+                    readerDate ? revisionSummaries.get(readerDate) : undefined
+                  }
+                  onOpenVersions={setVersionsDate}
+                />
+              </aside>
+            ) : null}
+          </div>
+        </TabPageShell>
+      </Tabs>
 
       <MemoryEditDialog
         open={editingMemory !== undefined}
@@ -604,8 +607,6 @@ export default function JournalPage() {
           }}
         />
       ) : null}
-
-      <FloatingBackButton to="/" title={tNav("home")} />
-    </AppPageShell>
+    </>
   );
 }
