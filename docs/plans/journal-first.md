@@ -1,9 +1,11 @@
 # What you keep, and what the AI reads
 
 **Status:** proposal, 2026-10-23. Not binding.
-**Revised** the same day: habit tracking and time tracking stay as things you
-keep by hand. The Journal destination stays as it is. An earlier draft of
-this file treated both as something to retire. That draft is withdrawn.
+**Revised** the same day, twice. Habit tracking and time tracking stay as
+things you keep by hand, and the Journal destination stays as it is. An
+earlier draft treated both as something to retire; that draft is withdrawn.
+Home and You are proposed as one page (D13): the week's letter, with the
+living base beside it, not two thin tabs.
 
 Merging this file records the proposal. It does not change the app, the
 schema, or the three binding documents
@@ -32,8 +34,8 @@ Two corrections, taken as given:
 2. **Habit tracking and time tracking stay, kept by hand.** Checkboxes,
    counters, avoid habits, check-only activities, routines, memos, groups,
    pins, your own order, the running timer, the session timeline, manual
-   time entry, streaks, break days. Today stays Today. The four tabs stay:
-   Home, Today, Journal, You.
+   time entry, streaks, break days. Today stays Today, and it is not folded
+   into the Journal. Whether Home and You remain two tabs is D13.
 
 You already have two kinds of capture, and both are worth keeping. The
 journal is the day in your own words. The tracker is the day as a record of
@@ -104,14 +106,15 @@ Settled rows are not questions. Open rows are.
 | **D1** | Journal stays as it is. Habits, memos, and time tracking stay as hand capture on Today. | Settled. |
 | **D2** | Leave the body at 300 characters. A longer entry is a separate question, asked only if real letters are too thin to be worth reading. | Settled, by D1. |
 | **D3** | Sending journal text to your own model is what makes the reading possible, behind an explicit opt-in. Photos, video, coordinates, and the birthday field are not sent. Session notes are prose and follow the same switch: off, they stay on the device; on, they go with the day's words. Habit names and the figures Today already computes can keep being sent as they are now. | Open. Rejecting it stops the reading. The tracker and the journal stay either way. |
-| **D4** | Four tabs stay. Today is not folded into the Journal. | Settled, by D1. |
+| **D4** | Today stays its own tab. It is not folded into the Journal. | Settled, by D1. |
+| **D13** | Home and You become one tab, named You. The letter leads; the portrait and the threads are the rest of that page, and on desktop they are the rail beside the letter. `/home` redirects to `/you`. | Open. Rejecting it keeps two destinations: the letter on Home, the base on You. |
 | **D5** | The tracker is not frozen and not deleted. | Settled, by D1. |
 | **D6** | You is maintained by the model from the journal, read against the tracker. You can correct, pin, or set aside. You are not asked to fill it in. Habits stay on Today; the model does not turn a thread into a new habit. | Open. Rejecting it keeps the forms, and the model only suggests beside them. |
 | **D7** | No questionnaires, no "tell me something" box, no scheduled check-in. A prompt may appear on an empty journal day; it is one line, dismissible, and it only writes into the journal if you use it. | Open. |
 | **D8** | At most one open experiment at a time. It points at something already yours: a habit, a time of day, or a gap in the writing. The next letter reports what later days did. It never creates a habit, a memo, or a session. | Open. |
-| **D9** | Home and You do not lead with a compliance rate. A number appears there as the evidence for a claim, next to the days and the tracker figures it came from. Streaks, flames, targets, and "done today" stay on Today, where they are the record. | Open. |
-| **D10** | With no key, or with reading turned off, Journal and Today work as they do now, including the current count-based insight. You shows only what you have pinned, and says the reading is off. Nothing invents a portrait. | Open. |
-| **D11** | The letter is judged on your own weeks before it replaces the count-based insight, and before You loses its forms. Today is not the thing at risk in that judgment. | Open. |
+| **D9** | The reading page does not lead with a compliance rate. A number appears there as the evidence for a claim, next to the days and the tracker figures it came from. Streaks, flames, targets, and "done today" stay on Today, where they are the record. | Open. |
+| **D10** | With no key, or with reading turned off, Journal and Today work as they do now. The reading page shows the current count-based insight where the letter will be, and pinned compass text where the portrait will be, and it says the reading is off. Nothing invents a portrait. | Open. |
+| **D11** | The letter is judged on your own weeks before it replaces the count-based insight, and before the compass forms go away. Today is not the thing at risk in that judgment. Merging the tabs (D13) can happen earlier; it does not require the letter to have won. | Open. |
 | **D12** | The model writes in the app's language (`en` or `pt`). Quotations stay in the language of the day. | Open. |
 
 ---
@@ -192,11 +195,13 @@ is not a strategy you type, and it is not a percentage.
 
 ### The letter
 
-Home's hero becomes one piece of prose for the week, in the editorial
-register, on the one full-bleed AI surface. It says what the week was
-about in the writing, which noticing it will stand behind, and — only when
-the single experiment is earned — one thing to watch. It links each claim
-to the days, and to the habit or the sessions when it used them.
+The top of the reading page becomes one piece of prose for the week, in
+the editorial register, on the one full-bleed AI surface. It says what the
+week was about in the writing, which noticing it will stand behind, and —
+only when the single experiment is earned — one thing to watch. It links
+each claim to the days, and to the habit or the sessions when it used
+them. Under D13 that page is You. Until then the letter can be tried on
+Home, which is where step 1 puts it.
 
 It does not open with a completion rate. If the writing was thin, it says
 so, names whatever threads it has, and leaves the tracker's own numbers on
@@ -211,6 +216,59 @@ The count-based insight stays on screen for anyone who has not opted in
 (D10), and it stays for everyone until a real letter has been judged worth
 swapping in (D11).
 
+### Home and You are one page
+
+They are the same job, split so that each half is thin. Home is what the
+reading says this week. You is what the reading has come to believe.
+Home can only recite counts, because it never sees the words. You can only
+be a form, because nothing writes it but you. The desktop layout for Home
+was already waiting on the other half: B4a left it a single column because
+"the rail it would take is the compass teaser and stats, which wait for
+B5." A teaser that links away is the wrong repair. The rail should be the
+base, on the same page as the letter, so a claim and the thread it came
+from are on screen together.
+
+**D13** is that repair. Three primary tabs: Today, Journal, You.
+design-and-branding §3.2 caps the mobile tab bar at four; three is inside
+the cap, and accepting D13 rewrites that table so the Home row and the You
+row are one destination. `/` stays Today. `/you` is the reading. `/home`
+redirects there, and the command palette still finds it under "home", so a
+bookmark does not break.
+
+The tab is named You. Home was the name of a dashboard. This page is a
+person, read back.
+
+On a phone the order is the letter, then the one experiment, then the
+portrait, then the threads, then noticings that have held. The letter is
+first so the thing to do is above the fold. The portrait stays short. One
+tier-1 gradient, on the letter. The base is paper. The check-in card from
+the flagship mock does not return as a second hero. Settings, What's new,
+Feedback, and Error logs stay at the bottom, where You already keeps them,
+and in the palette.
+
+At `lg` the letter and the experiment are the primary column. The portrait
+and the threads are a sticky rail, the same idea as the Journal's reader
+beside the feed. That is the improvement over stacking the two current
+pages. A thread the letter names is the thread in the rail.
+
+One empty state. "Not enough written yet" is the letter's thin copy, with
+whatever thread names exist under it, not a blank Home beside a blank You.
+Reading off is the same page: the current count-based insight in the
+letter's place, pinned compass text in the portrait's place, and a line
+that says the reading is off. There is no leftover Home tab whose only job
+is the old insight.
+
+D13 does not depend on D6. If the forms stay, they sit in the rail on
+desktop and under the letter on a phone, and the model suggests beside
+them. The merge still removes the hop.
+
+The month page, and a thread's quotations, open from here later. They are
+not new tabs.
+
+This page does not pick up habit rows, the timer, or the journal feed.
+Those stay on Today and in the Journal. It does not put a 7/7 strip
+between the letter and the portrait.
+
 ---
 
 ## What "actionable" means
@@ -219,7 +277,7 @@ Today already has the tracker's actions: check, count, start, stop, pin,
 reorder, open a session. Those stay, and the reading does not duplicate
 them as its own buttons unless the claim is about that habit.
 
-On Home and You, every claim has at least this:
+On the reading page, every claim has at least this:
 
 1. **Open the days.** The journal at the cited dates. If the claim used a
    habit or a session, the citation says which, with the figure the app
@@ -236,7 +294,7 @@ On Home and You, every claim has at least this:
    day, taken from the open experiment or from a real gap. Using it drops
    the line into the editor as editable text. Ignoring it writes nothing.
 
-A metric with nothing to do about it is still cut on Home and You
+A metric with nothing to do about it is still cut on the reading page
 (design-and-branding §4.4). "7/7" with no pattern beside it fails that test
 and stays on the habit row, where the thing to do is the habit itself.
 Streak flames stay on that row for the same reason: they are the tracker's
@@ -263,35 +321,34 @@ Unchanged. Habits, memos, timer, timeline, order, pins, "order with AI",
 streaks, break days. The reading does not reorder the list and does not
 write `order_index`. Rank-today keeps its current contract.
 
-### Home
+### You, the reading
 
-For someone who has opted in, and only after D11 passes: the letter, then
-the single experiment if one is open. Tier-1 gradient stays rationed to
-that hero. The numeric digest stops being the lead. It can remain available
-as the evidence behind a claim ("show the figures"), which Home already
-knows how to do.
+If D13 is accepted, this is the only page for the letter and the base.
+Step 1 may still show a trial letter on `/home` before the routes merge.
+After the merge, `/home` only redirects.
 
-Until then, and whenever reading is off, Home stays the Home that ships
-today.
+The letter leads. Under it, or beside it from `lg`, the portrait, the
+threads, and noticings that have held. A thread that lines up with a habit
+says so and offers the days. The page grows because you write and you log,
+and the paragraph changes. It does not grow because you filled in a form,
+and it does not show a progress bar.
 
-States that already exist stay: loading, offline with the last letter kept,
-not configured, reading off, rate limited, provider error, stale because a
-day or a logged habit changed the fingerprint, and "not enough written
-yet". None of them blocks Today or the Journal.
+The numeric digest stops being the lead once D11 passes. It stays one tap
+away as the figures behind a claim. Tier-1 gradient stays rationed to the
+letter.
 
-### You
-
-The portrait, then threads, then noticings that have held. A thread that
-lines up with a habit says so, and offers the days. This page grows because
-you write and you log, and the paragraph changes. It does not grow because
-you filled in a form, and it does not show a progress bar.
-
-Under D6, the manual sections (write a north star, add a word, new goal,
+Under D6 the manual sections (write a north star, add a word, new goal,
 "tell me something", link a goal to a habit) come out. Settings, What's
-new, Feedback, and Error logs stay reachable from You.
+new, Feedback, and Error logs stay reachable here.
 
 Parked and deleted compass rows stay restorable. Setting a thread aside is
 still not "done".
+
+States that already exist on Home move here with the letter: loading,
+offline with the last letter kept, not configured, reading off, rate
+limited, provider error, stale because a day or a logged habit changed the
+fingerprint, and "not enough written yet". None of them blocks Today or
+the Journal.
 
 ### A month, later
 
@@ -334,7 +391,7 @@ Cadence, so this does not call the model on every checkmark:
   experiment can be proposed.
 - The portrait revises as part of the week letter, and only if the reading
   of you differs from the current paragraph.
-- Opening Home, Today, or You never blocks on a request.
+- Opening the reading page, Today, or the Journal never blocks on a request.
 
 One open experiment is closed by the letter that follows: held, didn't show
 up, or the days were about something else. Then the slot is free.
@@ -355,8 +412,8 @@ A reading the model returns is untrusted. A sentence is shown only if:
   number with no source is dropped. This is the current `insight.ts` rule,
   kept for the tracker half.
 - A sentence that only restates one habit's done-count, streak, or
-  completion rate is dropped from Home and You. That number already lives
-  on the row.
+  completion rate is dropped from the reading page. That number already
+  lives on the row.
 - Advice appears only in a week letter, only as the single experiment, and
   only attached to a noticing that survived the checks. The experiment
   names a habit, a session pattern, or a writing gap that was in the
@@ -370,8 +427,9 @@ relationships you did not write, to say "you always", and to scold a missed
 habit or a missed day. "I don't know yet" is a valid outcome and should be
 common in the first month.
 
-D11 is how tone is caught: real weeks, read by you, before Home's hero or
-You's forms change. The test set includes weeks in Portuguese. The fixtures
+D11 is how tone is caught: real weeks, read by you, before the letter
+takes the top of the reading page or the compass forms go away. The test
+set includes weeks in Portuguese. The fixtures
 include a week where the tracker is full and the journal is empty, and a
 week where a habit's 7/7 hides a pattern in the words. The first must stay
 quiet. The second must not come back as "7/7".
@@ -458,10 +516,14 @@ them. Clearing the AI base does not touch the journal or the tracker.
 
 - **D3.** A new opt-in. Prose can leave the device. The current insight's
   payload does not change when the switch is off.
-- **D6.** You's forms come out. The page is the portrait, the threads, and
-  the noticings. Compass rows you already wrote stay as pins.
-- **D8, after D11.** Home's hero can become the letter. The digest stops
+- **D6.** The compass forms come out. The reading page is the letter, the
+  portrait, the threads, and the noticings. Compass rows you already wrote
+  stay as pins.
+- **D8, after D11.** The letter leads the reading page. The digest stops
   leading. "7/7" remains on the habit.
+- **D13.** Home and You become the one page described above. `/home`
+  redirects to `/you`. The four-tab table in design-and-branding §3.2 is
+  updated in that same change. Today and the Journal are not part of it.
 - **D7.** One optional line on an empty day, easy to dismiss.
 - **D9.** A goal on You no longer proves itself with "done N of the last 7
   days." The habit's week stays visible on Today. A thread may cite that
@@ -509,14 +571,20 @@ Depends on D3, D8, D10, D12.
 clinical, or a paraphrase of the counts, the prompt changes. You's forms
 stay. The hero stays. Step 2 waits.
 
-### 2. The base becomes visible
+### 2. The base becomes visible, on one page if D13 is in
 
-Depends on D6 and D7, and on step 1 passing.
+Depends on D6 and D7, and on step 1 passing. D13 can land here even if D6
+is still held: the forms move onto the merged page instead of disappearing.
 
 - Threads, portrait, noticings stored as in the table above. A thread may
   reference an existing habit.
-- You renders them. Existing compass text is pinned. The add-forms go away
-  only with the scope change written into `product-scope.md` first.
+- They render on You, under or beside the letter. Existing compass text is
+  pinned. The add-forms go away only with the scope change written into
+  `product-scope.md` first.
+- If D13 is accepted: `/home` redirects to `/you`, the palette's "home"
+  lands there, and design-and-branding §3.2 records three primary tabs.
+  The trial letter moves with the redirect. People who have not opted in
+  see the current insight at the top of You and the compass below it.
 - Corrections sync and survive a later reading.
 
 ### 3. Close the loop
@@ -528,15 +596,15 @@ Depends on D8.
 - When the noticing names a habit, pin and open-Today use the actions Today
   already has.
 
-### 4. The letter takes the hero
+### 4. The letter takes the top
 
 Depends on D9 and D11.
 
-- For people who opted in, the letter replaces the count-based hero. The
-  figures remain one tap away. People who stay opted out keep the current
-  Home.
-- You no longer shows "done N of 7" as a goal's progress. The habit row
-  still does.
+- For people who opted in, the letter replaces the count-based insight at
+  the top of the reading page. The figures remain one tap away. People who
+  stay opted out keep that insight in the same place.
+- A goal on this page no longer proves itself with "done N of 7." The habit
+  row on Today still does.
 
 ### 5. The month page, and thread pages worth lingering on
 
@@ -553,7 +621,10 @@ to prove the pivot.
 - A check-in countdown, a profile percent, or a goal bar.
 - Auto-created habits, memos, or sessions from prose.
 - The model editing the journal, a count, a session, or your order.
-- More than one full-bleed AI surface.
+- More than one full-bleed AI surface, including a merged page with a
+  gradient letter and a gradient portrait.
+- A merge that only stacks today's Home on top of today's You forms and
+  calls it done. The letter leads, and from `lg` the base is the rail.
 - A local word-cloud dressed up as the letter.
 - Sending photos, the clip, coordinates, or the birthday field.
 - Rebuilding effective-dated schedules. A thread is not a schedule.
@@ -563,6 +634,12 @@ to prove the pivot.
 ## The smallest yes
 
 Accept **D3, D8, D11, and D12**. Step 1 ships an opt-in letter beside the
-current Home. Today and the Journal are untouched. You judge the letter on
-your own days, including weeks where the tracker and the writing disagree.
-You's forms, and the hero, wait on that judgment.
+current insight on Home. Today and the Journal are untouched. You judge the
+letter on your own days, including weeks where the tracker and the writing
+disagree. The compass forms, and the top of the page, wait on that
+judgment.
+
+**D13** can be accepted with that, or with step 2. It does not delete
+anything you log. It makes the letter and the living base one page, named
+You, with the base as the desktop rail. Rejecting it leaves the letter on
+Home and the base on You.
