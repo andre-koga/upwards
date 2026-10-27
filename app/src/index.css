@@ -136,6 +136,25 @@
 }
 
 @layer components {
+  /* Installed iPhone PWAs (iOS 26+) blur whatever scrolls under the notch.
+     An opaque strip at least a few pixels tall, flush with the top, makes the
+     status bar sample the canvas instead. 0.5rem covers the case where the
+     inset reports 0 while the page still draws under the status bar. */
+  html.ios-standalone {
+    --ios-status-shield: max(env(safe-area-inset-top, 0px), 0.5rem);
+  }
+  html.ios-standalone body::before {
+    content: "";
+    position: fixed;
+    z-index: calc(var(--z-chrome) + 5);
+    top: 0;
+    right: 0;
+    left: 0;
+    height: var(--ios-status-shield);
+    background-color: hsl(var(--background));
+    pointer-events: none;
+  }
+
   /* Height the phone tab bar occupies. Fixed bottom controls add it to their
      offset so they sit above the bar; it is 0 once the sidebar replaces it. */
   .app-shell-tabs {

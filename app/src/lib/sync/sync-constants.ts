@@ -16,6 +16,11 @@ export const DEFAULT_PERIODIC_SYNC_MS = 5 * 60_000;
 export const MAX_CHAINED_SYNCS = 25;
 /** Submit pending ops in chunks so a large cutover queue cannot stall the RPC. */
 export const SUBMIT_SYNC_BATCH_SIZE = 50;
+/**
+ * Rows per `pull_sync_operations` call. The server caps this (see the
+ * migration that pages the pull) so a new phone cannot ask for the whole log.
+ */
+export const PULL_SYNC_PAGE_SIZE = 100;
 
 export const SYNC_TABLES: SyncTable[] = [
   "activity_groups",

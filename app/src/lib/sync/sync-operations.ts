@@ -9,7 +9,11 @@ import {
   markOperationRetryableError,
   requeueFailedOperations,
 } from "./pending-operations";
-import { CLIENT_PROTOCOL, SUBMIT_SYNC_BATCH_SIZE } from "./sync-constants";
+import {
+  CLIENT_PROTOCOL,
+  PULL_SYNC_PAGE_SIZE,
+  SUBMIT_SYNC_BATCH_SIZE,
+} from "./sync-constants";
 import {
   readDataEpoch,
   recordObservedDataEpoch,
@@ -19,7 +23,10 @@ import { recordSyncIssue } from "./sync-issues-store";
 import { isTransientNetworkError } from "@/lib/error-utils";
 import { buildJournalConflictPayload } from "./journal-conflict-resolution";
 import { buildProjectionConflictPayload } from "./projection-conflict-resolution";
-import { saveOpsRpcAvailable } from "./sync-storage";
+import {
+  advanceLastAppliedSequence,
+  saveOpsRpcAvailable,
+} from "./sync-storage";
 import {
   applyAcceptedProjectionOp,
   dexieTableForSyncTable,
@@ -79,7 +86,12 @@ export interface PushPendingOperationsResult {
 export interface PullAndApplyOperationsResult {
   maxSequence?: number;
   skipped?: boolean;
+  /** The server has operations past the pages applied in this call. */
+  hasMore?: boolean;
 }
+
+/** Pages applied before yielding. The cursor is saved after each one. */
+const PULL_SYNC_MAX_PAGES = 40;
 
 interface DefinitionPayload {
   version_id?: string;
@@ -769,37 +781,41 @@ export async function pushPendingOperations(): Promise<PushPendingOperationsResu
   }
 }
 
-export async function pullAndApplyOperations(
-  sinceSequence: number
-): Promise<PullAndApplyOperationsResult> {
-  if (!supabase) return { skipped: true };
+function readHasMore(data: unknown): boolean {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+  return (data as { has_more?: unknown }).has_more === true;
+}
 
-  const { data, error } = await supabase.rpc("pull_sync_operations", {
+/** Old servers expose the two-argument function and reject `p_limit`. */
+function isLimitArgumentUnsupported(error: {
+  message?: string;
+  details?: string;
+  hint?: string;
+}): boolean {
+  return [error.message, error.details, error.hint]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .includes("p_limit");
+}
+
+async function requestOperationPage(sinceSequence: number, withLimit: boolean) {
+  if (!supabase) return { data: null, error: null };
+  const args: {
+    since_sequence: number;
+    p_client_protocol: number;
+    p_limit?: number;
+  } = {
     since_sequence: sinceSequence,
     p_client_protocol: CLIENT_PROTOCOL,
-  });
+  };
+  if (withLimit) args.p_limit = PULL_SYNC_PAGE_SIZE;
+  return supabase.rpc("pull_sync_operations", args);
+}
 
-  if (error) {
-    throwIfClientOutdated(error);
-    if (isSyncOperationsRpcMissing(error)) {
-      saveOpsRpcAvailable(false);
-      return { skipped: true };
-    }
-    throw new Error(`pull_sync_operations failed: ${error.message}`);
-  }
-
-  saveOpsRpcAvailable(true);
-
-  recordObservedDataEpoch(readDataEpoch(data));
-  const ops = (
-    Array.isArray(data)
-      ? data
-      : ((data as { operations?: unknown })?.operations ?? [])
-  ) as RemoteSyncOperation[];
-  if (ops.length === 0) {
-    return { maxSequence: sinceSequence > 0 ? sinceSequence : undefined };
-  }
-
+async function applyRemoteOperationPage(
+  ops: RemoteSyncOperation[]
+): Promise<void> {
   const localDeviceId = getOrCreateDeviceId();
 
   for (const op of ops) {
@@ -831,11 +847,71 @@ export async function pullAndApplyOperations(
       );
     }
   }
+}
 
-  return {
-    maxSequence: maxServerSequence([
-      sinceSequence,
+export async function pullAndApplyOperations(
+  sinceSequence: number
+): Promise<PullAndApplyOperationsResult> {
+  if (!supabase) return { skipped: true };
+
+  let cursor = sinceSequence;
+  let hasMore = false;
+  let sawRow = false;
+  let allowLimit = true;
+
+  for (let page = 0; page < PULL_SYNC_MAX_PAGES; page += 1) {
+    let response = await requestOperationPage(cursor, allowLimit);
+    if (
+      response.error &&
+      allowLimit &&
+      isLimitArgumentUnsupported(response.error)
+    ) {
+      allowLimit = false;
+      response = await requestOperationPage(cursor, false);
+    }
+    const { data, error } = response;
+
+    if (error) {
+      throwIfClientOutdated(error);
+      if (isSyncOperationsRpcMissing(error)) {
+        saveOpsRpcAvailable(false);
+        return { skipped: true };
+      }
+      throw new Error(`pull_sync_operations failed: ${error.message}`);
+    }
+
+    saveOpsRpcAvailable(true);
+    recordObservedDataEpoch(readDataEpoch(data));
+    const ops = (
+      Array.isArray(data)
+        ? data
+        : ((data as { operations?: unknown })?.operations ?? [])
+    ) as RemoteSyncOperation[];
+    hasMore = readHasMore(data);
+    if (ops.length === 0) break;
+
+    sawRow = true;
+    await applyRemoteOperationPage(ops);
+    const pageMax = maxServerSequence([
+      cursor,
       ...ops.map((op) => op.server_sequence),
-    ]),
-  };
+    ]);
+    // A page that does not move the cursor must not be requested again.
+    if (pageMax == null || pageMax <= cursor) {
+      hasMore = false;
+      break;
+    }
+    advanceLastAppliedSequence(pageMax);
+    cursor = pageMax;
+    if (!hasMore) break;
+  }
+
+  if (!sawRow) {
+    return {
+      ...(sinceSequence > 0 ? { maxSequence: sinceSequence } : {}),
+      hasMore: false,
+    };
+  }
+
+  return { maxSequence: cursor, hasMore };
 }

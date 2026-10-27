@@ -47,7 +47,7 @@ export function AppShell({ navigation, chrome, children }: AppShellProps) {
     <TooltipProvider>
       <div
         className={cn(
-          "min-h-dvh md:flex md:h-dvh",
+          "min-h-dvh pt-[var(--ios-status-shield,0px)] md:flex md:h-dvh",
           navigation && "app-shell-tabs"
         )}
       >

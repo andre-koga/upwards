@@ -3,6 +3,7 @@ import {
   FUNCTION_TIMEOUT_MS,
   fetchWithTimeout,
   REQUEST_TIMEOUT_MS,
+  SNAPSHOT_TIMEOUT_MS,
 } from "./supabase-fetch";
 
 vi.mock("@/lib/error-utils", () => ({ logError: vi.fn() }));
@@ -47,6 +48,25 @@ describe("fetchWithTimeout", () => {
       /timed out after 30 s: POST \/rest\/v1\/rpc\/pull_sync_operations/
     );
     await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS + 1);
+    await assertion;
+  });
+
+  it("gives a cold-start snapshot longer than an ordinary request", async () => {
+    stubFetch(hangUntilAborted);
+    const pending = fetchWithTimeout(
+      "https://x.supabase.co/rest/v1/rpc/pull_sync_snapshot",
+      { method: "POST" }
+    );
+    let settled = false;
+    pending.catch(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS + 1);
+    expect(settled).toBe(false);
+    const assertion = expect(pending).rejects.toThrow(
+      /timed out after 70 s: POST \/rest\/v1\/rpc\/pull_sync_snapshot/
+    );
+    await vi.advanceTimersByTimeAsync(SNAPSHOT_TIMEOUT_MS);
     await assertion;
   });
 

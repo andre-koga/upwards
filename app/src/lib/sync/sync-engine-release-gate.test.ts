@@ -207,6 +207,22 @@ describe("sync engine release gates", () => {
     expect(mocks.calls).toContain("snapshot");
   });
 
+  it("pulls the next page when the server says more operations are waiting", async () => {
+    const { syncEngine, gate } = await loadEngine();
+    gate.resetObservedDataEpochForTests();
+    mocks.pull
+      .mockResolvedValueOnce({ maxSequence: 5, hasMore: true })
+      .mockResolvedValue({ maxSequence: 8, hasMore: false });
+
+    await syncEngine.sync();
+
+    await vi.waitFor(() => {
+      expect(mocks.pull).toHaveBeenCalledTimes(2);
+      expect(syncEngine.getState().isSyncing).toBe(false);
+    });
+    expect(mocks.pull.mock.calls[1]?.[0]).toBe(5);
+  });
+
   it("stops syncing and requires an update when the build is turned away", async () => {
     const { syncEngine, gate } = await loadEngine();
     mocks.push.mockRejectedValue(new gate.ClientOutdatedError());

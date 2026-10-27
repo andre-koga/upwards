@@ -341,7 +341,7 @@ synced, unedited, no queued op, no open conflict (product-scope.md §2.10).
 - **Implementation (A1, 2026-10-02).** `app_config` is a singleton row
   readable only by the service role and SQL; the client never reads it
   directly. The public RPCs (`submit_sync_operations(ops, p_client_protocol)`,
-  `pull_sync_operations(since_sequence, p_client_protocol)`,
+  `pull_sync_operations(since_sequence, p_client_protocol, p_limit)`,
   `pull_sync_snapshot(p_client_protocol)`) check the gate and wrap private
   `*_ungated` bodies, which clients cannot execute. **Edit the `*_ungated`
   functions when changing RPC behavior**; recreating the old one-argument
@@ -373,8 +373,15 @@ Local mutations:
 2. Enter the durable pending-operation queue (exactly one op per user action).
 3. Retry until the server acknowledges that operation ID.
 
-Devices pull by monotonic server sequence. The cursor advances only from
-pulled operations. Signing out must not erase unacknowledged operations.
+Devices pull by monotonic server sequence. `pull_sync_operations` returns
+at most one page (`p_limit`, default 100, capped at 500) plus `has_more`,
+so a new phone never aggregates the whole operation log in one statement.
+The client applies a page, advances the cursor to that page's highest
+sequence, and continues. The cursor still advances only from pulled
+operations. `pull_sync_snapshot` is one statement of the current rows (not
+the operation log) and may run longer than the API role's default
+`statement_timeout`, because a cold start has to finish. Signing out must
+not erase unacknowledged operations.
 Account switching must keep pending data in a recoverable, account-scoped
 local area until it is synced, exported, or explicitly discarded.
 

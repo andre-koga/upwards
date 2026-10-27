@@ -240,6 +240,7 @@ class SyncEngine {
     if (pullOpsResult.skipped !== true && pullOpsResult.maxSequence != null) {
       advanceLastAppliedSequence(pullOpsResult.maxSequence);
     }
+    if (pullOpsResult.hasMore) this.pendingResync = true;
     const userId = getCachedUserId();
     if (userId) {
       void touchLocalDevice(userId);
@@ -335,6 +336,7 @@ class SyncEngine {
         if (pullOpsResult.maxSequence != null) {
           advanceLastAppliedSequence(pullOpsResult.maxSequence);
         }
+        if (pullOpsResult.hasMore) this.pendingResync = true;
       }
 
       await this.adoptNewerDataEpoch();

@@ -30,13 +30,13 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!--
-      black-translucent lets the page background show through the iOS status bar
-      (true custom colors aren't supported there — matching body bg is the fix).
+      default, not black-translucent. From iOS 26.1 the translucent style makes
+      the system draw a blur over the notch and the top of an installed PWA.
+      iOS reads this tag when the icon is added to the Home Screen.
+      viewport-fit=cover stays so env(safe-area-inset-top) is available; the
+      ios-standalone class paints an opaque canvas strip in that inset.
     -->
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <script>
       (function () {
         try {
@@ -48,6 +48,16 @@
             storedTheme === "dark" || (storedTheme !== "light" && systemDark);
           if (isDark) {
             document.documentElement.classList.add("dark");
+          }
+          var ua = window.navigator.userAgent || "";
+          var iOS =
+            /iPad|iPhone|iPod/.test(ua) ||
+            (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+          var standalone =
+            window.navigator.standalone === true ||
+            (iOS && window.matchMedia("(display-mode: standalone)").matches);
+          if (iOS && standalone) {
+            document.documentElement.classList.add("ios-standalone");
           }
           var palette = localStorage.getItem("upwards-color-palette");
           if (palette) {
