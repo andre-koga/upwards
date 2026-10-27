@@ -428,7 +428,9 @@ Match intensity to prominence. Only one tier-1 surface may be visible at a time.
   glass buttons. At most one per screen.
 - **Tier 2 — gradient edge or wash.** A `1.5px` gradient border, or a blurred
   gradient glow bleeding from a corner at ≤25% opacity. For the journal-prompt
-  card, the memory throwback, the compass teaser.
+  card, the memory throwback, the compass teaser, and the weekly letter that
+  sits under the Home insight (product-scope.md §2.12). The letter does not
+  take the hero's fill: one tier-1 surface at a time.
 - **Tier 3 — gradient badge or sparkle.** A small pill or a `Sparkles` glyph in
   `--gold` next to an AI-personalized detail: an AI-ordered task's reason, a
   curated throwback label.
@@ -442,9 +444,16 @@ Match intensity to prominence. Only one tier-1 surface may be visible at a time.
   a one-tap way back to it. AI prompts need
   dismissal. Check-ins need skipping.
 - **Always name the goal served.** Recommendations link back to a compass goal.
+  The weekly letter is the exception while it is not allowed to read the
+  compass (product-scope.md §2.12): its action is the cited day and the one
+  experiment, not a compass item.
 - **Always disclose cost and ownership.** "your key, your model" stays visible.
-- **Never fabricate.** Text on an AI surface must be derived from real aggregates
-  (`app/src/lib/ai/build-insight-payload.ts`), never invented for visual effect.
+- **Never fabricate.** The count-based insight is still derived from real
+  aggregates (`app/src/lib/ai/build-insight-payload.ts`), never invented for
+  visual effect. The weekly letter (product-scope.md §2.12) may quote the
+  journal only when reading is on, and only a quotation that is actually in
+  the cited day; a number it prints has to be a figure that was sent or part
+  of that quotation. A sentence that fails the check is not shown.
 - **Never block on the AI.** Every AI surface needs not-configured, offline,
   loading, stale-cache, rate-limited, and error states. The app is fully usable
   with no key. (There is no signed-out state: an account is required.)

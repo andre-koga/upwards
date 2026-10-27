@@ -638,6 +638,54 @@ tools for it that do not compete: their own order, pins, and the AI.
 - A new habit still takes the next free number at the end of the scheduled
   sequence, so it appears last until moved.
 
+### 2.12 Journal reading: an opt-in letter beside the insight
+
+The direction is [`../plans/journal-first.md`](../plans/journal-first.md).
+This section is step 1 of that plan only. Today, the Journal, habit and time
+tracking, and the You forms stay as they are. The count-based insight stays
+the Home hero until a letter has been read against real weeks and a later
+change says otherwise.
+
+**What changed.** The insight request still sends habit figures and journal
+counts, never the words. A separate reading may send the words, and only
+after an explicit yes.
+
+- `user_profiles.journal_reading` is nullable. `null` and `false` are off.
+  The app does not infer it on. Existing accounts stay off. The switch lives
+  on Settings › AI, with the disclosure of what leaves the device.
+- When it is on, Home shows a weekly letter **under** the current insight,
+  not in its place. The letter is a tier-2 surface (gradient edge). The
+  insight hero remains the one tier-1 surface.
+- The letter's request is the week's journal text, memory text, place
+  **names**, and session notes, plus the habit figures Home already computes
+  (days done, days possible, streak, target, minutes). Photos, video,
+  coordinates, and the birthday column are not sent. The compass is not read.
+- The model writes in the app's language (`en` or `pt`). Quotations stay in
+  the language of the day.
+- A sentence is shown only when a quotation is a substring of a day that was
+  in the request, and every number outside that quotation is one of that
+  day's dates or a figure of a habit the sentence named. A sentence with no
+  quotation is dropped, which is what removes a bare "7/7". At most one
+  experiment, and it has to name a habit that was in the request or none at
+  all. It does not create a habit.
+- A week with nothing written (no journal text, memory, or session note)
+  does not call the model. Home says the writing was quiet.
+- Turning reading off stops new letters. It does not delete ones already
+  stored. "Clear the reading" does, and it does not touch the journal, the
+  habits, or the sessions.
+- Letters are a server cache (`journal_letters`), written by the edge
+  function, readable and deletable by their owner. They are not a synced
+  user-authored record and they are not in the backup: the same week can be
+  read again. Two devices with the same fingerprint share one stored letter
+  instead of each paying for a call.
+- The call shares the existing daily allowance with insights and Today
+  ordering.
+
+**Tradeoff.** People who turn this on are sending their journal to their
+own provider. That reverses the sentence Home still shows on the count-based
+insight ("your journal never is"). The letter says so on its own card. Off
+leaves Home pixel-for-pixel as it was.
+
 ## 3. Kept on purpose
 
 These were considered and stay because they serve the record, the compass, or

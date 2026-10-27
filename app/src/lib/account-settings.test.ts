@@ -140,6 +140,7 @@ describe("adoptRemoteAccountSettings", () => {
       holidayCalendars: ["US", "BR"],
       hemisphere: "south",
       birthday: null,
+      journalReading: null,
     });
   });
 

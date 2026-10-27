@@ -7,9 +7,9 @@
  *   visible per screen.
  * - `onAi`: the near-white text color for anything drawn on `aiGradient`.
  *
- * The linear gradient (`--ai-gradient-linear`, for badges, hairline accents and
- * 1.5px borders) is defined in `index.css` too. Nothing uses it yet; add its
- * constant here when the first tier-2 or tier-3 surface does.
+ * The linear gradient (`--ai-gradient-linear`) is the tier-2 edge. The weekly
+ * letter is the first surface that uses it.
  */
 export const aiGradient = "var(--ai-gradient)";
+export const aiGradientLinear = "var(--ai-gradient-linear)";
 export const onAi = "hsl(var(--on-ai))";

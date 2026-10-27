@@ -5,10 +5,14 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { FormField } from "@/components/forms";
 import { SettingsSection } from "@/components/ui/settings-section";
+import { updateAccountSettings } from "@/lib/account-settings";
+import { clearJournalLetters } from "@/lib/ai/letter-client";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useAuth } from "@/lib/use-auth";
+import { useAccountSettings } from "@/lib/use-account-settings";
 import {
   getAiSettingsStatus,
   invokeAiSettings,
@@ -22,6 +26,8 @@ export function AiCard() {
   const { t } = useTranslation("settings");
   const { isAuthed } = useAuth();
   const isOnline = useOnlineStatus();
+  const journalReading = useAccountSettings().journalReading === true;
+  const [clearing, setClearing] = useState(false);
   const [status, setStatus] = useState<AiSettingsStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL);
@@ -112,7 +118,25 @@ export function AiCard() {
     }
   };
 
-  const busy = saving || testing || loadingStatus;
+  const clearReading = async () => {
+    setMessage(null);
+    setClearing(true);
+    try {
+      await clearJournalLetters();
+      setMessage({ tone: "success", text: t("ai.reading.cleared") });
+    } catch (error) {
+      setMessage({
+        tone: "error",
+        text: t("ai.reading.clearFailed", {
+          error: error instanceof Error ? error.message : "unknown",
+        }),
+      });
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const busy = saving || testing || loadingStatus || clearing;
 
   return (
     <SettingsSection
@@ -205,6 +229,38 @@ export function AiCard() {
               onClick={() => void handleSave()}
             >
               {saving ? t("ai.saving") : t("ai.save")}
+            </Button>
+          </div>
+          <div className="space-y-3 border-t border-border pt-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="ai-journal-reading" className="leading-snug">
+                  {t("ai.reading.label")}
+                </Label>
+                <p
+                  id="ai-journal-reading-hint"
+                  className="text-xs leading-relaxed text-muted-foreground"
+                >
+                  {t("ai.reading.hint")}
+                </p>
+              </div>
+              <Switch
+                id="ai-journal-reading"
+                aria-describedby="ai-journal-reading-hint"
+                checked={journalReading}
+                disabled={busy}
+                onCheckedChange={(next) =>
+                  updateAccountSettings({ journalReading: next })
+                }
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy}
+              onClick={() => void clearReading()}
+            >
+              {clearing ? t("ai.reading.clearing") : t("ai.reading.clear")}
             </Button>
           </div>
         </>
