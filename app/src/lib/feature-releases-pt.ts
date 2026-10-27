@@ -12,6 +12,13 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-23-tab-chrome": {
+    title: "Telas de aba mais limpas",
+    bullets: [
+      "Início, Diário e Você não repetem mais um título grande e um subtítulo abaixo da barra superior. A aba que você escolheu nomeia a tela, como o Hoje já fazia.",
+      "O Diário mantém busca, filtros e a troca entre feed, calendário, mapa ou galeria numa faixa fixa no topo enquanto você rola.",
+    ],
+  },
   "2026-10-23-compass": {
     title: "Sua bússola",
     bullets: [
