@@ -255,7 +255,7 @@ export default function TodayPage() {
         </div>
       )}
 
-      <div className="sticky top-0 z-[var(--z-chrome)] border-b border-border bg-background/85 backdrop-blur-md">
+      <div className="sticky top-[var(--ios-status-shield,0px)] z-[var(--z-chrome)] border-b border-border bg-background/85 backdrop-blur-md md:top-0">
         <TodayHeader
           currentDate={currentDate}
           onDateChange={setCurrentDate}

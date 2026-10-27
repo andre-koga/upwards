@@ -260,7 +260,7 @@ import {
 } from "./sync-operations";
 import { saveOpsRpcAvailable } from "./sync-storage";
 import { MAX_PUSH_ATTEMPTS } from "./pending-operations";
-import { CLIENT_PROTOCOL } from "./sync-constants";
+import { CLIENT_PROTOCOL, PULL_SYNC_PAGE_SIZE } from "./sync-constants";
 import {
   ClientOutdatedError,
   getObservedDataEpoch,
@@ -724,10 +724,69 @@ describe("release gate", () => {
     const result = await pullAndApplyOperations(3);
     expect(rpcMock.mock.calls[0]).toEqual([
       "pull_sync_operations",
-      { since_sequence: 3, p_client_protocol: CLIENT_PROTOCOL },
+      {
+        since_sequence: 3,
+        p_client_protocol: CLIENT_PROTOCOL,
+        p_limit: PULL_SYNC_PAGE_SIZE,
+      },
     ]);
-    expect(result).toEqual({ maxSequence: 12 });
+    expect(result).toEqual({ maxSequence: 12, hasMore: false });
     expect(getObservedDataEpoch()).toBe(4);
+  });
+
+  it("follows has_more and continues from the page cursor", async () => {
+    const remote = (sequence: number): Record<string, unknown> => ({
+      operation_id: `remote-${sequence}`,
+      device_id: "other-device",
+      entity_type: "note",
+      entity_id: null,
+      operation_type: "noop",
+      payload: {},
+      base_revision: null,
+      status: "accepted",
+      server_sequence: sequence,
+      created_at: "2026-08-01T10:00:00.000Z",
+    });
+    rpcMock
+      .mockResolvedValueOnce({
+        data: { operations: [remote(11)], data_epoch: 4, has_more: true },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { operations: [remote(12)], data_epoch: 4, has_more: false },
+        error: null,
+      });
+
+    const result = await pullAndApplyOperations(3);
+
+    expect(rpcMock).toHaveBeenCalledTimes(2);
+    expect(rpcMock.mock.calls[1]?.[1]).toMatchObject({ since_sequence: 11 });
+    expect(result).toEqual({ maxSequence: 12, hasMore: false });
+  });
+
+  it("retries without p_limit when the server does not have that argument yet", async () => {
+    rpcMock
+      .mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: "PGRST202",
+          message:
+            "Could not find the function public.pull_sync_operations(since_sequence, p_client_protocol, p_limit)",
+        },
+      })
+      .mockResolvedValueOnce({
+        data: { operations: [], data_epoch: 4 },
+        error: null,
+      });
+
+    const result = await pullAndApplyOperations(0);
+
+    expect(rpcMock).toHaveBeenCalledTimes(2);
+    expect(rpcMock.mock.calls[1]?.[1]).toEqual({
+      since_sequence: 0,
+      p_client_protocol: CLIENT_PROTOCOL,
+    });
+    expect(result).toEqual({ hasMore: false });
   });
 
   it("rejects a pull with the typed error when the build is turned away", async () => {

@@ -315,7 +315,15 @@ Preserve the existing mobile-first experience:
 - Compact single-column pages
 - Touch swipe where useful
 - Mobile visual-viewport handling
-- PWA-safe area behavior
+- PWA-safe area behavior. Installed iPhone apps use
+  `apple-mobile-web-app-status-bar-style: default` (`app/index.html`).
+  `black-translucent` is what makes iOS 26 and later blur the notch and the
+  top of the page. `viewport-fit=cover` stays so `safe-area-inset-top` is
+  defined. While `html.ios-standalone` is set (home-screen iPhone/iPad only),
+  an opaque canvas strip (`--ios-status-shield`) fills that inset and the
+  shell starts below it. The Today sticky header sticks to the strip on
+  phones and to the scrollport from `md`. iOS reads the status-bar meta tag
+  when the icon is added to the Home Screen.
 
 Standardizing a drawer on Sheet must not regress keyboard appearance, safe-area
 padding, touch scrolling, or the current logical-day workflows.
