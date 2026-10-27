@@ -132,6 +132,21 @@
       "syncing": "Syncing for",
       "seconds": "{{count}} s",
       "lastError": "Last error"
+    },
+    "refresh": {
+      "syncNow": "Sync now",
+      "syncing": "Syncing…",
+      "synced": "Synced.",
+      "syncFailed": "Couldn't sync. Try again.",
+      "checkUpdate": "Check for app update",
+      "checking": "Checking…",
+      "upToDate": "This is the latest version.",
+      "updating": "Updating…",
+      "updateFailed": "Couldn't check for an update.",
+      "unavailable": "App updates aren't available in this browser.",
+      "offline": "You're offline. Try again when you're connected.",
+      "signedOut": "Sign in to sync this device.",
+      "hint": "On iPhone, pulling down doesn't reload the app. Use these to sync and to look for a new version."
     }
   },
   "ai": {
