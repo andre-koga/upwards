@@ -30,13 +30,13 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!--
-      default, not black-translucent. From iOS 26.1 the translucent style makes
-      the system draw a blur over the notch and the top of an installed PWA.
-      iOS reads this tag when the icon is added to the Home Screen.
-      viewport-fit=cover stays so env(safe-area-inset-top) is available; the
-      ios-standalone class paints an opaque canvas strip in that inset.
+      No apple-mobile-web-app-status-bar-style. black-translucent is what makes
+      iOS 26.1 and iOS 27 draw a blur over the notch and down across the top of
+      an installed PWA, and default does not stop it either. Apple's guidance
+      is to omit the tag so the status bar takes the page color. iOS reads the
+      tag when the icon is added to the Home Screen. The #ios-status-shield
+      element is what stops the blur on an already-installed icon.
     -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <script>
       (function () {
         try {
@@ -75,6 +75,12 @@
     />
   </head>
   <body>
+    <!--
+      Real element, not a pseudo. iOS 26/27 only stops the top blur when it can
+      sample a fixed, solid, full-width bar within a few pixels of the top.
+      Shown only while html.ios-standalone is set.
+    -->
+    <div id="ios-status-shield" aria-hidden="true"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
