@@ -264,7 +264,11 @@ Four primary destinations. This is a hard cap on the mobile tab bar.
 Everything else is secondary and reached from a profile/overflow menu or `⌘K`:
 Projects/groups, Settings (appearance, language, holiday calendars,
 daily clip, automatic location, account, sync, AI key, backup), Sync issues,
-What's new, Feedback, and About (version, error logs, source link).
+What's new, Feedback, and About (version, error logs, source link). The You
+tab keeps that overflow one tap away, and with it the manual Sync now /
+Check for app update controls — installed iPhone apps have no
+pull-to-refresh. Those controls use the instrument register; they do not
+sit inside a compass section.
 
 There is no standalone task-order screen. Today's order is the person's own
 (a Reorder mode on the list itself, with up/down buttons per row), with pins on

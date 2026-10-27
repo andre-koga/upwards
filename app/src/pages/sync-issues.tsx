@@ -4,13 +4,13 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
-  Loader2,
   RefreshCw,
   Smartphone,
   XCircle,
 } from "lucide-react";
 
 import { ConfirmFormDialog } from "@/components/forms";
+import { AppRefreshActions } from "@/components/pwa/app-refresh-actions";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { ConflictReviewCard } from "@/components/settings/conflict-review-card";
 import { RecoveryBundlesSection } from "@/components/settings/recovery-bundles-section";
@@ -188,22 +188,7 @@ export default function SyncIssuesPage() {
       subtitle={t("syncIssues.page.subtitle")}
       className="space-y-3"
     >
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => void handleRetrySync()}
-          disabled={isSyncing}
-        >
-          {isSyncing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-          {t("syncIssues.actions.retrySync")}
-        </Button>
-      </div>
+      <AppRefreshActions />
 
       {loading && !data ? (
         <p className="text-sm text-muted-foreground">

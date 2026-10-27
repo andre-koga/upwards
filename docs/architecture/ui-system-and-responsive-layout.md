@@ -323,7 +323,10 @@ Preserve the existing mobile-first experience:
   an opaque canvas strip (`--ios-status-shield`) fills that inset and the
   shell starts below it. The Today sticky header sticks to the strip on
   phones and to the scrollport from `md`. iOS reads the status-bar meta tag
-  when the icon is added to the Home Screen.
+  when the icon is added to the Home Screen. Installed iPhone apps also have
+  no pull-to-refresh. `AppRefreshActions` (You tab, Cloud sync card, Sync
+  issues) is the manual control: Sync now runs a sync without reloading, and
+  Check for app update reloads only when a newer service worker activates.
 
 Standardizing a drawer on Sheet must not regress keyboard appearance, safe-area
 padding, touch scrolling, or the current logical-day workflows.
