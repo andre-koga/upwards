@@ -315,15 +315,25 @@ Preserve the existing mobile-first experience:
 - Compact single-column pages
 - Touch swipe where useful
 - Mobile visual-viewport handling
-- PWA-safe area behavior. Installed iPhone apps use
-  `apple-mobile-web-app-status-bar-style: default` (`app/index.html`).
-  `black-translucent` is what makes iOS 26 and later blur the notch and the
-  top of the page. `viewport-fit=cover` stays so `safe-area-inset-top` is
-  defined. While `html.ios-standalone` is set (home-screen iPhone/iPad only),
-  an opaque canvas strip (`--ios-status-shield`) fills that inset and the
-  shell starts below it. The Today sticky header sticks to the strip on
-  phones and to the scrollport from `md`. iOS reads the status-bar meta tag
-  when the icon is added to the Home Screen.
+- PWA-safe area behavior. Installed iPhone apps omit
+  `apple-mobile-web-app-status-bar-style`. `black-translucent` makes iOS 26.1
+  and iOS 27 draw a blur over the notch and down across the top of the page,
+  and `default` does not stop it. Apple's guidance is to leave the tag out so
+  the status bar takes the page color. `viewport-fit=cover` stays so
+  `safe-area-inset-top` is defined. While `html.ios-standalone` is set
+  (home-screen iPhone/iPad only), `#ios-status-shield` — a real fixed element,
+  not a pseudo — is an opaque canvas strip at least 8px tall, flush with the
+  top, with no `backdrop-filter`. That is the element iOS samples, and it is
+  what removes the scrim. The shell starts below the strip. Today's sticky
+  header sticks to the strip on phones and to the scrollport from `md`, and on
+  that install it is opaque paper: a frosted top bar is what the scrim was
+  sampling. The running timer's glow is clipped to that header so it cannot
+  paint into the status band. iOS reads a status-bar meta tag, if one was
+  present, when the icon is added to the Home Screen; the shield applies with
+  the app update. Installed iPhone apps also have
+  no pull-to-refresh. `AppRefreshActions` (You tab, Cloud sync card, Sync
+  issues) is the manual control: Sync now runs a sync without reloading, and
+  Check for app update reloads only when a newer service worker activates.
 
 Standardizing a drawer on Sheet must not regress keyboard appearance, safe-area
 padding, touch scrolling, or the current logical-day workflows.

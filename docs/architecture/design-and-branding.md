@@ -173,7 +173,9 @@ a user's group color.
 Today shows a card in its sticky header row, beside the date control, filled with that group's color and a soft
 glow of the same color, with text chosen for contrast (`getContrastColor`). It is
 the only live, time-critical surface in the app, and the color is what makes a
-running timer unmistakable from across the room. The tradeoff accepted: one
+running timer unmistakable from across the room. On an installed iPhone the
+glow is clipped to that header row, so it cannot smear into the status band.
+The tradeoff accepted: one
 saturated, user-colored surface, only while a session runs, and never in a list
 or on any content card. It does not use the AI gradient.
 
@@ -207,7 +209,9 @@ labels and metadata. Never use them for body copy.
 - Shadows are for *floating* things only (nav, sheets, the AI hero). Content
   cards use `--line` borders, not shadows.
 - **Frosted glass** is reserved for floating and sticky chrome (bottom nav,
-  sticky headers, toolbars, sheets) and for AI surfaces. Recipe:
+  sticky headers, toolbars, sheets) and for AI surfaces. On an installed
+  iPhone the Today header is opaque paper instead: iOS 26.1 and 27 sample a
+  frosted top bar and paint a blur over the notch and the date row. Recipe:
   `backdrop-blur-xl` + a translucent surface (`bg-paper/70`) + a
   hairline top highlight (`border-white/40`) + a subtle grain overlay. Content
   cards stay opaque paper — glass on everything destroys legibility and reads
@@ -264,7 +268,11 @@ Four primary destinations. This is a hard cap on the mobile tab bar.
 Everything else is secondary and reached from a profile/overflow menu or `⌘K`:
 Projects/groups, Settings (appearance, language, holiday calendars,
 daily clip, automatic location, account, sync, AI key, backup), Sync issues,
-What's new, Feedback, and About (version, error logs, source link).
+What's new, Feedback, and About (version, error logs, source link). The You
+tab keeps that overflow one tap away, and with it the manual Sync now /
+Check for app update controls — installed iPhone apps have no
+pull-to-refresh. Those controls use the instrument register; they do not
+sit inside a compass section.
 
 There is no standalone task-order screen. Today's order is the person's own
 (a Reorder mode on the list itself, with up/down buttons per row), with pins on

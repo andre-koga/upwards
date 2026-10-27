@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AlertCircle } from "lucide-react";
 
+import { AppRefreshActions } from "@/components/pwa/app-refresh-actions";
 import { Button } from "@/components/ui/button";
 import { SettingsSection } from "@/components/ui/settings-section";
 import { syncEngine } from "@/lib/sync";
@@ -65,6 +66,7 @@ export function SyncCard() {
       title={t("sync.title")}
       description={t("sync.description")}
     >
+      <AppRefreshActions />
       <Button variant="outline" className="w-full" asChild>
         <Link to="/settings/sync-issues" className="flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />

@@ -1,6 +1,7 @@
 import { useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { IdentitySection } from "@/components/compass/identity-section";
+import { AppRefreshActions } from "@/components/pwa/app-refresh-actions";
 import { GoalsSection } from "@/components/compass/goals-section";
 import { KnowledgeSection } from "@/components/compass/knowledge-section";
 import { NorthStarSection } from "@/components/compass/north-star-section";
@@ -59,6 +60,7 @@ export default function YouPage() {
       )}
 
       <YouLinks />
+      <AppRefreshActions />
     </div>
   );
 }

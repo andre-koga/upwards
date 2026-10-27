@@ -132,6 +132,20 @@
       "syncing": "Sincronizando há",
       "seconds": "{{count}} s",
       "lastError": "Último erro"
+    },
+    "refresh": {
+      "syncNow": "Sincronizar agora",
+      "syncing": "Sincronizando…",
+      "synced": "Sincronizado.",
+      "syncFailed": "Não foi possível sincronizar. Tente de novo.",
+      "checkUpdate": "Procurar atualização do app",
+      "checking": "Procurando…",
+      "upToDate": "Esta é a versão mais recente.",
+      "updating": "Atualizando…",
+      "updateFailed": "Não foi possível procurar uma atualização.",
+      "unavailable": "Atualizações do app não estão disponíveis neste navegador.",
+      "offline": "Você está offline. Tente de novo quando estiver conectado.",
+      "signedOut": "Entre para sincronizar este dispositivo."
     }
   },
   "ai": {
