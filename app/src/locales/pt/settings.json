@@ -145,8 +145,7 @@
       "updateFailed": "Não foi possível procurar uma atualização.",
       "unavailable": "Atualizações do app não estão disponíveis neste navegador.",
       "offline": "Você está offline. Tente de novo quando estiver conectado.",
-      "signedOut": "Entre para sincronizar este dispositivo.",
-      "hint": "No iPhone, puxar a tela para baixo não recarrega o app. Use estes botões para sincronizar e procurar uma versão nova."
+      "signedOut": "Entre para sincronizar este dispositivo."
     }
   },
   "ai": {

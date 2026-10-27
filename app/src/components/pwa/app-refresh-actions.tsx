@@ -14,18 +14,10 @@ import { cn } from "@/lib/utils";
 type SyncNotice = "synced" | "failed" | null;
 
 /**
- * Manual resync and app-update check. Installed iPhone apps do not
- * pull-to-refresh, so these buttons are the way to do both by hand.
- * Syncing does not reload the page. An update check reloads only when a
- * newer service worker is waiting.
+ * Manual resync and app-update check. Syncing does not reload the page.
+ * An update check reloads only when a newer service worker is waiting.
  */
-export function AppRefreshActions({
-  className,
-  showHint = true,
-}: {
-  className?: string;
-  showHint?: boolean;
-}) {
+export function AppRefreshActions({ className }: { className?: string }) {
   const { t } = useTranslation("settings");
   const { isAuthed } = useAuth();
   const online = useOnlineStatus();
@@ -101,11 +93,6 @@ export function AppRefreshActions({
               : t("sync.refresh.checkUpdate")}
         </Button>
       </div>
-      {showHint ? (
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {t("sync.refresh.hint")}
-        </p>
-      ) : null}
       {status ? (
         <p
           className="font-mono text-xs tabular-nums text-muted-foreground"

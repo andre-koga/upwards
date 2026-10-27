@@ -145,8 +145,7 @@
       "updateFailed": "Couldn't check for an update.",
       "unavailable": "App updates aren't available in this browser.",
       "offline": "You're offline. Try again when you're connected.",
-      "signedOut": "Sign in to sync this device.",
-      "hint": "On iPhone, pulling down doesn't reload the app. Use these to sync and to look for a new version."
+      "signedOut": "Sign in to sync this device."
     }
   },
   "ai": {
