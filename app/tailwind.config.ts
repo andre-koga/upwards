@@ -8,6 +8,17 @@ export default {
     hoverOnlyWhenSupported: true,
   },
   theme: {
+    // The app is phone-only (design-and-branding.md §6). These never match a
+    // real window, so `sm:` and up stay inert and the unprefixed phone styles
+    // are the layout at every width. A wide window shows a notice and a 430px
+    // frame; it does not get a second layout.
+    screens: {
+      sm: "9999px",
+      md: "9999px",
+      lg: "9999px",
+      xl: "9999px",
+      "2xl": "9999px",
+    },
     extend: {
       colors: {
         background: "hsl(var(--background))",

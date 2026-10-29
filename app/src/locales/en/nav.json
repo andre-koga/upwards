@@ -3,7 +3,6 @@
   "whatsNewUnread": "What's new (unread updates)",
   "feedback": "Feedback / requests",
   "journal": "Journal",
-  "aiInsights": "AI Home",
   "settings": "Settings",
   "openMoreActions": "Open more actions",
   "pickDate": "Pick a date",
@@ -13,7 +12,6 @@
   "install": "Install",
   "dismissInstall": "Not now",
   "addQuickMemo": "Add quick memo",
-  "home": "Home",
   "back": "Back",
   "backToSettings": "Back to Settings",
   "whatsNewPage": {
@@ -46,7 +44,6 @@
   "moreNavigation": "More",
   "skipToContent": "Skip to content",
   "tabs": {
-    "home": "Home",
     "today": "Today",
     "journal": "Journal",
     "you": "You"
@@ -73,10 +70,9 @@
       "themeSystem": "Follow system appearance"
     },
     "keywords": {
-      "home": "insights ai digest",
       "today": "tasks timer sessions day activities",
       "journal": "entries diary reflections photos places memories",
-      "you": "compass identity goals north star profile",
+      "you": "compass identity goals north star profile home",
       "settings": "settings account language appearance sync",
       "whatsNew": "changelog updates releases",
       "errorLogs": "logs debug errors",

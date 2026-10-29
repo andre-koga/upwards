@@ -39,9 +39,9 @@ page-level information architecture, read:
 - [`docs/architecture/ui-system-and-responsive-layout.md`](docs/architecture/ui-system-and-responsive-layout.md)
 
 That document establishes shadcn/Radix as the baseline for generic accessible
-behavior while preserving Upwards-specific components and mobile behavior. It
-also requires a real adaptive desktop shell rather than a wider or centered
-phone layout.
+behavior while preserving Upwards-specific components and mobile behavior. The
+app is phone-only: a wide window shows a notice and a 430px frame, not a
+desktop shell.
 
 Before planning or implementing any change to frontend code, visual design,
 styling, layout, copy, component structure, or page-level information

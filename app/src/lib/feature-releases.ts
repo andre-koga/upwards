@@ -12,6 +12,17 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-10-29-three-places",
+    date: "2026-10-29",
+    title: "Today, Journal, You",
+    bullets: [
+      "The app is three places. Today is where you log the day. The Journal is where you read it back. You is where that record becomes a picture of you.",
+      "The Home tab and its weekly summary are gone. That page restated numbers you can already see on Today.",
+      "An old Home link opens You.",
+      "On a computer, Upwards says it is made for a phone and stays in a phone-sized window.",
+    ],
+  },
+  {
     id: "2026-10-23-compass",
     date: "2026-10-23",
     title: "Your compass",

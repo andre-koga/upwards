@@ -8,5 +8,6 @@
   "add": "Add",
   "loading": "Loading…",
   "email": "Email",
-  "emailPlaceholder": "you@example.com"
+  "emailPlaceholder": "you@example.com",
+  "wideScreen": "Upwards is made for a phone. On a larger screen it stays in a phone-sized window."
 }

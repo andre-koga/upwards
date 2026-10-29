@@ -33,9 +33,9 @@ Treat that document as binding repository guidance. Non-negotiables:
   no disconnected floating white lists.** Depth comes from tone and hairlines.
 - **Frosted glass only** on floating/sticky chrome and AI surfaces; content cards
   stay opaque paper.
-- **Mobile-first literally.** Unprefixed classes describe the phone; `lg:` adds a
-  real two-column desktop shell with a wide primary column and a narrow context
-  rail. Never the fixed 430px phone frame for new surfaces.
+- **Phone only.** Unprefixed classes are the layout. A window wider than a
+  phone shows a notice and a 430px frame (`design-and-branding.md` §6). Do not
+  add a desktop shell or a `lg:` layout.
 - **Journal and Memories are one record** distinguished by date precision
   (`exact` vs `approximate`), not two destinations.
 - **Scope is decided in `docs/architecture/product-scope.md`.** Every kept

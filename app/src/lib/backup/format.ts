@@ -73,12 +73,6 @@ export interface BackupSettings {
   hemisphere?: "north" | "south" | null;
   /** Your own birth date; optional so older files still read. */
   birthday?: string | null;
-  /**
-   * Whether the weekly letter may read the journal. Optional so older files
-   * still read. Unlike automatic location, restoring it does not ask the
-   * browser for a permission.
-   */
-  journalReading?: boolean | null;
 }
 
 /** A storage object carried in the archive under `media/<bucket>/<path>`. */

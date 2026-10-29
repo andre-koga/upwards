@@ -17,7 +17,7 @@ export interface CompletionParams {
 export const OUTPUT_TOKEN_CAP = 300;
 /**
  * Ceiling for `max_completion_tokens`, which also counts the model's hidden
- * reasoning. A summary and three recommendations come to about 120 tokens, but
+ * reasoning. A short order with one reason per row is well under this, but
  * 300 can be used up on reasoning before any answer appears. It is only a
  * ceiling: tokens are billed as used.
  */

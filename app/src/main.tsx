@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { ThemeProvider } from "next-themes";
 import { ThemeColorSync } from "@/components/theme-color-sync";
+import { WideScreenStage } from "@/components/layout/wide-screen-stage";
 import App from "./App.tsx";
 import "./index.css";
 import { syncEngine } from "./lib/sync";
@@ -72,7 +73,9 @@ function startApp() {
     <React.StrictMode>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <ThemeColorSync />
-        <App />
+        <WideScreenStage>
+          <App />
+        </WideScreenStage>
       </ThemeProvider>
     </React.StrictMode>
   );

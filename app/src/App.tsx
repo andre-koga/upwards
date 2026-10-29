@@ -33,7 +33,6 @@ const RedesignPreviewBPage = lazy(() => import("@/pages/redesign-preview-b"));
 const RedesignPreviewCPage = lazy(() => import("@/pages/redesign-preview-c"));
 const RedesignPreviewDPage = lazy(() => import("@/pages/redesign-preview-d"));
 const RedesignFlagshipPage = lazy(() => import("@/pages/redesign-flagship"));
-const HomePage = lazy(() => import("@/pages/home"));
 const YouPage = lazy(() => import("@/pages/you"));
 const ClipSpikePage = lazy(() => import("@/pages/clip-spike"));
 
@@ -136,7 +135,8 @@ function AppFrame() {
               element={<Navigate to="/journal" replace />}
             />
             <Route path="/logs" element={<LogsPage />} />
-            <Route path="/home" element={<HomePage />} />
+            {/* The weekly summary lived here. Old links open You. */}
+            <Route path="/home" element={<Navigate to="/you" replace />} />
             <Route path="/you" element={<YouPage />} />
             {/* Developer tool for the daily-clip device spike; not linked anywhere. */}
             <Route path="/clip-spike" element={<ClipSpikePage />} />

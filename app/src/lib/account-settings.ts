@@ -1,7 +1,6 @@
 import { getCachedUserId, supabase } from "@/lib/supabase";
 import { now } from "@/lib/db";
 import { parseBirthday } from "@/lib/holidays/birthday";
-import { clearLetterCache } from "@/lib/ai/letter-cache";
 
 /**
  * Account-level opt-ins (product-scope.md §2.5, §2.7, §2.8). They follow the
@@ -21,11 +20,6 @@ export interface AccountSettings {
   hemisphere: Hemisphere | null;
   /** Your own birth date, `YYYY-MM-DD`. Personal data: never sent to the AI. */
   birthday: string | null;
-  /**
-   * Whether the weekly letter may read the journal. `null` is off, and it is
-   * never inferred on (product-scope.md §2.12).
-   */
-  journalReading: boolean | null;
 }
 
 export const EMPTY_ACCOUNT_SETTINGS: AccountSettings = {
@@ -34,7 +28,6 @@ export const EMPTY_ACCOUNT_SETTINGS: AccountSettings = {
   holidayCalendars: null,
   hemisphere: null,
   birthday: null,
-  journalReading: null,
 };
 
 const STORAGE_KEY = "upwards-account-settings";
@@ -46,11 +39,10 @@ export interface AccountSettingsRow {
   holiday_calendars: string[] | null;
   hemisphere: Hemisphere | null;
   birthday: string | null;
-  journal_reading: boolean | null;
 }
 
 export const ACCOUNT_SETTINGS_COLUMNS =
-  "auto_location,daily_clip,holiday_calendars,hemisphere,birthday,journal_reading";
+  "auto_location,daily_clip,holiday_calendars,hemisphere,birthday";
 
 export function toRow(
   settings: Partial<AccountSettings>
@@ -63,8 +55,6 @@ export function toRow(
     row.holiday_calendars = settings.holidayCalendars;
   if (settings.hemisphere !== undefined) row.hemisphere = settings.hemisphere;
   if (settings.birthday !== undefined) row.birthday = settings.birthday;
-  if (settings.journalReading !== undefined)
-    row.journal_reading = settings.journalReading;
   return row;
 }
 
@@ -82,8 +72,6 @@ function fromRow(row: Partial<AccountSettingsRow> | null): AccountSettings {
         : null,
     // Only a real calendar date counts; anything else is treated as not set.
     birthday: parseBirthday(row?.birthday) ? (row?.birthday ?? null) : null,
-    journalReading:
-      typeof row?.journal_reading === "boolean" ? row.journal_reading : null,
   };
 }
 
@@ -202,12 +190,8 @@ export async function adoptRemoteAccountSettings(
 /** Forget this device's copy, e.g. on sign-out or switching accounts. */
 export function clearAccountSettings(): void {
   accountHasAnswered = false;
-  clearLetterCache();
   commit(EMPTY_ACCOUNT_SETTINGS);
 }
-
-export const isJournalReadingOn = (): boolean =>
-  snapshot.journalReading === true;
 
 export const isAutoLocationOn = (): boolean => snapshot.autoLocation === true;
 export const isDailyClipOn = (): boolean => snapshot.dailyClip === true;

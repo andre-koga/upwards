@@ -22,7 +22,6 @@ export function readBackupSettings(): BackupSettings {
     holidayCalendars: account.holidayCalendars,
     hemisphere: account.hemisphere,
     birthday: account.birthday,
-    journalReading: account.journalReading,
   };
 }
 
@@ -46,11 +45,6 @@ function missingAccountSettings(
     fill.hemisphere = settings.hemisphere;
   if (current.birthday === null && parseBirthday(settings.birthday))
     fill.birthday = settings.birthday;
-  if (
-    current.journalReading === null &&
-    typeof settings.journalReading === "boolean"
-  )
-    fill.journalReading = settings.journalReading;
   return fill;
 }
 

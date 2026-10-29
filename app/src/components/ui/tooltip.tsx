@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Tooltip as TooltipPrimitive } from "radix-ui";
 
+import { mobileFrame } from "@/lib/mobile-frame";
 import { cn } from "@/lib/utils";
 
 function TooltipProvider({
@@ -37,7 +38,7 @@ function TooltipContent({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
   return (
-    <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Portal container={mobileFrame()}>
       <TooltipPrimitive.Content
         data-slot="tooltip-content"
         sideOffset={sideOffset}

@@ -3,8 +3,8 @@
  * fixes a parameter the provider names as unsupported (see completion-params.ts).
  *
  * Failures come back as the JSON body and status the edge function should send,
- * in the same shapes `generate-ai-insights` uses, so the app reads both the same
- * way (`lib/ai/insight-errors.ts`). Uses only `fetch` and `AbortController`, so
+ * in the shapes `lib/ai/insight-errors.ts` already reads. Uses only `fetch` and
+ * `AbortController`, so
  * the app's unit tests import it directly.
  */
 import {

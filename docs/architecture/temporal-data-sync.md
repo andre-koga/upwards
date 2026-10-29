@@ -574,22 +574,14 @@ two. A stale-base goal edit becomes a Sync issue. Archive, delete and restore
 round-trip through backup. A compass field in an AI payload fails the privacy
 test.
 
-## Journal letter (step 1, 2026-10-27)
+## Journal letter (dropped 2026-10-29)
 
-The weekly letter in product-scope.md §2.12 is a **derived cache**, not a
-new kind of user history. It does not go through the sync operation log, and
-this is a deliberate limit of the first slice: the words the person wrote
-stay the journal rows; the letter can be made again from them.
-
-| Thing | Class | Rule |
-|---|---|---|
-| `user_profiles.journal_reading` | Account setting, like `daily_clip` | `null` is off. Never inferred on. Follows the account. Included in backup settings and filled only where the device has not chosen. |
-| `journal_letters` | Server cache written by `generate-journal-letter` | One row per `(user, fingerprint)`. The owner can read and delete. The client cannot insert. Clearing deletes these rows and nothing else. Not in the Dexie backup, because it is not a user-authored table. |
-| The journal, habits, sessions | Unchanged | The function never writes them. |
-
-A model write is not last-write-wins on the journal. The stored letter is the
-grounded output, not the raw prompt, and the function does not log the
-journal body.
+`20261027174139_journal_reading.sql` added `user_profiles.journal_reading` and
+a `journal_letters` cache for a weekly recap. That cache was not user-authored
+history: the journal rows were the record, and the letter could be made again
+from them. `20261029190000_drop_journal_letter.sql` drops the table and the
+column. Journal entries, memories, and session notes stay. The drop is not a
+deletion of accepted history. Do not reintroduce the letter.
 
 ## Adding a synced field (required checklist)
 

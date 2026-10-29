@@ -4,6 +4,7 @@ import * as React from "react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
+import { mobileFrame } from "@/lib/mobile-frame";
 import { cn } from "@/lib/utils";
 import {
   dialogSurfaceMotionClassName,
@@ -93,9 +94,16 @@ function DialogTrigger({
 }
 
 function DialogPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
+  return (
+    <DialogPrimitive.Portal
+      data-slot="dialog-portal"
+      container={container ?? mobileFrame()}
+      {...props}
+    />
+  );
 }
 
 function DialogOverlay({

@@ -2,9 +2,10 @@
 
 **Status:** binding — decided 2026-10-01.
 
-Upwards is pivoting from "a place that stores your days" to "a place that reads
-your days back against who you want to become" (see
-[`design-and-branding.md`](design-and-branding.md) §1). An app that does
+Upwards keeps the day on Today, lets you read that record in the Journal, and
+turns it into a picture of you on You (see
+[`design-and-branding.md`](design-and-branding.md) §1). A weekly recap is not
+that picture. An app that does
 everything cannot do any one thing especially well, so every shipped feature was
 reviewed against two questions:
 
@@ -40,6 +41,10 @@ with the product tradeoff that changed.
 | **Configurable day-reset hour** (default 4 AM, up to 8 AM) | A day that ends at an arbitrary hour forces every date calculation through an "effective today" layer: render-time clipping of sessions, boundary labels, and logical-day math in streaks, the journal, memos, and AI aggregation. The setting also lives in device `localStorage`, so two devices could disagree about which day it is. | Days always end at local midnight. Delete `lib/session/day-reset.ts` and `components/settings/day-reset-card.tsx`, and reduce `lib/activity/period-day-utils.ts` to the single midnight-based overlap helper (§2.2). `getEffectiveToday()` becomes the plain local date. The day timer (`hooks/use-day-reset-timer.ts`) becomes a UI-only midnight timer that rolls Today over and runs memo carry-forward. No rewrite of past facts: counts, break days, and journal entries stay on the dates they were recorded on. **Behavior change:** because the old default was 4 AM, anything done between midnight and 4 AM now belongs to the new day. The lifted edit lock (§2.3) makes it easy to log a late-night item on yesterday instead. |
 | **Per-field conflict merging** | Choosing field by field between two versions of a habit is precision nobody needs for a rare, low-stakes conflict, and it costs about 1,600 lines. | Whole-item choice, plus "keep both" for journal text. See §2.10. |
 | **Error Logs and GitHub link in the main menu** | Developer tools in a personal-life app's primary navigation. | Both move to Settings › About. The `/logs` route stays for support. |
+| **Home tab, the weekly AI insight, and its suggestions** (removed 2026-10-29) | A one-sentence recap of the last seven days, plus up to three suggestions, paraphrased counts the person can already see on each habit. That is not a picture of them, and it is not worth a model call. | Delete the Home screen, the insight cache, the suggestion list, `lib/ai/build-insight-payload.ts`, `supabase/functions/_shared/insight.ts`, and `generate-ai-insights`. `/home` redirects to `/you`. The phone tab bar is Today, Journal, You. **The deployed `generate-ai-insights` function should be removed**; the repo no longer calls it. Order with AI keeps the daily call cap on its own. |
+| **Home digest, "Worth acting on today"** (removed 2026-10-29) | The same week with no model: a streak at risk, a slipping habit, an unwritten journal day. A second summary of Today. | Delete `lib/home/digest.ts` and the Home screen. The week's figures stay in `lib/ai/habit-facts.ts` for a goal's evidence line on You and for Order with AI. |
+| **Opt-in weekly letter** (landed on `main` in #132, removed 2026-10-29) | A letter under the Home insight that quotes the week's journal. That is the same recap, with the person's own sentences pasted in. | Delete `generate-journal-letter`, the letter client, and the Settings switch. `20261027174139_journal_reading.sql` already applied, so `20261029190000_drop_journal_letter.sql` drops the `journal_letters` cache and `user_profiles.journal_reading`. Journal entries stay. **The deployed `generate-journal-letter` function should be removed**; the repo no longer calls it, and deploys do not prune functions. |
+| **Adaptive desktop shell** (withdrawn 2026-10-29) | A sidebar, a two-column Journal, and a desktop settings rail were a second layout for an app that is used on a phone. | The shell is the phone shell at every width. Past 480px, a notice and a 430px frame (`WideScreenStage`, `index.css`). Tailwind `sm` and up are set so they never match. Do not add a desktop variant. |
 
 ## 2. Changed
 
@@ -638,54 +643,6 @@ tools for it that do not compete: their own order, pins, and the AI.
 - A new habit still takes the next free number at the end of the scheduled
   sequence, so it appears last until moved.
 
-### 2.12 Journal reading: an opt-in letter beside the insight
-
-The direction is [`../plans/journal-first.md`](../plans/journal-first.md).
-This section is step 1 of that plan only. Today, the Journal, habit and time
-tracking, and the You forms stay as they are. The count-based insight stays
-the Home hero until a letter has been read against real weeks and a later
-change says otherwise.
-
-**What changed.** The insight request still sends habit figures and journal
-counts, never the words. A separate reading may send the words, and only
-after an explicit yes.
-
-- `user_profiles.journal_reading` is nullable. `null` and `false` are off.
-  The app does not infer it on. Existing accounts stay off. The switch lives
-  on Settings › AI, with the disclosure of what leaves the device.
-- When it is on, Home shows a weekly letter **under** the current insight,
-  not in its place. The letter is a tier-2 surface (gradient edge). The
-  insight hero remains the one tier-1 surface.
-- The letter's request is the week's journal text, memory text, place
-  **names**, and session notes, plus the habit figures Home already computes
-  (days done, days possible, streak, target, minutes). Photos, video,
-  coordinates, and the birthday column are not sent. The compass is not read.
-- The model writes in the app's language (`en` or `pt`). Quotations stay in
-  the language of the day.
-- A sentence is shown only when a quotation is a substring of a day that was
-  in the request, and every number outside that quotation is one of that
-  day's dates or a figure of a habit the sentence named. A sentence with no
-  quotation is dropped, which is what removes a bare "7/7". At most one
-  experiment, and it has to name a habit that was in the request or none at
-  all. It does not create a habit.
-- A week with nothing written (no journal text, memory, or session note)
-  does not call the model. Home says the writing was quiet.
-- Turning reading off stops new letters. It does not delete ones already
-  stored. "Clear the reading" does, and it does not touch the journal, the
-  habits, or the sessions.
-- Letters are a server cache (`journal_letters`), written by the edge
-  function, readable and deletable by their owner. They are not a synced
-  user-authored record and they are not in the backup: the same week can be
-  read again. Two devices with the same fingerprint share one stored letter
-  instead of each paying for a call.
-- The call shares the existing daily allowance with insights and Today
-  ordering.
-
-**Tradeoff.** People who turn this on are sending their journal to their
-own provider. That reverses the sentence Home still shows on the count-based
-insight ("your journal never is"). The letter says so on its own card. Off
-leaves Home pixel-for-pixel as it was.
-
 ## 3. Kept on purpose
 
 These were considered and stay because they serve the record, the compass, or
@@ -929,7 +886,7 @@ Track B gets its own breakdown before it starts. Its shape:
 
 - **B0.** Mock the screens the flagship lacks: previous versions, conflict
   review, the activity type question, sign-in, onboarding.
-- **B1.** Adaptive shell and navigation (Home / Today / Journal / You, `⌘K`).
+- **B1.** Adaptive shell and navigation (Today / Journal / You, `⌘K`; Home was removed 2026-10-29, §1).
   Done in two parts: B1a (palette, 2026-10-11) and B1b (shell, 2026-10-12; see
   [`ui-system-and-responsive-layout.md`](ui-system-and-responsive-layout.md)).
   From `cursor/adaptive-app-shell-5a78` only the tooltip and separator
@@ -964,8 +921,8 @@ Track B gets its own breakdown before it starts. Its shape:
     clears it. States: idle, loading, offline, not configured (with a Settings
     link), rate limited, provider error, unusable answer, stale (older than
     three hours, or an open row missing from it); the list is usable in all of
-    them. Ranking shares `user_ai_settings`' daily call allowance with
-    insights (20 a day). Every row also has a pin button (the quick pin). It
+    them. Ranking uses `user_ai_settings`' daily call allowance (20 a day). The
+    insight function that shared it was removed (§1). Every row also has a pin button (the quick pin). It
     needs a manual `supabase functions deploy rank-today`.
   - **B2c (done 2026-10-13):** manual order and "Done last" on Today, §2.11.
     The order the person sets is `order_index`, edited again from the list; the
@@ -1049,7 +1006,9 @@ Track B gets its own breakdown before it starts. Its shape:
     cards and the Calendar are real buttons and a grid, so every choice has a
     keyboard path.
   - **B3d:** generated month and holiday banner images.
-- **B4.** Home: AI insight surfaces on the existing AI groundwork. Split in
+- **B4.** Home: AI insight surfaces on the existing AI groundwork. **Withdrawn
+  2026-10-29 (§1).** The hero, the suggestions, and the digest below are what
+  shipped and then were deleted. Split in
   two, like B2.
   - **B4a (done 2026-10-14):** the Home screen, its states, and a digest that
     needs no key.

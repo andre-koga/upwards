@@ -24,15 +24,14 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
   );
 }
 
-// Same guardrails as generate-ai-insights: figures only, a capped answer, and
-// the same per-user daily call counter, so a buggy client cannot burn through
-// someone's key budget. Ranking and insights share the one allowance.
+// Figures only, a capped answer, and a per-user daily call counter, so a buggy
+// client cannot burn through someone's key budget.
 const MAX_CALLS_PER_DAY = 20;
 // About 12 items of figures; the body is untrusted client input.
 const MAX_PAYLOAD_BYTES = 4000;
 // Up to MAX_RANK_ITEMS rows of `{"key":"12","reason":"<90 chars>"}`, about 35
-// tokens each. `max_completion_tokens` also counts hidden reasoning, so it gets
-// the same headroom the insights call does.
+// tokens each. `max_completion_tokens` also counts hidden reasoning, so the
+// ceiling sits well above the visible answer.
 const RANK_TOKEN_CAPS = {
   maxTokens: 120 + MAX_RANK_ITEMS * 40,
   maxCompletionTokens: 1200,

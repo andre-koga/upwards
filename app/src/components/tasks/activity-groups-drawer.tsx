@@ -570,7 +570,7 @@ export default function ActivityGroupsDrawer({
             className={cn(
               !triggerLabel &&
                 floating &&
-                "fixed bottom-2 right-2 z-[60] gap-0 px-0 shadow-md",
+                "lift-above-tabs fixed right-4 z-[var(--z-floating)] gap-0 px-0 shadow-md",
               triggerLabel && "rounded-full shadow-md",
               triggerClassName
             )}

@@ -605,7 +605,7 @@ export default function JournalPage() {
         />
       ) : null}
 
-      <FloatingBackButton to="/" title={tNav("home")} />
+      <FloatingBackButton to="/" title={tNav("tabs.today")} />
     </AppPageShell>
   );
 }

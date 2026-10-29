@@ -8,5 +8,6 @@
   "add": "Adicionar",
   "loading": "Carregando…",
   "email": "E-mail",
-  "emailPlaceholder": "voce@exemplo.com"
+  "emailPlaceholder": "voce@exemplo.com",
+  "wideScreen": "O Upwards é feito para o celular. Numa tela maior, ele fica numa janela do tamanho do telefone."
 }

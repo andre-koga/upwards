@@ -25,9 +25,9 @@ Upwards is not a note-taking app and must not be designed like one. Obsidian,
 Notion, and Apple Notes already store text beautifully. The premise is narrower
 and harder:
 
-> You put your life in carefully — days, habits, time, words, places, photos —
-> and the app reads it back against who you said you wanted to become, then tells
-> you what to actually do about it.
+> You put the day in on Today. The Journal is where you read that record back.
+> You is where it becomes a picture of you — traits, scores, a profile — and
+> not a recap of the week.
 
 Three consequences that constrain every design decision:
 
@@ -36,8 +36,8 @@ Three consequences that constrain every design decision:
    capture surfaces get the warmth budget.
 2. **The AI is the differentiator and must look like it.** It gets the one
    saturated, alive visual treatment in the product. Nothing else competes.
-3. **Nothing is ever "done".** Identity, goals, and self-knowledge evolve. No
-   surface may present the user's self-model as a completed form.
+3. **Nothing is ever "done".** A profile revises as the record does. No surface
+   may present it as a completed form, a percent, or a finished score.
 
 ### The two registers
 
@@ -67,10 +67,13 @@ Do not build toward any of these, even if a single screenshot looks good:
   stuff" decorative filler cards, no illustrated ring flourishes as ornament.
 - A grayscale developer tool. Density is not the goal; *precision where precision
   helps* is.
-- A phone frame centered on a desktop monitor. See §6.
+- A desktop layout. There is no sidebar, no two-column page, and no wider
+  shell. A window wider than a phone shows a notice and the phone frame. See §6.
 - A pastel, childish, or "cute" aesthetic. Specifically: no pastel color blocks
   standing in for missing photos.
 - A gradient-everywhere AI-slop look. The gradient is rationed. See §4.
+- A weekly summary. "You met 50% of your intentions" is a paraphrase of Today.
+  It is not the product, and it does not get a screen.
 
 ---
 
@@ -256,14 +259,15 @@ browsed by when they happened; that is what the label and search are for.
 
 ### 3.2 Canonical navigation
 
-Four primary destinations. This is a hard cap on the mobile tab bar.
+Three primary destinations. Four is a hard cap on the mobile tab bar; three
+is the product. Home was the weekly summary and was removed (2026-10-29,
+[`product-scope.md`](product-scope.md) §1). `/home` redirects to `/you`.
 
 | Tab | Purpose | Register |
 |---|---|---|
-| **Home** | AI digest: insight, recommendations, what to do now | AI + instrument |
 | **Today** | Capture and act: tasks, counters, timers, sessions, day navigation | Instrument, with an editorial header |
 | **Journal** | The record: entries (exact + approximate), browse, search, media | Editorial |
-| **You** | The compass: identity, north star, goals, strategies, check-ins | Editorial + AI |
+| **You** | The output: a profile read from the record (traits, scores). The hand-written compass stays on this page until that profile replaces it | Editorial + AI |
 
 Everything else is secondary and reached from a profile/overflow menu or `⌘K`:
 Projects/groups, Settings (appearance, language, holiday calendars,
@@ -423,47 +427,41 @@ contrast in both.
 
 Match intensity to prominence. Only one tier-1 surface may be visible at a time.
 
-- **Tier 1 — full gradient fill.** The Home insight hero, and the Compass
-  check-in card. Large serif headline on the gradient, soft blurred color glows,
-  glass buttons. At most one per screen.
+- **Tier 1 — full gradient fill.** The You profile, once it is on screen.
+  Large serif headline on the gradient, soft blurred color glows, glass
+  buttons. At most one per screen. There is no weekly-insight hero and no
+  check-in card.
 - **Tier 2 — gradient edge or wash.** A `1.5px` gradient border, or a blurred
   gradient glow bleeding from a corner at ≤25% opacity. For the journal-prompt
-  card, the memory throwback, the compass teaser, and the weekly letter that
-  sits under the Home insight (product-scope.md §2.12). The letter does not
-  take the hero's fill: one tier-1 surface at a time.
+  card, the memory throwback, the compass teaser.
 - **Tier 3 — gradient badge or sparkle.** A small pill or a `Sparkles` glyph in
   `--gold` next to an AI-personalized detail: an AI-ordered task's reason, a
   curated throwback label.
 
 ### 4.3 Rules for AI surfaces
 
-- **Always name the evidence.** "Based on 7 days", "6 weeks of data: 90% vs 40%".
-- **Always be actionable.** An AI surface that only states a fact is incomplete;
-  attach "Add to today", "Answer now", or a prompt the user can tap.
-- **Always allow override.** AI-ordered lists need manual pinning, a manual order, and
-  a one-tap way back to it. AI prompts need
-  dismissal. Check-ins need skipping.
-- **Always name the goal served.** Recommendations link back to a compass goal.
-  The weekly letter is the exception while it is not allowed to read the
-  compass (product-scope.md §2.12): its action is the cited day and the one
-  experiment, not a compass item.
+- **Always name the evidence.** A trait or a score says which days, or which
+  habit figures, it came from.
+- **Always allow override.** AI-ordered lists on Today need a manual order and
+  a one-tap way back to it. A trait on You can be corrected or set aside.
+- **Do not recap the week.** A sentence whose only content is a completion
+  count, a streak, or "you did this 7 of 7" is Today's job, on the habit row.
+  It is not an AI surface.
 - **Always disclose cost and ownership.** "your key, your model" stays visible.
-- **Never fabricate.** The count-based insight is still derived from real
-  aggregates (`app/src/lib/ai/build-insight-payload.ts`), never invented for
-  visual effect. The weekly letter (product-scope.md §2.12) may quote the
-  journal only when reading is on, and only a quotation that is actually in
-  the cited day; a number it prints has to be a figure that was sent or part
-  of that quotation. A sentence that fails the check is not shown.
+- **Never fabricate.** A number on an AI surface must be a figure the app
+  computed and sent (`supabase/functions/_shared/rank-today.ts` is the current
+  case). A profile claim must quote a real day or cite a real figure. Nothing
+  is invented for visual effect.
 - **Never block on the AI.** Every AI surface needs not-configured, offline,
   loading, stale-cache, rate-limited, and error states. The app is fully usable
   with no key. (There is no signed-out state: an account is required.)
 
 ### 4.4 Statistics must come with actions
 
-A number alone is decoration. A weekly bar chart on its own tells the user
-nothing they can do. Any statistic must be accompanied, in the same card or the
-one immediately following, by an interpretation and at least one action. If there
-is nothing to do about a metric, cut the metric.
+A number alone, on Today, is decoration. A weekly bar of completion rates is
+cut: the habit row already holds the count, and the thing to do is the habit.
+On You, a score or a trait is the output. It names its evidence and can be
+corrected. It is not a prompt to go do a habit, and it is not a recap.
 
 ---
 
@@ -499,22 +497,26 @@ is nothing to do about a metric, cut the metric.
 
 ## 6. Responsive doctrine
 
-Mobile-first is literal: unprefixed Tailwind classes describe the phone, and
-`md:`/`lg:` add desktop. Never design desktop and shrink it.
+**Changed 2026-10-29.** The adaptive desktop shell is withdrawn. Upwards is a
+phone app. A wide window does not get another layout.
 
-- **Phone:** single column, frosted floating bottom tab bar, compact sticky
-  header, no keyboard chrome.
-- **Desktop (`lg:`):** a real adaptive shell — persistent sidebar with shortcut
-  chips, a command bar, and a **two-column content area**: a wide primary column
-  for the main object of the screen (the AI hero, the task list, the entry) and a
-  narrower secondary rail for supporting context (stats, spaces, compass teaser,
-  session totals). A single centered column on a wide monitor wastes the screen
-  and reads as a stretched phone.
-- Never re-introduce the fixed `430px` phone frame for new surfaces.
-- Keyboard shortcuts are desktop-only affordances: hide chips below `lg`, but the
-  underlying actions must remain reachable by keyboard at every size. Canonical
-  set: `⌘K` palette, `⌘1`–`⌘4` tabs, `j/k` move, `x` complete, `p` pin, `n` new,
-  `r` refresh insight.
+The tradeoff: a monitor shows a notice and a 430px column instead of using
+the width. Building a second information architecture (sidebar, two-column
+Journal, desktop settings rail) cost more than it gave a product that is
+used on a phone. The phone layout is the only one.
+
+- Unprefixed Tailwind classes are the layout. `sm` and up are set past any
+  real window in `tailwind.config.ts`, so a `md:` or `lg:` class does not
+  apply. Do not add one to make a desktop variant.
+- **Phone:** the page is the window. Single column, tab bar at the bottom,
+  document scroll.
+- **Wider than 480px:** a notice (`common.wideScreen`, en and pt) says the
+  app is made for a phone. Under it, `#mobile-frame` is 430px wide, a
+  containing block, and the same shell scrolls inside it. Overlays portal
+  into that frame.
+- Keyboard shortcuts stay, because they are the keyboard path for the same
+  actions, not a desktop layout. Canonical set: `⌘K` palette, `⌘1`–`⌘3`
+  tabs, `j/k` move, `x` complete, `p` pin, `n` new.
 
 ---
 
@@ -543,7 +545,7 @@ Mobile-first is literal: unprefixed Tailwind classes describe the phone, and
 3. If it is an AI surface: correct intensity tier, evidence named, action offered,
    override possible, all states handled?
 4. If it shows a statistic: is there an adjacent interpretation and action?
-5. Mobile-first at 375px, then a genuine two-column desktop at `lg`?
+5. Phone layout only, including inside the 430px frame on a wide window?
 6. Glass only on floating/sticky chrome and AI surfaces?
 7. Any feature displaced, hidden, or dropped — or a removed one brought back? If
    so, is `product-scope.md` updated first?
