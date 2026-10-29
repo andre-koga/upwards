@@ -39,6 +39,11 @@ The target is:
    second information architecture for a product used on a phone.
 5. Preserve the mobile PWA experience. It is the product, not a starting point.
 
+**Quiet library (2026-10-29).** `app/src/components/quiet/` is a proposed visual
+layer, shown at `/design` and not used by Today, Journal, or You. It composes
+Radix the same way `components/ui` does. It does not replace those primitives.
+See `design-and-branding.md` §5.1.
+
 ## Current state
 
 ### Existing shared system

@@ -269,6 +269,8 @@ is the product. Home was the weekly summary and was removed (2026-10-29,
 | **Journal** | The record: entries (exact + approximate), browse, search, media | Editorial |
 | **You** | The output: a profile read from the record (traits, scores). The hand-written compass stays on this page until that profile replaces it | Editorial + AI |
 
+`/design` is not a fourth tab. It shows the quiet component library (§5.1) before any of those controls are used on Today, Journal, or You.
+
 Everything else is secondary and reached from a profile/overflow menu or `⌘K`:
 Projects/groups, Settings (appearance, language, holiday calendars,
 daily clip, automatic location, account, sync, AI key, backup), Sync issues,
@@ -492,6 +494,30 @@ corrected. It is not a prompt to go do a habit, and it is not a recap.
   popovers. Do not hand-roll a control that exists.
 - **Non-component exports go in a separate module** from component exports, so
   React Fast Refresh keeps working (`react-refresh/only-export-components`).
+
+### 5.1 Quiet library (under review, 2026-10-29)
+
+The studies at `/redesign-preview` put each idea in a card, a colored meta line,
+a chart, or an icon. That is the look being set aside. Before a screen changes,
+the control is reviewed on `/design`, from `app/src/components/quiet/`. Today,
+Journal, and You keep importing `components/ui` until this library is accepted.
+
+**Tradeoff, library only.** Three rules above are loosened here, and nowhere
+else yet:
+
+- §2.4 uppercase mono micro-labels. A group is one sentence-case word in
+  `--ink-muted`, or it has no label. Size and space make the order.
+- §2.5 and the hairline boxes in this section. A border is the underline of a
+  text field. Rows are not ruled off. Groups sit about 5rem apart.
+- §4 gradient tiers, and the sage, terracotta, gold, and filled-green button.
+  A profile line is serif. The running timer is the word Stop. Green stays in
+  the palette for a later control if type cannot carry the act alone.
+
+What does not move: palette tokens, light and dark, 44px targets, a keyboard
+path and a name on every control, copy in `en` and `pt`, one register inside
+a component, the phone frame, no raw hex. The page shows the controls. It does
+not redraw streak flames, photos, or the map. Moving a real screen onto these
+components is a later change, and it updates this section if a rule returns.
 
 ---
 

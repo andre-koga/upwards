@@ -5,7 +5,9 @@
 Upwards keeps the day on Today, lets you read that record in the Journal, and
 turns it into a picture of you on You (see
 [`design-and-branding.md`](design-and-branding.md) §1). A weekly recap is not
-that picture. An app that does
+that picture. `/design` shows a proposed component library
+([`design-and-branding.md`](design-and-branding.md) §5.1). It is not a tab and
+not part of the product until a screen is moved onto it. An app that does
 everything cannot do any one thing especially well, so every shipped feature was
 reviewed against two questions:
 
