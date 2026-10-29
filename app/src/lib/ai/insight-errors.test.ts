@@ -75,6 +75,13 @@ describe("describeInsightError", () => {
     expect(
       describeInsightError({ error: "Payload too large" }, "generic", t)
     ).toBe("Payload too large");
+    expect(
+      describeInsightError(
+        { code: "NOT_FOUND", message: "Requested function was not found" },
+        "generic",
+        t
+      )
+    ).toBe("Requested function was not found");
     expect(describeInsightError(null, "generic", t)).toBe("generic");
     expect(describeInsightError(null, "", t)).toBe("Request failed");
   });
