@@ -33,6 +33,7 @@ const RedesignPreviewBPage = lazy(() => import("@/pages/redesign-preview-b"));
 const RedesignPreviewCPage = lazy(() => import("@/pages/redesign-preview-c"));
 const RedesignPreviewDPage = lazy(() => import("@/pages/redesign-preview-d"));
 const RedesignFlagshipPage = lazy(() => import("@/pages/redesign-flagship"));
+const DesignLibraryPage = lazy(() => import("@/pages/design"));
 const YouPage = lazy(() => import("@/pages/you"));
 const ClipSpikePage = lazy(() => import("@/pages/clip-spike"));
 
@@ -63,6 +64,7 @@ const FULL_BLEED_ROUTES = new Set([
   "/redesign-preview-c",
   "/redesign-preview-d",
   "/redesign-flagship",
+  "/design",
 ]);
 
 function AppFrame() {
@@ -91,6 +93,7 @@ function AppFrame() {
             element={<RedesignPreviewDPage />}
           />
           <Route path="/redesign-flagship" element={<RedesignFlagshipPage />} />
+          <Route path="/design" element={<DesignLibraryPage />} />
         </Routes>
       </Suspense>
     );

@@ -1,0 +1,62 @@
+{
+  "title": "Biblioteca",
+  "nav": "Biblioteca",
+  "groups": {
+    "type": "Tipo",
+    "list": "Lista",
+    "time": "Tempo",
+    "writing": "Escrita",
+    "choice": "Escolha",
+    "field": "Campo",
+    "you": "Você"
+  },
+  "day": "Quinta",
+  "dayLine": "29 de outubro",
+  "sentence": "A luz ficou na mesa mais do que eu esperava.",
+  "figure": "18 min",
+  "habits": {
+    "pages": "Páginas da manhã",
+    "walk": "Caminhada",
+    "read": "Leitura",
+    "sugar": "Açúcar"
+  },
+  "done": "Feito",
+  "notDone": "Não feito",
+  "slip": "Lapso",
+  "session": "Trabalho fundo",
+  "stop": "Parar",
+  "start": "Começar",
+  "elapsed": "1:24",
+  "past": "Caminhada",
+  "pastTime": "18 min",
+  "memo": "Ligar para casa",
+  "memoWhen": "Sexta",
+  "placeholder": "Escreva o dia",
+  "appearance": "Aparência",
+  "language": "Idioma",
+  "themes": {
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Escuro"
+  },
+  "languages": {
+    "en": "English",
+    "pt": "Português"
+  },
+  "clip": "Clipe do dia",
+  "name": "Nome",
+  "nameValue": "Rio",
+  "save": "Salvar",
+  "cancel": "Cancelar",
+  "edit": "Editar",
+  "delete": "Apagar",
+  "trait": "Firme quando o dia começa cedo.",
+  "evidence": "Dos dias começados antes das dez.",
+  "correct": "Corrigir",
+  "countOf": "{{label}}, {{count}} de {{target}}",
+  "tabs": {
+    "today": "Hoje",
+    "journal": "Diário",
+    "you": "Você"
+  }
+}

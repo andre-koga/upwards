@@ -1,0 +1,62 @@
+{
+  "title": "Library",
+  "nav": "Library",
+  "groups": {
+    "type": "Type",
+    "list": "List",
+    "time": "Time",
+    "writing": "Writing",
+    "choice": "Choice",
+    "field": "Field",
+    "you": "You"
+  },
+  "day": "Thursday",
+  "dayLine": "29 October",
+  "sentence": "The light stayed on the table longer than I expected.",
+  "figure": "18 min",
+  "habits": {
+    "pages": "Morning pages",
+    "walk": "Walk",
+    "read": "Read",
+    "sugar": "Sugar"
+  },
+  "done": "Done",
+  "notDone": "Not done",
+  "slip": "Slip",
+  "session": "Deep work",
+  "stop": "Stop",
+  "start": "Start",
+  "elapsed": "1:24",
+  "past": "Walk",
+  "pastTime": "18 min",
+  "memo": "Call home",
+  "memoWhen": "Friday",
+  "placeholder": "Write the day",
+  "appearance": "Appearance",
+  "language": "Language",
+  "themes": {
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "languages": {
+    "en": "English",
+    "pt": "Português"
+  },
+  "clip": "Daily clip",
+  "name": "Name",
+  "nameValue": "River",
+  "save": "Save",
+  "cancel": "Cancel",
+  "edit": "Edit",
+  "delete": "Delete",
+  "trait": "Steady when the day starts early.",
+  "evidence": "From the days begun before ten.",
+  "correct": "Correct",
+  "countOf": "{{label}}, {{count}} of {{target}}",
+  "tabs": {
+    "today": "Today",
+    "journal": "Journal",
+    "you": "You"
+  }
+}

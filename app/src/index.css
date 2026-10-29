@@ -272,6 +272,15 @@ html.ios-standalone [data-ios-top-chrome] {
     flex-direction: column;
     overflow: hidden;
   }
+  .mobile-frame .quiet-library {
+    display: flex;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+  }
   .mobile-frame [data-app-scroll] {
     min-height: 0;
     flex: 1 1 auto;
