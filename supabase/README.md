@@ -180,6 +180,7 @@ Get `<project-id>` from: https://app.supabase.com/project/_/settings/general
 | Reset DB (apply migrations + seed) | `pnpm supabase db reset` |
 | New migration | `pnpm supabase migration new <name>` |
 | Push migrations to cloud | `pnpm supabase db push` (CI does this on merge to `main`) |
+| Deploy edge functions | `pnpm supabase functions deploy --use-api` (the same workflow, after the migration push) |
 | RPC / Realtime integration tests | `pnpm test:integration` |
 | Pull schema from cloud | `pnpm supabase db pull` |
 | Diff local vs remote | `pnpm supabase db diff` |
