@@ -34,8 +34,7 @@ export function FloatingBackButton({
   if (fixed && to !== undefined && isTabRootPath(pathname)) return null;
   const merged = cn(
     FLOATING_BACK_BUTTON_BASE,
-    fixed &&
-      "fixed bottom-[calc(var(--app-tab-bar-h,0px)+0.75rem)] left-4 z-50",
+    fixed && "lift-above-tabs fixed left-4 z-[var(--z-floating)]",
     className
   );
 

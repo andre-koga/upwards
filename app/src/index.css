@@ -166,67 +166,8 @@
     --app-tab-bar-h: calc(3.5rem + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Wider than a phone: the notice, then the same app in a phone-sized frame.
-     The frame is a containing block (`transform`) so fixed chrome and portaled
-     overlays stay inside it. 480px is past a large phone in portrait. */
   .wide-screen-notice {
     display: none;
-  }
-  @media (min-width: 480px) {
-    html {
-      background: hsl(var(--canvas-deep));
-    }
-    .wide-screen-stage {
-      display: flex;
-      min-height: 100dvh;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
-      background: hsl(var(--canvas-deep));
-      padding: 1.25rem 1rem 1.5rem;
-    }
-    .wide-screen-notice {
-      display: block;
-      max-width: 28rem;
-      text-align: center;
-      font-size: 0.875rem;
-      line-height: 1.5;
-      color: hsl(var(--ink-muted));
-    }
-    .mobile-frame {
-      display: flex;
-      width: 430px;
-      max-width: 100%;
-      flex: 1;
-      flex-direction: column;
-      height: calc(100dvh - 6.5rem);
-      min-height: 0;
-      overflow: hidden;
-      position: relative;
-      transform: translateZ(0);
-      border: 1px solid hsl(var(--line));
-      border-radius: 1.75rem;
-      background: hsl(var(--background));
-    }
-    .mobile-frame .app-shell {
-      display: flex;
-      height: 100%;
-      min-height: 0;
-      flex: 1;
-      flex-direction: column;
-    }
-    .mobile-frame .app-shell-main {
-      display: flex;
-      min-height: 0;
-      flex: 1;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .mobile-frame [data-app-scroll] {
-      min-height: 0;
-      flex: 1;
-      overflow-y: auto;
-    }
   }
 }
 
@@ -263,4 +204,79 @@ html.ios-standalone [data-ios-top-chrome] {
   background-color: hsl(var(--background));
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+
+/* Clears the tab bar. Unlayered so it wins over `md:bottom-*`. */
+.lift-above-tabs {
+  bottom: calc(var(--app-tab-bar-h, 3.5rem) + 0.75rem);
+}
+
+/* Wider than a phone: the window does not scroll. The notice stays put, the
+   frame is the leftover height, and the page inside the frame scrolls.
+   Unlayered so `min-h-dvh` on the shell cannot stretch the window. */
+@media (min-width: 480px) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+    overflow: hidden;
+    background: hsl(var(--canvas-deep));
+  }
+  .wide-screen-stage {
+    display: flex;
+    height: 100dvh;
+    max-height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    overflow: hidden;
+    background: hsl(var(--canvas-deep));
+    padding: 1.25rem 1rem 1.5rem;
+  }
+  .wide-screen-notice {
+    display: block;
+    flex: none;
+    max-width: 28rem;
+    text-align: center;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: hsl(var(--ink-muted));
+  }
+  .mobile-frame {
+    display: flex;
+    width: 430px;
+    max-width: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    transform: translateZ(0);
+    border: 1px solid hsl(var(--line));
+    border-radius: 1.75rem;
+    background: hsl(var(--background));
+  }
+  .mobile-frame .app-shell {
+    display: flex;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mobile-frame .app-shell-main {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mobile-frame [data-app-scroll] {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }

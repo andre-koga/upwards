@@ -48,7 +48,7 @@ export default function TodayQuickActions({
   const { t } = useTranslation("nav");
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--app-tab-bar-h,0px)+0.75rem)] z-[var(--z-chrome)] md:bottom-4">
+    <div className="lift-above-tabs pointer-events-none fixed inset-x-0 z-[var(--z-floating)]">
       <div className="mx-auto flex w-full justify-end px-4 md:max-w-2xl lg:max-w-3xl">
         <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-background/85 p-1 shadow-lg backdrop-blur-md">
           <ActivityGroupsDrawer
