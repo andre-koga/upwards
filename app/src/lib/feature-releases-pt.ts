@@ -12,6 +12,15 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-10-29-three-places": {
+    title: "Hoje, Diário, Você",
+    bullets: [
+      "O app tem três lugares. Hoje é onde você registra o dia. O Diário é onde você relê. Você é onde esse registro vira um retrato seu.",
+      "A aba Início e o resumo semanal saíram. Aquela página repetia números que você já vê no Hoje.",
+      "Um link antigo de Início abre Você.",
+      "No computador, o Upwards avisa que é feito para o celular e fica numa janela do tamanho do telefone.",
+    ],
+  },
   "2026-10-23-compass": {
     title: "Sua bússola",
     bullets: [

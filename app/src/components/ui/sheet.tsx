@@ -5,6 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { XIcon } from "lucide-react";
 import { Dialog as SheetPrimitive } from "radix-ui";
 
+import { mobileFrame } from "@/lib/mobile-frame";
 import { cn } from "@/lib/utils";
 import {
   overlayBackdropMotionClassName,
@@ -28,9 +29,16 @@ function SheetClose({
 }
 
 function SheetPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
-  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
+  return (
+    <SheetPrimitive.Portal
+      data-slot="sheet-portal"
+      container={container ?? mobileFrame()}
+      {...props}
+    />
+  );
 }
 
 function SheetOverlay({

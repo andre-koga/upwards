@@ -3,7 +3,6 @@
   "whatsNewUnread": "Novidades (atualizações não lidas)",
   "feedback": "Feedback e sugestões",
   "journal": "Diário",
-  "aiInsights": "Início IA",
   "settings": "Configurações",
   "openMoreActions": "Abrir mais ações",
   "pickDate": "Escolher data",
@@ -13,7 +12,6 @@
   "install": "Instalar",
   "dismissInstall": "Agora não",
   "addQuickMemo": "Adicionar memo rápido",
-  "home": "Início",
   "back": "Voltar",
   "backToSettings": "Voltar às configurações",
   "whatsNewPage": {
@@ -46,7 +44,6 @@
   "moreNavigation": "Mais",
   "skipToContent": "Ir para o conteúdo",
   "tabs": {
-    "home": "Início",
     "today": "Hoje",
     "journal": "Diário",
     "you": "Você"
@@ -73,10 +70,9 @@
       "themeSystem": "Seguir a aparência do sistema"
     },
     "keywords": {
-      "home": "insights ia resumo",
       "today": "tarefas cronômetro sessões dia atividades hoje",
       "journal": "entradas diário reflexões fotos lugares memórias lembranças",
-      "you": "bússola identidade metas estrela-guia perfil você",
+      "you": "bússola identidade metas estrela-guia perfil você início",
       "settings": "configurações conta idioma aparência sincronização",
       "whatsNew": "novidades atualizações versões",
       "errorLogs": "registros erros depuração logs",

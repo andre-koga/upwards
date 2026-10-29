@@ -13,8 +13,6 @@ const aiDir = __dirname;
 const root = join(__dirname, "../../../..");
 
 const CLIENT_SIDE_FILES = [
-  "app/src/hooks/use-home-insight.ts",
-  "app/src/lib/home/digest.ts",
   "app/src/components/tasks/hooks/use-ai-today-order.ts",
 ];
 
@@ -28,17 +26,16 @@ const files = [
   ...readdirTs(aiDir, (name) => name.endsWith(".test.ts")),
   ...CLIENT_SIDE_FILES.map((file) => join(root, file)),
   ...readdirTs(join(root, "supabase/functions/_shared"), () => false),
-  join(root, "supabase/functions/generate-ai-insights/index.ts"),
   join(root, "supabase/functions/rank-today/index.ts"),
 ];
 
 describe("the compass stays out of AI requests", () => {
   it("finds the files that build or receive an AI request", () => {
     const names = files.map((file) => file.split("/").slice(-2).join("/"));
-    expect(names).toContain("ai/build-insight-payload.ts");
-    expect(names).toContain("_shared/insight.ts");
-    expect(names).toContain("generate-ai-insights/index.ts");
-    expect(files.length).toBeGreaterThan(15);
+    expect(names).toContain("ai/build-rank-request.ts");
+    expect(names).toContain("_shared/rank-today.ts");
+    expect(names).toContain("rank-today/index.ts");
+    expect(files.length).toBeGreaterThan(8);
   });
 
   for (const file of files) {

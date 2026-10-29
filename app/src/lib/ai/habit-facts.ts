@@ -1,14 +1,26 @@
+import type { RankItem } from "../../../../supabase/functions/_shared/rank-today";
 import { db } from "@/lib/db";
 import { loadRankRequest } from "@/lib/ai/build-rank-request";
-import type { DigestHabit } from "@/lib/home/digest";
 import { computeActivityStreaksForDate } from "@/lib/streak-utils";
 import { fromDateString, shiftDate, toDateString } from "@/lib/time-utils";
 
 /**
- * One account of the last week's habits, read from this device, shared by
- * everything that describes it: Home's digest, the figures sent to the AI for an
- * insight, and the ordering on Today. They read the same numbers, so the screen
- * and the model never tell two different stories about the same week.
+ * One habit, with the figures a goal on You can cite. The same window feeds
+ * "Order with AI" on Today (`loadRankRequest`), so the two never disagree.
+ */
+export interface DigestHabit {
+  id: string;
+  name: string;
+  pinned: boolean;
+  /** The last seven full days, and today. */
+  figures: Pick<
+    RankItem,
+    "type" | "target" | "doneToday" | "daysDone" | "daysActive" | "streak"
+  >;
+}
+
+/**
+ * The last week's habits, read on this device.
  *
  * - The window is the seven full days before `today`, counting a day only when
  *   the habit was due and the person was not on a break. A missed day with no

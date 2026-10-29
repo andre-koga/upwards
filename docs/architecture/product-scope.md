@@ -2,9 +2,10 @@
 
 **Status:** binding — decided 2026-10-01.
 
-Upwards is pivoting from "a place that stores your days" to "a place that reads
-your days back against who you want to become" (see
-[`design-and-branding.md`](design-and-branding.md) §1). An app that does
+Upwards keeps the day on Today, lets you read that record in the Journal, and
+turns it into a picture of you on You (see
+[`design-and-branding.md`](design-and-branding.md) §1). A weekly recap is not
+that picture. An app that does
 everything cannot do any one thing especially well, so every shipped feature was
 reviewed against two questions:
 
@@ -40,6 +41,9 @@ with the product tradeoff that changed.
 | **Configurable day-reset hour** (default 4 AM, up to 8 AM) | A day that ends at an arbitrary hour forces every date calculation through an "effective today" layer: render-time clipping of sessions, boundary labels, and logical-day math in streaks, the journal, memos, and AI aggregation. The setting also lives in device `localStorage`, so two devices could disagree about which day it is. | Days always end at local midnight. Delete `lib/session/day-reset.ts` and `components/settings/day-reset-card.tsx`, and reduce `lib/activity/period-day-utils.ts` to the single midnight-based overlap helper (§2.2). `getEffectiveToday()` becomes the plain local date. The day timer (`hooks/use-day-reset-timer.ts`) becomes a UI-only midnight timer that rolls Today over and runs memo carry-forward. No rewrite of past facts: counts, break days, and journal entries stay on the dates they were recorded on. **Behavior change:** because the old default was 4 AM, anything done between midnight and 4 AM now belongs to the new day. The lifted edit lock (§2.3) makes it easy to log a late-night item on yesterday instead. |
 | **Per-field conflict merging** | Choosing field by field between two versions of a habit is precision nobody needs for a rare, low-stakes conflict, and it costs about 1,600 lines. | Whole-item choice, plus "keep both" for journal text. See §2.10. |
 | **Error Logs and GitHub link in the main menu** | Developer tools in a personal-life app's primary navigation. | Both move to Settings › About. The `/logs` route stays for support. |
+| **Home tab, the weekly AI insight, and its suggestions** (removed 2026-10-29) | A one-sentence recap of the last seven days, plus up to three suggestions, paraphrased counts the person can already see on each habit. That is not a picture of them, and it is not worth a model call. | Delete the Home screen, the insight cache, the suggestion list, `lib/ai/build-insight-payload.ts`, `supabase/functions/_shared/insight.ts`, and `generate-ai-insights`. `/home` redirects to `/you`. The phone tab bar is Today, Journal, You. **The deployed `generate-ai-insights` function should be removed**; the repo no longer calls it. Order with AI keeps the daily call cap on its own. |
+| **Home digest, "Worth acting on today"** (removed 2026-10-29) | The same week with no model: a streak at risk, a slipping habit, an unwritten journal day. A second summary of Today. | Delete `lib/home/digest.ts` and the Home screen. The week's figures stay in `lib/ai/habit-facts.ts` for a goal's evidence line on You and for Order with AI. |
+| **Adaptive desktop shell** (withdrawn 2026-10-29) | A sidebar, a two-column Journal, and a desktop settings rail were a second layout for an app that is used on a phone. | The shell is the phone shell at every width. Past 480px, a notice and a 430px frame (`WideScreenStage`, `index.css`). Tailwind `sm` and up are set so they never match. Do not add a desktop variant. |
 
 ## 2. Changed
 
@@ -881,7 +885,7 @@ Track B gets its own breakdown before it starts. Its shape:
 
 - **B0.** Mock the screens the flagship lacks: previous versions, conflict
   review, the activity type question, sign-in, onboarding.
-- **B1.** Adaptive shell and navigation (Home / Today / Journal / You, `⌘K`).
+- **B1.** Adaptive shell and navigation (Today / Journal / You, `⌘K`; Home was removed 2026-10-29, §1).
   Done in two parts: B1a (palette, 2026-10-11) and B1b (shell, 2026-10-12; see
   [`ui-system-and-responsive-layout.md`](ui-system-and-responsive-layout.md)).
   From `cursor/adaptive-app-shell-5a78` only the tooltip and separator
@@ -916,8 +920,8 @@ Track B gets its own breakdown before it starts. Its shape:
     clears it. States: idle, loading, offline, not configured (with a Settings
     link), rate limited, provider error, unusable answer, stale (older than
     three hours, or an open row missing from it); the list is usable in all of
-    them. Ranking shares `user_ai_settings`' daily call allowance with
-    insights (20 a day). Every row also has a pin button (the quick pin). It
+    them. Ranking uses `user_ai_settings`' daily call allowance (20 a day). The
+    insight function that shared it was removed (§1). Every row also has a pin button (the quick pin). It
     needs a manual `supabase functions deploy rank-today`.
   - **B2c (done 2026-10-13):** manual order and "Done last" on Today, §2.11.
     The order the person sets is `order_index`, edited again from the list; the
@@ -1001,7 +1005,9 @@ Track B gets its own breakdown before it starts. Its shape:
     cards and the Calendar are real buttons and a grid, so every choice has a
     keyboard path.
   - **B3d:** generated month and holiday banner images.
-- **B4.** Home: AI insight surfaces on the existing AI groundwork. Split in
+- **B4.** Home: AI insight surfaces on the existing AI groundwork. **Withdrawn
+  2026-10-29 (§1).** The hero, the suggestions, and the digest below are what
+  shipped and then were deleted. Split in
   two, like B2.
   - **B4a (done 2026-10-14):** the Home screen, its states, and a digest that
     needs no key.

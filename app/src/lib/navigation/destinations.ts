@@ -3,16 +3,15 @@ import {
   CircleCheckBig,
   FileText,
   History,
-  Sparkles,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
 
-// design-and-branding.md §3.2: four primary destinations, a hard cap on the
-// phone tab bar. Everything else is secondary and lives in the sidebar's
+// design-and-branding.md §3.2: three primary destinations, under the hard cap
+// on the phone tab bar. Everything else is secondary and lives in the sidebar's
 // "more" list, the Today menu, or the command palette.
 
-export type TabId = "home" | "today" | "journal" | "you";
+export type TabId = "today" | "journal" | "you";
 
 export interface TabDestination {
   id: TabId;
@@ -26,25 +25,18 @@ export interface TabDestination {
 
 export const TABS: readonly TabDestination[] = [
   {
-    id: "home",
-    to: "/home",
-    labelKey: "tabs.home",
-    icon: Sparkles,
-    shortcut: "1",
-  },
-  {
     id: "today",
     to: "/",
     labelKey: "tabs.today",
     icon: CircleCheckBig,
-    shortcut: "2",
+    shortcut: "1",
   },
   {
     id: "journal",
     to: "/journal",
     labelKey: "tabs.journal",
     icon: BookOpen,
-    shortcut: "3",
+    shortcut: "2",
   },
   // The compass (B5b-2). Settings stays reachable from that page.
   {
@@ -52,7 +44,7 @@ export const TABS: readonly TabDestination[] = [
     to: "/you",
     labelKey: "tabs.you",
     icon: UserRound,
-    shortcut: "4",
+    shortcut: "3",
   },
 ];
 
@@ -80,7 +72,6 @@ export function isTabRootPath(pathname: string): boolean {
 export function activeTabForPath(pathname: string): TabId | null {
   const path = normalize(pathname);
   if (path === "/") return "today";
-  if (path === "/home" || path.startsWith("/home/")) return "home";
   if (
     path === "/journal" ||
     path.startsWith("/journal/") ||

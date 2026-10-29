@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { TABS, activeTabForPath } from "@/lib/navigation/destinations";
 
-/** Phone navigation: four tabs, frosted, floating above the safe area. */
+/** Phone navigation: the tab bar, frosted, above the safe area. */
 export function TabBar() {
   const { t } = useTranslation("nav");
   const { pathname } = useLocation();
@@ -12,9 +12,9 @@ export function TabBar() {
   return (
     <nav
       aria-label={t("primaryNavigation")}
-      className="fixed inset-x-0 bottom-0 z-[var(--z-chrome)] border-t border-border bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+      className="fixed inset-x-0 bottom-0 z-[var(--z-chrome)] border-t border-border bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
     >
-      <ul className="mx-auto grid h-14 max-w-md grid-cols-4">
+      <ul className="mx-auto grid h-14 max-w-md grid-cols-3">
         {TABS.map((tab) => {
           const isActive = tab.id === active;
           const Icon = tab.icon;

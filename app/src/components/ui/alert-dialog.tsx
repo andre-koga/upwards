@@ -9,6 +9,7 @@ import {
   overlayBackdropMotionClassName,
 } from "@/components/ui/overlay-motion";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
+import { mobileFrame } from "@/lib/mobile-frame";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,7 +44,7 @@ function AlertDialogContent({
   const { centerY } = useVisualViewportLayout();
 
   return (
-    <AlertDialogPrimitive.Portal>
+    <AlertDialogPrimitive.Portal container={mobileFrame()}>
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"

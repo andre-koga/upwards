@@ -33,9 +33,11 @@ The target is:
 2. Keep Upwards-specific composition and visual language.
 3. Replace hand-rolled generic overlays and controls where a proven primitive
    provides better keyboard, focus, and screen-reader behavior.
-4. Build a genuinely adaptive desktop shell rather than displaying the mobile
-   app in a centered phone frame.
-5. Preserve the existing mobile-first PWA experience.
+4. Stay a phone app. A window wider than a phone shows a notice and a 430px
+   frame with the same layout. Do not build a sidebar or a two-column page.
+   **Changed 2026-10-29.** The adaptive desktop shell is withdrawn: it was a
+   second information architecture for a product used on a phone.
+5. Preserve the mobile PWA experience. It is the product, not a starting point.
 
 ## Current state
 
@@ -69,13 +71,16 @@ The system is only partially standardized:
 - Focus-ring styles and control sizes vary.
 - Destructive button styles are repeated at feature call sites.
 
-### Desktop behavior
+### Phone shell
 
-**Updated 2026-10-12 (B1b).** The 430px phone frame and the "mobile experience"
-notice are gone. `components/layout/app-shell.tsx` now owns the frame:
+**Updated 2026-10-29.** The desktop shell from B1b is withdrawn. The notice and
+the 430px frame are back, and they are the wide-window presentation.
+`components/layout/app-shell.tsx` is the phone shell:
 
-- Below `md`: the document scrolls and a frosted four-tab bar (Home, Today,
-  Journal, You) floats at the bottom. `--app-tab-bar-h` (set on `.app-shell-tabs`
+- The document scrolls and a frosted three-tab bar (Today, Journal, You)
+  sits at the bottom. There is no sidebar. Home was removed 2026-10-29.
+  A window wider than 480px keeps this layout inside a 430px frame
+  (`index.css`, `.mobile-frame`) under a notice. `--app-tab-bar-h` (set on `.app-shell-tabs`
   in `index.css`) is the bar's height; fixed bottom controls add it to their
   offset, so the corner back button, the Memories add
   button, and the install prompt clear it. Today has no full-width bottom bar:
@@ -91,33 +96,23 @@ notice are gone. `components/layout/app-shell.tsx` now owns the frame:
   moves to the start so the card takes the rest of the row. It keeps the
   group-colour fill and glow the running pill has always had, a deliberate
   exception recorded in `design-and-branding.md` §2.3 (2026-10-14).
-- `md` and up: a sidebar beside one content pane that owns scrolling
-  (`data-app-scroll`). The sidebar is an icon rail with tooltips at `md` and a
-  labelled list with shortcut chips at `lg`. The pane is a containing block for
-  `position: fixed` descendants (`transform: translateZ(0)`), so floating
-  controls stay inside it. Overlays portal to the body and cover the window.
-  The tab bar and the corner back buttons are hidden.
-- The page column is capped at `max-w-2xl` (`lg:max-w-3xl`) and centered.
-  **This is an interim cap, not the desktop layout.** The two-column pages
-  replace it route by route (`routeUsesWideColumn` in
-  `lib/navigation/destinations.ts` lists the ones that have; the shell widens to
-  `lg:max-w-6xl` for them). **The Journal has (B3c2):** a list and a sticky
-  reader rail at `lg`, the whole width for its Map and Gallery views. **Settings
-  has panel navigation (B8)**: a rail beside the open panel at `lg`, a strip on
-  a phone; it keeps the capped column, with the rail and panel inside it. Today
-  and Sync issues follow (B2, B6); until then they read as one readable column
-  beside the sidebar. Bottom sheets are capped at `max-w-xl` and centered from
-  `md`.
+- There is no `md` shell. On a wide window the phone frame
+  (`transform: translateZ(0)`) is the containing block, and overlays portal
+  into `#mobile-frame` rather than covering the monitor. The tab bar and the
+  corner back button stay.
+- Pages are one column. The Journal's `lg:` reader rail and Settings' `lg:`
+  panel rail do not apply, because those breakpoints never match. Bottom
+  sheets stay sheets.
 - `⌘/Ctrl+K` opens a command palette (a Dialog with a combobox/listbox; filter
   logic in `lib/navigation/filter-commands.ts`). It covers destinations, send
   feedback, and appearance, and, from two characters typed, the journal record:
   days and memories that match, newest first (B3c). Memos, activities and
   sessions join once each has a destination that can open one item.
-  `⌘/Ctrl+1`-`4` open the tabs and are ignored while a dialog is open.
+  `⌘/Ctrl+1`-`3` open the tabs and are ignored while a dialog is open.
 - Destinations and which tab owns a route live in `lib/navigation/destinations.ts`.
   The "You" tab opens Settings until the compass (B5) exists.
-- The primary nav and "more" list are `<nav>` landmarks, the active item has
-  `aria-current="page"`, a skip link precedes the sidebar, and the content pane
+- The primary nav is a `<nav>` landmark, the active item has
+  `aria-current="page"`, a skip link precedes the content, and the content pane
   is `<main id="main-content">`.
 
 ## Component ownership model
@@ -338,62 +333,18 @@ Preserve the existing mobile-first experience:
 Standardizing a drawer on Sheet must not regress keyboard appearance, safe-area
 padding, touch scrolling, or the current logical-day workflows.
 
-### Desktop: `md` and above
+### Wide windows
 
-Replace the phone frame with an application shell:
-
-- Persistent sidebar or navigation rail
-- One main content scroll owner
-- Fluid content column
-- Stable top/page header for date controls, breadcrumbs, notifications, sync
-  status, and page actions
-- Mobile bottom navigation hidden
-- Floating back controls replaced by breadcrumbs or page-header navigation
-- Drawers promoted to inline or anchored panels where appropriate
-
-The shell should use available width while retaining readable page-specific
-maximums. Do not impose one global `430px` limit.
-
-### Wide desktop: `lg` and above
-
-Pages may use master-detail and multi-column layouts:
-
-| Area | Desktop behavior |
-| --- | --- |
-| Today | Journal/day context and tasks/timeline in coordinated columns |
-| Journal | Search/entry list plus selected-entry reader |
-| Settings | Settings navigation beside the selected panel |
-| Logs | Filterable, selectable table-like presentation |
-| Conflicts | Issue list beside conflict details and resolution controls |
-
-Multi-column layout must collapse cleanly when resized. Component behavior
-should depend on the space it receives; container queries may be used for
-chart/card density where viewport breakpoints are insufficient.
-
-### Navigation parity
-
-| Mobile | Desktop |
-| --- | --- |
-| Menu sheet | Persistent sidebar |
-| Projects sheet | Inline/collapsible projects panel |
-| Floating back button | Breadcrumbs or page back action |
-| Swipe day change | Header controls plus arrow keys |
-| Long press | Explicit action or context menu |
-
-Desktop adaptation must not create a second set of routes or divergent product
-logic. Shared route and feature state should feed both presentations.
+Do not build a desktop layout. Past 480px the page is the phone frame
+described above. Keyboard shortcuts remain the keyboard path for the same
+actions. There is one set of routes.
 
 ## Overlay and responsive-panel policy
 
-Use one shared abstraction when the same content changes presentation:
+Sheets and dialogs are the overlays. Do not add a desktop inline panel as a
+second presentation of the same content.
 
-- Mobile: Sheet or full-screen Dialog
-- Desktop: inline panel, anchored panel, or standard Dialog
-
-The content and actions should be shared. Avoid rendering two independently
-maintained feature implementations solely for different breakpoints.
-
-Portals must target a deliberate application overlay root. Modal overlays,
+Portals target `#mobile-frame` (`lib/mobile-frame.ts`). Modal overlays,
 focus containment, z-index, and scroll locking should behave consistently
 whether the app is mobile, installed as a PWA, or displayed in the desktop
 shell.
@@ -454,22 +405,17 @@ shared primitives.
 5. Add Sheet, AlertDialog, Alert, Tooltip, Separator, and other primitives only
    as required.
 6. Migrate simple drawers and confirmations, then the projects drawer.
-7. Introduce the adaptive AppShell while keeping mobile behavior unchanged.
-8. Add persistent desktop navigation and one scroll owner.
-9. Adapt pages incrementally, beginning with Settings before the more
-   interaction-heavy Today and Journal surfaces.
-10. Remove the desktop notice and phone-frame constraint only after navigation,
-    overlays, and critical routes work at desktop widths.
+7. The phone shell is the shell. Steps that added a sidebar and a two-column
+   page are withdrawn (2026-10-29). Do not resume them.
 
-Do not combine primitive upgrades, Tailwind major-version upgrades, and the
-desktop redesign into one unreviewable change.
+Do not combine primitive upgrades and a Tailwind major-version upgrade into
+one unreviewable change. Do not restart the desktop shell.
 
 ## Required verification
 
 Shared UI and responsive changes must verify:
 
-- Phone portrait, phone landscape, tablet, narrow desktop, and wide desktop
-  layouts
+- Phone portrait, and a wide window (notice plus the 430px frame)
 - Browser zoom and text scaling
 - Keyboard-only navigation
 - Focus trapping, Escape behavior, and focus restoration
@@ -500,13 +446,12 @@ Before changing shared UI or responsive behavior:
 3. Check whether an existing shared primitive or pattern already owns the
    behavior.
 4. Preserve documented Upwards extensions when syncing shadcn source.
-5. State mobile, desktop, keyboard, focus, labeling, and reduced-motion
-   behavior.
+5. State phone, keyboard, focus, labeling, and reduced-motion behavior.
 6. Do not add a raw generic control when an existing primitive fits.
 7. Do not force a shadcn component onto a genuinely product-specific
    interaction.
-8. Do not implement desktop support by merely adding a larger max-width.
-9. Do not remove mobile behavior while introducing desktop behavior.
+8. Do not add a desktop layout, a sidebar, or a breakpoint variant.
+9. Do not remove phone behavior to make a wide window look like a desktop app.
 10. Include accessibility and responsive verification proportional to the
     interaction risk.
 

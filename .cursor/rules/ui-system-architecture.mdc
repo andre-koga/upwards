@@ -1,5 +1,5 @@
 ---
-description: Required shadcn alignment, accessibility, and adaptive desktop architecture
+description: Required shadcn alignment, accessibility, and phone-only layout
 alwaysApply: true
 ---
 
@@ -19,9 +19,10 @@ Treat that document as binding repository guidance. In particular:
   and preserving their behavior.
 - Do not add raw generic controls when a shared primitive fits.
 - Every touch or pointer interaction needs a keyboard-accessible equivalent.
-- Desktop support requires an adaptive shell and information architecture, not
-  a wider or centered phone frame.
-- Preserve the mobile-first PWA experience while adding desktop behavior.
+- The app is phone-only. A wide window shows a notice and a 430px frame with
+  the same layout. Do not add a sidebar, a two-column page, or a `md:`/`lg:`
+  layout variant.
+- Preserve the mobile PWA experience. It is the product.
 
 Any intentional departure must update the architecture document and explain
 the changed product tradeoff before implementation.

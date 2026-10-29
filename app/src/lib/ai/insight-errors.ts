@@ -1,5 +1,6 @@
 /**
- * What `generate-ai-insights` says when it refuses or fails.
+ * What an AI edge function says when it refuses or fails. Ranking still uses
+ * these shapes. The weekly insight function that shared them is gone.
  *
  * supabase-js hides the response body of a non-2xx answer behind one generic
  * sentence ("Edge Function returned a non-2xx status code"). The function always

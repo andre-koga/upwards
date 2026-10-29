@@ -30,7 +30,6 @@ export function usePaletteCommands(onOpenFeedback: () => void) {
   return useMemo<PaletteCommand[]>(() => {
     const k = (key: string) => words(t(`palette.keywords.${key}`));
     const tabKeywords: Record<string, string[]> = {
-      home: k("home"),
       today: k("today"),
       journal: k("journal"),
       you: k("you"),

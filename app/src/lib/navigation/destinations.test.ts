@@ -9,13 +9,8 @@ import {
 } from "./destinations";
 
 describe("tab destinations", () => {
-  it("has exactly the four canonical tabs, in order", () => {
-    expect(TABS.map((tab) => tab.id)).toEqual([
-      "home",
-      "today",
-      "journal",
-      "you",
-    ]);
+  it("has exactly the three canonical tabs, in order", () => {
+    expect(TABS.map((tab) => tab.id)).toEqual(["today", "journal", "you"]);
   });
 
   it("gives every tab a distinct route and shortcut digit", () => {
@@ -27,7 +22,6 @@ describe("tab destinations", () => {
 describe("activeTabForPath", () => {
   it.each([
     ["/", "today"],
-    ["/home", "home"],
     ["/journal", "journal"],
     ["/memories", "journal"],
     ["/you", "you"],
@@ -42,6 +36,7 @@ describe("activeTabForPath", () => {
 
   it("does not claim unrelated routes", () => {
     expect(activeTabForPath("/clip-spike")).toBeNull();
+    expect(activeTabForPath("/home")).toBeNull();
     expect(activeTabForPath("/homework")).toBeNull();
   });
 });
@@ -58,9 +53,9 @@ describe("isTabRootPath", () => {
 
 describe("tabForShortcutKey", () => {
   it("maps 1-4 to tabs and ignores the rest", () => {
-    expect(tabForShortcutKey("1")?.id).toBe("home");
-    expect(tabForShortcutKey("4")?.id).toBe("you");
-    expect(tabForShortcutKey("5")).toBeNull();
+    expect(tabForShortcutKey("1")?.id).toBe("today");
+    expect(tabForShortcutKey("3")?.id).toBe("you");
+    expect(tabForShortcutKey("4")).toBeNull();
     expect(tabForShortcutKey("k")).toBeNull();
   });
 });
@@ -78,7 +73,7 @@ describe("routeUsesWideColumn", () => {
     expect(routeUsesWideColumn("/journal")).toBe(true);
     expect(routeUsesWideColumn("/journal/")).toBe(true);
     expect(routeUsesWideColumn("/")).toBe(false);
-    expect(routeUsesWideColumn("/home")).toBe(false);
+    expect(routeUsesWideColumn("/you")).toBe(false);
     expect(routeUsesWideColumn("/settings")).toBe(false);
     expect(routeUsesWideColumn("/journaling")).toBe(false);
   });
