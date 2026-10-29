@@ -9,6 +9,8 @@
  */
 export interface InsightErrorBody {
   error?: string;
+  /** Gateway failures (a missing function) put the reason here, not in `error`. */
+  message?: string;
   code?: string;
   /** HTTP status the AI provider answered with, when it answered. */
   provider_status?: number;
@@ -66,6 +68,6 @@ export function describeInsightError(
     case "provider_invalid":
       return t("error.providerInvalid");
     default:
-      return body?.error || fallback || "Request failed";
+      return body?.error || body?.message || fallback || "Request failed";
   }
 }

@@ -574,6 +574,15 @@ two. A stale-base goal edit becomes a Sync issue. Archive, delete and restore
 round-trip through backup. A compass field in an AI payload fails the privacy
 test.
 
+## Journal letter (dropped 2026-10-29)
+
+`20261027174139_journal_reading.sql` added `user_profiles.journal_reading` and
+a `journal_letters` cache for a weekly recap. That cache was not user-authored
+history: the journal rows were the record, and the letter could be made again
+from them. `20261029190000_drop_journal_letter.sql` drops the table and the
+column. Journal entries, memories, and session notes stay. The drop is not a
+deletion of accepted history. Do not reintroduce the letter.
+
 ## Adding a synced field (required checklist)
 
 Before storing a new column or entity, classify it:
