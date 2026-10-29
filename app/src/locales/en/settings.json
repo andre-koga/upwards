@@ -167,7 +167,15 @@
     "configuredWith": "Connected — using {{model}}",
     "notConfigured": "Not connected yet",
     "syncNotConfigured": "Sync is not configured for this build.",
-    "needsConnection": "AI insights need a connection. They come back when you're online."
+    "needsConnection": "AI insights need a connection. They come back when you're online.",
+    "reading": {
+      "label": "Let the AI read your journal",
+      "hint": "Off until you turn it on. On, the words of your journal, memories, place names, and session notes go to your own model so Home can write a weekly letter. Photos, video, coordinates, and your birthday stay on this device. The habits and the timer are unchanged.",
+      "clear": "Clear the reading",
+      "clearing": "Clearing…",
+      "cleared": "The reading was cleared. Your journal was not.",
+      "clearFailed": "Couldn't clear the reading: {{error}}"
+    }
   },
   "backup": {
     "title": "Backup",

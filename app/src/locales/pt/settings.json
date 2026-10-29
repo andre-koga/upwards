@@ -167,7 +167,15 @@
     "configuredWith": "Conectado — usando {{model}}",
     "notConfigured": "Ainda não conectado",
     "syncNotConfigured": "A sincronização não está configurada nesta versão.",
-    "needsConnection": "Os insights de IA precisam de conexão. Voltam quando você estiver online."
+    "needsConnection": "Os insights de IA precisam de conexão. Voltam quando você estiver online.",
+    "reading": {
+      "label": "Deixar a IA ler seu diário",
+      "hint": "Desligado até você ligar. Ligado, as palavras do diário, das memórias, os nomes dos lugares e as notas das sessões vão para o seu próprio modelo, para o Início escrever uma carta da semana. Fotos, vídeo, coordenadas e seu aniversário ficam neste aparelho. Os hábitos e o cronômetro continuam iguais.",
+      "clear": "Apagar a leitura",
+      "clearing": "Apagando…",
+      "cleared": "A leitura foi apagada. O diário não.",
+      "clearFailed": "Não foi possível apagar a leitura: {{error}}"
+    }
   },
   "backup": {
     "title": "Backup",

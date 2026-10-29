@@ -64,6 +64,7 @@ describe("pendingSetupQuestions", () => {
           holidayCalendars: null,
           hemisphere: null,
           birthday: null,
+          journalReading: null,
         },
       })
     ).toEqual([]);

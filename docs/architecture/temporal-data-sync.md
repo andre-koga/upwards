@@ -574,6 +574,23 @@ two. A stale-base goal edit becomes a Sync issue. Archive, delete and restore
 round-trip through backup. A compass field in an AI payload fails the privacy
 test.
 
+## Journal letter (step 1, 2026-10-27)
+
+The weekly letter in product-scope.md §2.12 is a **derived cache**, not a
+new kind of user history. It does not go through the sync operation log, and
+this is a deliberate limit of the first slice: the words the person wrote
+stay the journal rows; the letter can be made again from them.
+
+| Thing | Class | Rule |
+|---|---|---|
+| `user_profiles.journal_reading` | Account setting, like `daily_clip` | `null` is off. Never inferred on. Follows the account. Included in backup settings and filled only where the device has not chosen. |
+| `journal_letters` | Server cache written by `generate-journal-letter` | One row per `(user, fingerprint)`. The owner can read and delete. The client cannot insert. Clearing deletes these rows and nothing else. Not in the Dexie backup, because it is not a user-authored table. |
+| The journal, habits, sessions | Unchanged | The function never writes them. |
+
+A model write is not last-write-wins on the journal. The stored letter is the
+grounded output, not the raw prompt, and the function does not log the
+journal body.
+
 ## Adding a synced field (required checklist)
 
 Before storing a new column or entity, classify it:

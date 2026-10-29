@@ -85,6 +85,24 @@
     "providerEmpty": "Seu provedor de IA respondeu vazio. Confira o nome do modelo em Configurações.",
     "providerInvalid": "A IA não devolveu uma resposta utilizável. Tente de novo em instantes."
   },
+  "letter": {
+    "label": "Uma leitura da sua semana",
+    "labelOlder": "Uma leitura da sua semana · anterior",
+    "refresh": "Atualizar a carta",
+    "refreshing": "Lendo…",
+    "retry": "Tentar de novo",
+    "needsKey": "A carta precisa da chave de IA.",
+    "offline": "Você está offline, então esta é a última carta. Ela se atualiza quando você voltar.",
+    "error": "Não foi possível ler a semana.",
+    "quiet": "A escrita ficou quieta nesta semana.",
+    "ungrounded": "O modelo respondeu, e nada ficou: não estava na semana.",
+    "openDay": "Ler {{date}}",
+    "experiment": "Uma coisa para observar",
+    "openToday": "Abrir {{name}} em Hoje",
+    "dismiss": "Não esta",
+    "disclosure": "As palavras desta semana, os nomes dos lugares e as notas das sessões foram enviados ao seu modelo. Fotos, vídeo, coordenadas e seu aniversário não. Sua chave, seu modelo.",
+    "readingOff": "A leitura do diário está desligada."
+  },
   "offline": {
     "title": "Os insights de IA precisam de conexão",
     "description": "Os insights são gerados pela sua conta, então voltam quando você estiver online."

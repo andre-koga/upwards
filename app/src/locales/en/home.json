@@ -85,6 +85,24 @@
     "providerEmpty": "Your AI provider answered with nothing. Check the model name in Settings.",
     "providerInvalid": "The AI didn't return a usable answer. Try again in a moment."
   },
+  "letter": {
+    "label": "A reading of your week",
+    "labelOlder": "A reading of your week · older",
+    "refresh": "Refresh the letter",
+    "refreshing": "Reading…",
+    "retry": "Try again",
+    "needsKey": "The letter needs the AI key.",
+    "offline": "You're offline, so this is the last letter. It will refresh when you're back.",
+    "error": "Couldn't read the week.",
+    "quiet": "The writing was quiet this week.",
+    "ungrounded": "The model answered, and none of it stayed: it was not in the week.",
+    "openDay": "Read {{date}}",
+    "experiment": "One thing to watch",
+    "openToday": "Open {{name}} on Today",
+    "dismiss": "Not this",
+    "disclosure": "The words of this week, place names, and session notes were sent to your model. Photos, video, coordinates, and your birthday were not. Your key, your model.",
+    "readingOff": "Journal reading is off."
+  },
   "offline": {
     "title": "AI insights need a connection",
     "description": "Insights are made through your account, so they come back when you're online."

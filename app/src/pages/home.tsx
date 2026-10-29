@@ -8,6 +8,7 @@ import HomeAiSuggestions from "@/components/home/home-ai-suggestions";
 import HomeDigest from "@/components/home/home-digest";
 import HomeInsightHero from "@/components/home/home-insight-hero";
 import HomeInsightState from "@/components/home/home-insight-state";
+import HomeJournalLetter from "@/components/home/home-journal-letter";
 import { useHomeDigest } from "@/hooks/use-home-digest";
 import { useHomeInsight } from "@/hooks/use-home-insight";
 import { parseInsightFigures } from "@/lib/ai/build-insight-payload";
@@ -87,6 +88,7 @@ export default function HomePage() {
             notice={notice}
             onRefresh={refresh}
           />
+          <HomeJournalLetter />
           {digestSection}
           <HomeAiSuggestions
             suggestions={insight.suggestions ?? []}
@@ -104,6 +106,7 @@ export default function HomePage() {
           {/* No insight to lead with: the digest is the screen, and the AI is
               an offer below it, never a gate in front of it. */}
           {digestSection}
+          <HomeJournalLetter />
           <HomeInsightState
             state={
               phase === "error"

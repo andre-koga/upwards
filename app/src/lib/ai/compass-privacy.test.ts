@@ -14,6 +14,7 @@ const root = join(__dirname, "../../../..");
 
 const CLIENT_SIDE_FILES = [
   "app/src/hooks/use-home-insight.ts",
+  "app/src/hooks/use-journal-letter.ts",
   "app/src/lib/home/digest.ts",
   "app/src/components/tasks/hooks/use-ai-today-order.ts",
 ];
@@ -29,6 +30,7 @@ const files = [
   ...CLIENT_SIDE_FILES.map((file) => join(root, file)),
   ...readdirTs(join(root, "supabase/functions/_shared"), () => false),
   join(root, "supabase/functions/generate-ai-insights/index.ts"),
+  join(root, "supabase/functions/generate-journal-letter/index.ts"),
   join(root, "supabase/functions/rank-today/index.ts"),
 ];
 
@@ -38,6 +40,7 @@ describe("the compass stays out of AI requests", () => {
     expect(names).toContain("ai/build-insight-payload.ts");
     expect(names).toContain("_shared/insight.ts");
     expect(names).toContain("generate-ai-insights/index.ts");
+    expect(names).toContain("generate-journal-letter/index.ts");
     expect(files.length).toBeGreaterThan(15);
   });
 
