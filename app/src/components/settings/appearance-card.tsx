@@ -3,8 +3,12 @@ import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 
 import { SettingsSelect } from "@/components/settings/settings-select";
-import { SectionLabel } from "@/components/ui/section-label";
-import { SettingsSection } from "@/components/ui/settings-section";
+import {
+  SettingsGroup,
+  SettingsRow,
+} from "@/components/settings/settings-list";
+import { useLocale } from "@/lib/i18n/use-locale";
+import { LOCALE_OPTIONS, isLocaleValue } from "@/lib/i18n/locale-storage";
 
 const MODES = [
   { value: "system", icon: Laptop },
@@ -12,28 +16,48 @@ const MODES = [
   { value: "dark", icon: Moon },
 ] as const;
 
-export function AppearanceCard() {
+/** Theme and language: the two choices that change how everything reads. */
+export function GeneralSettingsGroup() {
   const { t } = useTranslation("settings");
   const { theme, setTheme } = useTheme();
-  const active = MODES.find((mode) => mode.value === theme) ?? MODES[0];
+  const { locale, setLocale } = useLocale();
+  const activeMode = MODES.find((mode) => mode.value === theme) ?? MODES[0];
+  const activeLocale =
+    LOCALE_OPTIONS.find((option) => option.value === locale) ??
+    LOCALE_OPTIONS[0];
 
   return (
-    <SettingsSection title={t("appearance.title")} icon={Sun}>
-      <div className="space-y-1">
-        <SectionLabel className="font-medium">
-          {t("appearance.theme")}
-        </SectionLabel>
-        <SettingsSelect
-          ariaLabel={t("appearance.theme")}
-          value={active.value}
-          onValueChange={setTheme}
-          options={MODES.map(({ value, icon }) => ({
-            value,
-            icon,
-            label: t(`appearance.modes.${value}`),
-          }))}
-        />
-      </div>
-    </SettingsSection>
+    <SettingsGroup title={t("groups.general")}>
+      <SettingsRow
+        label={t("appearance.theme")}
+        control={
+          <SettingsSelect
+            ariaLabel={t("appearance.theme")}
+            value={activeMode.value}
+            onValueChange={setTheme}
+            compact
+            options={MODES.map(({ value, icon }) => ({
+              value,
+              icon,
+              label: t(`appearance.modes.${value}`),
+            }))}
+          />
+        }
+      />
+      <SettingsRow
+        label={t("language.title")}
+        control={
+          <SettingsSelect
+            ariaLabel={t("language.title")}
+            value={activeLocale.value}
+            onValueChange={(value) => {
+              if (isLocaleValue(value)) setLocale(value);
+            }}
+            compact
+            options={LOCALE_OPTIONS}
+          />
+        }
+      />
+    </SettingsGroup>
   );
 }

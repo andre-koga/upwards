@@ -15,7 +15,7 @@ import { LOCAL_DB_NAME, MIN_UPGRADABLE_VERSION } from "./index";
 
 /**
  * The reset path for a local database the baseline schema cannot open
- * (product-scope.md §2.10).
+ *.
  *
  * Two cases reach it, both decided before Dexie touches the database:
  * - `old_schema`: older than v32. Its rows are in shapes only the deleted

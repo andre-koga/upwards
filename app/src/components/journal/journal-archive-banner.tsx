@@ -44,7 +44,7 @@ export default function JournalArchiveBanner({
   if (variant === "month" && imageSrc) {
     return (
       <div
-        className={cn("relative -mx-4 overflow-hidden rounded-none", className)}
+        className={cn("relative overflow-hidden rounded-2xl", className)}
         role="separator"
         aria-label={label}
       >
@@ -58,7 +58,7 @@ export default function JournalArchiveBanner({
           className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/35 to-black/15"
           aria-hidden
         />
-        <p className="absolute inset-0 flex items-center justify-center px-4 text-center font-crimson text-xl font-semibold tracking-tight text-white drop-shadow-sm">
+        <p className="absolute inset-0 flex items-center justify-center px-4 text-center font-display text-xl font-medium tracking-tight text-white drop-shadow-sm">
           {label}
         </p>
       </div>
@@ -67,16 +67,13 @@ export default function JournalArchiveBanner({
 
   return (
     <div
-      className={cn(
-        "-mx-4 rounded-none bg-amber-100 px-4 py-3 text-center text-amber-950 dark:bg-amber-950/60 dark:text-amber-100",
-        className
-      )}
+      className={cn("flex items-center gap-3 py-1 text-gold-text", className)}
       role="separator"
       aria-label={label}
     >
-      <p className="font-crimson text-base font-semibold tracking-tight">
-        {label}
-      </p>
+      <span className="h-px flex-1 bg-current opacity-25" aria-hidden />
+      <p className="font-display text-base italic">{label}</p>
+      <span className="h-px flex-1 bg-current opacity-25" aria-hidden />
     </div>
   );
 }

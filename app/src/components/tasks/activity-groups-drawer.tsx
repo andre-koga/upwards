@@ -1,13 +1,7 @@
-import {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  type AnimationEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
-import { ChevronDown, ChevronLeft, Plus, X } from "lucide-react";
+import { ChevronDown, Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { db } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
@@ -21,7 +15,6 @@ import {
   isArchivedNow,
   sortActivitiesByOrder,
 } from "@/lib/activity";
-import GroupPill from "@/components/activities/group-pill";
 import ActivityPill from "@/components/activities/activity-pill";
 import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
 import {
@@ -36,89 +29,69 @@ import { Button, type ButtonProps } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-type PendingDrawerContent =
-  | { type: "groups" }
-  | { type: "activities"; group: ActivityGroup };
-
-async function loadActivityGroupLists(): Promise<{
+interface ProjectsData {
   active: ActivityGroup[];
   archived: ActivityGroup[];
-}> {
-  const [active, archived] = await Promise.all([
-    db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
-    db.activityGroups.filter((g) => isArchivedNow(g)).sortBy("created_at"),
-  ]);
-  return { active, archived };
+  /** Every non-deleted activity of the active groups, archived included. */
+  activitiesByGroup: Map<string, Activity[]>;
 }
 
-function ArchivedPillToggle({
+async function loadProjects(): Promise<ProjectsData> {
+  const [active, archived, activities] = await Promise.all([
+    db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
+    db.activityGroups.filter((g) => isArchivedNow(g)).sortBy("created_at"),
+    db.activities.filter((a) => !a.deleted_at).toArray(),
+  ]);
+  const activitiesByGroup = new Map<string, Activity[]>();
+  for (const activity of sortActivitiesByOrder(activities)) {
+    const list = activitiesByGroup.get(activity.group_id) ?? [];
+    list.push(activity);
+    activitiesByGroup.set(activity.group_id, list);
+  }
+  return { active, archived, activitiesByGroup };
+}
+
+/** A quiet "Archived · 3" disclosure at the foot of a list. */
+function ArchivedToggle({
+  count,
   expanded,
   onToggle,
   showLabel,
   hideLabel,
+  controls,
 }: {
+  count: number;
   expanded: boolean;
   onToggle: () => void;
   showLabel: string;
   hideLabel: string;
+  controls: string;
 }) {
   const { t } = useTranslation("projects");
-
   return (
-    <div className="flex w-full justify-center pt-2">
-      <Button
-        type="button"
-        variant="ghost"
-        className="h-auto gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-        aria-expanded={expanded}
-        aria-label={expanded ? hideLabel : showLabel}
-        onClick={onToggle}
-      >
-        <span>{t("drawer.archived")}</span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 transition-transform duration-200",
-            expanded && "rotate-180"
-          )}
-          aria-hidden
-        />
-      </Button>
-    </div>
-  );
-}
-
-function DrawerActivityRow({
-  activity,
-  group,
-  isRunning,
-  elapsedMs,
-  onEdit,
-  onActivate,
-  onManualEntry,
-}: {
-  activity: Activity;
-  group: ActivityGroup;
-  isRunning: boolean;
-  elapsedMs: number;
-  onEdit: () => void;
-  onActivate?: () => void | Promise<void>;
-  onManualEntry?: () => void;
-}) {
-  return (
-    <ActivityPill
-      name={getActivityDisplayName(activity, group)}
-      color={group.color || DEFAULT_GROUP_COLOR}
-      elapsedMs={elapsedMs}
-      isRunning={isRunning}
-      showTimer={activityTracksTime(activity)}
-      onNameClick={onEdit}
-      onClick={onActivate}
-      onManualEntry={onManualEntry}
-    />
+    <Button
+      type="button"
+      variant="ghost"
+      className="h-9 w-full justify-start gap-1.5 rounded-none px-4 text-xs font-medium text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground"
+      aria-expanded={expanded}
+      aria-controls={controls}
+      aria-label={expanded ? hideLabel : showLabel}
+      onClick={onToggle}
+    >
+      {t("drawer.archivedCount", { count })}
+      <ChevronDown
+        className={cn(
+          "h-3.5 w-3.5 shrink-0 transition-transform duration-200",
+          expanded && "rotate-180"
+        )}
+        aria-hidden
+      />
+    </Button>
   );
 }
 
@@ -149,6 +122,14 @@ interface ActivityGroupsDrawerProps {
   floating?: boolean;
 }
 
+/**
+ * Projects: every group and its activities in one scrolling sheet. It used to
+ * be two levels (groups, then a group's activities), which cost a close and
+ * reopen to reach any timer. Now each group is a labelled panel of the same
+ * activity rows as Today, so starting anything is one tap from the dock.
+ * Tap a group's name to edit it, an activity's name to edit that; archived
+ * items fold away at the foot of their list with restore / delete.
+ */
 export default function ActivityGroupsDrawer({
   currentActivityId,
   activities = [],
@@ -169,17 +150,16 @@ export default function ActivityGroupsDrawer({
   const { t } = useTranslation("projects");
   const resolvedTriggerTitle = triggerTitle ?? t("drawer.pickGroupOrActivity");
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"groups" | "activities">("groups");
-  const [selectedGroup, setSelectedGroup] = useState<ActivityGroup | null>(
-    null
-  );
-  const [groups, setGroups] = useState<ActivityGroup[]>([]);
-  const [archivedGroups, setArchivedGroups] = useState<ActivityGroup[]>([]);
+  const [data, setData] = useState<ProjectsData>({
+    active: [],
+    archived: [],
+    activitiesByGroup: new Map(),
+  });
+  const [reloadTick, setReloadTick] = useState(0);
   const [showArchivedGroups, setShowArchivedGroups] = useState(false);
-  const [showArchivedActivities, setShowArchivedActivities] = useState(false);
-  // All non-deleted activities for the selected group (including archived).
-  const [groupActivities, setGroupActivities] = useState<Activity[]>([]);
-  const [groupActivitiesTick, setGroupActivitiesTick] = useState(0);
+  const [openArchivedFor, setOpenArchivedFor] = useState<Set<string>>(
+    () => new Set()
+  );
   const [archivedActionsTarget, setArchivedActionsTarget] =
     useState<ArchivedItemActionsTarget | null>(null);
   const [deleteArchivedTarget, setDeleteArchivedTarget] = useState<{
@@ -199,129 +179,60 @@ export default function ActivityGroupsDrawer({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    loadActivityGroupLists()
-      .then(({ active, archived }) => {
-        if (!cancelled) {
-          setGroups(active);
-          setArchivedGroups(archived);
-        }
+    loadProjects()
+      .then((next) => {
+        if (!cancelled) setData(next);
       })
       .catch(console.error);
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, reloadTick]);
 
-  // Load all non-deleted activities for the selected group whenever the group changes or a tick fires.
-  useEffect(() => {
-    if (!open || view !== "activities" || !selectedGroup) return;
-    let cancelled = false;
-    db.activities
-      .filter((a) => a.group_id === selectedGroup.id && !a.deleted_at)
-      .toArray()
-      .then((list) => {
-        if (!cancelled) {
-          setGroupActivities(sortActivitiesByOrder(list));
-        }
-      })
-      .catch(console.error);
-    return () => {
-      cancelled = true;
-    };
-  }, [open, view, selectedGroup, groupActivitiesTick]);
-
-  const reloadGroupActivities = () => setGroupActivitiesTick((t) => t + 1);
-
-  const resetDrawerView = useCallback(() => {
-    setView("groups");
-    setSelectedGroup(null);
-    setShowArchivedGroups(false);
-    setShowArchivedActivities(false);
-  }, []);
-
-  const pendingContentRef = useRef<PendingDrawerContent | null>(null);
+  const reload = useCallback(() => setReloadTick((n) => n + 1), []);
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
-  };
-
-  const closeDrawer = () => {
-    pendingContentRef.current = null;
-    setOpen(false);
-  };
-
-  const handleOpenGroup = (group: ActivityGroup) => {
-    pendingContentRef.current = { type: "activities", group };
-    setOpen(false);
-  };
-
-  const handleBackToGroups = () => {
-    pendingContentRef.current = { type: "groups" };
-    setOpen(false);
-  };
-
-  const completeDrawerClose = useCallback(() => {
-    const pending = pendingContentRef.current;
-    pendingContentRef.current = null;
-    if (pending?.type === "activities") {
-      setSelectedGroup(pending.group);
-      setView("activities");
-      setOpen(true);
-      return;
-    }
-
-    if (pending?.type === "groups") {
-      setSelectedGroup(null);
-      setView("groups");
+    if (!nextOpen) {
       setShowArchivedGroups(false);
-      setShowArchivedActivities(false);
-      setOpen(true);
-      return;
+      setOpenArchivedFor(new Set());
     }
+  };
 
-    resetDrawerView();
-  }, [resetDrawerView]);
+  const toggleArchivedFor = (groupId: string) =>
+    setOpenArchivedFor((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
 
-  // Keep the outgoing view visible until SheetContent's close animation ends.
-  // This avoids guessing a duration and prevents the groups list flashing while
-  // the activities view slides away.
-  const handleSheetAnimationEnd = useCallback(
-    (event: AnimationEvent<HTMLDivElement>) => {
-      if (open || event.currentTarget !== event.target) return;
-      completeDrawerClose();
-    },
-    [completeDrawerClose, open]
-  );
-
-  useEffect(() => {
-    if (
-      open ||
-      typeof window === "undefined" ||
-      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      return;
+  const groupById = useMemo(() => {
+    const map = new Map<string, ActivityGroup>();
+    for (const group of [...data.active, ...data.archived]) {
+      map.set(group.id, group);
     }
-    const frame = window.requestAnimationFrame(completeDrawerClose);
-    return () => window.cancelAnimationFrame(frame);
-  }, [completeDrawerClose, open]);
+    return map;
+  }, [data]);
 
-  const activeActivities = groupActivities.filter(
-    (a) => !isActivityArchived(a)
-  );
-  const archivedActivities = groupActivities.filter((a) =>
-    isActivityArchived(a)
-  );
+  const findActivity = (id: string | null) => {
+    if (!id) return null;
+    for (const list of data.activitiesByGroup.values()) {
+      const found = list.find((item) => item.id === id);
+      if (found) return found;
+    }
+    return activities.find((item) => item.id === id) ?? null;
+  };
 
-  const manualEntryActivity = manualEntryActivityId
-    ? (groupActivities.find((item) => item.id === manualEntryActivityId) ??
-      activities.find((item) => item.id === manualEntryActivityId) ??
-      null)
-    : null;
+  const manualEntryActivity = findActivity(manualEntryActivityId);
   const manualEntryGroup = manualEntryActivity
-    ? selectedGroup && selectedGroup.id === manualEntryActivity.group_id
-      ? selectedGroup
-      : groups.find((group) => group.id === manualEntryActivity.group_id)
+    ? groupById.get(manualEntryActivity.group_id)
     : undefined;
+  const editingActivityGroup = editingActivity
+    ? groupById.get(editingActivity.group_id)
+    : undefined;
+
+  const empty = data.active.length === 0 && data.archived.length === 0;
 
   return (
     <>
@@ -329,165 +240,109 @@ export default function ActivityGroupsDrawer({
         <SheetContent
           side="bottom"
           showCloseButton={false}
-          className="flex max-h-[70vh] flex-col gap-0 rounded-t-2xl border-t border-border p-0 shadow-xl"
+          className="flex max-h-[85dvh] flex-col gap-0 rounded-t-[1.75rem] border-t border-foreground/[0.07] p-0 shadow-xl"
           style={{ bottom: bottomInset }}
-          onAnimationEnd={handleSheetAnimationEnd}
         >
           <div
-            className="mx-auto mb-1 mt-3 h-1 w-10 shrink-0 rounded-full bg-muted"
+            className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-foreground/15"
             aria-hidden
           />
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {view === "groups" ? (
-              <>
-                <div className="shrink-0 px-5 pb-3 pt-2">
-                  <SheetTitle className="text-center text-lg">
-                    {t("drawer.groups")}
-                  </SheetTitle>
-                </div>
-                <div className="flex shrink-0 justify-center px-4 pb-6">
-                  <Button
-                    type="button"
-                    variant="outlineDashed"
-                    className="rounded-full px-4 py-2 text-sm"
-                    onClick={() => {
-                      closeDrawer();
-                      setNewGroupDialogOpen(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                    {t("drawer.newGroup")}
-                  </Button>
-                </div>
-                <div className="space-y-2 px-4 pb-12">
-                  {groups.length === 0 && archivedGroups.length === 0 ? (
-                    <p className="py-6 text-center text-sm text-muted-foreground">
-                      {t("drawer.noGroupsYet")}
-                    </p>
-                  ) : (
-                    <>
-                      {groups.length === 0 ? (
-                        <p className="py-2 text-center text-sm text-muted-foreground">
-                          {t("drawer.noActiveGroups")}
-                        </p>
-                      ) : (
-                        groups.map((group) => {
-                          return (
-                            <GroupPill
-                              key={group.id}
-                              name={group.name}
-                              color={group.color || DEFAULT_GROUP_COLOR}
-                              onNameClick={() => setEditingGroup(group)}
-                              onActionClick={() => handleOpenGroup(group)}
-                            />
-                          );
-                        })
-                      )}
-                      {archivedGroups.length > 0 ? (
-                        <div className="flex w-full flex-col">
-                          <ArchivedPillToggle
-                            expanded={showArchivedGroups}
-                            onToggle={() => setShowArchivedGroups((v) => !v)}
-                            showLabel={t("drawer.showArchivedGroups")}
-                            hideLabel={t("drawer.hideArchivedGroups")}
-                          />
-                          {showArchivedGroups ? (
-                            <div className="mt-2 w-full space-y-2">
-                              {archivedGroups.map((group) => (
-                                <GroupPill
-                                  key={group.id}
-                                  name={group.name}
-                                  color={group.color || DEFAULT_GROUP_COLOR}
-                                  nameTitle={t("drawer.restoreOrDeleteGroup")}
-                                  nameAriaLabel={t(
-                                    "drawer.restoreOrDeleteGroup"
-                                  )}
-                                  onNameClick={() =>
-                                    setArchivedActionsTarget({
-                                      type: "group",
-                                      group,
-                                    })
-                                  }
-                                />
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex shrink-0 items-center gap-2 px-4 pb-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="iconRoundMd"
-                    onClick={handleBackToGroups}
-                    className="text-muted-foreground"
-                    aria-label={t("drawer.backToGroups")}
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
-                  <SheetTitle className="flex-1 text-center text-lg">
-                    {selectedGroup?.name ?? ""}
-                  </SheetTitle>
-                  <div className="w-9" />
-                </div>
-                {selectedGroup && (
-                  <div className="flex shrink-0 justify-center px-4 pb-6">
+          <header className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-4">
+            <SheetTitle className="font-display text-[1.75rem] font-medium leading-tight tracking-[-0.02em]">
+              {t("drawer.title")}
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              {t("drawer.pickGroupOrActivity")}
+            </SheetDescription>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-9 gap-1.5 rounded-full bg-muted/70 px-3.5 text-[0.8125rem] font-medium hover:bg-muted"
+              onClick={() => setNewGroupDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              {t("drawer.newGroup")}
+            </Button>
+          </header>
+
+          <div className="min-h-0 flex-1 space-y-7 overflow-y-auto px-4 pb-10">
+            {empty ? (
+              <p className="py-10 text-center font-display text-lg italic text-muted-foreground">
+                {t("drawer.noGroupsYet")}
+              </p>
+            ) : null}
+
+            {data.active.map((group) => {
+              const color = group.color || DEFAULT_GROUP_COLOR;
+              const list = data.activitiesByGroup.get(group.id) ?? [];
+              const live = list.filter((a) => !isActivityArchived(a));
+              const archived = list.filter((a) => isActivityArchived(a));
+              const archivedOpen = openArchivedFor.has(group.id);
+              const archivedId = `projects-archived-${group.id}`;
+              return (
+                <section key={group.id} aria-label={group.name}>
+                  <div className="mb-1.5 flex items-center gap-1 pl-1">
                     <Button
                       type="button"
-                      variant="outlineDashed"
-                      className="rounded-full px-4 py-2 text-sm"
-                      onClick={() => {
-                        setNewActivityDialogGroup(selectedGroup);
-                        closeDrawer();
-                      }}
+                      variant="ghost"
+                      className="h-8 min-w-0 flex-1 justify-start gap-2 rounded-full px-3 text-[0.75rem] font-medium uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground"
+                      title={t("drawer.editGroup", { name: group.name })}
+                      aria-label={t("drawer.editGroup", { name: group.name })}
+                      onClick={() => setEditingGroup(group)}
                     >
-                      <Plus className="h-4 w-4" />
-                      {t("drawer.newActivity")}
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: color }}
+                        aria-hidden
+                      />
+                      <span className="truncate">{group.name}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="iconRoundSm"
+                      className="text-muted-foreground"
+                      title={t("drawer.newActivityIn", { name: group.name })}
+                      aria-label={t("drawer.newActivityIn", {
+                        name: group.name,
+                      })}
+                      onClick={() => setNewActivityDialogGroup(group)}
+                    >
+                      <Plus aria-hidden />
                     </Button>
                   </div>
-                )}
-                <div className="space-y-2 px-4 pb-12">
-                  {!selectedGroup ? (
-                    <p className="py-6 text-center text-sm text-muted-foreground">
-                      {t("drawer.noGroupSelected")}
-                    </p>
-                  ) : groupActivities.length === 0 ? (
-                    <p className="py-6 text-center text-sm text-muted-foreground">
-                      {t("drawer.noActivitiesInGroup")}
-                    </p>
-                  ) : (
-                    <>
-                      {activeActivities.length === 0 ? (
-                        <p className="py-2 text-center text-sm text-muted-foreground">
-                          {t("drawer.noActiveActivities")}
-                        </p>
-                      ) : (
-                        activeActivities.map((activity) => {
-                          const isRunning = currentActivityId === activity.id;
-                          return (
-                            <DrawerActivityRow
-                              key={activity.id}
-                              activity={activity}
-                              group={selectedGroup}
-                              isRunning={isRunning}
+
+                  <div className="divide-y divide-foreground/[0.07] overflow-hidden rounded-2xl bg-muted/45">
+                    {live.length === 0 ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-12 w-full justify-start gap-2 rounded-none px-4 text-sm font-normal text-muted-foreground hover:bg-foreground/[0.04]"
+                        onClick={() => setNewActivityDialogGroup(group)}
+                      >
+                        <Plus className="h-4 w-4" aria-hidden />
+                        {t("drawer.newActivity")}
+                      </Button>
+                    ) : (
+                      live.map((activity) => {
+                        const isRunning = currentActivityId === activity.id;
+                        return (
+                          <div key={activity.id} className="px-2 py-1.5">
+                            <ActivityPill
+                              appearance="row"
+                              name={getActivityDisplayName(activity, group)}
+                              color={color}
                               elapsedMs={getActivityDrawerElapsedMs(
                                 activity.id
                               )}
-                              onEdit={() => setEditingActivity(activity)}
-                              onActivate={async () => {
-                                if (isRunning) {
-                                  await onStopActivity?.();
-                                } else {
-                                  await onStartActivity?.(activity.id);
-                                }
-                                closeDrawer();
+                              isRunning={isRunning}
+                              showTimer={activityTracksTime(activity)}
+                              onNameClick={() => setEditingActivity(activity)}
+                              onClick={async () => {
+                                if (isRunning) await onStopActivity?.();
+                                else await onStartActivity?.(activity.id);
+                                handleOpenChange(false);
                               }}
                               onManualEntry={
                                 onAddManualEntry
@@ -495,34 +350,33 @@ export default function ActivityGroupsDrawer({
                                   : undefined
                               }
                             />
-                          );
-                        })
-                      )}
-                      {archivedActivities.length > 0 ? (
-                        <div className="flex w-full flex-col">
-                          <ArchivedPillToggle
-                            expanded={showArchivedActivities}
-                            onToggle={() =>
-                              setShowArchivedActivities((v) => !v)
-                            }
-                            showLabel={t("drawer.showArchivedActivities")}
-                            hideLabel={t("drawer.hideArchivedActivities")}
-                          />
-                          {showArchivedActivities ? (
-                            <div className="mt-2 w-full space-y-2">
-                              {archivedActivities.map((activity) => (
+                          </div>
+                        );
+                      })
+                    )}
+                    {archived.length > 0 ? (
+                      <div>
+                        <ArchivedToggle
+                          count={archived.length}
+                          expanded={archivedOpen}
+                          onToggle={() => toggleArchivedFor(group.id)}
+                          showLabel={t("drawer.showArchivedActivities")}
+                          hideLabel={t("drawer.hideArchivedActivities")}
+                          controls={archivedId}
+                        />
+                        {archivedOpen ? (
+                          <div id={archivedId} className="pb-1.5">
+                            {archived.map((activity) => (
+                              <div key={activity.id} className="px-2 py-1">
                                 <ActivityPill
-                                  key={activity.id}
-                                  name={getActivityDisplayName(
-                                    activity,
-                                    selectedGroup
-                                  )}
-                                  color={
-                                    selectedGroup.color || DEFAULT_GROUP_COLOR
-                                  }
+                                  appearance="row"
+                                  className="opacity-70"
+                                  name={getActivityDisplayName(activity, group)}
+                                  color={color}
                                   elapsedMs={getActivityDrawerElapsedMs(
                                     activity.id
                                   )}
+                                  showTimer={false}
                                   readOnly
                                   allowNameClickWhenReadOnly
                                   nameTitle={t(
@@ -535,20 +389,62 @@ export default function ActivityGroupsDrawer({
                                     setArchivedActionsTarget({
                                       type: "activity",
                                       activity,
-                                      group: selectedGroup,
+                                      group,
                                     })
                                   }
                                 />
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </>
-                  )}
-                </div>
-              </>
-            )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
+              );
+            })}
+
+            {data.archived.length > 0 ? (
+              <section className="overflow-hidden rounded-2xl">
+                <ArchivedToggle
+                  count={data.archived.length}
+                  expanded={showArchivedGroups}
+                  onToggle={() => setShowArchivedGroups((v) => !v)}
+                  showLabel={t("drawer.showArchivedGroups")}
+                  hideLabel={t("drawer.hideArchivedGroups")}
+                  controls="projects-archived-groups"
+                />
+                {showArchivedGroups ? (
+                  <div
+                    id="projects-archived-groups"
+                    className="divide-y divide-foreground/[0.07] rounded-2xl bg-muted/30"
+                  >
+                    {data.archived.map((group) => (
+                      <Button
+                        key={group.id}
+                        type="button"
+                        variant="ghost"
+                        className="h-12 w-full justify-start gap-2.5 rounded-none px-4 text-[0.9375rem] font-normal text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground"
+                        title={t("drawer.restoreOrDeleteGroup")}
+                        aria-label={`${group.name}. ${t("drawer.restoreOrDeleteGroup")}`}
+                        onClick={() =>
+                          setArchivedActionsTarget({ type: "group", group })
+                        }
+                      >
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full opacity-70"
+                          style={{
+                            backgroundColor: group.color || DEFAULT_GROUP_COLOR,
+                          }}
+                          aria-hidden
+                        />
+                        <span className="truncate">{group.name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
           </div>
         </SheetContent>
 
@@ -594,47 +490,42 @@ export default function ActivityGroupsDrawer({
         onOpenChange={setNewGroupDialogOpen}
         onCreated={() => {
           setNewGroupDialogOpen(false);
-          void loadActivityGroupLists()
-            .then(({ active, archived }) => {
-              setGroups(active);
-              setArchivedGroups(archived);
-            })
-            .catch(console.error);
+          reload();
         }}
       />
 
       {newActivityDialogGroup ? (
         <ActivityDialogForm
-          open={newActivityDialogGroup !== null}
+          open
           onOpenChange={(nextOpen) => {
             if (!nextOpen) setNewActivityDialogGroup(null);
           }}
           group={newActivityDialogGroup}
           onSaved={() => {
             setNewActivityDialogGroup(null);
-            reloadGroupActivities();
+            reload();
             onTasksDataChanged?.();
           }}
         />
       ) : null}
 
       {editingActivity &&
-      selectedGroup &&
+      editingActivityGroup &&
       !isActivityArchived(editingActivity) ? (
         <ActivityDialogForm
-          open={editingActivity !== null}
+          open
           onOpenChange={(nextOpen) => {
             if (!nextOpen) setEditingActivity(null);
           }}
-          group={selectedGroup}
+          group={editingActivityGroup}
           activity={editingActivity}
           onSaved={() => {
             setEditingActivity(null);
-            reloadGroupActivities();
+            reload();
           }}
           onArchived={() => {
             setEditingActivity(null);
-            reloadGroupActivities();
+            reload();
             onTasksDataChanged?.();
           }}
         />
@@ -642,34 +533,18 @@ export default function ActivityGroupsDrawer({
 
       {editingGroup && !editingGroup.archived_at ? (
         <EditGroupDialog
-          open={editingGroup !== null}
+          open
           onOpenChange={(nextOpen) => {
             if (!nextOpen) setEditingGroup(null);
           }}
           group={editingGroup}
           onUpdated={(updatedGroup) => {
-            setSelectedGroup((prev) =>
-              prev && prev.id === updatedGroup.id ? updatedGroup : prev
-            );
             setEditingGroup(updatedGroup);
-            void loadActivityGroupLists()
-              .then(({ active, archived }) => {
-                setGroups(active);
-                setArchivedGroups(archived);
-              })
-              .catch(console.error);
+            reload();
           }}
           onArchived={() => {
-            const id = editingGroup.id;
             setEditingGroup(null);
-            void loadActivityGroupLists()
-              .then(({ active, archived }) => {
-                setGroups(active);
-                setArchivedGroups(archived);
-              })
-              .catch(console.error);
-            setSelectedGroup((prev) => (prev && prev.id === id ? null : prev));
-            setView("groups");
+            reload();
             onTasksDataChanged?.();
           }}
         />
@@ -680,20 +555,8 @@ export default function ActivityGroupsDrawer({
         onOpenChange={(next) => {
           if (!next) setArchivedActionsTarget(null);
         }}
-        onUnarchived={async (t) => {
-          if (t.type === "group") {
-            setSelectedGroup((prev) =>
-              prev?.id === t.group.id ? { ...prev, archived_at: null } : prev
-            );
-          }
-          try {
-            const { active, archived } = await loadActivityGroupLists();
-            setGroups(active);
-            setArchivedGroups(archived);
-          } catch (e) {
-            console.error(e);
-          }
-          reloadGroupActivities();
+        onUnarchived={() => {
+          reload();
           onTasksDataChanged?.();
         }}
         onDeleteRequested={({ type, id }) => {
@@ -708,24 +571,9 @@ export default function ActivityGroupsDrawer({
         onOpenChange={(nextOpen) => {
           if (!nextOpen) setDeleteArchivedTarget(null);
         }}
-        onDeleted={({ type, id }) => {
+        onDeleted={() => {
           setDeleteArchivedTarget(null);
-          if (type === "group") {
-            setSelectedGroup((prev) => {
-              if (prev?.id === id) {
-                queueMicrotask(() => setView("groups"));
-                return null;
-              }
-              return prev;
-            });
-          }
-          void loadActivityGroupLists()
-            .then(({ active, archived }) => {
-              setGroups(active);
-              setArchivedGroups(archived);
-            })
-            .catch(console.error);
-          reloadGroupActivities();
+          reload();
           onTasksDataChanged?.();
         }}
       />

@@ -2,7 +2,7 @@ import type { JournalEntry, LocationData } from "@/lib/db/types";
 import { MAX_DAILY_LOCATIONS, normalizeJournalLocationRoute } from "./utils";
 
 /**
- * "Keep both" for a journal day in conflict (product-scope.md §2.10): the two
+ * "Keep both" for a journal day in conflict: the two
  * versions' words joined with a divider, and their photos and places unioned.
  *
  * Nothing is dropped to make room. The text may come out longer than the

@@ -12,6 +12,17 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-11-settings-tab",
+    date: "2026-11-11",
+    title: "Settings in one place",
+    bullets: [
+      "Settings is its own tab, and every setting is on one page, in one list. No more sections to switch between.",
+      "Sync now, Check for app update, Sync issues and Error logs are all in Settings.",
+      "The You tab is only about you. It's empty for now, until it can describe you from your journal and habits.",
+      "The compass is gone: the north star, your few words, goals and the knowledge map. Anything you wrote there was deleted.",
+    ],
+  },
+  {
     id: "2026-10-29-three-places",
     date: "2026-10-29",
     title: "Today, Journal, You",
@@ -20,16 +31,6 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
       "The Home tab and its weekly summary are gone. That page restated numbers you can already see on Today.",
       "An old Home link opens You.",
       "On a computer, Upwards says it is made for a phone and stays in a phone-sized window.",
-    ],
-  },
-  {
-    id: "2026-10-23-compass",
-    date: "2026-10-23",
-    title: "Your compass",
-    bullets: [
-      "The You tab is now your compass: a north star, a few words for who you are, goals, and notes you tell yourself. Nothing here needs an AI key.",
-      "A goal can point at a habit or a group. It then shows what your record says, like done 4 of the last 7 days. It never shows a percentage.",
-      "Settings, What's new, Feedback and Error logs are still on that page.",
     ],
   },
   {

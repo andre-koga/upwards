@@ -31,7 +31,9 @@ function TaskCheckbox({
   const actionLabel =
     title ?? (isComplete ? "Mark incomplete" : "Mark complete");
 
-  return (
+  // The empty and done states share the pill so every row's check lines up.
+  // The fixed-width slot keeps every row's name on the same line.
+  const button = (
     <Button
       type="button"
       variant={isComplete ? "taskComplete" : "taskTodo"}
@@ -46,6 +48,10 @@ function TaskCheckbox({
         ? (completeContent ?? <Check className="h-4 w-4" />)
         : (incompleteContent ?? null)}
     </Button>
+  );
+  if (size === "sm") return button;
+  return (
+    <span className="flex w-[2.75rem] shrink-0 justify-center">{button}</span>
   );
 }
 

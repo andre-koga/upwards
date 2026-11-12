@@ -35,6 +35,7 @@ import JournalMetaBar from "@/components/journal/journal-meta-bar";
 import JournalVersionsDialog from "@/components/journal/journal-versions-dialog";
 import { useJournalRevisionSummaries } from "@/hooks/use-journal-revision-summaries";
 import JournalPhotoStack from "@/components/journal/journal-photo-stack";
+import JournalArchivePhotoGrid from "@/components/journal/journal-archive-photos";
 import type { LocationData } from "@/lib/db/types";
 
 interface JournalCardProps {
@@ -232,7 +233,6 @@ export default function JournalCard({
   return (
     <>
       <div
-        className="overflow-hidden rounded-2xl border border-border bg-card md:rounded-3xl"
         onPointerDown={handleJournalPointerDown}
         onPointerUp={handleJournalPointerEnd}
         onPointerLeave={handleJournalPointerEnd}
@@ -245,43 +245,69 @@ export default function JournalCard({
           )}
           onClick={handleJournalCardClick}
         >
-          {clipEnabled ? (
-            <JournalVideoSection
-              videoSrc={videoPlaybackSrc ?? ""}
-              canPlay={isOnline}
-              thumbnail={journalThumbnail}
-              onThumbnailGenerated={(thumb) => {
-                updateDraft({ videoThumbnail: thumb });
-                journal.saveDraft();
-              }}
-            />
+          {clipEnabled && videoPlaybackSrc ? (
+            // The day's photos lie on the clip's corner like prints tossed
+            // onto a still, so the day's media reads as one pile.
+            <div
+              className={cn(
+                "relative",
+                journal.draftPhotoPaths.length > 0 ? "mb-14" : "mb-8"
+              )}
+            >
+              <JournalVideoSection
+                videoSrc={videoPlaybackSrc}
+                canPlay={isOnline}
+                thumbnail={journalThumbnail}
+                onThumbnailGenerated={(thumb) => {
+                  updateDraft({ videoThumbnail: thumb });
+                  journal.saveDraft();
+                }}
+              />
+              {journal.draftPhotoPaths.length > 0 ? (
+                <div className="absolute -bottom-9 right-3 z-10">
+                  <JournalPhotoStack photoPaths={journal.draftPhotoPaths} />
+                </div>
+              ) : null}
+            </div>
+          ) : journal.draftPhotoPaths.length > 0 ? (
+            // No clip today: the photos take the clip's place at the top.
+            <div className="mb-8">
+              <JournalArchivePhotoGrid
+                photoPaths={journal.draftPhotoPaths}
+                layout="banner"
+              />
+            </div>
           ) : null}
 
-          <div className="space-y-3 px-5 pb-2 pt-5">
-            <JournalTextSection
-              emoji={journal.draftEmoji}
-              trailing={
-                <JournalPhotoStack photoPaths={journal.draftPhotoPaths} />
-              }
-              title={journal.draftTitle}
-              text={journal.draftText}
-              locations={
-                displayLocations.length > 0 ? displayLocations : undefined
-              }
-              onLocationsEditClick={() => handleLocationsOpenChange(true)}
-              onPlacesMapClick={
-                displayLocations.length > 0
-                  ? () => setPlacesMapOpen(true)
-                  : undefined
-              }
-              journalCompletionStreak={
-                journal.isJournalComplete &&
-                typeof journal.journalCompletionStreak === "number"
-                  ? journal.journalCompletionStreak
-                  : null
-              }
-            />
-          </div>
+          <JournalTextSection
+            isToday={isCurrentDay}
+            actions={
+              <JournalMetaBar
+                journal={journal}
+                onEditRequest={openJournalEditor}
+                revisions={revisionSummaries.get(dateString)}
+                onOpenVersions={() => setVersionsOpen(true)}
+              />
+            }
+            emoji={journal.draftEmoji}
+            title={journal.draftTitle}
+            text={journal.draftText}
+            locations={
+              displayLocations.length > 0 ? displayLocations : undefined
+            }
+            onLocationsEditClick={() => handleLocationsOpenChange(true)}
+            onPlacesMapClick={
+              displayLocations.length > 0
+                ? () => setPlacesMapOpen(true)
+                : undefined
+            }
+            journalCompletionStreak={
+              journal.isJournalComplete &&
+              typeof journal.journalCompletionStreak === "number"
+                ? journal.journalCompletionStreak
+                : null
+            }
+          />
         </div>
 
         <JournalEditDialog
@@ -326,13 +352,6 @@ export default function JournalCard({
             onFullscreenOpenChange={setPlacesMapOpen}
           />
         ) : null}
-
-        <JournalMetaBar
-          journal={journal}
-          onEditRequest={openJournalEditor}
-          revisions={revisionSummaries.get(dateString)}
-          onOpenVersions={() => setVersionsOpen(true)}
-        />
       </div>
       {/* Outside the card: pointer events in a portal bubble through React, and
           a long press here would otherwise heart the day. */}

@@ -10,9 +10,7 @@ const APP_VERSION =
     ? import.meta.env.VITE_APP_VERSION
     : null;
 
-async function upsertRemoteDeviceRecord(
-  accountId: string
-): Promise<void> {
+async function upsertRemoteDeviceRecord(accountId: string): Promise<void> {
   if (!supabase) return;
   const deviceId = getOrCreateDeviceId();
   const ts = now();
@@ -33,7 +31,10 @@ async function upsertRemoteDeviceRecord(
   );
 
   if (error) {
-    console.warn("[sync] failed to upsert remote device record:", error.message);
+    console.warn(
+      "[sync] failed to upsert remote device record:",
+      error.message
+    );
   }
 }
 
@@ -49,7 +50,10 @@ export async function pullRemoteDeviceRecords(
     .order("last_seen_at", { ascending: false });
 
   if (error || !data) {
-    console.warn("[sync] failed to pull remote device records:", error?.message);
+    console.warn(
+      "[sync] failed to pull remote device records:",
+      error?.message
+    );
     return [];
   }
 
@@ -75,7 +79,9 @@ export async function pullRemoteDeviceRecords(
   return records;
 }
 
-export async function syncDeviceRegistry(accountId?: string | null): Promise<void> {
+export async function syncDeviceRegistry(
+  accountId?: string | null
+): Promise<void> {
   const userId = accountId ?? getCachedUserId();
   if (!userId) return;
   await upsertRemoteDeviceRecord(userId);

@@ -116,7 +116,7 @@ export default function RunningActivityBar({
   return (
     <section aria-label={t("label")} className="min-w-0 flex-1">
       <div
-        className="flex h-11 items-center gap-1 rounded-2xl pl-1 pr-1.5"
+        className="flex h-16 items-center gap-3 rounded-[1.25rem] pl-2 pr-2.5"
         style={{ backgroundColor: color, color: textColor, boxShadow }}
       >
         <Button
@@ -126,18 +126,18 @@ export default function RunningActivityBar({
           disabled={!onEdit}
           title={t("edit", { name })}
           aria-label={t("edit", { name })}
-          className="h-9 min-w-0 flex-1 flex-col items-start justify-center gap-0.5 rounded-xl px-2 text-left hover:bg-black/5 disabled:opacity-100"
+          className="h-12 min-w-0 flex-1 flex-col items-start justify-center gap-1 rounded-2xl px-3 text-left hover:bg-black/5 disabled:opacity-100"
           style={{ color: textColor }}
         >
-          <span className="hidden w-full truncate font-mono text-[0.6rem] uppercase leading-none tracking-[0.14em] opacity-80 sm:block">
+          <span className="w-full truncate text-[0.6875rem] font-medium uppercase leading-none tracking-[0.12em] opacity-75">
             {eyebrow}
           </span>
-          <span className="w-full truncate text-sm font-semibold leading-tight">
+          <span className="w-full truncate text-base font-semibold leading-tight">
             {name}
           </span>
         </Button>
 
-        <span className="shrink-0 font-mono text-base font-semibold tabular-nums">
+        <span className="shrink-0 text-[1.375rem] font-semibold tabular-nums tracking-tight">
           {formatTimerDisplay(elapsedMs)}
         </span>
 
@@ -147,11 +147,14 @@ export default function RunningActivityBar({
           onClick={onStop}
           title={t("stopNamed", { name })}
           aria-label={t("stopNamed", { name })}
-          className="h-8 w-8 shrink-0 gap-1.5 rounded-full border p-0 text-xs font-semibold uppercase tracking-wide hover:bg-black/5 sm:w-auto sm:px-3"
-          style={{ color: textColor, borderColor: hexToRgba(textColor, 0.45) }}
+          className="h-11 w-11 shrink-0 rounded-full border p-0 hover:bg-black/5"
+          style={{ color: textColor, borderColor: hexToRgba(textColor, 0.4) }}
         >
-          <Square className="h-3 w-3" style={{ fill: textColor }} aria-hidden />
-          <span className="sr-only sm:not-sr-only">{t("stop")}</span>
+          <Square
+            className="h-3.5 w-3.5"
+            style={{ fill: textColor }}
+            aria-hidden
+          />
         </Button>
       </div>
     </section>

@@ -34,7 +34,8 @@
       "empty": "No archived memos",
       "restore": "Restore memo",
       "delete": "Delete memo"
-    }
+    },
+    "overdue": "Overdue"
   },
   "addTask": {
     "trigger": "Add one-time task"

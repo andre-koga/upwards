@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { ArrowDownToLine, RefreshCw } from "lucide-react";
+
+import { SettingsActionRow } from "@/components/settings/settings-list";
 import { Button } from "@/components/ui/button";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import {
@@ -17,7 +20,14 @@ type SyncNotice = "synced" | "failed" | null;
  * Manual resync and app-update check. Syncing does not reload the page.
  * An update check reloads only when a newer service worker is waiting.
  */
-export function AppRefreshActions({ className }: { className?: string }) {
+export function AppRefreshActions({
+  className,
+  layout = "buttons",
+}: {
+  className?: string;
+  /** `rows` renders as rows of a Settings group instead of two buttons. */
+  layout?: "buttons" | "rows";
+}) {
   const { t } = useTranslation("settings");
   const { isAuthed } = useAuth();
   const online = useOnlineStatus();
@@ -63,6 +73,47 @@ export function AppRefreshActions({ className }: { className?: string }) {
     t,
   });
 
+  const syncDisabled =
+    !isAuthed || !online || syncState.isSyncing || updateBusy;
+  const syncLabel = syncState.isSyncing
+    ? t("sync.refresh.syncing")
+    : t("sync.refresh.syncNow");
+  const updateLabel =
+    updatePhase === "checking"
+      ? t("sync.refresh.checking")
+      : updatePhase === "updating"
+        ? t("sync.refresh.updating")
+        : t("sync.refresh.checkUpdate");
+
+  if (layout === "rows") {
+    return (
+      <>
+        <SettingsActionRow
+          icon={RefreshCw}
+          label={syncLabel}
+          disabled={syncDisabled}
+          onClick={() => void handleSync()}
+        />
+        <SettingsActionRow
+          icon={ArrowDownToLine}
+          label={updateLabel}
+          disabled={!online || updateBusy}
+          onClick={() => void handleUpdate()}
+        />
+        <p
+          className={cn(
+            "px-4 text-xs tabular-nums text-muted-foreground",
+            status ? "py-2.5" : "sr-only"
+          )}
+          role="status"
+          aria-live="polite"
+        >
+          {status}
+        </p>
+      </>
+    );
+  }
+
   return (
     <div className={cn("space-y-2", className)}>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -95,7 +146,7 @@ export function AppRefreshActions({ className }: { className?: string }) {
       </div>
       {status ? (
         <p
-          className="font-mono text-xs tabular-nums text-muted-foreground"
+          className="text-xs tabular-nums text-muted-foreground"
           role="status"
           aria-live="polite"
         >

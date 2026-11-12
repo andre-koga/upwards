@@ -2,7 +2,7 @@ import { Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * The wordmark (design-and-branding.md §2.2): `upwards` in lowercase, in the
+ * The wordmark: `upwards` in lowercase, in the
  * display face with tight tracking, beside a leaf in a rounded square of the
  * brand green. Never capitalized, never with a tagline in product chrome.
  */

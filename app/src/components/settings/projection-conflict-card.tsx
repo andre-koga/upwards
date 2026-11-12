@@ -24,7 +24,7 @@ interface ProjectionConflictCardProps {
 /**
  * An activity, group, memo or session in conflict: both whole versions, with
  * the fields that differ listed, and one choice between them
- * (product-scope.md §2.10). There is no per-field picking: a conflict here is
+ *. There is no per-field picking: a conflict here is
  * rare and low-stakes, and choosing field by field would cost more than it
  * could save. The instrument register: a dense, ruled table.
  */
@@ -66,12 +66,12 @@ export function ProjectionConflictCard({
         </>
       }
     >
-      <div className="overflow-x-auto rounded-md border border-border">
+      <div className="overflow-x-auto rounded-xl bg-background/70">
         <table className="w-full min-w-[20rem] text-left text-xs">
           <caption className="sr-only">
             {t("syncIssues.conflict.projection.tableCaption", { entity })}
           </caption>
-          <thead className="bg-muted/50 text-muted-foreground">
+          <thead className="text-muted-foreground">
             <tr>
               <th scope="col" className="px-2 py-1.5 font-medium">
                 {t("syncIssues.conflict.columns.field")}
@@ -86,7 +86,7 @@ export function ProjectionConflictCard({
           </thead>
           <tbody>
             {fields.map((field) => (
-              <tr key={field} className="border-t border-border">
+              <tr key={field} className="border-t border-foreground/[0.07]">
                 <th scope="row" className="px-2 py-1.5 font-medium">
                   {t(`syncIssues.conflict.projection.fields.${field}`, {
                     defaultValue: field,

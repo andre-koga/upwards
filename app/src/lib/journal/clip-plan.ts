@@ -1,5 +1,5 @@
 /**
- * The canonical stored format for a daily clip (product-scope.md §2.5):
+ * The canonical stored format for a daily clip:
  * H.264 video + AAC audio in an MP4, fixed frame rate, normalised size,
  * orientation preserved. One format means clips recorded on any browser can be
  * played everywhere and, later, joined into a month compilation.

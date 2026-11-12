@@ -23,6 +23,8 @@ interface SettingsSelectProps {
   /** Accessible name; the visible label is a separate element. */
   ariaLabel: string;
   className?: string;
+  /** Sits at the end of a settings row instead of filling the width. */
+  compact?: boolean;
 }
 
 /**
@@ -38,12 +40,18 @@ export function SettingsSelect({
   options,
   ariaLabel,
   className,
+  compact = false,
 }: SettingsSelectProps) {
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger
         aria-label={ariaLabel}
-        className={cn(dialogSelectTriggerClassName, className)}
+        className={cn(
+          dialogSelectTriggerClassName,
+          compact &&
+            "h-9 w-auto min-w-[8.5rem] gap-2 rounded-lg bg-background/70 px-3 text-sm",
+          className
+        )}
       >
         <SelectValue />
       </SelectTrigger>

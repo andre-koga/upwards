@@ -1,22 +1,15 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  RefreshCw,
-  Smartphone,
-  XCircle,
-} from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 import { ConfirmFormDialog } from "@/components/forms";
 import { AppRefreshActions } from "@/components/pwa/app-refresh-actions";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { ConflictReviewCard } from "@/components/settings/conflict-review-card";
 import { RecoveryBundlesSection } from "@/components/settings/recovery-bundles-section";
+import { SettingsGroup } from "@/components/settings/settings-list";
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
-import { SettingsSection } from "@/components/ui/settings-section";
 import { useAsyncData } from "@/hooks/use-async-data";
 import type {
   SyncDeviceRecord,
@@ -31,7 +24,6 @@ import {
 } from "@/lib/sync/pending-operations";
 import { listSyncIssues, resolveSyncIssue } from "@/lib/sync/sync-issues-store";
 import { db } from "@/lib/db";
-import { settingsPanelPath } from "@/lib/settings/panels";
 
 interface SyncIssuesData {
   conflicts: SyncIssue[];
@@ -94,34 +86,79 @@ function formatWhen(iso: string): string {
   }
 }
 
-function IssueCard({
+/** Repeats of the same error collapse into one row with a count. */
+interface IssueCluster {
+  key: string;
+  latest: SyncIssue;
+  ids: string[];
+}
+
+function clusterIssues(issues: SyncIssue[], at: (i: SyncIssue) => string) {
+  const clusters = new Map<string, IssueCluster>();
+  for (const issue of issues) {
+    const key = `${issue.title}\u0000${issue.detail ?? ""}`;
+    const found = clusters.get(key);
+    if (!found) {
+      clusters.set(key, { key, latest: issue, ids: [issue.id] });
+      continue;
+    }
+    found.ids.push(issue.id);
+    if (new Date(at(issue)).getTime() > new Date(at(found.latest)).getTime()) {
+      found.latest = issue;
+    }
+  }
+  return [...clusters.values()];
+}
+
+const PILL = "h-8 gap-1 rounded-full px-3.5 text-xs";
+
+/** One issue inside a group: title, detail, a quiet time, then its actions. */
+function IssueRow({
   title,
   detail,
   when,
+  count = 1,
   actions,
 }: {
   title: string;
   detail?: string | null;
   when?: string;
+  count?: number;
   actions?: ReactNode;
 }) {
+  const { t } = useTranslation("settings");
   return (
-    <div className="rounded-lg border border-border bg-background p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">{title}</p>
-          {detail ? (
-            <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
-          ) : null}
-          {when ? (
-            <p className="mt-2 text-xs text-muted-foreground">{when}</p>
-          ) : null}
-        </div>
-        {actions ? (
-          <div className="flex shrink-0 flex-col gap-2">{actions}</div>
+    <div className="px-4 py-3.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="min-w-0 text-[0.9375rem] leading-snug text-foreground">
+          {title}
+        </p>
+        {count > 1 ? (
+          <span className="shrink-0 rounded-full bg-background/70 px-2 py-0.5 text-[0.6875rem] tabular-nums text-muted-foreground">
+            {t("syncIssues.repeated", { count })}
+          </span>
         ) : null}
       </div>
+      {detail ? (
+        <p className="mt-1 break-words text-xs leading-relaxed text-muted-foreground">
+          {detail}
+        </p>
+      ) : null}
+      {when ? (
+        <p className="mt-1.5 text-[0.6875rem] tabular-nums text-muted-foreground/75">
+          {when}
+        </p>
+      ) : null}
+      {actions ? (
+        <div className="mt-3 flex flex-wrap gap-2">{actions}</div>
+      ) : null}
     </div>
+  );
+}
+
+function EmptyRow({ children }: { children: ReactNode }) {
+  return (
+    <p className="px-4 py-3.5 text-sm text-muted-foreground">{children}</p>
   );
 }
 
@@ -153,9 +190,9 @@ export default function SyncIssuesPage() {
     }
   }, [reload]);
 
-  const handleResolveIssue = useCallback(
-    async (id: string) => {
-      await resolveSyncIssue(id);
+  const handleResolveIssues = useCallback(
+    async (ids: string[]) => {
+      for (const id of ids) await resolveSyncIssue(id);
       reload();
     },
     [reload]
@@ -180,232 +217,214 @@ export default function SyncIssuesPage() {
   const resolved = data?.resolved ?? [];
   const info = data?.info ?? [];
   const devices = data?.devices ?? [];
+  const errorClusters = clusterIssues(errors, (i) => i.updated_at);
+  const infoClusters = clusterIssues(info, (i) => i.updated_at);
+  const resolvedClusters = clusterIssues(
+    resolved,
+    (i) => i.resolved_at ?? i.updated_at
+  );
   const localDeviceId = data?.localDeviceId ?? getOrCreateDeviceId();
 
   return (
     <AppPageShell
       title={t("syncIssues.page.title")}
       subtitle={t("syncIssues.page.subtitle")}
-      className="space-y-3"
+      className="space-y-9"
     >
-      <AppRefreshActions />
+      <SettingsGroup title={t("sync.title")}>
+        <AppRefreshActions layout="rows" />
+      </SettingsGroup>
 
       {loading && !data ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="px-4 text-sm text-muted-foreground">
           {t("syncIssues.loading")}
         </p>
       ) : null}
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? <p className="px-4 text-sm text-destructive">{error}</p> : null}
 
       <RecoveryBundlesSection />
 
-      <SettingsSection
+      <SettingsGroup
         title={t("syncIssues.sections.review.title")}
-        icon={AlertTriangle}
-        description={t("syncIssues.sections.review.description")}
+        footer={t("syncIssues.sections.review.description")}
       >
         {conflicts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("syncIssues.sections.review.empty")}
-          </p>
+          <EmptyRow>{t("syncIssues.sections.review.empty")}</EmptyRow>
         ) : (
-          <div className="space-y-3">
-            {conflicts.map((issue) => (
-              <ConflictReviewCard
-                key={issue.id}
-                issue={issue}
-                onResolved={reload}
-              />
-            ))}
-          </div>
+          conflicts.map((issue) => (
+            <ConflictReviewCard
+              key={issue.id}
+              issue={issue}
+              onResolved={reload}
+            />
+          ))
         )}
-      </SettingsSection>
+      </SettingsGroup>
 
-      <SettingsSection
+      <SettingsGroup
         title={t("syncIssues.sections.pending.title")}
-        icon={Clock}
-        description={t("syncIssues.sections.pending.description")}
+        footer={t("syncIssues.sections.pending.description")}
       >
         {pendingOps.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("syncIssues.sections.pending.empty")}
-          </p>
+          <EmptyRow>{t("syncIssues.sections.pending.empty")}</EmptyRow>
         ) : (
-          <div className="space-y-2">
-            {pendingOps.map((op) => (
-              <IssueCard
-                key={op.id}
-                title={t("syncIssues.sections.pending.itemTitle", {
-                  type: op.operation_type,
-                  entity: op.entity_type,
-                })}
-                detail={
-                  op.last_error ??
-                  t("syncIssues.sections.pending.itemDetail", {
-                    id: op.operation_id,
-                  })
-                }
-                when={formatWhen(op.created_at)}
-                actions={
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={() => setDiscardTarget(op)}
-                  >
-                    {t("syncIssues.actions.discard")}
-                  </Button>
-                }
-              />
-            ))}
-          </div>
+          pendingOps.map((op) => (
+            <IssueRow
+              key={op.id}
+              title={t("syncIssues.sections.pending.itemTitle", {
+                type: op.operation_type,
+                entity: op.entity_type,
+              })}
+              detail={
+                op.last_error ??
+                t("syncIssues.sections.pending.itemDetail", {
+                  id: op.operation_id,
+                })
+              }
+              when={formatWhen(op.created_at)}
+              actions={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`${PILL} text-destructive`}
+                  onClick={() => setDiscardTarget(op)}
+                >
+                  {t("syncIssues.actions.discard")}
+                </Button>
+              }
+            />
+          ))
         )}
-      </SettingsSection>
+      </SettingsGroup>
 
-      <SettingsSection
+      <SettingsGroup
         title={t("syncIssues.sections.errors.title")}
-        icon={XCircle}
-        description={t("syncIssues.sections.errors.description")}
+        footer={t("syncIssues.sections.errors.description")}
       >
-        {errors.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("syncIssues.sections.errors.empty")}
-          </p>
+        {errorClusters.length === 0 ? (
+          <EmptyRow>{t("syncIssues.sections.errors.empty")}</EmptyRow>
         ) : (
-          <div className="space-y-2">
-            {errors.map((issue) => (
-              <IssueCard
-                key={issue.id}
-                title={issue.title}
-                detail={issue.detail}
-                when={formatWhen(issue.updated_at)}
-                actions={
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => void handleResolveIssue(issue.id)}
-                    >
-                      {t("syncIssues.actions.dismiss")}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1"
-                      onClick={() => void handleRetrySync()}
-                      disabled={isSyncing}
-                    >
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      {t("syncIssues.actions.retry")}
-                    </Button>
-                  </>
-                }
-              />
-            ))}
-          </div>
-        )}
-      </SettingsSection>
-
-      <SettingsSection
-        title={t("syncIssues.sections.resolved.title")}
-        icon={CheckCircle2}
-        description={t("syncIssues.sections.resolved.description")}
-      >
-        {resolved.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("syncIssues.sections.resolved.empty")}
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {resolved.map((issue) => (
-              <IssueCard
-                key={issue.id}
-                title={issue.title}
-                detail={issue.detail}
-                when={formatWhen(issue.resolved_at ?? issue.updated_at)}
-              />
-            ))}
-          </div>
-        )}
-      </SettingsSection>
-
-      {info.length > 0 ? (
-        <SettingsSection
-          title={t("syncIssues.sections.info.title")}
-          icon={AlertTriangle}
-          description={t("syncIssues.sections.info.description")}
-        >
-          <div className="space-y-2">
-            {info.map((issue) => (
-              <IssueCard
-                key={issue.id}
-                title={issue.title}
-                detail={issue.detail}
-                when={formatWhen(issue.updated_at)}
-                actions={
+          errorClusters.map(({ key, latest, ids }) => (
+            <IssueRow
+              key={key}
+              title={latest.title}
+              detail={latest.detail}
+              when={formatWhen(latest.updated_at)}
+              count={ids.length}
+              actions={
+                <>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => void handleResolveIssue(issue.id)}
+                    className={PILL}
+                    onClick={() => void handleRetrySync()}
+                    disabled={isSyncing}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                    {t("syncIssues.actions.retry")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={PILL}
+                    onClick={() => void handleResolveIssues(ids)}
                   >
                     {t("syncIssues.actions.dismiss")}
                   </Button>
-                }
-              />
-            ))}
-          </div>
-        </SettingsSection>
+                </>
+              }
+            />
+          ))
+        )}
+      </SettingsGroup>
+
+      {infoClusters.length > 0 ? (
+        <SettingsGroup
+          title={t("syncIssues.sections.info.title")}
+          footer={t("syncIssues.sections.info.description")}
+        >
+          {infoClusters.map(({ key, latest, ids }) => (
+            <IssueRow
+              key={key}
+              title={latest.title}
+              detail={latest.detail}
+              when={formatWhen(latest.updated_at)}
+              count={ids.length}
+              actions={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={PILL}
+                  onClick={() => void handleResolveIssues(ids)}
+                >
+                  {t("syncIssues.actions.dismiss")}
+                </Button>
+              }
+            />
+          ))}
+        </SettingsGroup>
       ) : null}
 
-      <SettingsSection
+      <SettingsGroup
+        title={t("syncIssues.sections.resolved.title")}
+        footer={t("syncIssues.sections.resolved.description")}
+      >
+        {resolvedClusters.length === 0 ? (
+          <EmptyRow>{t("syncIssues.sections.resolved.empty")}</EmptyRow>
+        ) : (
+          resolvedClusters.map(({ key, latest, ids }) => (
+            <IssueRow
+              key={key}
+              title={latest.title}
+              detail={latest.detail}
+              when={formatWhen(latest.resolved_at ?? latest.updated_at)}
+              count={ids.length}
+            />
+          ))
+        )}
+      </SettingsGroup>
+
+      <SettingsGroup
         title={t("syncIssues.sections.device.title")}
-        icon={Smartphone}
-        description={t("syncIssues.sections.device.description")}
+        footer={t("syncIssues.sections.device.description")}
       >
         {devices.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("syncIssues.sections.device.empty")}
-          </p>
+          <EmptyRow>{t("syncIssues.sections.device.empty")}</EmptyRow>
         ) : (
-          <div className="space-y-3">
-            {devices.map((device) => (
-              <div
-                key={device.id}
-                className="rounded-lg border border-border bg-background p-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium">
-                    {device.label?.trim() ||
-                      (device.id === localDeviceId
-                        ? t("syncIssues.sections.device.thisDevice")
-                        : t("syncIssues.sections.device.otherDevice"))}
-                  </p>
-                  {device.id === localDeviceId ? (
-                    <span className="text-xs text-muted-foreground">
-                      {t("syncIssues.sections.device.currentBadge")}
-                    </span>
-                  ) : null}
-                </div>
-                <dl className="mt-2 space-y-1 text-sm">
-                  <div>
-                    <dt className="text-muted-foreground">
-                      {t("syncIssues.sections.device.idLabel")}
-                    </dt>
-                    <dd className="font-mono text-xs">{device.id}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">
-                      {t("syncIssues.sections.device.lastSeenLabel")}
-                    </dt>
-                    <dd>{formatWhen(device.last_seen_at)}</dd>
-                  </div>
-                </dl>
+          devices.map((device) => (
+            <div key={device.id} className="px-4 py-3.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-[0.9375rem] leading-snug">
+                  {device.label?.trim() ||
+                    (device.id === localDeviceId
+                      ? t("syncIssues.sections.device.thisDevice")
+                      : t("syncIssues.sections.device.otherDevice"))}
+                </p>
+                {device.id === localDeviceId ? (
+                  <span className="rounded-full bg-background/70 px-2 py-0.5 text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">
+                    {t("syncIssues.sections.device.currentBadge")}
+                  </span>
+                ) : null}
               </div>
-            ))}
-          </div>
+              <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-xs">
+                <dt className="text-muted-foreground">
+                  {t("syncIssues.sections.device.lastSeenLabel")}
+                </dt>
+                <dd className="text-right tabular-nums">
+                  {formatWhen(device.last_seen_at)}
+                </dd>
+                <dt className="text-muted-foreground">
+                  {t("syncIssues.sections.device.idLabel")}
+                </dt>
+                <dd className="truncate text-right font-mono text-[0.6875rem] text-muted-foreground">
+                  {device.id}
+                </dd>
+              </dl>
+            </div>
+          ))
         )}
-      </SettingsSection>
+      </SettingsGroup>
 
       <ConfirmFormDialog
         open={discardTarget != null}
@@ -421,10 +440,7 @@ export default function SyncIssuesPage() {
         onConfirm={() => void handleDiscardPending()}
       />
 
-      <FloatingBackButton
-        to={settingsPanelPath("account")}
-        title={tNav("settings")}
-      />
+      <FloatingBackButton to="/settings" title={tNav("settings")} />
     </AppPageShell>
   );
 }

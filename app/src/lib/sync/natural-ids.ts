@@ -27,11 +27,6 @@ export function naturalDailyEntryId(userKey: string, date: string): string {
   return uuidv5(`daily:${userKey}:${date}`, UPWARDS_SYNC_NAMESPACE);
 }
 
-/** One north star per person, so every device computes the same row id. */
-export function naturalNorthStarId(userKey: string): string {
-  return uuidv5(`compass:north_star:${userKey}`, UPWARDS_SYNC_NAMESPACE);
-}
-
 export function naturalJournalIdForDate(date: string): string {
   return naturalJournalId(currentSyncUserKey(), date);
 }

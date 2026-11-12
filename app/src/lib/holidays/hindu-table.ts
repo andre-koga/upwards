@@ -3,7 +3,7 @@
  * calendar, so these come from a table; more years or festivals are added here
  * as data, not code. The array index is `year - HINDU_FIRST_YEAR`.
  *
- * How the table was made (see docs/architecture/product-scope.md §2.8):
+ * How the table was made:
  * - Diwali: the new moon with the Sun in sidereal Libra, on the day it holds at
  *   dusk in India. Matches all 31 published dates for 2000-2030.
  * - Holi: the day after Holika Dahan (the Purnima evening). The astronomy rule

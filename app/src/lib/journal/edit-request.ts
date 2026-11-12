@@ -3,7 +3,7 @@ import type { JournalEntry } from "@/lib/db/types";
 /**
  * A one-shot request to open a day's journal editor on Today. "Keep both" in
  * conflict review joins two versions of a day and then opens the result for
- * editing (product-scope.md §2.10), so the person can trim it.
+ * editing, so the person can trim it.
  *
  * The editor reads its starting values once, as it opens. Opened a moment too
  * early it would hold the empty draft Today starts with, and saving that would

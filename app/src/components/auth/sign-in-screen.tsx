@@ -14,8 +14,7 @@ const emailId = "sign-in-email";
 const passwordId = "sign-in-password";
 
 /**
- * What an unauthenticated visitor sees instead of the app (product-scope.md
- * §2.6). One primary action, and making an account as a quiet second one: most
+ * What an unauthenticated visitor sees instead of the app One primary action, and making an account as a quiet second one: most
  * visits are a return, and two equal buttons ask the person to choose between
  * them every time.
  */
@@ -68,37 +67,44 @@ export function SignInScreen() {
       {!isOnline ? (
         <div
           role="status"
-          className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground"
+          className="flex items-start gap-2 rounded-2xl bg-muted/45 px-4 py-3 text-sm text-muted-foreground"
         >
           <CloudOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>{t("auth.screen.offline")}</span>
         </div>
       ) : null}
 
-      <form
-        onSubmit={handleSignIn}
-        className="space-y-4 rounded-2xl border border-border bg-card p-5"
-      >
-        <div className="space-y-2">
-          <Label htmlFor={emailId}>{t("auth.email")}</Label>
+      <form onSubmit={handleSignIn} className="space-y-5">
+        <div className="space-y-1.5">
+          <Label
+            className="px-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground"
+            htmlFor={emailId}
+          >
+            {t("auth.email")}
+          </Label>
           <Input
             id={emailId}
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
-            className="h-11 md:h-10"
+            className="h-12 rounded-xl px-4"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor={passwordId}>{t("auth.password")}</Label>
+        <div className="space-y-1.5">
+          <Label
+            className="px-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground"
+            htmlFor={passwordId}
+          >
+            {t("auth.password")}
+          </Label>
           <Input
             id={passwordId}
             type="password"
             autoComplete="current-password"
-            className="h-11 md:h-10"
+            className="h-12 rounded-xl px-4"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -117,7 +123,7 @@ export function SignInScreen() {
         <Button
           type="submit"
           disabled={authLoading || !isOnline}
-          className="h-11 w-full md:h-10"
+          className="h-12 w-full rounded-full text-[0.9375rem]"
         >
           {authLoading ? "…" : t("auth.signIn")}
         </Button>
@@ -128,7 +134,7 @@ export function SignInScreen() {
             type="button"
             variant="link"
             disabled={authLoading || !isOnline}
-            className="h-11 px-1 md:h-10"
+            className="h-11 px-1"
             onClick={() => void handleSignUp()}
           >
             {t("auth.screen.createAccount")}

@@ -160,7 +160,8 @@ describe("pending-operations", () => {
   });
 
   it("reportOpsUnavailablePending leaves pending ops and records an issue", async () => {
-    const { reportOpsUnavailablePending } = await import("./pending-operations");
+    const { reportOpsUnavailablePending } =
+      await import("./pending-operations");
 
     await enqueuePendingOperation({
       operation_id: "op-1",
@@ -213,12 +214,12 @@ describe("pending-operations", () => {
 
     const discarded = await collapseDuplicatePendingProjectionUpserts();
     expect(discarded).toBe(1);
-    expect(pendingOps.find((row) => row.operation_id === "op-old")?.status).toBe(
-      "discarded"
-    );
-    expect(pendingOps.find((row) => row.operation_id === "op-new")?.status).toBe(
-      "pending"
-    );
+    expect(
+      pendingOps.find((row) => row.operation_id === "op-old")?.status
+    ).toBe("discarded");
+    expect(
+      pendingOps.find((row) => row.operation_id === "op-new")?.status
+    ).toBe("pending");
     expect(
       pendingOps.find((row) => row.operation_id === "op-other")?.status
     ).toBe("pending");
@@ -249,11 +250,11 @@ describe("pending-operations", () => {
     await markOperationFailed(newest.id, "payload too large");
 
     await collapseDuplicatePendingProjectionUpserts();
-    expect(pendingOps.find((row) => row.operation_id === "op-old")?.status).toBe(
-      "discarded"
-    );
-    expect(pendingOps.find((row) => row.operation_id === "op-new")?.status).toBe(
-      "pending"
-    );
+    expect(
+      pendingOps.find((row) => row.operation_id === "op-old")?.status
+    ).toBe("discarded");
+    expect(
+      pendingOps.find((row) => row.operation_id === "op-new")?.status
+    ).toBe("pending");
   });
 });

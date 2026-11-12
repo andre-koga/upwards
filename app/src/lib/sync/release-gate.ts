@@ -20,7 +20,10 @@ export function isClientOutdatedError(error: unknown): boolean {
   if (error instanceof ClientOutdatedError) return true;
   if (typeof error === "string") return error.includes(CLIENT_OUTDATED);
   if (typeof error !== "object") return false;
-  const { message, details } = error as { message?: unknown; details?: unknown };
+  const { message, details } = error as {
+    message?: unknown;
+    details?: unknown;
+  };
   return [message, details].some(
     (part) => typeof part === "string" && part.includes(CLIENT_OUTDATED)
   );
@@ -74,7 +77,9 @@ export async function requeueClientOutdatedOperations(): Promise<number> {
     .where("status")
     .equals("failed")
     .toArray();
-  const stranded = failed.filter((row) => isClientOutdatedError(row.last_error));
+  const stranded = failed.filter((row) =>
+    isClientOutdatedError(row.last_error)
+  );
   if (stranded.length === 0) return 0;
   const ts = now();
   await Promise.all(

@@ -49,7 +49,7 @@ function AlertDialogContent({
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"
         className={cn(
-          "fixed left-1/2 z-[var(--z-dialog)] grid max-h-[min(90dvh,100svh-1rem)] w-full max-w-[calc(100%-3rem)] gap-4 overflow-y-auto rounded-xl border bg-background p-6 shadow-lg sm:max-w-md",
+          "fixed left-1/2 z-[var(--z-dialog)] grid max-h-[min(90dvh,100svh-1rem)] w-full max-w-[calc(100%-2rem)] gap-5 overflow-y-auto rounded-[1.75rem] border border-border/50 bg-card p-6 shadow-2xl sm:max-w-md",
           dialogSurfaceMotionClassName,
           className
         )}
@@ -96,7 +96,10 @@ function AlertDialogTitle({
   return (
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
-      className={cn("text-lg font-semibold", className)}
+      className={cn(
+        "font-display text-[1.375rem] font-medium leading-tight tracking-[-0.01em]",
+        className
+      )}
       {...props}
     />
   );

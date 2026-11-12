@@ -1,28 +1,41 @@
-export const dialogFieldClassName =
-  "w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary read-only:cursor-default read-only:border-border read-only:border-dashed disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground read-only:bg-muted";
+/**
+ * Every form control in a dialog shares one shape: a soft tonal field, 44px
+ * tall, no border. Text inputs, time pickers, selects and action buttons must
+ * read as the same object, so they all start from `controlBase`.
+ */
+const controlBase =
+  "h-11 w-full rounded-xl border border-transparent bg-muted/70 px-3.5 text-[0.9375rem] font-normal text-foreground shadow-none transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-muted/40 disabled:text-muted-foreground";
 
-export const dialogTextareaClassName = `${dialogFieldClassName} resize-none`;
+/**
+ * A read-only value (a running session's end, a completion with no span) keeps
+ * the same height and shape, drops the fill and gets a hairline instead, so it
+ * looks set rather than editable.
+ */
+const readOnlyControl =
+  "read-only:cursor-default read-only:border-border read-only:bg-transparent read-only:text-muted-foreground read-only:focus-visible:ring-0";
 
-export const dialogSelectTriggerClassName =
-  "h-10 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary data-[disabled]:border-dashed data-[disabled]:cursor-default data-[disabled]:border-border data-[disabled]:bg-muted data-[disabled]:text-muted-foreground";
+export const dialogFieldClassName = `${controlBase} py-2 ${readOnlyControl}`;
 
-export const dialogActionContainerClassName =
-  "flex items-center justify-center gap-3 pt-2";
+export const dialogTextareaClassName = `${controlBase} ${readOnlyControl} h-auto min-h-[5.5rem] resize-none py-2.5 leading-relaxed`;
+
+export const dialogSelectTriggerClassName = `${controlBase} hover:bg-muted data-[disabled]:cursor-default data-[disabled]:bg-transparent data-[disabled]:border-border data-[disabled]:text-muted-foreground`;
+
+export const dialogActionContainerClassName = "flex items-center gap-2 pt-3";
 
 export const dialogPrimaryActionClassName =
-  "w-full max-w-[12rem] rounded-full px-5 py-2.5 text-sm font-semibold shadow-md disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground";
+  "h-11 flex-1 rounded-full px-5 text-[0.9375rem] font-semibold shadow-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
 
 export const dialogSecondaryActionClassName =
-  "rounded-full px-5 py-2.5 text-sm font-semibold shadow-md";
+  "h-11 flex-1 rounded-full bg-muted/70 px-5 text-[0.9375rem] font-medium shadow-none hover:bg-muted";
 
 export const dialogSecondaryDestructiveClassName = "hover:text-destructive";
 
 /** Primary confirm action in a destructive dialog (delete permanently, etc.). */
 export const dialogPrimaryDestructiveClassName =
-  "bg-destructive text-destructive-foreground shadow-md hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive";
+  "bg-destructive text-destructive-foreground shadow-none hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)] focus-visible:ring-destructive";
 
-export const dialogFieldLabelClassName = "text-xs";
+export const dialogFieldLabelClassName =
+  "text-[0.8125rem] font-medium text-muted-foreground";
 
-/** Action control in a dialog form: same chrome as {@link dialogFieldClassName} / select triggers (rounded-md, border, h-10). */
-export const dialogFormControlButtonClassName =
-  "flex h-10 w-full items-center justify-start gap-2 rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:border-border disabled:bg-muted disabled:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";
+/** Action control in a dialog form: same shape as every other field. */
+export const dialogFormControlButtonClassName = `${controlBase} flex items-center justify-start gap-2 hover:bg-muted [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground`;

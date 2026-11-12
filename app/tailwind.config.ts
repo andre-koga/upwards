@@ -8,7 +8,7 @@ export default {
     hoverOnlyWhenSupported: true,
   },
   theme: {
-    // The app is phone-only (design-and-branding.md §6). These never match a
+    // The app is phone-only. These never match a
     // real window, so `sm:` and up stay inert and the unprefixed phone styles
     // are the layout at every width. A wide window shows a notice and a 430px
     // frame; it does not get a second layout.
@@ -54,7 +54,7 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        // Brand palette (design-and-branding.md §2.3). Channel triplets in
+        // Brand palette. Channel triplets in
         // index.css, so opacity modifiers work: bg-paper/70, border-line/60.
         // `extend` merges with Tailwind's own scales, so green-500 etc. remain.
         canvas: {
@@ -87,10 +87,18 @@ export default {
         lavender: "hsl(var(--lavender) / <alpha-value>)",
       },
       fontFamily: {
-        crimson: ["Crimson Pro", "serif"],
-        display: ["Newsreader", "serif"],
-        preview: ["Manrope", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        // Two voices: Newsreader for anything written or reflective, Figtree
+        // for everything you operate. Mono is only for raw technical strings
+        // (device ids, logs) and uses the system face, nothing downloaded.
+        sans: [
+          "Figtree",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "sans-serif",
+        ],
+        display: ["Newsreader", "ui-serif", "Georgia", "serif"],
+        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",

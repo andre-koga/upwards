@@ -1,7 +1,7 @@
 import type { AccountSettings } from "@/lib/account-settings";
 
 /**
- * The two choices Upwards asks about once (product-scope.md §2.5, §2.7). Both
+ * The two choices Upwards asks about once. Both
  * are off until chosen, and both live in Settings afterwards, so this is a
  * friendly place to decide, never the only one.
  */

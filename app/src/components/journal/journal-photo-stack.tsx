@@ -1,5 +1,6 @@
 import { useState, type MouseEvent } from "react";
 import { getJournalPhotoUrl } from "@/lib/journal";
+import { useTranslation } from "react-i18next";
 import MediaLightbox from "@/components/journal/media-lightbox";
 
 interface JournalPhotoStackProps {
@@ -23,6 +24,7 @@ interface LightboxState {
 export default function JournalPhotoStack({
   photoPaths,
 }: JournalPhotoStackProps) {
+  const { t } = useTranslation("journal");
   const pathsKey = photoPaths.join("\0");
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
 
@@ -67,9 +69,9 @@ export default function JournalPhotoStack({
       <button
         type="button"
         onClick={openLightbox}
-        className="pointer-events-auto relative h-[4.5rem] w-[4.5rem] shrink-0"
-        aria-label={`View ${photoPaths.length} photo${photoPaths.length !== 1 ? "s" : ""}`}
-        title={`View ${photoPaths.length} photo${photoPaths.length !== 1 ? "s" : ""}`}
+        className="pointer-events-auto relative h-[6.5rem] w-[6.5rem] shrink-0"
+        aria-label={t("archive.photoCount", { count: photoPaths.length })}
+        title={t("archive.photoCount", { count: photoPaths.length })}
       >
         {stackedPaths.map((path, i) => {
           const url = getJournalPhotoUrl(path);
@@ -78,7 +80,7 @@ export default function JournalPhotoStack({
           return (
             <span
               key={path}
-              className="absolute inset-0 overflow-hidden rounded-md border-2 border-background shadow"
+              className="absolute inset-0 overflow-hidden rounded-lg border-[3px] border-background shadow-lg"
               style={{
                 transform: `rotate(${slot.rotate}deg) translate(${slot.tx}px, ${slot.ty}px)`,
                 zIndex: i,
@@ -98,7 +100,7 @@ export default function JournalPhotoStack({
           );
         })}
         {photoPaths.length > 1 && (
-          <span className="absolute -bottom-1 -right-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-background text-[9px] font-semibold tabular-nums shadow">
+          <span className="absolute -bottom-1.5 -right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-background px-1.5 text-[0.6875rem] font-semibold tabular-nums shadow">
             {photoPaths.length}
           </span>
         )}
@@ -113,24 +115,25 @@ export default function JournalPhotoStack({
             );
           }
         }}
-        title={`Photo ${lightboxIndex + 1} of ${photoPaths.length}`}
+        title={t("upload.photoAlt", { index: lightboxIndex + 1 })}
         index={lightboxIndex}
         count={photoPaths.length}
         onPrevious={showPreviousPhoto}
         onNext={showNextPhoto}
-        previousLabel="Previous photo"
-        nextLabel="Next photo"
+        previousLabel={t("archive.previousPhoto")}
+        nextLabel={t("archive.nextPhoto")}
+        closeLabel={t("archive.closePhoto")}
       >
         {lightboxUrl ? (
           <img
             src={lightboxUrl}
-            alt={`Photo ${lightboxIndex + 1} of ${photoPaths.length}`}
+            alt={t("upload.photoAlt", { index: lightboxIndex + 1 })}
             className="max-h-[90dvh] max-w-[90dvw] rounded-lg object-contain shadow-2xl"
             draggable={false}
           />
         ) : (
           <div className="flex h-64 w-64 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            Photo unavailable
+            {t("archive.photoUnavailable")}
           </div>
         )}
       </MediaLightbox>

@@ -66,11 +66,16 @@ export function InstallAppPrompt() {
   return (
     <aside
       aria-label={t("installApp")}
-      className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-xl md:bottom-6 md:left-auto md:right-6"
+      className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto flex max-w-md items-center gap-3 rounded-[1.5rem] border border-foreground/10 bg-background/80 py-2 pl-4 pr-2 shadow-[0_10px_30px_-14px_rgb(0_0_0/0.45)] backdrop-blur-md"
     >
-      <Download className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+      <Download
+        className="h-4 w-4 shrink-0 text-muted-foreground"
+        aria-hidden="true"
+      />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold">{t("installApp")}</p>
+        <p className="font-display text-[1.0625rem] leading-snug">
+          {t("installApp")}
+        </p>
         <p className="text-xs text-muted-foreground">
           {t("installAppDescription")}
         </p>
@@ -78,7 +83,7 @@ export function InstallAppPrompt() {
       <Button
         type="button"
         size="sm"
-        className="h-10 shrink-0 rounded-lg px-3"
+        className="h-9 shrink-0 rounded-full px-4"
         onClick={() => void handleInstall()}
       >
         {t("install")}
@@ -87,7 +92,7 @@ export function InstallAppPrompt() {
         type="button"
         variant="ghost"
         size="icon"
-        className="h-10 w-10 shrink-0 rounded-lg"
+        className="h-9 w-9 shrink-0 rounded-full text-muted-foreground"
         onClick={() => setDismissed(true)}
         aria-label={t("dismissInstall")}
       >

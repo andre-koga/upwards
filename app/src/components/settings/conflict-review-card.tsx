@@ -45,7 +45,7 @@ interface Refreshed {
 
 /**
  * One conflict on the Sync issues page, in the shape its kind calls for
- * (product-scope.md §2.10): a journal day is kept as mine, theirs or both; an
+ *: a journal day is kept as mine, theirs or both; an
  * activity, group, memo or session is kept as one whole version or the other.
  * Anything with no usable payload falls back to a plain card that can keep this
  * device's version.

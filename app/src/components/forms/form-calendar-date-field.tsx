@@ -104,7 +104,7 @@ export function FormCalendarDateField({
   const labelText = selectedDate ? formatValue(selectedDate) : placeholder;
 
   return (
-    <div className={cn("space-y-1", containerClassName)}>
+    <div className={cn("space-y-1.5", containerClassName)}>
       <Label
         htmlFor={id}
         className={cn(dialogFieldLabelClassName, labelClassName)}
@@ -122,8 +122,9 @@ export function FormCalendarDateField({
             setOpen(true);
           }}
           className={cn(
-            "h-9 min-h-9 flex-1 justify-between bg-muted px-3 py-0 text-sm",
-            readOnly && "cursor-default border-dashed bg-muted",
+            "flex-1 justify-between",
+            readOnly &&
+              "cursor-default border-border bg-transparent text-muted-foreground hover:bg-transparent",
             buttonClassName
           )}
         >
@@ -135,7 +136,7 @@ export function FormCalendarDateField({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-9 w-9 shrink-0 rounded-full text-muted-foreground"
+            className="h-11 w-11 shrink-0 rounded-full text-muted-foreground"
             onClick={() => onValueChange("")}
             title={clearLabel}
             aria-label={clearLabel}

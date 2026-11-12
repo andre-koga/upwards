@@ -3,15 +3,16 @@ import {
   CircleCheckBig,
   FileText,
   History,
+  Settings,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
 
-// design-and-branding.md §3.2: three primary destinations, under the hard cap
-// on the phone tab bar. Everything else is secondary and lives in the sidebar's
-// "more" list, the Today menu, or the command palette.
+// Today, Journal and You, plus Settings, which is
+// the fourth and last tab the phone bar allows. Everything else is secondary
+// and reached from Settings or the command palette.
 
-export type TabId = "today" | "journal" | "you";
+export type TabId = "today" | "journal" | "you" | "settings";
 
 export interface TabDestination {
   id: TabId;
@@ -38,13 +39,19 @@ export const TABS: readonly TabDestination[] = [
     icon: BookOpen,
     shortcut: "2",
   },
-  // The compass (B5b-2). Settings stays reachable from that page.
   {
     id: "you",
     to: "/you",
     labelKey: "tabs.you",
     icon: UserRound,
     shortcut: "3",
+  },
+  {
+    id: "settings",
+    to: "/settings",
+    labelKey: "tabs.settings",
+    icon: Settings,
+    shortcut: "4",
   },
 ];
 
@@ -80,22 +87,21 @@ export function activeTabForPath(pathname: string): TabId | null {
   ) {
     return "journal";
   }
+  if (path === "/you" || path.startsWith("/you/")) return "you";
   if (
-    path === "/you" ||
-    path.startsWith("/you/") ||
     path === "/settings" ||
     path.startsWith("/settings/") ||
     path === "/whats-new" ||
     path === "/logs"
   ) {
-    return "you";
+    return "settings";
   }
   return null;
 }
 
 /**
  * Routes with a real two-column layout at `lg`. Every other page reads as one
- * capped column beside the sidebar (ui-system-and-responsive-layout.md); these
+ * capped column beside the sidebar; these
  * take the width and place a context rail beside the main column themselves.
  */
 export function routeUsesWideColumn(pathname: string): boolean {

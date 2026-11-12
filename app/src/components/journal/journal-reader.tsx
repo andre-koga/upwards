@@ -71,8 +71,8 @@ export default function JournalReader({
 
   if (!entry && memories.length > 0) {
     return (
-      <div className="space-y-3">
-        <h2 className="font-display text-xl leading-tight tracking-tight">
+      <div className="space-y-6">
+        <h2 className="px-3 pt-2 text-center text-[0.75rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
           {longDate}
         </h2>
         {memories.map(renderMemory)}
@@ -82,8 +82,8 @@ export default function JournalReader({
 
   if (!entry) {
     return (
-      <div className="space-y-3 rounded-2xl border border-dashed border-border p-5">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col items-center space-y-4 px-3 py-8 text-center">
+        <p className="font-display text-[1.0625rem] italic leading-relaxed text-muted-foreground">
           {t("archive.calendar.noEntry", {
             date: `${formatWeekdayShortDate(day)} ${day.getFullYear()}`,
           })}
@@ -92,6 +92,7 @@ export default function JournalReader({
           type="button"
           variant="outline"
           size="sm"
+          className="h-8 rounded-full px-3.5"
           onClick={() => openDay(date)}
         >
           {t("archive.calendar.openDay")}
@@ -107,39 +108,38 @@ export default function JournalReader({
   const photoPaths = entry.photo_paths ?? [];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-8">
       <article
         aria-label={t("reader.label", { date: longDate })}
-        className="space-y-4 rounded-2xl border border-border bg-card p-5"
+        className="space-y-6 px-3 py-2"
       >
-        <header className="space-y-2">
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <header className="flex flex-col items-center text-center">
+          <p className="flex items-center gap-1.5 text-[0.75rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
             <span>{longDate}</span>
             {entry.is_bookmarked ? (
               <>
                 <Heart
-                  className="h-3.5 w-3.5 fill-red-500 text-red-500"
+                  className="h-3 w-3 fill-terracotta text-terracotta"
                   aria-hidden
                 />
                 <span className="sr-only">{t("bookmarkDay")}</span>
               </>
             ) : null}
           </p>
-          <div className="flex items-start gap-3">
-            <span className="text-5xl leading-none" aria-hidden>
-              {entry.day_emoji?.trim() || "🙂"}
-            </span>
-            <h2 className="min-w-0 font-display text-3xl leading-tight tracking-tight">
-              {entry.title?.trim() || t("untitled")}
-            </h2>
-          </div>
+          <span className="mt-5 text-[2.75rem] leading-none" aria-hidden>
+            {entry.day_emoji?.trim() || "🙂"}
+          </span>
+          <h2 className="mt-4 max-w-[22rem] text-balance font-display text-[2rem] font-medium leading-[1.15] tracking-[-0.02em]">
+            {entry.title?.trim() || t("untitled")}
+          </h2>
+          <span className="mt-5 h-px w-10 bg-foreground/25" aria-hidden />
         </header>
 
         <p
           className={
             text
-              ? "whitespace-pre-wrap font-display text-lg leading-relaxed"
-              : "font-display text-lg italic leading-relaxed text-muted-foreground"
+              ? "whitespace-pre-wrap font-display text-[1.125rem] leading-[1.85]"
+              : "text-center font-display text-lg italic leading-relaxed text-muted-foreground"
           }
         >
           {text || t("noReflection")}
@@ -152,7 +152,7 @@ export default function JournalReader({
           previewLimit={READER_PHOTO_PREVIEW}
         />
 
-        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-foreground/[0.07] pt-4">
           {revisions ? (
             <JournalEditedNote
               summary={revisions}
@@ -165,6 +165,7 @@ export default function JournalReader({
             type="button"
             variant="outline"
             size="sm"
+            className="h-8 rounded-full px-3.5"
             onClick={() => openDay(entry.entry_date)}
           >
             {t("reader.openDay")}

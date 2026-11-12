@@ -1,5 +1,5 @@
 /**
- * Whether the app shows its screens or the sign-in screen (product-scope.md §2.6).
+ * Whether the app shows its screens or the sign-in screen.
  *
  * The decision comes from what is on the device, never from waiting on Supabase.
  * With an expired access token and no network, `getSession()` retries for about

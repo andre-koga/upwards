@@ -3,7 +3,19 @@ import type { AppLog } from "@/lib/db/types";
 import { db } from "@/lib/db";
 import { formatDateShort } from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
-import { AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  CheckCircle,
+  Copy,
+  Info,
+  Smartphone,
+} from "lucide-react";
+import {
+  SettingsActionRow,
+  SettingsGroup,
+} from "@/components/settings/settings-list";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
@@ -17,41 +29,46 @@ interface LogItemProps {
   getTimestamp: (isoTime: string) => string;
 }
 
+/** One log line; pressing it copies the context and message. */
 function LogItem({ log, getIcon, getTimestamp }: LogItemProps) {
+  const { t } = useTranslation("settings");
   const [copied, setCopied] = useState(false);
 
-  const handleClick = () => {
-    const logText = `${log.context}: ${log.message}`;
-    navigator.clipboard.writeText(logText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleClick = async () => {
+    try {
+      await navigator.clipboard.writeText(`${log.context}: ${log.message}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard blocked: the text stays on screen to select by hand.
+    }
   };
 
   return (
-    <div
-      onClick={handleClick}
-      className="relative flex cursor-pointer gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors hover:bg-muted/50"
+    <Button
+      type="button"
+      variant="bare"
+      onClick={() => void handleClick()}
+      className="flex h-auto w-full items-start justify-start gap-3 whitespace-normal rounded-none px-4 py-3 text-left transition-colors hover:bg-foreground/[0.04] focus-visible:ring-inset focus-visible:ring-offset-0 active:bg-foreground/[0.06]"
     >
-      <div className="mt-0.5 shrink-0">{getIcon(log.level)}</div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-foreground">{log.context}</p>
-            <p className="break-words text-xs text-muted-foreground">
-              {log.message}
-            </p>
-          </div>
-        </div>
-        <p className="mt-0.5 text-xs text-muted-foreground/70">
-          {getTimestamp(log.created_at)}
-        </p>
-      </div>
-      {copied && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 text-xs font-medium text-white">
-          Copied!
-        </div>
-      )}
-    </div>
+      <span className="mt-0.5 shrink-0">{getIcon(log.level)}</span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-baseline justify-between gap-3">
+          <span className="min-w-0 truncate text-sm font-medium text-foreground">
+            {log.context}
+          </span>
+          <span
+            className="shrink-0 text-[0.6875rem] tabular-nums text-muted-foreground/75"
+            aria-live="polite"
+          >
+            {copied ? t("logsPage.copied") : getTimestamp(log.created_at)}
+          </span>
+        </span>
+        <span className="mt-0.5 block break-words font-mono text-xs leading-relaxed text-muted-foreground">
+          {log.message}
+        </span>
+      </span>
+    </Button>
   );
 }
 
@@ -97,36 +114,35 @@ function DeviceReportSection() {
   };
 
   return (
-    <section className="mt-6 space-y-2">
-      <h2 className="text-xs font-medium text-muted-foreground">
-        {t("deviceReport.title")}
-      </h2>
-      <p className="text-xs text-muted-foreground">{t("deviceReport.hint")}</p>
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void check()}
-          disabled={busy}
-        >
-          {t("deviceReport.check")}
-        </Button>
-        {report && (
-          <Button variant="outline" size="sm" onClick={() => void copy()}>
-            {copied ? t("deviceReport.copied") : t("deviceReport.copy")}
-          </Button>
-        )}
-      </div>
-      {report && (
-        <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border bg-card p-2 font-mono text-xs tabular-nums text-muted-foreground">
-          {report}
-        </pre>
-      )}
-    </section>
+    <SettingsGroup
+      title={t("deviceReport.title")}
+      footer={t("deviceReport.hint")}
+    >
+      <SettingsActionRow
+        icon={Smartphone}
+        label={t("deviceReport.check")}
+        busy={busy}
+        disabled={busy}
+        onClick={() => void check()}
+      />
+      {report ? (
+        <>
+          <SettingsActionRow
+            icon={copied ? Check : Copy}
+            label={copied ? t("deviceReport.copied") : t("deviceReport.copy")}
+            onClick={() => void copy()}
+          />
+          <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words px-4 py-3 font-mono text-xs tabular-nums text-muted-foreground">
+            {report}
+          </pre>
+        </>
+      ) : null}
+    </SettingsGroup>
   );
 }
 
 export default function ErrorLogsPage() {
+  const { t } = useTranslation("settings");
   const { t: tNav } = useTranslation("nav");
   const [logs, setLogs] = useState<AppLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -166,7 +182,7 @@ export default function ErrorLogsPage() {
         return <AlertTriangle className="h-4 w-4 text-gold-text" />;
       case "info":
       default:
-        return <Info className="h-4 w-4 text-blue-600" />;
+        return <Info className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -188,33 +204,37 @@ export default function ErrorLogsPage() {
 
   return (
     <AppPageShell
-      title="Error Logs"
-      subtitle={`${logs.length} ${logs.length === 1 ? "entry" : "entries"} (last 24 hours)`}
+      title={t("logsPage.title")}
+      subtitle={t("logsPage.subtitle", { count: logs.length })}
+      className="space-y-9"
     >
-      {loading ? (
-        <div className="flex items-center justify-center p-8">
-          <p className="text-muted-foreground">Loading logs...</p>
-        </div>
-      ) : logs.length === 0 ? (
-        <div className="flex items-center justify-center p-8">
-          <p className="text-muted-foreground">No logs yet</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {logs.map((log) => (
+      <SettingsGroup
+        title={t("logsPage.groupTitle")}
+        footer={logs.length > 0 ? t("logsPage.copyHint") : undefined}
+      >
+        {loading ? (
+          <p className="px-4 py-3.5 text-sm text-muted-foreground">
+            {t("logsPage.loading")}
+          </p>
+        ) : logs.length === 0 ? (
+          <p className="px-4 py-3.5 text-sm text-muted-foreground">
+            {t("logsPage.empty")}
+          </p>
+        ) : (
+          logs.map((log) => (
             <LogItem
               key={log.id}
               log={log}
               getIcon={getIcon}
               getTimestamp={getTimestamp}
             />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </SettingsGroup>
 
       <DeviceReportSection />
 
-      <FloatingBackButton to="/you" title={tNav("tabs.you")} />
+      <FloatingBackButton to="/settings" title={tNav("settings")} />
     </AppPageShell>
   );
 }

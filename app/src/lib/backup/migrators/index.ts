@@ -8,11 +8,6 @@ import { migrateV4ToV5 } from "./v4-to-v5";
 import { migrateV5ToV6, type BackupDocumentV5 } from "./v5-to-v6";
 import { migrateV6ToV7, type BackupDocumentV6 } from "./v6-to-v7";
 
-/** Every table a format 6 file has: all of today's except the compass. */
-const V6_TABLE_NAMES = BACKUP_TABLE_NAMES.filter(
-  (name) => name !== "compassItems"
-);
-
 const V5_ONLY_TABLES = [
   "recurringMemos",
   "activityStatusEvents",
@@ -85,7 +80,7 @@ export function migrateBackupDocument(input: unknown): BackupDocument {
     return migrateV6ToV7(
       migrateV5ToV6(
         normalizeCurrent<BackupDocumentV5>(raw, [
-          ...V6_TABLE_NAMES,
+          ...BACKUP_TABLE_NAMES,
           ...V5_ONLY_TABLES,
         ])
       )
@@ -93,7 +88,7 @@ export function migrateBackupDocument(input: unknown): BackupDocument {
   }
   if (raw.format_version === 6) {
     return migrateV6ToV7(
-      normalizeCurrent<BackupDocumentV6>(raw, V6_TABLE_NAMES)
+      normalizeCurrent<BackupDocumentV6>(raw, BACKUP_TABLE_NAMES)
     );
   }
   if (raw.format_version < BACKUP_FORMAT_VERSION) {

@@ -12,6 +12,15 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-11-settings-tab": {
+    title: "Configurações num só lugar",
+    bullets: [
+      "As Configurações agora são uma aba, e todas as opções ficam numa só página, numa só lista. Chega de trocar de seção.",
+      "Sincronizar agora, Procurar atualização do app, Problemas de sincronização e Registros de erro estão todos nas Configurações.",
+      "A aba Você é só sobre você. Por enquanto ela está vazia, até poder descrever você a partir do seu diário e dos seus hábitos.",
+      "A bússola saiu: a estrela-guia, suas palavras, as metas e o mapa de conhecimento. Tudo o que você escreveu lá foi apagado.",
+    ],
+  },
   "2026-10-29-three-places": {
     title: "Hoje, Diário, Você",
     bullets: [
@@ -19,14 +28,6 @@ export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
       "A aba Início e o resumo semanal saíram. Aquela página repetia números que você já vê no Hoje.",
       "Um link antigo de Início abre Você.",
       "No computador, o Upwards avisa que é feito para o celular e fica numa janela do tamanho do telefone.",
-    ],
-  },
-  "2026-10-23-compass": {
-    title: "Sua bússola",
-    bullets: [
-      "A aba Você agora é a sua bússola: uma estrela-guia, algumas palavras sobre quem você é, metas e notas que você conta para si. Nada disso precisa de uma chave de IA.",
-      "Uma meta pode apontar para um hábito ou um grupo. Ela então mostra o que o seu registro diz, como feito em 4 dos últimos 7 dias. Ela nunca mostra uma porcentagem.",
-      "Configurações, Novidades, Feedback e sugestões e Registros de erros continuam nessa página.",
     ],
   },
   "2026-10-12-one-record": {

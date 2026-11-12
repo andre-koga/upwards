@@ -212,7 +212,7 @@ export async function refreshJournalConflictPayload(
 
 /**
  * A previous version holding the words and media of one side of the conflict,
- * so choosing the other never ends them (product-scope.md §2.3). Null when that
+ * so choosing the other never ends them. Null when that
  * side had nothing worth keeping.
  */
 function revisionFromFields(
@@ -284,7 +284,7 @@ async function markJournalIssueResolved(
 
 /**
  * Resolve a journal day by keeping this device's version, the other's, or both
- * (product-scope.md §2.10). It is an ordinary edit to the day (a
+ *. It is an ordinary edit to the day (a
  * `projection.upsert` made on the other side's revision), and the side that is
  * left out is kept as a previous version, so no choice here is final.
  *

@@ -154,7 +154,7 @@ export default function JournalArchiveDateFilterDialog({
         className="w-[calc(100vw-2rem)] max-w-sm gap-3 rounded-2xl p-3 sm:max-w-sm"
       >
         <DialogHeader className="space-y-1 px-1 text-left">
-          <DialogTitle className="font-crimson text-xl">
+          <DialogTitle className="font-display text-xl">
             {t("archive.filters.dates.title")}
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -164,7 +164,7 @@ export default function JournalArchiveDateFilterDialog({
 
         {availableYears.length > 0 ? (
           <div className="space-y-1.5 px-1">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-[0.8125rem] font-medium text-muted-foreground">
               {t("archive.filters.dates.years")}
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -193,7 +193,7 @@ export default function JournalArchiveDateFilterDialog({
         ) : null}
 
         <div className="space-y-1.5 px-1">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("archive.filters.dates.presets")}
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -226,7 +226,7 @@ export default function JournalArchiveDateFilterDialog({
         </div>
 
         <div className="space-y-1.5">
-          <p className="px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="px-1 text-[0.8125rem] font-medium text-muted-foreground">
             {t("archive.filters.dates.custom")}
           </p>
           <Calendar

@@ -1,5 +1,5 @@
 /**
- * The one AI visual language (design-and-branding.md §4). The gradients are
+ * The one AI visual language. The gradients are
  * defined once as CSS variables in `index.css`; use these constants, never a
  * re-authored gradient.
  *

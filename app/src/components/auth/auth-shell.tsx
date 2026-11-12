@@ -11,9 +11,10 @@ interface AuthShellProps {
 
 /**
  * The frame of every screen a signed-out person can reach: sign in, ask for a
- * password reset, choose a new password. One column, centred, with the
- * wordmark above and room around it. No navigation, because there is nowhere
- * to go yet (product-scope.md §2.6).
+ * password reset, choose a new password. One column with the same centred
+ * masthead as the Journal: wordmark, serif title, a short rule, an italic
+ * line. Fields sit on the page, not in a card. No navigation, because there is nowhere
+ * to go yet.
  */
 export function AuthShell({
   title,
@@ -23,15 +24,16 @@ export function AuthShell({
 }: AuthShellProps) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm space-y-8">
-        <Wordmark />
+      <div className="w-full max-w-sm space-y-9">
+        <Wordmark className="justify-center" />
 
-        <header className="space-y-2">
-          <h1 className="font-display text-[clamp(1.9rem,6vw,2.5rem)] leading-[1.05] tracking-[-0.03em]">
+        <header className="flex flex-col items-center text-center">
+          <h1 className="font-display text-[2.375rem] font-medium leading-[1.1] tracking-[-0.02em]">
             {title}
           </h1>
+          <span className="mt-4 h-px w-10 bg-foreground/25" aria-hidden />
           {description ? (
-            <p className="text-pretty text-sm leading-6 text-muted-foreground">
+            <p className="mt-4 max-w-[19rem] text-pretty font-display text-[1.0625rem] italic leading-relaxed text-muted-foreground">
               {description}
             </p>
           ) : null}

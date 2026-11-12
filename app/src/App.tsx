@@ -28,13 +28,7 @@ const SyncIssuesPage = lazy(() => import("@/pages/sync-issues"));
 const WhatsNewPage = lazy(() => import("@/pages/whats-new"));
 const JournalPage = lazy(() => import("@/pages/journal"));
 const LogsPage = lazy(() => import("@/pages/logs"));
-const RedesignPreviewPage = lazy(() => import("@/pages/redesign-preview"));
-const RedesignPreviewBPage = lazy(() => import("@/pages/redesign-preview-b"));
-const RedesignPreviewCPage = lazy(() => import("@/pages/redesign-preview-c"));
-const RedesignPreviewDPage = lazy(() => import("@/pages/redesign-preview-d"));
-const RedesignFlagshipPage = lazy(() => import("@/pages/redesign-flagship"));
 const YouPage = lazy(() => import("@/pages/you"));
-const ClipSpikePage = lazy(() => import("@/pages/clip-spike"));
 
 function PageLoadingFallback() {
   return (
@@ -55,16 +49,6 @@ const PUBLIC_ROUTES = new Set([
   "/settings/reset-password",
 ]);
 
-// Design previews that ship their own full-bleed layout and navigation. They
-// render outside the app shell on purpose.
-const FULL_BLEED_ROUTES = new Set([
-  "/redesign-preview",
-  "/redesign-preview-b",
-  "/redesign-preview-c",
-  "/redesign-preview-d",
-  "/redesign-flagship",
-]);
-
 function AppFrame() {
   const location = useLocation();
   const gate = useAuthGate();
@@ -72,29 +56,6 @@ function AppFrame() {
     gate === "signed_out" && !PUBLIC_ROUTES.has(location.pathname);
   const showLoading =
     gate === "loading" && !PUBLIC_ROUTES.has(location.pathname);
-
-  if (FULL_BLEED_ROUTES.has(location.pathname)) {
-    return (
-      <Suspense fallback={<PageLoadingFallback />}>
-        <Routes>
-          <Route path="/redesign-preview" element={<RedesignPreviewPage />} />
-          <Route
-            path="/redesign-preview-b"
-            element={<RedesignPreviewBPage />}
-          />
-          <Route
-            path="/redesign-preview-c"
-            element={<RedesignPreviewCPage />}
-          />
-          <Route
-            path="/redesign-preview-d"
-            element={<RedesignPreviewDPage />}
-          />
-          <Route path="/redesign-flagship" element={<RedesignFlagshipPage />} />
-        </Routes>
-      </Suspense>
-    );
-  }
 
   const showNavigation =
     !showSignIn && !showLoading && !routeHidesNavigation(location.pathname);
@@ -138,8 +99,6 @@ function AppFrame() {
             {/* The weekly summary lived here. Old links open You. */}
             <Route path="/home" element={<Navigate to="/you" replace />} />
             <Route path="/you" element={<YouPage />} />
-            {/* Developer tool for the daily-clip device spike; not linked anywhere. */}
-            <Route path="/clip-spike" element={<ClipSpikePage />} />
           </Routes>
         </Suspense>
       )}

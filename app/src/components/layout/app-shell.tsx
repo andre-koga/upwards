@@ -17,7 +17,7 @@ interface AppShellProps {
 }
 
 /**
- * The phone shell (ui-system-and-responsive-layout.md). One column, document
+ * The phone shell. One column, document
  * scroll, tab bar at the bottom. A wide window puts this inside the phone
  * frame; it does not grow a sidebar.
  */

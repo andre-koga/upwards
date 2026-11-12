@@ -201,10 +201,7 @@ function JournalLocationMapSurface({
   const locationsFitKey = useMemo(
     () =>
       `${fitBounds}|${locations
-        .map(
-          (loc) =>
-            `${loc.displayName}:${loc.lat ?? ""}:${loc.lon ?? ""}`
-        )
+        .map((loc) => `${loc.displayName}:${loc.lat ?? ""}:${loc.lon ?? ""}`)
         .join("|")}`,
     [fitBounds, locations]
   );
@@ -393,9 +390,7 @@ function JournalLocationMapSurface({
       aria-label={ariaLabel ?? t("locations.mapAriaLabel")}
       className={cn(
         "relative h-56 touch-none overflow-hidden rounded-lg border bg-muted",
-        interactive
-          ? "cursor-grab active:cursor-grabbing"
-          : "cursor-default",
+        interactive ? "cursor-grab active:cursor-grabbing" : "cursor-default",
         className
       )}
       onPointerDown={handlePointerDown}
@@ -518,8 +513,7 @@ export default function JournalLocationMapPicker({
   const { t } = useTranslation("journal");
   const [uncontrolledFullscreenOpen, setUncontrolledFullscreenOpen] =
     useState(false);
-  const fullscreenOpen =
-    controlledFullscreenOpen ?? uncontrolledFullscreenOpen;
+  const fullscreenOpen = controlledFullscreenOpen ?? uncontrolledFullscreenOpen;
   const setFullscreenOpen =
     onFullscreenOpenChange ?? setUncontrolledFullscreenOpen;
 

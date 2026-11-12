@@ -1,7 +1,7 @@
 import type { JournalEntry, Memory } from "@/lib/db/types";
 import { memoryRememberedDate, recordMemories } from "./record";
 
-/** The four ways to browse the one record (design-and-branding.md §3.3). */
+/** The four ways to browse the one record. */
 const JOURNAL_VIEWS = ["feed", "calendar", "map", "gallery"] as const;
 export type JournalView = (typeof JOURNAL_VIEWS)[number];
 

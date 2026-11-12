@@ -24,7 +24,7 @@ export function FormFieldShell({
   messageClassName,
 }: FormFieldShellProps) {
   return (
-    <div className={cn("space-y-1", containerClassName)}>
+    <div className={cn("space-y-1.5", containerClassName)}>
       <Label
         htmlFor={id}
         className={cn(dialogFieldLabelClassName, labelClassName)}

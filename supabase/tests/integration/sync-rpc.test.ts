@@ -445,7 +445,7 @@ describe("sync RPC integration", () => {
         entityId: periodId,
         row: {
           // A stale client may still send the link. Sessions stand alone now
-          // (product-scope.md §2.10) and the column is gone, so it is ignored.
+          // and the column is gone, so it is ignored.
           daily_entry_id: dailyId,
           activity_id: activityId,
           start_time: "2026-08-25T15:00:00.000Z",

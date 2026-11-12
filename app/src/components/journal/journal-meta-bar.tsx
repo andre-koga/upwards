@@ -24,17 +24,17 @@ export default function JournalMetaBar({
 }: JournalMetaBarProps) {
   const { t } = useTranslation("journal");
   return (
-    <div className="relative flex items-center justify-end gap-2 px-3 pb-3 pt-1">
+    <div className="-mr-2 flex shrink-0 items-center gap-0.5">
       {revisions && onOpenVersions ? (
         <JournalEditedNote
           summary={revisions}
           onOpen={onOpenVersions}
-          className="mr-auto"
+          className="mr-1"
         />
       ) : null}
       <Button
         variant="ghost"
-        size="smIcon"
+        size="iconRoundMd"
         onClick={() => {
           const next = !journal.draftBookmarked;
           journal.setDraftBookmarked(next);
@@ -48,14 +48,14 @@ export default function JournalMetaBar({
       >
         <Heart
           className={cn(
-            "transition-colors",
-            journal.draftBookmarked && "fill-red-500 text-red-500"
+            "h-4 w-4 transition-colors",
+            journal.draftBookmarked && "fill-terracotta text-terracotta"
           )}
         />
       </Button>
       <Button
         variant="ghost"
-        size="smIcon"
+        size="iconRoundMd"
         onClick={onEditRequest}
         className="text-muted-foreground"
         title={t("editJournal")}

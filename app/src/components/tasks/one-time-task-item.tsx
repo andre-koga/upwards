@@ -164,8 +164,15 @@ function OneTimeTaskItem({
     setEditOpen(true);
   };
 
+  const isOverdue =
+    !task.is_completed &&
+    task.due_date !== null &&
+    task.due_date !== undefined &&
+    task.due_date < todayDateString();
   const dueDateDisplay = task.due_date
-    ? getDueDateDisplayLabel(task.due_date, t)
+    ? isOverdue
+      ? t("memo.overdue")
+      : t("memo.due", { date: getDueDateDisplayLabel(task.due_date, t) })
     : null;
 
   return (
@@ -207,19 +214,23 @@ function OneTimeTaskItem({
           tabIndex={isToday ? 0 : undefined}
         >
           <p
-            className={`min-w-0 flex-1 whitespace-pre-wrap break-words px-2 py-1.5 text-left text-sm font-medium ${
+            className={`min-w-0 flex-1 whitespace-pre-wrap break-words px-2 py-1 text-left text-[0.9375rem] leading-snug ${
               task.is_completed ? "text-muted-foreground line-through" : ""
             }`}
           >
             {task.title}
-          </p>
-          {dueDateDisplay ? (
-            <div className="px-2 pb-1.5">
-              <span className="min-w-0 text-xs text-muted-foreground">
-                {t("memo.due", { date: dueDateDisplay })}
+            {dueDateDisplay ? (
+              <span
+                className={`ml-2 inline-block whitespace-nowrap text-xs ${
+                  isOverdue
+                    ? "font-medium text-terracotta-text"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {dueDateDisplay}
               </span>
-            </div>
-          ) : null}
+            ) : null}
+          </p>
         </div>
 
         <PinToggle

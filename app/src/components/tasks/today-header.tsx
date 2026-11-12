@@ -1,11 +1,15 @@
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { getActiveLocaleTag } from "@/lib/i18n";
-import { toDateString, todayDateString } from "@/lib/time-utils";
-import { cn } from "@/lib/utils";
+import {
+  fromDateString,
+  toDateString,
+  todayDateString,
+} from "@/lib/time-utils";
 import { JournalDateCalendarDialog } from "@/components/journal/journal-date-calendar-dialog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface TodayHeaderProps {
   currentDate: Date;
@@ -15,18 +19,18 @@ interface TodayHeaderProps {
   entryDates: Set<string>;
   bookmarkedDates: Set<string>;
   loadJournalMeta: () => Promise<void>;
-  /** A session is running: the date control tightens and moves aside for it. */
+  /** A session is running: the running card gets its own row under the date. */
   running?: boolean;
-  /** The running-session card; fills the row beside the date control. */
+  /** The running-session card; a full-width row under the masthead. */
   children?: ReactNode;
 }
 
 /**
- * Today's top chrome, one row: day navigation, and the running session when
- * there is one. With nothing running the date control sits centered; with a
- * session it tightens and moves to the start so the card gets the rest. Previous
- * and next are the button equivalent of the swipe. The page wraps this in one
- * sticky frosted container.
+ * Today's top chrome. The date is a centred masthead (tap it for the
+ * calendar), flanked by previous / next as the button equivalent of the
+ * swipe, with a "Today" jump in the corner when looking at another day. While
+ * a session runs, the masthead keeps its shape and the running card sits on
+ * its own row beneath it.
  */
 export default function TodayHeader({
   currentDate,
@@ -43,86 +47,105 @@ export default function TodayHeader({
   const { t: tToday } = useTranslation("today");
   const [calendarOpen, setCalendarOpen] = useState(false);
 
-  const isSelectedToday = toDateString(currentDate) === todayDateString();
-  const shortDate = currentDate.toLocaleDateString(getActiveLocaleTag(), {
-    weekday: "short",
-    month: "short",
+  const locale = getActiveLocaleTag();
+  const selected = toDateString(currentDate);
+  const today = todayDateString();
+  const isSelectedToday = selected === today;
+  const yesterday = fromDateString(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = selected === toDateString(yesterday);
+
+  const weekday = currentDate.toLocaleDateString(locale, { weekday: "long" });
+  const longDate = currentDate.toLocaleDateString(locale, {
+    month: "long",
     day: "numeric",
+    ...(currentDate.getFullYear() !== new Date().getFullYear()
+      ? { year: "numeric" }
+      : {}),
   });
   const eyebrow = isSelectedToday
     ? t("tabs.today")
-    : String(currentDate.getFullYear());
+    : isYesterday
+      ? tToday("header.yesterday")
+      : weekday;
+
+  const prevButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="iconRoundMd"
+      onClick={onPreviousDay}
+      className="text-muted-foreground"
+      title={tToday("swipe.previousDay")}
+      aria-label={tToday("swipe.previousDay")}
+    >
+      <ChevronLeft className="h-5 w-5" aria-hidden />
+    </Button>
+  );
+  const nextButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="iconRoundMd"
+      onClick={onNextDay}
+      disabled={isSelectedToday}
+      className="text-muted-foreground disabled:bg-transparent disabled:opacity-30"
+      title={
+        isSelectedToday ? tToday("swipe.alreadyToday") : tToday("swipe.nextDay")
+      }
+      aria-label={tToday("swipe.nextDay")}
+    >
+      <ChevronRight className="h-5 w-5" aria-hidden />
+    </Button>
+  );
 
   return (
     <>
-      <header>
-        <div
-          className={cn(
-            "flex h-14 items-center gap-2 px-2 md:px-4",
-            running ? "justify-start" : "justify-center"
-          )}
-        >
-          <div className="flex shrink-0 items-center">
-            <Button
-              type="button"
-              variant="ghost"
-              size="iconRoundMd"
-              onClick={onPreviousDay}
-              title={tToday("swipe.previousDay")}
-              aria-label={tToday("swipe.previousDay")}
-            >
-              <ChevronLeft className="h-5 w-5" aria-hidden />
-            </Button>
-
-            <h1 className="flex min-w-0 items-center">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setCalendarOpen(true)}
-                className={cn(
-                  "min-w-0 flex-col items-center justify-center rounded-xl px-2.5",
-                  running ? "h-9 py-0" : "h-auto gap-1 py-2"
-                )}
-              >
-                {running ? null : (
-                  <span className="font-mono text-[0.6rem] uppercase leading-[1] tracking-[0.14em] text-ink-faint">
-                    {eyebrow}
-                  </span>
-                )}
-                <span
-                  className={cn(
-                    "font-display font-semibold tracking-[-0.02em]",
-                    running ? "text-base leading-none" : "text-lg leading-[1.1]"
-                  )}
-                >
-                  {shortDate}
-                </span>
-                <span className="sr-only">. {t("pickDate")}</span>
-              </Button>
-            </h1>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="iconRoundMd"
-              onClick={onNextDay}
-              disabled={isSelectedToday}
-              className="disabled:border-transparent disabled:bg-transparent disabled:opacity-35"
-              title={
-                isSelectedToday
-                  ? tToday("swipe.alreadyToday")
-                  : tToday("swipe.nextDay")
-              }
-              aria-label={tToday("swipe.nextDay")}
-            >
-              <ChevronRight className="h-5 w-5" aria-hidden />
-            </Button>
-          </div>
-
-          {children}
+      {/* A page masthead: the date centred like the top of a diary page, with
+          the day-step buttons flanking it and the jump back to today tucked in
+          the far corner so nothing pulls the date off centre. */}
+      <header
+        className={cn(
+          "relative flex flex-col justify-center gap-1 px-3",
+          running ? "pb-4 pt-3" : "h-[6.25rem]"
+        )}
+      >
+        <div className="flex h-6 items-center justify-center text-[0.8125rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          {eyebrow}
         </div>
+        {!isSelectedToday ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onDateChange(new Date(`${today}T12:00:00`))}
+            className="absolute right-3 top-3 h-7 gap-0.5 whitespace-nowrap rounded-full bg-muted/70 px-2.5 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-muted-foreground"
+            title={tToday("header.goToToday")}
+            aria-label={tToday("header.goToToday")}
+          >
+            {t("tabs.today")}
+            <ChevronsRight className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+        ) : null}
+        <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-1">
+          <div className="flex justify-start">{prevButton}</div>
+          <h1 className="flex min-w-0 justify-center">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setCalendarOpen(true)}
+              className="h-auto min-w-0 max-w-full rounded-xl px-3 py-0.5"
+            >
+              <span className="truncate font-display text-[2.125rem] font-medium leading-[1.15] tracking-[-0.02em]">
+                {longDate}
+              </span>
+              <span className="sr-only">. {t("pickDate")}</span>
+            </Button>
+          </h1>
+          <div className="flex justify-end">{nextButton}</div>
+        </div>
+        {running ? <div className="px-2 pt-3">{children}</div> : null}
       </header>
-
       <JournalDateCalendarDialog
         open={calendarOpen}
         onOpenChange={setCalendarOpen}

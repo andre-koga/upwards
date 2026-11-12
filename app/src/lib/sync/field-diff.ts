@@ -2,7 +2,7 @@
  * Which fields of two versions of one row differ, and how to show a value.
  *
  * Conflict review shows two whole versions and lets the person keep one
- * (product-scope.md §2.10). There is no per-field choice and no automatic merge
+ *. There is no per-field choice and no automatic merge
  * here: working out which side "won" each field needs a common ancestor the app
  * does not keep, and a wrong guess would silently drop someone's edit.
  */

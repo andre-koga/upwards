@@ -115,7 +115,7 @@
     "backToSignIn": "Back to sign in"
   },
   "sync": {
-    "title": "Cloud sync",
+    "title": "Sync and updates",
     "description": "Your data syncs automatically. Open Sync issues to review conflicts or errors.",
     "issuesLink": "Sync issues",
     "issuesBadge": "{{count}} open sync issues",
@@ -146,6 +146,11 @@
       "unavailable": "App updates aren't available in this browser.",
       "offline": "You're offline. Try again when you're connected.",
       "signedOut": "Sign in to sync this device."
+    },
+    "indicator": {
+      "syncing": "Syncing",
+      "offline": "Offline. Changes are saved here and sync when you reconnect.",
+      "failed": "Couldn't sync. Open sync issues."
     }
   },
   "ai": {
@@ -392,7 +397,8 @@
         "tableCaption": "The two versions of this {{entity}}, field by field"
       },
       "differs": "differs"
-    }
+    },
+    "repeated": "{{count}}×"
   },
   "about": {
     "title": "About",
@@ -451,15 +457,6 @@
       "clear": "Remove birthday"
     }
   },
-  "panels": {
-    "label": "Settings sections",
-    "general": "General",
-    "journal": "Journal",
-    "account": "Account and sync",
-    "ai": "AI",
-    "data": "Your data",
-    "about": "About"
-  },
   "setup": {
     "autoLocation": {
       "label": "Add where I am to today",
@@ -477,5 +474,18 @@
     "description_other": "Both are off until you say so, and you can change either one any time in Settings.",
     "footer_one": "We won't ask again. You'll find this under Settings, then Journal.",
     "footer_other": "We won't ask again. You'll find these under Settings, then Journal."
+  },
+  "groups": {
+    "general": "General"
+  },
+  "logsPage": {
+    "title": "Error logs",
+    "subtitle_one": "{{count}} entry from the last 24 hours",
+    "subtitle_other": "{{count}} entries from the last 24 hours",
+    "groupTitle": "Last 24 hours",
+    "loading": "Loading logs…",
+    "empty": "Nothing has been logged in the last day.",
+    "copied": "Copied",
+    "copyHint": "Press an entry to copy it."
   }
 }

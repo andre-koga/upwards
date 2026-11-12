@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { CalendarDays } from "lucide-react";
 
 import { FormCalendarDateField } from "@/components/forms/form-calendar-date-field";
 import { SettingsSelect } from "@/components/settings/settings-select";
-import { Label } from "@/components/ui/label";
-import { SettingsSection } from "@/components/ui/settings-section";
+import {
+  SettingsBlock,
+  SettingsGroup,
+  SettingsRow,
+} from "@/components/settings/settings-list";
 import { Switch } from "@/components/ui/switch";
 import { updateAccountSettings } from "@/lib/account-settings";
 import { CALENDAR_IDS, toggleCalendar, type CalendarId } from "@/lib/holidays";
@@ -53,34 +55,29 @@ export function HolidaysCard() {
   };
 
   return (
-    <SettingsSection
+    <SettingsGroup
       title={t("holidays.title")}
-      icon={CalendarDays}
-      description={t("holidays.description")}
+      footer={t("holidays.description")}
     >
       {CALENDAR_IDS.map((id) => (
-        <div key={id} className="flex items-start justify-between gap-4">
-          <div className="min-w-0 space-y-1">
-            <Label htmlFor={`holiday-calendar-${id}`} className="leading-snug">
-              {t(`holidays.calendars.${id}.label`)}
-            </Label>
-            <p
-              id={`holiday-calendar-${id}-hint`}
-              className="text-xs leading-relaxed text-muted-foreground"
-            >
-              {t(`holidays.calendars.${id}.hint`)}
-            </p>
-          </div>
-          <Switch
-            id={`holiday-calendar-${id}`}
-            aria-describedby={`holiday-calendar-${id}-hint`}
-            checked={calendars.includes(id)}
-            onCheckedChange={(on) => setCalendar(id, on)}
-          />
-        </div>
+        <SettingsRow
+          key={id}
+          htmlFor={`holiday-calendar-${id}`}
+          label={t(`holidays.calendars.${id}.label`)}
+          hint={t(`holidays.calendars.${id}.hint`)}
+          hintId={`holiday-calendar-${id}-hint`}
+          control={
+            <Switch
+              id={`holiday-calendar-${id}`}
+              aria-describedby={`holiday-calendar-${id}-hint`}
+              checked={calendars.includes(id)}
+              onCheckedChange={(on) => setCalendar(id, on)}
+            />
+          }
+        />
       ))}
 
-      <div className="border-t border-border pt-3">
+      <SettingsBlock>
         <FormCalendarDateField
           id="holiday-birthday"
           label={t("holidays.birthday.label")}
@@ -93,30 +90,35 @@ export function HolidaysCard() {
           clearLabel={t("holidays.birthday.clear")}
           formatValue={formatBirthDate}
           message={t("holidays.birthday.hint")}
+          labelClassName="text-[0.9375rem] font-normal text-foreground"
+          buttonClassName="bg-background/70 hover:bg-background"
+          messageClassName="text-xs leading-relaxed"
         />
-      </div>
+      </SettingsBlock>
 
-      <div className="space-y-1 border-t border-border pt-3">
-        <Label className="leading-snug">{t("holidays.hemisphere.label")}</Label>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          {t("holidays.hemisphere.hint")}
-        </p>
-        <SettingsSelect
-          ariaLabel={t("holidays.hemisphere.label")}
-          value={chosenHemisphere ?? "auto"}
-          onValueChange={setHemisphere}
-          options={[
-            {
-              value: "auto",
-              label: t("holidays.hemisphere.auto", {
-                season: t(`holidays.hemisphere.${hemisphere}`),
-              }),
-            },
-            { value: "north", label: t("holidays.hemisphere.north") },
-            { value: "south", label: t("holidays.hemisphere.south") },
-          ]}
-        />
-      </div>
-    </SettingsSection>
+      <SettingsRow
+        label={t("holidays.hemisphere.label")}
+        hint={t("holidays.hemisphere.hint")}
+      >
+        <div className="pt-2.5">
+          <SettingsSelect
+            ariaLabel={t("holidays.hemisphere.label")}
+            value={chosenHemisphere ?? "auto"}
+            onValueChange={setHemisphere}
+            className="bg-background/70 hover:bg-background"
+            options={[
+              {
+                value: "auto",
+                label: t("holidays.hemisphere.auto", {
+                  season: t(`holidays.hemisphere.${hemisphere}`),
+                }),
+              },
+              { value: "north", label: t("holidays.hemisphere.north") },
+              { value: "south", label: t("holidays.hemisphere.south") },
+            ]}
+          />
+        </div>
+      </SettingsRow>
+    </SettingsGroup>
   );
 }

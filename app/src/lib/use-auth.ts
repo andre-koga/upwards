@@ -6,10 +6,7 @@ import {
   getCachedSession,
 } from "@/lib/supabase";
 import { getAuthRedirectUrl } from "@/lib/auth-redirect";
-import {
-  syncEngine,
-  type PushBeforeSignOutResult,
-} from "@/lib/sync";
+import { syncEngine, type PushBeforeSignOutResult } from "@/lib/sync";
 import { clearLocalSyncData } from "@/lib/sync/clear-local-sync-data";
 import { clearLastSignedInUserId } from "@/lib/sync/sync-storage";
 

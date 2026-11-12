@@ -44,38 +44,20 @@ function todayOrderBand(
 
 /**
  * The order of "For today": pinned first, then not yet done, then the stored
- * `order_index`, which the person edits with the reorder controls
- * (product-scope.md §1, Task Order). Within a pin/done band the stored order
- * is kept, so the result is stable and a tap never reshuffles unrelated rows.
+ * `order_index`, which the person edits with the reorder controls. Within a
+ * pin/done band the stored order is kept, so the result is stable and a tap never reshuffles unrelated rows.
  *
  * Avoid habits are never "done": a slip is the unwanted outcome, so they sit in
  * the not-done band (and, having no `order_index`, after the scheduled ones).
- *
- * `ranking` is the AI's order (activity ids, best first). It is a temporary
- * view on top of the person's order: it only decides the order inside the
- * unpinned, not-yet-done band. Pins still win, done rows still sink (unless
- * kept in place), and rows the ranking has not seen (added since, or avoid
- * habits) follow it in stored order. Dropping the ranking restores the
- * person's order untouched.
  */
 export function orderActivitiesForToday<T extends Orderable>(
   activities: readonly T[],
   counts: Readonly<Record<string, number>>,
-  ranking?: readonly string[],
   options: TodayOrderOptions = {}
 ): T[] {
   const bands: T[][] = [[], [], [], []];
   for (const activity of sortActivitiesByOrder(activities)) {
     bands[todayOrderBand(activity, counts, options)].push(activity);
-  }
-  if (ranking?.length) {
-    const position = new Map(ranking.map((id, index) => [id, index]));
-    // Array.prototype.sort is stable: unranked rows keep their stored order.
-    bands[2].sort(
-      (left, right) =>
-        (position.get(left.id) ?? ranking.length) -
-        (position.get(right.id) ?? ranking.length)
-    );
   }
   return bands.flat();
 }
@@ -115,7 +97,7 @@ function findNeighbour<T extends Orderable>(
  * The `order_index` writes that move one row a step up (-1) or down (+1)
  * among the rows shown, staying inside its pin/done band.
  *
- * `ordered` is today's list in the person's own order (no AI ranking);
+ * `ordered` is today's list in the person's own order;
  * `all` is every active activity, so a renumber stays consistent with rows not
  * scheduled today. Two distinct numbers are simply swapped. Ties and rows
  * without an index (avoid habits, offline duplicates) renumber the whole

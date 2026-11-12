@@ -12,6 +12,7 @@
   "install": "Install",
   "dismissInstall": "Not now",
   "addQuickMemo": "Add quick memo",
+  "quickMemoShort": "Memo",
   "back": "Back",
   "backToSettings": "Back to Settings",
   "whatsNewPage": {
@@ -46,7 +47,8 @@
   "tabs": {
     "today": "Today",
     "journal": "Journal",
-    "you": "You"
+    "you": "You",
+    "settings": "Settings"
   },
   "palette": {
     "open": "Search and commands",
@@ -72,8 +74,8 @@
     "keywords": {
       "today": "tasks timer sessions day activities",
       "journal": "entries diary reflections photos places memories",
-      "you": "compass identity goals north star profile home",
-      "settings": "settings account language appearance sync",
+      "you": "profile personality identity portrait",
+      "settings": "settings account language appearance sync update logs backup",
       "whatsNew": "changelog updates releases",
       "errorLogs": "logs debug errors",
       "syncIssues": "conflicts pending sync review",

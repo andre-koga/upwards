@@ -127,7 +127,7 @@ function AssignActivityDialogContent({
         label="Duration"
         value={formatTimerDisplay(intervalMs)}
         readOnly
-        className="font-mono tabular-nums"
+        className="tabular-nums"
       />
 
       <FormSelectField

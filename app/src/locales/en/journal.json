@@ -38,7 +38,8 @@
     "emptyHelper": "Write a reflection on Today, or add a memory with the + button, and it will show up here.",
     "noResults": "Nothing matches",
     "noResultsHelper": "Try different words, filters, an emoji, or a date.",
-    "resultCount": "{{count}} found",
+    "resultCount_one": "{{count}} moment found",
+    "resultCount_other": "{{count}} moments found",
     "loadingMore": "Loading more…",
     "end": "You've reached the beginning.",
     "closePhoto": "Close",
@@ -243,5 +244,10 @@
       "plain": "Your birthday",
       "withAge": "Your {{ordinal}} birthday"
     }
+  },
+  "prompt": {
+    "today": "How did today go?",
+    "past": "Nothing written for this day.",
+    "hint": "Tap to write"
   }
 }

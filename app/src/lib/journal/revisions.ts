@@ -16,7 +16,7 @@ import {
 
 /**
  * Every earlier version of a day, newest first. Revisions are append-only, so
- * this list only ever grows (product-scope.md §2.3).
+ * this list only ever grows.
  */
 export async function journalRevisionsForDate(
   entryDate: string

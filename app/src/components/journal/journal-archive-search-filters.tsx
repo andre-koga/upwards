@@ -28,6 +28,7 @@ interface JournalArchiveSearchFiltersProps {
   availableYears: number[];
   entryDates: Set<string>;
   bookmarkedDates: Set<string>;
+  className?: string;
 }
 
 const FILTER_KEYS: JournalArchiveFilterKey[] = [
@@ -96,15 +97,11 @@ export default function JournalArchiveSearchFilters({
   availableYears,
   entryDates,
   bookmarkedDates,
+  className,
 }: JournalArchiveSearchFiltersProps) {
   const { t } = useTranslation("journal");
   const clipEnabled = useAccountSettings().dailyClip === true;
   const [datesOpen, setDatesOpen] = useState(false);
-  const hasStructuredFilters =
-    filters.bookmarked !== "any" ||
-    filters.hasPhotos !== "any" ||
-    filters.hasVideo !== "any" ||
-    filters.hasPlaces !== "any";
   const mapSelectionCount = filters.mapEntryDates?.length ?? 0;
   const hasMapSelection = mapSelectionCount > 0;
   const hasDateRange = Boolean(filters.dateRange);
@@ -113,16 +110,6 @@ export default function JournalArchiveSearchFilters({
     onChange({
       ...filters,
       [key]: cycleJournalArchiveTriFilter(filters[key]),
-    });
-  };
-
-  const clearStructured = () => {
-    onChange({
-      ...filters,
-      bookmarked: "any",
-      hasPhotos: "any",
-      hasVideo: "any",
-      hasPlaces: "any",
     });
   };
 
@@ -150,14 +137,14 @@ export default function JournalArchiveSearchFilters({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
         {hasMapSelection ? (
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={clearMapSelection}
-            className="h-7 gap-1 rounded-full border-primary bg-primary/10 px-2.5 text-xs font-medium text-primary shadow-none"
+            className="h-8 gap-1 rounded-full border-primary bg-primary/10 px-3 text-[0.8125rem] font-medium text-primary shadow-none"
             title={t("archive.filters.mapSelection.hint")}
             aria-label={t("archive.filters.mapSelection.clearAria", {
               place: filters.mapPlaceLabel ?? "",
@@ -187,9 +174,9 @@ export default function JournalArchiveSearchFilters({
             size="sm"
             onClick={() => setDatesOpen(true)}
             className={cn(
-              "h-7 gap-1 px-2.5 text-xs font-medium shadow-none",
+              "h-8 gap-1.5 px-3 text-[0.8125rem] font-medium shadow-none",
               hasDateRange
-                ? "rounded-l-full rounded-r-none border-primary border-r-0 bg-primary/10 text-primary"
+                ? "rounded-l-full rounded-r-none border-r-0 border-primary bg-primary/10 text-primary"
                 : "rounded-full border-border text-muted-foreground"
             )}
             aria-pressed={hasDateRange}
@@ -215,7 +202,7 @@ export default function JournalArchiveSearchFilters({
               variant="outline"
               size="sm"
               onClick={clearDateRange}
-              className="h-7 rounded-l-none rounded-r-full border-primary bg-primary/10 px-1.5 text-primary shadow-none"
+              className="h-8 rounded-l-none rounded-r-full border-primary bg-primary/10 px-2 text-primary shadow-none"
               title={t("archive.filters.dates.clear")}
               aria-label={t("archive.filters.dates.clear")}
             >
@@ -235,7 +222,7 @@ export default function JournalArchiveSearchFilters({
               size="sm"
               onClick={() => cycle(key)}
               className={cn(
-                "h-7 gap-1 rounded-full px-2.5 text-xs font-medium shadow-none",
+                "h-8 gap-1.5 rounded-full px-3 text-[0.8125rem] font-medium shadow-none",
                 chipClassName(value)
               )}
               aria-pressed={value !== "any"}
@@ -253,21 +240,6 @@ export default function JournalArchiveSearchFilters({
             </Button>
           );
         })}
-
-        {hasStructuredFilters ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={clearStructured}
-            className="h-7 gap-1 rounded-full px-2 text-xs text-muted-foreground shadow-none"
-            title={t("archive.filters.clear")}
-            aria-label={t("archive.filters.clear")}
-          >
-            <X className="h-3 w-3" aria-hidden />
-            {t("archive.filters.clear")}
-          </Button>
-        ) : null}
       </div>
 
       <JournalArchiveDateFilterDialog

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
-import { settingsPanelPath } from "@/lib/settings/panels";
 import { useAuth } from "@/lib/use-auth";
 
 const passwordId = "reset-password-new";
@@ -135,7 +134,7 @@ export default function ResetPasswordPage() {
     "inline-flex min-h-11 items-center underline underline-offset-2 hover:text-foreground";
   // Signed out, the way back is sign-in at the root. Signed in, it is Settings.
   const back = isAuthed ? (
-    <Link to={settingsPanelPath("account")} className={linkClass}>
+    <Link to={"/settings"} className={linkClass}>
       {tNav("backToSettings")}
     </Link>
   ) : (
@@ -174,7 +173,7 @@ export default function ResetPasswordPage() {
         description={t("auth.resetPasswordPage.invalidLink")}
         footer={back}
       >
-        <Button asChild className="h-11 w-full md:h-10">
+        <Button asChild className="h-12 w-full rounded-full text-[0.9375rem]">
           <Link to="/settings/forgot-password">
             {t("auth.resetPasswordPage.requestNewLink")}
           </Link>
@@ -190,9 +189,9 @@ export default function ResetPasswordPage() {
         description={t("auth.resetPasswordPage.updatedDescription")}
       >
         <Button
-          className="h-11 w-full md:h-10"
+          className="h-12 w-full rounded-full text-[0.9375rem]"
           onClick={() =>
-            navigate(isAuthed ? settingsPanelPath("account") : "/", {
+            navigate(isAuthed ? "/settings" : "/", {
               replace: true,
             })
           }
@@ -213,34 +212,37 @@ export default function ResetPasswordPage() {
       description={t("auth.resetPasswordPage.chooseDescription")}
       footer={back}
     >
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-2xl border border-border bg-card p-5"
-      >
-        <div className="space-y-2">
-          <Label htmlFor={passwordId}>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-1.5">
+          <Label
+            className="px-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground"
+            htmlFor={passwordId}
+          >
             {t("auth.resetPasswordPage.newPassword")}
           </Label>
           <Input
             id={passwordId}
             type="password"
             autoComplete="new-password"
-            className="h-11 md:h-10"
+            className="h-12 rounded-xl px-4"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor={confirmId}>
+        <div className="space-y-1.5">
+          <Label
+            className="px-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground"
+            htmlFor={confirmId}
+          >
             {t("auth.resetPasswordPage.confirmPassword")}
           </Label>
           <Input
             id={confirmId}
             type="password"
             autoComplete="new-password"
-            className="h-11 md:h-10"
+            className="h-12 rounded-xl px-4"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             required
@@ -256,7 +258,7 @@ export default function ResetPasswordPage() {
 
         <Button
           type="submit"
-          className="h-11 w-full md:h-10"
+          className="h-12 w-full rounded-full text-[0.9375rem]"
           disabled={authLoading}
         >
           {authLoading

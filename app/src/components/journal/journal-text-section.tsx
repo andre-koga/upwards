@@ -1,16 +1,18 @@
 import type { ReactNode } from "react";
-import { Flame, MapPin, Plus } from "lucide-react";
+import { Flame, MapPin, PenLine, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { LocationData } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
 
 interface JournalTextSectionProps {
-  /** The day's emoji; a quiet placeholder shows until one is chosen. */
+  /** The day's emoji; nothing shows until one is chosen. */
   emoji?: string;
-  /** Sits at the end of the heading row (the photo stack). */
+  /** Sits under the text (the photos, when a clip holds the top). */
   trailing?: ReactNode;
   title: string;
   text: string;
+  /** Today reads "How did today go?", another day "Nothing written". */
+  isToday?: boolean;
   /** Distinct places visited that day (unordered). */
   locations?: LocationData[];
   /** Opens the places editor (search / manage). */
@@ -19,73 +21,93 @@ interface JournalTextSectionProps {
   onPlacesMapClick?: () => void;
   /** Shown next to location when the day’s journal is complete. */
   journalCompletionStreak?: number | null;
+  /** Trailing controls on the footer row (heart, edit, versions). */
+  actions?: ReactNode;
 }
+
+const CHIP_CLASS =
+  "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border-0 bg-muted/70 px-3.5 text-left text-[0.8125rem] font-normal leading-none text-muted-foreground shadow-none";
 
 export default function JournalTextSection({
   emoji,
   trailing,
   title,
   text,
+  isToday = false,
   locations,
   onLocationsEditClick,
   onPlacesMapClick,
   journalCompletionStreak,
+  actions,
 }: JournalTextSectionProps) {
   const { t } = useTranslation("journal");
   const showStreak = typeof journalCompletionStreak === "number";
   const hasLocations = Boolean(locations?.length);
   const canEditLocations = typeof onLocationsEditClick === "function";
   const canOpenMap = typeof onPlacesMapClick === "function" && hasLocations;
-
-  const showMetaRow = canEditLocations || showStreak || hasLocations;
+  const isEmpty = !title && !text && !emoji;
 
   const streakLabel = t("journalStreak", {
     count: journalCompletionStreak ?? 0,
   });
 
-  const chipClassName =
-    "inline-flex h-6 max-w-full items-center gap-1 rounded-full px-2 text-left text-xs font-normal leading-none text-muted-foreground shadow-none";
-
   return (
-    <>
-      <div className="flex items-center gap-3">
-        <span
-          className={`flex h-12 w-12 shrink-0 items-center justify-center text-4xl leading-none ${emoji ? "" : "opacity-40 grayscale"}`}
-          aria-hidden
-        >
-          {emoji || "🙂"}
-        </span>
-        <h2
-          className={`flex min-h-12 min-w-0 flex-1 items-center break-words font-display text-3xl font-semibold leading-tight tracking-[-0.02em] ${
-            title ? "" : "text-muted-foreground"
-          }`}
-        >
-          {title || t("untitled")}
-        </h2>
-        {trailing ? <div className="shrink-0 pr-1">{trailing}</div> : null}
-      </div>
+    <div className="space-y-7">
+      {isEmpty ? (
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <p className="font-display text-[1.75rem] italic leading-[1.3] tracking-[-0.01em] text-foreground/85">
+            {isToday ? t("prompt.today") : t("prompt.past")}
+          </p>
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <PenLine className="h-3.5 w-3.5" aria-hidden />
+            {t("prompt.hint")}
+          </p>
+          {trailing ? <div className="w-full pt-3">{trailing}</div> : null}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex flex-col items-center text-center">
+            {emoji ? (
+              <span className="mb-3 text-5xl leading-none" aria-hidden>
+                {emoji}
+              </span>
+            ) : null}
+            <h2 className="break-words font-display text-[2rem] font-medium leading-[1.2] tracking-[-0.02em]">
+              <span className={title ? "" : "text-muted-foreground"}>
+                {title || t("untitled")}
+              </span>
+            </h2>
+            <span className="mt-5 h-px w-10 bg-foreground/25" aria-hidden />
+          </div>
 
-      <p
-        className={`w-full whitespace-pre-wrap text-left font-display text-lg leading-relaxed ${
-          text ? "" : "italic text-muted-foreground"
-        }`}
-      >
-        {text || t("noReflection")}
-      </p>
+          {text ? (
+            <p className="whitespace-pre-wrap text-left font-display text-[1.1875rem] leading-[1.85] text-foreground/85">
+              {text}
+            </p>
+          ) : (
+            <p className="text-center font-display text-lg italic text-muted-foreground">
+              {t("noReflection")}
+            </p>
+          )}
 
-      {showMetaRow && (
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+          {trailing ? <div className="pt-1">{trailing}</div> : null}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           {hasLocations
             ? locations!.map((loc, index) => {
                 const label = loc.displayName;
+                const key = `${index}-${label}-${loc.lat ?? ""}-${loc.lon ?? ""}`;
                 if (canOpenMap) {
                   return (
                     <Button
-                      key={`${index}-${label}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
+                      key={key}
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       onClick={onPlacesMapClick}
-                      className={chipClassName}
+                      className={CHIP_CLASS}
                       title={t("locations.openFullscreenMap")}
                       aria-label={`${label}. ${t("locations.openFullscreenMap")}`}
                     >
@@ -95,11 +117,7 @@ export default function JournalTextSection({
                   );
                 }
                 return (
-                  <span
-                    key={`${index}-${label}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
-                    className={`${chipClassName} border border-border`}
-                    title={label}
-                  >
+                  <span key={key} className={CHIP_CLASS} title={label}>
                     <MapPin className="h-3 w-3 shrink-0" />
                     <span className="min-w-0 truncate">{label}</span>
                   </span>
@@ -110,9 +128,9 @@ export default function JournalTextSection({
           {canEditLocations ? (
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={onLocationsEditClick}
-              className={chipClassName}
+              className={hasLocations ? `${CHIP_CLASS} w-8 px-0` : CHIP_CLASS}
               title={t("addLocationsVisited")}
               aria-label={t("addLocationsVisited")}
             >
@@ -129,7 +147,7 @@ export default function JournalTextSection({
 
           {showStreak && (
             <span
-              className="inline-flex shrink-0 items-center gap-0.5 tabular-nums"
+              className="inline-flex shrink-0 items-center gap-0.5 px-1 tabular-nums"
               title={streakLabel}
               aria-label={streakLabel}
             >
@@ -138,7 +156,8 @@ export default function JournalTextSection({
             </span>
           )}
         </div>
-      )}
-    </>
+        {actions}
+      </div>
+    </div>
   );
 }

@@ -49,7 +49,7 @@ export function FormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         size={size}
-        className={cn("p-4", contentClassName)}
+        className={cn("p-5", contentClassName)}
         overlayClassName={overlayClassName}
         onPointerDownOutside={onContentPointerDownOutside}
       >

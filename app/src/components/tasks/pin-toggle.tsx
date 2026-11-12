@@ -56,7 +56,7 @@ export function PinToggle({
         "h-8 w-8 shrink-0 rounded-md p-0 shadow-none",
         pinned
           ? "text-foreground"
-          : "text-muted-foreground/50 hover:text-foreground",
+          : "text-muted-foreground/35 hover:text-foreground",
         className
       )}
     >
