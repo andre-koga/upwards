@@ -241,7 +241,9 @@
       "closest": "Journal agrees most",
       "widest": "Widest gap"
     },
-    "balancedWord": "Balanced"
+    "balancedWord": "Balanced",
+    "journalPill_one": "Journal · {{count}} day",
+    "journalPill_other": "Journal · {{count}} days"
   },
   "journal": {
     "heading": "What your journal reads as",

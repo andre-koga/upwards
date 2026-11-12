@@ -57,7 +57,7 @@ export function RadarChart({ self, journal, last, tint }: RadarChartProps) {
       }`}
     >
       <svg
-        viewBox="0 0 420 305"
+        viewBox="-35 0 490 305"
         className="mx-auto block w-full max-w-[26rem] overflow-visible"
         aria-hidden="true"
       >

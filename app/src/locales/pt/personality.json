@@ -242,7 +242,10 @@
       "closest": "Diário concorda mais",
       "widest": "Maior diferença"
     },
-    "balancedWord": "Equilibrado"
+    "balancedWord": "Equilibrado",
+    "journalPill_one": "Diário · {{count}} dia",
+    "journalPill_many": "Diário · {{count}} dias",
+    "journalPill_other": "Diário · {{count}} dias"
   },
   "journal": {
     "heading": "O que o seu diário mostra",

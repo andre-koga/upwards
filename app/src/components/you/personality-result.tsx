@@ -49,6 +49,7 @@ export function PersonalityResult({
         self={scores}
         journal={reading?.scores ?? null}
         last={previous?.scores ?? null}
+        daysRead={reading?.days_read ?? null}
         takenOn={
           latest.completed_at
             ? formatDateShort(new Date(latest.completed_at))

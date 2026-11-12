@@ -1,6 +1,5 @@
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { AppPageShell } from "@/components/layout/app-page-shell";
 import { JournalReadingPanel } from "@/components/you/journal-reading-panel";
 import { PersonalityResult } from "@/components/you/personality-result";
 import { PersonalityTest } from "@/components/you/personality-test";
@@ -22,6 +21,26 @@ import { ITEM_COUNT } from "@/lib/personality/items";
 import { countAnswered } from "@/lib/personality/scoring";
 import { startSitting } from "@/lib/personality/store";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
+
+/**
+ * The page has no masthead of its own: the tab bar already says where you are,
+ * and a title above the portrait only pushes it down. The heading stays for
+ * screen readers.
+ */
+function YouLayout({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="space-y-6 px-2 pb-24 pt-6 md:p-4 md:pb-24">
+      <h1 className="sr-only">{title}</h1>
+      {children}
+    </div>
+  );
+}
 
 /**
  * Who you are. Reflective, so editorial: the same centred masthead as the
@@ -69,7 +88,7 @@ export default function YouPage() {
 
   if (testing) {
     return (
-      <AppPageShell title={t("title")} align="center">
+      <YouLayout title={t("title")}>
         <PersonalityTest
           key={testing.id}
           sitting={testing}
@@ -77,7 +96,7 @@ export default function YouPage() {
           onLeave={leaveTest}
           onDiscarded={leaveTest}
         />
-      </AppPageShell>
+      </YouLayout>
     );
   }
 
@@ -86,7 +105,7 @@ export default function YouPage() {
   const current = data?.current ?? null;
 
   return (
-    <AppPageShell title={t("title")} align="center">
+    <YouLayout title={t("title")}>
       {current && (
         <section
           aria-labelledby="resume-test"
@@ -181,6 +200,6 @@ export default function YouPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </AppPageShell>
+    </YouLayout>
   );
 }

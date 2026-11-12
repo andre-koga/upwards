@@ -9,6 +9,8 @@ interface ArchetypeHeroProps {
   journal: TraitScores | null;
   last: TraitScores | null;
   takenOn: string | null;
+  /** Days the journal reading covered, when a reading exists. */
+  daysRead: number | null;
 }
 
 /**
@@ -20,6 +22,7 @@ export function ArchetypeHero({
   journal,
   last,
   takenOn,
+  daysRead,
 }: ArchetypeHeroProps) {
   const { t } = useTranslation("personality");
   const name = typeName(self);
@@ -69,6 +72,20 @@ export function ArchetypeHero({
       />
 
       <div className="relative">
+        {(takenOn || daysRead !== null) && (
+          <ul className="mb-5 flex flex-wrap justify-center gap-2">
+            {takenOn && (
+              <li className="rounded-full border border-foreground/15 bg-background/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
+                {t("result.takenOn", { date: takenOn })}
+              </li>
+            )}
+            {daysRead !== null && (
+              <li className="rounded-full border border-foreground/15 bg-background/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
+                {t("result.journalPill", { count: daysRead })}
+              </li>
+            )}
+          </ul>
+        )}
         <p className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           {t("type.eyebrow")}
         </p>
@@ -148,12 +165,6 @@ export function ArchetypeHero({
             </li>
           )}
         </ul>
-
-        {takenOn && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            {t("result.takenOn", { date: takenOn })}
-          </p>
-        )}
       </div>
     </section>
   );
