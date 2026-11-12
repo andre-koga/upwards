@@ -7,7 +7,9 @@ import type {
   DailyEntry,
   JournalEntry,
   JournalEntryRevision,
+  JournalReading,
   Memory,
+  PersonalitySitting,
   OneTimeTask,
 } from "@/lib/db/types";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
@@ -250,6 +252,45 @@ export async function patchMemory(
   await saveMemory(
     { ...existing, ...patch, updated_at: patch.updated_at ?? now() },
     existing.updated_at
+  );
+}
+
+export async function savePersonalitySitting(
+  row: PersonalitySitting,
+  baseRevision?: string | null
+): Promise<void> {
+  await db.personalitySittings.put(row);
+  await writeProjection(
+    "personality_sittings",
+    row as unknown as Record<string, unknown>,
+    baseRevision
+  );
+}
+
+export async function patchPersonalitySitting(
+  id: string,
+  patch: Partial<PersonalitySitting>
+): Promise<PersonalitySitting | null> {
+  const existing = await db.personalitySittings.get(id);
+  if (!existing) return null;
+  const next = {
+    ...existing,
+    ...patch,
+    updated_at: patch.updated_at ?? now(),
+  };
+  await savePersonalitySitting(next, existing.updated_at);
+  return next;
+}
+
+export async function saveJournalReading(
+  row: JournalReading,
+  baseRevision?: string | null
+): Promise<void> {
+  await db.journalReadings.put(row);
+  await writeProjection(
+    "journal_readings",
+    row as unknown as Record<string, unknown>,
+    baseRevision
   );
 }
 
@@ -653,6 +694,16 @@ export async function importBackup(
   }
 
   await importRows(tables.memories, "memories", db.memories);
+  await importRows(
+    tables.personalitySittings,
+    "personality_sittings",
+    db.personalitySittings
+  );
+  await importRows(
+    tables.journalReadings,
+    "journal_readings",
+    db.journalReadings
+  );
 
   requestDebouncedSync();
   return summary;

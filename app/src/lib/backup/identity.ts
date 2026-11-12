@@ -131,6 +131,14 @@ export function remapBackupIdentity(
       id: mapId("memory", row.id),
       photo_paths: row.photo_paths ? row.photo_paths.map(owner) : null,
     })),
+    personalitySittings: t.personalitySittings.map((row) => ({
+      ...row,
+      id: mapId("personality_sitting", row.id),
+    })),
+    journalReadings: t.journalReadings.map((row) => ({
+      ...row,
+      id: mapId("journal_reading", row.id),
+    })),
     oneTimeTasks: t.oneTimeTasks.map((row) => ({
       ...withoutDroppedColumns("one_time_tasks", row),
       id: mapId("one_time_task", row.id),

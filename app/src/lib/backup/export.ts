@@ -54,6 +54,8 @@ async function readBackupTables(): Promise<BackupTables> {
     journalEntries,
     journalEntryRevisions,
     memories,
+    personalitySittings,
+    journalReadings,
     oneTimeTasks,
   ] = await Promise.all([
     db.activityGroups.toArray(),
@@ -63,6 +65,8 @@ async function readBackupTables(): Promise<BackupTables> {
     db.journalEntries.toArray(),
     db.journalEntryRevisions.toArray(),
     db.memories.toArray(),
+    db.personalitySittings.toArray(),
+    db.journalReadings.toArray(),
     db.oneTimeTasks.toArray(),
   ]);
   return {
@@ -73,6 +77,8 @@ async function readBackupTables(): Promise<BackupTables> {
     journalEntries,
     journalEntryRevisions,
     memories,
+    personalitySittings,
+    journalReadings,
     oneTimeTasks,
   };
 }
