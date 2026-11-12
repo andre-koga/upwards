@@ -149,14 +149,14 @@ describe("behaviourSignal", () => {
 
   it("looks back only as far as the chosen range", () => {
     const input = empty();
-    // Active every day for the last 14 days, then nothing until 60 days back.
-    for (let i = 0; i < 14; i++) input.daily.push(daily(day(i)));
-    for (let i = 55; i < 60; i++) input.daily.push(daily(day(i)));
-    expect(behaviourSignal(input, TODAY, 14)?.conscientiousness).toBe(100);
-    expect(behaviourSignal(input, TODAY, 30)?.conscientiousness).toBe(47);
-    // 19 active days over the 60 days of history, inside the 90-day range.
-    expect(behaviourSignal(input, TODAY, 90)?.detail.windowDays).toBe(60);
-    expect(behaviourSignal(input, TODAY, 90)?.conscientiousness).toBe(32);
+    // Active every day for the last 30 days, then nothing until 80 days back.
+    for (let i = 0; i < 30; i++) input.daily.push(daily(day(i)));
+    for (let i = 75; i < 80; i++) input.daily.push(daily(day(i)));
+    expect(behaviourSignal(input, TODAY, 30)?.conscientiousness).toBe(100);
+    // 35 active days over 80 days of history, inside both longer ranges.
+    expect(behaviourSignal(input, TODAY, 90)?.detail.windowDays).toBe(80);
+    expect(behaviourSignal(input, TODAY, 90)?.conscientiousness).toBe(44);
+    expect(behaviourSignal(input, TODAY, 180)?.detail.windowDays).toBe(80);
   });
 
   it("does not count days before the person started against them", () => {
@@ -172,8 +172,8 @@ describe("behaviourSignal", () => {
     const counts: Record<string, number> = {};
     for (let i = 0; i < 8; i++) counts[`a${i}`] = 1;
     for (let i = 0; i < 20; i++) input.daily.push(daily(day(i), counts));
-    expect(behaviourSignal(input, TODAY, 14)?.openness).toBe(100);
     expect(behaviourSignal(input, TODAY, 30)?.openness).toBe(67);
     expect(behaviourSignal(input, TODAY, 90)?.openness).toBe(40);
+    expect(behaviourSignal(input, TODAY, 180)?.openness).toBe(29);
   });
 });

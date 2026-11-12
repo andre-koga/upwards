@@ -13,7 +13,7 @@ import { fromDateString, toDateString } from "@/lib/time-utils";
  * Extraversion, agreeableness and neuroticism cannot be seen in habit data, so
  * they are left out rather than guessed.
  */
-export const BEHAVIOUR_RANGES = [14, 30, 90] as const;
+export const BEHAVIOUR_RANGES = [30, 90, 180] as const;
 export type BehaviourRange = (typeof BEHAVIOUR_RANGES)[number];
 export const DEFAULT_BEHAVIOUR_RANGE: BehaviourRange = 30;
 /**
@@ -21,9 +21,9 @@ export const DEFAULT_BEHAVIOUR_RANGE: BehaviourRange = 30;
  * range meets more of both, so its bar is higher, but not in step with the days.
  */
 export const VARIETY_TOP: Record<BehaviourRange, number> = {
-  14: 8,
   30: 12,
   90: 20,
+  180: 28,
 };
 /** Days of history needed before the signal means anything. */
 export const MIN_HISTORY_DAYS = 14;
