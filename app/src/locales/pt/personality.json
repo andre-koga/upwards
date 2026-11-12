@@ -184,6 +184,7 @@
       "provider_unreachable": "Não foi possível falar com o seu provedor de IA.",
       "provider_invalid": "A IA respondeu de um jeito que não deu para usar. Tente de novo.",
       "generic": "Não foi possível ler o seu diário. Tente de novo."
-    }
+    },
+    "modelFallback": "o seu modelo de IA"
   }
 }
