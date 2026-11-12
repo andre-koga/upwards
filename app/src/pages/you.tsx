@@ -138,23 +138,25 @@ export default function YouPage() {
       {data && !latest && !current && (
         <section
           aria-labelledby="you-empty"
-          className="mx-auto flex max-w-[20rem] flex-col items-center px-4 pt-10 text-center"
+          className="fixed inset-x-0 bottom-[var(--app-tab-bar-h,0px)] top-[var(--ios-status-shield,0px)] overflow-y-auto"
         >
-          <h2
-            id="you-empty"
-            className="font-display text-[1.625rem] italic leading-snug tracking-[-0.01em] text-foreground/85"
-          >
-            {t("empty.heading")}
-          </h2>
-          <p className="mt-4 font-display text-[1.0625rem] leading-relaxed text-muted-foreground">
-            {t("empty.body")}
-          </p>
-          <p className="mt-4 text-[0.9375rem] leading-relaxed text-muted-foreground">
-            {tp("test.intro")}
-          </p>
-          <Button type="button" className="mt-6" onClick={() => void begin()}>
-            {tp("test.start")}
-          </Button>
+          <div className="mx-auto flex min-h-full max-w-[20rem] flex-col items-center justify-center px-4 py-8 text-center">
+            <h2
+              id="you-empty"
+              className="font-display text-[1.625rem] italic leading-snug tracking-[-0.01em] text-foreground/85"
+            >
+              {t("empty.heading")}
+            </h2>
+            <p className="mt-4 font-display text-[1.0625rem] leading-relaxed text-muted-foreground">
+              {t("empty.body")}
+            </p>
+            <p className="mt-4 text-[0.9375rem] leading-relaxed text-muted-foreground">
+              {tp("test.intro")}
+            </p>
+            <Button type="button" className="mt-6" onClick={() => void begin()}>
+              {tp("test.start")}
+            </Button>
+          </div>
         </section>
       )}
 
