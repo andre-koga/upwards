@@ -214,6 +214,7 @@ export default function YouPage() {
             latest={latest}
             previous={previous}
             reading={data?.reading ?? null}
+            behaviour={data?.behaviour ?? null}
           />
           {!current && (
             <div className="flex justify-center pt-6">

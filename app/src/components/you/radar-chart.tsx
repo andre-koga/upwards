@@ -30,6 +30,8 @@ interface RadarChartProps {
   self: TraitScores;
   journal: TraitScores | null;
   last: TraitScores | null;
+  /** Habit-based marks on the traits they can speak to. */
+  behaviour?: Partial<Record<Trait, number>> | null;
   /** The two traits that shape the type tint the shape. */
   tint: [Trait, Trait];
 }
@@ -38,7 +40,13 @@ interface RadarChartProps {
  * The five traits as a pentagon. Drawn by hand in SVG: no chart library. The
  * picture is decorative; the wrapper carries every number as text.
  */
-export function RadarChart({ self, journal, last, tint }: RadarChartProps) {
+export function RadarChart({
+  self,
+  journal,
+  last,
+  behaviour = null,
+  tint,
+}: RadarChartProps) {
   const { t } = useTranslation("personality");
 
   const label = TRAITS.map(
@@ -53,6 +61,16 @@ export function RadarChart({ self, journal, last, tint }: RadarChartProps) {
           ? ` ${t("result.journal")}: ${TRAITS.map(
               (trait) => `${t(`traits.${trait}.name`)} ${journal[trait]}`
             ).join(", ")}.`
+          : ""
+      }${
+        behaviour
+          ? ` ${t("result.behaviour")}: ${TRAITS.filter(
+              (trait) => behaviour[trait] !== undefined
+            )
+              .map(
+                (trait) => `${t(`traits.${trait}.name`)} ${behaviour[trait]}`
+              )
+              .join(", ")}.`
           : ""
       }`}
     >
@@ -150,6 +168,23 @@ export function RadarChart({ self, journal, last, tint }: RadarChartProps) {
                 r={5.5}
                 fill={traitColor(trait)}
                 className="stroke-background"
+                strokeWidth={2}
+              />
+            );
+          })}
+          {TRAITS.map((trait, index) => {
+            const value = behaviour?.[trait];
+            if (value === undefined) return null;
+            const { x, y } = point(index, value);
+            return (
+              <rect
+                key={`behaviour-${trait}`}
+                x={x - 4.5}
+                y={y - 4.5}
+                width={9}
+                height={9}
+                transform={`rotate(45 ${x} ${y})`}
+                className="fill-background stroke-foreground"
                 strokeWidth={2}
               />
             );

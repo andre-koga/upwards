@@ -245,7 +245,20 @@
     "balancedWord": "Equilibrado",
     "journalPill_one": "Diário · {{count}} dia",
     "journalPill_many": "Diário · {{count}} dias",
-    "journalPill_other": "Diário · {{count}} dias"
+    "journalPill_other": "Diário · {{count}} dias",
+    "behaviour": "Seus hábitos",
+    "trackAriaBehaviour": "Seus hábitos {{behaviour}}.",
+    "habits": {
+      "conscientiousness": "Você registrou algo em {{active}} de {{total}} dias recentes.",
+      "openness": "Recentemente você fez {{activities}} e esteve em {{places}}.",
+      "activities_one": "{{count}} atividade",
+      "activities_many": "{{count}} atividades diferentes",
+      "activities_other": "{{count}} atividades diferentes",
+      "places_one": "{{count}} lugar",
+      "places_many": "{{count}} lugares diferentes",
+      "places_other": "{{count}} lugares diferentes"
+    },
+    "habitsNote": "Os losangos mostram seus hábitos nos últimos {{days}} dias, contados neste aparelho. Eles só falam de Abertura e Conscienciosidade; hábitos dizem pouco sobre os outros três."
   },
   "journal": {
     "heading": "O que o seu diário mostra",
@@ -276,5 +289,18 @@
       "generic": "Não foi possível ler o seu diário. Tente de novo."
     },
     "modelFallback": "o seu modelo de IA"
+  },
+  "words": {
+    "title": "Nas suas palavras",
+    "subtitle": "As frases em que a leitura se apoiou",
+    "open_one": "Ver a {{count}} frase das suas próprias palavras",
+    "open_many": "Ver as {{count}} frases das suas próprias palavras",
+    "open_other": "Ver as {{count}} frases das suas próprias palavras",
+    "empty": "Ainda sem frases. Leia seu diário na página Você e as frases em que a leitura se apoia aparecerão aqui.",
+    "backToYou": "Voltar para Você",
+    "back": "Voltar para Você",
+    "sounds": "Isso soa como {{trait}}",
+    "fromDay": "De {{date}}",
+    "dayChanged": "De um dia que você mudou depois"
   }
 }
