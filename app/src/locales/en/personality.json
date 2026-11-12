@@ -296,5 +296,11 @@
     "sounds": "Sounds like {{trait}}",
     "fromDay": "From {{date}}",
     "dayChanged": "From a day you have since changed"
+  },
+  "habitsRange": {
+    "label": "Look back at my habits over",
+    "option_one": "{{count}} day",
+    "option_other": "{{count}} days",
+    "empty": "Not enough logged days in this range for your habits to show. Try a longer one, or keep logging."
   }
 }

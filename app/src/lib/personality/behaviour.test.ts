@@ -52,10 +52,12 @@ describe("behaviourSignal", () => {
 
   it("counts the share of days with something logged", () => {
     const input = empty();
-    // 15 of the last 30 days, every other day.
+    // 15 of the last 30 days, every other day; a quiet record 29 days back.
     for (let i = 0; i < 30; i += 2) input.daily.push(daily(day(i)));
+    input.daily.push(daily(day(29), null));
     const result = behaviourSignal(input, TODAY);
     expect(result?.detail.activeDays).toBe(15);
+    expect(result?.detail.windowDays).toBe(30);
     expect(result?.conscientiousness).toBe(50);
   });
 
@@ -143,5 +145,35 @@ describe("behaviourSignal", () => {
     const input = empty();
     for (let i = 40; i < 80; i++) input.daily.push(daily(day(i)));
     expect(behaviourSignal(input, TODAY)).toBeNull();
+  });
+
+  it("looks back only as far as the chosen range", () => {
+    const input = empty();
+    // Active every day for the last 14 days, then nothing until 60 days back.
+    for (let i = 0; i < 14; i++) input.daily.push(daily(day(i)));
+    for (let i = 55; i < 60; i++) input.daily.push(daily(day(i)));
+    expect(behaviourSignal(input, TODAY, 14)?.conscientiousness).toBe(100);
+    expect(behaviourSignal(input, TODAY, 30)?.conscientiousness).toBe(47);
+    // 19 active days over the 60 days of history, inside the 90-day range.
+    expect(behaviourSignal(input, TODAY, 90)?.detail.windowDays).toBe(60);
+    expect(behaviourSignal(input, TODAY, 90)?.conscientiousness).toBe(32);
+  });
+
+  it("does not count days before the person started against them", () => {
+    const input = empty();
+    for (let i = 0; i < 20; i++) input.daily.push(daily(day(i)));
+    const result = behaviourSignal(input, TODAY, 90);
+    expect(result?.detail.windowDays).toBe(20);
+    expect(result?.conscientiousness).toBe(100);
+  });
+
+  it("raises the bar for variety on a longer range", () => {
+    const input = empty();
+    const counts: Record<string, number> = {};
+    for (let i = 0; i < 8; i++) counts[`a${i}`] = 1;
+    for (let i = 0; i < 20; i++) input.daily.push(daily(day(i), counts));
+    expect(behaviourSignal(input, TODAY, 14)?.openness).toBe(100);
+    expect(behaviourSignal(input, TODAY, 30)?.openness).toBe(67);
+    expect(behaviourSignal(input, TODAY, 90)?.openness).toBe(40);
   });
 });

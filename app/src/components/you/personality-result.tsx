@@ -3,7 +3,15 @@ import { useTranslation } from "react-i18next";
 import { ArchetypeHero } from "@/components/you/archetype-hero";
 import { TraitTrack } from "@/components/you/trait-track";
 import type { JournalReading, PersonalitySitting } from "@/lib/db/types";
-import type { Behaviour } from "@/lib/personality/behaviour";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/ui/segmented-control";
+import {
+  BEHAVIOUR_RANGES,
+  type Behaviour,
+  type BehaviourRange,
+} from "@/lib/personality/behaviour";
 import { band, gapDirection } from "@/lib/personality/bands";
 import { journalComparison } from "@/lib/personality/highlights";
 import { TRAITS, type Trait } from "@/lib/personality/items";
@@ -15,6 +23,8 @@ interface PersonalityResultProps {
   previous: PersonalitySitting | null;
   reading: JournalReading | null;
   behaviour: Behaviour | null;
+  range: BehaviourRange;
+  onRangeChange: (range: BehaviourRange) => void;
 }
 
 function TraitDot({ trait }: { trait: Trait }) {
@@ -33,6 +43,8 @@ export function PersonalityResult({
   previous,
   reading,
   behaviour,
+  range,
+  onRangeChange,
 }: PersonalityResultProps) {
   const { t } = useTranslation("personality");
   const scores = latest.scores;
@@ -211,11 +223,32 @@ export function PersonalityResult({
         })}
       </ul>
 
-      {behaviour && (
-        <p className="px-2 text-center text-xs leading-relaxed text-muted-foreground">
-          {t("result.habitsNote", { days: behaviour.detail.windowDays })}
+      <section aria-labelledby="habits-range" className="space-y-3 px-2">
+        <h3
+          id="habits-range"
+          className="text-center text-sm text-foreground/85"
+        >
+          {t("habitsRange.label")}
+        </h3>
+        <SegmentedControl
+          aria-labelledby="habits-range"
+          value={String(range)}
+          onValueChange={(value) =>
+            onRangeChange(Number(value) as BehaviourRange)
+          }
+        >
+          {BEHAVIOUR_RANGES.map((days) => (
+            <SegmentedControlItem key={days} value={String(days)}>
+              {t("habitsRange.option", { count: days })}
+            </SegmentedControlItem>
+          ))}
+        </SegmentedControl>
+        <p className="text-center text-xs leading-relaxed text-muted-foreground">
+          {behaviour
+            ? t("result.habitsNote", { days: behaviour.detail.windowDays })
+            : t("habitsRange.empty")}
         </p>
-      )}
+      </section>
 
       {quoteCount > 0 && (
         <Link

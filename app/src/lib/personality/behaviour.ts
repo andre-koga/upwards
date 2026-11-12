@@ -13,9 +13,18 @@ import { fromDateString, toDateString } from "@/lib/time-utils";
  * Extraversion, agreeableness and neuroticism cannot be seen in habit data, so
  * they are left out rather than guessed.
  */
-export const BEHAVIOUR_WINDOW_DAYS = 30;
-/** Different activities plus places in the window that read as the top. */
-export const VARIETY_TOP = 12;
+export const BEHAVIOUR_RANGES = [14, 30, 90] as const;
+export type BehaviourRange = (typeof BEHAVIOUR_RANGES)[number];
+export const DEFAULT_BEHAVIOUR_RANGE: BehaviourRange = 30;
+/**
+ * Different activities plus places that read as the top of the scale. A longer
+ * range meets more of both, so its bar is higher, but not in step with the days.
+ */
+export const VARIETY_TOP: Record<BehaviourRange, number> = {
+  14: 8,
+  30: 12,
+  90: 20,
+};
 /** Days of history needed before the signal means anything. */
 export const MIN_HISTORY_DAYS = 14;
 /** Days with something logged needed before the signal means anything. */
@@ -39,6 +48,7 @@ export interface Behaviour {
   /** 0-100: how much variety the window held. */
   openness: number;
   detail: {
+    /** Days counted: the range, or fewer when the history is shorter. */
     windowDays: number;
     activeDays: number;
     /** Days in the window that were not break days. */
@@ -61,37 +71,44 @@ function daysBetween(from: string, to: string): number {
 export function behaviourSignal(
   input: BehaviourInput,
   today: string,
-  windowDays = BEHAVIOUR_WINDOW_DAYS
+  range: BehaviourRange = DEFAULT_BEHAVIOUR_RANGE
 ): Behaviour | null {
-  const oldest = (() => {
-    const start = fromDateString(today);
-    start.setDate(start.getDate() - (windowDays - 1));
-    return toDateString(start);
-  })();
+  // Days before the person started using the app do not count against them.
+  const dates = [
+    ...input.periods
+      .filter((row) => !row.deleted_at)
+      .map((row) => toDateString(new Date(row.start_time))),
+    ...input.daily.filter((row) => !row.deleted_at).map((row) => row.date),
+    ...input.journal
+      .filter((row) => !row.deleted_at)
+      .map((row) => row.entry_date),
+  ];
+  if (dates.length === 0) return null;
+  const earliest = dates.reduce((min, date) => (date < min ? date : min));
+  const history = daysBetween(earliest, today) + 1;
+  if (history < MIN_HISTORY_DAYS) return null;
+  const windowDays = Math.min(range, history);
+
+  const start = fromDateString(today);
+  start.setDate(start.getDate() - (windowDays - 1));
+  const oldest = toDateString(start);
   const inWindow = (date: string) => date >= oldest && date <= today;
 
   const active = new Set<string>();
   const breakDays = new Set<string>();
   const activities = new Set<string>();
   const places = new Set<string>();
-  let earliest: string | null = null;
-  const seen = (date: string) => {
-    if (earliest === null || date < earliest) earliest = date;
-  };
 
   for (const period of input.periods) {
     if (period.deleted_at) continue;
     const date = toDateString(new Date(period.start_time));
-    seen(date);
     if (!inWindow(date)) continue;
     active.add(date);
     activities.add(period.activity_id);
   }
 
   for (const row of input.daily) {
-    if (row.deleted_at) continue;
-    seen(row.date);
-    if (!inWindow(row.date)) continue;
+    if (row.deleted_at || !inWindow(row.date)) continue;
     if (row.is_break_day) breakDays.add(row.date);
     const done = Object.entries(row.task_counts ?? {}).filter(
       ([, count]) => count > 0
@@ -103,9 +120,7 @@ export function behaviourSignal(
   }
 
   for (const entry of input.journal) {
-    if (entry.deleted_at) continue;
-    seen(entry.entry_date);
-    if (!inWindow(entry.entry_date)) continue;
+    if (entry.deleted_at || !inWindow(entry.entry_date)) continue;
     if ((entry.title ?? "").trim() || (entry.text_content ?? "").trim()) {
       active.add(entry.entry_date);
     }
@@ -115,8 +130,6 @@ export function behaviourSignal(
     }
   }
 
-  if (earliest === null) return null;
-  if (daysBetween(earliest, today) + 1 < MIN_HISTORY_DAYS) return null;
   if (active.size < MIN_ACTIVE_DAYS) return null;
 
   const countedDays = Math.max(1, windowDays - breakDays.size);
@@ -124,7 +137,9 @@ export function behaviourSignal(
   const activeDays = [...active].filter((day) => !breakDays.has(day)).length;
   return {
     conscientiousness: clamp((activeDays / countedDays) * 100),
-    openness: clamp(((activities.size + places.size) / VARIETY_TOP) * 100),
+    openness: clamp(
+      ((activities.size + places.size) / VARIETY_TOP[range]) * 100
+    ),
     detail: {
       windowDays,
       activeDays,
@@ -137,6 +152,7 @@ export function behaviourSignal(
 
 /** Reads the rows the signal needs from this device. */
 export async function loadBehaviour(
+  range: BehaviourRange = DEFAULT_BEHAVIOUR_RANGE,
   today = toDateString(new Date())
 ): Promise<Behaviour | null> {
   const [periods, daily, journal] = await Promise.all([
@@ -144,5 +160,5 @@ export async function loadBehaviour(
     db.dailyEntries.toArray(),
     db.journalEntries.toArray(),
   ]);
-  return behaviourSignal({ periods, daily, journal }, today);
+  return behaviourSignal({ periods, daily, journal }, today, range);
 }
