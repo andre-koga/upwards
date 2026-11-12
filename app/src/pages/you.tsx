@@ -43,6 +43,73 @@ function YouLayout({
 }
 
 /**
+ * Content held in the middle of the free space between the top of the screen
+ * and the tab bar. It scrolls on very short screens instead of being cut off.
+ */
+function CenteredScreen({
+  labelledBy,
+  children,
+}: {
+  labelledBy: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-labelledby={labelledBy}
+      className="fixed inset-x-0 bottom-[var(--app-tab-bar-h,0px)] top-[var(--ios-status-shield,0px)] overflow-y-auto"
+    >
+      <div className="mx-auto flex min-h-full max-w-[20rem] flex-col items-center justify-center px-4 py-8 text-center">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * A test that was started and not finished. On its own it fills the screen;
+ * above a finished result (a retake in progress) it is a short note.
+ */
+function ResumePrompt({
+  centered,
+  title,
+  left,
+  action,
+  onResume,
+}: {
+  centered: boolean;
+  title: string;
+  left: string;
+  action: string;
+  onResume: () => void;
+}) {
+  const body = (
+    <>
+      <h2
+        id="resume-test"
+        className="font-display text-[1.375rem] italic leading-snug text-foreground/85"
+      >
+        {title}
+      </h2>
+      <p className="mt-2 text-[0.9375rem] text-muted-foreground">{left}</p>
+      <Button type="button" className="mt-4" onClick={onResume}>
+        {action}
+      </Button>
+    </>
+  );
+  if (centered) {
+    return <CenteredScreen labelledBy="resume-test">{body}</CenteredScreen>;
+  }
+  return (
+    <section
+      aria-labelledby="resume-test"
+      className="mx-auto flex max-w-[20rem] flex-col items-center px-4 pt-4 text-center"
+    >
+      {body}
+    </section>
+  );
+}
+
+/**
  * Who you are. Reflective, so editorial: the same centred masthead as the
  * Journal, and serif text set on the page rather than in a box. The portrait
  * comes from a short self-test scored on this device, and, only if asked, from
@@ -107,57 +174,38 @@ export default function YouPage() {
   return (
     <YouLayout title={t("title")}>
       {current && (
-        <section
-          aria-labelledby="resume-test"
-          className="mx-auto flex max-w-[20rem] flex-col items-center px-4 pt-4 text-center"
-        >
-          <h2
-            id="resume-test"
-            className="font-display text-[1.375rem] italic leading-snug text-foreground/85"
-          >
-            {tp("test.resumeTitle")}
-          </h2>
-          <p className="mt-2 text-[0.9375rem] text-muted-foreground">
-            {tp("test.resumeLeft", {
-              count: ITEM_COUNT - countAnswered(current.answers),
-            })}
-          </p>
-          <Button
-            type="button"
-            className="mt-4"
-            onClick={() => {
-              setTesting(current);
-              scrollAppToTop();
-            }}
-          >
-            {tp("test.resume")}
-          </Button>
-        </section>
+        <ResumePrompt
+          centered={!latest}
+          title={tp("test.resumeTitle")}
+          left={tp("test.resumeLeft", {
+            count: ITEM_COUNT - countAnswered(current.answers),
+          })}
+          action={tp("test.resume")}
+          onResume={() => {
+            setTesting(current);
+            scrollAppToTop();
+          }}
+        />
       )}
 
       {data && !latest && !current && (
-        <section
-          aria-labelledby="you-empty"
-          className="fixed inset-x-0 bottom-[var(--app-tab-bar-h,0px)] top-[var(--ios-status-shield,0px)] overflow-y-auto"
-        >
-          <div className="mx-auto flex min-h-full max-w-[20rem] flex-col items-center justify-center px-4 py-8 text-center">
-            <h2
-              id="you-empty"
-              className="font-display text-[1.625rem] italic leading-snug tracking-[-0.01em] text-foreground/85"
-            >
-              {t("empty.heading")}
-            </h2>
-            <p className="mt-4 font-display text-[1.0625rem] leading-relaxed text-muted-foreground">
-              {t("empty.body")}
-            </p>
-            <p className="mt-4 text-[0.9375rem] leading-relaxed text-muted-foreground">
-              {tp("test.intro")}
-            </p>
-            <Button type="button" className="mt-6" onClick={() => void begin()}>
-              {tp("test.start")}
-            </Button>
-          </div>
-        </section>
+        <CenteredScreen labelledBy="you-empty">
+          <h2
+            id="you-empty"
+            className="font-display text-[1.625rem] italic leading-snug tracking-[-0.01em] text-foreground/85"
+          >
+            {t("empty.heading")}
+          </h2>
+          <p className="mt-4 font-display text-[1.0625rem] leading-relaxed text-muted-foreground">
+            {t("empty.body")}
+          </p>
+          <p className="mt-4 text-[0.9375rem] leading-relaxed text-muted-foreground">
+            {tp("test.intro")}
+          </p>
+          <Button type="button" className="mt-6" onClick={() => void begin()}>
+            {tp("test.start")}
+          </Button>
+        </CenteredScreen>
       )}
 
       {latest && (
