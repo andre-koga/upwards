@@ -4,7 +4,7 @@ import { logError } from "@/lib/error-utils";
 import { patchActivity, patchActivityGroup } from "@/lib/sync/mutate-synced";
 
 /**
- * Archive state is one timestamp on the row (product-scope.md §2.10): set when
+ * Archive state is one timestamp on the row: set when
  * archived, cleared on restore. The item stays on days before it and drops off
  * from the next day on.
  */

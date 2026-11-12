@@ -62,7 +62,7 @@ export default function JournalArchiveGallery({
   if (items.length === 0) {
     return (
       <div className="space-y-2 py-12 text-center">
-        <p className="font-display text-xl font-semibold">
+        <p className="font-display text-xl font-medium">
           {t("archive.gallery.empty")}
         </p>
         <p className="text-sm text-muted-foreground">
@@ -80,7 +80,7 @@ export default function JournalArchiveGallery({
           <section key={month.key} aria-labelledby={headingId}>
             <h2
               id={headingId}
-              className="pb-2 font-display text-lg font-semibold tracking-tight"
+              className="pb-2 font-display text-lg font-medium tracking-tight"
             >
               {formatArchiveMonthLabel(month.year, month.month)}
             </h2>

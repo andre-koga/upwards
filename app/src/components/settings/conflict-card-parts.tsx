@@ -15,7 +15,7 @@ export function ConflictFrame({
   children: ReactNode;
 }) {
   return (
-    <article className="space-y-3 rounded-lg border border-border bg-card p-3">
+    <article className="space-y-4 px-4 py-4">
       <header className="flex items-start gap-2">
         <GitMerge
           className="mt-0.5 h-4 w-4 shrink-0 text-gold-text"
@@ -51,7 +51,7 @@ export function ChoiceButton({
       type="button"
       variant={variant}
       size="sm"
-      className="h-11 md:h-8"
+      className="h-9 rounded-full px-4"
       disabled={busy != null || disabled}
       title={title}
       onClick={onClick}

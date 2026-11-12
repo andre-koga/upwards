@@ -12,6 +12,7 @@
   "install": "Instalar",
   "dismissInstall": "Agora não",
   "addQuickMemo": "Adicionar memo rápido",
+  "quickMemoShort": "Memo",
   "back": "Voltar",
   "backToSettings": "Voltar às configurações",
   "whatsNewPage": {
@@ -46,7 +47,8 @@
   "tabs": {
     "today": "Hoje",
     "journal": "Diário",
-    "you": "Você"
+    "you": "Você",
+    "settings": "Configurações"
   },
   "palette": {
     "open": "Buscar e comandos",
@@ -72,8 +74,8 @@
     "keywords": {
       "today": "tarefas cronômetro sessões dia atividades hoje",
       "journal": "entradas diário reflexões fotos lugares memórias lembranças",
-      "you": "bússola identidade metas estrela-guia perfil você início",
-      "settings": "configurações conta idioma aparência sincronização",
+      "you": "perfil personalidade identidade retrato você",
+      "settings": "configurações conta idioma aparência sincronização atualização registros backup",
       "whatsNew": "novidades atualizações versões",
       "errorLogs": "registros erros depuração logs",
       "syncIssues": "conflitos pendentes sincronização revisão",

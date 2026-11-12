@@ -276,7 +276,7 @@ export function FormTimeField({
   };
 
   return (
-    <div className={cn("space-y-1", containerClassName)}>
+    <div className={cn("space-y-1.5", containerClassName)}>
       <Label
         htmlFor={`${id}-time`}
         className={cn(dialogFieldLabelClassName, labelClassName)}
@@ -291,7 +291,7 @@ export function FormTimeField({
         onClick={openDial}
         className={cn(
           dialogFormControlButtonClassName,
-          "justify-between font-mono",
+          "justify-between tabular-nums",
           triggerClassName
         )}
       >
@@ -321,7 +321,7 @@ export function FormTimeField({
           size="sm"
           data-no-swipe
           overlayClassName="z-[85] bg-black/50 backdrop-blur-none"
-          className="z-[90] rounded-2xl p-4 sm:max-w-sm"
+          className="z-[90] p-5 sm:max-w-sm"
           onTouchStart={(event) => event.stopPropagation()}
           onTouchMove={(event) => event.stopPropagation()}
           onTouchEnd={(event) => event.stopPropagation()}
@@ -337,7 +337,7 @@ export function FormTimeField({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <div className="mx-auto w-full rounded-full bg-muted">
+            <div className="mx-auto w-full max-w-[17rem]">
               <svg
                 ref={dialRef}
                 viewBox="0 0 240 240"
@@ -368,8 +368,8 @@ export function FormTimeField({
                 <circle
                   cx={center}
                   cy={center}
-                  r={radius + 8}
-                  fill="hsl(var(--card))"
+                  r={radius + 16}
+                  fill="hsl(var(--muted) / 0.7)"
                 />
                 {(activeUnit === "hour"
                   ? Array.from({ length: 12 }, (_, index) => index)
@@ -443,11 +443,11 @@ export function FormTimeField({
               </svg>
             </div>
 
-            <div className="grid grid-cols-4 gap-1.5 pt-2">
+            <div className="grid grid-cols-4 gap-1.5 pt-3">
               <Button
                 type="button"
                 variant={activeUnit === "hour" ? "default" : "outline"}
-                className="font-mono"
+                className="h-12 rounded-xl text-lg font-medium tabular-nums shadow-none"
                 onClick={() => setActiveUnit("hour")}
               >
                 {draft.hour12}
@@ -455,7 +455,7 @@ export function FormTimeField({
               <Button
                 type="button"
                 variant={activeUnit === "minute" ? "default" : "outline"}
-                className="font-mono"
+                className="h-12 rounded-xl text-lg font-medium tabular-nums shadow-none"
                 onClick={() => setActiveUnit("minute")}
               >
                 {draft.minutes}
@@ -463,7 +463,7 @@ export function FormTimeField({
               <Button
                 type="button"
                 variant={activeUnit === "second" ? "default" : "outline"}
-                className="font-mono"
+                className="h-12 rounded-xl text-lg font-medium tabular-nums shadow-none"
                 onClick={() => setActiveUnit("second")}
               >
                 {draft.seconds}
@@ -471,7 +471,7 @@ export function FormTimeField({
               <Button
                 type="button"
                 variant="outline"
-                className="font-semibold"
+                className="h-12 rounded-xl text-base font-medium"
                 onClick={() =>
                   updateFromDraft({
                     meridiem: draft.meridiem === "AM" ? "PM" : "AM",
@@ -486,7 +486,7 @@ export function FormTimeField({
               <Button
                 type="button"
                 variant="outline"
-                className="text-sm font-medium"
+                className="h-10 rounded-xl text-sm font-medium text-muted-foreground"
                 onClick={() => {
                   setDraft((prev) => adjustDraftMinutes(prev, -5));
                   setActiveUnit("minute");
@@ -498,7 +498,7 @@ export function FormTimeField({
               <Button
                 type="button"
                 variant="outline"
-                className="text-sm font-medium"
+                className="h-10 rounded-xl text-sm font-medium text-muted-foreground"
                 onClick={() => {
                   setDraft((prev) => adjustDraftMinutes(prev, 5));
                   setActiveUnit("minute");

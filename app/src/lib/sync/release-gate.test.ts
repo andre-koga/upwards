@@ -78,9 +78,9 @@ describe("client_outdated detection", () => {
   });
 
   it("throws a typed error so callers can skip marking ops failed", () => {
-    expect(() =>
-      throwIfClientOutdated({ message: "client_outdated" })
-    ).toThrow(ClientOutdatedError);
+    expect(() => throwIfClientOutdated({ message: "client_outdated" })).toThrow(
+      ClientOutdatedError
+    );
     expect(() =>
       throwIfClientOutdated({ message: "permission denied" })
     ).not.toThrow();

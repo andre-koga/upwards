@@ -13,7 +13,7 @@ export function ShortcutChip({
     <kbd
       aria-hidden
       className={cn(
-        "rounded border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground",
+        "rounded border border-border bg-muted/60 px-1.5 py-0.5 text-[11px] tabular-nums leading-none text-muted-foreground",
         className
       )}
     >

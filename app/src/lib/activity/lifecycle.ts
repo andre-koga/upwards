@@ -1,7 +1,7 @@
 import { endOfDay, startOfDay } from "@/lib/time-utils";
 
 /**
- * Lifecycle as timestamps, not an event log (product-scope.md §2.10). An
+ * Lifecycle as timestamps, not an event log. An
  * activity or group is archived or deleted from a moment onward; past days
  * before that moment still show it, so history keeps its retired items.
  *

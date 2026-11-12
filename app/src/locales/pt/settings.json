@@ -115,7 +115,7 @@
     "backToSignIn": "Voltar para entrar"
   },
   "sync": {
-    "title": "Sincronização na nuvem",
+    "title": "Sincronização e atualizações",
     "description": "Seus dados são sincronizados automaticamente. Abra Problemas de sincronização para revisar conflitos ou erros.",
     "issuesLink": "Problemas de sincronização",
     "issuesBadge": "{{count}} problemas de sincronização abertos",
@@ -146,6 +146,11 @@
       "unavailable": "Atualizações do app não estão disponíveis neste navegador.",
       "offline": "Você está offline. Tente de novo quando estiver conectado.",
       "signedOut": "Entre para sincronizar este dispositivo."
+    },
+    "indicator": {
+      "syncing": "Sincronizando",
+      "offline": "Offline. As mudanças ficam salvas aqui e sincronizam quando você se reconectar.",
+      "failed": "Não foi possível sincronizar. Abrir problemas de sincronização."
     }
   },
   "ai": {
@@ -392,7 +397,8 @@
         "tableCaption": "As duas versões deste(a) {{entity}}, campo a campo"
       },
       "differs": "diferente"
-    }
+    },
+    "repeated": "{{count}}×"
   },
   "about": {
     "title": "Sobre",
@@ -451,15 +457,6 @@
       "clear": "Remover aniversário"
     }
   },
-  "panels": {
-    "label": "Seções das configurações",
-    "general": "Geral",
-    "journal": "Diário",
-    "account": "Conta e sincronização",
-    "ai": "IA",
-    "data": "Seus dados",
-    "about": "Sobre"
-  },
   "setup": {
     "autoLocation": {
       "label": "Adicionar onde estou ao dia de hoje",
@@ -477,5 +474,18 @@
     "description_other": "Ambas começam desativadas até você decidir, e você pode mudar qualquer uma quando quiser nas Configurações.",
     "footer_one": "Não vamos perguntar de novo. Você encontra isto em Configurações, depois Diário.",
     "footer_other": "Não vamos perguntar de novo. Você encontra isto em Configurações, depois Diário."
+  },
+  "groups": {
+    "general": "Geral"
+  },
+  "logsPage": {
+    "title": "Registros de erro",
+    "subtitle_one": "{{count}} registro das últimas 24 horas",
+    "subtitle_other": "{{count}} registros das últimas 24 horas",
+    "groupTitle": "Últimas 24 horas",
+    "loading": "Carregando registros…",
+    "empty": "Nada foi registrado no último dia.",
+    "copied": "Copiado",
+    "copyHint": "Toque em um registro para copiá-lo."
   }
 }

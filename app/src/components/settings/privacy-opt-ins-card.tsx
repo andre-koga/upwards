@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Clapperboard, MapPin } from "lucide-react";
 
-import { Label } from "@/components/ui/label";
-import { SettingsSection } from "@/components/ui/settings-section";
+import {
+  SettingsGroup,
+  SettingsRow,
+} from "@/components/settings/settings-list";
 import { Switch } from "@/components/ui/switch";
 import { updateAccountSettings } from "@/lib/account-settings";
 import {
@@ -36,60 +38,46 @@ export function PrivacyOptInsCard() {
   };
 
   return (
-    <SettingsSection
-      title={t("optIns.title")}
-      icon={MapPin}
-      description={t("optIns.description")}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <Label htmlFor="opt-in-auto-location" className="leading-snug">
-            {t("optIns.autoLocation.label")}
-          </Label>
-          <p
-            id="opt-in-auto-location-hint"
-            className="text-xs leading-relaxed text-muted-foreground"
-          >
-            {t("optIns.autoLocation.hint")}
+    <SettingsGroup title={t("optIns.title")} footer={t("optIns.description")}>
+      <SettingsRow
+        htmlFor="opt-in-auto-location"
+        icon={MapPin}
+        label={t("optIns.autoLocation.label")}
+        hint={t("optIns.autoLocation.hint")}
+        hintId="opt-in-auto-location-hint"
+        control={
+          <Switch
+            id="opt-in-auto-location"
+            aria-describedby="opt-in-auto-location-hint"
+            checked={autoLocation === true}
+            disabled={checking}
+            onCheckedChange={(next) => void handleAutoLocation(next)}
+          />
+        }
+      >
+        {problem ? (
+          <p role="alert" className="text-xs text-destructive">
+            {t(`optIns.autoLocation.${problem}`)}
           </p>
-          {problem ? (
-            <p role="alert" className="text-xs text-destructive">
-              {t(`optIns.autoLocation.${problem}`)}
-            </p>
-          ) : null}
-        </div>
-        <Switch
-          id="opt-in-auto-location"
-          aria-describedby="opt-in-auto-location-hint"
-          checked={autoLocation === true}
-          disabled={checking}
-          onCheckedChange={(next) => void handleAutoLocation(next)}
-        />
-      </div>
-
-      <div className="flex items-start justify-between gap-4 border-t border-border pt-3">
-        <div className="min-w-0 space-y-1">
-          <Label
-            htmlFor="opt-in-daily-clip"
-            className="flex items-center gap-1.5 leading-snug"
-          >
-            <Clapperboard className="h-3.5 w-3.5" aria-hidden />
-            {t("optIns.dailyClip.label")}
-          </Label>
-          <p
-            id="opt-in-daily-clip-hint"
-            className="text-xs leading-relaxed text-muted-foreground"
-          >
-            {t("optIns.dailyClip.hint")}
-          </p>
-        </div>
-        <Switch
-          id="opt-in-daily-clip"
-          aria-describedby="opt-in-daily-clip-hint"
-          checked={dailyClip === true}
-          onCheckedChange={(next) => updateAccountSettings({ dailyClip: next })}
-        />
-      </div>
-    </SettingsSection>
+        ) : null}
+      </SettingsRow>
+      <SettingsRow
+        htmlFor="opt-in-daily-clip"
+        icon={Clapperboard}
+        label={t("optIns.dailyClip.label")}
+        hint={t("optIns.dailyClip.hint")}
+        hintId="opt-in-daily-clip-hint"
+        control={
+          <Switch
+            id="opt-in-daily-clip"
+            aria-describedby="opt-in-daily-clip-hint"
+            checked={dailyClip === true}
+            onCheckedChange={(next) =>
+              updateAccountSettings({ dailyClip: next })
+            }
+          />
+        }
+      />
+    </SettingsGroup>
   );
 }

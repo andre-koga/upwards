@@ -48,10 +48,10 @@ export default function JournalArchiveMemory({
         <div className="flex w-12 shrink-0 flex-col items-center gap-1 pt-1">
           {showDate ? (
             <>
-              <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground">
+              <span className="font-display text-4xl font-medium tabular-nums leading-none tracking-tight text-foreground">
                 {date.getDate()}
               </span>
-              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="text-xs font-medium text-muted-foreground">
                 {weekday}
               </span>
             </>
@@ -62,24 +62,24 @@ export default function JournalArchiveMemory({
           >
             <History className="size-4" />
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             {t("kicker")}
           </span>
         </div>
 
-        <div className="min-w-0 overflow-hidden rounded-xl border border-dashed border-border">
+        <div className="-mx-1 min-w-0 overflow-hidden rounded-xl">
           <div className="flex items-start gap-1">
             <button
               type="button"
               onClick={() => onEdit(memory)}
-              className="min-w-0 flex-1 space-y-1 px-3 py-2.5 text-left"
+              className="min-w-0 flex-1 space-y-1 px-1 pb-2 pt-1 text-left"
               aria-label={t("editNamed", { label: label || t("untitled") })}
             >
-              <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
+              <h2 className="font-display text-[1.375rem] font-medium italic leading-snug tracking-[-0.01em]">
                 {label || t("untitled")}
               </h2>
               {text ? (
-                <p className="whitespace-pre-wrap font-crimson text-base leading-relaxed text-muted-foreground">
+                <p className="whitespace-pre-wrap font-display text-[1.0625rem] leading-relaxed text-foreground/75">
                   {text}
                 </p>
               ) : null}
@@ -98,7 +98,7 @@ export default function JournalArchiveMemory({
           </div>
 
           {photoPaths.length > 0 ? (
-            <div className="px-3 pb-2.5">
+            <div className="px-1 pb-2">
               <JournalArchivePhotoGrid photoPaths={photoPaths} />
             </div>
           ) : null}

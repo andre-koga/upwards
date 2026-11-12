@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Archive, Download, Loader2, Upload } from "lucide-react";
+import { Download, Loader2, Upload } from "lucide-react";
 import { ConfirmFormDialog } from "@/components/forms";
 import { Button } from "@/components/ui/button";
-import { SettingsSection } from "@/components/ui/settings-section";
+import { SettingsGroup } from "@/components/settings/settings-list";
 import { useAsyncData } from "@/hooks/use-async-data";
 import { BACKUP_JSON_NAME } from "@/lib/backup/format";
 import { ZipBlobWriter } from "@/lib/backup/zip";
@@ -60,86 +60,85 @@ export function RecoveryBundlesSection() {
   const userId = getCachedUserId();
 
   return (
-    <SettingsSection
-      title={t("syncIssues.sections.recovery.title")}
-      icon={Archive}
-      description={t("syncIssues.sections.recovery.description")}
-    >
-      <div className="space-y-2">
-        {bundles.map((bundle) => {
-          const foreign =
-            bundle.source_user_id !== null && bundle.source_user_id !== userId;
-          const result = outcome[bundle.saved_at];
-          const status = bundle.imported_at
-            ? t("syncIssues.sections.recovery.imported", {
-                when: new Date(bundle.imported_at).toLocaleString(),
-              })
-            : result === "blocked"
-              ? t("syncIssues.sections.recovery.blocked")
-              : result === "failed" || bundle.last_error
-                ? t("syncIssues.sections.recovery.failed")
-                : bundle.reason === "unowned_data" || foreign
-                  ? t("syncIssues.sections.recovery.needsChoice")
-                  : t("syncIssues.sections.recovery.waiting");
-          const canRemove =
-            !!bundle.imported_at || downloaded.has(bundle.saved_at);
-          return (
-            <div
-              key={bundle.saved_at}
-              className="rounded-lg border border-border bg-background p-3"
-            >
-              <p className="text-sm font-medium">
-                {t(`syncIssues.sections.recovery.reason.${bundle.reason}`, {
-                  when: new Date(bundle.saved_at).toLocaleString(),
-                })}
-              </p>
-              <p
-                className="mt-1 text-sm text-muted-foreground"
-                role={result === "failed" ? "alert" : undefined}
-              >
-                {status}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {!bundle.imported_at ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    disabled={busy !== null}
-                    onClick={() => void handleImport(bundle)}
-                  >
-                    {busy === bundle.saved_at ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Upload className="h-3.5 w-3.5" />
-                    )}
-                    {t("syncIssues.sections.recovery.import")}
-                  </Button>
-                ) : null}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => void handleDownload(bundle)}
+    <>
+      <SettingsGroup
+        title={t("syncIssues.sections.recovery.title")}
+        footer={t("syncIssues.sections.recovery.description")}
+      >
+        <>
+          {bundles.map((bundle) => {
+            const foreign =
+              bundle.source_user_id !== null &&
+              bundle.source_user_id !== userId;
+            const result = outcome[bundle.saved_at];
+            const status = bundle.imported_at
+              ? t("syncIssues.sections.recovery.imported", {
+                  when: new Date(bundle.imported_at).toLocaleString(),
+                })
+              : result === "blocked"
+                ? t("syncIssues.sections.recovery.blocked")
+                : result === "failed" || bundle.last_error
+                  ? t("syncIssues.sections.recovery.failed")
+                  : bundle.reason === "unowned_data" || foreign
+                    ? t("syncIssues.sections.recovery.needsChoice")
+                    : t("syncIssues.sections.recovery.waiting");
+            const canRemove =
+              !!bundle.imported_at || downloaded.has(bundle.saved_at);
+            return (
+              <div key={bundle.saved_at} className="px-4 py-3.5">
+                <p className="text-[0.9375rem] leading-snug">
+                  {t(`syncIssues.sections.recovery.reason.${bundle.reason}`, {
+                    when: new Date(bundle.saved_at).toLocaleString(),
+                  })}
+                </p>
+                <p
+                  className="mt-1 text-xs leading-relaxed text-muted-foreground"
+                  role={result === "failed" ? "alert" : undefined}
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  {t("syncIssues.sections.recovery.download")}
-                </Button>
-                {canRemove ? (
+                  {status}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {!bundle.imported_at ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1 rounded-full px-3.5"
+                      disabled={busy !== null}
+                      onClick={() => void handleImport(bundle)}
+                    >
+                      {busy === bundle.saved_at ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Upload className="h-3.5 w-3.5" />
+                      )}
+                      {t("syncIssues.sections.recovery.import")}
+                    </Button>
+                  ) : null}
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-destructive"
-                    onClick={() => setRemoveTarget(bundle)}
+                    className="h-8 gap-1 rounded-full px-3.5"
+                    onClick={() => void handleDownload(bundle)}
                   >
-                    {t("syncIssues.sections.recovery.remove")}
+                    <Download className="h-3.5 w-3.5" />
+                    {t("syncIssues.sections.recovery.download")}
                   </Button>
-                ) : null}
+                  {canRemove ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 rounded-full px-3.5 text-destructive"
+                      onClick={() => setRemoveTarget(bundle)}
+                    >
+                      {t("syncIssues.sections.recovery.remove")}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </>
+      </SettingsGroup>
       <ConfirmFormDialog
         open={removeTarget != null}
         onOpenChange={(open) => {
@@ -157,6 +156,6 @@ export function RecoveryBundlesSection() {
           );
         }}
       />
-    </SettingsSection>
+    </>
   );
 }

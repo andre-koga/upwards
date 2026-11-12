@@ -6,7 +6,6 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { settingsPanelPath } from "@/lib/settings/panels";
 import { useAuth } from "@/lib/use-auth";
 
 const emailId = "forgot-password-email";
@@ -42,7 +41,7 @@ export default function ForgotPasswordPage() {
   // (a link opened from inside the app), it is Settings.
   const back = isAuthed ? (
     <Link
-      to={settingsPanelPath("account")}
+      to={"/settings"}
       className="inline-flex min-h-11 items-center underline underline-offset-2 hover:text-foreground"
     >
       {tNav("backToSettings")}
@@ -77,25 +76,27 @@ export default function ForgotPasswordPage() {
       {sent ? (
         <div
           role="status"
-          className="rounded-2xl border border-border bg-card p-5"
+          className="rounded-2xl bg-muted/45 px-5 py-4 text-center"
         >
           <p className="text-sm text-green">
             {t("auth.forgotPasswordPage.sent", { email: email.trim() })}
           </p>
         </div>
       ) : (
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4 rounded-2xl border border-border bg-card p-5"
-        >
-          <div className="space-y-2">
-            <Label htmlFor={emailId}>{tCommon("email")}</Label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-1.5">
+            <Label
+              className="px-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground"
+              htmlFor={emailId}
+            >
+              {tCommon("email")}
+            </Label>
             <Input
               id={emailId}
               type="email"
               autoComplete="email"
               placeholder={tCommon("emailPlaceholder")}
-              className="h-11 md:h-10"
+              className="h-12 rounded-xl px-4"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -110,7 +111,7 @@ export default function ForgotPasswordPage() {
 
           <Button
             type="submit"
-            className="h-11 w-full md:h-10"
+            className="h-12 w-full rounded-full text-[0.9375rem]"
             disabled={authLoading}
           >
             {authLoading

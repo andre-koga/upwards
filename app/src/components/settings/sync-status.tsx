@@ -1,115 +1,79 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { syncEngine } from "@/lib/sync";
 import { useAuth } from "@/lib/use-auth";
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { SyncStatusPill } from "./sync-status-pill";
-import { logError } from "@/lib/error-utils";
 import { cn } from "@/lib/utils";
 
-const FADE_OUT_DELAY_MS = 2200;
+/** Keeps a very quick sync on screen long enough to register. */
+const LINGER_MS = 600;
 
+/**
+ * Sync status that stays out of the way. While a sync runs, a hairline sweeps
+ * along the top edge. Nothing shows once it's done. Two states stay on screen
+ * because they need attention: a muted dot while offline, and a terracotta dot
+ * after a failed sync that opens Sync issues. Manual sync lives in Settings.
+ */
 export default function SyncStatus() {
+  const { t } = useTranslation("settings", { keyPrefix: "sync.indicator" });
   const [syncState, setSyncState] = useState(syncEngine.getState());
-  const { isSupabaseConfigured, isAuthed } = useAuth();
+  const { isSupabaseConfigured } = useAuth();
   const isOnline = useOnlineStatus();
-  const [isVisible, setIsVisible] = useState(false);
-  const hideTimerRef = useRef<number | null>(null);
-  const prevIsSyncingRef = useRef(syncState.isSyncing);
+  const [lingering, setLingering] = useState(false);
 
-  const clearHideTimer = () => {
-    if (hideTimerRef.current !== null) {
-      window.clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
-    }
-  };
+  useEffect(() => syncEngine.subscribe(setSyncState), []);
 
+  const syncing = syncState.isSyncing;
   useEffect(() => {
-    const unsubscribe = syncEngine.subscribe(setSyncState);
-
-    return () => {
-      clearHideTimer();
-      unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    const wasSyncing = prevIsSyncingRef.current;
-
-    if (syncState.isSyncing) {
-      clearHideTimer();
-      /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing with external sync engine */
-      setIsVisible(true);
-      prevIsSyncingRef.current = true;
+    if (syncing) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- mirrors the external sync engine */
+      setLingering(true);
       return;
     }
+    const timer = window.setTimeout(() => setLingering(false), LINGER_MS);
+    return () => window.clearTimeout(timer);
+  }, [syncing]);
 
-    const justFinished = wasSyncing && !syncState.isSyncing;
-    const hasResult = Boolean(syncState.lastSyncAt || syncState.lastError);
-    if (justFinished || (syncState.lastError && hasResult)) {
-      setIsVisible(true);
-      clearHideTimer();
-      hideTimerRef.current = window.setTimeout(() => {
-        setIsVisible(false);
-      }, FADE_OUT_DELAY_MS);
-    }
+  if (!isSupabaseConfigured) return null;
 
-    prevIsSyncingRef.current = syncState.isSyncing;
-  }, [syncState.isSyncing, syncState.lastSyncAt, syncState.lastError]);
-
-  const handleManualSync = async () => {
-    setIsVisible(true);
-    try {
-      await syncEngine.sync();
-    } catch (error) {
-      logError("Manual sync failed", error);
-    }
-  };
-
-  if (!isSupabaseConfigured) {
-    return null;
-  }
+  const showSweep = isOnline && (syncing || lingering);
+  const failed = isOnline && !syncing && Boolean(syncState.lastError);
 
   return (
-    <div
-      className={cn(
-        // Below the sticky day header (h-14), and below the iPhone status
-        // shield, so it does not sit in the notch scrim or on the timer.
-        "fixed right-3 top-[calc(var(--ios-status-shield)+4.25rem)] z-50 transition-[visibility] duration-300 md:top-16",
-        isVisible
-          ? "pointer-events-auto visible"
-          : "pointer-events-none invisible"
-      )}
-    >
-      <SyncStatusPill
-        syncState={syncState}
-        isOnline={isOnline}
-        isAuthed={isAuthed}
-        onManualSync={handleManualSync}
-      />
+    <>
+      <span role="status" className="sr-only">
+        {showSweep ? t("syncing") : ""}
+      </span>
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none fixed inset-x-0 top-[var(--ios-status-shield,0px)] z-50 h-0.5 overflow-hidden transition-opacity duration-500",
+          showSweep ? "opacity-100" : "opacity-0"
+        )}
+      >
+        <div className="sync-sweep h-full w-1/3 rounded-full bg-foreground/30" />
+      </div>
 
-      {isOnline && syncState.lastError && (
-        <div className="absolute right-0 top-11 w-72 rounded-lg border border-destructive bg-background p-3 shadow-xl">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-            <div className="flex-1">
-              <p className="mb-1 text-xs font-semibold text-destructive">
-                Sync Error
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {syncState.lastError}
-              </p>
-              <Link
-                to="/settings/sync-issues"
-                className="mt-2 inline-block text-xs font-medium text-destructive underline-offset-2 hover:underline"
-              >
-                View sync issues
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      {failed ? (
+        <Link
+          to="/settings/sync-issues"
+          className="fixed left-1 top-[calc(var(--ios-status-shield,0px)+0.25rem)] z-50 flex h-6 w-6 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          title={t("failed")}
+          aria-label={t("failed")}
+        >
+          <span className="h-2 w-2 rounded-full bg-terracotta" />
+        </Link>
+      ) : !isOnline ? (
+        <span
+          role="img"
+          className="fixed left-1 top-[calc(var(--ios-status-shield,0px)+0.25rem)] z-50 flex h-6 w-6 items-center justify-center"
+          title={t("offline")}
+          aria-label={t("offline")}
+        >
+          <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
+        </span>
+      ) : null}
+    </>
   );
 }

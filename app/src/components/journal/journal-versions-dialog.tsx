@@ -109,11 +109,11 @@ function VersionsList({
           {t("versions.loadError")}
         </p>
       ) : revisions.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
+        <p className="py-8 text-center font-display text-[1.0625rem] italic text-muted-foreground">
           {t("versions.empty")}
         </p>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-foreground/[0.07]">
           {revisions.map((revision) => {
             const when = formatRevisionMoment(revision.created_at);
             const change = summarizeJournalChange(
@@ -203,7 +203,7 @@ function VersionBody({ revision }: { revision: JournalEntryRevision }) {
                 return (
                   <span
                     key={path}
-                    className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-muted text-xs text-muted-foreground"
+                    className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-muted text-xs text-muted-foreground"
                   >
                     {url ? (
                       <img
@@ -226,7 +226,7 @@ function VersionBody({ revision }: { revision: JournalEntryRevision }) {
                 </span>
               ) : null}
               {revision.video_path ? (
-                <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                <span className="rounded-full bg-muted/70 px-2.5 py-0.5 text-xs text-muted-foreground">
                   {t("versions.clip")}
                 </span>
               ) : null}

@@ -38,7 +38,7 @@ export interface CompileResult {
  * regenerated whenever the clips change.
  *
  * Video only for now: sound from sixty one-second slices is not meaningful, and
- * the spike in product-scope.md §2.5 is about whether the join survives on a
+ * the spike is about whether the join survives on a
  * phone. A clip that cannot be read is skipped and counted, not fatal.
  */
 export async function compileClips(

@@ -17,7 +17,7 @@ const buttonVariants = cva(
         destructiveOutline:
           "border border-destructive bg-background text-destructive shadow-sm transition-colors hover:bg-destructive/10",
         outline:
-          "border border-border bg-muted/60 text-foreground shadow-none transition-colors hover:bg-muted",
+          "border border-transparent bg-muted/70 text-foreground shadow-none transition-colors hover:bg-muted",
         secondary:
           "bg-secondary text-secondary-foreground shadow-sm transition-colors hover:bg-muted",
         ghost: "transition-colors hover:bg-muted",
@@ -27,7 +27,7 @@ const buttonVariants = cva(
           "border border-dashed border-border bg-transparent text-muted-foreground shadow-none transition-colors hover:bg-muted",
         /** Task row completion control — incomplete state. */
         taskTodo:
-          "rounded-full border border-border bg-transparent text-muted-foreground shadow-none transition-colors hover:bg-muted hover:text-foreground",
+          "rounded-full border-[1.5px] border-[hsl(var(--line-strong)/0.35)] bg-transparent text-muted-foreground shadow-none transition-colors hover:border-[hsl(var(--line-strong)/0.6)] hover:bg-muted hover:text-foreground",
         /** Task row completion control — complete state. */
         taskComplete:
           "rounded-full border border-primary bg-primary text-primary-foreground shadow-none transition-colors hover:bg-[color-mix(in_srgb,hsl(var(--primary))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--primary))_88%,white)]",

@@ -8,7 +8,6 @@ import type {
   JournalEntry,
   JournalEntryRevision,
   Memory,
-  CompassItem,
   OneTimeTask,
   AppLog,
   SyncPendingOperation,
@@ -19,7 +18,7 @@ import type {
 export const LOCAL_DB_NAME = "okhabit";
 
 /**
- * The one local schema (product-scope.md §2.10). There are no upgrade steps:
+ * The one local schema. There are no upgrade steps:
  * a database older than `MIN_UPGRADABLE_VERSION` never reaches Dexie, because
  * `prepareLocalDatabase()` moves its rows into a recovery bundle and deletes
  * it first. A v32 database already holds the cutover model (the server
@@ -27,7 +26,7 @@ export const LOCAL_DB_NAME = "okhabit";
  * by diffing the stores: the retired tables are dropped and nothing is
  * rewritten.
  */
-export const BASELINE_VERSION = 34;
+export const BASELINE_VERSION = 35;
 export const MIN_UPGRADABLE_VERSION = 32;
 
 export const BASELINE_STORES = {
@@ -38,7 +37,6 @@ export const BASELINE_STORES = {
   journalEntries: "id, entry_date, is_bookmarked, deleted_at",
   journalEntryRevisions: "id, entry_date, created_at",
   memories: "id, deleted_at, created_at",
-  compassItems: "id, kind, archived_at, deleted_at, created_at",
   oneTimeTasks:
     "id, date, is_completed, is_pinned, due_date, deleted_at, created_at",
   appLogs: "id, created_at, level",
@@ -56,7 +54,6 @@ class UpwardsDB extends Dexie {
   journalEntries!: Table<JournalEntry>;
   journalEntryRevisions!: Table<JournalEntryRevision>;
   memories!: Table<Memory>;
-  compassItems!: Table<CompassItem>;
   oneTimeTasks!: Table<OneTimeTask>;
   appLogs!: Table<AppLog>;
   syncPendingOperations!: Table<SyncPendingOperation>;

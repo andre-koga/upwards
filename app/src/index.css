@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400..700;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -7,16 +7,16 @@
 @layer base {
   :root {
     color-scheme: light;
-    /* Brand palette (design-and-branding.md §2.3). HSL channels, so opacity
+    /* Brand palette. HSL channels, so opacity
        modifiers work: bg-paper/70. Change a value here and nowhere else. */
-    --canvas: 39 39% 93%;
-    --paper: 43 100% 99%;
-    --canvas-deep: 39 40% 89%;
-    --line: 37 28% 85%;
+    --canvas: 40 38% 94%;
+    --paper: 43 60% 98%;
+    --canvas-deep: 38 32% 89%;
+    --line: 36 24% 86%;
     --line-strong: 34 13% 49%;
-    --ink: 28 24% 14%;
-    --ink-muted: 30 11% 34%;
-    --ink-faint: 32 8% 39%;
+    --ink: 25 22% 15%;
+    --ink-muted: 28 11% 33%;
+    --ink-faint: 30 9% 37%;
     --sage: 120 20% 90%;
     --green: 155 24% 32%;
     --green-deep: 157 27% 21%;
@@ -52,7 +52,7 @@
     --chart-4: var(--lavender);
     --chart-5: var(--ink-muted);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
     /* Overlay stacking: chrome < sheet < dialog < popover < lightbox */
     --z-chrome: 40;
     --z-floating: 50;
@@ -65,7 +65,7 @@
     /* Overridden on html.ios-standalone. 0 everywhere else. */
     --ios-status-shield: 0px;
 
-    /* The AI gradient (design-and-branding.md §4.1). Defined once, here, and
+    /* The AI gradient. Defined once, here, and
        used only through lib/ai/ai-visual.ts. The stops are fixed colors, not
        theme tokens: the surface is dark in light and dark mode alike, so the
        near-white text on it (--on-ai) keeps its contrast in both. */
@@ -90,17 +90,17 @@
   }
   .dark {
     color-scheme: dark;
-    /* Brand palette (design-and-branding.md §2.3). HSL channels, so opacity
+    /* Brand palette. HSL channels, so opacity
        modifiers work: bg-paper/70. Change a value here and nowhere else. */
-    --canvas: 30 10% 9%;
-    --paper: 30 9% 12%;
-    --canvas-deep: 30 10% 7%;
-    --line: 30 8% 20%;
-    --line-strong: 32 8% 50%;
-    --ink: 40 30% 90%;
-    --ink-muted: 35 10% 68%;
-    --ink-faint: 35 7% 56%;
-    --sage: 145 12% 19%;
+    --canvas: 28 14% 9%;
+    --paper: 28 12% 12%;
+    --canvas-deep: 28 14% 7%;
+    --line: 28 10% 18%;
+    --line-strong: 30 9% 46%;
+    --ink: 38 34% 89%;
+    --ink-muted: 34 12% 66%;
+    --ink-faint: 33 9% 54%;
+    --sage: 148 14% 18%;
     --green: 151 23% 61%;
     --green-deep: 147 26% 85%;
     --terracotta: 16 64% 66%;
@@ -122,7 +122,7 @@
     --secondary-foreground: var(--ink);
     --muted: var(--canvas-deep);
     --muted-foreground: var(--ink-muted);
-    --accent: 30 8% 16%;
+    --accent: 28 11% 15%;
     --accent-foreground: var(--ink);
     --destructive: 5 78% 69%;
     --destructive-foreground: 154 32% 9%;
@@ -184,8 +184,9 @@
     @apply bg-background;
   }
   body {
-    @apply select-none bg-background text-foreground;
+    @apply select-none bg-background font-sans text-foreground antialiased;
     -webkit-touch-callout: none;
+    text-rendering: optimizeLegibility;
   }
   input,
   textarea,
@@ -278,5 +279,24 @@ html.ios-standalone [data-ios-top-chrome] {
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
+  }
+}
+
+/* The sync hairline: a short segment sweeping along the top edge. */
+@keyframes sync-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+.sync-sweep {
+  animation: sync-sweep 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sync-sweep {
+    width: 100%;
+    animation: none;
   }
 }

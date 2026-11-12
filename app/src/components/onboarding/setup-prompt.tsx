@@ -25,7 +25,7 @@ import {
 
 /**
  * Asks, once, about the two things that are off until chosen: adding where you
- * are to today, and the daily clip (product-scope.md §2.5, §2.7). Both stay in
+ * are to today, and the daily clip. Both stay in
  * Settings afterwards, so this is a friendly place to decide, never the only one.
  *
  * It asks only what is unanswered, and only after the account has said what it

@@ -9,7 +9,7 @@ function modalIsOpen(): boolean {
 }
 
 /**
- * Desktop shortcuts (design-and-branding.md §6): ⌘/Ctrl+K toggles the palette,
+ * Desktop shortcuts: ⌘/Ctrl+K toggles the palette,
  * ⌘/Ctrl+1–4 open the tabs. Every action is also reachable by pointer and by
  * Tab, so these are accelerators, not the only path.
  */

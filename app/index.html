@@ -59,20 +59,14 @@
           if (iOS && standalone) {
             document.documentElement.classList.add("ios-standalone");
           }
-          var palette = localStorage.getItem("upwards-color-palette");
-          if (palette) {
-            document.documentElement.setAttribute("data-palette", palette);
-          }
         } catch (e) {
           /* ignore */
         }
       })();
     </script>
     <title>Upwards</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
   <body>
     <!--

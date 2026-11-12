@@ -38,7 +38,8 @@
     "emptyHelper": "Escreva uma reflexão em Hoje, ou adicione uma memória com o botão +, e ela aparece aqui.",
     "noResults": "Nada encontrado",
     "noResultsHelper": "Tente outras palavras, filtros, um emoji ou uma data.",
-    "resultCount": "{{count}} encontrados",
+    "resultCount_one": "{{count}} momento encontrado",
+    "resultCount_other": "{{count}} momentos encontrados",
     "loadingMore": "Carregando mais…",
     "end": "Você chegou ao começo.",
     "closePhoto": "Fechar",
@@ -243,5 +244,10 @@
       "plain": "Seu aniversário",
       "withAge": "Seu {{ordinal}} aniversário"
     }
+  },
+  "prompt": {
+    "today": "Como foi o seu dia?",
+    "past": "Nada escrito neste dia.",
+    "hint": "Toque para escrever"
   }
 }

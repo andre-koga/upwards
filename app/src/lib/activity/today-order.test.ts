@@ -112,56 +112,6 @@ describe("orderActivitiesForToday", () => {
   });
 });
 
-describe("orderActivitiesForToday with an AI ranking", () => {
-  const list = () => [
-    activity("a", { order_index: 0 }),
-    activity("b", { order_index: 1 }),
-    activity("c", { order_index: 2 }),
-    activity("d", { order_index: 3 }),
-  ];
-
-  it("orders the open rows by the ranking", () => {
-    expect(
-      ids(orderActivitiesForToday(list(), {}, ["c", "a", "b", "d"]))
-    ).toEqual(["c", "a", "b", "d"]);
-  });
-
-  it("keeps pins first and done rows last, whatever the ranking says", () => {
-    const rows = [
-      activity("a", { order_index: 0 }),
-      activity("b", { order_index: 1, is_pinned: true }),
-      activity("c", { order_index: 2 }),
-      activity("d", { order_index: 3 }),
-    ];
-    expect(
-      ids(orderActivitiesForToday(rows, { c: 1 }, ["c", "d", "a", "b"]))
-    ).toEqual(["b", "d", "a", "c"]);
-  });
-
-  it("puts rows the ranking has not seen after it, in stored order", () => {
-    expect(ids(orderActivitiesForToday(list(), {}, ["d", "b"]))).toEqual([
-      "d",
-      "b",
-      "a",
-      "c",
-    ]);
-  });
-
-  it("ignores ids that are no longer on today's list", () => {
-    expect(ids(orderActivitiesForToday(list(), {}, ["gone", "b"]))).toEqual([
-      "b",
-      "a",
-      "c",
-      "d",
-    ]);
-  });
-
-  it("is the plain order with an empty or missing ranking", () => {
-    const plain = ids(orderActivitiesForToday(list(), {}));
-    expect(ids(orderActivitiesForToday(list(), {}, []))).toEqual(plain);
-  });
-});
-
 describe("orderActivitiesForToday with done habits kept in place", () => {
   it("leaves a done habit where the stored order puts it", () => {
     const list = [
@@ -170,9 +120,7 @@ describe("orderActivitiesForToday with done habits kept in place", () => {
       activity("c", { order_index: 2 }),
     ];
     expect(
-      ids(
-        orderActivitiesForToday(list, { a: 1 }, undefined, { doneLast: false })
-      )
+      ids(orderActivitiesForToday(list, { a: 1 }, { doneLast: false }))
     ).toEqual(["a", "b", "c"]);
     expect(ids(orderActivitiesForToday(list, { a: 1 }))).toEqual([
       "b",
@@ -186,23 +134,9 @@ describe("orderActivitiesForToday with done habits kept in place", () => {
       activity("a", { order_index: 0 }),
       activity("b", { order_index: 1, is_pinned: true }),
     ];
-    expect(
-      ids(orderActivitiesForToday(list, {}, undefined, { doneLast: false }))
-    ).toEqual(["b", "a"]);
-  });
-
-  it("drops the AI ranking back to the stored order", () => {
-    const list = [
-      activity("a", { order_index: 0 }),
-      activity("b", { order_index: 1 }),
-      activity("c", { order_index: 2 }),
-    ];
-    expect(ids(orderActivitiesForToday(list, {}, ["c", "b", "a"]))).toEqual([
-      "c",
-      "b",
-      "a",
-    ]);
-    expect(ids(orderActivitiesForToday(list, {}))).toEqual(["a", "b", "c"]);
+    expect(ids(orderActivitiesForToday(list, {}, { doneLast: false }))).toEqual(
+      ["b", "a"]
+    );
   });
 });
 
@@ -251,7 +185,7 @@ describe("planActivityMove", () => {
     expect(canMoveActivity(shown, "open", 1, counts)).toBe(false);
 
     const inPlace = { doneLast: false };
-    const flat = orderActivitiesForToday(all, counts, undefined, inPlace);
+    const flat = orderActivitiesForToday(all, counts, inPlace);
     expect(planActivityMove(all, flat, "open", 1, counts, inPlace)).toEqual([
       { id: "open", order_index: 2 },
       { id: "done", order_index: 1 },

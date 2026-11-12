@@ -8,7 +8,7 @@ interface SectionLabelProps extends ComponentPropsWithoutRef<"p"> {
   children: ReactNode;
 }
 
-/** Overline-style label for in-page sections. */
+/** Quiet sentence-case label for in-page sections. */
 export function SectionLabel({
   asChild = false,
   className,
@@ -19,7 +19,7 @@ export function SectionLabel({
   return (
     <Comp
       className={cn(
-        "text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+        "text-[0.8125rem] font-medium text-muted-foreground",
         className
       )}
       {...props}

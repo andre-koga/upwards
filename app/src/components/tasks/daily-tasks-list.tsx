@@ -25,16 +25,13 @@ import {
   planActivityMove,
 } from "@/lib/activity/today-order";
 import { setDoneLast, useDoneLast } from "@/lib/today-order-preference";
-import { getActivityDisplayName } from "@/lib/activity";
 import { now } from "@/lib/db";
 import { logError } from "@/lib/error-utils";
 import { patchActivity } from "@/lib/sync/mutate-synced";
 import {
   TodayOrderControls,
-  TodayOrderStatus,
   type TodayOrderState,
 } from "./today-order-controls";
-import { useAiTodayOrder } from "./hooks/use-ai-today-order";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
@@ -118,37 +115,28 @@ export default function DailyTasksList({
     handleStartActivity(activityId);
   }, [isToday, activityToStartOnToday, handleStartActivity]);
   const pausedTaskIdSet = new Set(pausedTaskIds);
-  const getName = useCallback(
-    (activity: Activity) =>
-      getActivityDisplayName(activity, getGroup(activity)),
-    [getGroup]
-  );
-  const aiOrder = useAiTodayOrder({
-    enabled: isToday,
-    today: todayDateString(),
-    activities: dailyActivities,
-    getName,
-    counts: taskCounts,
-    streaks: activityStreaks,
-  });
   const doneLast = useDoneLast();
   const orderOptions = useMemo(() => ({ doneLast }), [doneLast]);
   // Pinned first, then not yet done (unless done habits stay in place), then
-  // the AI's order while the person is looking at one, else their own stored
-  // order. Pins always win.
+  // the person's own stored order.
   const orderedActivities = useMemo(
-    () =>
-      orderActivitiesForToday(
-        dailyActivities,
-        taskCounts,
-        aiOrder.ranking,
-        orderOptions
-      ),
-    [dailyActivities, taskCounts, aiOrder.ranking, orderOptions]
+    () => orderActivitiesForToday(dailyActivities, taskCounts, orderOptions),
+    [dailyActivities, taskCounts, orderOptions]
   );
-  const aiOrderInView = aiOrder.generatedAt !== null;
+  // Progress counts what can be finished today: not avoid habits (a full count
+  // there is a slip), not anytime activities, not habits paused for the day.
+  const progressItems = dailyActivities.filter(
+    (activity) =>
+      activity.routine !== "never" &&
+      activity.routine !== "anytime" &&
+      !pausedTaskIds.includes(activity.id)
+  );
+  const progressDone = progressItems.filter(
+    (activity) =>
+      (taskCounts[activity.id] || 0) >= (activity.completion_target ?? 1)
+  ).length;
   const [reorderRequested, setReorderRequested] = useState(false);
-  const reordering = isToday && reorderRequested && !aiOrderInView;
+  const reordering = isToday && reorderRequested;
   const moveInFlight = useRef(false);
 
   // A reload after a move hands back fresh rows; until then a second tap would
@@ -232,14 +220,6 @@ export default function DailyTasksList({
   };
 
   const orderState: TodayOrderState = {
-    aiCanOrder: aiOrder.canOrder,
-    aiAvailable: aiOrder.available,
-    aiLoading: aiOrder.loading,
-    aiError: aiOrder.error,
-    aiGeneratedAt: aiOrder.generatedAt,
-    aiStale: aiOrder.stale,
-    onAiOrder: () => void aiOrder.rank(),
-    onAiReset: aiOrder.reset,
     canArrange: dailyActivities.length > 1,
     canReorder: isToday,
     reordering,
@@ -249,10 +229,11 @@ export default function DailyTasksList({
   };
 
   return (
-    <div className="flex flex-col gap-3 md:gap-5">
+    <div className="flex flex-col gap-8">
       {(oneTimeTasks.length > 0 || isToday) && (
         <TodaySection
           label={t("sections.memos")}
+          meta={oneTimeTasks.length > 0 ? oneTimeTasks.length : undefined}
           aside={
             <Button
               type="button"
@@ -270,6 +251,11 @@ export default function DailyTasksList({
             </Button>
           }
         >
+          {oneTimeTasks.length === 0 ? (
+            <p className="py-1 text-sm text-muted-foreground">
+              {t("memosEmpty")}
+            </p>
+          ) : null}
           {oneTimeTasks.map((task) => (
             <TodayRow key={task.id}>
               <OneTimeTaskItem
@@ -291,12 +277,29 @@ export default function DailyTasksList({
       {(loading || dailyActivities.length > 0) && (
         <TodaySection
           label={t("sections.forToday")}
+          meta={
+            !loading && progressItems.length > 0
+              ? t("progress", {
+                  done: progressDone,
+                  total: progressItems.length,
+                })
+              : undefined
+          }
+          progress={
+            !loading && progressItems.length > 0
+              ? progressDone / progressItems.length
+              : undefined
+          }
           aside={loading ? null : <TodayOrderControls {...orderState} />}
         >
-          {loading ? null : <TodayOrderStatus {...orderState} />}
+          {loading || !reordering ? null : (
+            <p className="pb-2 text-xs text-muted-foreground">
+              {t("order.reorderHint")}
+            </p>
+          )}
 
           {loading && (
-            <p className="px-4 py-4 text-center text-sm text-muted-foreground">
+            <p className="py-4 text-center text-sm text-muted-foreground">
               {t("loading")}
             </p>
           )}
@@ -324,7 +327,6 @@ export default function DailyTasksList({
                     setRetiredInfo({ kind, activityName })
                   }
                   onTogglePin={togglePin}
-                  reason={aiOrder.reasons.get(activity.id)}
                   reorder={
                     reordering
                       ? {
@@ -351,23 +353,23 @@ export default function DailyTasksList({
               </TodayRow>
             ))}
 
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+          <div className="flex items-center justify-between gap-3 pt-3">
             {isBreakDay ? (
-              <span />
-            ) : (
               <p className="min-w-0 text-xs text-muted-foreground">
                 {t("breakDay.helper")}
               </p>
+            ) : (
+              <span />
             )}
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => {
                 void toggleBreakDay();
               }}
               className={cn(
-                "shrink-0 gap-1.5 rounded-full px-3 text-xs font-medium shadow-none",
+                "-mr-3 shrink-0 gap-1.5 rounded-full px-3 text-xs font-medium",
                 isBreakDay ? "text-gold-text" : "text-muted-foreground"
               )}
               aria-pressed={isBreakDay}
@@ -383,8 +385,8 @@ export default function DailyTasksList({
       {timelineSessions.length > 0 && (
         <TodaySection
           label={t("sections.timeline")}
-          aside={
-            <span className="font-mono text-xs tabular-nums text-muted-foreground">
+          meta={
+            <span className="tabular-nums">
               {formatTimerDisplay(
                 timelineSessions.reduce(
                   (total, session) => total + session.intervalMs,
@@ -394,7 +396,7 @@ export default function DailyTasksList({
             </span>
           }
         >
-          <div className="space-y-1 p-2">
+          <div className="-mx-1.5 space-y-0.5">
             {timelineSessions.map((session) => {
               const isUnknown = !session.groupId;
               return (

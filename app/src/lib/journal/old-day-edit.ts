@@ -3,7 +3,7 @@ import { fromDateString, toDateString } from "@/lib/time-utils";
 
 /**
  * Days older than this ask for confirmation before a change is saved. Nothing
- * is locked: every day stays editable (product-scope.md §2.3).
+ * is locked: every day stays editable.
  */
 export const OLD_DAY_CONFIRM_AFTER_DAYS = 7;
 

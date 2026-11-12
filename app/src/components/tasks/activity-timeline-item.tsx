@@ -10,7 +10,7 @@ export const TIMELINE_ITEM_NAME_CLASS =
 export const TIMELINE_ITEM_NOTE_CLASS =
   "mt-0.5 block whitespace-pre-wrap break-words text-xs text-muted-foreground";
 export const TIMELINE_TIME_PILL_CLASS =
-  "flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-xs text-muted-foreground";
+  "flex shrink-0 items-center gap-1.5 rounded-full bg-muted/60 px-2 py-0.5 tabular-nums text-xs text-muted-foreground";
 
 interface ActivityTimelineItemProps {
   activityName: string;
@@ -131,12 +131,12 @@ function ActivityTimelineItem({
       )}
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         onClick={(event) => {
           event.stopPropagation();
           onStartActivity?.(activityId);
         }}
-        className="mr-1.5 mt-1 h-auto shrink-0 gap-1.5 rounded-full border-border px-2 py-0.5 font-mono text-xs font-normal text-muted-foreground shadow-none"
+        className="mr-1.5 mt-1 h-auto shrink-0 gap-1.5 rounded-full bg-muted/60 px-2 py-0.5 text-xs font-normal tabular-nums text-muted-foreground shadow-none"
         title="Start this activity"
         aria-label={`Start ${activityName}`}
       >

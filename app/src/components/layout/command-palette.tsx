@@ -181,7 +181,7 @@ function PaletteBody({
               >
                 <p
                   id={headingId}
-                  className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  className="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground"
                 >
                   {t(`palette.groups.${section.group}`)}
                 </p>

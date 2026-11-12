@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LogOut, RefreshCw } from "lucide-react";
+import { LogIn, LogOut, RefreshCw } from "lucide-react";
 
 import { ConfirmFormDialog } from "@/components/forms";
-import { Button } from "@/components/ui/button";
-import { SettingsSection } from "@/components/ui/settings-section";
+import {
+  SettingsActionRow,
+  SettingsBlock,
+  SettingsGroup,
+  SettingsValueRow,
+} from "@/components/settings/settings-list";
 import { SignOutConfirmDialog } from "@/components/settings/sign-out-confirm-dialog";
 import { isSignOutBlockedError, useAuth } from "@/lib/use-auth";
 import { syncEngine } from "@/lib/sync";
@@ -104,24 +108,24 @@ export function AuthCard() {
   };
 
   return (
-    <SettingsSection title={t("auth.title")}>
+    <SettingsGroup title={t("auth.title")}>
       {isAuthed ? (
         <>
-          <p className="text-sm text-muted-foreground">
-            {t("auth.signedInAs")}{" "}
-            <span className="font-medium text-foreground">
-              {currentUserEmail ?? t("auth.unknownEmail")}
-            </span>
-          </p>
-          <Button
-            variant="outline"
-            className="flex w-full items-center gap-2"
+          <SettingsValueRow
+            label={t("auth.signedInAs")}
+            value={
+              <span className="text-foreground">
+                {currentUserEmail ?? t("auth.unknownEmail")}
+              </span>
+            }
+          />
+          <SettingsActionRow
+            icon={LogOut}
+            label={t("auth.signOut")}
+            tone="destructive"
             disabled={signOutBusy}
             onClick={() => void handleSignOut()}
-          >
-            <LogOut className="h-4 w-4" />
-            {t("auth.signOut")}
-          </Button>
+          />
           <SignOutConfirmDialog
             open={signOutBlockedOpen}
             pendingOpCount={signOutBlockedPending}
@@ -136,44 +140,40 @@ export function AuthCard() {
         // No Supabase: there is no account. Otherwise the person is signed in on
         // this device but the session is not confirmed yet (offline, or the app
         // is still starting): the app shows the sign-in screen when there is no
-        // session at all (product-scope.md §2.6).
+        // session at all.
         <>
-          <p className="text-sm text-muted-foreground">
-            {isSupabaseConfigured
-              ? t("auth.sessionPending")
-              : t("auth.syncNotConfigured")}
-          </p>
+          <SettingsBlock>
+            <p className="text-sm text-muted-foreground">
+              {isSupabaseConfigured
+                ? t("auth.sessionPending")
+                : t("auth.syncNotConfigured")}
+            </p>
+            {checkResult ? (
+              <p
+                className="text-xs tabular-nums text-muted-foreground"
+                role="status"
+              >
+                {describeCheck(checkResult, t)}
+              </p>
+            ) : null}
+          </SettingsBlock>
           {isSupabaseConfigured ? (
             <>
-              <Button
-                variant="outline"
-                className="flex w-full items-center gap-2"
+              <SettingsActionRow
+                icon={RefreshCw}
+                label={
+                  checking
+                    ? t("auth.recovery.checking")
+                    : t("auth.recovery.check")
+                }
                 disabled={checking}
                 onClick={() => void handleCheckConnection()}
-              >
-                <RefreshCw
-                  className={checking ? "h-4 w-4 animate-spin" : "h-4 w-4"}
-                  aria-hidden
-                />
-                {checking
-                  ? t("auth.recovery.checking")
-                  : t("auth.recovery.check")}
-              </Button>
-              {checkResult ? (
-                <p
-                  className="font-mono text-xs tabular-nums text-muted-foreground"
-                  role="status"
-                >
-                  {describeCheck(checkResult, t)}
-                </p>
-              ) : null}
-              <Button
-                variant="ghost"
-                className="w-full"
+              />
+              <SettingsActionRow
+                icon={LogIn}
+                label={t("auth.recovery.signInAgain")}
                 onClick={() => setSignInAgainOpen(true)}
-              >
-                {t("auth.recovery.signInAgain")}
-              </Button>
+              />
               <ConfirmFormDialog
                 open={signInAgainOpen}
                 onOpenChange={setSignInAgainOpen}
@@ -190,6 +190,6 @@ export function AuthCard() {
           ) : null}
         </>
       )}
-    </SettingsSection>
+    </SettingsGroup>
   );
 }

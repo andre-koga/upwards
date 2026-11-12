@@ -12,9 +12,9 @@ export function TabBar() {
   return (
     <nav
       aria-label={t("primaryNavigation")}
-      className="fixed inset-x-0 bottom-0 z-[var(--z-chrome)] border-t border-border bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
+      className="fixed inset-x-0 bottom-0 z-[var(--z-chrome)] border-t border-foreground/[0.07] bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
     >
-      <ul className="mx-auto grid h-14 max-w-md grid-cols-3">
+      <ul className="mx-auto grid h-14 max-w-md grid-cols-4">
         {TABS.map((tab) => {
           const isActive = tab.id === active;
           const Icon = tab.icon;
@@ -23,24 +23,28 @@ export function TabBar() {
               <Link
                 to={tab.to}
                 aria-current={isActive ? "page" : undefined}
-                className="group flex h-full flex-col items-center justify-center gap-0.5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                className={cn(
+                  "relative flex h-full flex-col items-center justify-center gap-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                  isActive
+                    ? "text-foreground"
+                    : "text-muted-foreground/80 active:text-foreground"
+                )}
               >
+                {/* The current tab is marked like a ribbon bookmark: a short
+                    hairline on the bar's top edge, no filled pill. */}
                 <span
+                  aria-hidden
                   className={cn(
-                    "flex h-7 w-14 items-center justify-center rounded-full transition-colors",
-                    isActive
-                      ? "bg-sage text-green-deep"
-                      : "text-muted-foreground group-active:bg-muted"
+                    "absolute top-0 h-0.5 w-6 rounded-full bg-foreground transition-opacity",
+                    isActive ? "opacity-80" : "opacity-0"
                   )}
-                >
-                  <Icon className="h-5 w-5" aria-hidden />
-                </span>
-                <span
-                  className={cn(
-                    "truncate text-[11px] font-medium leading-none",
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  )}
-                >
+                />
+                <Icon
+                  className="h-[1.375rem] w-[1.375rem]"
+                  strokeWidth={isActive ? 2 : 1.5}
+                  aria-hidden
+                />
+                <span className="truncate text-[0.6875rem] font-medium leading-none tracking-[0.02em]">
                   {t(tab.labelKey)}
                 </span>
               </Link>

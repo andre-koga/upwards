@@ -19,12 +19,12 @@ export interface Activity {
   completion_target: number | null;
   /**
    * When the activity was archived; null when it is not. Hides it from For Today
-   * from the next day on until it is restored (product-scope.md §2.10).
+   * from the next day on until it is restored.
    */
   archived_at: string | null;
-  /** False for check-only activities: no timer, no sessions (§2.1). */
+  /** False for check-only activities: no timer, no sessions. */
   tracks_time: boolean;
-  /** The user's pin, overriding AI ordering (§2.1). The control arrives in B2. */
+  /** The user's pin, overriding AI ordering. The control arrives in B2. */
   is_pinned: boolean;
   order_index: number | null;
   created_at: string;
@@ -124,31 +124,6 @@ export interface Memory {
   created_at: string;
   updated_at: string;
   synced_at: string | null;
-  deleted_at: string | null;
-}
-
-export type CompassKind = "north_star" | "identity" | "goal" | "knowledge";
-
-/**
- * One thing a person has written about who they are becoming
- * (temporal-data-sync.md, "Compass"). Current state: edits overwrite, archive
- * and delete are lifecycle timestamps, and nothing here is ever "done".
- */
-export interface CompassItem {
-  id: string;
-  kind: CompassKind;
-  /** The words: the north star, an identity word, a goal, or a knowledge answer. */
-  text: string;
-  /** Knowledge only: what was asked. */
-  question: string | null;
-  /** Goal only: the habit it is measured by. A plain reference, not a foreign key. */
-  activity_id: string | null;
-  /** Goal only: the group it is measured by. At most one of the two is set. */
-  group_id: string | null;
-  created_at: string;
-  updated_at: string;
-  synced_at: string | null;
-  archived_at: string | null;
   deleted_at: string | null;
 }
 

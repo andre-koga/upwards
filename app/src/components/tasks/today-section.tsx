@@ -1,45 +1,65 @@
 import type { ReactNode } from "react";
-import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
 
 interface TodaySectionProps {
   label: ReactNode;
-  /** Trailing header content: a total, or a quiet action. */
+  /** Quiet figure beside the label: "3 of 6 done", a day total. */
+  meta?: ReactNode;
+  /** Trailing header content: quiet actions. */
   aside?: ReactNode;
+  /** 0–1. Draws a thin progress line under the header. */
+  progress?: number;
   className?: string;
   children: ReactNode;
 }
 
 /**
- * One operational block of Today (memos, the day's habits, the timeline): an
- * opaque paper card with a hairline header, its rows bound to it by shared
- * dividers instead of each row carrying its own box.
+ * One block of Today (memos, the day's habits, the timeline). No card and no
+ * rules: a label with its figure, then rows on the page. Blocks are told apart
+ * by the space the page leaves between them.
  */
 export function TodaySection({
   label,
+  meta,
   aside,
+  progress,
   className,
   children,
 }: TodaySectionProps) {
   return (
-    <section
-      className={cn(
-        "overflow-hidden rounded-xl border border-border bg-card",
-        className
-      )}
-    >
-      <header className="flex min-h-11 items-center justify-between gap-2 border-b border-border px-4">
-        <SectionLabel asChild>
-          <h2>{label}</h2>
-        </SectionLabel>
-        {aside}
-      </header>
-      {children}
+    <section className={cn("space-y-3", className)}>
+      <div className="space-y-1.5">
+        <header className="flex min-h-9 items-baseline gap-2.5">
+          <h2 className="font-display text-[1.3125rem] font-medium leading-tight tracking-[-0.01em]">
+            {label}
+          </h2>
+          {meta ? (
+            <span className="text-[0.8125rem] tabular-nums text-muted-foreground">
+              {meta}
+            </span>
+          ) : null}
+          {aside ? (
+            <div className="ml-auto flex items-center self-center">{aside}</div>
+          ) : null}
+        </header>
+        {typeof progress === "number" ? (
+          <div
+            className="h-[3px] overflow-hidden rounded-full bg-foreground/[0.07]"
+            aria-hidden
+          >
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
+              style={{ width: `${Math.round(Math.min(1, progress) * 100)}%` }}
+            />
+          </div>
+        ) : null}
+      </div>
+      <div>{children}</div>
     </section>
   );
 }
 
-/** A row inside a `TodaySection`, divided from its neighbours by a hairline. */
+/** A row inside a `TodaySection`, set apart from its neighbours by padding. */
 export function TodayRow({
   className,
   children,
@@ -47,14 +67,5 @@ export function TodayRow({
   className?: string;
   children: ReactNode;
 }) {
-  return (
-    <div
-      className={cn(
-        "border-b border-border px-4 py-2.5 last:border-b-0",
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <div className={cn("py-1", className)}>{children}</div>;
 }

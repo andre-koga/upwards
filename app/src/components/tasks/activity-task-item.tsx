@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronUp, Flame, Sparkles, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Flame, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
   getActivityDisplayName,
@@ -42,8 +42,6 @@ interface ActivityTaskItemProps {
   onShowRetiredInfo: (kind: ActivityRetiredKind, activityName: string) => void;
   /** Quick pin from the row. */
   onTogglePin?: (activity: Activity) => void;
-  /** The AI's one-line reason for this row's place, naming its evidence. */
-  reason?: string;
   /** Present while reordering: step this row up or down within its band. */
   reorder?: {
     canMoveUp: boolean;
@@ -72,7 +70,6 @@ function ActivityTaskItem({
   onEdit,
   onShowRetiredInfo,
   onTogglePin,
-  reason,
   reorder,
 }: ActivityTaskItemProps) {
   const { t } = useTranslation("projects");
@@ -154,7 +151,7 @@ function ActivityTaskItem({
             onPointerLeave={clearNeverPressTimeout}
             onPointerCancel={clearNeverPressTimeout}
             className={cn(
-              "flex h-7 min-w-[2.75rem] touch-manipulation items-center justify-center rounded-md border px-1 transition-colors",
+              "flex h-7 min-w-[2.75rem] touch-manipulation items-center justify-center rounded-full border-[1.5px] px-1 transition-colors",
               canUpdateCount
                 ? "cursor-pointer"
                 : "cursor-default text-muted-foreground",
@@ -162,7 +159,7 @@ function ActivityTaskItem({
                 ? "border-destructive bg-destructive text-destructive-foreground hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,black)] dark:hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_88%,white)]"
                 : count > 0
                   ? "border-destructive bg-[color-mix(in_srgb,hsl(var(--destructive))_18%,hsl(var(--background)))] text-destructive hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_28%,hsl(var(--background)))]"
-                  : "border-destructive bg-transparent hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_12%,hsl(var(--background)))]"
+                  : "border-[hsl(var(--line-strong)/0.35)] bg-transparent hover:bg-muted"
             )}
             title={canUpdateCount ? t("taskItem.neverSlipHint") : undefined}
             disabled={!canUpdateCount}
@@ -170,12 +167,12 @@ function ActivityTaskItem({
             {!isComplete ? (
               <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none text-muted-foreground">
                 <Flame className="h-3 w-3 fill-current" />
-                <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
+                <span className="mt-0.5 tabular-nums">{streak}</span>
               </span>
             ) : count === 1 ? (
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             ) : count > 1 ? (
-              <span className="mt-0.5 font-mono text-xs font-semibold tabular-nums leading-none">
+              <span className="mt-0.5 text-xs font-semibold tabular-nums leading-none">
                 {count}
               </span>
             ) : null}
@@ -189,7 +186,7 @@ function ActivityTaskItem({
             completeContent={
               <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
                 <Flame className="h-3 w-3 fill-current" />
-                <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
+                <span className="mt-0.5 tabular-nums">{streak}</span>
               </span>
             }
             className={cn(
@@ -212,7 +209,7 @@ function ActivityTaskItem({
             }
             disabled={!canUpdateCount}
             className={cn(
-              "h-7 min-h-[1.75rem] min-w-[2.75rem] rounded-full px-2 text-xs font-semibold shadow-none disabled:cursor-default",
+              "h-7 min-h-[1.75rem] min-w-[2.75rem] rounded-full border-[1.5px] bg-transparent px-2 text-xs font-semibold shadow-none disabled:cursor-default",
               isBreakDay || isPaused
                 ? isComplete
                   ? "border-amber-500 bg-amber-500 text-amber-950"
@@ -223,7 +220,7 @@ function ActivityTaskItem({
                   ? "border-primary bg-primary text-primary-foreground"
                   : count > 0
                     ? "border-primary bg-[color-mix(in_srgb,hsl(var(--primary))_22%,hsl(var(--background)))] text-primary"
-                    : "border-border text-muted-foreground"
+                    : "border-[hsl(var(--line-strong)/0.35)] text-muted-foreground"
             )}
             title={
               canUpdateCount
@@ -234,10 +231,10 @@ function ActivityTaskItem({
             {isComplete ? (
               <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
                 <Flame className="h-3 w-3 fill-current" />
-                <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
+                <span className="mt-0.5 tabular-nums">{streak}</span>
               </span>
             ) : (
-              <p className="pt-0.5 font-mono">
+              <p className="pt-0.5 tabular-nums">
                 {count}/{target}
               </p>
             )}
@@ -259,15 +256,6 @@ function ActivityTaskItem({
           onStopActivity={onStopActivity}
           onManualEntry={onManualEntry}
         />
-        {reason ? (
-          <p className="mt-1 flex items-start gap-1 px-2 text-[11px] leading-snug text-muted-foreground">
-            <Sparkles
-              className="mt-px h-3 w-3 shrink-0 text-gold-text"
-              aria-hidden
-            />
-            <span className="min-w-0">{reason}</span>
-          </p>
-        ) : null}
       </div>
       {reorder ? (
         <div className="flex h-10 shrink-0 items-center gap-0.5">

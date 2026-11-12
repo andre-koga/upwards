@@ -9,7 +9,7 @@ import type {
 } from "./types";
 
 /**
- * Columns the A8b window dropped from the server (product-scope.md §2.10).
+ * Columns the A8b window dropped from the server.
  * Local rows and backup files written before it can still carry them; nothing
  * reads them, and they are stripped on the way to the server.
  */

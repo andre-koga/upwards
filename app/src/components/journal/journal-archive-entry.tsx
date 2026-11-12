@@ -1,9 +1,10 @@
-import { Image as ImageIcon } from "lucide-react";
+import { Heart, Image as ImageIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { JournalEntry } from "@/lib/db/types";
 import { normalizeJournalLocationRoute } from "@/lib/journal";
 import { rememberJournalJumpDate } from "@/lib/journal/archive";
+import { heartedWashStyle } from "@/lib/journal/hearted-wash";
 import { fromDateString } from "@/lib/time-utils";
 import { getActiveLocaleTag } from "@/lib/i18n";
 import {
@@ -72,8 +73,13 @@ export default function JournalArchiveEntry({
   return (
     <article
       data-journal-entry-date={entry.entry_date}
+      data-hearted={isBookmarked ? "true" : undefined}
+      style={isBookmarked ? heartedWashStyle(entry.entry_date) : undefined}
       className={cn(
-        "py-1 duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both",
+        "duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-both",
+        isBookmarked
+          ? "-mx-1.5 rounded-3xl px-1.5 py-3 ring-1 ring-inset ring-foreground/5"
+          : "py-1",
         highlighted && "rounded-xl ring-2 ring-primary/40"
       )}
     >
@@ -85,10 +91,10 @@ export default function JournalArchiveEntry({
             className="group flex flex-col items-center gap-1 text-left"
             {...selectProps}
           >
-            <span className="font-crimson text-4xl font-bold tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+            <span className="font-display text-4xl font-medium tabular-nums leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
               {dayNumber}
             </span>
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               {weekday}
             </span>
           </button>
@@ -102,29 +108,35 @@ export default function JournalArchiveEntry({
             {entry.day_emoji?.trim() || "🙂"}
           </span>
           {isBookmarked ? (
-            <span className="sr-only">{t("bookmarkDay")}</span>
+            <>
+              <Heart
+                className="h-3.5 w-3.5 fill-terracotta text-terracotta"
+                aria-hidden
+              />
+              <span className="sr-only">{t("bookmarkDay")}</span>
+            </>
           ) : null}
         </div>
 
         <div
           className={cn(
-            "min-w-0 overflow-hidden rounded-xl border",
-            selected ? "border-primary/60 bg-muted/40" : "border-border/70"
+            "-mx-1 min-w-0 overflow-hidden rounded-xl",
+            selected && "bg-muted/60"
           )}
         >
           <button
             type="button"
             onClick={choose}
-            className="group w-full space-y-1 px-3 py-2.5 text-left"
+            className="group w-full space-y-1 px-1 pb-2 pt-1 text-left"
             {...selectProps}
           >
-            <h2 className="font-crimson text-2xl font-bold leading-snug tracking-tight">
+            <h2 className="font-display text-[1.375rem] font-medium leading-snug tracking-[-0.01em]">
               {entry.title?.trim() || t("untitled")}
             </h2>
             {entry.text_content?.trim() ? (
               <p
                 className={cn(
-                  "whitespace-pre-wrap font-crimson text-base leading-relaxed text-muted-foreground",
+                  "whitespace-pre-wrap font-display text-[1.0625rem] leading-relaxed text-foreground/75",
                   compact && "line-clamp-3"
                 )}
               >
@@ -136,13 +148,13 @@ export default function JournalArchiveEntry({
           {locations.length > 0 ? (
             <JournalEntryPlaces
               locations={locations}
-              className="flex flex-wrap gap-1.5 px-3 pb-2.5"
+              className="flex flex-wrap gap-1.5 px-1 pb-2"
             />
           ) : null}
 
           {compact ? (
             photoPaths.length > 0 ? (
-              <p className="flex items-center gap-1 px-3 pb-2.5 text-xs text-muted-foreground">
+              <p className="flex items-center gap-1 px-1 pb-2 text-xs text-muted-foreground">
                 <ImageIcon className="h-3 w-3" aria-hidden />
                 <span>
                   {t("archive.photoCount", { count: photoPaths.length })}
@@ -150,7 +162,7 @@ export default function JournalArchiveEntry({
               </p>
             ) : null
           ) : (
-            <div className="space-y-1.5 px-3 pb-2.5 empty:hidden">
+            <div className="space-y-1.5 px-1 pb-2 empty:hidden">
               <JournalEntryClip entry={entry} />
               <JournalArchivePhotoGrid photoPaths={photoPaths} />
             </div>

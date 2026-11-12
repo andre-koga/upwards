@@ -1,7 +1,7 @@
 import { resolveTracksTime } from "./tracks-time";
 
 /**
- * The one question the activity form asks (product-scope.md §2.1). The stored
+ * The one question the activity form asks. The stored
  * fields (routine, target, tracks_time) do not change; the type maps onto them
  * and `normalizeActivityByType` guarantees no meaningless combination is saved.
  *

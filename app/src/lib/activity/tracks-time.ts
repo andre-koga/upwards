@@ -3,7 +3,7 @@ import type { Activity } from "@/lib/db/types";
 /**
  * Whether an activity has a timer. Check-only activities (medication, "made my
  * bed") have none: no start/stop control, no sessions, and they never appear
- * in session pickers (product-scope.md §2.1). Rows from before the cutover
+ * in session pickers. Rows from before the cutover
  * default to true.
  */
 export function activityTracksTime(

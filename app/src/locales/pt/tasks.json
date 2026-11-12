@@ -34,7 +34,8 @@
       "empty": "Não há memos arquivados",
       "restore": "Restaurar memo",
       "delete": "Excluir memo"
-    }
+    },
+    "overdue": "Atrasado"
   },
   "addTask": {
     "trigger": "Adicionar tarefa avulsa"

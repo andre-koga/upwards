@@ -1,7 +1,7 @@
 import type { LocaleValue } from "@/lib/i18n/locale-storage";
 
 /**
- * Your own birthday as a holiday-style banner (product-scope.md §2.8). Pure
+ * Your own birthday as a holiday-style banner. Pure
  * date logic: the setting is a `YYYY-MM-DD` date, and these functions answer
  * whether a given day is the birthday and which one it is.
  */

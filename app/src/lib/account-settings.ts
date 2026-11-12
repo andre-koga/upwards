@@ -3,7 +3,7 @@ import { now } from "@/lib/db";
 import { parseBirthday } from "@/lib/holidays/birthday";
 
 /**
- * Account-level opt-ins (product-scope.md §2.5, §2.7, §2.8). They follow the
+ * Account-level opt-ins. They follow the
  * account across devices through the `user_profiles` row, and are cached in
  * localStorage so they work offline and before the first sync.
  *

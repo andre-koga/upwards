@@ -1,4 +1,5 @@
 import { Play, Plus, Square } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { formatTimerDisplay } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR, getContrastColor } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
@@ -46,11 +47,18 @@ export default function ActivityPill({
   appearance = "pill",
   className = "",
 }: ActivityPillProps) {
+  const { t } = useTranslation("today");
   const textColor = getContrastColor(color);
   const timerLabel = formatTimerDisplay(elapsedMs);
   const nameInteractive = !readOnly || allowNameClickWhenReadOnly;
   const row = appearance === "row";
   const hasManualEntry = !readOnly && Boolean(onManualEntry);
+  // In a row, an untouched timer is just a play button: "00:00" on every habit
+  // is noise. The time appears once there is some, or while it runs.
+  const compactTimer = row && !isRunning && elapsedMs < 1000;
+  const timerActionLabel = isRunning
+    ? t("timer.stop", { name })
+    : t("timer.start", { name });
 
   return (
     <div
@@ -79,7 +87,7 @@ export default function ActivityPill({
           title={nameTitle}
           aria-label={nameAriaLabel}
           className={cn(
-            "h-full min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center gap-0 p-0 text-left text-sm font-medium shadow-none",
+            "h-full min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center gap-0 p-0 text-left text-[0.9375rem] font-normal shadow-none",
             row ? "rounded-md" : "rounded-none"
           )}
         >
@@ -90,7 +98,7 @@ export default function ActivityPill({
             )}
           >
             <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              className="h-2 w-2 shrink-0 rounded-full"
               style={{ backgroundColor: color }}
             />
             <span className={cn("min-w-0 flex-1 truncate", nameClassName)}>
@@ -108,16 +116,16 @@ export default function ActivityPill({
           {hasManualEntry ? (
             <Button
               type="button"
-              variant="outline"
+              variant={row ? "ghost" : "outline"}
               onClick={onManualEntry}
               className={cn(
                 "relative h-full shrink-0 shadow-none",
                 row
-                  ? "w-9 rounded-l-md rounded-r-none border-r-0 text-muted-foreground"
+                  ? "w-9 rounded-full text-muted-foreground/60"
                   : "-mr-4 w-12 rounded-l-full border-r-0 pr-6"
               )}
-              title="Add manual time entry"
-              aria-label="Add manual time entry"
+              title={t("timer.manualEntry")}
+              aria-label={t("timer.manualEntry")}
             >
               <Plus className="h-3.5 w-3.5" />
             </Button>
@@ -127,8 +135,9 @@ export default function ActivityPill({
             <div
               className={cn(
                 "relative flex h-full shrink-0 items-center justify-center gap-1.5 border bg-background text-xs font-semibold",
-                row ? "rounded-md px-3" : "rounded-full px-4",
-                isRunning ? "border-2" : "border-border text-muted-foreground"
+                row ? "rounded-full px-3" : "rounded-full px-4",
+                isRunning ? "border-2" : "border-border text-muted-foreground",
+                row && !isRunning && "border-transparent bg-muted/60"
               )}
               style={
                 isRunning ? { borderColor: color, color: textColor } : undefined
@@ -144,7 +153,7 @@ export default function ActivityPill({
               )}
               <span
                 className={cn(
-                  "font-mono text-xs",
+                  "text-xs tabular-nums",
                   !isRunning && "text-muted-foreground"
                 )}
               >
@@ -156,13 +165,14 @@ export default function ActivityPill({
               type="button"
               variant="secondary"
               onClick={onClick}
+              title={timerActionLabel}
+              aria-label={`${timerActionLabel}, ${timerLabel}`}
               className={cn(
                 "relative h-full shrink-0 gap-1.5 font-semibold shadow-none",
                 row
-                  ? cn(
-                      "rounded-md border border-border px-3",
-                      hasManualEntry && "rounded-l-none"
-                    )
+                  ? compactTimer
+                    ? "w-10 rounded-full border-0 bg-transparent p-0 hover:bg-muted"
+                    : "rounded-full border-0 bg-muted/50 px-3.5 text-muted-foreground hover:bg-muted"
                   : "rounded-full px-4"
               )}
               style={
@@ -181,9 +191,18 @@ export default function ActivityPill({
                   style={{ fill: textColor }}
                 />
               ) : (
-                <Play className="h-3.5 w-3.5 shrink-0 translate-x-px fill-secondary-foreground" />
+                <Play
+                  className={cn(
+                    "h-3.5 w-3.5 shrink-0 translate-x-px",
+                    row
+                      ? "fill-muted-foreground text-muted-foreground"
+                      : "fill-secondary-foreground"
+                  )}
+                />
               )}
-              <span className="font-mono text-xs">{timerLabel}</span>
+              {compactTimer ? null : (
+                <span className="text-xs tabular-nums">{timerLabel}</span>
+              )}
             </Button>
           )}
         </div>

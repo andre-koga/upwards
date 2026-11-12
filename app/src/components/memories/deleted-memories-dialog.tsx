@@ -31,25 +31,23 @@ export function DeletedMemoriesDialog({
         title={t("trash.title")}
       >
         {memories.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
+          <p className="py-8 text-center font-display text-[1.0625rem] italic text-muted-foreground">
             {t("trash.empty")}
           </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="divide-y divide-foreground/[0.07] overflow-hidden rounded-2xl bg-muted/45">
             {memories.map((memory) => (
-              <li
-                key={memory.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"
-              >
-                <span className="min-w-0 flex-1 basis-32 truncate">
+              <li key={memory.id} className="space-y-2.5 px-4 py-3.5">
+                <span className="block truncate text-[0.9375rem] leading-snug">
                   {memory.time_label ||
                     memory.text_content ||
                     t("trash.fallbackLabel")}
                 </span>
-                <span className="flex shrink-0 flex-wrap gap-1">
+                <span className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="h-8 rounded-full px-3.5"
                     onClick={() => void restoreMemory(memory).then(onChanged)}
                   >
                     {t("trash.restore")}
@@ -57,6 +55,7 @@ export function DeletedMemoriesDialog({
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="h-8 rounded-full px-3.5 text-destructive hover:text-destructive"
                     onClick={() => setPermanent(memory)}
                   >
                     {t("trash.deletePermanently")}

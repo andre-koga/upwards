@@ -12,12 +12,21 @@ interface LightboxState {
 
 export default function JournalArchivePhotoGrid({
   photoPaths,
-  previewLimit = 2,
+  previewLimit: previewLimitProp,
+  layout = "grid",
 }: {
   photoPaths: string[];
   /** How many photos show before the rest collapse into a "+N" tile. */
   previewLimit?: number;
+  /**
+   * `grid` is square tiles (the archive). `banner` fills the same 2:1 frame
+   * as the day's clip: one photo whole, two side by side, three or more as a
+   * large photo with two stacked beside it.
+   */
+  layout?: "grid" | "banner";
 }) {
+  const banner = layout === "banner";
+  const previewLimit = previewLimitProp ?? (banner ? 3 : 2);
   const { t } = useTranslation("journal");
   const pathsKey = photoPaths.join("\0");
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
@@ -58,7 +67,18 @@ export default function JournalArchivePhotoGrid({
       <div
         className={cn(
           "grid gap-1.5",
-          singlePreview ? "grid-cols-1" : "grid-cols-2"
+          banner
+            ? cn(
+                "aspect-[2/1] overflow-hidden rounded-3xl",
+                previewPaths.length >= 3
+                  ? "grid-cols-[2fr_1fr] grid-rows-2"
+                  : previewPaths.length === 2
+                    ? "grid-cols-2"
+                    : "grid-cols-1"
+              )
+            : singlePreview
+              ? "grid-cols-1"
+              : "grid-cols-2"
         )}
       >
         {previewPaths.map((path, index) => {
@@ -76,8 +96,16 @@ export default function JournalArchivePhotoGrid({
                 setLightbox({ key: pathsKey, index: openIndex, open: true });
               }}
               className={cn(
-                "relative overflow-hidden rounded-lg bg-muted",
-                singlePreview ? "aspect-[2/1]" : "aspect-square"
+                "relative overflow-hidden bg-muted",
+                banner
+                  ? cn(
+                      "h-full min-h-0 rounded-md",
+                      previewPaths.length >= 3 && index === 0 && "row-span-2"
+                    )
+                  : cn(
+                      "rounded-lg",
+                      singlePreview ? "aspect-[2/1]" : "aspect-square"
+                    )
               )}
               aria-label={
                 isOverflowTile
@@ -98,7 +126,7 @@ export default function JournalArchivePhotoGrid({
                   className="absolute inset-0 flex items-center justify-center bg-black/55"
                   aria-hidden
                 >
-                  <span className="font-crimson text-3xl font-semibold tracking-tight text-white drop-shadow-sm">
+                  <span className="font-display text-3xl font-medium tracking-tight text-white drop-shadow-sm">
                     +{hiddenCount}
                   </span>
                 </span>

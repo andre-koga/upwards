@@ -62,7 +62,9 @@ export function UpdateRequiredDialog() {
       >
         <DialogHeader>
           <DialogTitle>{t("updateRequired.title")}</DialogTitle>
-          <DialogDescription>{t("updateRequired.description")}</DialogDescription>
+          <DialogDescription>
+            {t("updateRequired.description")}
+          </DialogDescription>
         </DialogHeader>
         {pendingCount > 0 && (
           <p className="text-sm font-medium">
@@ -77,10 +79,14 @@ export function UpdateRequiredDialog() {
             onClick={() => void handleUpdate()}
           >
             <RefreshCw
-              className={updating ? "animate-spin motion-reduce:animate-none" : undefined}
+              className={
+                updating ? "animate-spin motion-reduce:animate-none" : undefined
+              }
               aria-hidden="true"
             />
-            {updating ? t("updateRequired.updating") : t("updateRequired.action")}
+            {updating
+              ? t("updateRequired.updating")
+              : t("updateRequired.action")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -159,17 +159,18 @@ export default function JournalLocationsDialog({
           ) : null}
 
           {draftRoute.locations.length > 0 ? (
-            <div className="space-y-2">
+            <div className="divide-y divide-foreground/[0.07] overflow-hidden rounded-2xl bg-muted/45">
               {draftRoute.locations.map((loc, index) => (
                 <div
                   key={`${index}-${loc.displayName}-${loc.lat ?? ""}-${loc.lon ?? ""}`}
-                  className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5"
+                  className="flex min-h-[3.25rem] items-center gap-3 py-2 pl-4 pr-2"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" aria-hidden />
-                  </span>
+                  <MapPin
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">
+                    <span className="block truncate text-[0.9375rem] leading-snug">
                       {loc.displayName}
                     </span>
                     <span className="block truncate text-xs text-muted-foreground">
@@ -179,9 +180,9 @@ export default function JournalLocationsDialog({
                   </span>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
-                    className="h-8 w-8 shrink-0 border-destructive text-destructive"
+                    className="h-9 w-9 shrink-0 rounded-full text-destructive hover:text-destructive"
                     onClick={() => setDeleteConfirmIndex(index)}
                     title={t("locations.deleteLocation")}
                     aria-label={t("locations.deleteLocation")}
@@ -192,7 +193,7 @@ export default function JournalLocationsDialog({
               ))}
             </div>
           ) : (
-            <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+            <p className="rounded-2xl bg-muted/45 px-4 py-3.5 text-xs leading-relaxed text-muted-foreground">
               {t("locations.emptyHelper")}
             </p>
           )}
@@ -205,7 +206,7 @@ export default function JournalLocationsDialog({
                   value={addSearch.query}
                   onChange={(event) => handleAddQueryChange(event.target.value)}
                   placeholder={t("locations.searchAddPlaceholder")}
-                  className="border-dashed pl-9"
+                  className="h-11 rounded-xl pl-9"
                 />
                 {addSearch.searching ? (
                   <Loader2

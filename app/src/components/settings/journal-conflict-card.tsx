@@ -40,7 +40,7 @@ function photos(fields: Fields): number {
 
 /**
  * A journal day in conflict: the two versions side by side, with what differs
- * marked in words, and the three ways out of product-scope.md §2.10: keep this
+ * marked in words, and the three ways out: keep this
  * device's, keep the other, or keep both. The words are the person's own, so
  * the register is editorial: serif, with room.
  */
@@ -111,7 +111,7 @@ export function JournalConflictCard({
             differing={differing}
           />
         ) : (
-          <p className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">
+          <p className="rounded-xl bg-background/60 p-3 text-sm italic text-muted-foreground">
             {t("syncIssues.conflict.unknownRemote")}
           </p>
         )}
@@ -193,7 +193,7 @@ function VersionPanel({
 
   const marker = (...keys: string[]) =>
     keys.some((key) => differing.has(key)) ? (
-      <span className="ml-1.5 rounded-full border border-border px-1.5 py-px font-sans text-[0.64rem] uppercase tracking-wide text-gold-text">
+      <span className="ml-1.5 rounded-full bg-gold/15 px-1.5 py-px font-sans text-[0.64rem] uppercase tracking-wide text-gold-text">
         {t("syncIssues.conflict.differs")}
       </span>
     ) : null;
@@ -201,7 +201,7 @@ function VersionPanel({
   return (
     <section
       aria-label={heading}
-      className="min-w-0 space-y-2 rounded-lg border border-border bg-background p-3"
+      className="min-w-0 space-y-2 rounded-xl bg-background/70 p-3.5"
     >
       <p className="text-xs text-muted-foreground">
         <span className="font-medium text-foreground">{heading}</span>

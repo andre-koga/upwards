@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-// design-and-branding.md §2.3 requires 4.5:1 for text and 3:1 for form-control
+// Text needs 4.5:1 for text and 3:1 for form-control
 // borders, in light and dark. The palette lives in index.css as HSL channel
 // triplets; this reads it, so editing a token that breaks a pairing fails here
 // instead of shipping.

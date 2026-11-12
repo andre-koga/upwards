@@ -37,7 +37,6 @@ export interface BackupTablesV5 extends Omit<
   | "dailyEntries"
   | "journalEntries"
   | "oneTimeTasks"
-  | "compassItems"
 > {
   activityGroups: LegacyActivityGroup[];
   activities: LegacyActivity[];

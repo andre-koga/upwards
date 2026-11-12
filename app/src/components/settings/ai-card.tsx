@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Sparkles } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { FormField } from "@/components/forms";
-import { SettingsSection } from "@/components/ui/settings-section";
+import {
+  dialogPrimaryActionClassName,
+  dialogSecondaryActionClassName,
+} from "@/components/forms/styles";
+import {
+  SettingsBlock,
+  SettingsGroup,
+  SettingsRow,
+} from "@/components/settings/settings-list";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useAuth } from "@/lib/use-auth";
 import {
@@ -114,39 +121,46 @@ export function AiCard() {
 
   const busy = saving || testing || loadingStatus;
 
+  const fieldClass = "bg-background/70 focus-visible:bg-background";
+  const ready = Boolean(apiKey && baseUrl && model);
+
   return (
-    <SettingsSection
-      title={t("ai.title")}
-      icon={Sparkles}
-      description={t("ai.description")}
-    >
+    <SettingsGroup id="ai" title={t("ai.title")} footer={t("ai.description")}>
       {!isSupabaseConfigured ? (
-        <p className="text-sm text-muted-foreground">
-          {t("ai.syncNotConfigured")}
-        </p>
+        <SettingsBlock>
+          <p className="text-sm text-muted-foreground">
+            {t("ai.syncNotConfigured")}
+          </p>
+        </SettingsBlock>
       ) : !isAuthed ? (
         // Offline with a login that cannot refresh. Online, the session arrives
         // a moment after load and this branch goes away, so say nothing yet.
         isOnline ? null : (
-          <p className="text-sm text-muted-foreground">
-            {t("ai.needsConnection")}
-          </p>
+          <SettingsBlock>
+            <p className="text-sm text-muted-foreground">
+              {t("ai.needsConnection")}
+            </p>
+          </SettingsBlock>
         )
       ) : (
         <>
           {status ? (
-            <p className="text-xs text-muted-foreground">
-              {status.configured
-                ? t("ai.configuredWith", { model: status.model })
-                : t("ai.notConfigured")}
-            </p>
+            <SettingsRow
+              icon={Sparkles}
+              label={
+                status.configured
+                  ? t("ai.configuredWith", { model: status.model })
+                  : t("ai.notConfigured")
+              }
+            />
           ) : null}
-          <div className="space-y-2">
+          <SettingsBlock className="space-y-3">
             <FormField
               id="ai-base-url"
               label={t("ai.baseUrl")}
               value={baseUrl}
               disabled={busy}
+              className={fieldClass}
               onChange={(e) => setBaseUrl(e.target.value)}
               placeholder={DEFAULT_BASE_URL}
             />
@@ -155,60 +169,59 @@ export function AiCard() {
               label={t("ai.model")}
               value={model}
               disabled={busy}
+              className={fieldClass}
               onChange={(e) => setModel(e.target.value)}
               placeholder={DEFAULT_MODEL}
             />
-            <div className="space-y-1.5">
-              <Label htmlFor="ai-api-key">{t("ai.apiKey")}</Label>
-              <FormField
-                id="ai-api-key"
-                label=""
-                labelClassName="sr-only"
-                type="password"
-                autoComplete="off"
-                value={apiKey}
-                disabled={busy}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder={
-                  status?.configured
-                    ? t("ai.apiKeySavedPlaceholder")
-                    : t("ai.apiKeyPlaceholder")
-                }
-              />
-            </div>
-          </div>
-          {message ? (
-            <p
-              className={
-                message.tone === "success"
-                  ? "text-xs text-green"
-                  : "text-xs text-destructive"
+            <FormField
+              id="ai-api-key"
+              label={t("ai.apiKey")}
+              type="password"
+              autoComplete="off"
+              value={apiKey}
+              disabled={busy}
+              className={fieldClass}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder={
+                status?.configured
+                  ? t("ai.apiKeySavedPlaceholder")
+                  : t("ai.apiKeyPlaceholder")
               }
-            >
-              {message.text}
-            </p>
-          ) : null}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              disabled={busy || !apiKey || !baseUrl || !model}
-              onClick={() => void handleTest()}
-            >
-              {testing ? t("ai.testing") : t("ai.testConnection")}
-            </Button>
-            <Button
-              type="button"
-              className="flex-1"
-              disabled={busy || !apiKey || !baseUrl || !model}
-              onClick={() => void handleSave()}
-            >
-              {saving ? t("ai.saving") : t("ai.save")}
-            </Button>
-          </div>
+            />
+            {message ? (
+              <p
+                role="status"
+                className={
+                  message.tone === "success"
+                    ? "text-xs text-green"
+                    : "text-xs text-destructive"
+                }
+              >
+                {message.text}
+              </p>
+            ) : null}
+            <div className="flex gap-2 pt-1">
+              <Button
+                type="button"
+                variant="ghost"
+                className={dialogSecondaryActionClassName}
+                disabled={busy || !ready}
+                onClick={() => void handleTest()}
+              >
+                {testing ? t("ai.testing") : t("ai.testConnection")}
+              </Button>
+              <Button
+                type="button"
+                className={dialogPrimaryActionClassName}
+                disabled={busy || !ready}
+                onClick={() => void handleSave()}
+              >
+                {saving ? t("ai.saving") : t("ai.save")}
+              </Button>
+            </div>
+          </SettingsBlock>
         </>
       )}
-    </SettingsSection>
+    </SettingsGroup>
   );
 }

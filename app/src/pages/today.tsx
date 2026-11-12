@@ -257,7 +257,7 @@ export default function TodayPage() {
 
       <div
         data-ios-top-chrome
-        className="sticky top-[var(--ios-status-shield,0px)] z-[var(--z-chrome)] overflow-hidden border-b border-border bg-background/85 backdrop-blur-md md:top-0"
+        className="sticky top-[var(--ios-status-shield,0px)] z-[var(--z-chrome)] overflow-hidden bg-background/85 backdrop-blur-md"
       >
         <TodayHeader
           currentDate={currentDate}
@@ -284,7 +284,7 @@ export default function TodayPage() {
         </TodayHeader>
       </div>
 
-      <div className="space-y-3 px-2 py-3 md:space-y-5 md:p-4">
+      <div className="space-y-16 px-5 pb-8 pt-6">
         <JournalCard
           key={toDateString(currentDate)}
           currentDate={currentDate}

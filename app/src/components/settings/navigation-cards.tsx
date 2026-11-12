@@ -1,17 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  ExternalLink,
-  FileText,
-  Github,
-  History,
-  Info,
-  MessageSquare,
-} from "lucide-react";
+import { FileText, Github, History, MessageSquare } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { SettingsSection } from "@/components/ui/settings-section";
+import {
+  SettingsActionRow,
+  SettingsGroup,
+} from "@/components/settings/settings-list";
 import FeedbackDialog from "@/components/tasks/feedback-dialog";
 import { hasUnreadWhatsNewRelease } from "@/lib/whats-new-read";
 
@@ -24,55 +18,37 @@ export function AboutCard() {
   const whatsNewLabel = hasUnread ? tNav("whatsNewUnread") : tNav("whatsNew");
 
   return (
-    <SettingsSection title={t("about.title")} icon={Info}>
-      <Button
-        variant="outline"
-        className="relative w-full justify-start"
-        asChild
-      >
-        <Link to="/whats-new" aria-label={whatsNewLabel}>
-          <History className="h-4 w-4" />
-          {tNav("whatsNew")}
-          {hasUnread ? (
+    <SettingsGroup title={t("about.title")}>
+      <SettingsActionRow
+        to="/whats-new"
+        icon={History}
+        label={tNav("whatsNew")}
+        ariaLabel={whatsNewLabel}
+        trailing={
+          hasUnread ? (
             <span
-              className="absolute right-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-terracotta"
+              className="h-2 w-2 shrink-0 rounded-full bg-terracotta"
               aria-hidden
             />
-          ) : null}
-        </Link>
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full justify-start"
+          ) : null
+        }
+      />
+      <SettingsActionRow
+        icon={MessageSquare}
+        label={tNav("feedback")}
         onClick={() => setFeedbackOpen(true)}
-      >
-        <MessageSquare className="h-4 w-4" />
-        {tNav("feedback")}
-      </Button>
-      <Button variant="outline" className="w-full justify-start" asChild>
-        <Link to="/logs">
-          <FileText className="h-4 w-4" />
-          {t("about.errorLogs")}
-        </Link>
-      </Button>
-      <Button variant="outline" className="w-full justify-between" asChild>
-        <a
-          href="https://github.com/andre-koga/upwards"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span className="flex items-center gap-2">
-            <Github className="h-4 w-4" />
-            {t("about.github")}
-          </span>
-          <ExternalLink
-            className="h-4 w-4 shrink-0 text-muted-foreground"
-            aria-hidden
-          />
-        </a>
-      </Button>
+      />
+      <SettingsActionRow
+        to="/logs"
+        icon={FileText}
+        label={t("about.errorLogs")}
+      />
+      <SettingsActionRow
+        href="https://github.com/andre-koga/upwards"
+        icon={Github}
+        label={t("about.github")}
+      />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
-    </SettingsSection>
+    </SettingsGroup>
   );
 }

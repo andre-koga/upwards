@@ -6,7 +6,7 @@ export const EPOCH = "1970-01-01T00:00:00.000Z";
  * Sent to every sync RPC; the server rejects builds below
  * `app_config.min_client_protocol` with `client_outdated`. Bump it whenever
  * operation shapes or table semantics change, and raise the server minimum in
- * the same migration window (docs/architecture/product-scope.md §4.1).
+ * the same migration window.
  */
 export const CLIENT_PROTOCOL = 4;
 export const DEBOUNCE_SYNC_MS = 5_000;
@@ -30,7 +30,6 @@ export const SYNC_TABLES: SyncTable[] = [
   "journal_entries",
   "journal_entry_revisions",
   "memories",
-  "compass_items",
   "one_time_tasks",
 ];
 
@@ -48,6 +47,5 @@ export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
   journal_entries: "journalEntries",
   journal_entry_revisions: "journalEntryRevisions",
   memories: "memories",
-  compass_items: "compassItems",
   one_time_tasks: "oneTimeTasks",
 };

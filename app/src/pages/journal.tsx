@@ -1,17 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-import {
-  BookOpen,
-  CalendarDays,
-  Images,
-  List,
-  MapPin,
-  Plus,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Plus, Search, Trash2, X } from "lucide-react";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { AppPageShell } from "@/components/layout/app-page-shell";
 import { Input } from "@/components/ui/input";
@@ -347,8 +337,8 @@ export default function JournalPage() {
     <AppPageShell
       title={t("archive.title")}
       subtitle={t("archive.subtitle")}
-      titleIcon={<BookOpen className="h-6 w-6" />}
-      className="space-y-3"
+      align="center"
+      className="space-y-5"
     >
       <div
         className={cn(
@@ -356,12 +346,12 @@ export default function JournalPage() {
             "lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start lg:gap-x-6 xl:grid-cols-[minmax(0,1fr)_24rem] xl:gap-x-8"
         )}
       >
-        <div className="min-w-0 space-y-3">
-          <div className="space-y-2">
+        <div className="min-w-0 space-y-5">
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="relative min-w-0 flex-1">
                 <Search
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                  className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                   aria-hidden
                 />
                 <Input
@@ -369,7 +359,7 @@ export default function JournalPage() {
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   placeholder={t("archive.searchPlaceholder")}
-                  className="h-11 rounded-xl pl-9 pr-10"
+                  className="h-12 rounded-full pl-11 pr-11"
                   aria-label={t("archive.searchPlaceholder")}
                 />
                 {searchInput ? (
@@ -391,7 +381,7 @@ export default function JournalPage() {
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-11 w-11 shrink-0 rounded-xl"
+                className="h-12 w-12 shrink-0 rounded-full"
                 onClick={() =>
                   setEditingMemory({ memory: blankMemory(), isNew: true })
                 }
@@ -405,7 +395,7 @@ export default function JournalPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-11 w-11 shrink-0 rounded-xl text-muted-foreground"
+                  className="h-12 w-12 shrink-0 rounded-full text-muted-foreground"
                   onClick={() => setDeletedOpen(true)}
                   title={t("archive.memory.deleted", {
                     count: trashedMemories.length,
@@ -426,9 +416,33 @@ export default function JournalPage() {
                 availableYears={availableYears}
                 entryDates={entryDates}
                 bookmarkedDates={bookmarkedDates}
+                className="justify-center gap-2"
               />
             ) : null}
           </div>
+
+          {!loading && totalEntries > 0 && filtersActive ? (
+            <div className="flex flex-col items-center gap-1 text-center">
+              {totalMatching > 0 ? (
+                <p className="font-display text-2xl font-medium tracking-tight">
+                  {t("archive.resultCount", { count: totalMatching })}
+                </p>
+              ) : null}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-full px-3 text-[0.8125rem] text-muted-foreground"
+                onClick={() => {
+                  setSearchInput("");
+                  setFilters(DEFAULT_JOURNAL_ARCHIVE_FILTERS);
+                }}
+              >
+                <X className="h-3.5 w-3.5" aria-hidden />
+                {t("archive.filters.clear")}
+              </Button>
+            </div>
+          ) : null}
 
           {loading ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
@@ -436,7 +450,7 @@ export default function JournalPage() {
             </p>
           ) : totalEntries === 0 ? (
             <div className="space-y-2 py-12 text-center">
-              <p className="font-crimson text-xl font-semibold">
+              <p className="font-display text-xl font-medium">
                 {t("archive.empty")}
               </p>
               <p className="text-sm text-muted-foreground">
@@ -450,19 +464,13 @@ export default function JournalPage() {
             >
               <TabsList aria-label={t("archive.views.label")}>
                 <TabsTrigger value="feed">
-                  <List aria-hidden />
                   {t("archive.views.feed")}
                 </TabsTrigger>
                 <TabsTrigger value="calendar">
-                  <CalendarDays aria-hidden />
                   {t("archive.views.calendar")}
                 </TabsTrigger>
-                <TabsTrigger value="map">
-                  <MapPin aria-hidden />
-                  {t("archive.views.map")}
-                </TabsTrigger>
+                <TabsTrigger value="map">{t("archive.views.map")}</TabsTrigger>
                 <TabsTrigger value="gallery">
-                  <Images aria-hidden />
                   {t("archive.views.gallery")}
                 </TabsTrigger>
               </TabsList>
@@ -470,7 +478,7 @@ export default function JournalPage() {
               <TabsContent value="feed">
                 {totalMatching === 0 ? (
                   <div className="space-y-2 py-12 text-center">
-                    <p className="font-crimson text-xl font-semibold">
+                    <p className="font-display text-xl font-medium">
                       {t("archive.noResults")}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -478,13 +486,7 @@ export default function JournalPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {filtersActive ? (
-                      <p className="text-xs text-muted-foreground">
-                        {t("archive.resultCount", { count: totalMatching })}
-                      </p>
-                    ) : null}
-
+                  <div className="space-y-6 pt-2">
                     {visibleItems.map((item) => {
                       if (item.kind === "month") {
                         return (

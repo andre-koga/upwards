@@ -8,7 +8,6 @@ import type {
   JournalEntry,
   JournalEntryRevision,
   Memory,
-  CompassItem,
   OneTimeTask,
 } from "@/lib/db/types";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
@@ -170,7 +169,7 @@ const CONFLICT_PROTECTED_FIELDS = new Set([
 ]);
 
 /**
- * Apply the version a person kept in conflict review (product-scope.md §2.10)
+ * Apply the version a person kept in conflict review
  * as an ordinary current-state edit: the chosen fields are written to the local
  * row and queued as one projection upsert made on the other side's revision, so
  * it syncs, wins that revision, and can be revised like any edit.
@@ -266,32 +265,6 @@ export async function eraseMemory(row: Memory): Promise<void> {
       updated_at: now(),
     },
     row.updated_at
-  );
-}
-
-export async function saveCompassItem(
-  row: CompassItem,
-  baseRevision?: string | null
-): Promise<void> {
-  const existing = await db.compassItems.get(row.id);
-  if (existing) await db.compassItems.put(row);
-  else await db.compassItems.add(row);
-  await writeProjection(
-    "compass_items",
-    row as unknown as Record<string, unknown>,
-    baseRevision
-  );
-}
-
-export async function patchCompassItem(
-  id: string,
-  patch: Partial<CompassItem>
-): Promise<void> {
-  const existing = await db.compassItems.get(id);
-  if (!existing) return;
-  await saveCompassItem(
-    { ...existing, ...patch, updated_at: patch.updated_at ?? now() },
-    existing.updated_at
   );
 }
 
@@ -680,7 +653,6 @@ export async function importBackup(
   }
 
   await importRows(tables.memories, "memories", db.memories);
-  await importRows(tables.compassItems, "compass_items", db.compassItems);
 
   requestDebouncedSync();
   return summary;

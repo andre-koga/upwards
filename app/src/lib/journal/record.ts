@@ -5,7 +5,7 @@ import { getActiveLocaleTag } from "@/lib/i18n";
 import { fromDateString, toDateString } from "@/lib/time-utils";
 
 /**
- * The journal and memories are one record (design-and-branding.md §3.1). A day
+ * The journal and memories are one record. A day
  * stands on the day it describes. A memory stands on the day it was
  * remembered: the local day it was written down. Its `time_label` ("when I was
  * six") is the person's own words for when it happened; it is the memory's

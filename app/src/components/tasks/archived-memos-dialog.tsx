@@ -75,57 +75,59 @@ export function ArchivedMemosDialog({
       }
       size="default"
     >
-      <div className="max-h-96 space-y-1 overflow-y-auto">
+      <div className="max-h-96 overflow-y-auto">
         {archivedMemos.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
+          <p className="py-8 text-center font-display text-[1.0625rem] italic text-muted-foreground">
             {t("memo.archivedDialog.empty")}
           </p>
         ) : (
-          archivedMemos.map((memo) => (
-            <div
-              key={memo.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="whitespace-pre-wrap break-words font-medium">
-                  {memo.title}
-                </p>
-                {memo.due_date && (
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {t("memo.due", {
-                      date: formatDateShort(fromDateString(memo.due_date)),
-                    })}
+          <div className="divide-y divide-foreground/[0.07] overflow-hidden rounded-2xl bg-muted/45">
+            {archivedMemos.map((memo) => (
+              <div
+                key={memo.id}
+                className="flex min-h-[3.25rem] items-center justify-between gap-2 py-2.5 pl-4 pr-2 text-sm"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="whitespace-pre-wrap break-words text-[0.9375rem] leading-snug">
+                    {memo.title}
                   </p>
-                )}
+                  {memo.due_date && (
+                    <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+                      {t("memo.due", {
+                        date: formatDateShort(fromDateString(memo.due_date)),
+                      })}
+                    </p>
+                  )}
+                </div>
+                <div className="flex shrink-0 gap-0.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRestore(memo.id)}
+                    disabled={restoringId === memo.id}
+                    className="h-9 w-9 rounded-full"
+                    title={t("memo.archivedDialog.restore")}
+                    aria-label={t("memo.archivedDialog.restore")}
+                  >
+                    <Undo2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(memo.id)}
+                    disabled={restoringId === memo.id}
+                    className="h-9 w-9 rounded-full text-destructive hover:text-destructive"
+                    title={t("memo.archivedDialog.delete")}
+                    aria-label={t("memo.archivedDialog.delete")}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex shrink-0 gap-0.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRestore(memo.id)}
-                  disabled={restoringId === memo.id}
-                  className="h-6 w-6"
-                  title={t("memo.archivedDialog.restore")}
-                  aria-label={t("memo.archivedDialog.restore")}
-                >
-                  <Undo2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(memo.id)}
-                  disabled={restoringId === memo.id}
-                  className="h-6 w-6 text-destructive hover:text-destructive"
-                  title={t("memo.archivedDialog.delete")}
-                  aria-label={t("memo.archivedDialog.delete")}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
       <FormDialogActions
