@@ -1,0 +1,189 @@
+{
+  "disclaimer": "Isto é uma reflexão, não um diagnóstico. É uma escala curta de autorrelato e uma leitura das suas próprias palavras, e pode estar errada.",
+  "answers": {
+    "1": "Descreve muito mal",
+    "2": "Descreve mal",
+    "3": "Nem bem nem mal",
+    "4": "Descreve bem",
+    "5": "Descreve muito bem"
+  },
+  "items": {
+    "E1": "Sou a alma da festa.",
+    "E2": "Não falo muito.",
+    "E3": "Sinto-me à vontade perto das pessoas.",
+    "E4": "Fico em segundo plano.",
+    "E5": "Começo conversas.",
+    "E6": "Tenho pouco a dizer.",
+    "E7": "Converso com muitas pessoas diferentes nas festas.",
+    "E8": "Não gosto de chamar atenção para mim.",
+    "E9": "Não me importo de ser o centro das atenções.",
+    "E10": "Fico em silêncio perto de desconhecidos.",
+    "A1": "Sinto pouca preocupação com os outros.",
+    "A2": "Tenho interesse pelas pessoas.",
+    "A3": "Insulto as pessoas.",
+    "A4": "Solidarizo-me com os sentimentos dos outros.",
+    "A5": "Não me interesso pelos problemas dos outros.",
+    "A6": "Tenho um coração mole.",
+    "A7": "Na verdade, não me interesso pelos outros.",
+    "A8": "Reservo tempo para os outros.",
+    "A9": "Sinto as emoções dos outros.",
+    "A10": "Deixo as pessoas à vontade.",
+    "C1": "Estou sempre com tudo preparado.",
+    "C2": "Deixo meus pertences espalhados.",
+    "C3": "Presto atenção aos detalhes.",
+    "C4": "Faço bagunça nas coisas.",
+    "C5": "Resolvo as tarefas de casa na hora.",
+    "C6": "Muitas vezes esqueço de guardar as coisas no lugar certo.",
+    "C7": "Gosto de ordem.",
+    "C8": "Fujo das minhas obrigações.",
+    "C9": "Sigo um cronograma.",
+    "C10": "Sou rigoroso no meu trabalho.",
+    "N1": "Fico estressado com facilidade.",
+    "N2": "Fico relaxado na maior parte do tempo.",
+    "N3": "Preocupo-me com as coisas.",
+    "N4": "Raramente me sinto para baixo.",
+    "N5": "Perturbo-me com facilidade.",
+    "N6": "Chateio-me com facilidade.",
+    "N7": "Meu humor muda muito.",
+    "N8": "Tenho mudanças de humor frequentes.",
+    "N9": "Irrito-me com facilidade.",
+    "N10": "Muitas vezes me sinto para baixo.",
+    "O1": "Tenho um vocabulário rico.",
+    "O2": "Tenho dificuldade para entender ideias abstratas.",
+    "O3": "Tenho uma imaginação vívida.",
+    "O4": "Não me interesso por ideias abstratas.",
+    "O5": "Tenho ótimas ideias.",
+    "O6": "Não tenho boa imaginação.",
+    "O7": "Entendo as coisas rapidamente.",
+    "O8": "Uso palavras difíceis.",
+    "O9": "Passo tempo refletindo sobre as coisas.",
+    "O10": "Tenho a cabeça cheia de ideias."
+  },
+  "traits": {
+    "openness": {
+      "name": "Abertura",
+      "low": "Familiar",
+      "high": "Curioso",
+      "adjective": "aberto a novidades"
+    },
+    "conscientiousness": {
+      "name": "Conscienciosidade",
+      "low": "Flexível",
+      "high": "Organizado",
+      "adjective": "consciencioso"
+    },
+    "extraversion": {
+      "name": "Extroversão",
+      "low": "Reservado",
+      "high": "Expansivo",
+      "adjective": "extrovertido"
+    },
+    "agreeableness": {
+      "name": "Amabilidade",
+      "low": "Direto",
+      "high": "Acolhedor",
+      "adjective": "cordial"
+    },
+    "neuroticism": {
+      "name": "Neuroticismo",
+      "low": "Estável",
+      "high": "Sensível",
+      "adjective": "emocionalmente reativo"
+    }
+  },
+  "test": {
+    "intro": "Cinquenta frases curtas, uma de cada vez. Responda o quanto cada uma descreve você como é agora, não como gostaria de ser. Seu lugar é salvo a cada resposta.",
+    "start": "Começar o teste",
+    "resumeTitle": "Seu teste está esperando",
+    "resumeLeft_one": "Falta {{count}} pergunta",
+    "resumeLeft_many": "Faltam {{count}} perguntas",
+    "resumeLeft_other": "Faltam {{count}} perguntas",
+    "resume": "Continuar",
+    "progress": "Pergunta {{current}} de {{total}}",
+    "statementLabel": "O quanto isto descreve você?",
+    "answersLabel": "Sua resposta",
+    "back": "Pergunta anterior",
+    "retake": "Fazer o teste de novo",
+    "retakeTitle": "Fazer o teste de novo?",
+    "retakeBody": "Você vai responder às cinquenta perguntas outra vez. O último resultado continua salvo, e a página vai mostrá-lo como \"da última vez\".",
+    "retakeConfirm": "Começar de novo",
+    "cancel": "Cancelar",
+    "discard": "Recomeçar",
+    "discardTitle": "Recomeçar esta tentativa?",
+    "discardBody": "As respostas que você deu nesta tentativa serão apagadas.",
+    "exit": "Sair do teste",
+    "savedHint": "Salvo neste aparelho e sincronizado com a sua conta."
+  },
+  "result": {
+    "heading": "Seu retrato",
+    "you": "Você",
+    "journal": "Seu diário",
+    "lastTime": "Da última vez",
+    "scoreOf": "{{score}} de 100",
+    "trackAria": "{{trait}}: você {{self}} de 100.",
+    "trackAriaJournal": "{{trait}}: você {{self}} de 100, seu diário {{journal}} de 100.",
+    "trackAriaLast": "Da última vez {{last}}.",
+    "takenOn": "Feito em {{date}}",
+    "bands": {
+      "openness": {
+        "low": "Você tende a preferir o familiar e o prático.",
+        "mid": "Você mistura ideias novas com o que já conhece.",
+        "high": "Você é atraído por ideias, arte e experiências novas."
+      },
+      "conscientiousness": {
+        "low": "Você tende a manter os planos soltos e a ser flexível.",
+        "mid": "Você é organizado em alguns pontos e tranquilo em outros.",
+        "high": "Você gosta de ordem, de planos e de levar as coisas até o fim."
+      },
+      "extraversion": {
+        "low": "Você tende a ser quieto e a recarregar as energias sozinho.",
+        "mid": "Você alterna entre companhia e tempo para si.",
+        "high": "Você tende a buscar pessoas e a se animar com elas."
+      },
+      "agreeableness": {
+        "low": "Você tende a dizer o que pensa, mesmo quando soa direto.",
+        "mid": "Você equilibra gentileza com firmeza.",
+        "high": "Você tende a deixar as pessoas à vontade e a se importar com o que sentem."
+      },
+      "neuroticism": {
+        "low": "Você tende a se manter estável quando fica estressante.",
+        "mid": "O estresse às vezes pesa em você, e às vezes não.",
+        "high": "Você tende a sentir o estresse e as mudanças de humor com intensidade."
+      }
+    },
+    "gap": {
+      "close": "Seu diário e suas respostas concordam em {{trait}}.",
+      "journalHigher": "Seu diário parece mais {{adjective}} do que você se avaliou.",
+      "journalLower": "Seu diário parece menos {{adjective}} do que você se avaliou."
+    }
+  },
+  "journal": {
+    "heading": "O que o seu diário mostra",
+    "body": "À parte do teste: a sua própria IA lê os dias que você escreveu recentemente e os pontua nos mesmos cinco traços, para você comparar.",
+    "read": "Ler o meu diário",
+    "readAgain": "Ler de novo",
+    "reading": "Lendo...",
+    "span": "Com base em {{count}} dias, de {{from}} a {{to}}.",
+    "noteLabel": "O que o modelo notou",
+    "quotesLabel": "Das suas próprias palavras",
+    "notConnected": "Conecte uma IA nas configurações para ler o seu diário. O teste funciona sem ela.",
+    "openSettings": "Abrir configurações",
+    "noDays": "Escreva alguns dias no diário primeiro. Só dias com título ou texto podem ser lidos.",
+    "needTest": "Faça o teste primeiro e depois compare com o seu diário.",
+    "consentTitle": "Enviar estes dias para a sua IA?",
+    "consentBody_one": "As palavras de {{count}} dia escrito (título, data e os primeiros 300 caracteres do texto) serão enviadas para {{model}}, o modelo indicado nas configurações. Nada mais é enviado: nem aniversário, nem perfil, nem respostas do teste.",
+    "consentBody_many": "As palavras de {{count}} dias escritos (título, data e os primeiros 300 caracteres de cada texto) serão enviadas para {{model}}, o modelo indicado nas configurações. Nada mais é enviado: nem aniversário, nem perfil, nem respostas do teste.",
+    "consentBody_other": "As palavras de {{count}} dias escritos (título, data e os primeiros 300 caracteres de cada texto) serão enviadas para {{model}}, o modelo indicado nas configurações. Nada mais é enviado: nem aniversário, nem perfil, nem respostas do teste.",
+    "consentConfirm": "Enviar e ler",
+    "cancel": "Cancelar",
+    "errors": {
+      "not_configured": "Conecte uma IA nas configurações primeiro.",
+      "rate_limited": "Você atingiu o limite de chamadas de IA de hoje. Tente de novo amanhã.",
+      "provider_rejected": "O seu provedor de IA recusou o pedido.",
+      "provider_empty": "O seu provedor de IA não devolveu nada.",
+      "provider_unreachable": "Não foi possível falar com o seu provedor de IA.",
+      "provider_invalid": "A IA respondeu de um jeito que não deu para usar. Tente de novo.",
+      "generic": "Não foi possível ler o seu diário. Tente de novo."
+    }
+  }
+}
