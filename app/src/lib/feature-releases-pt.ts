@@ -12,6 +12,14 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-12-big-five-on-you": {
+    title: "Seu retrato nos Cinco Grandes",
+    bullets: [
+      "A aba Você tem um teste de personalidade com 50 perguntas. Responda uma afirmação por vez; seu ponto é salvo a cada resposta, então você pode parar e continuar depois.",
+      "O resultado mostra cinco linhas, uma para cada traço dos Cinco Grandes, calculadas no seu celular. Refaça o teste quando quiser; o resultado anterior fica guardado para comparar.",
+      "Peça à sua própria IA que leia os dias recentes do seu diário e veja como esse retrato se compara às suas respostas. Só acontece quando você toca, depois de ver quais dias serão enviados.",
+    ],
+  },
   "2026-11-12-tighter-screen-edges": {
     title: "Bordas da tela mais justas",
     bullets: [
