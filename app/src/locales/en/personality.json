@@ -288,8 +288,8 @@
   "words": {
     "title": "In your words",
     "subtitle": "The lines your reading leaned on",
-    "open_one": "See the {{count}} line from your own words",
-    "open_other": "See the {{count}} lines from your own words",
+    "open_one": "See {{count}} line from your own words",
+    "open_other": "See {{count}} lines from your own words",
     "empty": "No lines yet. Read your journal from the You page and the lines it leans on will show up here.",
     "backToYou": "Back to You",
     "back": "Back to You",

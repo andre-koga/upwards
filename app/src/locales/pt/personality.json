@@ -293,9 +293,9 @@
   "words": {
     "title": "Nas suas palavras",
     "subtitle": "As frases em que a leitura se apoiou",
-    "open_one": "Ver a {{count}} frase das suas próprias palavras",
-    "open_many": "Ver as {{count}} frases das suas próprias palavras",
-    "open_other": "Ver as {{count}} frases das suas próprias palavras",
+    "open_one": "Ver {{count}} frase das suas próprias palavras",
+    "open_many": "Ver {{count}} frases das suas próprias palavras",
+    "open_other": "Ver {{count}} frases das suas próprias palavras",
     "empty": "Ainda sem frases. Leia seu diário na página Você e as frases em que a leitura se apoia aparecerão aqui.",
     "backToYou": "Voltar para Você",
     "back": "Voltar para Você",
