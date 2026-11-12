@@ -127,6 +127,54 @@ export interface Memory {
   deleted_at: string | null;
 }
 
+/** Which of the five traits, as a number from 0 to 100. */
+export type PersonalityScores = Record<
+  | "openness"
+  | "conscientiousness"
+  | "extraversion"
+  | "agreeableness"
+  | "neuroticism",
+  number
+>;
+
+/**
+ * One sitting of the Big Five self-test. It exists from the first answer, so
+ * `completed_at` and `scores` are null until all fifty are answered. A retake
+ * is a new row; the earlier sitting is kept.
+ */
+export interface PersonalitySitting {
+  id: string;
+  started_at: string;
+  completed_at: string | null;
+  /** Answers by stable item id, each 1 (very inaccurate) to 5 (very accurate). */
+  answers: Record<string, number>;
+  scores: PersonalityScores | null;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
+/**
+ * What the user's own model read from their recent journal days. Holds scores,
+ * a short note per trait and quotes that were checked against the days sent,
+ * never a second copy of the journal.
+ */
+export interface JournalReading {
+  id: string;
+  scores: PersonalityScores;
+  notes: Partial<Record<keyof PersonalityScores, string>>;
+  quotes: Partial<Record<keyof PersonalityScores, string[]>>;
+  /** First and last written day that was read, YYYY-MM-DD. */
+  span_start: string;
+  span_end: string;
+  days_read: number;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
 export interface OneTimeTask {
   id: string;
   date: string | null; // YYYY-MM-DD, completion date when done

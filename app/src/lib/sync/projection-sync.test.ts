@@ -12,6 +12,17 @@ describe("projection-sync mappings", () => {
     expect(syncTableToEntityType("activity_periods")).toBe("activity_period");
   });
 
+  it("maps the Big Five tables both ways", () => {
+    expect(syncTableToEntityType("personality_sittings")).toBe(
+      "personality_sitting"
+    );
+    expect(entityTypeToSyncTable("personality_sitting")).toBe(
+      "personality_sittings"
+    );
+    expect(syncTableToEntityType("journal_readings")).toBe("journal_reading");
+    expect(entityTypeToSyncTable("journal_reading")).toBe("journal_readings");
+  });
+
   it("does not strip current activity fields from projection payloads", () => {
     const row = {
       id: "a1",

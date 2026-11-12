@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-12-big-five-on-you",
+    date: "2026-11-12",
+    title: "Your Big Five portrait",
+    bullets: [
+      "The You tab has a 50-question personality test. Answer one statement at a time, and your place is saved after every answer so you can stop and carry on later.",
+      "Your result shows five lines, one for each Big Five trait, scored on your phone. Take the test again whenever you like; your last result stays for comparison.",
+      "Ask your own AI to read your recent journal days and see how that portrait compares with your answers. It only happens when you tap, after you see which days are sent.",
+    ],
+  },
+  {
     id: "2026-11-12-tighter-screen-edges",
     date: "2026-11-12",
     title: "Tighter screen edges",

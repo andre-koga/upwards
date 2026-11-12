@@ -1,0 +1,188 @@
+{
+  "disclaimer": "This is a reflection, not a diagnosis. It is a short self-report scale and a reading of your own words, and it can be wrong.",
+  "answers": {
+    "1": "Very inaccurate",
+    "2": "Moderately inaccurate",
+    "3": "Neither inaccurate nor accurate",
+    "4": "Moderately accurate",
+    "5": "Very accurate"
+  },
+  "items": {
+    "E1": "Am the life of the party.",
+    "E2": "Don't talk a lot.",
+    "E3": "Feel comfortable around people.",
+    "E4": "Keep in the background.",
+    "E5": "Start conversations.",
+    "E6": "Have little to say.",
+    "E7": "Talk to a lot of different people at parties.",
+    "E8": "Don't like to draw attention to myself.",
+    "E9": "Don't mind being the center of attention.",
+    "E10": "Am quiet around strangers.",
+    "A1": "Feel little concern for others.",
+    "A2": "Am interested in people.",
+    "A3": "Insult people.",
+    "A4": "Sympathize with others' feelings.",
+    "A5": "Am not interested in other people's problems.",
+    "A6": "Have a soft heart.",
+    "A7": "Am not really interested in others.",
+    "A8": "Take time out for others.",
+    "A9": "Feel others' emotions.",
+    "A10": "Make people feel at ease.",
+    "C1": "Am always prepared.",
+    "C2": "Leave my belongings around.",
+    "C3": "Pay attention to details.",
+    "C4": "Make a mess of things.",
+    "C5": "Get chores done right away.",
+    "C6": "Often forget to put things back in their proper place.",
+    "C7": "Like order.",
+    "C8": "Shirk my duties.",
+    "C9": "Follow a schedule.",
+    "C10": "Am exacting in my work.",
+    "N1": "Get stressed out easily.",
+    "N2": "Am relaxed most of the time.",
+    "N3": "Worry about things.",
+    "N4": "Seldom feel blue.",
+    "N5": "Am easily disturbed.",
+    "N6": "Get upset easily.",
+    "N7": "Change my mood a lot.",
+    "N8": "Have frequent mood swings.",
+    "N9": "Get irritated easily.",
+    "N10": "Often feel blue.",
+    "O1": "Have a rich vocabulary.",
+    "O2": "Have difficulty understanding abstract ideas.",
+    "O3": "Have a vivid imagination.",
+    "O4": "Am not interested in abstract ideas.",
+    "O5": "Have excellent ideas.",
+    "O6": "Do not have a good imagination.",
+    "O7": "Am quick to understand things.",
+    "O8": "Use difficult words.",
+    "O9": "Spend time reflecting on things.",
+    "O10": "Am full of ideas."
+  },
+  "traits": {
+    "openness": {
+      "name": "Openness",
+      "low": "Familiar",
+      "high": "Curious",
+      "adjective": "open to new things"
+    },
+    "conscientiousness": {
+      "name": "Conscientiousness",
+      "low": "Flexible",
+      "high": "Organised",
+      "adjective": "conscientious"
+    },
+    "extraversion": {
+      "name": "Extraversion",
+      "low": "Reserved",
+      "high": "Outgoing",
+      "adjective": "outgoing"
+    },
+    "agreeableness": {
+      "name": "Agreeableness",
+      "low": "Direct",
+      "high": "Warm",
+      "adjective": "agreeable"
+    },
+    "neuroticism": {
+      "name": "Neuroticism",
+      "low": "Steady",
+      "high": "Sensitive",
+      "adjective": "emotionally reactive"
+    }
+  },
+  "test": {
+    "intro": "Fifty short statements, one at a time. Answer how accurately each describes you as you are now, not as you would like to be. Your place is saved after every answer.",
+    "start": "Start the test",
+    "resumeTitle": "Your test is waiting",
+    "resumeLeft_one": "{{count}} question left",
+    "resumeLeft_other": "{{count}} questions left",
+    "resume": "Continue",
+    "progress": "Question {{current}} of {{total}}",
+    "statementLabel": "How accurately does this describe you?",
+    "answersLabel": "Your answer",
+    "back": "Previous question",
+    "retake": "Take the test again",
+    "retakeTitle": "Take the test again?",
+    "retakeBody": "You will answer all fifty questions again. Your last result stays saved, and the page will show it as \"last time\".",
+    "retakeConfirm": "Start again",
+    "cancel": "Cancel",
+    "discard": "Start over",
+    "discardTitle": "Start this sitting over?",
+    "discardBody": "The answers you have given in this sitting will be cleared.",
+    "exit": "Leave the test",
+    "savedHint": "Saved on this device and synced with your account."
+  },
+  "result": {
+    "heading": "Your portrait",
+    "you": "You",
+    "journal": "Your journal",
+    "lastTime": "Last time",
+    "scoreOf": "{{score}} out of 100",
+    "trackAria": "{{trait}}: you {{self}} out of 100.",
+    "trackAriaJournal": "{{trait}}: you {{self}} out of 100, your journal {{journal}} out of 100.",
+    "trackAriaLast": "Last time {{last}}.",
+    "takenOn": "Taken {{date}}",
+    "bands": {
+      "openness": {
+        "low": "You tend to prefer the familiar and the practical.",
+        "mid": "You mix new ideas with what you already know.",
+        "high": "You are drawn to new ideas, art and experiences."
+      },
+      "conscientiousness": {
+        "low": "You tend to keep plans loose and stay flexible.",
+        "mid": "You are organised in some places and relaxed in others.",
+        "high": "You like order, plans and following through."
+      },
+      "extraversion": {
+        "low": "You tend to be quiet and recharge on your own.",
+        "mid": "You move between company and time to yourself.",
+        "high": "You tend to seek out people and feel energised by them."
+      },
+      "agreeableness": {
+        "low": "You tend to say what you think, even when it is blunt.",
+        "mid": "You balance being kind with standing your ground.",
+        "high": "You tend to put people at ease and care how they feel."
+      },
+      "neuroticism": {
+        "low": "You tend to stay steady when things get stressful.",
+        "mid": "Stress affects you at times, and at times it does not.",
+        "high": "You tend to feel stress and mood shifts strongly."
+      }
+    },
+    "gap": {
+      "close": "Your journal and your answers agree on {{trait}}.",
+      "journalHigher": "Your journal reads as more {{adjective}} than you rated yourself.",
+      "journalLower": "Your journal reads as less {{adjective}} than you rated yourself."
+    }
+  },
+  "journal": {
+    "heading": "What your journal reads as",
+    "body": "Separate from the test: your own AI reads your recent written days and scores them on the same five traits, so you can compare.",
+    "read": "Read my journal",
+    "readAgain": "Read it again",
+    "reading": "Reading...",
+    "span": "Based on {{count}} days, {{from}} to {{to}}",
+    "noteLabel": "What the model noticed",
+    "quotesLabel": "From your own words",
+    "notConnected": "Connect an AI in Settings to read your journal. The test works without it.",
+    "openSettings": "Open Settings",
+    "noDays": "Write a few journal days first. Only days with a title or text can be read.",
+    "needTest": "Take the test first, then compare it with your journal.",
+    "consentTitle": "Send these days to your AI?",
+    "consentBody_one": "The words of {{count}} written day (title, date and the first 300 characters of the entry) will be sent to {{model}}, the model named in Settings. Nothing else is sent: no birthday, no profile, no test answers.",
+    "consentBody_other": "The words of {{count}} written days (title, date and the first 300 characters of each entry) will be sent to {{model}}, the model named in Settings. Nothing else is sent: no birthday, no profile, no test answers.",
+    "consentConfirm": "Send and read",
+    "cancel": "Cancel",
+    "errors": {
+      "not_configured": "Connect an AI in Settings first.",
+      "rate_limited": "You have reached today's limit of AI calls. Try again tomorrow.",
+      "provider_rejected": "Your AI provider turned the request down.",
+      "provider_empty": "Your AI provider sent back nothing.",
+      "provider_unreachable": "Could not reach your AI provider.",
+      "provider_invalid": "The AI answered in a form that could not be used. Try again.",
+      "generic": "Could not read your journal. Try again."
+    },
+    "modelFallback": "your AI model"
+  }
+}
