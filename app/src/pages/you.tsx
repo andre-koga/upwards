@@ -69,7 +69,7 @@ export default function YouPage() {
 
   if (testing) {
     return (
-      <AppPageShell title={t("title")} subtitle={t("eyebrow")} align="center">
+      <AppPageShell title={t("title")} align="center">
         <PersonalityTest
           key={testing.id}
           sitting={testing}
@@ -86,7 +86,7 @@ export default function YouPage() {
   const current = data?.current ?? null;
 
   return (
-    <AppPageShell title={t("title")} subtitle={t("eyebrow")} align="center">
+    <AppPageShell title={t("title")} align="center">
       {current && (
         <section
           aria-labelledby="resume-test"

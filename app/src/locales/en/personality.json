@@ -91,6 +91,87 @@
       "adjective": "emotionally reactive"
     }
   },
+  "type": {
+    "eyebrow": "Your type",
+    "balanced": "The Balancer",
+    "balancedBlurb": "No single trait pulls far from the middle. You adapt to what each moment asks of you.",
+    "name": "The {{adjective}} {{noun}}",
+    "article_m": "The",
+    "article_f": "The",
+    "definedBy": "Stands out for",
+    "traits": {
+      "openness": {
+        "high": {
+          "adjective_m": "Curious",
+          "adjective_f": "Curious",
+          "noun": "Explorer",
+          "gender": "m"
+        },
+        "low": {
+          "adjective_m": "Practical",
+          "adjective_f": "Practical",
+          "noun": "Realist",
+          "gender": "m"
+        }
+      },
+      "conscientiousness": {
+        "high": {
+          "adjective_m": "Focused",
+          "adjective_f": "Focused",
+          "noun": "Builder",
+          "gender": "m"
+        },
+        "low": {
+          "adjective_m": "Spontaneous",
+          "adjective_f": "Spontaneous",
+          "noun": "Improviser",
+          "gender": "m"
+        }
+      },
+      "extraversion": {
+        "high": {
+          "adjective_m": "Lively",
+          "adjective_f": "Lively",
+          "noun": "Spark",
+          "gender": "f"
+        },
+        "low": {
+          "adjective_m": "Quiet",
+          "adjective_f": "Quiet",
+          "noun": "Observer",
+          "gender": "m"
+        }
+      },
+      "agreeableness": {
+        "high": {
+          "adjective_m": "Warm",
+          "adjective_f": "Warm",
+          "noun": "Peacemaker",
+          "gender": "m"
+        },
+        "low": {
+          "adjective_m": "Frank",
+          "adjective_f": "Frank",
+          "noun": "Challenger",
+          "gender": "m"
+        }
+      },
+      "neuroticism": {
+        "high": {
+          "adjective_m": "Intense",
+          "adjective_f": "Intense",
+          "noun": "Sentinel",
+          "gender": "f"
+        },
+        "low": {
+          "adjective_m": "Calm",
+          "adjective_f": "Calm",
+          "noun": "Anchor",
+          "gender": "f"
+        }
+      }
+    }
+  },
   "test": {
     "intro": "Fifty short statements, one at a time. Answer how accurately each describes you as you are now, not as you would like to be. Your place is saved after every answer.",
     "start": "Start the test",
@@ -154,7 +235,13 @@
       "close": "Your journal and your answers agree on {{trait}}.",
       "journalHigher": "Your journal reads as more {{adjective}} than you rated yourself.",
       "journalLower": "Your journal reads as less {{adjective}} than you rated yourself."
-    }
+    },
+    "highlights": {
+      "standout": "Biggest standout",
+      "closest": "Journal agrees most",
+      "widest": "Widest gap"
+    },
+    "balancedWord": "Balanced"
   },
   "journal": {
     "heading": "What your journal reads as",
