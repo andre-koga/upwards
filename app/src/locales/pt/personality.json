@@ -91,6 +91,87 @@
       "adjective": "emocionalmente reativo"
     }
   },
+  "type": {
+    "eyebrow": "Seu tipo",
+    "balanced": "O Equilibrista",
+    "balancedBlurb": "Nenhum traço se afasta muito do meio. Você se adapta ao que cada momento pede.",
+    "name": "{{article}} {{noun}} {{adjective}}",
+    "article_m": "O",
+    "article_f": "A",
+    "definedBy": "Se destaca por",
+    "traits": {
+      "openness": {
+        "high": {
+          "adjective_m": "Curioso",
+          "adjective_f": "Curiosa",
+          "noun": "Explorador",
+          "gender": "m"
+        },
+        "low": {
+          "adjective_m": "Prático",
+          "adjective_f": "Prática",
+          "noun": "Realista",
+          "gender": "m"
+        }
+      },
+      "conscientiousness": {
+        "high": {
+          "adjective_m": "Focado",
+          "adjective_f": "Focada",
+          "noun": "Construtor",
+          "gender": "m"
+        },
+        "low": {
+          "adjective_m": "Espontâneo",
+          "adjective_f": "Espontânea",
+          "noun": "Improvisador",
+          "gender": "m"
+        }
+      },
+      "extraversion": {
+        "high": {
+          "adjective_m": "Animado",
+          "adjective_f": "Animada",
+          "noun": "Faísca",
+          "gender": "f"
+        },
+        "low": {
+          "adjective_m": "Reservado",
+          "adjective_f": "Reservada",
+          "noun": "Observador",
+          "gender": "m"
+        }
+      },
+      "agreeableness": {
+        "high": {
+          "adjective_m": "Acolhedor",
+          "adjective_f": "Acolhedora",
+          "noun": "Pacificador",
+          "gender": "m"
+        },
+        "low": {
+          "adjective_m": "Franco",
+          "adjective_f": "Franca",
+          "noun": "Desafiador",
+          "gender": "m"
+        }
+      },
+      "neuroticism": {
+        "high": {
+          "adjective_m": "Intenso",
+          "adjective_f": "Intensa",
+          "noun": "Sentinela",
+          "gender": "f"
+        },
+        "low": {
+          "adjective_m": "Calmo",
+          "adjective_f": "Calma",
+          "noun": "Âncora",
+          "gender": "f"
+        }
+      }
+    }
+  },
   "test": {
     "intro": "Cinquenta frases curtas, uma de cada vez. Responda o quanto cada uma descreve você como é agora, não como gostaria de ser. Seu lugar é salvo a cada resposta.",
     "start": "Começar o teste",
@@ -155,7 +236,16 @@
       "close": "Seu diário e suas respostas concordam em {{trait}}.",
       "journalHigher": "Seu diário parece mais {{adjective}} do que você se avaliou.",
       "journalLower": "Seu diário parece menos {{adjective}} do que você se avaliou."
-    }
+    },
+    "highlights": {
+      "standout": "Maior destaque",
+      "closest": "Diário concorda mais",
+      "widest": "Maior diferença"
+    },
+    "balancedWord": "Equilibrado",
+    "journalPill_one": "Diário · {{count}} dia",
+    "journalPill_many": "Diário · {{count}} dias",
+    "journalPill_other": "Diário · {{count}} dias"
   },
   "journal": {
     "heading": "O que o seu diário mostra",
