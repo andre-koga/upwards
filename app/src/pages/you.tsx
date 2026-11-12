@@ -15,6 +15,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { usePersonality } from "@/hooks/use-personality";
+import {
+  setBehaviourRange,
+  useBehaviourRange,
+} from "@/lib/personality/behaviour-range";
 import type { PersonalitySitting } from "@/lib/db/types";
 import { logError } from "@/lib/error-utils";
 import { ITEM_COUNT } from "@/lib/personality/items";
@@ -118,7 +122,8 @@ function ResumePrompt({
 export default function YouPage() {
   const { t } = useTranslation("you");
   const { t: tp } = useTranslation("personality");
-  const { data, reload } = usePersonality();
+  const range = useBehaviourRange();
+  const { data, reload } = usePersonality(range);
   const [testing, setTesting] = useState<PersonalitySitting | null>(null);
   const [confirmRetake, setConfirmRetake] = useState(false);
 
@@ -214,6 +219,9 @@ export default function YouPage() {
             latest={latest}
             previous={previous}
             reading={data?.reading ?? null}
+            behaviour={data?.behaviour ?? null}
+            range={range}
+            onRangeChange={setBehaviourRange}
           />
           {!current && (
             <div className="flex justify-center pt-6">

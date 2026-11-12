@@ -243,7 +243,18 @@
     },
     "balancedWord": "Balanced",
     "journalPill_one": "Journal · {{count}} day",
-    "journalPill_other": "Journal · {{count}} days"
+    "journalPill_other": "Journal · {{count}} days",
+    "behaviour": "Your habits",
+    "trackAriaBehaviour": "Your habits {{behaviour}}.",
+    "habits": {
+      "conscientiousness": "You logged something on {{active}} of {{total}} days lately.",
+      "openness": "Lately you did {{activities}} and were in {{places}}.",
+      "activities_one": "{{count}} activity",
+      "activities_other": "{{count}} different activities",
+      "places_one": "{{count}} place",
+      "places_other": "{{count}} different places"
+    },
+    "habitsNote": "The diamonds show your habits over the last {{days}} days, counted on this device. They can only speak to Openness and Conscientiousness; habits say little about the other three."
   },
   "journal": {
     "heading": "What your journal reads as",
@@ -273,5 +284,23 @@
       "generic": "Could not read your journal. Try again."
     },
     "modelFallback": "your AI model"
+  },
+  "words": {
+    "title": "In your words",
+    "subtitle": "The lines your reading leaned on",
+    "open_one": "See {{count}} line from your own words",
+    "open_other": "See {{count}} lines from your own words",
+    "empty": "No lines yet. Read your journal from the You page and the lines it leans on will show up here.",
+    "backToYou": "Back to You",
+    "back": "Back to You",
+    "sounds": "Sounds like {{trait}}",
+    "fromDay": "From {{date}}",
+    "dayChanged": "From a day you have since changed"
+  },
+  "habitsRange": {
+    "label": "Look back at my habits over",
+    "option_one": "{{count}} day",
+    "option_other": "{{count}} days",
+    "empty": "Not enough logged days in this range for your habits to show. Try a longer one, or keep logging."
   }
 }

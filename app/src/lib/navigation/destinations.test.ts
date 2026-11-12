@@ -30,6 +30,7 @@ describe("activeTabForPath", () => {
     ["/journal", "journal"],
     ["/memories", "journal"],
     ["/you", "you"],
+    ["/you/words", "you"],
     ["/settings", "settings"],
     ["/settings/sync-issues", "settings"],
     ["/whats-new", "settings"],
