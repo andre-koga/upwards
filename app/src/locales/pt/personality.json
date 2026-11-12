@@ -163,7 +163,7 @@
     "read": "Ler o meu diário",
     "readAgain": "Ler de novo",
     "reading": "Lendo...",
-    "span": "Com base em {{count}} dias, de {{from}} a {{to}}.",
+    "span": "Com base em {{count}} dias, de {{from}} a {{to}}",
     "noteLabel": "O que o modelo notou",
     "quotesLabel": "Das suas próprias palavras",
     "notConnected": "Conecte uma IA nas configurações para ler o seu diário. O teste funciona sem ela.",

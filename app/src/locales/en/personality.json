@@ -162,7 +162,7 @@
     "read": "Read my journal",
     "readAgain": "Read it again",
     "reading": "Reading...",
-    "span": "Based on {{count}} days, {{from}} to {{to}}.",
+    "span": "Based on {{count}} days, {{from}} to {{to}}",
     "noteLabel": "What the model noticed",
     "quotesLabel": "From your own words",
     "notConnected": "Connect an AI in Settings to read your journal. The test works without it.",

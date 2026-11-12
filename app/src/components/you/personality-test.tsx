@@ -73,8 +73,12 @@ export function PersonalityTest({
     function onKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (confirmDiscard) return;
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("input, textarea, [role='dialog']")) return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest("input, textarea, [role='dialog']")
+      ) {
+        return;
+      }
       if (event.key >= "1" && event.key <= "5") {
         event.preventDefault();
         void answer(Number(event.key));
