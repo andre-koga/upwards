@@ -57,19 +57,19 @@ export function ArchetypeHero({
   return (
     <section
       aria-labelledby="your-type"
-      className="relative -mx-4 -mt-8 overflow-hidden px-4 pb-8 pt-14 text-center"
-      style={{
-        background: [
-          `radial-gradient(ellipse 90% 45% at 50% 0%, ${traitColor(from, 0.32)}, transparent 100%)`,
-          `linear-gradient(180deg, ${traitColor(from, 0.2)} 0%, ${traitColor(to, 0.14)} 45%, transparent 100%)`,
-        ].join(", "),
-      }}
+      className="relative -mx-4 -mt-8 px-4 pb-8 pt-14 text-center"
     >
+      {/* The wash belongs to the page: it sits behind everything and runs past
+          the end of this section, so the first trait cards sit on it too. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-10 h-72"
+        className="pointer-events-none absolute inset-x-0 -bottom-64 top-0 -z-10"
         style={{
-          background: `radial-gradient(ellipse at 50% 60%, ${traitColor(to, 0.2)}, transparent 65%)`,
+          background: [
+            `radial-gradient(ellipse 90% 40% at 50% 0%, ${traitColor(from, 0.34)}, transparent 100%)`,
+            `radial-gradient(ellipse 80% 30% at 50% 62%, ${traitColor(to, 0.18)}, transparent 100%)`,
+            `linear-gradient(180deg, ${traitColor(from, 0.2)} 0%, ${traitColor(to, 0.14)} 50%, transparent 100%)`,
+          ].join(", "),
         }}
       />
 

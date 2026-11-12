@@ -35,7 +35,7 @@ function YouLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="space-y-6 px-2 pb-24 pt-6 md:p-4 md:pb-24">
+    <div className="relative isolate space-y-6 px-2 pb-24 pt-6 md:p-4 md:pb-24 [&>h1+*]:!mt-0">
       <h1 className="sr-only">{title}</h1>
       {children}
     </div>
