@@ -7,6 +7,11 @@ import {
   SettingsGroup,
   SettingsRow,
 } from "@/components/settings/settings-list";
+import { Switch } from "@/components/ui/switch";
+import {
+  setCompactScreenEdges,
+  useCompactScreenEdges,
+} from "@/lib/compact-screen-edges";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { LOCALE_OPTIONS, isLocaleValue } from "@/lib/i18n/locale-storage";
 
@@ -16,11 +21,12 @@ const MODES = [
   { value: "dark", icon: Moon },
 ] as const;
 
-/** Theme and language: the two choices that change how everything reads. */
+/** Theme, language, and how close the page sits to the screen edge. */
 export function GeneralSettingsGroup() {
   const { t } = useTranslation("settings");
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocale();
+  const compactScreenEdges = useCompactScreenEdges();
   const activeMode = MODES.find((mode) => mode.value === theme) ?? MODES[0];
   const activeLocale =
     LOCALE_OPTIONS.find((option) => option.value === locale) ??
@@ -55,6 +61,20 @@ export function GeneralSettingsGroup() {
             }}
             compact
             options={LOCALE_OPTIONS}
+          />
+        }
+      />
+      <SettingsRow
+        htmlFor="compact-screen-edges"
+        label={t("screenEdges.label")}
+        hint={t("screenEdges.hint")}
+        hintId="compact-screen-edges-hint"
+        control={
+          <Switch
+            id="compact-screen-edges"
+            aria-describedby="compact-screen-edges-hint"
+            checked={compactScreenEdges}
+            onCheckedChange={setCompactScreenEdges}
           />
         }
       />

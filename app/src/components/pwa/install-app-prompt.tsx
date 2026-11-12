@@ -66,7 +66,7 @@ export function InstallAppPrompt() {
   return (
     <aside
       aria-label={t("installApp")}
-      className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto flex max-w-md items-center gap-3 rounded-[1.5rem] border border-foreground/10 bg-background/80 py-2 pl-4 pr-2 shadow-[0_10px_30px_-14px_rgb(0_0_0/0.45)] backdrop-blur-md"
+      className="fixed inset-x-3 bottom-[calc(5rem+var(--app-safe-bottom,env(safe-area-inset-bottom,0px)))] z-40 mx-auto flex max-w-md items-center gap-3 rounded-[1.5rem] border border-foreground/10 bg-background/80 py-2 pl-4 pr-2 shadow-[0_10px_30px_-14px_rgb(0_0_0/0.45)] backdrop-blur-md"
     >
       <Download
         className="h-4 w-4 shrink-0 text-muted-foreground"

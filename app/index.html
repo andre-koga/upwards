@@ -59,6 +59,10 @@
           if (iOS && standalone) {
             document.documentElement.classList.add("ios-standalone");
           }
+          // Same key as COMPACT_SCREEN_EDGES_KEY in compact-screen-edges.ts.
+          if (localStorage.getItem("upwards-compact-screen-edges") === "1") {
+            document.documentElement.classList.add("compact-screen-edges");
+          }
         } catch (e) {
           /* ignore */
         }

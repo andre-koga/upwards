@@ -62,8 +62,10 @@
     --z-dialog: 80;
     --z-popover: 90;
     --z-lightbox: 100;
-    /* Overridden on html.ios-standalone. 0 everywhere else. */
+    /* Overridden on html.ios-standalone. 0 everywhere else.
+       html.compact-screen-edges sets both back to 0. */
     --ios-status-shield: 0px;
+    --app-safe-bottom: env(safe-area-inset-bottom, 0px);
 
     /* The AI gradient. Defined once, here, and
        used only through lib/ai/ai-visual.ts. The stops are fixed colors, not
@@ -148,6 +150,12 @@
   html.ios-standalone {
     --ios-status-shield: max(env(safe-area-inset-top, 0px), 8px);
   }
+  /* The installed app already insets the page. Drop the insets this stylesheet
+     adds, so they are not counted twice. Settings turns the class on. */
+  html.compact-screen-edges {
+    --ios-status-shield: 0px;
+    --app-safe-bottom: 0px;
+  }
   html.ios-standalone #ios-status-shield {
     display: block;
     position: fixed;
@@ -163,7 +171,9 @@
   /* Height the phone tab bar occupies. Fixed bottom controls add it to their
      offset so they sit above the bar. */
   .app-shell-tabs {
-    --app-tab-bar-h: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    --app-tab-bar-h: calc(
+      3.5rem + var(--app-safe-bottom, env(safe-area-inset-bottom, 0px))
+    );
   }
 
   .wide-screen-notice {

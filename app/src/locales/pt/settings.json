@@ -18,6 +18,10 @@
     "current": "Idioma",
     "comingSoon": "Mais idiomas em breve."
   },
+  "screenEdges": {
+    "label": "Bordas da tela mais justas",
+    "hint": "Aproxima a data e a barra de abas do topo e da base da tela. Ative quando o app instalado já deixa um espaço ali."
+  },
   "auth": {
     "title": "Conta para sincronização",
     "signedInAs": "Conectado como",
