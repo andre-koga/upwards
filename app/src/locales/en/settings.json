@@ -18,6 +18,10 @@
     "current": "Language",
     "comingSoon": "More languages are on the way."
   },
+  "screenEdges": {
+    "label": "Tighter screen edges",
+    "hint": "Pulls the date and the tab bar closer to the top and bottom of the screen. Turn this on when the installed app already leaves a gap there."
+  },
   "auth": {
     "title": "Sync account",
     "signedInAs": "Signed in as",

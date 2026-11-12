@@ -12,6 +12,14 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-12-tighter-screen-edges",
+    date: "2026-11-12",
+    title: "Tighter screen edges",
+    bullets: [
+      "Settings has a switch that pulls the date and the tab bar closer to the top and bottom, for a phone where the installed app already leaves a gap there.",
+    ],
+  },
+  {
     id: "2026-11-11-settings-tab",
     date: "2026-11-11",
     title: "Settings in one place",

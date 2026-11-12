@@ -12,6 +12,12 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-12-tighter-screen-edges": {
+    title: "Bordas da tela mais justas",
+    bullets: [
+      "As Configurações têm um interruptor que aproxima a data e a barra de abas do topo e da base, para um celular em que o app instalado já deixa um espaço ali.",
+    ],
+  },
   "2026-11-11-settings-tab": {
     title: "Configurações num só lugar",
     bullets: [
