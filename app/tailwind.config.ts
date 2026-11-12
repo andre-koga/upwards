@@ -85,6 +85,7 @@ export default {
           text: "hsl(var(--gold-text) / <alpha-value>)",
         },
         lavender: "hsl(var(--lavender) / <alpha-value>)",
+        sky: "hsl(var(--sky) / <alpha-value>)",
       },
       fontFamily: {
         // Two voices: Newsreader for anything written or reflective, Figtree

@@ -25,6 +25,7 @@
     --gold: 40 56% 52%;
     --gold-text: 40 75% 28%;
     --lavender: 255 18% 59%;
+    --sky: 205 42% 46%;
 
     /* shadcn semantic variables, mapped onto the palette. */
     --background: var(--canvas);
@@ -110,6 +111,7 @@
     --gold: 42 63% 60%;
     --gold-text: 42 63% 60%;
     --lavender: 253 28% 74%;
+    --sky: 205 52% 70%;
 
     /* shadcn semantic variables, mapped onto the palette. */
     --background: var(--canvas);

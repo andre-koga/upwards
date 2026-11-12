@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { Trait } from "@/lib/personality/items";
-import { cn } from "@/lib/utils";
+import { traitColor } from "@/lib/personality/trait-colors";
 
 interface TraitTrackProps {
   trait: Trait;
@@ -11,22 +11,10 @@ interface TraitTrackProps {
   last: number | null;
 }
 
-function Mark({ score, className }: { score: number; className: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "absolute top-1/2 block -translate-x-1/2 -translate-y-1/2 rounded-full",
-        className
-      )}
-      style={{ left: `${score}%` }}
-    />
-  );
-}
-
 /**
- * One trait as a line from low to high. The marks are fixed to the scores and
- * cannot be dragged; the line carries a text equivalent with every number.
+ * One trait as a coloured bar from low to high. The marks are fixed to the
+ * scores and cannot be dragged; the bar carries a text equivalent with every
+ * number.
  */
 export function TraitTrack({ trait, self, journal, last }: TraitTrackProps) {
   const { t } = useTranslation("personality");
@@ -43,48 +31,46 @@ export function TraitTrack({ trait, self, journal, last }: TraitTrackProps) {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="font-display text-[1.0625rem] text-foreground">
-          {name}
-        </h3>
-        <p
-          aria-hidden="true"
-          className="text-[0.8125rem] tabular-nums text-muted-foreground"
-        >
-          <span className="text-foreground">{self}</span>
-          {journal !== null && (
-            <>
-              <span className="mx-1.5">/</span>
-              <span className="text-terracotta-text">{journal}</span>
-            </>
-          )}
-        </p>
-      </div>
-
-      <div role="img" aria-label={label} className="relative mx-2 mt-3 h-5">
+      <div role="img" aria-label={label} className="relative mx-2 h-6">
         <span
           aria-hidden="true"
-          className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[hsl(var(--line-strong)/0.45)]"
+          className="absolute inset-x-0 top-1/2 h-2.5 -translate-y-1/2 rounded-full"
+          style={{
+            background: `linear-gradient(90deg, ${traitColor(trait, 0.12)}, ${traitColor(trait, 0.6)})`,
+          }}
+        />
+        <span
+          aria-hidden="true"
+          className="absolute left-0 top-1/2 h-2.5 -translate-y-1/2 rounded-full"
+          style={{
+            width: `${self}%`,
+            background: `linear-gradient(90deg, ${traitColor(trait, 0.5)}, ${traitColor(trait)})`,
+          }}
         />
         {last !== null && (
           <span
             aria-hidden="true"
-            className="absolute top-1/2 block h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-muted-foreground/60"
+            className="absolute top-1/2 block h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50"
             style={{ left: `${last}%` }}
           />
         )}
         {journal !== null && (
-          <Mark
-            score={journal}
-            className="size-3 border-2 border-terracotta bg-background"
+          <span
+            aria-hidden="true"
+            className="absolute top-1/2 block size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-foreground bg-background"
+            style={{ left: `${journal}%` }}
           />
         )}
-        <Mark score={self} className="size-3.5 bg-primary" />
+        <span
+          aria-hidden="true"
+          className="absolute top-1/2 block size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background shadow-md"
+          style={{ left: `${self}%`, background: traitColor(trait) }}
+        />
       </div>
 
       <div
         aria-hidden="true"
-        className="mt-1.5 flex justify-between text-xs text-muted-foreground"
+        className="mt-1.5 flex justify-between px-2 text-xs text-muted-foreground"
       >
         <span>{t(`traits.${trait}.low`)}</span>
         <span>{t(`traits.${trait}.high`)}</span>
