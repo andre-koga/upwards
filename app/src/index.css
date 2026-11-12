@@ -151,10 +151,12 @@
     --ios-status-shield: max(env(safe-area-inset-top, 0px), 8px);
   }
   /* The installed app already insets the page. Drop the insets this stylesheet
-     adds, so they are not counted twice. Settings turns the class on. */
+     adds, so they are not counted twice. Settings turns the class on.
+     The tab bar keeps a short pad: newer iPhones curve at the bottom, and
+     with the safe area removed the labels sit on that curve. */
   html.compact-screen-edges {
     --ios-status-shield: 0px;
-    --app-safe-bottom: 0px;
+    --app-safe-bottom: 0.75rem;
   }
   html.ios-standalone #ios-status-shield {
     display: block;
