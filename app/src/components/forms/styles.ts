@@ -2,9 +2,13 @@
  * Every form control in a dialog shares one shape: a soft tonal field, 44px
  * tall, no border. Text inputs, time pickers, selects and action buttons must
  * read as the same object, so they all start from `controlBase`.
+ *
+ * Type is 16px, and only the size changes: an arbitrary value keeps the
+ * existing line-height. iOS Safari zooms the page when a focused text field
+ * is any smaller, and the page stays zoomed after the field blurs.
  */
 const controlBase =
-  "h-11 w-full rounded-xl border border-transparent bg-muted/70 px-3.5 text-[0.9375rem] font-normal text-foreground shadow-none transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-muted/40 disabled:text-muted-foreground";
+  "h-11 w-full rounded-xl border border-transparent bg-muted/70 px-3.5 text-[16px] font-normal text-foreground shadow-none transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-muted/40 disabled:text-muted-foreground";
 
 /**
  * A read-only value (a running session's end, a completion with no span) keeps
