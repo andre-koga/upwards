@@ -36,7 +36,7 @@ function getSnapshot(): BehaviourRange {
   return snapshot;
 }
 
-export function setBehaviourRange(next: BehaviourRange): void {
+export function setLookBackRange(next: BehaviourRange): void {
   snapshot = next;
   try {
     localStorage.setItem(STORAGE_KEY, String(next));
@@ -46,6 +46,6 @@ export function setBehaviourRange(next: BehaviourRange): void {
   for (const listener of listeners) listener();
 }
 
-export function useBehaviourRange(): BehaviourRange {
+export function useLookBackRange(): BehaviourRange {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

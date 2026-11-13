@@ -258,7 +258,7 @@
   },
   "journal": {
     "heading": "What your journal reads as",
-    "body": "Separate from the test: your own AI reads your recent written days and scores them on the same five traits, so you can compare.",
+    "body": "Separate from the test: your own AI reads your written days and scores them on the same five traits, so you can compare.",
     "read": "Read my journal",
     "readAgain": "Read it again",
     "reading": "Reading...",
@@ -267,7 +267,7 @@
     "quotesLabel": "From your own words",
     "notConnected": "Connect an AI in Settings to read your journal. The test works without it.",
     "openSettings": "Open Settings",
-    "noDays": "Write a few journal days first. Only days with a title or text can be read.",
+    "noDays": "No written days in the last {{days}} days. Write a few, or look back further. Only days with a title or text can be read.",
     "needTest": "Take the test first, then compare it with your journal.",
     "consentTitle": "Send these days to your AI?",
     "consentBody_one": "The words of {{count}} written day (title, date and the first 300 characters of the entry) will be sent to {{model}}, the model named in Settings. Nothing else is sent: no birthday, no profile, no test answers.",
@@ -283,7 +283,8 @@
       "provider_invalid": "The AI answered in a form that could not be used. Try again.",
       "generic": "Could not read your journal. Try again."
     },
-    "modelFallback": "your AI model"
+    "modelFallback": "your AI model",
+    "window": "Reads the written days from the last {{days}} days."
   },
   "words": {
     "title": "In your words",
@@ -298,7 +299,7 @@
     "dayChanged": "From a day you have since changed"
   },
   "habitsRange": {
-    "label": "Look back at my habits over",
+    "label": "Habits and journal reading look back over",
     "option_one": "{{count}} day",
     "option_other": "{{count}} days",
     "empty": "Not enough logged days in this range for your habits to show. Try a longer one, or keep logging."

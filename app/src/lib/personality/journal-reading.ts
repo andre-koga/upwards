@@ -4,26 +4,34 @@ import {
   requestJournalReading,
   type ParsedReading,
 } from "@/lib/ai/journal-reading-client";
+import { fromDateString, toDateString } from "@/lib/time-utils";
 import { saveJournalReading } from "@/lib/sync/mutate-synced";
+import { DEFAULT_BEHAVIOUR_RANGE, type BehaviourRange } from "./behaviour";
 import { TRAITS } from "./items";
 import { verifiedQuotes, type SentDay } from "./quotes";
 
 /** What the edge function accepts: the limits are mirrored there. */
-export const READING_MAX_DAYS = 60;
+export const READING_MAX_DAYS = 180;
 export const READING_MAX_TEXT_CHARS = 300;
 export const READING_MAX_TITLE_CHARS = 80;
 
 /**
- * The most recent written days, oldest first, cut to what will be sent. Only a
- * day with a title or text counts; photos, places and emoji are never sent.
+ * The written days from the last `range` days (today included), oldest first,
+ * cut to what will be sent. Only a day with a title or text counts; photos,
+ * places and emoji are never sent.
  */
 export async function collectReadingDays(
-  limit = READING_MAX_DAYS
+  range: BehaviourRange = DEFAULT_BEHAVIOUR_RANGE,
+  today = toDateString(new Date())
 ): Promise<SentDay[]> {
+  const start = fromDateString(today);
+  start.setDate(start.getDate() - (range - 1));
+  const oldest = toDateString(start);
   const rows = await db.journalEntries.toArray();
   const days: SentDay[] = [];
   for (const row of rows) {
     if (row.deleted_at) continue;
+    if (row.entry_date < oldest || row.entry_date > today) continue;
     const title = (row.title ?? "").trim().slice(0, READING_MAX_TITLE_CHARS);
     const text = (row.text_content ?? "")
       .trim()
@@ -32,7 +40,7 @@ export async function collectReadingDays(
     days.push({ date: row.entry_date, title, text });
   }
   days.sort((a, b) => b.date.localeCompare(a.date));
-  return days.slice(0, limit).reverse();
+  return days.slice(0, READING_MAX_DAYS).reverse();
 }
 
 /** The newest reading that has not been deleted. */
