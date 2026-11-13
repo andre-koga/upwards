@@ -12,6 +12,7 @@ import enMemories from "@/locales/en/memories.json";
 import enProjects from "@/locales/en/projects.json";
 import enYou from "@/locales/en/you.json";
 import enPersonality from "@/locales/en/personality.json";
+import enQuestions from "@/locales/en/questions.json";
 import ptCommon from "@/locales/pt/common.json";
 import ptNav from "@/locales/pt/nav.json";
 import ptSettings from "@/locales/pt/settings.json";
@@ -22,6 +23,7 @@ import ptMemories from "@/locales/pt/memories.json";
 import ptProjects from "@/locales/pt/projects.json";
 import ptYou from "@/locales/pt/you.json";
 import ptPersonality from "@/locales/pt/personality.json";
+import ptQuestions from "@/locales/pt/questions.json";
 import {
   LOCALE_HTML_TAGS,
   resolveInitialLocale,
@@ -40,6 +42,7 @@ const resources = {
     projects: enProjects,
     you: enYou,
     personality: enPersonality,
+    questions: enQuestions,
   },
   pt: {
     common: ptCommon,
@@ -52,6 +55,7 @@ const resources = {
     projects: ptProjects,
     you: ptYou,
     personality: ptPersonality,
+    questions: ptQuestions,
   },
 } as const;
 

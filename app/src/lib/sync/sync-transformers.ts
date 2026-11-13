@@ -13,6 +13,7 @@ export type SyncTable =
   | "memories"
   | "personality_sittings"
   | "journal_readings"
+  | "question_answers"
   | "one_time_tasks";
 
 export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
@@ -25,6 +26,7 @@ export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
   memories: "id",
   personality_sittings: "id",
   journal_readings: "id",
+  question_answers: "id",
   one_time_tasks: "id",
 };
 

@@ -9,6 +9,7 @@ import type {
   Memory,
   OneTimeTask,
   PersonalitySitting,
+  QuestionAnswer,
 } from "@/lib/db/types";
 
 export const BACKUP_FORMAT = "upwards-backup";
@@ -33,6 +34,7 @@ export interface BackupTables {
   memories: Memory[];
   personalitySittings: PersonalitySitting[];
   journalReadings: JournalReading[];
+  questionAnswers: QuestionAnswer[];
   oneTimeTasks: OneTimeTask[];
 }
 
@@ -49,6 +51,7 @@ export const BACKUP_TABLE_NAMES = [
   "memories",
   "personalitySittings",
   "journalReadings",
+  "questionAnswers",
   "oneTimeTasks",
 ] as const satisfies readonly BackupTableName[];
 
@@ -119,6 +122,7 @@ export function emptyBackupTables(): BackupTables {
     memories: [],
     personalitySittings: [],
     journalReadings: [],
+    questionAnswers: [],
     oneTimeTasks: [],
   };
 }

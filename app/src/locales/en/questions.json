@@ -1,0 +1,210 @@
+{
+  "q": {
+    "o1": {
+      "prompt": "You have a free afternoon in a city you have never visited. What do you do?",
+      "a": "Wander with no plan and see where it leads",
+      "b": "Pick one place I read about and go there",
+      "c": "Find a café and watch people go by",
+      "d": "Stay close to what is easy and familiar"
+    },
+    "o2": {
+      "prompt": "A friend tells you about a belief you find strange. What do you do first?",
+      "a": "Ask them to explain it in more detail",
+      "b": "Listen politely and think about it later",
+      "c": "Tell them honestly where I disagree",
+      "d": "Steer toward something we agree on"
+    },
+    "o3": {
+      "prompt": "Which gives you more satisfaction?",
+      "a": "Finding a new way to do something",
+      "b": "Doing something well, the way it has always been done",
+      "c": "Both about equally"
+    },
+    "o4": {
+      "prompt": "A film ends and you did not understand it. How do you feel?",
+      "a": "Delighted, I want to talk about what it could mean",
+      "b": "Curious, I might read about it",
+      "c": "A little annoyed, I like clear endings",
+      "d": "I would rather have watched something simpler"
+    },
+    "o5": {
+      "prompt": "When your mind wanders, where does it usually go?",
+      "a": "Invented places, ideas or stories",
+      "b": "Things I could build or make",
+      "c": "Real plans for the week ahead",
+      "d": "It rarely wanders"
+    },
+    "o6": {
+      "prompt": "Someone offers you a food you have never heard of.",
+      "a": "Yes, right away",
+      "b": "Yes, after asking what is in it",
+      "c": "Just a small bite",
+      "d": "I will stick to what I know"
+    },
+    "c1": {
+      "prompt": "It is Sunday evening. How does your week ahead look?",
+      "a": "Planned, with the first task already chosen",
+      "b": "Roughly sketched",
+      "c": "Open, I will see how it goes",
+      "d": "Unknown, and I like it that way"
+    },
+    "c2": {
+      "prompt": "You promised to send something by Friday. When does it go out?",
+      "a": "Wednesday, early",
+      "b": "Thursday",
+      "c": "Friday, near the end of the day",
+      "d": "Whenever I remember"
+    },
+    "c3": {
+      "prompt": "How does your desk or bag usually look?",
+      "a": "Everything has a place",
+      "b": "Tidy enough",
+      "c": "Messy, but I know where things are",
+      "d": "I could not tell you what is in there"
+    },
+    "c4": {
+      "prompt": "A task is boring but important. What do you do?",
+      "a": "Do it first, to be done with it",
+      "b": "Put it in my schedule and do it",
+      "c": "Wait for the right mood",
+      "d": "Find something more interesting to do first"
+    },
+    "c5": {
+      "prompt": "You notice a mistake in work you already handed in.",
+      "a": "I fix it and tell people right away",
+      "b": "I fix it and mention it if it matters",
+      "c": "I wait to see whether anyone notices"
+    },
+    "c6": {
+      "prompt": "You want to build a new habit. What helps you most?",
+      "a": "A fixed time every day",
+      "b": "Tracking it so I can see progress",
+      "c": "Doing it when I feel like it",
+      "d": "Trying it for a week, then deciding"
+    },
+    "e1": {
+      "prompt": "After a long week, what recharges you?",
+      "a": "A night out with a group",
+      "b": "Dinner with a couple of friends",
+      "c": "A quiet evening with one person",
+      "d": "Time alone, with nobody to talk to"
+    },
+    "e2": {
+      "prompt": "You are at a party where you only know the host.",
+      "a": "I introduce myself to people",
+      "b": "I join a group that is already talking",
+      "c": "I stay near the host",
+      "d": "I find a quiet corner or leave early"
+    },
+    "e3": {
+      "prompt": "Something good happens to you. What do you do?",
+      "a": "Tell several people right away",
+      "b": "Tell one or two close people",
+      "c": "Enjoy it quietly for a while first"
+    },
+    "e4": {
+      "prompt": "A phone call or a message?",
+      "a": "A call, it is faster and warmer",
+      "b": "Whichever the other person used",
+      "c": "A message, so I can think first",
+      "d": "I avoid both if I can"
+    },
+    "e5": {
+      "prompt": "A free evening appears at the last minute.",
+      "a": "I text around to see who is free",
+      "b": "I go somewhere with people around, like a café",
+      "c": "I do my own thing",
+      "d": "I am relieved and stay home"
+    },
+    "e6": {
+      "prompt": "In a meeting, you are usually...",
+      "a": "The first to speak",
+      "b": "Speaking after a few others",
+      "c": "Speaking only when asked",
+      "d": "Following up by message afterwards"
+    },
+    "a1": {
+      "prompt": "A friend asks for help on a day you are already busy.",
+      "a": "I make time, even if it costs me",
+      "b": "I help, and I tell them my limits",
+      "c": "I suggest another day",
+      "d": "I say no, my plans come first"
+    },
+    "a2": {
+      "prompt": "Two friends disagree and both want you on their side.",
+      "a": "I try to find what each of them needs",
+      "b": "I stay neutral and listen",
+      "c": "I say who I think is right",
+      "d": "I stay out of it"
+    },
+    "a3": {
+      "prompt": "Someone cuts in front of you in a queue.",
+      "a": "I assume they did not see me",
+      "b": "I let it go",
+      "c": "I point it out",
+      "d": "I make sure they know it was rude"
+    },
+    "a4": {
+      "prompt": "Which is closest to how you handle an argument?",
+      "a": "Winning is not the point, understanding is",
+      "b": "I look for a middle ground",
+      "c": "I make my case until it lands",
+      "d": "I like to win"
+    },
+    "a5": {
+      "prompt": "A stranger on the street asks you for money.",
+      "a": "I usually give something",
+      "b": "I stop and talk",
+      "c": "It depends on the situation",
+      "d": "I keep walking"
+    },
+    "a6": {
+      "prompt": "A colleague takes credit for your idea.",
+      "a": "I let it go, the idea matters more than the credit",
+      "b": "I mention it kindly later",
+      "c": "I correct it in front of others",
+      "d": "I remember it for a long time"
+    },
+    "n1": {
+      "prompt": "You send an important message and hear nothing back for a day.",
+      "a": "I replay it and imagine what went wrong",
+      "b": "I check my phone more than I want to",
+      "c": "I assume they are busy",
+      "d": "I forget about it"
+    },
+    "n2": {
+      "prompt": "The night before something big, you...",
+      "a": "Lie awake running through it",
+      "b": "Sleep badly but manage",
+      "c": "Sleep like any other night"
+    },
+    "n3": {
+      "prompt": "Someone criticises your work.",
+      "a": "It stays with me for days",
+      "b": "It stings, then I use it",
+      "c": "I take what is useful and move on",
+      "d": "It barely registers"
+    },
+    "n4": {
+      "prompt": "How quickly does your mood change during a day?",
+      "a": "Often, from small things",
+      "b": "Sometimes",
+      "c": "Rarely",
+      "d": "Almost never"
+    },
+    "n5": {
+      "prompt": "Plans fall apart at the last minute.",
+      "a": "I feel stressed for a while",
+      "b": "I am annoyed, then I adapt",
+      "c": "I switch to plan B without fuss",
+      "d": "I quietly enjoy the change"
+    },
+    "n6": {
+      "prompt": "When something goes wrong, what does your inner voice sound like?",
+      "a": "Harsh, it blames me",
+      "b": "Worried, it imagines the worst",
+      "c": "Practical, it asks what to do next",
+      "d": "Calm, it says it will be fine"
+    }
+  }
+}

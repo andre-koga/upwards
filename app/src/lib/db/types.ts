@@ -175,6 +175,28 @@ export interface JournalReading {
   deleted_at: string | null;
 }
 
+/**
+ * One answer to the daily question. The id is derived from the account and the
+ * day, so there is one row per day and two devices that answer the same day
+ * meet as a reviewable conflict instead of becoming two answers.
+ */
+export interface QuestionAnswer {
+  id: string;
+  /** A bundled question id, such as "o1". */
+  question_id: string;
+  choice_id: string;
+  /** Private note about the choice. Never leaves the account. */
+  why: string | null;
+  /** The local calendar day the question was asked, YYYY-MM-DD. */
+  answered_on: string;
+  /** Whether this answer is counted in the anonymous results. */
+  in_crowd: boolean;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+  deleted_at: string | null;
+}
+
 export interface OneTimeTask {
   id: string;
   date: string | null; // YYYY-MM-DD, completion date when done

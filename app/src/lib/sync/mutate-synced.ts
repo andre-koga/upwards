@@ -10,6 +10,7 @@ import type {
   JournalReading,
   Memory,
   PersonalitySitting,
+  QuestionAnswer,
   OneTimeTask,
 } from "@/lib/db/types";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
@@ -289,6 +290,18 @@ export async function saveJournalReading(
   await db.journalReadings.put(row);
   await writeProjection(
     "journal_readings",
+    row as unknown as Record<string, unknown>,
+    baseRevision
+  );
+}
+
+export async function saveQuestionAnswer(
+  row: QuestionAnswer,
+  baseRevision?: string | null
+): Promise<void> {
+  await db.questionAnswers.put(row);
+  await writeProjection(
+    "question_answers",
     row as unknown as Record<string, unknown>,
     baseRevision
   );
@@ -703,6 +716,11 @@ export async function importBackup(
     tables.journalReadings,
     "journal_readings",
     db.journalReadings
+  );
+  await importRows(
+    tables.questionAnswers,
+    "question_answers",
+    db.questionAnswers
   );
 
   requestDebouncedSync();

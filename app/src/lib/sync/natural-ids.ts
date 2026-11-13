@@ -27,6 +27,15 @@ export function naturalDailyEntryId(userKey: string, date: string): string {
   return uuidv5(`daily:${userKey}:${date}`, UPWARDS_SYNC_NAMESPACE);
 }
 
+/** One answer row per account and day, so the same day on two devices collides. */
+export function naturalQuestionAnswerId(userKey: string, date: string): string {
+  return uuidv5(`question:${userKey}:${date}`, UPWARDS_SYNC_NAMESPACE);
+}
+
+export function naturalQuestionAnswerIdForDate(date: string): string {
+  return naturalQuestionAnswerId(currentSyncUserKey(), date);
+}
+
 export function naturalJournalIdForDate(date: string): string {
   return naturalJournalId(currentSyncUserKey(), date);
 }
