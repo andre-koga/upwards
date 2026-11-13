@@ -25,6 +25,8 @@ interface PersonalityResultProps {
   behaviour: Behaviour | null;
   range: BehaviourRange;
   onRangeChange: (range: BehaviourRange) => void;
+  /** The portrait site: no habits, and no quotes page to open. */
+  portraitOnly?: boolean;
 }
 
 function TraitDot({ trait }: { trait: Trait }) {
@@ -45,6 +47,7 @@ export function PersonalityResult({
   behaviour,
   range,
   onRangeChange,
+  portraitOnly = false,
 }: PersonalityResultProps) {
   const { t } = useTranslation("personality");
   const scores = latest.scores;
@@ -60,12 +63,13 @@ export function PersonalityResult({
   }
 
   // Habits can only speak to some traits; the rest are left out, not guessed.
-  const behaviourScores: Partial<Record<Trait, number>> | null = behaviour
-    ? {
-        openness: behaviour.openness,
-        conscientiousness: behaviour.conscientiousness,
-      }
-    : null;
+  const behaviourScores: Partial<Record<Trait, number>> | null =
+    behaviour && !portraitOnly
+      ? {
+          openness: behaviour.openness,
+          conscientiousness: behaviour.conscientiousness,
+        }
+      : null;
   const quoteCount = reading
     ? TRAITS.reduce(
         (sum, trait) => sum + (reading.quotes[trait]?.length ?? 0),
@@ -223,34 +227,36 @@ export function PersonalityResult({
         })}
       </ul>
 
-      <section aria-labelledby="habits-range" className="space-y-3 px-2">
-        <h3
-          id="habits-range"
-          className="text-center text-sm text-foreground/85"
-        >
-          {t("habitsRange.label")}
-        </h3>
-        <SegmentedControl
-          aria-labelledby="habits-range"
-          value={String(range)}
-          onValueChange={(value) =>
-            onRangeChange(Number(value) as BehaviourRange)
-          }
-        >
-          {BEHAVIOUR_RANGES.map((days) => (
-            <SegmentedControlItem key={days} value={String(days)}>
-              {t("habitsRange.option", { count: days })}
-            </SegmentedControlItem>
-          ))}
-        </SegmentedControl>
-        <p className="text-center text-xs leading-relaxed text-muted-foreground">
-          {behaviour
-            ? t("result.habitsNote", { days: behaviour.detail.windowDays })
-            : t("habitsRange.empty")}
-        </p>
-      </section>
+      {!portraitOnly && (
+        <section aria-labelledby="habits-range" className="space-y-3 px-2">
+          <h3
+            id="habits-range"
+            className="text-center text-sm text-foreground/85"
+          >
+            {t("habitsRange.label")}
+          </h3>
+          <SegmentedControl
+            aria-labelledby="habits-range"
+            value={String(range)}
+            onValueChange={(value) =>
+              onRangeChange(Number(value) as BehaviourRange)
+            }
+          >
+            {BEHAVIOUR_RANGES.map((days) => (
+              <SegmentedControlItem key={days} value={String(days)}>
+                {t("habitsRange.option", { count: days })}
+              </SegmentedControlItem>
+            ))}
+          </SegmentedControl>
+          <p className="text-center text-xs leading-relaxed text-muted-foreground">
+            {behaviour
+              ? t("result.habitsNote", { days: behaviour.detail.windowDays })
+              : t("habitsRange.empty")}
+          </p>
+        </section>
+      )}
 
-      {quoteCount > 0 && (
+      {quoteCount > 0 && !portraitOnly && (
         <Link
           to="/you/words"
           className="mx-auto flex w-fit items-center rounded-full border border-foreground/15 bg-background/60 px-4 py-2 text-sm text-foreground/85 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

@@ -10,7 +10,13 @@ import { SyncCard } from "@/components/settings/sync-card";
 import { AiCard } from "@/components/settings/ai-card";
 import { BackupCard } from "@/components/settings/backup-card";
 import { AboutCard } from "@/components/settings/navigation-cards";
+import {
+  SettingsActionRow,
+  SettingsGroup,
+} from "@/components/settings/settings-list";
+import { FULL_APP_URL, isYouMode } from "@/lib/app-mode";
 import { useAuth } from "@/lib/use-auth";
+import { AppWindow } from "lucide-react";
 
 /**
  * Every setting on one page, in one list. Technical things (sync, updates,
@@ -36,12 +42,22 @@ export default function SettingsPage() {
       className="space-y-9"
     >
       <GeneralSettingsGroup />
-      <PrivacyOptInsCard />
-      <HolidaysCard />
+      {isYouMode ? null : <PrivacyOptInsCard />}
+      {isYouMode ? null : <HolidaysCard />}
       {isSupabaseConfigured ? <AuthCard /> : null}
       <SyncCard />
-      <BackupCard />
-      {isSupabaseConfigured ? <AiCard /> : null}
+      {isYouMode ? null : <BackupCard />}
+      {isSupabaseConfigured && !isYouMode ? <AiCard /> : null}
+      {isYouMode ? (
+        <SettingsGroup title={t("fullApp.title")}>
+          <SettingsActionRow
+            href={FULL_APP_URL}
+            icon={AppWindow}
+            label={t("fullApp.open")}
+            hint={t("fullApp.hint")}
+          />
+        </SettingsGroup>
+      ) : null}
       <AboutCard />
       <div className="space-y-1 pb-2 pt-2 text-center text-xs text-muted-foreground">
         <p>{t("page.tagline")}</p>

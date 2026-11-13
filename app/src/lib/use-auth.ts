@@ -89,7 +89,11 @@ export function useAuth() {
     setAuthLoading(true);
     setAuthError(null);
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: getAuthRedirectUrl("/") },
+      });
       if (error) throw error;
       setAuthError(t("auth.checkEmail"));
     } catch (error) {

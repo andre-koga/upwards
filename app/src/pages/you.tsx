@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { isYouMode } from "@/lib/app-mode";
 import { usePersonality } from "@/hooks/use-personality";
 import {
   setLookBackRange,
@@ -222,6 +223,7 @@ export default function YouPage() {
             behaviour={data?.behaviour ?? null}
             range={range}
             onRangeChange={setLookBackRange}
+            portraitOnly={isYouMode}
           />
           {!current && (
             <div className="flex justify-center pt-6">
@@ -234,12 +236,14 @@ export default function YouPage() {
               </Button>
             </div>
           )}
-          <JournalReadingPanel
-            reading={data?.reading ?? null}
-            hasTest
-            range={range}
-            onSaved={reload}
-          />
+          {!isYouMode && (
+            <JournalReadingPanel
+              reading={data?.reading ?? null}
+              hasTest
+              range={range}
+              onSaved={reload}
+            />
+          )}
         </>
       )}
 

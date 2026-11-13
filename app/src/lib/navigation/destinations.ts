@@ -7,6 +7,7 @@ import {
   UserRound,
   type LucideIcon,
 } from "lucide-react";
+import { isYouMode } from "@/lib/app-mode";
 
 // Today, Journal and You, plus Settings, which is
 // the fourth and last tab the phone bar allows. Everything else is secondary
@@ -24,7 +25,7 @@ export interface TabDestination {
   shortcut: string;
 }
 
-export const TABS: readonly TabDestination[] = [
+const ALL_TABS: readonly TabDestination[] = [
   {
     id: "today",
     to: "/",
@@ -54,6 +55,13 @@ export const TABS: readonly TabDestination[] = [
     shortcut: "4",
   },
 ];
+
+/** The portrait site shows only You and Settings, numbered from 1. */
+export const TABS: readonly TabDestination[] = isYouMode
+  ? ALL_TABS.filter((tab) => tab.id === "you" || tab.id === "settings").map(
+      (tab, index) => ({ ...tab, shortcut: String(index + 1) })
+    )
+  : ALL_TABS;
 
 export interface SecondaryDestination {
   id: "whatsNew" | "logs";

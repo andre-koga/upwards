@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { TabBar } from "@/components/layout/tab-bar";
 import { useAppShortcuts } from "@/components/layout/use-app-shortcuts";
+import { isYouMode } from "@/lib/app-mode";
 import { usePaletteCommands } from "@/components/layout/use-palette-commands";
 
 interface AppShellProps {
@@ -29,7 +30,10 @@ export function AppShell({ navigation, chrome, children }: AppShellProps) {
   const openFeedback = useCallback(() => setFeedbackOpen(true), []);
   const togglePalette = useCallback(() => setPaletteOpen((open) => !open), []);
   const commands = usePaletteCommands(openFeedback);
-  useAppShortcuts({ enabled: navigation, onTogglePalette: togglePalette });
+  useAppShortcuts({
+    enabled: navigation,
+    onTogglePalette: isYouMode ? () => undefined : togglePalette,
+  });
 
   return (
     <TooltipProvider>
@@ -63,11 +67,13 @@ export function AppShell({ navigation, chrome, children }: AppShellProps) {
       </div>
       {navigation ? (
         <>
-          <CommandPalette
-            open={paletteOpen}
-            onOpenChange={setPaletteOpen}
-            commands={commands}
-          />
+          {isYouMode ? null : (
+            <CommandPalette
+              open={paletteOpen}
+              onOpenChange={setPaletteOpen}
+              commands={commands}
+            />
+          )}
           <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
         </>
       ) : null}

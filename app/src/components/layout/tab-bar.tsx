@@ -14,7 +14,12 @@ export function TabBar() {
       aria-label={t("primaryNavigation")}
       className="fixed inset-x-0 bottom-0 z-[var(--z-chrome)] border-t border-foreground/[0.07] bg-background/85 pb-[var(--app-safe-bottom,env(safe-area-inset-bottom))] backdrop-blur-md"
     >
-      <ul className="mx-auto grid h-14 max-w-md grid-cols-4">
+      <ul
+        className="mx-auto grid h-14 max-w-md"
+        style={{
+          gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))`,
+        }}
+      >
         {TABS.map((tab) => {
           const isActive = tab.id === active;
           const Icon = tab.icon;

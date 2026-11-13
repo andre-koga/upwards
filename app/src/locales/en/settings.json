@@ -491,5 +491,10 @@
     "empty": "Nothing has been logged in the last day.",
     "copied": "Copied",
     "copyHint": "Press an entry to copy it."
+  },
+  "fullApp": {
+    "title": "The full app",
+    "open": "Open the full app",
+    "hint": "Habits, journal and more, on app.upwards.live. Sign in with this same account and your portrait is already there."
   }
 }

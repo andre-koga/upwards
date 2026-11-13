@@ -15,6 +15,7 @@ import { prepareLocalDatabase } from "./lib/db/recovery";
 import { recordDeviceState } from "./lib/breadcrumbs";
 import { startRecoveryAutoImport } from "./lib/db/recovery-import";
 import i18n from "./lib/i18n";
+import { isYouMode } from "./lib/app-mode";
 
 void (async () => {
   try {
@@ -39,6 +40,15 @@ for (const key of [
   "okhabit_cutover_enqueued_v1",
 ]) {
   localStorage.removeItem(key);
+}
+
+// The portrait site installs as its own app: its own name and a start page of
+// /you. The manifest link is swapped before the browser decides installability.
+if (isYouMode) {
+  document.title = "Upwards You";
+  document
+    .querySelector<HTMLLinkElement>('link[rel="manifest"]')
+    ?.setAttribute("href", "/manifest-you.webmanifest");
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
