@@ -3,5 +3,49 @@
   "empty": {
     "heading": "Your portrait is not here yet",
     "body": "This page will describe you, drawn from the days you log and the journal you write. Until that exists, it stays empty rather than guess."
+  },
+  "daily": {
+    "label": "Today's question",
+    "unanswered": "One question a day. Pick the answer closest to you.",
+    "whyLabel": "Why? (optional, only you can read this)",
+    "whyPlaceholder": "A line to remember it by",
+    "changeNote": "You can change your answer until midnight.",
+    "saveNote": "Save note",
+    "streak_one": "{{count}}-day streak",
+    "streak_other": "{{count}}-day streak",
+    "streakBest_one": "Best streak: {{count}} day",
+    "streakBest_other": "Best streak: {{count}} days",
+    "streakBestShort": "Best {{count}}",
+    "results": {
+      "heading": "How everyone answered",
+      "yours": "Your answer",
+      "percent": "{{percent}}%",
+      "total_one": "{{count}} person answered.",
+      "total_other": "{{count}} people answered.",
+      "loading": "Loading results…",
+      "waiting": "Results appear when 10 people have answered.",
+      "offline": "Connect to the internet to see how everyone answered. Your answer is saved.",
+      "pending": "Your answer is still being saved. Try again in a moment.",
+      "failed": "The results could not be loaded.",
+      "retry": "Try again"
+    },
+    "crowd": {
+      "label": "Count my answers in the crowd results",
+      "hint": "Only as a number. Never with your name, your note or the date."
+    }
+  },
+  "choices": {
+    "heading": "Your choices",
+    "intro": "Which way your daily answers lean, beside what the test said. This is kept apart from the test and never changes it.",
+    "progress_one": "{{count}} of {{needed}} answers",
+    "progress_other": "{{count}} of {{needed}} answers",
+    "trackAria": "{{trait}}: your choices at {{choices}} out of 100, your test at {{test}} out of 100.",
+    "drift": {
+      "higher": "Your choices lean toward “{{word}}” more than your test said.",
+      "lower": "Your choices lean toward “{{word}}” more than your test said."
+    },
+    "note": "The line marks your test, the dot your choices. They appear after 10 answers on a trait.",
+    "answers_one": "{{count}} answer",
+    "answers_other": "{{count}} answers"
   }
 }

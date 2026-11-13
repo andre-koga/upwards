@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-13-daily-question",
+    date: "2026-11-13",
+    title: "A question a day on You",
+    bullets: [
+      "The You tab asks one question a day. Pick the answer closest to you, add a private line about why if you like, and change your mind until midnight.",
+      "After you answer, see how everyone else answered, as percentages. The results appear once 10 people have answered, and a switch lets you leave your answers out of the count.",
+      "A streak keeps count of the days in a row you answer, and Your choices shows which way your answers lean next to your test, without changing it.",
+    ],
+  },
+  {
     id: "2026-11-12-big-five-on-you",
     date: "2026-11-12",
     title: "Your Big Five portrait",

@@ -3,5 +3,54 @@
   "empty": {
     "heading": "Seu retrato ainda não está aqui",
     "body": "Esta página vai descrever você, a partir dos dias que você registra e do diário que você escreve. Até lá, ela fica vazia em vez de adivinhar."
+  },
+  "daily": {
+    "label": "Pergunta de hoje",
+    "unanswered": "Uma pergunta por dia. Escolha a resposta mais parecida com você.",
+    "whyLabel": "Por quê? (opcional, só você lê isso)",
+    "whyPlaceholder": "Uma frase para lembrar depois",
+    "changeNote": "Você pode mudar a resposta até a meia-noite.",
+    "saveNote": "Salvar anotação",
+    "streak_one": "Sequência de {{count}} dia",
+    "streak_many": "Sequência de {{count}} dias",
+    "streak_other": "Sequência de {{count}} dias",
+    "streakBest_one": "Melhor sequência: {{count}} dia",
+    "streakBest_many": "Melhor sequência: {{count}} dias",
+    "streakBest_other": "Melhor sequência: {{count}} dias",
+    "streakBestShort": "Melhor {{count}}",
+    "results": {
+      "heading": "Como todo mundo respondeu",
+      "yours": "Sua resposta",
+      "percent": "{{percent}}%",
+      "total_one": "{{count}} pessoa respondeu.",
+      "total_many": "{{count}} pessoas responderam.",
+      "total_other": "{{count}} pessoas responderam.",
+      "loading": "Carregando resultados…",
+      "waiting": "Os resultados aparecem quando 10 pessoas responderem.",
+      "offline": "Conecte-se à internet para ver como todo mundo respondeu. Sua resposta está salva.",
+      "pending": "Sua resposta ainda está sendo salva. Tente de novo em instantes.",
+      "failed": "Não foi possível carregar os resultados.",
+      "retry": "Tentar de novo"
+    },
+    "crowd": {
+      "label": "Contar minhas respostas nos resultados do grupo",
+      "hint": "Só como um número. Nunca com seu nome, sua anotação ou a data."
+    }
+  },
+  "choices": {
+    "heading": "Suas escolhas",
+    "intro": "Para que lado suas respostas diárias pendem, ao lado do que o teste disse. Fica separado do teste e nunca o altera.",
+    "progress_one": "{{count}} de {{needed}} respostas",
+    "progress_many": "{{count}} de {{needed}} respostas",
+    "progress_other": "{{count}} de {{needed}} respostas",
+    "trackAria": "{{trait}}: suas escolhas em {{choices}} de 100, seu teste em {{test}} de 100.",
+    "drift": {
+      "higher": "Suas escolhas pendem mais para “{{word}}” do que o teste indicou.",
+      "lower": "Suas escolhas pendem mais para “{{word}}” do que o teste indicou."
+    },
+    "note": "O traço marca seu teste, a bolinha suas escolhas. Aparecem depois de 10 respostas em um traço.",
+    "answers_one": "{{count}} resposta",
+    "answers_many": "{{count}} respostas",
+    "answers_other": "{{count}} respostas"
   }
 }

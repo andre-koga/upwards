@@ -1,8 +1,10 @@
 import { useCallback, useLayoutEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { DailyQuestionCard } from "@/components/you/daily-question-card";
 import { JournalReadingPanel } from "@/components/you/journal-reading-panel";
 import { PersonalityResult } from "@/components/you/personality-result";
 import { PersonalityTest } from "@/components/you/personality-test";
+import { YourChoices } from "@/components/you/your-choices";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { isYouMode } from "@/lib/app-mode";
+import { useDailyQuestion } from "@/hooks/use-daily-question";
 import { usePersonality } from "@/hooks/use-personality";
 import {
   setLookBackRange,
@@ -125,6 +128,7 @@ export default function YouPage() {
   const { t: tp } = useTranslation("personality");
   const range = useLookBackRange();
   const { data, reload } = usePersonality(range);
+  const { data: daily, reload: reloadDaily } = useDailyQuestion();
   const [testing, setTesting] = useState<PersonalitySitting | null>(null);
   const [confirmRetake, setConfirmRetake] = useState(false);
 
@@ -214,6 +218,14 @@ export default function YouPage() {
         </CenteredScreen>
       )}
 
+      {latest && daily && (
+        <DailyQuestionCard
+          key={daily.date}
+          data={daily}
+          onChanged={reloadDaily}
+        />
+      )}
+
       {latest && (
         <>
           <PersonalityResult
@@ -225,6 +237,9 @@ export default function YouPage() {
             onRangeChange={setLookBackRange}
             portraitOnly={isYouMode}
           />
+          {daily && latest.scores && (
+            <YourChoices evidence={daily.evidence} scores={latest.scores} />
+          )}
           {!current && (
             <div className="flex justify-center pt-6">
               <Button
