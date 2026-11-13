@@ -13,12 +13,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { useJournalReading } from "@/hooks/use-journal-reading";
 import type { JournalReading } from "@/lib/db/types";
+import type { BehaviourRange } from "@/lib/personality/behaviour";
 import { fromDateString, formatDateShort } from "@/lib/time-utils";
 
 interface JournalReadingPanelProps {
   reading: JournalReading | null;
   /** The self-test has a finished sitting to compare against. */
   hasTest: boolean;
+  /** How many days back the reading looks, set on the You page. */
+  range: BehaviourRange;
   onSaved: () => void;
 }
 
@@ -29,11 +32,12 @@ interface JournalReadingPanelProps {
 export function JournalReadingPanel({
   reading,
   hasTest,
+  range,
   onSaved,
 }: JournalReadingPanelProps) {
   const { t } = useTranslation("personality");
   const { ai, writtenDays, pending, status, errorCode, prepare, cancel, send } =
-    useJournalReading(onSaved);
+    useJournalReading(onSaved, range);
 
   const model = ai.state === "connected" ? ai.model : null;
   const isReading = status === "reading";
@@ -50,7 +54,7 @@ export function JournalReadingPanel({
       </Button>
     );
   } else if (writtenDays === 0) {
-    message = t("journal.noDays");
+    message = t("journal.noDays", { days: range });
   } else {
     action = (
       <Button
@@ -79,6 +83,9 @@ export function JournalReadingPanel({
         </h2>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
           {t("journal.body")}
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {t("journal.window", { days: range })}
         </p>
         {reading && (
           <p className="mt-2 text-xs text-muted-foreground">

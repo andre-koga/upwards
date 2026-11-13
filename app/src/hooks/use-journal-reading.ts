@@ -10,6 +10,7 @@ import {
   collectReadingDays,
   readJournal,
 } from "@/lib/personality/journal-reading";
+import type { BehaviourRange } from "@/lib/personality/behaviour";
 import type { SentDay } from "@/lib/personality/quotes";
 
 /** Whether an AI is set up in Settings. `unknown` until asked, or when offline. */
@@ -25,7 +26,7 @@ export type ReadingStatus = "idle" | "reading" | "error";
  * that would be sent and holds them as `pending`; the person confirms, and
  * `send` sends exactly those days, so what they agreed to is what leaves.
  */
-export function useJournalReading(onSaved: () => void) {
+export function useJournalReading(onSaved: () => void, range: BehaviourRange) {
   const { i18n } = useTranslation();
   const [ai, setAi] = useState<AiConnection>({ state: "unknown" });
   const [pending, setPending] = useState<SentDay[] | null>(null);
@@ -50,7 +51,7 @@ export function useJournalReading(onSaved: () => void) {
         // Offline or signed out: leave the connection unknown rather than
         // claiming it is missing.
       });
-    collectReadingDays()
+    collectReadingDays(range)
       .then((days) => {
         if (!cancelled) setWrittenDays(days.length);
       })
@@ -58,15 +59,15 @@ export function useJournalReading(onSaved: () => void) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [range]);
 
   const prepare = useCallback(async () => {
     setErrorCode(null);
     setStatus("idle");
-    const days = await collectReadingDays();
+    const days = await collectReadingDays(range);
     setWrittenDays(days.length);
     setPending(days.length > 0 ? days : null);
-  }, []);
+  }, [range]);
 
   const cancel = useCallback(() => setPending(null), []);
 

@@ -16,9 +16,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { usePersonality } from "@/hooks/use-personality";
 import {
-  setBehaviourRange,
-  useBehaviourRange,
-} from "@/lib/personality/behaviour-range";
+  setLookBackRange,
+  useLookBackRange,
+} from "@/lib/personality/look-back";
 import type { PersonalitySitting } from "@/lib/db/types";
 import { logError } from "@/lib/error-utils";
 import { ITEM_COUNT } from "@/lib/personality/items";
@@ -122,7 +122,7 @@ function ResumePrompt({
 export default function YouPage() {
   const { t } = useTranslation("you");
   const { t: tp } = useTranslation("personality");
-  const range = useBehaviourRange();
+  const range = useLookBackRange();
   const { data, reload } = usePersonality(range);
   const [testing, setTesting] = useState<PersonalitySitting | null>(null);
   const [confirmRetake, setConfirmRetake] = useState(false);
@@ -221,7 +221,7 @@ export default function YouPage() {
             reading={data?.reading ?? null}
             behaviour={data?.behaviour ?? null}
             range={range}
-            onRangeChange={setBehaviourRange}
+            onRangeChange={setLookBackRange}
           />
           {!current && (
             <div className="flex justify-center pt-6">
@@ -237,6 +237,7 @@ export default function YouPage() {
           <JournalReadingPanel
             reading={data?.reading ?? null}
             hasTest
+            range={range}
             onSaved={reload}
           />
         </>

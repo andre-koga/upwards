@@ -46,29 +46,54 @@ beforeEach(async () => {
 });
 
 describe("collectReadingDays", () => {
-  it("sends only written days, newest 60, oldest first, with capped text", async () => {
+  const TODAY = "2026-11-12";
+
+  it("sends only written days, oldest first, with capped text", async () => {
     await db.journalEntries.bulkAdd([
       entry("2026-11-01", { title: "One", text_content: "x".repeat(500) }),
       entry("2026-11-02", { text_content: "   " }),
       entry("2026-11-03", { title: "Gone", deleted_at: T0 }),
       entry("2026-11-04", { text_content: "Four" }),
     ]);
-    const days = await collectReadingDays();
+    const days = await collectReadingDays(30, TODAY);
     expect(days.map((d) => d.date)).toEqual(["2026-11-01", "2026-11-04"]);
     expect(days[0].text).toHaveLength(300);
     expect(JSON.stringify(days)).not.toContain("secret");
   });
 
-  it("keeps the most recent days when there are more than the limit", async () => {
-    const rows = Array.from({ length: 65 }, (_, i) =>
-      entry(`2026-09-${String(i + 1).padStart(2, "0")}`, { title: `t${i}` })
-    );
-    // 65 distinct ids; dates beyond 30 are not real days, which is fine for sorting
+  it("reads only the days inside the chosen range", async () => {
+    await db.journalEntries.bulkAdd([
+      entry("2026-05-20", { title: "Half a year ago" }),
+      entry("2026-08-20", { title: "Eighty-four days ago" }),
+      entry("2026-10-14", { title: "Twenty-nine days ago" }),
+      entry("2026-10-13", { title: "Thirty days ago" }),
+      entry("2026-10-12", { title: "Thirty-one days ago" }),
+      entry("2026-11-12", { title: "Today" }),
+      entry("2026-11-13", { title: "Tomorrow" }),
+    ]);
+    const dates = async (range: 30 | 90 | 180) =>
+      (await collectReadingDays(range, TODAY)).map((d) => d.date);
+    expect(await dates(30)).toEqual(["2026-10-14", "2026-11-12"]);
+    expect(await dates(90)).toEqual([
+      "2026-08-20",
+      "2026-10-12",
+      "2026-10-13",
+      "2026-10-14",
+      "2026-11-12",
+    ]);
+    expect(await dates(180)).toContain("2026-05-20");
+    expect(await dates(180)).not.toContain("2026-11-13");
+  });
+
+  it("can send a full 180 days", async () => {
+    const rows = Array.from({ length: 180 }, (_, i) => {
+      const d = new Date(2026, 10, 12 - i);
+      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      return entry(date, { title: `t${i}` });
+    });
     await db.journalEntries.bulkAdd(rows);
-    const days = await collectReadingDays();
-    expect(days).toHaveLength(60);
-    expect(days[0].date).toBe("2026-09-06");
-    expect(days[59].date).toBe("2026-09-65");
+    expect(await collectReadingDays(180, TODAY)).toHaveLength(180);
+    expect(await collectReadingDays(30, TODAY)).toHaveLength(30);
   });
 });
 

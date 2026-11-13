@@ -262,7 +262,7 @@
   },
   "journal": {
     "heading": "O que o seu diário mostra",
-    "body": "À parte do teste: a sua própria IA lê os dias que você escreveu recentemente e os pontua nos mesmos cinco traços, para você comparar.",
+    "body": "À parte do teste: a sua própria IA lê os dias que você escreveu e os pontua nos mesmos cinco traços, para você comparar.",
     "read": "Ler o meu diário",
     "readAgain": "Ler de novo",
     "reading": "Lendo...",
@@ -271,7 +271,7 @@
     "quotesLabel": "Das suas próprias palavras",
     "notConnected": "Conecte uma IA nas configurações para ler o seu diário. O teste funciona sem ela.",
     "openSettings": "Abrir configurações",
-    "noDays": "Escreva alguns dias no diário primeiro. Só dias com título ou texto podem ser lidos.",
+    "noDays": "Nenhum dia escrito nos últimos {{days}} dias. Escreva alguns ou olhe mais para trás. Só dias com título ou texto podem ser lidos.",
     "needTest": "Faça o teste primeiro e depois compare com o seu diário.",
     "consentTitle": "Enviar estes dias para a sua IA?",
     "consentBody_one": "As palavras de {{count}} dia escrito (título, data e os primeiros 300 caracteres do texto) serão enviadas para {{model}}, o modelo indicado nas configurações. Nada mais é enviado: nem aniversário, nem perfil, nem respostas do teste.",
@@ -288,7 +288,8 @@
       "provider_invalid": "A IA respondeu de um jeito que não deu para usar. Tente de novo.",
       "generic": "Não foi possível ler o seu diário. Tente de novo."
     },
-    "modelFallback": "o seu modelo de IA"
+    "modelFallback": "o seu modelo de IA",
+    "window": "Lê os dias escritos nos últimos {{days}} dias."
   },
   "words": {
     "title": "Nas suas palavras",
@@ -304,7 +305,7 @@
     "dayChanged": "De um dia que você mudou depois"
   },
   "habitsRange": {
-    "label": "Olhar meus hábitos dos últimos",
+    "label": "Hábitos e leitura do diário olham os últimos",
     "option_one": "{{count}} dia",
     "option_many": "{{count}} dias",
     "option_other": "{{count}} dias",

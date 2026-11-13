@@ -8,7 +8,7 @@
  */
 import { extractJson } from "./model-json.ts";
 
-export const MAX_DAYS = 60;
+export const MAX_DAYS = 180;
 export const MAX_TEXT_CHARS = 300;
 export const MAX_TITLE_CHARS = 80;
 export const MAX_NOTE_CHARS = 240;
