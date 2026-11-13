@@ -18,6 +18,7 @@ import { SignInScreen } from "@/components/auth/sign-in-screen";
 import { useAuthGate } from "@/lib/use-auth-gate";
 import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
 import { UpdateRequiredDialog } from "@/components/pwa/update-required-dialog";
+import { isYouMode } from "@/lib/app-mode";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -73,7 +74,11 @@ function AppFrame() {
       ) : (
         <Suspense fallback={<PageLoadingFallback />}>
           <Routes>
-            <Route path="/" element={<TodayPage />} />
+            {isYouMode ? (
+              <Route path="/" element={<Navigate to="/you" replace />} />
+            ) : (
+              <Route path="/" element={<TodayPage />} />
+            )}
             <Route path="/settings" element={<SettingsPage />} />
             <Route
               path="/settings/forgot-password"
@@ -90,17 +95,27 @@ function AppFrame() {
             />
             <Route path="/settings/sync-issues" element={<SyncIssuesPage />} />
             <Route path="/whats-new" element={<WhatsNewPage />} />
-            <Route path="/journal" element={<JournalPage />} />
-            {/* Memories joined the journal as one record (B3); old links land there. */}
-            <Route
-              path="/memories"
-              element={<Navigate to="/journal" replace />}
-            />
+            {!isYouMode && (
+              <>
+                <Route path="/journal" element={<JournalPage />} />
+                {/* Memories joined the journal as one record (B3); old links land there. */}
+                <Route
+                  path="/memories"
+                  element={<Navigate to="/journal" replace />}
+                />
+              </>
+            )}
             <Route path="/logs" element={<LogsPage />} />
             {/* The weekly summary lived here. Old links open You. */}
             <Route path="/home" element={<Navigate to="/you" replace />} />
             <Route path="/you" element={<YouPage />} />
-            <Route path="/you/words" element={<YouWordsPage />} />
+            {!isYouMode && (
+              <Route path="/you/words" element={<YouWordsPage />} />
+            )}
+            {/* The portrait site has no other pages; anything else opens You. */}
+            {isYouMode && (
+              <Route path="*" element={<Navigate to="/you" replace />} />
+            )}
           </Routes>
         </Suspense>
       )}
@@ -114,10 +129,12 @@ export default function App() {
     <BrowserRouter>
       <AppFrame />
       <AccountSwitchDialog />
-      <SetupPrompt />
+      {/* Its answers are saved to the account, so the portrait site must not
+          ask: a "not now" here would stop the full app from ever asking. */}
+      {isYouMode ? null : <SetupPrompt />}
       <InstallAppPrompt />
       <UpdateRequiredDialog />
-      <OldDayEditDialog />
+      {isYouMode ? null : <OldDayEditDialog />}
       <SpeedInsights />
       <Analytics />
     </BrowserRouter>

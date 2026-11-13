@@ -48,10 +48,7 @@ export function AppPageShell({
           {title}
         </h1>
         {centered ? (
-          <span
-            className="mb-4 mt-4 h-px w-10 bg-foreground/25"
-            aria-hidden
-          />
+          <span className="mb-4 mt-4 h-px w-10 bg-foreground/25" aria-hidden />
         ) : null}
         {subtitle != null ? (
           <p

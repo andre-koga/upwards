@@ -65,6 +65,16 @@ Upwards is designed to make consistency visible, reduce friction in daily tracki
 
 ---
 
+## Two sites, one account
+
+One build serves `app.upwards.live` (the whole app) and `you.upwards.live`
+(the personality portrait alone). A host that starts with `you.` switches the
+build to portrait mode (`app/src/lib/app-mode.ts`); `VITE_APP_MODE=you` forces
+it on localhost. Both use the same Supabase project, so an account made on
+either site is the same account, and portrait data syncs like any other.
+Auth emails link back to the site they were sent from, so every origin must be
+in the Supabase Auth redirect allow-list.
+
 ## Testing and schema deploy
 
 | Path | What it does |

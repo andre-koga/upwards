@@ -491,5 +491,10 @@
     "empty": "Nada foi registrado no último dia.",
     "copied": "Copiado",
     "copyHint": "Toque em um registro para copiá-lo."
+  },
+  "fullApp": {
+    "title": "O app completo",
+    "open": "Abrir o app completo",
+    "hint": "Hábitos, diário e mais, em app.upwards.live. Entre com esta mesma conta e o seu retrato já estará lá."
   }
 }
