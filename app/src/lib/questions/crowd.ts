@@ -3,7 +3,7 @@
 /** How everyone answered one question, as the server reports it. */
 export type CrowdResult =
   | { status: "ready"; total: number; counts: Record<string, number> }
-  /** Fewer than 10 people are counted, so the server returns no numbers. */
+  /** Fewer than 5 people are counted, so the server returns no numbers. */
   | { status: "waiting" };
 
 /** Reads the RPC reply, trusting only whole non-negative counts. */
