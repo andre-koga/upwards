@@ -1,4 +1,5 @@
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { isGuestDevice } from "@/lib/guest";
 import {
   BACKUP_FORMAT,
   BACKUP_TABLE_NAMES,
@@ -24,7 +25,9 @@ import { LOCAL_DB_NAME, MIN_UPGRADABLE_VERSION } from "./index";
  * - `unowned_data`: rows but no remembered account. Sign-out empties the
  *   database before forgetting the user, so this is data created signed out.
  *   It replaces the guest handoff: the rows are kept, never pushed under an
- *   identity the account does not use.
+ *   identity the account does not use. On the portrait site a guest's rows stay
+ *   where they are until that person signs in; only then are they moved aside
+ *   here, imported into the account after the first sync.
  *
  * Either way the rows go to a separate database first, the local one is
  * deleted, and the device bootstraps from the server snapshot. The bundle is
@@ -212,6 +215,7 @@ export async function prepareLocalDatabase(): Promise<RecoveryBundle | null> {
       !oldSchema &&
       isSupabaseConfigured &&
       !lastUserId &&
+      !isGuestDevice() &&
       (await countUserRows(idb)) > 0;
     if (!oldSchema && !unowned) return null;
 

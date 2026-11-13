@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { isYouMode } from "@/lib/app-mode";
 import { useAuth } from "@/lib/use-auth";
 
 const emailId = "sign-in-email";
@@ -49,7 +50,9 @@ export function SignInScreen() {
   return (
     <AuthShell
       title={t("auth.screen.title")}
-      description={t("auth.screen.subtitle")}
+      description={t(
+        isYouMode ? "auth.screen.subtitleYou" : "auth.screen.subtitle"
+      )}
       footer={
         <>
           <p>
@@ -60,7 +63,19 @@ export function SignInScreen() {
               {t("auth.forgotPassword")}
             </Link>
           </p>
-          <p className="text-xs">{t("auth.screen.note")}</p>
+          {isYouMode ? (
+            <p>
+              <Link
+                to="/you"
+                className="inline-flex min-h-11 items-center underline underline-offset-2 hover:text-foreground"
+              >
+                {t("auth.screen.continueAsGuest")}
+              </Link>
+            </p>
+          ) : null}
+          <p className="text-xs">
+            {t(isYouMode ? "auth.screen.noteYou" : "auth.screen.note")}
+          </p>
         </>
       }
     >

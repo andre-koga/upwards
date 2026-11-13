@@ -15,6 +15,7 @@ import {
   SettingsGroup,
 } from "@/components/settings/settings-list";
 import { FULL_APP_URL, isYouMode } from "@/lib/app-mode";
+import { useIsGuest } from "@/lib/guest";
 import { useAuth } from "@/lib/use-auth";
 import { AppWindow } from "lucide-react";
 
@@ -26,6 +27,7 @@ import { AppWindow } from "lucide-react";
 export default function SettingsPage() {
   const { t } = useTranslation("settings");
   const { isSupabaseConfigured } = useAuth();
+  const guest = useIsGuest();
   const buildLabel = import.meta.env.VITE_APP_BUILD_TIMESTAMP ?? "dev";
   const randomPhrase = import.meta.env.VITE_APP_RANDOM_PHRASE ?? "hey there!";
   const { hash } = useLocation();
@@ -45,7 +47,7 @@ export default function SettingsPage() {
       {isYouMode ? null : <PrivacyOptInsCard />}
       {isYouMode ? null : <HolidaysCard />}
       {isSupabaseConfigured ? <AuthCard /> : null}
-      <SyncCard />
+      {guest ? null : <SyncCard />}
       {isYouMode ? null : <BackupCard />}
       {isSupabaseConfigured && !isYouMode ? <AiCard /> : null}
       {isYouMode ? (

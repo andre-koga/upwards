@@ -1,3 +1,4 @@
+import { isYouMode } from "@/lib/app-mode";
 import { syncEngine } from "./index";
 import { clearLocalSyncData } from "./clear-local-sync-data";
 import {
@@ -7,13 +8,20 @@ import {
 } from "./sync-storage";
 import { getLocalSyncSafetyStatus } from "./unsynced-data";
 
-export type PrepareResult = "ready" | "needs_account_switch_choice";
+export type PrepareResult =
+  | "ready"
+  | "needs_account_switch_choice"
+  /** A guest on the portrait site signed in: their rows move aside on reload. */
+  | "guest_data_to_adopt";
 
 /**
  * Called on SIGNED_IN / INITIAL_SESSION before starting auto-sync.
  *
  * - Account switch with unsynced local data → "needs_account_switch_choice".
  * - Account switch with everything synced → wipe local and return "ready".
+ * - A guest on the portrait site signing in with rows made before the account
+ *   → "guest_data_to_adopt": the caller reloads, and the boot-time recovery
+ *   moves those rows into a bundle that imports into this account.
  * - Same account, or first sign-in on this device → "ready".
  *
  * Data created signed out never reaches here: `prepareLocalDatabase()` moves
@@ -39,6 +47,13 @@ export async function prepareSignedInSession(
 
     await clearLocalSyncData();
     clearLastSignedInUserId();
+  }
+
+  if (isYouMode && !lastUserId) {
+    const safety = await getLocalSyncSafetyStatus();
+    // The user id is not remembered yet: that is what lets the boot-time check
+    // see these rows as made signed out.
+    if (safety.hasUnsyncedData) return "guest_data_to_adopt";
   }
 
   saveLastSignedInUserId(userId);

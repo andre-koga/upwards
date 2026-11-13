@@ -79,7 +79,10 @@
       "offline": "You're offline. Signing in needs a connection the first time; after that Upwards works offline.",
       "newHere": "New here?",
       "createAccount": "Create an account",
-      "note": "Your days stay on this device and sync to your account."
+      "note": "Your days stay on this device and sync to your account.",
+      "continueAsGuest": "Continue without an account",
+      "subtitleYou": "Keep your portrait and your answers on every device.",
+      "noteYou": "Without an account, your portrait stays on this phone."
     },
     "accountSwitch": {
       "title": "Unsaved changes from another account",
@@ -116,7 +119,11 @@
         "post": "Server reached, but sign-in requests to it are failing: {{detail}}"
       }
     },
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "guest": {
+      "note": "You're using Upwards without an account. Your portrait stays on this phone.",
+      "action": "Sign in or create an account"
+    }
   },
   "sync": {
     "title": "Sync and updates",

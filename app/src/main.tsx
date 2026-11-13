@@ -70,6 +70,12 @@ function startApp() {
             syncEngine.startAutoSync(60000, userId);
             return;
           }
+          if (result === "guest_data_to_adopt") {
+            // The next boot moves what the guest made into a recovery bundle,
+            // before Dexie opens, and the first sync imports it.
+            window.location.reload();
+            return;
+          }
           emitAccountSwitchChoiceNeeded(userId);
         });
       } else if (event === "SIGNED_OUT") {
