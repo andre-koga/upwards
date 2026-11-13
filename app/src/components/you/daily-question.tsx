@@ -1,8 +1,16 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Flame } from "lucide-react";
+import { Check, Flame, MessageCircleQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChoiceGroup, ChoiceGroupItem } from "@/components/ui/choice-group";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -141,11 +149,11 @@ function CrowdView({
 }
 
 /**
- * Today's question: pick an answer, optionally say why in a line only you can
- * read, then see how everyone answered. Changing your mind is allowed until the
- * day ends and rewrites the same answer.
+ * The question itself: pick an answer, optionally say why in a line only you
+ * can read, then see how everyone answered. Changing your mind is allowed until
+ * the day ends and rewrites the same answer.
  */
-export function DailyQuestionCard({
+function DailyQuestionBody({
   data,
   onChanged,
 }: {
@@ -189,26 +197,21 @@ export function DailyQuestionCard({
   };
 
   return (
-    <section
-      aria-labelledby="daily-question"
-      className="rounded-3xl border border-border bg-card px-4 py-5"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <p className="pt-1 text-[0.8125rem] font-medium text-muted-foreground">
-          {t("daily.label")}
-        </p>
-        <StreakPill streaks={data.streaks} />
-      </div>
-
-      <h2
-        id="daily-question"
-        className="mt-2 font-display text-[1.375rem] italic leading-snug tracking-[-0.01em] text-foreground/90"
-      >
-        {tq(`q.${question.id}.prompt`)}
-      </h2>
+    <>
+      <SheetHeader className="space-y-2 p-0 pr-10">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <SheetDescription className="text-[0.8125rem] font-medium">
+            {t("daily.label")}
+          </SheetDescription>
+          <StreakPill streaks={data.streaks} />
+        </div>
+        <SheetTitle className="font-display text-[1.375rem] font-normal italic leading-snug tracking-[-0.01em] text-foreground/90">
+          {tq(`q.${question.id}.prompt`)}
+        </SheetTitle>
+      </SheetHeader>
 
       <ChoiceGroup
-        aria-labelledby="daily-question"
+        aria-label={tq(`q.${question.id}.prompt`)}
         value={today?.choice_id ?? ""}
         onValueChange={(choiceId) => void save(choiceId, note)}
         disabled={saving}
@@ -283,6 +286,54 @@ export function DailyQuestionCard({
           {t("daily.unanswered")}
         </p>
       )}
-    </section>
+    </>
+  );
+}
+
+/**
+ * Today's question lives behind a small button floating above the tab bar and
+ * opens as a sheet, so it never competes with the portrait for the top of the
+ * page. The sheet's contents mount only while it is open, so the crowd results
+ * are fetched only when someone looks.
+ */
+export function DailyQuestion({
+  data,
+  onChanged,
+}: {
+  data: DailyQuestionData;
+  onChanged: () => void;
+}) {
+  const { t } = useTranslation("you");
+  const answered = data.today !== null;
+
+  return (
+    <Sheet>
+      <div className="lift-above-tabs pointer-events-none fixed inset-x-0 z-[var(--z-floating)] flex justify-center">
+        <SheetTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className="pointer-events-auto h-11 gap-2 rounded-full border-border bg-background px-4 text-foreground shadow-md"
+          >
+            {answered ? (
+              <Check aria-hidden="true" className="size-4 text-primary" />
+            ) : (
+              <MessageCircleQuestion
+                aria-hidden="true"
+                className="size-4 text-primary"
+              />
+            )}
+            {t("daily.label")}
+          </Button>
+        </SheetTrigger>
+      </div>
+      <SheetContent
+        side="bottom"
+        className="max-h-[88dvh] overflow-y-auto rounded-t-3xl px-4 pb-8 pt-5"
+        showCloseButton
+      >
+        <DailyQuestionBody data={data} onChanged={onChanged} />
+      </SheetContent>
+    </Sheet>
   );
 }

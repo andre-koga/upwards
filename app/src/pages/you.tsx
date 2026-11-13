@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { DailyQuestionCard } from "@/components/you/daily-question-card";
+import { DailyQuestion } from "@/components/you/daily-question";
 import { JournalReadingPanel } from "@/components/you/journal-reading-panel";
 import { PersonalityResult } from "@/components/you/personality-result";
 import { PersonalityTest } from "@/components/you/personality-test";
@@ -219,11 +219,7 @@ export default function YouPage() {
       )}
 
       {latest && daily && (
-        <DailyQuestionCard
-          key={daily.date}
-          data={daily}
-          onChanged={reloadDaily}
-        />
+        <DailyQuestion key={daily.date} data={daily} onChanged={reloadDaily} />
       )}
 
       {latest && (
