@@ -26,6 +26,7 @@ const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const SyncIssuesPage = lazy(() => import("@/pages/sync-issues"));
 const WhatsNewPage = lazy(() => import("@/pages/whats-new"));
+const YouWordsPage = lazy(() => import("@/pages/you-words"));
 const JournalPage = lazy(() => import("@/pages/journal"));
 const LogsPage = lazy(() => import("@/pages/logs"));
 const YouPage = lazy(() => import("@/pages/you"));
@@ -99,6 +100,7 @@ function AppFrame() {
             {/* The weekly summary lived here. Old links open You. */}
             <Route path="/home" element={<Navigate to="/you" replace />} />
             <Route path="/you" element={<YouPage />} />
+            <Route path="/you/words" element={<YouWordsPage />} />
           </Routes>
         </Suspense>
       )}

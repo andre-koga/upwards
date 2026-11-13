@@ -9,6 +9,8 @@ interface TraitTrackProps {
   journal: number | null;
   /** The same trait on the previous finished sitting. */
   last: number | null;
+  /** What habits and journal show for this trait, when they can say. */
+  behaviour?: number | null;
 }
 
 /**
@@ -16,7 +18,13 @@ interface TraitTrackProps {
  * scores and cannot be dragged; the bar carries a text equivalent with every
  * number.
  */
-export function TraitTrack({ trait, self, journal, last }: TraitTrackProps) {
+export function TraitTrack({
+  trait,
+  self,
+  journal,
+  last,
+  behaviour = null,
+}: TraitTrackProps) {
   const { t } = useTranslation("personality");
   const name = t(`traits.${trait}.name`);
 
@@ -25,6 +33,7 @@ export function TraitTrack({ trait, self, journal, last }: TraitTrackProps) {
       ? t("result.trackAria", { trait: name, self })
       : t("result.trackAriaJournal", { trait: name, self, journal }),
     last === null ? null : t("result.trackAriaLast", { last }),
+    behaviour === null ? null : t("result.trackAriaBehaviour", { behaviour }),
   ]
     .filter(Boolean)
     .join(" ");
@@ -59,6 +68,13 @@ export function TraitTrack({ trait, self, journal, last }: TraitTrackProps) {
             aria-hidden="true"
             className="absolute top-1/2 block size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-foreground bg-background"
             style={{ left: `${journal}%` }}
+          />
+        )}
+        {behaviour !== null && (
+          <span
+            aria-hidden="true"
+            className="absolute top-1/2 block size-3.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-2 border-foreground bg-background"
+            style={{ left: `${behaviour}%` }}
           />
         )}
         <span

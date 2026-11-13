@@ -1,7 +1,17 @@
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArchetypeHero } from "@/components/you/archetype-hero";
 import { TraitTrack } from "@/components/you/trait-track";
 import type { JournalReading, PersonalitySitting } from "@/lib/db/types";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/ui/segmented-control";
+import {
+  BEHAVIOUR_RANGES,
+  type Behaviour,
+  type BehaviourRange,
+} from "@/lib/personality/behaviour";
 import { band, gapDirection } from "@/lib/personality/bands";
 import { journalComparison } from "@/lib/personality/highlights";
 import { TRAITS, type Trait } from "@/lib/personality/items";
@@ -12,6 +22,9 @@ interface PersonalityResultProps {
   latest: PersonalitySitting;
   previous: PersonalitySitting | null;
   reading: JournalReading | null;
+  behaviour: Behaviour | null;
+  range: BehaviourRange;
+  onRangeChange: (range: BehaviourRange) => void;
 }
 
 function TraitDot({ trait }: { trait: Trait }) {
@@ -29,6 +42,9 @@ export function PersonalityResult({
   latest,
   previous,
   reading,
+  behaviour,
+  range,
+  onRangeChange,
 }: PersonalityResultProps) {
   const { t } = useTranslation("personality");
   const scores = latest.scores;
@@ -43,12 +59,27 @@ export function PersonalityResult({
     }
   }
 
+  // Habits can only speak to some traits; the rest are left out, not guessed.
+  const behaviourScores: Partial<Record<Trait, number>> | null = behaviour
+    ? {
+        openness: behaviour.openness,
+        conscientiousness: behaviour.conscientiousness,
+      }
+    : null;
+  const quoteCount = reading
+    ? TRAITS.reduce(
+        (sum, trait) => sum + (reading.quotes[trait]?.length ?? 0),
+        0
+      )
+    : 0;
+
   return (
     <div className="space-y-6 px-2 pt-2">
       <ArchetypeHero
         self={scores}
         journal={reading?.scores ?? null}
         last={previous?.scores ?? null}
+        behaviour={behaviourScores}
         daysRead={reading?.days_read ?? null}
         takenOn={
           latest.completed_at
@@ -92,7 +123,7 @@ export function PersonalityResult({
           const gap = journal === null ? null : gapDirection(self, journal);
           const level = band(self);
           const note = reading?.notes[trait];
-          const quotes = reading?.quotes[trait] ?? [];
+          const habit = behaviourScores?.[trait] ?? null;
           const word =
             level === "mid"
               ? t("result.balancedWord")
@@ -134,6 +165,7 @@ export function PersonalityResult({
                   self={self}
                   journal={journal}
                   last={last}
+                  behaviour={habit}
                 />
               </div>
 
@@ -152,40 +184,80 @@ export function PersonalityResult({
                   })}
                 </p>
               )}
-              {(note || quotes.length > 0) && (
+              {habit !== null && behaviour && (
+                <p className="mt-2 flex items-start gap-2 text-[0.9375rem] leading-relaxed text-foreground/75">
+                  <span
+                    aria-hidden="true"
+                    className="mt-1.5 size-2.5 shrink-0 rotate-45 border-2 border-foreground"
+                  />
+                  {trait === "conscientiousness"
+                    ? t("result.habits.conscientiousness", {
+                        active: behaviour.detail.activeDays,
+                        total: behaviour.detail.countedDays,
+                      })
+                    : t("result.habits.openness", {
+                        activities: t("result.habits.activities", {
+                          count: behaviour.detail.activities,
+                        }),
+                        places: t("result.habits.places", {
+                          count: behaviour.detail.places,
+                        }),
+                      })}
+                </p>
+              )}
+              {note && (
                 <div
                   className="mt-3 border-l-2 pl-3 text-[0.875rem] leading-relaxed text-muted-foreground"
                   style={{ borderColor: traitColor(trait, 0.7) }}
                 >
-                  {note && (
-                    <p>
-                      <span className="font-medium text-foreground/80">
-                        {t("journal.noteLabel")}:
-                      </span>{" "}
-                      {note}
-                    </p>
-                  )}
-                  {quotes.length > 0 && (
-                    <figure className="mt-1.5">
-                      <figcaption className="text-xs">
-                        {t("journal.quotesLabel")}
-                      </figcaption>
-                      {quotes.map((quote) => (
-                        <blockquote
-                          key={quote}
-                          className="mt-1 font-display italic text-foreground/80"
-                        >
-                          “{quote}”
-                        </blockquote>
-                      ))}
-                    </figure>
-                  )}
+                  <p>
+                    <span className="font-medium text-foreground/80">
+                      {t("journal.noteLabel")}:
+                    </span>{" "}
+                    {note}
+                  </p>
                 </div>
               )}
             </li>
           );
         })}
       </ul>
+
+      <section aria-labelledby="habits-range" className="space-y-3 px-2">
+        <h3
+          id="habits-range"
+          className="text-center text-sm text-foreground/85"
+        >
+          {t("habitsRange.label")}
+        </h3>
+        <SegmentedControl
+          aria-labelledby="habits-range"
+          value={String(range)}
+          onValueChange={(value) =>
+            onRangeChange(Number(value) as BehaviourRange)
+          }
+        >
+          {BEHAVIOUR_RANGES.map((days) => (
+            <SegmentedControlItem key={days} value={String(days)}>
+              {t("habitsRange.option", { count: days })}
+            </SegmentedControlItem>
+          ))}
+        </SegmentedControl>
+        <p className="text-center text-xs leading-relaxed text-muted-foreground">
+          {behaviour
+            ? t("result.habitsNote", { days: behaviour.detail.windowDays })
+            : t("habitsRange.empty")}
+        </p>
+      </section>
+
+      {quoteCount > 0 && (
+        <Link
+          to="/you/words"
+          className="mx-auto flex w-fit items-center rounded-full border border-foreground/15 bg-background/60 px-4 py-2 text-sm text-foreground/85 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {t("words.open", { count: quoteCount })}
+        </Link>
+      )}
 
       <p className="px-2 text-center text-xs leading-relaxed text-muted-foreground">
         {t("disclaimer")}

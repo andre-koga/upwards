@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { RadarChart } from "@/components/you/radar-chart";
-import type { TraitScores } from "@/lib/personality/items";
+import type { Trait, TraitScores } from "@/lib/personality/items";
 import { traitColor } from "@/lib/personality/trait-colors";
 import { typeName } from "@/lib/personality/type-name";
 
@@ -8,6 +8,7 @@ interface ArchetypeHeroProps {
   self: TraitScores;
   journal: TraitScores | null;
   last: TraitScores | null;
+  behaviour: Partial<Record<Trait, number>> | null;
   takenOn: string | null;
   /** Days the journal reading covered, when a reading exists. */
   daysRead: number | null;
@@ -21,6 +22,7 @@ export function ArchetypeHero({
   self,
   journal,
   last,
+  behaviour,
   takenOn,
   daysRead,
 }: ArchetypeHeroProps) {
@@ -133,6 +135,7 @@ export function ArchetypeHero({
             self={self}
             journal={journal}
             last={last}
+            behaviour={behaviour}
             tint={[from, to]}
           />
         </div>
@@ -155,6 +158,15 @@ export function ArchetypeHero({
                 className="h-0 w-4 border-t-2 border-dashed border-foreground"
               />
               {t("result.journal")}
+            </li>
+          )}
+          {behaviour && (
+            <li className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="size-2 rotate-45 border-2 border-foreground"
+              />
+              {t("result.behaviour")}
             </li>
           )}
           {last && (
