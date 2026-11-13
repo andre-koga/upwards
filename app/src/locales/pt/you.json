@@ -7,10 +7,6 @@
   "daily": {
     "label": "Pergunta de hoje",
     "unanswered": "Uma pergunta por dia. Escolha a resposta mais parecida com você.",
-    "whyLabel": "Por quê? (opcional, só você lê isso)",
-    "whyPlaceholder": "Uma frase para lembrar depois",
-    "changeNote": "Você pode mudar a resposta até a meia-noite.",
-    "saveNote": "Salvar anotação",
     "streak_one": "Sequência de {{count}} dia",
     "streak_many": "Sequência de {{count}} dias",
     "streak_other": "Sequência de {{count}} dias",
@@ -26,15 +22,13 @@
       "total_many": "{{count}} pessoas responderam.",
       "total_other": "{{count}} pessoas responderam.",
       "loading": "Carregando resultados…",
-      "waiting": "Os resultados aparecem quando 10 pessoas responderem.",
       "offline": "Conecte-se à internet para ver como todo mundo respondeu. Sua resposta está salva.",
       "pending": "Sua resposta ainda está sendo salva. Tente de novo em instantes.",
       "failed": "Não foi possível carregar os resultados.",
       "retry": "Tentar de novo"
     },
     "crowd": {
-      "label": "Contar minhas respostas nos resultados do grupo",
-      "hint": "Só como um número. Nunca com seu nome, sua anotação ou a data."
+      "label": "Contar minhas respostas nos resultados do grupo"
     }
   },
   "choices": {

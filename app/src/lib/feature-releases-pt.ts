@@ -15,8 +15,8 @@ export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
   "2026-11-13-daily-question": {
     title: "Uma pergunta por dia em Você",
     bullets: [
-      "A aba Você faz uma pergunta por dia. Escolha a resposta mais parecida com você, acrescente uma frase só sua sobre o motivo, se quiser, e mude de ideia até a meia-noite.",
-      "Depois de responder, veja como todo mundo respondeu, em porcentagens. Os resultados aparecem quando 10 pessoas responderem, e um interruptor deixa você de fora da contagem.",
+      "A aba Você faz uma pergunta por dia. Escolha a resposta mais parecida com você e mude de ideia até a meia-noite.",
+      "Depois de responder, veja como todo mundo respondeu, em porcentagens. Os resultados aparecem quando 5 pessoas responderem, e um interruptor deixa você de fora da contagem.",
       "Uma sequência conta os dias seguidos em que você responde, e Suas escolhas mostra para que lado suas respostas pendem ao lado do teste, sem alterá-lo.",
     ],
   },

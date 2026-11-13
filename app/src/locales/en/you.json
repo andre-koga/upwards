@@ -7,10 +7,6 @@
   "daily": {
     "label": "Today's question",
     "unanswered": "One question a day. Pick the answer closest to you.",
-    "whyLabel": "Why? (optional, only you can read this)",
-    "whyPlaceholder": "A line to remember it by",
-    "changeNote": "You can change your answer until midnight.",
-    "saveNote": "Save note",
     "streak_one": "{{count}}-day streak",
     "streak_other": "{{count}}-day streak",
     "streakBest_one": "Best streak: {{count}} day",
@@ -23,15 +19,13 @@
       "total_one": "{{count}} person answered.",
       "total_other": "{{count}} people answered.",
       "loading": "Loading results…",
-      "waiting": "Results appear when 10 people have answered.",
       "offline": "Connect to the internet to see how everyone answered. Your answer is saved.",
       "pending": "Your answer is still being saved. Try again in a moment.",
       "failed": "The results could not be loaded.",
       "retry": "Try again"
     },
     "crowd": {
-      "label": "Count my answers in the crowd results",
-      "hint": "Only as a number. Never with your name, your note or the date."
+      "label": "Count my answers in the crowd results"
     }
   },
   "choices": {

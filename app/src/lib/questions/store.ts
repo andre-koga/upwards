@@ -3,7 +3,7 @@ import type { QuestionAnswer } from "@/lib/db/types";
 import { saveQuestionAnswer } from "@/lib/sync/mutate-synced";
 import { naturalQuestionAnswerIdForDate } from "@/lib/sync/natural-ids";
 import { todayDateString } from "@/lib/time-utils";
-import { MAX_WHY_LENGTH, isValidChoice } from "./bank";
+import { isValidChoice } from "./bank";
 import { questionForDate } from "./daily";
 
 /** Live answers, newest day first. */
@@ -29,7 +29,6 @@ export function crowdPreference(answers: readonly QuestionAnswer[]): boolean {
  */
 export async function answerToday(input: {
   choiceId: string;
-  why: string;
 }): Promise<QuestionAnswer | null> {
   const date = todayDateString();
   const question = questionForDate(date);
@@ -38,14 +37,14 @@ export async function answerToday(input: {
   const id = naturalQuestionAnswerIdForDate(date);
   const existing = await db.questionAnswers.get(id);
   const stamp = now();
-  const why = input.why.trim().slice(0, MAX_WHY_LENGTH);
   const preference = crowdPreference(await liveAnswers());
 
   const row: QuestionAnswer = {
     id,
     question_id: question.id,
     choice_id: input.choiceId,
-    why: why.length > 0 ? why : null,
+    // The question no longer asks for a note. One written earlier is kept.
+    why: existing?.why ?? null,
     answered_on: date,
     in_crowd: existing && !existing.deleted_at ? existing.in_crowd : preference,
     created_at: existing?.created_at ?? stamp,

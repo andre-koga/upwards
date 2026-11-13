@@ -40,12 +40,11 @@ describe("question answer store", () => {
     const question = questionForDate("2026-11-13");
     const saved = await answerToday({
       choiceId: question.choices[0].id,
-      why: "  because  ",
     });
     expect(saved).toMatchObject({
       question_id: question.id,
       choice_id: question.choices[0].id,
-      why: "because",
+      why: null,
       answered_on: "2026-11-13",
       in_crowd: true,
       deleted_at: null,
@@ -59,7 +58,7 @@ describe("question answer store", () => {
   });
 
   it("refuses a choice that is not part of today's question", async () => {
-    expect(await answerToday({ choiceId: "zz", why: "" })).toBeNull();
+    expect(await answerToday({ choiceId: "zz" })).toBeNull();
     expect(await db.questionAnswers.count()).toBe(0);
   });
 
@@ -67,12 +66,10 @@ describe("question answer store", () => {
     const question = questionForDate("2026-11-13");
     const first = await answerToday({
       choiceId: question.choices[0].id,
-      why: "",
     });
     vi.setSystemTime(new Date(2026, 10, 13, 18, 0, 0));
     const second = await answerToday({
       choiceId: question.choices[1].id,
-      why: "",
     });
     expect(second!.id).toBe(first!.id);
     expect(second!.created_at).toBe(first!.created_at);
@@ -82,28 +79,27 @@ describe("question answer store", () => {
     );
   });
 
-  it("caps the private note", async () => {
+  it("keeps a note written before the question stopped asking for one", async () => {
     const question = questionForDate("2026-11-13");
-    const saved = await answerToday({
-      choiceId: question.choices[0].id,
-      why: "x".repeat(1000),
-    });
-    expect(saved!.why).toHaveLength(280);
+    const first = await answerToday({ choiceId: question.choices[0].id });
+    await db.questionAnswers.update(first!.id, { why: "from before" });
+    const second = await answerToday({ choiceId: question.choices[1].id });
+    expect(second!.why).toBe("from before");
   });
 
   it("uses a different row on a different day", async () => {
     const question = questionForDate("2026-11-13");
-    await answerToday({ choiceId: question.choices[0].id, why: "" });
+    await answerToday({ choiceId: question.choices[0].id });
     vi.setSystemTime(new Date(2026, 10, 14, 9, 0, 0));
     const next = questionForDate("2026-11-14");
-    await answerToday({ choiceId: next.choices[0].id, why: "" });
+    await answerToday({ choiceId: next.choices[0].id });
     expect(await db.questionAnswers.count()).toBe(2);
     expect((await liveAnswers())[0].answered_on).toBe("2026-11-14");
   });
 
   it("the crowd switch applies to every answer and to the next one", async () => {
     const question = questionForDate("2026-11-13");
-    await answerToday({ choiceId: question.choices[0].id, why: "" });
+    await answerToday({ choiceId: question.choices[0].id });
     expect(crowdPreference(await liveAnswers())).toBe(true);
 
     await setCrowdPreference(false);
@@ -112,7 +108,7 @@ describe("question answer store", () => {
 
     vi.setSystemTime(new Date(2026, 10, 14, 9, 0, 0));
     const next = questionForDate("2026-11-14");
-    const saved = await answerToday({ choiceId: next.choices[0].id, why: "" });
+    const saved = await answerToday({ choiceId: next.choices[0].id });
     expect(saved!.in_crowd).toBe(false);
   });
 });
