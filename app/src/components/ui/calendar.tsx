@@ -56,7 +56,11 @@ function Calendar({
           "flex gap-4 flex-col md:flex-row relative",
           defaultClassNames.months
         ),
-        month: cn("flex flex-col w-full gap-4", defaultClassNames.month),
+        // A grid, not a flex column: the month grid is a real <table> whose
+        // rows are sized by aspect-ratio cells. As a flex item, WebKit sizes
+        // the column before those rows resolve, so the month came out about
+        // half its height and the rest was cut off or needed scrolling.
+        month: cn("grid w-full gap-4", defaultClassNames.month),
         nav: cn(
           "flex items-center gap-1 w-full absolute top-0 inset-x-0 justify-between",
           defaultClassNames.nav
