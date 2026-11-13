@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   naturalDailyEntryId,
   naturalJournalId,
+  naturalQuestionAnswerId,
   syncUserKey,
 } from "./natural-ids";
 
@@ -24,6 +25,16 @@ describe("natural sync ids", () => {
     expect(journal).not.toBe(daily);
     expect(journal).not.toBe(naturalJournalId(userB, "2026-08-26"));
     expect(journal).not.toBe(naturalJournalId(userA, "2026-08-25"));
+  });
+
+  it("gives one question answer id per account and day", () => {
+    const userA = "11111111-1111-4111-8111-111111111111";
+    const userB = "22222222-2222-4222-8222-222222222222";
+    const id = naturalQuestionAnswerId(userA, "2026-11-13");
+    expect(id).toBe(naturalQuestionAnswerId(userA, "2026-11-13"));
+    expect(id).not.toBe(naturalQuestionAnswerId(userB, "2026-11-13"));
+    expect(id).not.toBe(naturalQuestionAnswerId(userA, "2026-11-14"));
+    expect(id).not.toBe(naturalJournalId(userA, "2026-11-13"));
   });
 
   it("uses guest:device when unsigned", () => {

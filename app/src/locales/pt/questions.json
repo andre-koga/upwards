@@ -1,0 +1,210 @@
+{
+  "q": {
+    "o1": {
+      "prompt": "Você tem uma tarde livre numa cidade que nunca visitou. O que faz?",
+      "a": "Saio andando sem plano e vejo aonde chego",
+      "b": "Escolho um lugar sobre o qual li e vou até lá",
+      "c": "Procuro um café e fico observando as pessoas",
+      "d": "Fico perto do que é fácil e familiar"
+    },
+    "o2": {
+      "prompt": "Um amigo conta uma crença que você acha estranha. O que você faz primeiro?",
+      "a": "Peço que explique com mais detalhes",
+      "b": "Ouço com educação e penso nisso depois",
+      "c": "Digo com sinceridade onde discordo",
+      "d": "Levo a conversa para algo em que concordamos"
+    },
+    "o3": {
+      "prompt": "O que lhe dá mais satisfação?",
+      "a": "Descobrir um jeito novo de fazer algo",
+      "b": "Fazer algo bem feito, do jeito de sempre",
+      "c": "Os dois, mais ou menos igual"
+    },
+    "o4": {
+      "prompt": "Um filme termina e você não entendeu. Como se sente?",
+      "a": "Encantado, quero conversar sobre o que pode significar",
+      "b": "Curioso, talvez eu leia a respeito",
+      "c": "Um pouco irritado, gosto de finais claros",
+      "d": "Preferia ter visto algo mais simples"
+    },
+    "o5": {
+      "prompt": "Quando a mente vagueia, para onde costuma ir?",
+      "a": "Lugares, ideias ou histórias inventadas",
+      "b": "Coisas que eu poderia construir ou criar",
+      "c": "Planos reais para a semana",
+      "d": "Ela raramente vagueia"
+    },
+    "o6": {
+      "prompt": "Alguém lhe oferece uma comida que você nunca ouviu falar.",
+      "a": "Sim, na hora",
+      "b": "Sim, depois de perguntar o que tem",
+      "c": "Só uma provadinha",
+      "d": "Fico com o que já conheço"
+    },
+    "c1": {
+      "prompt": "É domingo à noite. Como está a sua semana pela frente?",
+      "a": "Planejada, com a primeira tarefa já escolhida",
+      "b": "Esboçada por alto",
+      "c": "Aberta, vejo como vai ser",
+      "d": "Desconhecida, e eu gosto assim"
+    },
+    "c2": {
+      "prompt": "Você prometeu enviar algo até sexta. Quando sai?",
+      "a": "Quarta, cedo",
+      "b": "Quinta",
+      "c": "Sexta, perto do fim do dia",
+      "d": "Quando eu lembrar"
+    },
+    "c3": {
+      "prompt": "Como costumam ficar a sua mesa ou a sua bolsa?",
+      "a": "Tudo tem o seu lugar",
+      "b": "Arrumadas o bastante",
+      "c": "Bagunçadas, mas sei onde estão as coisas",
+      "d": "Não saberia dizer o que tem lá dentro"
+    },
+    "c4": {
+      "prompt": "Uma tarefa é chata, mas importante. O que você faz?",
+      "a": "Faço primeiro, para me livrar dela",
+      "b": "Coloco na agenda e faço",
+      "c": "Espero o humor certo",
+      "d": "Acho algo mais interessante para fazer antes"
+    },
+    "c5": {
+      "prompt": "Você percebe um erro num trabalho que já entregou.",
+      "a": "Corrijo e aviso as pessoas na hora",
+      "b": "Corrijo e comento se for importante",
+      "c": "Espero para ver se alguém percebe"
+    },
+    "c6": {
+      "prompt": "Você quer criar um hábito novo. O que mais ajuda?",
+      "a": "Um horário fixo todos os dias",
+      "b": "Registrar para ver o progresso",
+      "c": "Fazer quando der vontade",
+      "d": "Testar por uma semana e depois decidir"
+    },
+    "e1": {
+      "prompt": "Depois de uma semana longa, o que recarrega você?",
+      "a": "Uma noite fora com um grupo",
+      "b": "Jantar com dois ou três amigos",
+      "c": "Uma noite tranquila com uma pessoa",
+      "d": "Tempo sozinho, sem ninguém para conversar"
+    },
+    "e2": {
+      "prompt": "Você está numa festa em que só conhece o anfitrião.",
+      "a": "Me apresento às pessoas",
+      "b": "Entro num grupo que já está conversando",
+      "c": "Fico perto do anfitrião",
+      "d": "Procuro um canto quieto ou vou embora cedo"
+    },
+    "e3": {
+      "prompt": "Algo bom acontece com você. O que faz?",
+      "a": "Conto para várias pessoas na hora",
+      "b": "Conto para uma ou duas pessoas próximas",
+      "c": "Aproveito em silêncio por um tempo"
+    },
+    "e4": {
+      "prompt": "Ligação ou mensagem?",
+      "a": "Ligação, é mais rápida e calorosa",
+      "b": "O que a outra pessoa usou",
+      "c": "Mensagem, para pensar antes",
+      "d": "Evito as duas se puder"
+    },
+    "e5": {
+      "prompt": "Surge uma noite livre de última hora.",
+      "a": "Mando mensagem para ver quem está livre",
+      "b": "Vou a algum lugar com gente por perto, como um café",
+      "c": "Faço as minhas coisas",
+      "d": "Fico aliviado e fico em casa"
+    },
+    "e6": {
+      "prompt": "Numa reunião, você costuma ser...",
+      "a": "O primeiro a falar",
+      "b": "Quem fala depois de algumas pessoas",
+      "c": "Quem só fala quando perguntam",
+      "d": "Quem retoma depois por mensagem"
+    },
+    "a1": {
+      "prompt": "Um amigo pede ajuda num dia em que você já está ocupado.",
+      "a": "Arranjo tempo, mesmo que me custe",
+      "b": "Ajudo e digo quais são os meus limites",
+      "c": "Sugiro outro dia",
+      "d": "Digo não, os meus planos vêm primeiro"
+    },
+    "a2": {
+      "prompt": "Dois amigos discordam e os dois querem você do lado deles.",
+      "a": "Tento descobrir do que cada um precisa",
+      "b": "Fico neutro e escuto",
+      "c": "Digo quem eu acho que tem razão",
+      "d": "Fico fora disso"
+    },
+    "a3": {
+      "prompt": "Alguém fura a fila na sua frente.",
+      "a": "Imagino que não me viu",
+      "b": "Deixo para lá",
+      "c": "Aponto o que aconteceu",
+      "d": "Faço questão de que saiba que foi grosseiro"
+    },
+    "a4": {
+      "prompt": "O que mais se parece com o seu jeito de lidar com uma discussão?",
+      "a": "Ganhar não importa, entender importa",
+      "b": "Procuro um meio-termo",
+      "c": "Defendo o meu ponto até ele ser aceito",
+      "d": "Gosto de ganhar"
+    },
+    "a5": {
+      "prompt": "Um desconhecido na rua pede dinheiro.",
+      "a": "Costumo dar alguma coisa",
+      "b": "Paro e converso",
+      "c": "Depende da situação",
+      "d": "Continuo andando"
+    },
+    "a6": {
+      "prompt": "Um colega leva o crédito pela sua ideia.",
+      "a": "Deixo para lá, a ideia importa mais que o crédito",
+      "b": "Menciono com gentileza depois",
+      "c": "Corrijo na frente dos outros",
+      "d": "Lembro disso por muito tempo"
+    },
+    "n1": {
+      "prompt": "Você manda uma mensagem importante e não tem resposta por um dia.",
+      "a": "Repasso tudo e imagino o que deu errado",
+      "b": "Olho o celular mais do que gostaria",
+      "c": "Imagino que a pessoa esteja ocupada",
+      "d": "Esqueço do assunto"
+    },
+    "n2": {
+      "prompt": "Na véspera de algo importante, você...",
+      "a": "Fica acordado repassando tudo",
+      "b": "Dorme mal, mas dá conta",
+      "c": "Dorme como em qualquer outra noite"
+    },
+    "n3": {
+      "prompt": "Alguém critica o seu trabalho.",
+      "a": "Fica comigo por dias",
+      "b": "Dói, depois eu aproveito",
+      "c": "Pego o que é útil e sigo em frente",
+      "d": "Mal me afeta"
+    },
+    "n4": {
+      "prompt": "Com que rapidez o seu humor muda durante o dia?",
+      "a": "Com frequência, por coisas pequenas",
+      "b": "Às vezes",
+      "c": "Raramente",
+      "d": "Quase nunca"
+    },
+    "n5": {
+      "prompt": "Os planos desmoronam de última hora.",
+      "a": "Fico estressado por um tempo",
+      "b": "Fico chateado, depois me adapto",
+      "c": "Passo para o plano B sem drama",
+      "d": "Gosto em silêncio da mudança"
+    },
+    "n6": {
+      "prompt": "Quando algo dá errado, como soa a sua voz interior?",
+      "a": "Dura, me culpa",
+      "b": "Preocupada, imagina o pior",
+      "c": "Prática, pergunta o que fazer agora",
+      "d": "Calma, diz que vai ficar tudo bem"
+    }
+  }
+}

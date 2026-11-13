@@ -20,6 +20,7 @@ const PROJECTION_FIELD_KEYS: Record<string, readonly string[]> = {
   memory: ["text_content", "photo_paths", "time_label", "deleted_at"],
   personality_sitting: ["answers", "scores", "completed_at", "deleted_at"],
   journal_reading: ["scores", "notes", "quotes", "deleted_at"],
+  question_answer: ["choice_id", "why", "in_crowd", "deleted_at"],
   activity_period: [
     "activity_id",
     "start_time",
@@ -132,6 +133,7 @@ function entityLabel(
   if (entityType === "activity_streak") return "Streak";
   if (entityType === "personality_sitting") return "Big Five test";
   if (entityType === "journal_reading") return "Journal reading";
+  if (entityType === "question_answer") return "Daily question";
   if (entityType === "memory") {
     if (typeof fields.time_label === "string" && fields.time_label.trim()) {
       return fields.time_label.trim();

@@ -32,6 +32,7 @@ export const SYNC_TABLES: SyncTable[] = [
   "memories",
   "personality_sittings",
   "journal_readings",
+  "question_answers",
   "one_time_tasks",
 ];
 
@@ -51,5 +52,6 @@ export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
   memories: "memories",
   personality_sittings: "personalitySittings",
   journal_readings: "journalReadings",
+  question_answers: "questionAnswers",
   one_time_tasks: "oneTimeTasks",
 };

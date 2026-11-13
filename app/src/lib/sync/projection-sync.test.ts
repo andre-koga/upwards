@@ -23,6 +23,11 @@ describe("projection-sync mappings", () => {
     expect(entityTypeToSyncTable("journal_reading")).toBe("journal_readings");
   });
 
+  it("maps daily question answers both ways", () => {
+    expect(syncTableToEntityType("question_answers")).toBe("question_answer");
+    expect(entityTypeToSyncTable("question_answer")).toBe("question_answers");
+  });
+
   it("does not strip current activity fields from projection payloads", () => {
     const row = {
       id: "a1",

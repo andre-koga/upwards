@@ -3,6 +3,7 @@ import {
   UPWARDS_SYNC_NAMESPACE,
   naturalDailyEntryId,
   naturalJournalId,
+  naturalQuestionAnswerId,
 } from "@/lib/sync/natural-ids";
 import { withoutDroppedColumns } from "@/lib/db/legacy-shapes";
 import type { BackupDocument, BackupTables } from "./format";
@@ -138,6 +139,10 @@ export function remapBackupIdentity(
     journalReadings: t.journalReadings.map((row) => ({
       ...row,
       id: mapId("journal_reading", row.id),
+    })),
+    questionAnswers: t.questionAnswers.map((row) => ({
+      ...row,
+      id: naturalQuestionAnswerId(targetUserKey, row.answered_on),
     })),
     oneTimeTasks: t.oneTimeTasks.map((row) => ({
       ...withoutDroppedColumns("one_time_tasks", row),
