@@ -23,7 +23,8 @@ function hash(seed: string): number {
   return Math.abs(h);
 }
 
-const tone = (token: string, alpha: number) => `hsl(var(${token}) / ${alpha})`;
+const tone = (token: string, alpha: number) =>
+  `hsl(var(${token}) / ${alpha})`;
 
 /** Inline style for a hearted day's background. Stable for a given seed. */
 export function heartedWashStyle(seed: string): CSSProperties {
