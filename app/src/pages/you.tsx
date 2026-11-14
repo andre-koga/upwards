@@ -31,20 +31,30 @@ import { startSitting } from "@/lib/personality/store";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
 
 /**
- * The page has no masthead of its own: the tab bar already says where you are,
- * and a title above the portrait only pushes it down. The heading stays for
- * screen readers.
+ * With a portrait on screen the page carries a small title, so the pills under
+ * it are not floating on their own. Before there is one, the centred intro is
+ * the whole screen and the heading stays for screen readers only.
  */
 function YouLayout({
   title,
+  showTitle = false,
   children,
 }: {
   title: string;
+  showTitle?: boolean;
   children: ReactNode;
 }) {
   return (
     <div className="relative isolate space-y-6 px-2 pb-24 pt-6 md:p-4 md:pb-24 [&>h1+*]:!mt-0">
-      <h1 className="sr-only">{title}</h1>
+      <h1
+        className={
+          showTitle
+            ? "text-center font-display text-[1.375rem] leading-none tracking-[-0.01em] text-foreground/85"
+            : "sr-only"
+        }
+      >
+        {title}
+      </h1>
       {children}
     </div>
   );
@@ -182,7 +192,7 @@ export default function YouPage() {
   const current = data?.current ?? null;
 
   return (
-    <YouLayout title={t("title")}>
+    <YouLayout title={t("title")} showTitle={!!latest}>
       {current && (
         <ResumePrompt
           centered={!latest}
