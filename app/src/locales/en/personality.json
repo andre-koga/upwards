@@ -266,7 +266,7 @@
     }
   },
   "test": {
-    "intro": "Fifty short statements, one at a time. Answer how accurately each describes you as you are now, not as you would like to be. Your place is saved after every answer.",
+    "intro": "Out of 32 possible outcomes, discover which animal best resonates with you!",
     "start": "Start the test",
     "resumeTitle": "Your test is waiting",
     "resumeLeft_one": "{{count}} question left",

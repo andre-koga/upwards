@@ -2,7 +2,7 @@
   "title": "You",
   "empty": {
     "heading": "Your portrait is not here yet",
-    "body": "This page will describe you, drawn from the days you log and the journal you write. Until that exists, it stays empty rather than guess."
+    "body": "This test is composed of 50 questions and is heavily inspired by the OCEAN test, and can be answered in minutes."
   },
   "daily": {
     "label": "Today's question",

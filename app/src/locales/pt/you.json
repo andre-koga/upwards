@@ -2,7 +2,7 @@
   "title": "Você",
   "empty": {
     "heading": "Seu retrato ainda não está aqui",
-    "body": "Esta página vai descrever você, a partir dos dias que você registra e do diário que você escreve. Até lá, ela fica vazia em vez de adivinhar."
+    "body": "Este teste é composto por 50 perguntas, é fortemente inspirado no teste OCEAN e pode ser respondido em minutos."
   },
   "daily": {
     "label": "Pergunta de hoje",

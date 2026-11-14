@@ -266,7 +266,7 @@
     }
   },
   "test": {
-    "intro": "Cinquenta frases curtas, uma de cada vez. Responda o quanto cada uma descreve você como é agora, não como gostaria de ser. Seu lugar é salvo a cada resposta.",
+    "intro": "De 32 resultados possíveis, descubra qual animal mais ressoa com você!",
     "start": "Começar o teste",
     "resumeTitle": "Seu teste está esperando",
     "resumeLeft_one": "Falta {{count}} pergunta",
