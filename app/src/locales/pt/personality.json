@@ -157,13 +157,13 @@
         "name": "Morcego",
         "blurb": "Alerta e preciso. Você tem seus próprios horários e percebe tudo que se mexe por perto."
       },
-      "spider": {
-        "name": "Aranha",
-        "blurb": "Paciente e reservada. Você constrói seu mundo um fio cuidadoso de cada vez."
+      "cat": {
+        "name": "Gato",
+        "blurb": "Paciente, reservado e tranquilo. Você tem seus próprios horários, observa primeiro e se move quando lhe convém."
       },
-      "firefly": {
-        "name": "Vaga-lume",
-        "blurb": "Sonhador e suave. Você flutua, brilha e capta cada corrente ao redor."
+      "jellyfish": {
+        "name": "Água-viva",
+        "blurb": "Sonhadora e suave. Você flutua, brilha e capta cada corrente ao redor."
       },
       "sloth": {
         "name": "Preguiça",

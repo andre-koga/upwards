@@ -157,12 +157,12 @@
         "name": "Bat",
         "blurb": "Alert and exact. You keep your own hours and pick up everything that moves near you."
       },
-      "spider": {
-        "name": "Spider",
-        "blurb": "Patient and self-contained. You build your world one careful thread at a time."
+      "cat": {
+        "name": "Cat",
+        "blurb": "Patient, private and unbothered. You keep your own hours, watch first and move when it suits you."
       },
-      "firefly": {
-        "name": "Firefly",
+      "jellyfish": {
+        "name": "Jellyfish",
         "blurb": "Dreamy and soft. You drift, you glow, and you pick up on every current around you."
       },
       "sloth": {
