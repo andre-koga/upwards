@@ -16,7 +16,6 @@ import { band, gapDirection } from "@/lib/personality/bands";
 import { journalComparison } from "@/lib/personality/highlights";
 import { TRAITS, type Trait } from "@/lib/personality/items";
 import { traitColor } from "@/lib/personality/trait-colors";
-import { formatDateShort } from "@/lib/time-utils";
 
 interface PersonalityResultProps {
   latest: PersonalitySitting;
@@ -84,12 +83,6 @@ export function PersonalityResult({
         journal={reading?.scores ?? null}
         last={previous?.scores ?? null}
         behaviour={behaviourScores}
-        daysRead={reading?.days_read ?? null}
-        takenOn={
-          latest.completed_at
-            ? formatDateShort(new Date(latest.completed_at))
-            : null
-        }
       />
 
       {highlights.length > 0 && (

@@ -29,22 +29,47 @@ import { ITEM_COUNT } from "@/lib/personality/items";
 import { countAnswered } from "@/lib/personality/scoring";
 import { startSitting } from "@/lib/personality/store";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
+import { formatDateShort } from "@/lib/time-utils";
 
 /**
- * The page has no masthead of its own: the tab bar already says where you are,
- * and a title above the portrait only pushes it down. The heading stays for
- * screen readers.
+ * With a portrait on screen the page opens with the same centred masthead as
+ * the Journal: a serif title, a small rule, and a quiet italic line. Before
+ * there is one, the centred intro is the whole screen and the heading stays
+ * for screen readers only.
  */
 function YouLayout({
   title,
+  subtitle,
   children,
 }: {
   title: string;
+  /** Shown under the title when there is a portrait; hides the masthead if absent. */
+  subtitle?: string | null;
   children: ReactNode;
 }) {
+  const masthead = subtitle != null;
   return (
-    <div className="relative isolate space-y-6 px-2 pb-24 pt-6 md:p-4 md:pb-24 [&>h1+*]:!mt-0">
-      <h1 className="sr-only">{title}</h1>
+    <div className="relative isolate space-y-6 px-2 pb-24 pt-6 md:p-4 md:pb-24 [&>h1+*]:!mt-0 [&>header+*]:!mt-0">
+      {masthead ? (
+        <header className="flex flex-col items-center px-4 pb-0 pt-2 text-center">
+          <h1 className="font-display text-[2.5rem] font-medium leading-[1.1] tracking-[-0.02em]">
+            {title}
+          </h1>
+          {subtitle && (
+            <>
+              <span
+                aria-hidden="true"
+                className="my-3 h-px w-10 bg-foreground/25"
+              />
+              <p className="font-display text-[1.0625rem] italic leading-relaxed text-muted-foreground">
+                {subtitle}
+              </p>
+            </>
+          )}
+        </header>
+      ) : (
+        <h1 className="sr-only">{title}</h1>
+      )}
       {children}
     </div>
   );
@@ -181,8 +206,25 @@ export default function YouPage() {
   const previous = data?.completed[1] ?? null;
   const current = data?.current ?? null;
 
+  // The quiet line under the title: when the test was taken, and how many days
+  // of journal the reading covered.
+  const subtitle = latest
+    ? [
+        latest.completed_at
+          ? tp("result.takenOn", {
+              date: formatDateShort(new Date(latest.completed_at)),
+            })
+          : null,
+        data?.reading
+          ? tp("result.journalPill", { count: data.reading.days_read })
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : null;
+
   return (
-    <YouLayout title={t("title")}>
+    <YouLayout title={t("title")} subtitle={subtitle}>
       {current && (
         <ResumePrompt
           centered={!latest}

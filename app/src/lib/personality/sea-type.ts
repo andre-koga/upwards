@@ -45,6 +45,36 @@ export function groupColor(group: SeaGroup, alpha?: number): string {
     : `hsl(var(${GROUP_TOKEN[group]}) / ${alpha})`;
 }
 
+/**
+ * Each group has its own pair of colours for the portrait wash, picked to
+ * match how the group feels: [upper, lower].
+ * - reef: sunlit coral, bright and lively
+ * - deep: twilight water, far out and quiet
+ * - shore: dusk on the sand, grounded and warm
+ * - lagoon: clear shallows, calm and still
+ */
+const GROUP_PAIR: Record<SeaGroup, readonly [string, string]> = {
+  reef: ["--gold", "--terracotta"],
+  deep: ["--lavender", "--sky"],
+  shore: ["--terracotta", "--lavender"],
+  lagoon: ["--green", "--sky"],
+};
+
+function tokenColor(token: string, alpha?: number): string {
+  return alpha === undefined
+    ? `hsl(var(${token}))`
+    : `hsl(var(${token}) / ${alpha})`;
+}
+
+/** The two colours of a group's wash, [upper, lower], with an optional alpha. */
+export function groupPairColors(
+  group: SeaGroup,
+  alpha?: number
+): [string, string] {
+  const [upper, lower] = GROUP_PAIR[group];
+  return [tokenColor(upper, alpha), tokenColor(lower, alpha)];
+}
+
 export const SEA_TYPE_IDS = [
   "dolphin",
   "clownfish",
