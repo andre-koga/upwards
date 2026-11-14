@@ -75,3 +75,24 @@ export function driftFromTest(
   if (gap === 0) return null;
   return gap > 0 ? "higher" : "lower";
 }
+
+/** A lean from -1 to 1 as a position along a trait bar, 0 to 100. */
+export function leanPosition(lean: number): number {
+  return Math.round(((Math.max(-1, Math.min(1, lean)) + 1) / 2) * 100);
+}
+
+/**
+ * Where the choices sit on each trait's bar, for the traits with enough
+ * answers. The rest are left out rather than drawn at the middle.
+ */
+export function choicePositions(
+  evidence: Evidence
+): Partial<Record<Trait, number>> {
+  const positions: Partial<Record<Trait, number>> = {};
+  for (const trait of TRAITS) {
+    if (evidence[trait].count >= DRIFT_MIN_ANSWERS) {
+      positions[trait] = leanPosition(evidence[trait].lean);
+    }
+  }
+  return positions;
+}

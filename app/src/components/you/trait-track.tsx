@@ -9,8 +9,8 @@ interface TraitTrackProps {
   journal: number | null;
   /** The same trait on the previous finished sitting. */
   last: number | null;
-  /** What habits and journal show for this trait, when they can say. */
-  behaviour?: number | null;
+  /** Where the daily answers sit on this bar, 0-100, once there are some. */
+  choices?: number | null;
 }
 
 /**
@@ -23,7 +23,7 @@ export function TraitTrack({
   self,
   journal,
   last,
-  behaviour = null,
+  choices = null,
 }: TraitTrackProps) {
   const { t } = useTranslation("personality");
   const name = t(`traits.${trait}.name`);
@@ -33,7 +33,7 @@ export function TraitTrack({
       ? t("result.trackAria", { trait: name, self })
       : t("result.trackAriaJournal", { trait: name, self, journal }),
     last === null ? null : t("result.trackAriaLast", { last }),
-    behaviour === null ? null : t("result.trackAriaBehaviour", { behaviour }),
+    choices === null ? null : t("result.trackAriaChoices", { choices }),
   ]
     .filter(Boolean)
     .join(" ");
@@ -70,11 +70,11 @@ export function TraitTrack({
             style={{ left: `${journal}%` }}
           />
         )}
-        {behaviour !== null && (
+        {choices !== null && (
           <span
             aria-hidden="true"
             className="absolute top-1/2 block size-3.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-2 border-foreground bg-background"
-            style={{ left: `${behaviour}%` }}
+            style={{ left: `${choices}%` }}
           />
         )}
         <span

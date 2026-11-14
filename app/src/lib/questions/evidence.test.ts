@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { QuestionAnswer } from "@/lib/db/types";
 import {
+  choicePositions,
   DRIFT_MIN_ANSWERS,
   driftFromTest,
+  leanPosition,
   leanBand,
   tallyEvidence,
 } from "./evidence";
@@ -87,5 +89,33 @@ describe("driftFromTest", () => {
     expect(driftFromTest({ count: 10, lean: -0.8 }, 50)).toBe("lower");
     expect(driftFromTest({ count: 10, lean: 0 }, 85)).toBe("lower");
     expect(driftFromTest({ count: 10, lean: 0 }, 15)).toBe("higher");
+  });
+});
+
+describe("leanPosition", () => {
+  it("maps a lean from -1..1 onto the bar, 0..100", () => {
+    expect(leanPosition(-1)).toBe(0);
+    expect(leanPosition(0)).toBe(50);
+    expect(leanPosition(1)).toBe(100);
+    expect(leanPosition(0.5)).toBe(75);
+  });
+
+  it("stays on the bar for a lean beyond the range", () => {
+    expect(leanPosition(3)).toBe(100);
+    expect(leanPosition(-3)).toBe(0);
+  });
+});
+
+describe("choicePositions", () => {
+  it("leaves out traits without enough answers", () => {
+    const none = { count: 0, lean: 0 };
+    const positions = choicePositions({
+      openness: { count: 4, lean: 0.5 },
+      conscientiousness: none,
+      extraversion: { count: 1, lean: -1 },
+      agreeableness: none,
+      neuroticism: none,
+    });
+    expect(positions).toEqual({ openness: 75, extraversion: 0 });
   });
 });

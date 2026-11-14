@@ -1,5 +1,8 @@
 export type Band = "low" | "mid" | "high";
 
+/** Five steps of the same score, for the longer description of a trait. */
+export type Level = "veryLow" | "low" | "mid" | "high" | "veryHigh";
+
 export type GapDirection = "close" | "journalHigher" | "journalLower";
 
 /** Scores below this read as low, scores above `HIGH_FROM` as high. */
@@ -13,6 +16,18 @@ export function band(score: number): Band {
   if (score < LOW_BELOW) return "low";
   if (score >= HIGH_FROM) return "high";
   return "mid";
+}
+
+/**
+ * Fifths of the scale: 0-19, 20-39, 40-59, 60-79, 80-100. The outer fifths
+ * are the strong ends; low, mid and high match the three bands above.
+ */
+export function level(score: number): Level {
+  if (score < 20) return "veryLow";
+  if (score < LOW_BELOW) return "low";
+  if (score < HIGH_FROM) return "mid";
+  if (score < 80) return "high";
+  return "veryHigh";
 }
 
 /** Which way the journal reading sits relative to the self-test. */

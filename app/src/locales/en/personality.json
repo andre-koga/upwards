@@ -1,5 +1,4 @@
 {
-  "disclaimer": "This is a reflection, not a diagnosis. It is a short self-report scale and a reading of your own words, and it can be wrong.",
   "answers": {
     "1": "Very inaccurate",
     "2": "Moderately inaccurate",
@@ -302,29 +301,39 @@
     "takenOn": "Taken {{date}}",
     "bands": {
       "openness": {
+        "veryLow": "You much prefer what is familiar, practical and proven.",
         "low": "You tend to prefer the familiar and the practical.",
         "mid": "You mix new ideas with what you already know.",
-        "high": "You are drawn to new ideas, art and experiences."
+        "high": "You are drawn to new ideas, art and experiences.",
+        "veryHigh": "You are hungry for new ideas, art and experiences, and always on the lookout for the next one."
       },
       "conscientiousness": {
+        "veryLow": "You keep almost nothing fixed and go with the moment.",
         "low": "You tend to keep plans loose and stay flexible.",
         "mid": "You are organised in some places and relaxed in others.",
-        "high": "You like order, plans and following through."
+        "high": "You like order, plans and following through.",
+        "veryHigh": "You live by order, plans and lists, and you rarely leave anything unfinished."
       },
       "extraversion": {
+        "veryLow": "You are quiet and private, and you need plenty of time alone to recharge.",
         "low": "You tend to be quiet and recharge on your own.",
         "mid": "You move between company and time to yourself.",
-        "high": "You tend to seek out people and feel energised by them."
+        "high": "You tend to seek out people and feel energised by them.",
+        "veryHigh": "You thrive around people and feel most alive in company."
       },
       "agreeableness": {
+        "veryLow": "You say exactly what you think, however blunt, and you do not bend just to keep the peace.",
         "low": "You tend to say what you think, even when it is blunt.",
         "mid": "You balance being kind with standing your ground.",
-        "high": "You tend to put people at ease and care how they feel."
+        "high": "You tend to put people at ease and care how they feel.",
+        "veryHigh": "You put other people first and go out of your way to put everyone at ease."
       },
       "neuroticism": {
+        "veryLow": "You stay calm almost no matter what, and stress rarely shakes you.",
         "low": "You tend to stay steady when things get stressful.",
         "mid": "Stress affects you at times, and at times it does not.",
-        "high": "You tend to feel stress and mood shifts strongly."
+        "high": "You tend to feel stress and mood shifts strongly.",
+        "veryHigh": "You feel stress and mood shifts deeply, and they can take a while to settle."
       }
     },
     "gap": {
@@ -340,21 +349,12 @@
     "balancedWord": "Balanced",
     "journalPill_one": "Journal · {{count}} day",
     "journalPill_other": "Journal · {{count}} days",
-    "behaviour": "Your habits",
-    "trackAriaBehaviour": "Your habits {{behaviour}}.",
-    "habits": {
-      "conscientiousness": "You logged something on {{active}} of {{total}} days lately.",
-      "openness": "Lately you did {{activities}} and were in {{places}}.",
-      "activities_one": "{{count}} activity",
-      "activities_other": "{{count}} different activities",
-      "places_one": "{{count}} place",
-      "places_other": "{{count}} different places"
-    },
-    "habitsNote": "The diamonds show your habits over the last {{days}} days, counted on this device. They can only speak to Openness and Conscientiousness; habits say little about the other three."
+    "choices": "Your choices",
+    "trackAriaChoices": "Your choices {{choices}}."
   },
   "journal": {
     "heading": "What your journal reads as",
-    "body": "Separate from the test: your own AI reads your written days and scores them on the same five traits, so you can compare.",
+    "body": "Your AI analyses and scores your journal entries.",
     "read": "Read my journal",
     "readAgain": "Read it again",
     "reading": "Reading...",
@@ -363,7 +363,7 @@
     "quotesLabel": "From your own words",
     "notConnected": "Connect an AI in Settings to read your journal. The test works without it.",
     "openSettings": "Open Settings",
-    "noDays": "No written days in the last {{days}} days. Write a few, or look back further. Only days with a title or text can be read.",
+    "noDays": "Nothing written in the last {{days}} days. Try looking back further.",
     "needTest": "Take the test first, then compare it with your journal.",
     "consentTitle": "Send these days to your AI?",
     "consentBody_one": "The words of {{count}} written day (title, date and the first 300 characters of the entry) will be sent to {{model}}, the model named in Settings. Nothing else is sent: no birthday, no profile, no test answers.",
@@ -379,8 +379,7 @@
       "provider_invalid": "The AI answered in a form that could not be used. Try again.",
       "generic": "Could not read your journal. Try again."
     },
-    "modelFallback": "your AI model",
-    "window": "Reads the written days from the last {{days}} days."
+    "modelFallback": "your AI model"
   },
   "words": {
     "title": "In your words",
@@ -394,11 +393,10 @@
     "fromDay": "From {{date}}",
     "dayChanged": "From a day you have since changed"
   },
-  "habitsRange": {
-    "label": "Habits and journal reading look back over",
+  "funDisclaimer": "Types, codes and animals are just for fun, not science.",
+  "lookBack": {
+    "label": "Look back over",
     "option_one": "{{count}} day",
-    "option_other": "{{count}} days",
-    "empty": "Not enough logged days in this range for your habits to show. Try a longer one, or keep logging."
-  },
-  "funDisclaimer": "Types, codes and animals are just for fun. They are a playful way to group five scores, they are not scientific, and they are not a label."
+    "option_other": "{{count}} days"
+  }
 }

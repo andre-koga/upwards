@@ -4,7 +4,6 @@ import { DailyQuestion } from "@/components/you/daily-question";
 import { JournalReadingPanel } from "@/components/you/journal-reading-panel";
 import { PersonalityResult } from "@/components/you/personality-result";
 import { PersonalityTest } from "@/components/you/personality-test";
-import { YourChoices } from "@/components/you/your-choices";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,9 +48,9 @@ function YouLayout({
 }) {
   const masthead = subtitle != null;
   return (
-    <div className="relative isolate space-y-6 px-2 pb-24 pt-6 md:p-4 md:pb-24 [&>h1+*]:!mt-0 [&>header+*]:!mt-0">
+    <div className="relative isolate space-y-6 px-2 pb-24 pt-4 md:p-4 md:pb-24 [&>h1+*]:!mt-0 [&>header+*]:!mt-0">
       {masthead ? (
-        <header className="flex flex-col items-center px-4 pb-0 pt-2 text-center">
+        <header className="flex flex-col items-center px-4 pb-0 pt-6 text-center">
           <h1 className="font-display text-[2.5rem] font-medium leading-[1.1] tracking-[-0.02em]">
             {title}
           </h1>
@@ -152,7 +151,7 @@ export default function YouPage() {
   const { t } = useTranslation("you");
   const { t: tp } = useTranslation("personality");
   const range = useLookBackRange();
-  const { data, reload } = usePersonality(range);
+  const { data, reload } = usePersonality();
   const { data: daily, reload: reloadDaily } = useDailyQuestion();
   const [testing, setTesting] = useState<PersonalitySitting | null>(null);
   const [confirmRetake, setConfirmRetake] = useState(false);
@@ -270,16 +269,11 @@ export default function YouPage() {
             latest={latest}
             previous={previous}
             reading={data?.reading ?? null}
-            behaviour={data?.behaviour ?? null}
-            range={range}
-            onRangeChange={setLookBackRange}
+            evidence={daily?.evidence ?? null}
             portraitOnly={isYouMode}
           />
-          {daily && latest.scores && (
-            <YourChoices evidence={daily.evidence} scores={latest.scores} />
-          )}
           {!current && (
-            <div className="flex justify-center pt-6">
+            <div className="flex justify-center">
               <Button
                 type="button"
                 variant="outline"
@@ -294,6 +288,7 @@ export default function YouPage() {
               reading={data?.reading ?? null}
               hasTest
               range={range}
+              onRangeChange={setLookBackRange}
               onSaved={reload}
             />
           )}
@@ -301,9 +296,8 @@ export default function YouPage() {
       )}
 
       {latest && (
-        <footer className="space-y-1.5 px-4 pt-6 text-center text-xs leading-relaxed text-muted-foreground">
+        <footer className="px-4 pt-2 text-center text-xs leading-relaxed text-muted-foreground">
           <p>{tp("funDisclaimer")}</p>
-          <p>{tp("disclaimer")}</p>
         </footer>
       )}
 

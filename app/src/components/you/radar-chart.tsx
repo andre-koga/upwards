@@ -30,8 +30,8 @@ interface RadarChartProps {
   self: TraitScores;
   journal: TraitScores | null;
   last: TraitScores | null;
-  /** Habit-based marks on the traits they can speak to. */
-  behaviour?: Partial<Record<Trait, number>> | null;
+  /** Where the daily answers sit on each trait with enough of them, 0-100. */
+  choices?: Partial<Record<Trait, number>> | null;
   /** The two traits that shape the type tint the shape. */
   tint: [Trait, Trait];
 }
@@ -44,7 +44,7 @@ export function RadarChart({
   self,
   journal,
   last,
-  behaviour = null,
+  choices = null,
   tint,
 }: RadarChartProps) {
   const { t } = useTranslation("personality");
@@ -63,13 +63,11 @@ export function RadarChart({
             ).join(", ")}.`
           : ""
       }${
-        behaviour
-          ? ` ${t("result.behaviour")}: ${TRAITS.filter(
-              (trait) => behaviour[trait] !== undefined
+        choices
+          ? ` ${t("result.choices")}: ${TRAITS.filter(
+              (trait) => choices[trait] !== undefined
             )
-              .map(
-                (trait) => `${t(`traits.${trait}.name`)} ${behaviour[trait]}`
-              )
+              .map((trait) => `${t(`traits.${trait}.name`)} ${choices[trait]}`)
               .join(", ")}.`
           : ""
       }`}
@@ -173,12 +171,12 @@ export function RadarChart({
             );
           })}
           {TRAITS.map((trait, index) => {
-            const value = behaviour?.[trait];
+            const value = choices?.[trait];
             if (value === undefined) return null;
             const { x, y } = point(index, value);
             return (
               <rect
-                key={`behaviour-${trait}`}
+                key={`choices-${trait}`}
                 x={x - 4.5}
                 y={y - 4.5}
                 width={9}
