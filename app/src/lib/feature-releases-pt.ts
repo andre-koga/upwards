@@ -12,6 +12,12 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-13-choices-sooner": {
+    title: "Suas escolhas aparecem mais cedo",
+    bullets: [
+      "Cada traço em Suas escolhas agora aparece a partir da sua primeira resposta, em vez de depois de 10. Poucas respostas são uma pista aproximada, e a página avisa isso.",
+    ],
+  },
   "2026-11-13-sea-types": {
     title: "Seu bicho do mar em Você",
     bullets: [
