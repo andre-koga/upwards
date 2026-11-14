@@ -79,8 +79,8 @@ export function ArchetypeHero({
           className="pointer-events-none absolute inset-x-0 -bottom-64 -top-40 -z-10"
           style={{
             background: [
-              `radial-gradient(circle 24rem at 50% 20rem, ${upper} 0%, transparent 100%)`,
-              `radial-gradient(circle 26rem at 50% 38rem, ${lower} 0%, transparent 100%)`,
+              `radial-gradient(circle 27rem at 50% 20rem, ${upper} 0%, transparent 100%)`,
+              `radial-gradient(circle 29rem at 50% 38rem, ${lower} 0%, transparent 100%)`,
             ].join(", "),
             maskImage: WASH_FADE,
             WebkitMaskImage: WASH_FADE,
