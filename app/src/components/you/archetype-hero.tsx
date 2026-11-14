@@ -107,10 +107,6 @@ export function ArchetypeHero({
         />
 
         <div className="relative">
-          <p className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            {t("type.eyebrow")}
-          </p>
-
           <AnimalPicture id={type.id} />
 
           <h2
@@ -126,7 +122,7 @@ export function ArchetypeHero({
             </span>
             <span
               aria-hidden="true"
-              className="font-display text-[1.375rem] leading-none text-muted-foreground"
+              className="pl-[0.08em] font-display text-[1.375rem] leading-none tracking-[0.08em] text-muted-foreground"
             >
               {type.code}
             </span>
