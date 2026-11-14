@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RadarChart } from "@/components/you/radar-chart";
 import { TRAITS, type Trait, type TraitScores } from "@/lib/personality/items";
 import {
-  groupColor,
   groupPairColors,
   animalType,
+  type AnimalTypeId,
 } from "@/lib/personality/animal-type";
 import { traitColor } from "@/lib/personality/trait-colors";
 
@@ -44,6 +45,26 @@ const WASH_FADE = `linear-gradient(to bottom, ${[
 ]
   .map(([rem, alpha]) => `rgba(0, 0, 0, ${alpha}) ${rem}rem`)
   .join(", ")})`;
+
+/**
+ * The picture of the animal, a PNG at `/animals/<id>.png` in the public
+ * folder. It is decorative (the name sits right below it), and when a picture
+ * is missing nothing is drawn, so the block still reads without it.
+ */
+function AnimalPicture({ id }: { id: AnimalTypeId }) {
+  const [missing, setMissing] = useState<AnimalTypeId | null>(null);
+  if (missing === id) return null;
+  return (
+    <img
+      src={`/animals/${id}.png`}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      onError={() => setMissing(id)}
+      className="mx-auto mt-4 size-36 object-contain"
+    />
+  );
+}
 
 /**
  * The headline: a five-letter code, a one-word animal and a colour group,
@@ -90,40 +111,35 @@ export function ArchetypeHero({
             {t("type.eyebrow")}
           </p>
 
-          <p className="mt-3">
-            <span className="sr-only">
-              {t("type.codeLabel")}: {type.code}
-            </span>
-            <span aria-hidden="true" className="inline-flex gap-1.5">
-              {type.letters.map(({ trait, letter }) => (
-                <span
-                  key={trait}
-                  className="flex size-10 items-center justify-center rounded-xl border border-foreground/20 bg-foreground/5 pt-[5px] font-display text-[1.375rem] leading-none text-foreground"
-                >
-                  {letter}
-                </span>
-              ))}
-            </span>
-          </p>
+          <AnimalPicture id={type.id} />
 
           <h2
             id="your-type"
-            className="mx-auto mt-4 max-w-[18rem] font-display text-[2.5rem] italic leading-[1.1] tracking-[-0.02em] text-foreground"
+            className="mx-auto mt-3 max-w-[18rem] font-display text-[2.5rem] italic leading-[1.1] tracking-[-0.02em] text-foreground"
           >
             {t(`type.names.${type.id}.name`)}
           </h2>
 
-          <p
-            className="mx-auto mt-3 flex w-fit items-center gap-2 rounded-full border bg-background/60 px-3 py-1 text-[0.8125rem] backdrop-blur-sm"
-            style={{ borderColor: groupColor(type.group, 0.55) }}
-          >
+          <p className="mt-2">
+            <span className="sr-only">
+              {t("type.codeLabel")}: {type.code}
+            </span>
             <span
               aria-hidden="true"
-              className="size-2.5 rounded-full"
-              style={{ background: groupColor(type.group) }}
-            />
+              className="inline-flex gap-2.5 text-sm font-medium text-muted-foreground"
+            >
+              {type.letters.map(({ trait, letter }) => (
+                <span key={trait}>{letter}</span>
+              ))}
+            </span>
+          </p>
+
+          <p className="mx-auto mt-4 max-w-[20rem] text-[0.875rem] leading-snug">
             <span className="font-medium text-foreground">
               {t(`type.groups.${type.group}.name`)}
+            </span>
+            <span aria-hidden="true" className="text-muted-foreground">
+              {" · "}
             </span>
             <span className="text-muted-foreground">
               {t(`type.groups.${type.group}.tagline`)}

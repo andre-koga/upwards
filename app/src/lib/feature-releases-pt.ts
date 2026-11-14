@@ -12,6 +12,13 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-14-type-header": {
+    title: "Um começo mais limpo para o seu tipo",
+    bullets: [
+      "O nome do seu animal agora vem primeiro, com as cinco letras pequenas logo abaixo, em vez de cinco caixas grandes acima.",
+      "O habitat agora é texto simples, então não parece mais um dos seus selos de traço.",
+    ],
+  },
   "2026-11-14-choices-on-cards": {
     title: "Suas respostas diárias, nos seus traços",
     bullets: [
