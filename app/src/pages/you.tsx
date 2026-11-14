@@ -58,9 +58,9 @@ function YouLayout({
             <>
               <span
                 aria-hidden="true"
-                className="my-3 h-px w-10 bg-foreground/25"
+                className="my-4 h-px w-10 bg-foreground/25"
               />
-              <p className="font-display text-[1.0625rem] italic leading-relaxed text-muted-foreground">
+              <p className="max-w-[19rem] font-display text-[1.0625rem] italic leading-relaxed text-muted-foreground">
                 {subtitle}
               </p>
             </>
