@@ -1,5 +1,4 @@
 {
-  "disclaimer": "This is a reflection, not a diagnosis. It is a short self-report scale and a reading of your own words, and it can be wrong.",
   "answers": {
     "1": "Very inaccurate",
     "2": "Moderately inaccurate",
@@ -92,156 +91,155 @@
     }
   },
   "type": {
-    "eyebrow": "Your type",
     "codeLabel": "Your code",
     "groupLabel": "Group",
     "letters": "What the letters mean",
     "groups": {
-      "reef": {
-        "name": "Reef",
+      "savanna": {
+        "name": "Savanna",
         "tagline": "Bright, curious and always in company."
       },
-      "deep": {
-        "name": "Deep",
+      "night": {
+        "name": "Night",
         "tagline": "Curious minds that go far out on their own."
       },
-      "shore": {
-        "name": "Shore",
-        "tagline": "Sociable and grounded, where water meets land."
+      "farm": {
+        "name": "Farm",
+        "tagline": "Sociable and grounded, at home among your people."
       },
-      "lagoon": {
-        "name": "Lagoon",
+      "woodland": {
+        "name": "Woodland",
         "tagline": "Calm and sheltered, happy with what you know."
       }
     },
     "names": {
-      "clownfish": {
-        "name": "Clownfish",
-        "blurb": "Bright, driven and tender. You plan, you reach out, and you feel it all deeply."
+      "elephant": {
+        "name": "Elephant",
+        "blurb": "Tender, organized and never forgetting. You look after the whole herd and feel it deeply."
       },
-      "dolphin": {
-        "name": "Dolphin",
-        "blurb": "Playful and organized, and kind with it. You bring people along and stay calm doing it."
+      "lion": {
+        "name": "Lion",
+        "blurb": "Warm, calm and quietly in charge. You plan ahead and people feel safe around you."
       },
-      "barracuda": {
-        "name": "Barracuda",
-        "blurb": "Fast, focused and blunt. You chase what you want, and it runs hot when things get in the way."
+      "cheetah": {
+        "name": "Cheetah",
+        "blurb": "Fast, focused and blunt. You go straight at what you want, and it runs hot when you are slowed down."
       },
-      "orca": {
-        "name": "Orca",
-        "blurb": "Calm and driven. You say it straight and keep the whole pod moving."
+      "giraffe": {
+        "name": "Giraffe",
+        "blurb": "Tall, unhurried and direct. You see further than most, say it plainly and stay cool."
       },
-      "angelfish": {
-        "name": "Angelfish",
-        "blurb": "Colourful and warm, and a little all over the place. Your feelings show, and people love you for it."
+      "flamingo": {
+        "name": "Flamingo",
+        "blurb": "Colourful, warm and a little dramatic. Your feelings show, and people love you for it."
       },
-      "otter": {
-        "name": "Otter",
-        "blurb": "Easygoing, friendly and quick to play. You go with the current and make it fun for everyone."
+      "monkey": {
+        "name": "Monkey",
+        "blurb": "Easygoing, friendly and quick to play. You swing along with the day and make it fun for everyone."
       },
-      "triggerfish": {
-        "name": "Triggerfish",
-        "blurb": "Spontaneous, direct and spirited. You react fast and say what you think."
+      "hyena": {
+        "name": "Hyena",
+        "blurb": "Loud, spontaneous and spirited. You react fast, laugh harder and say what you think."
       },
-      "marlin": {
-        "name": "Marlin",
-        "blurb": "Free, bold and sure of your own line. Easy about it, and hard to pin down."
+      "zebra": {
+        "name": "Zebra",
+        "blurb": "Free, bold and one of a kind. Easy about it, and hard to pin down."
       },
-      "seahorse": {
-        "name": "Seahorse",
+      "owl": {
+        "name": "Owl",
         "blurb": "Careful, gentle and thoughtful. You prepare, you notice a lot, and you feel it before others do."
       },
-      "whale": {
-        "name": "Whale",
-        "blurb": "A gentle giant. Calm, caring and organized, you think big and carry others along quietly."
+      "wolf": {
+        "name": "Wolf",
+        "blurb": "Loyal, calm and organized. You keep a small circle close and look after it quietly."
       },
-      "moray": {
-        "name": "Moray",
-        "blurb": "Watchful and exact. You keep your own space and notice everything that moves near it."
+      "bat": {
+        "name": "Bat",
+        "blurb": "Alert and exact. You keep your own hours and pick up everything that moves near you."
       },
-      "nautilus": {
-        "name": "Nautilus",
-        "blurb": "Methodical and self-contained. You build your world one careful chamber at a time."
+      "cat": {
+        "name": "Cat",
+        "blurb": "Patient, private and unbothered. You keep your own hours, watch first and move when it suits you."
       },
       "jellyfish": {
         "name": "Jellyfish",
         "blurb": "Dreamy and soft. You drift, you glow, and you pick up on every current around you."
       },
-      "ray": {
-        "name": "Ray",
-        "blurb": "A gliding, kind daydreamer. You move slowly and calmly and let your mind wander."
+      "sloth": {
+        "name": "Sloth",
+        "blurb": "A slow, kind daydreamer. You move calmly and let your mind wander."
       },
-      "anglerfish": {
-        "name": "Anglerfish",
-        "blurb": "A lone light in the dark. Original, private and wary, you shine on your own terms."
+      "fox": {
+        "name": "Fox",
+        "blurb": "Original, private and wary. You shine on your own terms and trust your own read."
       },
-      "octopus": {
-        "name": "Octopus",
+      "raccoon": {
+        "name": "Raccoon",
         "blurb": "Clever, independent and improvising. You solve things sideways and need no one's map."
       },
-      "sandpiper": {
-        "name": "Sandpiper",
-        "blurb": "Quick, busy and careful. You like a routine and good company, and a small wave still makes you jump."
+      "hen": {
+        "name": "Hen",
+        "blurb": "Busy, caring and watchful. You like a routine and a full yard, and a sudden noise still makes you jump."
       },
-      "lighthouse": {
-        "name": "Lighthouse",
+      "dog": {
+        "name": "Dog",
         "blurb": "Steady and warm. You are the one people look for, and you stay put when the weather turns."
       },
-      "pufferfish": {
-        "name": "Pufferfish",
-        "blurb": "Tidy, sociable and quick to puff up. Standards matter to you, and so does being heard."
+      "horse": {
+        "name": "Horse",
+        "blurb": "Proud, tidy and built for the long run. Standards matter to you, and so does being heard."
       },
-      "anchor": {
-        "name": "Anchor",
-        "blurb": "Dependable and firm. You hold the line, say what you mean, and nothing moves you easily."
+      "ox": {
+        "name": "Ox",
+        "blurb": "Dependable and firm. You pull your share, say what you mean, and nothing moves you easily."
       },
-      "starfish": {
-        "name": "Starfish",
-        "blurb": "Open-hearted and loose. You reach out to everyone, and you feel it when they reach back less."
+      "lamb": {
+        "name": "Lamb",
+        "blurb": "Open-hearted and loose. You stay close to everyone, and you feel it when they drift away."
       },
-      "seal": {
-        "name": "Seal",
-        "blurb": "Friendly and playful. You love a crowd, a nap and a good time, in no particular order."
+      "pig": {
+        "name": "Pig",
+        "blurb": "Friendly and playful. You love company, a nap and a good time, in no particular order."
       },
-      "crab": {
-        "name": "Crab",
-        "blurb": "Lively, sideways and a bit pinchy. You enjoy people and defend your shell fast."
+      "goose": {
+        "name": "Goose",
+        "blurb": "Lively, loud and a bit sharp. You enjoy your flock and defend it fast."
       },
-      "gull": {
-        "name": "Gull",
-        "blurb": "Loud, free and unbothered. You live in the moment and take whatever the day drops near you."
+      "goat": {
+        "name": "Goat",
+        "blurb": "Free, unbothered and up for anything. You live in the moment and eat whatever the day puts near you."
       },
-      "turtle": {
-        "name": "Turtle",
+      "squirrel": {
+        "name": "Squirrel",
+        "blurb": "Careful and a little anxious. You like your things stored, your people few, and a plan for winter."
+      },
+      "tortoise": {
+        "name": "Tortoise",
         "blurb": "Patient, kind and steady. You take it slowly, you get there, and you carry home with you."
       },
-      "hermit": {
-        "name": "Hermit",
-        "blurb": "Careful and homebound. You like your shell tidy and your people few, and you worry a little."
-      },
-      "limpet": {
-        "name": "Limpet",
-        "blurb": "You hold on tight to what you know. Orderly, direct and unbothered by waves."
-      },
-      "urchin": {
-        "name": "Urchin",
+      "hedgehog": {
+        "name": "Hedgehog",
         "blurb": "Neat, spiky and guarded. You keep things in order, and you keep your distance."
       },
-      "manatee": {
-        "name": "Manatee",
-        "blurb": "Slow, gentle and kind. You take life as it floats by and make it softer for others."
+      "badger": {
+        "name": "Badger",
+        "blurb": "Orderly and stubborn. You hold on to what you know, say it straight and dig in."
       },
-      "anemone": {
-        "name": "Anemone",
-        "blurb": "Soft, tender and sensitive. You cling to the ones you love and feel every tide."
+      "rabbit": {
+        "name": "Rabbit",
+        "blurb": "Soft, tender and easily startled. You stay close to the ones you love and feel every rustle."
       },
-      "flounder": {
-        "name": "Flounder",
-        "blurb": "Low-key and unbothered. You blend in, keep your own counsel and let the waves go by."
+      "bear": {
+        "name": "Bear",
+        "blurb": "Slow, gentle and kind. You take life as it comes and make it softer for others."
       },
-      "stonefish": {
-        "name": "Stonefish",
-        "blurb": "Quiet and watchful. You stay still, you stay private, and you do not like being stepped on."
+      "deer": {
+        "name": "Deer",
+        "blurb": "Quiet, watchful and quick to bolt. You keep your distance, and you do not like being startled."
+      },
+      "koala": {
+        "name": "Koala",
+        "blurb": "Low-key and unbothered. You keep your own counsel, rest well and let the world go by."
       }
     },
     "poles": {
@@ -302,29 +300,39 @@
     "takenOn": "Taken {{date}}",
     "bands": {
       "openness": {
+        "veryLow": "You much prefer what is familiar, practical and proven.",
         "low": "You tend to prefer the familiar and the practical.",
         "mid": "You mix new ideas with what you already know.",
-        "high": "You are drawn to new ideas, art and experiences."
+        "high": "You are drawn to new ideas, art and experiences.",
+        "veryHigh": "You are hungry for new ideas, art and experiences, and always on the lookout for the next one."
       },
       "conscientiousness": {
+        "veryLow": "You keep almost nothing fixed and go with the moment.",
         "low": "You tend to keep plans loose and stay flexible.",
         "mid": "You are organised in some places and relaxed in others.",
-        "high": "You like order, plans and following through."
+        "high": "You like order, plans and following through.",
+        "veryHigh": "You live by order, plans and lists, and you rarely leave anything unfinished."
       },
       "extraversion": {
+        "veryLow": "You are quiet and private, and you need plenty of time alone to recharge.",
         "low": "You tend to be quiet and recharge on your own.",
         "mid": "You move between company and time to yourself.",
-        "high": "You tend to seek out people and feel energised by them."
+        "high": "You tend to seek out people and feel energised by them.",
+        "veryHigh": "You thrive around people and feel most alive in company."
       },
       "agreeableness": {
+        "veryLow": "You say exactly what you think, however blunt, and you do not bend just to keep the peace.",
         "low": "You tend to say what you think, even when it is blunt.",
         "mid": "You balance being kind with standing your ground.",
-        "high": "You tend to put people at ease and care how they feel."
+        "high": "You tend to put people at ease and care how they feel.",
+        "veryHigh": "You put other people first and go out of your way to put everyone at ease."
       },
       "neuroticism": {
+        "veryLow": "You stay calm almost no matter what, and stress rarely shakes you.",
         "low": "You tend to stay steady when things get stressful.",
         "mid": "Stress affects you at times, and at times it does not.",
-        "high": "You tend to feel stress and mood shifts strongly."
+        "high": "You tend to feel stress and mood shifts strongly.",
+        "veryHigh": "You feel stress and mood shifts deeply, and they can take a while to settle."
       }
     },
     "gap": {
@@ -340,21 +348,13 @@
     "balancedWord": "Balanced",
     "journalPill_one": "Journal · {{count}} day",
     "journalPill_other": "Journal · {{count}} days",
-    "behaviour": "Your habits",
-    "trackAriaBehaviour": "Your habits {{behaviour}}.",
-    "habits": {
-      "conscientiousness": "You logged something on {{active}} of {{total}} days lately.",
-      "openness": "Lately you did {{activities}} and were in {{places}}.",
-      "activities_one": "{{count}} activity",
-      "activities_other": "{{count}} different activities",
-      "places_one": "{{count}} place",
-      "places_other": "{{count}} different places"
-    },
-    "habitsNote": "The diamonds show your habits over the last {{days}} days, counted on this device. They can only speak to Openness and Conscientiousness; habits say little about the other three."
+    "choices": "Your choices",
+    "trackAriaChoices": "Your choices {{choices}}.",
+    "basedOn": "Based on the OCEAN test"
   },
   "journal": {
     "heading": "What your journal reads as",
-    "body": "Separate from the test: your own AI reads your written days and scores them on the same five traits, so you can compare.",
+    "body": "Your AI analyses and scores your journal entries.",
     "read": "Read my journal",
     "readAgain": "Read it again",
     "reading": "Reading...",
@@ -363,7 +363,7 @@
     "quotesLabel": "From your own words",
     "notConnected": "Connect an AI in Settings to read your journal. The test works without it.",
     "openSettings": "Open Settings",
-    "noDays": "No written days in the last {{days}} days. Write a few, or look back further. Only days with a title or text can be read.",
+    "noDays": "Nothing written in the last {{days}} days. Try looking back further.",
     "needTest": "Take the test first, then compare it with your journal.",
     "consentTitle": "Send these days to your AI?",
     "consentBody_one": "The words of {{count}} written day (title, date and the first 300 characters of the entry) will be sent to {{model}}, the model named in Settings. Nothing else is sent: no birthday, no profile, no test answers.",
@@ -379,8 +379,7 @@
       "provider_invalid": "The AI answered in a form that could not be used. Try again.",
       "generic": "Could not read your journal. Try again."
     },
-    "modelFallback": "your AI model",
-    "window": "Reads the written days from the last {{days}} days."
+    "modelFallback": "your AI model"
   },
   "words": {
     "title": "In your words",
@@ -394,11 +393,19 @@
     "fromDay": "From {{date}}",
     "dayChanged": "From a day you have since changed"
   },
-  "habitsRange": {
-    "label": "Habits and journal reading look back over",
-    "option_one": "{{count}} day",
-    "option_other": "{{count}} days",
-    "empty": "Not enough logged days in this range for your habits to show. Try a longer one, or keep logging."
+  "types": {
+    "title": "All the types",
+    "subtitle": "Every result the test can give",
+    "open": "See all 32 types",
+    "back": "Back to You",
+    "you": "You",
+    "opposite": "Your opposite",
+    "codeLabel": "Code"
   },
-  "funDisclaimer": "Types, codes and sea creatures are just for fun. They are a playful way to group five scores, they are not scientific, and they are not a label."
+  "funDisclaimer": "Types, codes and animals are just for fun, not science.",
+  "lookBack": {
+    "label": "Look back over",
+    "option_one": "{{count}} day",
+    "option_other": "{{count}} days"
+  }
 }

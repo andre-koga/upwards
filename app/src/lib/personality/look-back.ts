@@ -1,26 +1,26 @@
 import { useSyncExternalStore } from "react";
-import {
-  BEHAVIOUR_RANGES,
-  DEFAULT_BEHAVIOUR_RANGE,
-  type BehaviourRange,
-} from "./behaviour";
+/** The windows, in days, the journal reading can look back over. */
+export const LOOK_BACK_RANGES = [30, 90, 180] as const;
+export type LookBackRange = (typeof LOOK_BACK_RANGES)[number];
+export const DEFAULT_LOOK_BACK_RANGE: LookBackRange = 30;
 
+// The key keeps its old name so a saved choice survives.
 const STORAGE_KEY = "upwards-habits-range";
 
 /**
- * How far back the habit marks look. A display preference kept on this device,
- * like the theme: it changes what is counted, not any record, so it needs no
- * sync.
+ * How far back the journal reading looks. A display preference kept on this
+ * device, like the theme: it changes what is sent, not any record, so it needs
+ * no sync.
  */
-function read(): BehaviourRange {
+function read(): LookBackRange {
   try {
     const value = Number(localStorage.getItem(STORAGE_KEY));
     return (
-      BEHAVIOUR_RANGES.find((range) => range === value) ??
-      DEFAULT_BEHAVIOUR_RANGE
+      LOOK_BACK_RANGES.find((range) => range === value) ??
+      DEFAULT_LOOK_BACK_RANGE
     );
   } catch {
-    return DEFAULT_BEHAVIOUR_RANGE;
+    return DEFAULT_LOOK_BACK_RANGE;
   }
 }
 
@@ -32,11 +32,11 @@ function subscribe(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
-function getSnapshot(): BehaviourRange {
+function getSnapshot(): LookBackRange {
   return snapshot;
 }
 
-export function setLookBackRange(next: BehaviourRange): void {
+export function setLookBackRange(next: LookBackRange): void {
   snapshot = next;
   try {
     localStorage.setItem(STORAGE_KEY, String(next));
@@ -46,6 +46,6 @@ export function setLookBackRange(next: BehaviourRange): void {
   for (const listener of listeners) listener();
 }
 
-export function useLookBackRange(): BehaviourRange {
+export function useLookBackRange(): LookBackRange {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

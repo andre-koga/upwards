@@ -1,5 +1,4 @@
 {
-  "disclaimer": "Isto é uma reflexão, não um diagnóstico. É uma escala curta de autorrelato e uma leitura das suas próprias palavras, e pode estar errada.",
   "answers": {
     "1": "Descreve muito mal",
     "2": "Descreve mal",
@@ -92,156 +91,155 @@
     }
   },
   "type": {
-    "eyebrow": "Seu tipo",
     "codeLabel": "Seu código",
     "groupLabel": "Grupo",
     "letters": "O que as letras significam",
     "groups": {
-      "reef": {
-        "name": "Recife",
+      "savanna": {
+        "name": "Savana",
         "tagline": "Brilhante, curioso e sempre em companhia."
       },
-      "deep": {
-        "name": "Fundo",
+      "night": {
+        "name": "Noite",
         "tagline": "Mentes curiosas que vão longe, sozinhas."
       },
-      "shore": {
-        "name": "Costa",
-        "tagline": "Sociável e com os pés no chão, onde a água encontra a terra."
+      "farm": {
+        "name": "Fazenda",
+        "tagline": "Sociável e com os pés no chão, em casa entre os seus."
       },
-      "lagoon": {
-        "name": "Lagoa",
+      "woodland": {
+        "name": "Floresta",
         "tagline": "Calmo e abrigado, feliz com o que conhece."
       }
     },
     "names": {
-      "clownfish": {
-        "name": "Peixe-palhaço",
-        "blurb": "Brilhante, determinado e terno. Você planeja, se aproxima e sente tudo com intensidade."
+      "elephant": {
+        "name": "Elefante",
+        "blurb": "Terno, organizado e que nunca esquece. Você cuida da manada inteira e sente tudo fundo."
       },
-      "dolphin": {
-        "name": "Golfinho",
-        "blurb": "Brincalhão e organizado, e gentil com isso. Você leva as pessoas junto e mantém a calma."
+      "lion": {
+        "name": "Leão",
+        "blurb": "Caloroso, calmo e no comando sem alarde. Você planeja e as pessoas se sentem seguras perto de você."
       },
-      "barracuda": {
-        "name": "Barracuda",
-        "blurb": "Rápida, focada e direta. Você vai atrás do que quer e esquenta quando algo atrapalha."
+      "cheetah": {
+        "name": "Guepardo",
+        "blurb": "Rápido, focado e franco. Você vai direto ao que quer, e esquenta quando te atrasam."
       },
-      "orca": {
-        "name": "Orca",
-        "blurb": "Calma e determinada. Você fala sem rodeios e mantém o grupo todo em movimento."
+      "giraffe": {
+        "name": "Girafa",
+        "blurb": "Alta, sem pressa e direta. Você enxerga mais longe, fala claro e mantém a cabeça fria."
       },
-      "angelfish": {
-        "name": "Peixe-anjo",
-        "blurb": "Colorido e caloroso, e um pouco disperso. Seus sentimentos aparecem, e as pessoas gostam disso."
+      "flamingo": {
+        "name": "Flamingo",
+        "blurb": "Colorido, caloroso e um pouco dramático. Seus sentimentos aparecem, e as pessoas adoram isso."
       },
-      "otter": {
-        "name": "Lontra",
-        "blurb": "Tranquila, simpática e pronta para brincar. Você vai com a correnteza e deixa tudo mais divertido."
+      "monkey": {
+        "name": "Macaco",
+        "blurb": "Tranquilo, simpático e rápido na brincadeira. Você vai na onda do dia e deixa tudo mais divertido."
       },
-      "triggerfish": {
-        "name": "Peixe-gatilho",
-        "blurb": "Espontâneo, direto e animado. Você reage rápido e diz o que pensa."
+      "hyena": {
+        "name": "Hiena",
+        "blurb": "Barulhenta, espontânea e animada. Você reage rápido, ri mais alto e diz o que pensa."
       },
-      "marlin": {
-        "name": "Marlim",
-        "blurb": "Livre, ousado e seguro do seu próprio rumo. Leve nisso, e difícil de prender."
+      "zebra": {
+        "name": "Zebra",
+        "blurb": "Livre, ousada e única. Tranquila com isso, e difícil de enquadrar."
       },
-      "seahorse": {
-        "name": "Cavalo-marinho",
-        "blurb": "Cuidadoso, gentil e pensativo. Você se prepara, percebe muito e sente antes dos outros."
+      "owl": {
+        "name": "Coruja",
+        "blurb": "Cuidadosa, gentil e pensativa. Você se prepara, nota muita coisa e sente antes dos outros."
       },
-      "whale": {
-        "name": "Baleia",
-        "blurb": "Um gigante gentil. Calma, atenciosa e organizada, você pensa grande e leva os outros junto em silêncio."
+      "wolf": {
+        "name": "Lobo",
+        "blurb": "Leal, calmo e organizado. Você mantém um círculo pequeno por perto e cuida dele em silêncio."
       },
-      "moray": {
-        "name": "Moreia",
-        "blurb": "Atenta e precisa. Você guarda seu espaço e nota tudo o que se mexe por perto."
+      "bat": {
+        "name": "Morcego",
+        "blurb": "Alerta e preciso. Você tem seus próprios horários e percebe tudo que se mexe por perto."
       },
-      "nautilus": {
-        "name": "Náutilo",
-        "blurb": "Metódico e reservado. Você constrói seu mundo uma câmara cuidadosa de cada vez."
+      "cat": {
+        "name": "Gato",
+        "blurb": "Paciente, reservado e tranquilo. Você tem seus próprios horários, observa primeiro e se move quando lhe convém."
       },
       "jellyfish": {
         "name": "Água-viva",
         "blurb": "Sonhadora e suave. Você flutua, brilha e capta cada corrente ao redor."
       },
-      "ray": {
-        "name": "Raia",
-        "blurb": "Uma sonhadora gentil que desliza. Você se move devagar e com calma e deixa a mente vagar."
+      "sloth": {
+        "name": "Preguiça",
+        "blurb": "Uma sonhadora lenta e gentil. Você se move com calma e deixa a mente passear."
       },
-      "anglerfish": {
-        "name": "Peixe-pescador",
-        "blurb": "Uma luz solitária no escuro. Original, reservado e desconfiado, você brilha do seu jeito."
+      "fox": {
+        "name": "Raposa",
+        "blurb": "Original, reservada e desconfiada. Você brilha do seu jeito e confia na sua leitura."
       },
-      "octopus": {
-        "name": "Polvo",
-        "blurb": "Esperto, independente e cheio de improviso. Você resolve de lado e não precisa do mapa de ninguém."
+      "raccoon": {
+        "name": "Guaxinim",
+        "blurb": "Esperto, independente e de improviso. Você resolve de lado e não precisa do mapa de ninguém."
       },
-      "sandpiper": {
-        "name": "Maçarico",
-        "blurb": "Rápido, ocupado e cuidadoso. Você gosta de rotina e boa companhia, e uma onda pequena ainda assusta."
+      "hen": {
+        "name": "Galinha",
+        "blurb": "Ocupada, cuidadosa e atenta. Você gosta de rotina e de quintal cheio, e um barulho repentino ainda te assusta."
       },
-      "lighthouse": {
-        "name": "Farol",
-        "blurb": "Firme e caloroso. É quem as pessoas procuram, e você fica de pé quando o tempo vira."
+      "dog": {
+        "name": "Cachorro",
+        "blurb": "Firme e caloroso. É por você que as pessoas procuram, e você fica quando o tempo vira."
       },
-      "pufferfish": {
-        "name": "Baiacu",
-        "blurb": "Arrumado, sociável e rápido em se inflar. Padrões importam para você, e ser ouvido também."
+      "horse": {
+        "name": "Cavalo",
+        "blurb": "Orgulhoso, arrumado e feito para a longa distância. Padrão importa para você, e ser ouvido também."
       },
-      "anchor": {
-        "name": "Âncora",
-        "blurb": "Confiável e firme. Você mantém a linha, diz o que pensa, e quase nada te move."
+      "ox": {
+        "name": "Boi",
+        "blurb": "Confiável e firme. Você puxa a sua parte, diz o que quer dizer, e nada te move fácil."
       },
-      "starfish": {
-        "name": "Estrela-do-mar",
-        "blurb": "De coração aberto e solto. Você se aproxima de todos e sente quando se aproximam menos."
+      "lamb": {
+        "name": "Cordeiro",
+        "blurb": "De coração aberto e solto. Você fica perto de todo mundo, e sente quando se afastam."
       },
-      "seal": {
-        "name": "Foca",
-        "blurb": "Simpática e brincalhona. Você adora uma multidão, um cochilo e um bom momento, em qualquer ordem."
+      "pig": {
+        "name": "Porco",
+        "blurb": "Simpático e brincalhão. Você ama companhia, uma soneca e um bom momento, nessa ordem qualquer."
       },
-      "crab": {
-        "name": "Caranguejo",
-        "blurb": "Animado, de lado e um pouco beliscador. Você gosta de gente e defende o casco rápido."
+      "goose": {
+        "name": "Ganso",
+        "blurb": "Animado, barulhento e um pouco afiado. Você curte o seu bando e o defende rápido."
       },
-      "gull": {
-        "name": "Gaivota",
-        "blurb": "Barulhenta, livre e tranquila. Você vive o momento e aproveita o que o dia deixar por perto."
+      "goat": {
+        "name": "Cabra",
+        "blurb": "Livre, tranquila e pronta para tudo. Você vive o momento e come o que o dia deixar por perto."
       },
-      "turtle": {
-        "name": "Tartaruga",
-        "blurb": "Paciente, gentil e firme. Você vai devagar, chega lá e leva a casa com você."
+      "squirrel": {
+        "name": "Esquilo",
+        "blurb": "Cuidadoso e um pouco ansioso. Você gosta das suas coisas guardadas, de poucas pessoas e de um plano para o inverno."
       },
-      "hermit": {
-        "name": "Ermitão",
-        "blurb": "Cuidadoso e caseiro. Você gosta do casco arrumado e de poucas pessoas, e se preocupa um pouco."
+      "tortoise": {
+        "name": "Jabuti",
+        "blurb": "Paciente, gentil e constante. Você vai devagar, chega lá e leva a casa com você."
       },
-      "limpet": {
-        "name": "Lapa",
-        "blurb": "Você se agarra ao que conhece. Ordenada, direta e indiferente às ondas."
-      },
-      "urchin": {
+      "hedgehog": {
         "name": "Ouriço",
-        "blurb": "Arrumado, espinhoso e na defensiva. Você mantém tudo em ordem e mantém distância."
+        "blurb": "Arrumado, espinhoso e reservado. Você mantém tudo em ordem, e mantém a distância."
       },
-      "manatee": {
-        "name": "Peixe-boi",
-        "blurb": "Lento, gentil e bondoso. Você aceita a vida que passa e a deixa mais suave para os outros."
+      "badger": {
+        "name": "Texugo",
+        "blurb": "Ordeiro e teimoso. Você se agarra ao que conhece, fala na lata e finca o pé."
       },
-      "anemone": {
-        "name": "Anêmona",
-        "blurb": "Suave, terna e sensível. Você se agarra a quem ama e sente cada maré."
+      "rabbit": {
+        "name": "Coelho",
+        "blurb": "Macio, terno e fácil de assustar. Você fica perto de quem ama e sente cada ruído."
       },
-      "flounder": {
-        "name": "Linguado",
-        "blurb": "Discreto e tranquilo. Você se mistura, guarda suas opiniões e deixa as ondas passarem."
+      "bear": {
+        "name": "Urso",
+        "blurb": "Lento, gentil e bondoso. Você leva a vida como ela vem e a deixa mais macia para os outros."
       },
-      "stonefish": {
-        "name": "Peixe-pedra",
-        "blurb": "Quieto e atento. Você fica parado, reservado, e não gosta de ser pisado."
+      "deer": {
+        "name": "Cervo",
+        "blurb": "Quieto, atento e rápido para fugir. Você mantém a distância, e não gosta de ser surpreendido."
+      },
+      "koala": {
+        "name": "Coala",
+        "blurb": "Discreto e despreocupado. Você guarda suas ideias, descansa bem e deixa o mundo passar."
       }
     },
     "poles": {
@@ -303,29 +301,39 @@
     "takenOn": "Feito em {{date}}",
     "bands": {
       "openness": {
+        "veryLow": "Você prefere de longe o que é familiar, prático e já testado.",
         "low": "Você tende a preferir o familiar e o prático.",
         "mid": "Você mistura ideias novas com o que já conhece.",
-        "high": "Você é atraído por ideias, arte e experiências novas."
+        "high": "Você é atraído por ideias, arte e experiências novas.",
+        "veryHigh": "Você tem sede de ideias, arte e experiências novas, e está sempre atrás da próxima."
       },
       "conscientiousness": {
+        "veryLow": "Você deixa quase tudo em aberto e vai conforme o momento.",
         "low": "Você tende a manter os planos soltos e a ser flexível.",
         "mid": "Você é organizado em alguns pontos e tranquilo em outros.",
-        "high": "Você gosta de ordem, de planos e de levar as coisas até o fim."
+        "high": "Você gosta de ordem, de planos e de levar as coisas até o fim.",
+        "veryHigh": "Você vive de ordem, planos e listas, e raramente deixa algo pela metade."
       },
       "extraversion": {
+        "veryLow": "Você é reservado e precisa de bastante tempo sozinho para recarregar as energias.",
         "low": "Você tende a ser quieto e a recarregar as energias sozinho.",
         "mid": "Você alterna entre companhia e tempo para si.",
-        "high": "Você tende a buscar pessoas e a se animar com elas."
+        "high": "Você tende a buscar pessoas e a se animar com elas.",
+        "veryHigh": "Você floresce perto de pessoas e se sente mais vivo em companhia."
       },
       "agreeableness": {
+        "veryLow": "Você diz exatamente o que pensa, por mais direto que seja, e não cede só para manter a paz.",
         "low": "Você tende a dizer o que pensa, mesmo quando soa direto.",
         "mid": "Você equilibra gentileza com firmeza.",
-        "high": "Você tende a deixar as pessoas à vontade e a se importar com o que sentem."
+        "high": "Você tende a deixar as pessoas à vontade e a se importar com o que sentem.",
+        "veryHigh": "Você coloca os outros em primeiro lugar e faz de tudo para deixar todo mundo à vontade."
       },
       "neuroticism": {
+        "veryLow": "Você se mantém calmo quase sempre, e o estresse raramente te abala.",
         "low": "Você tende a se manter estável quando fica estressante.",
         "mid": "O estresse às vezes pesa em você, e às vezes não.",
-        "high": "Você tende a sentir o estresse e as mudanças de humor com intensidade."
+        "high": "Você tende a sentir o estresse e as mudanças de humor com intensidade.",
+        "veryHigh": "Você sente o estresse e as mudanças de humor com muita intensidade, e eles podem levar um tempo para passar."
       }
     },
     "gap": {
@@ -342,23 +350,13 @@
     "journalPill_one": "Diário · {{count}} dia",
     "journalPill_many": "Diário · {{count}} dias",
     "journalPill_other": "Diário · {{count}} dias",
-    "behaviour": "Seus hábitos",
-    "trackAriaBehaviour": "Seus hábitos {{behaviour}}.",
-    "habits": {
-      "conscientiousness": "Você registrou algo em {{active}} de {{total}} dias recentes.",
-      "openness": "Recentemente você fez {{activities}} e esteve em {{places}}.",
-      "activities_one": "{{count}} atividade",
-      "activities_many": "{{count}} atividades diferentes",
-      "activities_other": "{{count}} atividades diferentes",
-      "places_one": "{{count}} lugar",
-      "places_many": "{{count}} lugares diferentes",
-      "places_other": "{{count}} lugares diferentes"
-    },
-    "habitsNote": "Os losangos mostram seus hábitos nos últimos {{days}} dias, contados neste aparelho. Eles só falam de Abertura e Conscienciosidade; hábitos dizem pouco sobre os outros três."
+    "choices": "Suas escolhas",
+    "trackAriaChoices": "Suas escolhas {{choices}}.",
+    "basedOn": "Com base no teste OCEAN"
   },
   "journal": {
     "heading": "O que o seu diário mostra",
-    "body": "À parte do teste: a sua própria IA lê os dias que você escreveu e os pontua nos mesmos cinco traços, para você comparar.",
+    "body": "A sua IA analisa e pontua as entradas do seu diário.",
     "read": "Ler o meu diário",
     "readAgain": "Ler de novo",
     "reading": "Lendo...",
@@ -367,7 +365,7 @@
     "quotesLabel": "Das suas próprias palavras",
     "notConnected": "Conecte uma IA nas configurações para ler o seu diário. O teste funciona sem ela.",
     "openSettings": "Abrir configurações",
-    "noDays": "Nenhum dia escrito nos últimos {{days}} dias. Escreva alguns ou olhe mais para trás. Só dias com título ou texto podem ser lidos.",
+    "noDays": "Nada escrito nos últimos {{days}} dias. Tente olhar mais para trás.",
     "needTest": "Faça o teste primeiro e depois compare com o seu diário.",
     "consentTitle": "Enviar estes dias para a sua IA?",
     "consentBody_one": "As palavras de {{count}} dia escrito (título, data e os primeiros 300 caracteres do texto) serão enviadas para {{model}}, o modelo indicado nas configurações. Nada mais é enviado: nem aniversário, nem perfil, nem respostas do teste.",
@@ -384,8 +382,7 @@
       "provider_invalid": "A IA respondeu de um jeito que não deu para usar. Tente de novo.",
       "generic": "Não foi possível ler o seu diário. Tente de novo."
     },
-    "modelFallback": "o seu modelo de IA",
-    "window": "Lê os dias escritos nos últimos {{days}} dias."
+    "modelFallback": "o seu modelo de IA"
   },
   "words": {
     "title": "Nas suas palavras",
@@ -400,12 +397,20 @@
     "fromDay": "De {{date}}",
     "dayChanged": "De um dia que você mudou depois"
   },
-  "habitsRange": {
-    "label": "Hábitos e leitura do diário olham os últimos",
+  "types": {
+    "title": "Todos os tipos",
+    "subtitle": "Todos os resultados que o teste pode dar",
+    "open": "Ver os 32 tipos",
+    "back": "Voltar para Você",
+    "you": "Você",
+    "opposite": "Seu oposto",
+    "codeLabel": "Código"
+  },
+  "funDisclaimer": "Tipos, códigos e bichos são só diversão, não ciência.",
+  "lookBack": {
+    "label": "Olhar os últimos",
     "option_one": "{{count}} dia",
     "option_many": "{{count}} dias",
-    "option_other": "{{count}} dias",
-    "empty": "Poucos dias registrados neste período para mostrar seus hábitos. Tente um período maior ou continue registrando."
-  },
-  "funDisclaimer": "Tipos, códigos e bichos do mar são só diversão. É um jeito brincalhão de agrupar cinco pontuações, não é científico e não é um rótulo."
+    "option_other": "{{count}} dias"
+  }
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ITEMS, ITEM_COUNT, TRAITS, type PersonalityAnswers } from "./items";
 import { countAnswered, nextUnansweredIndex, scoreSitting } from "./scoring";
-import { band, gapDirection } from "./bands";
+import { band, gapDirection, level } from "./bands";
 import { verifiedQuotes } from "./quotes";
 
 function answerAll(value: number): PersonalityAnswers {
@@ -94,6 +94,19 @@ describe("bands", () => {
     expect(band(59)).toBe("mid");
     expect(band(60)).toBe("high");
     expect(band(100)).toBe("high");
+  });
+
+  it("splits scores into fifths", () => {
+    expect(level(0)).toBe("veryLow");
+    expect(level(19)).toBe("veryLow");
+    expect(level(20)).toBe("low");
+    expect(level(39)).toBe("low");
+    expect(level(40)).toBe("mid");
+    expect(level(59)).toBe("mid");
+    expect(level(60)).toBe("high");
+    expect(level(79)).toBe("high");
+    expect(level(80)).toBe("veryHigh");
+    expect(level(100)).toBe("veryHigh");
   });
 
   it("reads the gap in either direction", () => {

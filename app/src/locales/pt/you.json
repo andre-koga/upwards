@@ -32,16 +32,13 @@
     }
   },
   "choices": {
-    "heading": "Suas escolhas",
-    "intro": "Para que lado suas respostas diárias pendem, ao lado do que o teste disse. Fica separado do teste e nunca o altera.",
-    "trackAria": "{{trait}}: suas escolhas em {{choices}} de 100, seu teste em {{test}} de 100.",
     "drift": {
       "higher": "Suas escolhas pendem mais para “{{word}}” do que o teste indicou.",
       "lower": "Suas escolhas pendem mais para “{{word}}” do que o teste indicou."
     },
-    "note": "O traço marca seu teste, a bolinha suas escolhas. Poucas respostas são menos precisas do que muitas, então veja as primeiras bolinhas como uma pista aproximada.",
-    "answers_one": "{{count}} resposta",
-    "answers_many": "{{count}} respostas",
-    "answers_other": "{{count}} respostas"
+    "same": "Suas respostas diárias combinam com o teste.",
+    "answers_one": "Com base em {{count}} resposta.",
+    "answers_many": "Com base em {{count}} respostas.",
+    "answers_other": "Com base em {{count}} respostas."
   }
 }

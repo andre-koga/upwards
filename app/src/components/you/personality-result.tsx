@@ -3,28 +3,23 @@ import { useTranslation } from "react-i18next";
 import { ArchetypeHero } from "@/components/you/archetype-hero";
 import { TraitTrack } from "@/components/you/trait-track";
 import type { JournalReading, PersonalitySitting } from "@/lib/db/types";
-import {
-  SegmentedControl,
-  SegmentedControlItem,
-} from "@/components/ui/segmented-control";
-import {
-  BEHAVIOUR_RANGES,
-  type Behaviour,
-  type BehaviourRange,
-} from "@/lib/personality/behaviour";
-import { band, gapDirection } from "@/lib/personality/bands";
+import { band, gapDirection, level } from "@/lib/personality/bands";
 import { journalComparison } from "@/lib/personality/highlights";
 import { TRAITS, type Trait } from "@/lib/personality/items";
 import { traitColor } from "@/lib/personality/trait-colors";
+import {
+  choicePositions,
+  driftFromTest,
+  type Evidence,
+} from "@/lib/questions/evidence";
 
 interface PersonalityResultProps {
   latest: PersonalitySitting;
   previous: PersonalitySitting | null;
   reading: JournalReading | null;
-  behaviour: Behaviour | null;
-  range: BehaviourRange;
-  onRangeChange: (range: BehaviourRange) => void;
-  /** The portrait site: no habits, and no quotes page to open. */
+  /** What the daily answers add up to, or null before they are read. */
+  evidence: Evidence | null;
+  /** The portrait site: no journal reading, and no quotes page to open. */
   portraitOnly?: boolean;
 }
 
@@ -43,12 +38,11 @@ export function PersonalityResult({
   latest,
   previous,
   reading,
-  behaviour,
-  range,
-  onRangeChange,
+  evidence,
   portraitOnly = false,
 }: PersonalityResultProps) {
   const { t } = useTranslation("personality");
+  const { t: ty } = useTranslation("you");
   const scores = latest.scores;
   if (!scores) return null;
 
@@ -61,14 +55,10 @@ export function PersonalityResult({
     }
   }
 
-  // Habits can only speak to some traits; the rest are left out, not guessed.
-  const behaviourScores: Partial<Record<Trait, number>> | null =
-    behaviour && !portraitOnly
-      ? {
-          openness: behaviour.openness,
-          conscientiousness: behaviour.conscientiousness,
-        }
-      : null;
+  // Daily answers sit on the traits they have been asked about; the rest are
+  // left out, not guessed.
+  const choices = evidence ? choicePositions(evidence) : {};
+  const hasChoices = Object.keys(choices).length > 0;
   const quoteCount = reading
     ? TRAITS.reduce(
         (sum, trait) => sum + (reading.quotes[trait]?.length ?? 0),
@@ -82,7 +72,7 @@ export function PersonalityResult({
         self={scores}
         journal={reading?.scores ?? null}
         last={previous?.scores ?? null}
-        behaviour={behaviourScores}
+        choices={hasChoices ? choices : null}
       />
 
       {highlights.length > 0 && (
@@ -118,13 +108,18 @@ export function PersonalityResult({
           const journal = reading ? reading.scores[trait] : null;
           const last = previous?.scores ? previous.scores[trait] : null;
           const gap = journal === null ? null : gapDirection(self, journal);
-          const level = band(self);
+          const tone = band(self);
+          const detail = level(self);
           const note = reading?.notes[trait];
-          const habit = behaviourScores?.[trait] ?? null;
+          const choice = choices[trait] ?? null;
+          const drift =
+            evidence && choice !== null
+              ? driftFromTest(evidence[trait], self)
+              : null;
           const word =
-            level === "mid"
+            tone === "mid"
               ? t("result.balancedWord")
-              : t(`traits.${trait}.${level}`);
+              : t(`traits.${trait}.${tone}`);
 
           return (
             <li
@@ -162,12 +157,12 @@ export function PersonalityResult({
                   self={self}
                   journal={journal}
                   last={last}
-                  behaviour={habit}
+                  choices={choice}
                 />
               </div>
 
               <p className="mt-3 font-display text-[1.0625rem] leading-relaxed text-foreground/85">
-                {t(`result.bands.${trait}.${level}`)}
+                {t(`result.bands.${trait}.${detail}`)}
               </p>
               {gap !== null && (
                 <p className="mt-2 flex items-start gap-2 text-[0.9375rem] leading-relaxed text-foreground/75">
@@ -181,25 +176,24 @@ export function PersonalityResult({
                   })}
                 </p>
               )}
-              {habit !== null && behaviour && (
+              {choice !== null && evidence && (
                 <p className="mt-2 flex items-start gap-2 text-[0.9375rem] leading-relaxed text-foreground/75">
                   <span
                     aria-hidden="true"
                     className="mt-1.5 size-2.5 shrink-0 rotate-45 border-2 border-foreground"
                   />
-                  {trait === "conscientiousness"
-                    ? t("result.habits.conscientiousness", {
-                        active: behaviour.detail.activeDays,
-                        total: behaviour.detail.countedDays,
-                      })
-                    : t("result.habits.openness", {
-                        activities: t("result.habits.activities", {
-                          count: behaviour.detail.activities,
-                        }),
-                        places: t("result.habits.places", {
-                          count: behaviour.detail.places,
-                        }),
-                      })}
+                  <span>
+                    {drift
+                      ? ty(`choices.drift.${drift}`, {
+                          word: t(
+                            `traits.${trait}.${drift === "higher" ? "high" : "low"}`
+                          ),
+                        })
+                      : ty("choices.same")}{" "}
+                    <span className="text-muted-foreground">
+                      {ty("choices.answers", { count: evidence[trait].count })}
+                    </span>
+                  </span>
                 </p>
               )}
               {note && (
@@ -219,35 +213,6 @@ export function PersonalityResult({
           );
         })}
       </ul>
-
-      {!portraitOnly && (
-        <section aria-labelledby="habits-range" className="space-y-3 px-2">
-          <h3
-            id="habits-range"
-            className="text-center text-sm text-foreground/85"
-          >
-            {t("habitsRange.label")}
-          </h3>
-          <SegmentedControl
-            aria-labelledby="habits-range"
-            value={String(range)}
-            onValueChange={(value) =>
-              onRangeChange(Number(value) as BehaviourRange)
-            }
-          >
-            {BEHAVIOUR_RANGES.map((days) => (
-              <SegmentedControlItem key={days} value={String(days)}>
-                {t("habitsRange.option", { count: days })}
-              </SegmentedControlItem>
-            ))}
-          </SegmentedControl>
-          <p className="text-center text-xs leading-relaxed text-muted-foreground">
-            {behaviour
-              ? t("result.habitsNote", { days: behaviour.detail.windowDays })
-              : t("habitsRange.empty")}
-          </p>
-        </section>
-      )}
 
       {quoteCount > 0 && !portraitOnly && (
         <Link

@@ -12,6 +12,48 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-14-all-types",
+    date: "2026-11-14",
+    title: "Every type, in one place",
+    bullets: [
+      "A new button on You opens a page with all 32 animals, their five letters and what each one is like.",
+      "The page explains what each letter means, marks your own type, and shows your perfect opposite: the type with the other side of all five letters.",
+      "All 32 animals now have their own picture, from the Elephant to the Koala.",
+    ],
+  },
+  {
+    id: "2026-11-14-type-header",
+    date: "2026-11-14",
+    title: "A cleaner start to your type",
+    bullets: [
+      "Your animal's name now comes first, with your five letters small beneath it, instead of five big boxes above it.",
+      "The habitat is plain text now, so it no longer looks like one of your trait pills.",
+    ],
+  },
+  {
+    id: "2026-11-14-choices-on-cards",
+    date: "2026-11-14",
+    title: "Your daily answers, on your traits",
+    bullets: [
+      "A diamond on each trait now shows where your daily answers lean, right beside your test result, instead of in a separate section.",
+      "The diamonds also appear on your radar, and each card says whether your answers agree with your test.",
+      "Each trait's description now has five steps instead of three, so a score of 15 reads differently from 35, and 85 differently from 65.",
+    ],
+    fixes: [
+      "The habit marks for Openness and Conscientiousness are gone. Counting activities and logged days said little about you.",
+    ],
+  },
+  {
+    id: "2026-11-14-animal-types",
+    date: "2026-11-14",
+    title: "Animals you know, in habitats that fit",
+    bullets: [
+      "Your type is now a well-known animal, like Lion, Owl or Dog, instead of a sea creature.",
+      "The four colour groups are now habitats that match how they feel: Savanna, Night, Farm and Woodland.",
+      "The background behind your type takes the two colours of your group.",
+    ],
+  },
+  {
     id: "2026-11-13-choices-sooner",
     date: "2026-11-13",
     title: "Your choices show up sooner",

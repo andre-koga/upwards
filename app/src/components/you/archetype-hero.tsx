@@ -1,18 +1,15 @@
 import { useTranslation } from "react-i18next";
+import { AnimalPicture } from "@/components/you/animal-picture";
 import { RadarChart } from "@/components/you/radar-chart";
 import { TRAITS, type Trait, type TraitScores } from "@/lib/personality/items";
-import {
-  groupColor,
-  groupPairColors,
-  seaType,
-} from "@/lib/personality/sea-type";
+import { groupPairColors, animalType } from "@/lib/personality/animal-type";
 import { traitColor } from "@/lib/personality/trait-colors";
 
 interface ArchetypeHeroProps {
   self: TraitScores;
   journal: TraitScores | null;
   last: TraitScores | null;
-  behaviour: Partial<Record<Trait, number>> | null;
+  choices: Partial<Record<Trait, number>> | null;
 }
 
 /** The two traits furthest from the middle; they tint the radar shape. */
@@ -46,17 +43,17 @@ const WASH_FADE = `linear-gradient(to bottom, ${[
   .join(", ")})`;
 
 /**
- * The headline: a five-letter code, a one-word sea creature and a colour group,
+ * The headline: a five-letter code, a one-word animal and a colour group,
  * all read from the five scores, then the shape of the scores.
  */
 export function ArchetypeHero({
   self,
   journal,
   last,
-  behaviour,
+  choices,
 }: ArchetypeHeroProps) {
   const { t } = useTranslation("personality");
-  const type = seaType(self);
+  const type = animalType(self);
   const tint = standoutPair(self);
   // Each group has its own pair of wash colours: one circle above the other.
   const [upper, lower] = groupPairColors(type.group, 0.32);
@@ -86,44 +83,33 @@ export function ArchetypeHero({
         />
 
         <div className="relative">
-          <p className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            {t("type.eyebrow")}
-          </p>
-
-          <p className="mt-3">
-            <span className="sr-only">
-              {t("type.codeLabel")}: {type.code}
-            </span>
-            <span aria-hidden="true" className="inline-flex gap-1.5">
-              {type.letters.map(({ trait, letter }) => (
-                <span
-                  key={trait}
-                  className="flex size-10 items-center justify-center rounded-xl border border-foreground/20 bg-foreground/5 pt-[5px] font-display text-[1.375rem] leading-none text-foreground"
-                >
-                  {letter}
-                </span>
-              ))}
-            </span>
-          </p>
+          <AnimalPicture id={type.id} className="mx-auto mt-4 size-36" />
 
           <h2
             id="your-type"
-            className="mx-auto mt-4 max-w-[18rem] font-display text-[2.5rem] italic leading-[1.1] tracking-[-0.02em] text-foreground"
+            className="mx-auto mt-3 max-w-[20rem] font-display text-[3.5rem] italic leading-[1.05] tracking-[-0.02em] text-foreground"
           >
             {t(`type.names.${type.id}.name`)}
           </h2>
 
-          <p
-            className="mx-auto mt-3 flex w-fit items-center gap-2 rounded-full border bg-background/60 px-3 py-1 text-[0.8125rem] backdrop-blur-sm"
-            style={{ borderColor: groupColor(type.group, 0.55) }}
-          >
+          <p className="mt-2">
+            <span className="sr-only">
+              {t("type.codeLabel")}: {type.code}
+            </span>
             <span
               aria-hidden="true"
-              className="size-2.5 rounded-full"
-              style={{ background: groupColor(type.group) }}
-            />
+              className="pl-[0.08em] font-display text-[1.375rem] leading-none tracking-[0.08em] text-muted-foreground"
+            >
+              {type.code}
+            </span>
+          </p>
+
+          <p className="mx-auto mt-4 w-fit max-w-full rounded-3xl border border-foreground/20 bg-foreground/5 px-3.5 py-1.5 text-[0.8125rem] leading-snug backdrop-blur-sm">
             <span className="font-medium text-foreground">
               {t(`type.groups.${type.group}.name`)}
+            </span>
+            <span aria-hidden="true" className="text-muted-foreground">
+              {" · "}
             </span>
             <span className="text-muted-foreground">
               {t(`type.groups.${type.group}.tagline`)}
@@ -163,12 +149,12 @@ export function ArchetypeHero({
               self={self}
               journal={journal}
               last={last}
-              behaviour={behaviour}
+              choices={choices}
               tint={tint}
             />
           </div>
 
-          {(journal || behaviour || last) && (
+          {(journal || choices || last) && (
             <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
               {journal && (
                 <li className="flex items-center gap-1.5">
@@ -179,13 +165,13 @@ export function ArchetypeHero({
                   {t("result.journal")}
                 </li>
               )}
-              {behaviour && (
+              {choices && (
                 <li className="flex items-center gap-1.5">
                   <span
                     aria-hidden="true"
                     className="size-2 rotate-45 border-2 border-foreground"
                   />
-                  {t("result.behaviour")}
+                  {t("result.choices")}
                 </li>
               )}
               {last && (

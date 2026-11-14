@@ -12,6 +12,40 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-14-all-types": {
+    title: "Todos os tipos, num só lugar",
+    bullets: [
+      "Um novo botão em Você abre uma página com os 32 animais, as cinco letras de cada um e como cada um é.",
+      "A página explica o que cada letra significa, marca o seu tipo e mostra o seu oposto perfeito: o tipo com o outro lado das cinco letras.",
+      "Os 32 animais agora têm a sua própria imagem, do Elefante ao Coala.",
+    ],
+  },
+  "2026-11-14-type-header": {
+    title: "Um começo mais limpo para o seu tipo",
+    bullets: [
+      "O nome do seu animal agora vem primeiro, com as cinco letras pequenas logo abaixo, em vez de cinco caixas grandes acima.",
+      "O habitat agora é texto simples, então não parece mais um dos seus selos de traço.",
+    ],
+  },
+  "2026-11-14-choices-on-cards": {
+    title: "Suas respostas diárias, nos seus traços",
+    bullets: [
+      "Um losango em cada traço agora mostra para onde suas respostas diárias pendem, ao lado do resultado do teste, em vez de uma seção separada.",
+      "Os losangos também aparecem no seu radar, e cada cartão diz se suas respostas combinam com o teste.",
+      "A descrição de cada traço agora tem cinco níveis em vez de três, então uma nota 15 soa diferente de 35, e 85 diferente de 65.",
+    ],
+    fixes: [
+      "As marcas de hábitos para Abertura e Conscienciosidade saíram. Contar atividades e dias registrados dizia pouco sobre você.",
+    ],
+  },
+  "2026-11-14-animal-types": {
+    title: "Animais que você conhece, em habitats que combinam",
+    bullets: [
+      "Seu tipo agora é um animal bem conhecido, como Leão, Coruja ou Cachorro, em vez de um bicho do mar.",
+      "Os quatro grupos de cor agora são habitats que combinam com o jeito de cada um: Savana, Noite, Fazenda e Floresta.",
+      "O fundo atrás do seu tipo usa as duas cores do seu grupo.",
+    ],
+  },
   "2026-11-13-choices-sooner": {
     title: "Suas escolhas aparecem mais cedo",
     bullets: [
