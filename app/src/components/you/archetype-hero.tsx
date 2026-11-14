@@ -39,22 +39,24 @@ export function ArchetypeHero({
     <>
       <section
         aria-labelledby="your-type"
-        className="relative -mx-4 -mt-2 px-4 pb-8 pt-10 text-center"
+        className="relative -mx-4 px-4 pb-8 pt-8 text-center"
       >
         {/* The wash belongs to the page: it sits behind everything and runs past
-          the end of this section, so the first trait cards sit on it too. Its
-          rounded top edge starts below the pills, on the plain background, so
-          the installed app's status bar never cuts it off. */}
+          the end of this section, so the first trait cards sit on it too. It
+          reaches up behind the masthead and fades to nothing at its top, so
+          there is no edge for the installed app's status bar to cut across. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 -bottom-64 top-0 -z-10 rounded-t-[2rem] border-t"
+          className="pointer-events-none absolute inset-x-0 -bottom-64 -top-48 -z-10"
           style={{
-            borderColor: groupColor(type.group, 0.4),
             background: [
-              `radial-gradient(ellipse 90% 40% at 50% 0%, ${groupColor(type.group, 0.34)}, transparent 100%)`,
-              `radial-gradient(ellipse 80% 30% at 50% 62%, ${groupColor(type.group, 0.18)}, transparent 100%)`,
-              `linear-gradient(180deg, ${groupColor(type.group, 0.2)} 0%, ${groupColor(type.group, 0.08)} 50%, transparent 100%)`,
+              `radial-gradient(ellipse 85% 20rem at 50% 15rem, ${groupColor(type.group, 0.34)}, transparent 100%)`,
+              `radial-gradient(ellipse 80% 14rem at 50% 38rem, ${groupColor(type.group, 0.16)}, transparent 100%)`,
+              `linear-gradient(180deg, transparent 0%, ${groupColor(type.group, 0.1)} 25%, transparent 100%)`,
             ].join(", "),
+            maskImage: "linear-gradient(to bottom, transparent 0, black 8rem)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent 0, black 8rem)",
           }}
         />
 
