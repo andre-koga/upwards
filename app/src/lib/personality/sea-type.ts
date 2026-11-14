@@ -1,4 +1,4 @@
-import { type Trait, type TraitScores } from "./items";
+import { TRAITS, type Trait, type TraitScores } from "./items";
 
 /**
  * The playful layer on top of the Big Five (OCEAN). Each trait is read as high
@@ -161,19 +161,6 @@ const NAMES: Record<SeaGroup, readonly SeaTypeId[]> = {
   ],
 };
 
-/**
- * The order the letters are shown in. Extraversion comes first because it is
- * the one people recognise and care about most, then openness: the two together
- * pick the colour group. The rest follow in OCEAN order.
- */
-export const LETTER_ORDER: readonly Trait[] = [
-  "extraversion",
-  "openness",
-  "conscientiousness",
-  "agreeableness",
-  "neuroticism",
-];
-
 export interface SeaLetter {
   trait: Trait;
   pole: Pole;
@@ -183,7 +170,7 @@ export interface SeaLetter {
 export interface SeaType {
   id: SeaTypeId;
   group: SeaGroup;
-  /** The five letters in display order (see LETTER_ORDER), such as "EOPWS". */
+  /** The five letters in OCEAN order, such as "OPEWC". */
   code: string;
   letters: SeaLetter[];
 }
@@ -200,7 +187,7 @@ function groupOf(openness: Pole, extraversion: Pole): SeaGroup {
 
 /** The type for a set of trait scores. Always one of the 32. */
 export function seaType(scores: TraitScores): SeaType {
-  const letters: SeaLetter[] = LETTER_ORDER.map((trait) => {
+  const letters: SeaLetter[] = TRAITS.map((trait) => {
     const pole = poleOf(scores[trait]);
     return { trait, pole, letter: TRAIT_LETTERS[trait][pole] };
   });

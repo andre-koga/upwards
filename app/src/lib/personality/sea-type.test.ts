@@ -3,7 +3,6 @@ import en from "@/locales/en/personality.json";
 import pt from "@/locales/pt/personality.json";
 import { TRAITS, type TraitScores } from "./items";
 import {
-  LETTER_ORDER,
   SEA_GROUPS,
   SEA_TYPE_IDS,
   TRAIT_LETTERS,
@@ -33,11 +32,11 @@ function allCombinations(): TraitScores[] {
 
 describe("seaType", () => {
   it("reads 50 and above as high, below as low", () => {
-    expect(seaType(flat()).code).toBe("EOPWS");
-    expect(seaType(flat({ openness: 49 })).code).toBe("EGPWS");
+    expect(seaType(flat()).code).toBe("OPEWS");
+    expect(seaType(flat({ openness: 49 })).code).toBe("GPEWS");
   });
 
-  it("writes extraversion first, then openness, then the rest", () => {
+  it("writes the code in OCEAN order", () => {
     const type = seaType(
       flat({
         openness: 90,
@@ -47,8 +46,8 @@ describe("seaType", () => {
         neuroticism: 10,
       })
     );
-    expect(type.code).toBe("IOFWC");
-    expect(type.letters.map((l) => l.trait)).toEqual([...LETTER_ORDER]);
+    expect(type.code).toBe("OFIWC");
+    expect(type.letters.map((l) => l.trait)).toEqual([...TRAITS]);
   });
 
   it("uses ten distinct letters", () => {
