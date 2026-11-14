@@ -49,7 +49,7 @@ function YouLayout({
       <h1
         className={
           showTitle
-            ? "text-center font-display text-[1.375rem] leading-none tracking-[-0.01em] text-foreground/85"
+            ? "px-2 font-display text-[1.875rem] font-medium leading-[1.2] tracking-[-0.02em] md:px-0"
             : "sr-only"
         }
       >
