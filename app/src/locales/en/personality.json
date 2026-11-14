@@ -125,9 +125,9 @@
         "name": "Cheetah",
         "blurb": "Fast, focused and blunt. You go straight at what you want, and it runs hot when you are slowed down."
       },
-      "leopard": {
-        "name": "Leopard",
-        "blurb": "Sleek, sure and direct. You pick your moment, say it plainly and stay cool."
+      "giraffe": {
+        "name": "Giraffe",
+        "blurb": "Tall, unhurried and direct. You see further than most, say it plainly and stay cool."
       },
       "flamingo": {
         "name": "Flamingo",
@@ -157,12 +157,12 @@
         "name": "Bat",
         "blurb": "Alert and exact. You keep your own hours and pick up everything that moves near you."
       },
-      "spider": {
-        "name": "Spider",
-        "blurb": "Patient and self-contained. You build your world one careful thread at a time."
+      "cat": {
+        "name": "Cat",
+        "blurb": "Patient, private and unbothered. You keep your own hours, watch first and move when it suits you."
       },
-      "firefly": {
-        "name": "Firefly",
+      "jellyfish": {
+        "name": "Jellyfish",
         "blurb": "Dreamy and soft. You drift, you glow, and you pick up on every current around you."
       },
       "sloth": {
@@ -185,9 +185,9 @@
         "name": "Dog",
         "blurb": "Steady and warm. You are the one people look for, and you stay put when the weather turns."
       },
-      "rooster": {
-        "name": "Rooster",
-        "blurb": "Proud, tidy and up at dawn. Standards matter to you, and so does being heard."
+      "horse": {
+        "name": "Horse",
+        "blurb": "Proud, tidy and built for the long run. Standards matter to you, and so does being heard."
       },
       "ox": {
         "name": "Ox",
@@ -392,6 +392,15 @@
     "sounds": "Sounds like {{trait}}",
     "fromDay": "From {{date}}",
     "dayChanged": "From a day you have since changed"
+  },
+  "types": {
+    "title": "All the types",
+    "subtitle": "Every result the test can give",
+    "open": "See all 32 types",
+    "back": "Back to You",
+    "you": "You",
+    "opposite": "Your opposite",
+    "codeLabel": "Code"
   },
   "funDisclaimer": "Types, codes and animals are just for fun, not science.",
   "lookBack": {

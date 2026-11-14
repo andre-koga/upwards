@@ -125,9 +125,9 @@
         "name": "Guepardo",
         "blurb": "Rápido, focado e franco. Você vai direto ao que quer, e esquenta quando te atrasam."
       },
-      "leopard": {
-        "name": "Leopardo",
-        "blurb": "Elegante, seguro e direto. Você escolhe o momento, fala claro e mantém a cabeça fria."
+      "giraffe": {
+        "name": "Girafa",
+        "blurb": "Alta, sem pressa e direta. Você enxerga mais longe, fala claro e mantém a cabeça fria."
       },
       "flamingo": {
         "name": "Flamingo",
@@ -157,13 +157,13 @@
         "name": "Morcego",
         "blurb": "Alerta e preciso. Você tem seus próprios horários e percebe tudo que se mexe por perto."
       },
-      "spider": {
-        "name": "Aranha",
-        "blurb": "Paciente e reservada. Você constrói seu mundo um fio cuidadoso de cada vez."
+      "cat": {
+        "name": "Gato",
+        "blurb": "Paciente, reservado e tranquilo. Você tem seus próprios horários, observa primeiro e se move quando lhe convém."
       },
-      "firefly": {
-        "name": "Vaga-lume",
-        "blurb": "Sonhador e suave. Você flutua, brilha e capta cada corrente ao redor."
+      "jellyfish": {
+        "name": "Água-viva",
+        "blurb": "Sonhadora e suave. Você flutua, brilha e capta cada corrente ao redor."
       },
       "sloth": {
         "name": "Preguiça",
@@ -185,9 +185,9 @@
         "name": "Cachorro",
         "blurb": "Firme e caloroso. É por você que as pessoas procuram, e você fica quando o tempo vira."
       },
-      "rooster": {
-        "name": "Galo",
-        "blurb": "Orgulhoso, arrumado e de pé ao amanhecer. Padrão importa para você, e ser ouvido também."
+      "horse": {
+        "name": "Cavalo",
+        "blurb": "Orgulhoso, arrumado e feito para a longa distância. Padrão importa para você, e ser ouvido também."
       },
       "ox": {
         "name": "Boi",
@@ -396,6 +396,15 @@
     "sounds": "Isso soa como {{trait}}",
     "fromDay": "De {{date}}",
     "dayChanged": "De um dia que você mudou depois"
+  },
+  "types": {
+    "title": "Todos os tipos",
+    "subtitle": "Todos os resultados que o teste pode dar",
+    "open": "Ver os 32 tipos",
+    "back": "Voltar para Você",
+    "you": "Você",
+    "opposite": "Seu oposto",
+    "codeLabel": "Código"
   },
   "funDisclaimer": "Tipos, códigos e bichos são só diversão, não ciência.",
   "lookBack": {

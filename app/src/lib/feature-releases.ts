@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-14-all-types",
+    date: "2026-11-14",
+    title: "Every type, in one place",
+    bullets: [
+      "A new button on You opens a page with all 32 animals, their five letters and what each one is like.",
+      "The page explains what each letter means, marks your own type, and shows your perfect opposite: the type with the other side of all five letters.",
+      "All 32 animals now have their own picture, from the Elephant to the Koala.",
+    ],
+  },
+  {
     id: "2026-11-14-type-header",
     date: "2026-11-14",
     title: "A cleaner start to your type",

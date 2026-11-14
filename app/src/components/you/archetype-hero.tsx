@@ -1,12 +1,8 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AnimalPicture } from "@/components/you/animal-picture";
 import { RadarChart } from "@/components/you/radar-chart";
 import { TRAITS, type Trait, type TraitScores } from "@/lib/personality/items";
-import {
-  groupPairColors,
-  animalType,
-  type AnimalTypeId,
-} from "@/lib/personality/animal-type";
+import { groupPairColors, animalType } from "@/lib/personality/animal-type";
 import { traitColor } from "@/lib/personality/trait-colors";
 
 interface ArchetypeHeroProps {
@@ -45,26 +41,6 @@ const WASH_FADE = `linear-gradient(to bottom, ${[
 ]
   .map(([rem, alpha]) => `rgba(0, 0, 0, ${alpha}) ${rem}rem`)
   .join(", ")})`;
-
-/**
- * The picture of the animal, a PNG at `/animals/<id>.png` in the public
- * folder. It is decorative (the name sits right below it), and when a picture
- * is missing nothing is drawn, so the block still reads without it.
- */
-function AnimalPicture({ id }: { id: AnimalTypeId }) {
-  const [missing, setMissing] = useState<AnimalTypeId | null>(null);
-  if (missing === id) return null;
-  return (
-    <img
-      src={`/animals/${id}.png`}
-      alt=""
-      aria-hidden="true"
-      draggable={false}
-      onError={() => setMissing(id)}
-      className="mx-auto mt-4 size-36 object-contain"
-    />
-  );
-}
 
 /**
  * The headline: a five-letter code, a one-word animal and a colour group,
@@ -107,7 +83,7 @@ export function ArchetypeHero({
         />
 
         <div className="relative">
-          <AnimalPicture id={type.id} />
+          <AnimalPicture id={type.id} className="mx-auto mt-4 size-36" />
 
           <h2
             id="your-type"

@@ -6,7 +6,9 @@ import {
   ANIMAL_GROUPS,
   ANIMAL_TYPE_IDS,
   TRAIT_LETTERS,
+  allAnimalTypes,
   animalType,
+  oppositeType,
   type AnimalGroup,
 } from "./animal-type";
 
@@ -93,6 +95,66 @@ describe("animalType", () => {
   it("is stable: the same scores always give the same type", () => {
     const scores = flat({ openness: 63, neuroticism: 12 });
     expect(animalType(scores)).toEqual(animalType({ ...scores }));
+  });
+});
+
+describe("allAnimalTypes", () => {
+  it("lists all 32, each with its own name and code, eight to a habitat", () => {
+    const types = allAnimalTypes();
+    expect(types).toHaveLength(32);
+    expect(new Set(types.map((t) => t.id))).toEqual(new Set(ANIMAL_TYPE_IDS));
+    expect(new Set(types.map((t) => t.code)).size).toBe(32);
+    for (const group of ANIMAL_GROUPS) {
+      expect(types.filter((t) => t.group === group)).toHaveLength(8);
+    }
+  });
+
+  it("matches what the test gives for every combination", () => {
+    const listed = new Map(allAnimalTypes().map((t) => [t.code, t.id]));
+    for (const scores of allCombinations()) {
+      const type = animalType(scores);
+      expect(listed.get(type.code)).toBe(type.id);
+    }
+  });
+
+  it("keeps the habitats in order, then the names in order", () => {
+    expect(allAnimalTypes().map((t) => t.id)).toEqual([...ANIMAL_TYPE_IDS]);
+  });
+});
+
+describe("oppositeType", () => {
+  it("flips all five letters", () => {
+    const type = animalType(
+      flat({
+        openness: 90,
+        conscientiousness: 10,
+        extraversion: 10,
+        agreeableness: 90,
+        neuroticism: 10,
+      })
+    );
+    expect(type.code).toBe("OFIWC");
+    expect(oppositeType(type).code).toBe("GPEDS");
+  });
+
+  it("pairs every type with one other, and back again", () => {
+    for (const type of allAnimalTypes()) {
+      const opposite = oppositeType(type);
+      expect(opposite.id).not.toBe(type.id);
+      expect(
+        opposite.letters.every((l, i) => l.pole !== type.letters[i].pole)
+      ).toBe(true);
+      expect(oppositeType(opposite).id).toBe(type.id);
+    }
+  });
+
+  it("puts the opposite across both openness and extraversion", () => {
+    expect(
+      oppositeType(animalType(flat({ openness: 80, extraversion: 80 }))).group
+    ).toBe("woodland");
+    expect(
+      oppositeType(animalType(flat({ openness: 80, extraversion: 20 }))).group
+    ).toBe("farm");
   });
 });
 

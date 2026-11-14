@@ -79,7 +79,7 @@ export const ANIMAL_TYPE_IDS = [
   "elephant",
   "lion",
   "cheetah",
-  "leopard",
+  "giraffe",
   "flamingo",
   "monkey",
   "hyena",
@@ -87,14 +87,14 @@ export const ANIMAL_TYPE_IDS = [
   "owl",
   "wolf",
   "bat",
-  "spider",
-  "firefly",
+  "cat",
+  "jellyfish",
   "sloth",
   "fox",
   "raccoon",
   "hen",
   "dog",
-  "rooster",
+  "horse",
   "ox",
   "lamb",
   "pig",
@@ -123,14 +123,14 @@ const NAMES: Record<AnimalGroup, readonly AnimalTypeId[]> = {
     "elephant",
     "lion",
     "cheetah",
-    "leopard",
+    "giraffe",
     "flamingo",
     "monkey",
     "hyena",
     "zebra",
   ],
-  night: ["owl", "wolf", "bat", "spider", "firefly", "sloth", "fox", "raccoon"],
-  farm: ["hen", "dog", "rooster", "ox", "lamb", "pig", "goose", "goat"],
+  night: ["owl", "wolf", "bat", "cat", "jellyfish", "sloth", "fox", "raccoon"],
+  farm: ["hen", "dog", "horse", "ox", "lamb", "pig", "goose", "goat"],
   woodland: [
     "squirrel",
     "tortoise",
@@ -165,6 +165,40 @@ function poleOf(score: number): Pole {
 function groupOf(openness: Pole, extraversion: Pole): AnimalGroup {
   if (openness === "high") return extraversion === "high" ? "savanna" : "night";
   return extraversion === "high" ? "farm" : "woodland";
+}
+
+/**
+ * All 32 types, habitat by habitat, in the order of the names above. Each one
+ * is read back through `animalType`, so a listing can never disagree with what
+ * the test would give.
+ */
+export function allAnimalTypes(): AnimalType[] {
+  return ANIMAL_GROUPS.flatMap((group) =>
+    NAMES[group].map((_, index) => {
+      const open = group === "savanna" || group === "night";
+      const extravert = group === "savanna" || group === "farm";
+      // The same bits `animalType` reads: low sets a bit, high first.
+      return animalType({
+        openness: open ? 75 : 25,
+        conscientiousness: index & 4 ? 25 : 75,
+        extraversion: extravert ? 75 : 25,
+        agreeableness: index & 2 ? 25 : 75,
+        neuroticism: index & 1 ? 25 : 75,
+      });
+    })
+  );
+}
+
+/**
+ * The perfect opposite: the type with the other pole on all five letters, so
+ * Open becomes Grounded, Planned becomes Flexible, and so on. Every type has
+ * exactly one, and the opposite of the opposite is the type itself.
+ */
+export function oppositeType(type: AnimalType): AnimalType {
+  const flipped = Object.fromEntries(
+    type.letters.map(({ trait, pole }) => [trait, pole === "high" ? 25 : 75])
+  ) as TraitScores;
+  return animalType(flipped);
 }
 
 /** The type for a set of trait scores. Always one of the 32. */
