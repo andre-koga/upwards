@@ -18,7 +18,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     bullets: [
       "A new button on You opens a page with all 32 animals, their five letters and what each one is like.",
       "The page explains what each letter means, marks your own type, and shows your perfect opposite: the type with the other side of all five letters.",
-      "The Savanna and Night animals now have their own pictures: 16 of the 32 are drawn so far.",
+      "The Savanna and Night animals now have their own pictures: 15 of the 32 are drawn so far.",
     ],
   },
   {

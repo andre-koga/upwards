@@ -17,7 +17,7 @@ export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
     bullets: [
       "Um novo botão em Você abre uma página com os 32 animais, as cinco letras de cada um e como cada um é.",
       "A página explica o que cada letra significa, marca o seu tipo e mostra o seu oposto perfeito: o tipo com o outro lado das cinco letras.",
-      "Os animais da Savana e da Noite agora têm suas próprias imagens: 16 dos 32 já estão desenhados.",
+      "Os animais da Savana e da Noite agora têm suas próprias imagens: 15 dos 32 já estão desenhados.",
     ],
   },
   "2026-11-14-type-header": {

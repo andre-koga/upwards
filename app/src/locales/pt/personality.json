@@ -125,9 +125,9 @@
         "name": "Guepardo",
         "blurb": "Rápido, focado e franco. Você vai direto ao que quer, e esquenta quando te atrasam."
       },
-      "leopard": {
-        "name": "Leopardo",
-        "blurb": "Elegante, seguro e direto. Você escolhe o momento, fala claro e mantém a cabeça fria."
+      "giraffe": {
+        "name": "Girafa",
+        "blurb": "Alta, sem pressa e direta. Você enxerga mais longe, fala claro e mantém a cabeça fria."
       },
       "flamingo": {
         "name": "Flamingo",
@@ -185,9 +185,9 @@
         "name": "Cachorro",
         "blurb": "Firme e caloroso. É por você que as pessoas procuram, e você fica quando o tempo vira."
       },
-      "rooster": {
-        "name": "Galo",
-        "blurb": "Orgulhoso, arrumado e de pé ao amanhecer. Padrão importa para você, e ser ouvido também."
+      "horse": {
+        "name": "Cavalo",
+        "blurb": "Orgulhoso, arrumado e feito para a longa distância. Padrão importa para você, e ser ouvido também."
       },
       "ox": {
         "name": "Boi",
