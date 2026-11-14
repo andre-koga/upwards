@@ -100,11 +100,7 @@ export function ArchetypeHero({
               {type.letters.map(({ trait, letter }) => (
                 <span
                   key={trait}
-                  className="flex size-10 items-center justify-center rounded-xl border font-display text-[1.375rem] leading-none text-foreground"
-                  style={{
-                    borderColor: traitColor(trait, 0.55),
-                    background: traitColor(trait, 0.2),
-                  }}
+                  className="flex size-10 items-center justify-center rounded-xl border border-foreground/20 bg-foreground/5 font-display text-[1.375rem] leading-none text-foreground"
                 >
                   {letter}
                 </span>
