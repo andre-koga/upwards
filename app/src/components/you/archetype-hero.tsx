@@ -126,15 +126,13 @@ export function ArchetypeHero({
             </span>
             <span
               aria-hidden="true"
-              className="inline-flex gap-2 font-display text-[1.375rem] leading-none text-muted-foreground"
+              className="font-display text-[1.375rem] leading-none text-muted-foreground"
             >
-              {type.letters.map(({ trait, letter }) => (
-                <span key={trait}>{letter}</span>
-              ))}
+              {type.code}
             </span>
           </p>
 
-          <p className="mx-auto mt-4 max-w-[20rem] text-[0.875rem] leading-snug">
+          <p className="mx-auto mt-4 w-fit max-w-full rounded-3xl border border-foreground/20 bg-foreground/5 px-3.5 py-1.5 text-[0.8125rem] leading-snug backdrop-blur-sm">
             <span className="font-medium text-foreground">
               {t(`type.groups.${type.group}.name`)}
             </span>
