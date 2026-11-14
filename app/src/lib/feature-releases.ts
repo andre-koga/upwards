@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-13-sea-types",
+    date: "2026-11-13",
+    title: "Your sea creature on You",
+    bullets: [
+      "Your result now has a five-letter code, a one-word sea creature like Dolphin or Lighthouse, and one of four colour groups: Reef, Deep, Shore and Lagoon.",
+      "Everyone who has already taken the test gets a type straight away, with no need to retake it.",
+      "A small note at the bottom of You says the types are just for fun.",
+    ],
+  },
+  {
     id: "2026-11-13-you-without-an-account",
     date: "2026-11-13",
     title: "Try You without an account",

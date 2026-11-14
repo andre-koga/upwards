@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { RadarChart } from "@/components/you/radar-chart";
-import type { Trait, TraitScores } from "@/lib/personality/items";
+import { TRAITS, type Trait, type TraitScores } from "@/lib/personality/items";
+import { groupColor, seaType } from "@/lib/personality/sea-type";
 import { traitColor } from "@/lib/personality/trait-colors";
-import { typeName } from "@/lib/personality/type-name";
 
 interface ArchetypeHeroProps {
   self: TraitScores;
@@ -14,9 +14,17 @@ interface ArchetypeHeroProps {
   daysRead: number | null;
 }
 
+/** The two traits furthest from the middle; they tint the radar shape. */
+function standoutPair(scores: TraitScores): [Trait, Trait] {
+  const ranked = [...TRAITS].sort(
+    (a, b) => Math.abs(scores[b] - 50) - Math.abs(scores[a] - 50)
+  );
+  return [ranked[0], ranked[1]];
+}
+
 /**
- * The headline: a type name drawn from the traits that stand furthest from the
- * middle, the shape of the five scores, and what the type is built from.
+ * The headline: a five-letter code, a one-word sea creature and a colour group,
+ * all read from the five scores, then the shape of the scores.
  */
 export function ArchetypeHero({
   self,
@@ -27,34 +35,10 @@ export function ArchetypeHero({
   daysRead,
 }: ArchetypeHeroProps) {
   const { t } = useTranslation("personality");
-  const name = typeName(self);
-
-  let title: string;
-  let blurb: string;
-  let from: Parameters<typeof traitColor>[0] = "openness";
-  let to: Parameters<typeof traitColor>[0] = "conscientiousness";
-
-  if (name.kind === "balanced") {
-    title = t("type.balanced");
-    blurb = t("type.balancedBlurb");
-    from = "conscientiousness";
-    to = "neuroticism";
-  } else {
-    const nounKey = `type.traits.${name.noun.trait}.${name.noun.pole}`;
-    const gender = t(`${nounKey}.gender`);
-    title = t("type.name", {
-      article: t(`type.article_${gender}`),
-      adjective: t(
-        `type.traits.${name.lead.trait}.${name.lead.pole}.adjective_${gender}`
-      ),
-      noun: t(`${nounKey}.noun`),
-    });
-    blurb = name.defining
-      .map((entry) => t(`result.bands.${entry.trait}.${entry.pole}`))
-      .join(" ");
-    from = name.lead.trait;
-    to = name.noun.trait;
-  }
+  const type = seaType(self);
+  const tint = standoutPair(self);
+  const from = groupColor(type.group);
+  const to = traitColor(tint[0]);
 
   return (
     <section
@@ -68,9 +52,9 @@ export function ArchetypeHero({
         className="pointer-events-none absolute inset-x-0 -bottom-64 top-0 -z-10"
         style={{
           background: [
-            `radial-gradient(ellipse 90% 40% at 50% 0%, ${traitColor(from, 0.34)}, transparent 100%)`,
-            `radial-gradient(ellipse 80% 30% at 50% 62%, ${traitColor(to, 0.18)}, transparent 100%)`,
-            `linear-gradient(180deg, ${traitColor(from, 0.2)} 0%, ${traitColor(to, 0.14)} 50%, transparent 100%)`,
+            `radial-gradient(ellipse 90% 40% at 50% 0%, ${groupColor(type.group, 0.34)}, transparent 100%)`,
+            `radial-gradient(ellipse 80% 30% at 50% 62%, ${groupColor(type.group, 0.18)}, transparent 100%)`,
+            `linear-gradient(180deg, ${groupColor(type.group, 0.2)} 0%, ${groupColor(type.group, 0.08)} 50%, transparent 100%)`,
           ].join(", "),
         }}
       />
@@ -93,42 +77,78 @@ export function ArchetypeHero({
         <p className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           {t("type.eyebrow")}
         </p>
-        <h2
-          id="your-type"
-          className="mx-auto mt-2 max-w-[18rem] font-display text-[2.25rem] italic leading-[1.1] tracking-[-0.02em] text-foreground"
-        >
-          {title}
-        </h2>
-        <p className="mx-auto mt-3 max-w-[22rem] font-display text-[1.0625rem] leading-relaxed text-foreground/80">
-          {blurb}
+
+        <p className="mt-3">
+          <span className="sr-only">
+            {t("type.codeLabel")}: {type.code}
+          </span>
+          <span aria-hidden="true" className="inline-flex gap-1.5">
+            {type.letters.map(({ trait, letter }) => (
+              <span
+                key={trait}
+                className="flex size-10 items-center justify-center rounded-xl border font-display text-[1.375rem] leading-none text-foreground"
+                style={{
+                  borderColor: traitColor(trait, 0.55),
+                  background: traitColor(trait, 0.2),
+                }}
+              >
+                {letter}
+              </span>
+            ))}
+          </span>
         </p>
 
-        {name.kind === "named" && (
-          <div className="mt-4">
-            <p className="text-xs text-muted-foreground">
-              {t("type.definedBy")}
-            </p>
-            <ul className="mt-1.5 flex flex-wrap justify-center gap-2">
-              {name.defining.map((entry) => (
-                <li
-                  key={entry.trait}
-                  className="flex items-center gap-1.5 rounded-full border bg-background/60 px-3 py-1 text-[0.8125rem] backdrop-blur-sm"
-                  style={{ borderColor: traitColor(entry.trait, 0.5) }}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="size-2.5 rounded-full"
-                    style={{ background: traitColor(entry.trait) }}
-                  />
-                  {t(`traits.${entry.trait}.${entry.pole}`)}
-                  <span className="tabular-nums text-muted-foreground">
-                    {self[entry.trait]}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <h2
+          id="your-type"
+          className="mx-auto mt-4 max-w-[18rem] font-display text-[2.5rem] italic leading-[1.1] tracking-[-0.02em] text-foreground"
+        >
+          {t(`type.names.${type.id}.name`)}
+        </h2>
+
+        <p
+          className="mx-auto mt-3 flex w-fit items-center gap-2 rounded-full border bg-background/60 px-3 py-1 text-[0.8125rem] backdrop-blur-sm"
+          style={{ borderColor: groupColor(type.group, 0.55) }}
+        >
+          <span
+            aria-hidden="true"
+            className="size-2.5 rounded-full"
+            style={{ background: groupColor(type.group) }}
+          />
+          <span className="font-medium text-foreground">
+            {t(`type.groups.${type.group}.name`)}
+          </span>
+          <span className="text-muted-foreground">
+            {t(`type.groups.${type.group}.tagline`)}
+          </span>
+        </p>
+
+        <p className="mx-auto mt-4 max-w-[22rem] font-display text-[1.0625rem] leading-relaxed text-foreground/80">
+          {t(`type.names.${type.id}.blurb`)}
+        </p>
+
+        <div className="mt-4">
+          <p className="text-xs text-muted-foreground">{t("type.letters")}</p>
+          <ul className="mt-1.5 flex flex-wrap justify-center gap-2">
+            {type.letters.map(({ trait, pole, letter }) => (
+              <li
+                key={trait}
+                className="flex items-center gap-1.5 rounded-full border bg-background/60 px-3 py-1 text-[0.8125rem] backdrop-blur-sm"
+                style={{ borderColor: traitColor(trait, 0.5) }}
+              >
+                <span
+                  aria-hidden="true"
+                  className="size-2.5 rounded-full"
+                  style={{ background: traitColor(trait) }}
+                />
+                <span className="font-medium">{letter}</span>
+                {t(`traits.${trait}.${pole}`)}
+                <span className="tabular-nums text-muted-foreground">
+                  {self[trait]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         <div className="mt-6">
           <RadarChart
@@ -136,7 +156,7 @@ export function ArchetypeHero({
             journal={journal}
             last={last}
             behaviour={behaviour}
-            tint={[from, to]}
+            tint={tint}
           />
         </div>
 
@@ -146,7 +166,7 @@ export function ArchetypeHero({
               aria-hidden="true"
               className="size-2.5 rounded-full"
               style={{
-                background: `linear-gradient(135deg, ${traitColor(from)}, ${traitColor(to)})`,
+                background: `linear-gradient(135deg, ${from}, ${to})`,
               }}
             />
             {t("result.you")}

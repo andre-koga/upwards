@@ -93,82 +93,155 @@
   },
   "type": {
     "eyebrow": "Your type",
-    "balanced": "The Balancer",
-    "balancedBlurb": "No single trait pulls far from the middle. You adapt to what each moment asks of you.",
-    "name": "The {{adjective}} {{noun}}",
-    "article_m": "The",
-    "article_f": "The",
-    "definedBy": "Stands out for",
-    "traits": {
-      "openness": {
-        "high": {
-          "adjective_m": "Curious",
-          "adjective_f": "Curious",
-          "noun": "Explorer",
-          "gender": "m"
-        },
-        "low": {
-          "adjective_m": "Practical",
-          "adjective_f": "Practical",
-          "noun": "Realist",
-          "gender": "m"
-        }
+    "codeLabel": "Your code",
+    "groupLabel": "Group",
+    "letters": "What the letters mean",
+    "groups": {
+      "reef": {
+        "name": "Reef",
+        "tagline": "Bright, curious and always in company."
       },
-      "conscientiousness": {
-        "high": {
-          "adjective_m": "Focused",
-          "adjective_f": "Focused",
-          "noun": "Builder",
-          "gender": "m"
-        },
-        "low": {
-          "adjective_m": "Spontaneous",
-          "adjective_f": "Spontaneous",
-          "noun": "Improviser",
-          "gender": "m"
-        }
+      "deep": {
+        "name": "Deep",
+        "tagline": "Curious minds that go far out on their own."
       },
-      "extraversion": {
-        "high": {
-          "adjective_m": "Lively",
-          "adjective_f": "Lively",
-          "noun": "Spark",
-          "gender": "f"
-        },
-        "low": {
-          "adjective_m": "Quiet",
-          "adjective_f": "Quiet",
-          "noun": "Observer",
-          "gender": "m"
-        }
+      "shore": {
+        "name": "Shore",
+        "tagline": "Sociable and grounded, where water meets land."
       },
-      "agreeableness": {
-        "high": {
-          "adjective_m": "Warm",
-          "adjective_f": "Warm",
-          "noun": "Peacemaker",
-          "gender": "m"
-        },
-        "low": {
-          "adjective_m": "Frank",
-          "adjective_f": "Frank",
-          "noun": "Challenger",
-          "gender": "m"
-        }
+      "lagoon": {
+        "name": "Lagoon",
+        "tagline": "Calm and sheltered, happy with what you know."
+      }
+    },
+    "names": {
+      "clownfish": {
+        "name": "Clownfish",
+        "blurb": "Bright, driven and tender. You plan, you reach out, and you feel it all deeply."
       },
-      "neuroticism": {
-        "high": {
-          "adjective_m": "Intense",
-          "adjective_f": "Intense",
-          "noun": "Sentinel",
-          "gender": "f"
-        },
-        "low": {
-          "adjective_m": "Calm",
-          "adjective_f": "Calm",
-          "noun": "Anchor",
-          "gender": "f"
-        }
+      "dolphin": {
+        "name": "Dolphin",
+        "blurb": "Playful and organized, and kind with it. You bring people along and stay calm doing it."
+      },
+      "barracuda": {
+        "name": "Barracuda",
+        "blurb": "Fast, focused and blunt. You chase what you want, and it runs hot when things get in the way."
+      },
+      "orca": {
+        "name": "Orca",
+        "blurb": "Calm and driven. You say it straight and keep the whole pod moving."
+      },
+      "angelfish": {
+        "name": "Angelfish",
+        "blurb": "Colourful and warm, and a little all over the place. Your feelings show, and people love you for it."
+      },
+      "otter": {
+        "name": "Otter",
+        "blurb": "Easygoing, friendly and quick to play. You go with the current and make it fun for everyone."
+      },
+      "triggerfish": {
+        "name": "Triggerfish",
+        "blurb": "Spontaneous, direct and spirited. You react fast and say what you think."
+      },
+      "marlin": {
+        "name": "Marlin",
+        "blurb": "Free, bold and sure of your own line. Easy about it, and hard to pin down."
+      },
+      "seahorse": {
+        "name": "Seahorse",
+        "blurb": "Careful, gentle and thoughtful. You prepare, you notice a lot, and you feel it before others do."
+      },
+      "whale": {
+        "name": "Whale",
+        "blurb": "A gentle giant. Calm, caring and organized, you think big and carry others along quietly."
+      },
+      "moray": {
+        "name": "Moray",
+        "blurb": "Watchful and exact. You keep your own space and notice everything that moves near it."
+      },
+      "nautilus": {
+        "name": "Nautilus",
+        "blurb": "Methodical and self-contained. You build your world one careful chamber at a time."
+      },
+      "jellyfish": {
+        "name": "Jellyfish",
+        "blurb": "Dreamy and soft. You drift, you glow, and you pick up on every current around you."
+      },
+      "ray": {
+        "name": "Ray",
+        "blurb": "A gliding, kind daydreamer. You move slowly and calmly and let your mind wander."
+      },
+      "anglerfish": {
+        "name": "Anglerfish",
+        "blurb": "A lone light in the dark. Original, private and wary, you shine on your own terms."
+      },
+      "octopus": {
+        "name": "Octopus",
+        "blurb": "Clever, independent and improvising. You solve things sideways and need no one's map."
+      },
+      "sandpiper": {
+        "name": "Sandpiper",
+        "blurb": "Quick, busy and careful. You like a routine and good company, and a small wave still makes you jump."
+      },
+      "lighthouse": {
+        "name": "Lighthouse",
+        "blurb": "Steady and warm. You are the one people look for, and you stay put when the weather turns."
+      },
+      "pufferfish": {
+        "name": "Pufferfish",
+        "blurb": "Tidy, sociable and quick to puff up. Standards matter to you, and so does being heard."
+      },
+      "anchor": {
+        "name": "Anchor",
+        "blurb": "Dependable and firm. You hold the line, say what you mean, and nothing moves you easily."
+      },
+      "starfish": {
+        "name": "Starfish",
+        "blurb": "Open-hearted and loose. You reach out to everyone, and you feel it when they reach back less."
+      },
+      "seal": {
+        "name": "Seal",
+        "blurb": "Friendly and playful. You love a crowd, a nap and a good time, in no particular order."
+      },
+      "crab": {
+        "name": "Crab",
+        "blurb": "Lively, sideways and a bit pinchy. You enjoy people and defend your shell fast."
+      },
+      "gull": {
+        "name": "Gull",
+        "blurb": "Loud, free and unbothered. You live in the moment and take whatever the day drops near you."
+      },
+      "turtle": {
+        "name": "Turtle",
+        "blurb": "Patient, kind and steady. You take it slowly, you get there, and you carry home with you."
+      },
+      "hermit": {
+        "name": "Hermit",
+        "blurb": "Careful and homebound. You like your shell tidy and your people few, and you worry a little."
+      },
+      "limpet": {
+        "name": "Limpet",
+        "blurb": "You hold on tight to what you know. Orderly, direct and unbothered by waves."
+      },
+      "urchin": {
+        "name": "Urchin",
+        "blurb": "Neat, spiky and guarded. You keep things in order, and you keep your distance."
+      },
+      "manatee": {
+        "name": "Manatee",
+        "blurb": "Slow, gentle and kind. You take life as it floats by and make it softer for others."
+      },
+      "anemone": {
+        "name": "Anemone",
+        "blurb": "Soft, tender and sensitive. You cling to the ones you love and feel every tide."
+      },
+      "flounder": {
+        "name": "Flounder",
+        "blurb": "Low-key and unbothered. You blend in, keep your own counsel and let the waves go by."
+      },
+      "stonefish": {
+        "name": "Stonefish",
+        "blurb": "Quiet and watchful. You stay still, you stay private, and you do not like being stepped on."
       }
     }
   },
@@ -304,5 +377,6 @@
     "option_one": "{{count}} day",
     "option_other": "{{count}} days",
     "empty": "Not enough logged days in this range for your habits to show. Try a longer one, or keep logging."
-  }
+  },
+  "funDisclaimer": "Types, codes and sea creatures are just for fun. They are a playful way to group five scores, they are not scientific, and they are not a label."
 }

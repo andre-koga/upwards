@@ -258,6 +258,13 @@ export default function YouPage() {
         </>
       )}
 
+      {latest && (
+        <footer className="space-y-1.5 px-4 pt-6 text-center text-xs leading-relaxed text-muted-foreground">
+          <p>{tp("funDisclaimer")}</p>
+          <p>{tp("disclaimer")}</p>
+        </footer>
+      )}
+
       <AlertDialog open={confirmRetake} onOpenChange={setConfirmRetake}>
         <AlertDialogContent>
           <AlertDialogHeader>
