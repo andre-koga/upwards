@@ -157,7 +157,7 @@ export function ArchetypeHero({
                     style={{ background: traitColor(trait) }}
                   />
                   <span className="font-medium">{letter}</span>
-                  {t(`traits.${trait}.${pole}`)}
+                  {t(`type.poles.${trait}.${pole}`)}
                   <span className="tabular-nums text-muted-foreground">
                     {self[trait]}
                   </span>

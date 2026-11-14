@@ -8,13 +8,17 @@ import { TRAITS, type Trait, type TraitScores } from "./items";
 
 export type Pole = "low" | "high";
 
-/** One letter per trait pole, all ten distinct so a code reads unambiguously. */
+/**
+ * One letter per trait pole, ten distinct letters in all. The legend names
+ * each one: Open / Grounded, Planned / Flexible, Extravert / Introvert,
+ * Warm / Direct, Sensitive / Calm.
+ */
 export const TRAIT_LETTERS: Record<Trait, Record<Pole, string>> = {
-  openness: { high: "X", low: "R" }, // eXploring / Rooted
-  conscientiousness: { high: "P", low: "F" }, // Planning / Flowing
-  extraversion: { high: "L", low: "Q" }, // Lively / Quiet
-  agreeableness: { high: "W", low: "D" }, // Warm / Direct
-  neuroticism: { high: "T", low: "C" }, // Tidal / Calm
+  openness: { high: "O", low: "G" },
+  conscientiousness: { high: "P", low: "F" },
+  extraversion: { high: "E", low: "I" },
+  agreeableness: { high: "W", low: "D" },
+  neuroticism: { high: "S", low: "C" },
 };
 
 export type SeaGroup = "reef" | "deep" | "shore" | "lagoon";
@@ -170,7 +174,7 @@ export interface SeaLetter {
 export interface SeaType {
   id: SeaTypeId;
   group: SeaGroup;
-  /** The five letters in OCEAN order, such as "XPLWC". */
+  /** The five letters in OCEAN order, such as "OPEWC". */
   code: string;
   letters: SeaLetter[];
 }

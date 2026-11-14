@@ -12,6 +12,14 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-13-choices-sooner",
+    date: "2026-11-13",
+    title: "Your choices show up sooner",
+    bullets: [
+      "Each trait in Your choices now appears from your first answer on it, instead of after 10. A few answers are a rough guide, and the page says so.",
+    ],
+  },
+  {
     id: "2026-11-13-sea-types",
     date: "2026-11-13",
     title: "Your sea creature on You",

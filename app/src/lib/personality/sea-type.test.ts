@@ -32,8 +32,8 @@ function allCombinations(): TraitScores[] {
 
 describe("seaType", () => {
   it("reads 50 and above as high, below as low", () => {
-    expect(seaType(flat()).code).toBe("XPLWT");
-    expect(seaType(flat({ openness: 49 })).code).toBe("RPLWT");
+    expect(seaType(flat()).code).toBe("OPEWS");
+    expect(seaType(flat({ openness: 49 })).code).toBe("GPEWS");
   });
 
   it("writes the code in OCEAN order", () => {
@@ -46,13 +46,17 @@ describe("seaType", () => {
         neuroticism: 10,
       })
     );
-    expect(type.code).toBe("XFQWC");
+    expect(type.code).toBe("OFIWC");
     expect(type.letters.map((l) => l.trait)).toEqual([...TRAITS]);
   });
 
   it("uses ten distinct letters", () => {
     const letters = TRAITS.flatMap((t) => Object.values(TRAIT_LETTERS[t]));
     expect(new Set(letters).size).toBe(10);
+  });
+
+  it("reads extraversion as E or I", () => {
+    expect(TRAIT_LETTERS.extraversion).toEqual({ high: "E", low: "I" });
   });
 
   it("gives all 32 combinations their own code and their own name", () => {
@@ -109,6 +113,12 @@ describe("sea type copy", () => {
       for (const group of SEA_GROUPS) {
         expect(copy.type.groups[group].name.length).toBeGreaterThan(0);
         expect(copy.type.groups[group].tagline.length).toBeGreaterThan(0);
+      }
+      for (const trait of TRAITS) {
+        for (const pole of ["high", "low"] as const) {
+          const word = copy.type.poles[trait][pole];
+          expect(word.length).toBeGreaterThan(0);
+        }
       }
       expect(copy.funDisclaimer.length).toBeGreaterThan(0);
     }

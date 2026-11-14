@@ -73,6 +73,10 @@ describe("driftFromTest", () => {
     ).toBeNull();
   });
 
+  it("speaks from the first answer", () => {
+    expect(driftFromTest({ count: 1, lean: 0.5 }, 50)).toBe("higher");
+  });
+
   it("says nothing when choices and test sit in the same band", () => {
     expect(driftFromTest({ count: 12, lean: 0.8 }, 80)).toBeNull();
     expect(driftFromTest({ count: 12, lean: 0 }, 50)).toBeNull();

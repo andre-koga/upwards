@@ -243,6 +243,28 @@
         "name": "Peixe-pedra",
         "blurb": "Quieto e atento. Você fica parado, reservado, e não gosta de ser pisado."
       }
+    },
+    "poles": {
+      "openness": {
+        "high": "Aberto",
+        "low": "Pé no chão"
+      },
+      "conscientiousness": {
+        "high": "Planejado",
+        "low": "Flexível"
+      },
+      "extraversion": {
+        "high": "Extrovertido",
+        "low": "Introvertido"
+      },
+      "agreeableness": {
+        "high": "Caloroso",
+        "low": "Direto"
+      },
+      "neuroticism": {
+        "high": "Sensível",
+        "low": "Calmo"
+      }
     }
   },
   "test": {
