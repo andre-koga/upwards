@@ -303,29 +303,39 @@
     "takenOn": "Feito em {{date}}",
     "bands": {
       "openness": {
+        "veryLow": "Você prefere de longe o que é familiar, prático e já testado.",
         "low": "Você tende a preferir o familiar e o prático.",
         "mid": "Você mistura ideias novas com o que já conhece.",
-        "high": "Você é atraído por ideias, arte e experiências novas."
+        "high": "Você é atraído por ideias, arte e experiências novas.",
+        "veryHigh": "Você tem sede de ideias, arte e experiências novas, e está sempre atrás da próxima."
       },
       "conscientiousness": {
+        "veryLow": "Você deixa quase tudo em aberto e vai conforme o momento.",
         "low": "Você tende a manter os planos soltos e a ser flexível.",
         "mid": "Você é organizado em alguns pontos e tranquilo em outros.",
-        "high": "Você gosta de ordem, de planos e de levar as coisas até o fim."
+        "high": "Você gosta de ordem, de planos e de levar as coisas até o fim.",
+        "veryHigh": "Você vive de ordem, planos e listas, e raramente deixa algo pela metade."
       },
       "extraversion": {
+        "veryLow": "Você é reservado e precisa de bastante tempo sozinho para recarregar as energias.",
         "low": "Você tende a ser quieto e a recarregar as energias sozinho.",
         "mid": "Você alterna entre companhia e tempo para si.",
-        "high": "Você tende a buscar pessoas e a se animar com elas."
+        "high": "Você tende a buscar pessoas e a se animar com elas.",
+        "veryHigh": "Você floresce perto de pessoas e se sente mais vivo em companhia."
       },
       "agreeableness": {
+        "veryLow": "Você diz exatamente o que pensa, por mais direto que seja, e não cede só para manter a paz.",
         "low": "Você tende a dizer o que pensa, mesmo quando soa direto.",
         "mid": "Você equilibra gentileza com firmeza.",
-        "high": "Você tende a deixar as pessoas à vontade e a se importar com o que sentem."
+        "high": "Você tende a deixar as pessoas à vontade e a se importar com o que sentem.",
+        "veryHigh": "Você coloca os outros em primeiro lugar e faz de tudo para deixar todo mundo à vontade."
       },
       "neuroticism": {
+        "veryLow": "Você se mantém calmo quase sempre, e o estresse raramente te abala.",
         "low": "Você tende a se manter estável quando fica estressante.",
         "mid": "O estresse às vezes pesa em você, e às vezes não.",
-        "high": "Você tende a sentir o estresse e as mudanças de humor com intensidade."
+        "high": "Você tende a sentir o estresse e as mudanças de humor com intensidade.",
+        "veryHigh": "Você sente o estresse e as mudanças de humor com muita intensidade, e eles podem levar um tempo para passar."
       }
     },
     "gap": {

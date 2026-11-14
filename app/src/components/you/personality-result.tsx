@@ -11,7 +11,7 @@ import {
   LOOK_BACK_RANGES,
   type LookBackRange,
 } from "@/lib/personality/look-back";
-import { band, gapDirection } from "@/lib/personality/bands";
+import { band, gapDirection, level } from "@/lib/personality/bands";
 import { journalComparison } from "@/lib/personality/highlights";
 import { TRAITS, type Trait } from "@/lib/personality/items";
 import { traitColor } from "@/lib/personality/trait-colors";
@@ -120,7 +120,8 @@ export function PersonalityResult({
           const journal = reading ? reading.scores[trait] : null;
           const last = previous?.scores ? previous.scores[trait] : null;
           const gap = journal === null ? null : gapDirection(self, journal);
-          const level = band(self);
+          const tone = band(self);
+          const detail = level(self);
           const note = reading?.notes[trait];
           const choice = choices[trait] ?? null;
           const drift =
@@ -128,9 +129,9 @@ export function PersonalityResult({
               ? driftFromTest(evidence[trait], self)
               : null;
           const word =
-            level === "mid"
+            tone === "mid"
               ? t("result.balancedWord")
-              : t(`traits.${trait}.${level}`);
+              : t(`traits.${trait}.${tone}`);
 
           return (
             <li
@@ -173,7 +174,7 @@ export function PersonalityResult({
               </div>
 
               <p className="mt-3 font-display text-[1.0625rem] leading-relaxed text-foreground/85">
-                {t(`result.bands.${trait}.${level}`)}
+                {t(`result.bands.${trait}.${detail}`)}
               </p>
               {gap !== null && (
                 <p className="mt-2 flex items-start gap-2 text-[0.9375rem] leading-relaxed text-foreground/75">

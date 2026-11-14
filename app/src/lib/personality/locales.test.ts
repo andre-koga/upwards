@@ -27,7 +27,11 @@ describe("personality copy", () => {
       }
       for (const trait of TRAITS) {
         expect(copy.traits[trait].name.length).toBeGreaterThan(0);
-        expect(copy.result.bands[trait].mid.length).toBeGreaterThan(0);
+        for (const step of ["veryLow", "low", "mid", "high", "veryHigh"]) {
+          expect(
+            (copy.result.bands[trait] as Record<string, string>)[step]?.length
+          ).toBeGreaterThan(0);
+        }
       }
     }
   });

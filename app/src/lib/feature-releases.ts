@@ -18,6 +18,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     bullets: [
       "A diamond on each trait now shows where your daily answers lean, right beside your test result, instead of in a separate section.",
       "The diamonds also appear on your radar, and each card says whether your answers agree with your test.",
+      "Each trait's description now has five steps instead of three, so a score of 15 reads differently from 35, and 85 differently from 65.",
     ],
     fixes: [
       "The habit marks for Openness and Conscientiousness are gone. Counting activities and logged days said little about you.",

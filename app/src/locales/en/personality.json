@@ -302,29 +302,39 @@
     "takenOn": "Taken {{date}}",
     "bands": {
       "openness": {
+        "veryLow": "You much prefer what is familiar, practical and proven.",
         "low": "You tend to prefer the familiar and the practical.",
         "mid": "You mix new ideas with what you already know.",
-        "high": "You are drawn to new ideas, art and experiences."
+        "high": "You are drawn to new ideas, art and experiences.",
+        "veryHigh": "You are hungry for new ideas, art and experiences, and always on the lookout for the next one."
       },
       "conscientiousness": {
+        "veryLow": "You keep almost nothing fixed and go with the moment.",
         "low": "You tend to keep plans loose and stay flexible.",
         "mid": "You are organised in some places and relaxed in others.",
-        "high": "You like order, plans and following through."
+        "high": "You like order, plans and following through.",
+        "veryHigh": "You live by order, plans and lists, and you rarely leave anything unfinished."
       },
       "extraversion": {
+        "veryLow": "You are quiet and private, and you need plenty of time alone to recharge.",
         "low": "You tend to be quiet and recharge on your own.",
         "mid": "You move between company and time to yourself.",
-        "high": "You tend to seek out people and feel energised by them."
+        "high": "You tend to seek out people and feel energised by them.",
+        "veryHigh": "You thrive around people and feel most alive in company."
       },
       "agreeableness": {
+        "veryLow": "You say exactly what you think, however blunt, and you do not bend just to keep the peace.",
         "low": "You tend to say what you think, even when it is blunt.",
         "mid": "You balance being kind with standing your ground.",
-        "high": "You tend to put people at ease and care how they feel."
+        "high": "You tend to put people at ease and care how they feel.",
+        "veryHigh": "You put other people first and go out of your way to put everyone at ease."
       },
       "neuroticism": {
+        "veryLow": "You stay calm almost no matter what, and stress rarely shakes you.",
         "low": "You tend to stay steady when things get stressful.",
         "mid": "Stress affects you at times, and at times it does not.",
-        "high": "You tend to feel stress and mood shifts strongly."
+        "high": "You tend to feel stress and mood shifts strongly.",
+        "veryHigh": "You feel stress and mood shifts deeply, and they can take a while to settle."
       }
     },
     "gap": {
