@@ -1,5 +1,4 @@
 {
-  "disclaimer": "Isto é uma reflexão, não um diagnóstico, e pode estar errada.",
   "answers": {
     "1": "Descreve muito mal",
     "2": "Descreve mal",
@@ -357,7 +356,7 @@
   },
   "journal": {
     "heading": "O que o seu diário mostra",
-    "body": "A sua própria IA lê os dias que você escreveu e pontua os mesmos cinco traços, para comparar com o teste.",
+    "body": "A sua IA analisa e pontua as entradas do seu diário.",
     "read": "Ler o meu diário",
     "readAgain": "Ler de novo",
     "reading": "Lendo...",

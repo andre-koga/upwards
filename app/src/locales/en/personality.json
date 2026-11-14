@@ -1,5 +1,4 @@
 {
-  "disclaimer": "This is a reflection, not a diagnosis, and it can be wrong.",
   "answers": {
     "1": "Very inaccurate",
     "2": "Moderately inaccurate",
@@ -355,7 +354,7 @@
   },
   "journal": {
     "heading": "What your journal reads as",
-    "body": "Your own AI reads your written days and scores the same five traits, so you can compare with the test.",
+    "body": "Your AI analyses and scores your journal entries.",
     "read": "Read my journal",
     "readAgain": "Read it again",
     "reading": "Reading...",

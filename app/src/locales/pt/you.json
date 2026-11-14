@@ -36,7 +36,6 @@
       "higher": "Suas escolhas pendem mais para “{{word}}” do que o teste indicou.",
       "lower": "Suas escolhas pendem mais para “{{word}}” do que o teste indicou."
     },
-    "note": "O losango marca suas respostas diárias. Poucas respostas são menos precisas do que muitas, então veja um losango recente como uma pista aproximada.",
     "same": "Suas respostas diárias combinam com o teste.",
     "answers_one": "Com base em {{count}} resposta.",
     "answers_many": "Com base em {{count}} respostas.",

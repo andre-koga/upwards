@@ -214,12 +214,6 @@ export function PersonalityResult({
         })}
       </ul>
 
-      {hasChoices && (
-        <p className="px-2 text-center text-xs leading-relaxed text-muted-foreground">
-          {ty("choices.note")}
-        </p>
-      )}
-
       {quoteCount > 0 && !portraitOnly && (
         <Link
           to="/you/words"
