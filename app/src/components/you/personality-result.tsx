@@ -3,14 +3,6 @@ import { useTranslation } from "react-i18next";
 import { ArchetypeHero } from "@/components/you/archetype-hero";
 import { TraitTrack } from "@/components/you/trait-track";
 import type { JournalReading, PersonalitySitting } from "@/lib/db/types";
-import {
-  SegmentedControl,
-  SegmentedControlItem,
-} from "@/components/ui/segmented-control";
-import {
-  LOOK_BACK_RANGES,
-  type LookBackRange,
-} from "@/lib/personality/look-back";
 import { band, gapDirection, level } from "@/lib/personality/bands";
 import { journalComparison } from "@/lib/personality/highlights";
 import { TRAITS, type Trait } from "@/lib/personality/items";
@@ -27,8 +19,6 @@ interface PersonalityResultProps {
   reading: JournalReading | null;
   /** What the daily answers add up to, or null before they are read. */
   evidence: Evidence | null;
-  range: LookBackRange;
-  onRangeChange: (range: LookBackRange) => void;
   /** The portrait site: no journal reading, and no quotes page to open. */
   portraitOnly?: boolean;
 }
@@ -49,8 +39,6 @@ export function PersonalityResult({
   previous,
   reading,
   evidence,
-  range,
-  onRangeChange,
   portraitOnly = false,
 }: PersonalityResultProps) {
   const { t } = useTranslation("personality");
@@ -230,27 +218,6 @@ export function PersonalityResult({
         <p className="px-2 text-center text-xs leading-relaxed text-muted-foreground">
           {ty("choices.note")}
         </p>
-      )}
-
-      {!portraitOnly && (
-        <section aria-labelledby="look-back" className="space-y-3 px-2">
-          <h3 id="look-back" className="text-center text-sm text-foreground/85">
-            {t("lookBack.label")}
-          </h3>
-          <SegmentedControl
-            aria-labelledby="look-back"
-            value={String(range)}
-            onValueChange={(value) =>
-              onRangeChange(Number(value) as LookBackRange)
-            }
-          >
-            {LOOK_BACK_RANGES.map((days) => (
-              <SegmentedControlItem key={days} value={String(days)}>
-                {t("lookBack.option", { count: days })}
-              </SegmentedControlItem>
-            ))}
-          </SegmentedControl>
-        </section>
       )}
 
       {quoteCount > 0 && !portraitOnly && (

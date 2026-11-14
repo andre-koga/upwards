@@ -1,5 +1,5 @@
 {
-  "disclaimer": "This is a reflection, not a diagnosis. It is a short self-report scale and a reading of your own words, and it can be wrong.",
+  "disclaimer": "This is a reflection, not a diagnosis, and it can be wrong.",
   "answers": {
     "1": "Very inaccurate",
     "2": "Moderately inaccurate",
@@ -355,7 +355,7 @@
   },
   "journal": {
     "heading": "What your journal reads as",
-    "body": "Separate from the test: your own AI reads your written days and scores them on the same five traits, so you can compare.",
+    "body": "Your own AI reads your written days and scores the same five traits, so you can compare with the test.",
     "read": "Read my journal",
     "readAgain": "Read it again",
     "reading": "Reading...",
@@ -364,7 +364,7 @@
     "quotesLabel": "From your own words",
     "notConnected": "Connect an AI in Settings to read your journal. The test works without it.",
     "openSettings": "Open Settings",
-    "noDays": "No written days in the last {{days}} days. Write a few, or look back further. Only days with a title or text can be read.",
+    "noDays": "Nothing written in the last {{days}} days. Try looking back further.",
     "needTest": "Take the test first, then compare it with your journal.",
     "consentTitle": "Send these days to your AI?",
     "consentBody_one": "The words of {{count}} written day (title, date and the first 300 characters of the entry) will be sent to {{model}}, the model named in Settings. Nothing else is sent: no birthday, no profile, no test answers.",
@@ -380,8 +380,7 @@
       "provider_invalid": "The AI answered in a form that could not be used. Try again.",
       "generic": "Could not read your journal. Try again."
     },
-    "modelFallback": "your AI model",
-    "window": "Reads the written days from the last {{days}} days."
+    "modelFallback": "your AI model"
   },
   "words": {
     "title": "In your words",
@@ -395,9 +394,9 @@
     "fromDay": "From {{date}}",
     "dayChanged": "From a day you have since changed"
   },
-  "funDisclaimer": "Types, codes and animals are just for fun. They are a playful way to group five scores, they are not scientific, and they are not a label.",
+  "funDisclaimer": "Types, codes and animals are just for fun, not science.",
   "lookBack": {
-    "label": "Journal reading looks back over",
+    "label": "Look back over",
     "option_one": "{{count}} day",
     "option_other": "{{count}} days"
   }

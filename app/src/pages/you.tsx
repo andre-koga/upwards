@@ -270,12 +270,10 @@ export default function YouPage() {
             previous={previous}
             reading={data?.reading ?? null}
             evidence={daily?.evidence ?? null}
-            range={range}
-            onRangeChange={setLookBackRange}
             portraitOnly={isYouMode}
           />
           {!current && (
-            <div className="flex justify-center pt-6">
+            <div className="flex justify-center">
               <Button
                 type="button"
                 variant="outline"
@@ -290,6 +288,7 @@ export default function YouPage() {
               reading={data?.reading ?? null}
               hasTest
               range={range}
+              onRangeChange={setLookBackRange}
               onSaved={reload}
             />
           )}
@@ -297,9 +296,10 @@ export default function YouPage() {
       )}
 
       {latest && (
-        <footer className="space-y-1.5 px-4 pt-6 text-center text-xs leading-relaxed text-muted-foreground">
-          <p>{tp("funDisclaimer")}</p>
-          <p>{tp("disclaimer")}</p>
+        <footer className="px-4 pt-2 text-center text-xs leading-relaxed text-muted-foreground">
+          <p>
+            {tp("funDisclaimer")} {tp("disclaimer")}
+          </p>
         </footer>
       )}
 

@@ -11,17 +11,25 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/ui/segmented-control";
 import { useJournalReading } from "@/hooks/use-journal-reading";
 import type { JournalReading } from "@/lib/db/types";
-import type { LookBackRange } from "@/lib/personality/look-back";
+import {
+  LOOK_BACK_RANGES,
+  type LookBackRange,
+} from "@/lib/personality/look-back";
 import { fromDateString, formatDateShort } from "@/lib/time-utils";
 
 interface JournalReadingPanelProps {
   reading: JournalReading | null;
   /** The self-test has a finished sitting to compare against. */
   hasTest: boolean;
-  /** How many days back the reading looks, set on the You page. */
+  /** How many days back the reading looks. */
   range: LookBackRange;
+  onRangeChange: (range: LookBackRange) => void;
   onSaved: () => void;
 }
 
@@ -33,6 +41,7 @@ export function JournalReadingPanel({
   reading,
   hasTest,
   range,
+  onRangeChange,
   onSaved,
 }: JournalReadingPanelProps) {
   const { t } = useTranslation("personality");
@@ -41,6 +50,8 @@ export function JournalReadingPanel({
 
   const model = ai.state === "connected" ? ai.model : null;
   const isReading = status === "reading";
+  // The window only matters once there is a test and an AI to read with.
+  const showRange = hasTest && ai.state !== "not_connected";
 
   let action: React.ReactNode = null;
   let message: string | null = null;
@@ -73,7 +84,7 @@ export function JournalReadingPanel({
   }
 
   return (
-    <section aria-labelledby="journal-reading" className="px-4 pt-10">
+    <section aria-labelledby="journal-reading" className="px-4">
       <div className="border-t border-border pt-6 text-center">
         <h2
           id="journal-reading"
@@ -84,21 +95,38 @@ export function JournalReadingPanel({
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
           {t("journal.body")}
         </p>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {t("journal.window", { days: range })}
-        </p>
+        {showRange && (
+          <div className="mt-5 space-y-2">
+            <p id="look-back" className="text-xs text-muted-foreground">
+              {t("lookBack.label")}
+            </p>
+            <SegmentedControl
+              aria-labelledby="look-back"
+              value={String(range)}
+              onValueChange={(value) =>
+                onRangeChange(Number(value) as LookBackRange)
+              }
+            >
+              {LOOK_BACK_RANGES.map((days) => (
+                <SegmentedControlItem key={days} value={String(days)}>
+                  {t("lookBack.option", { count: days })}
+                </SegmentedControlItem>
+              ))}
+            </SegmentedControl>
+          </div>
+        )}
+        {message && (
+          <p className="mt-4 text-[0.9375rem] leading-relaxed text-foreground/80">
+            {message}
+          </p>
+        )}
         {reading && (
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-4 text-xs text-muted-foreground">
             {t("journal.span", {
               count: reading.days_read,
               from: formatDateShort(fromDateString(reading.span_start)),
               to: formatDateShort(fromDateString(reading.span_end)),
             })}
-          </p>
-        )}
-        {message && (
-          <p className="mt-4 text-[0.9375rem] leading-relaxed text-foreground/80">
-            {message}
           </p>
         )}
         {status === "error" && errorCode && (
