@@ -20,6 +20,28 @@ function standoutPair(scores: TraitScores): [Trait, Trait] {
 }
 
 /**
+ * Fades the wash in from nothing: the first 2.5rem is exactly the page
+ * background (so the top of the screen never shows a tint), then it eases in
+ * over about ten rem on a smooth curve, with no visible start line.
+ */
+const WASH_FADE = `linear-gradient(to bottom, ${[
+  [0, 0],
+  [2.5, 0],
+  [3.5, 0.02],
+  [4.5, 0.07],
+  [5.5, 0.15],
+  [6.5, 0.27],
+  [7.5, 0.42],
+  [8.5, 0.58],
+  [9.5, 0.73],
+  [10.5, 0.86],
+  [11.5, 0.95],
+  [12.5, 1],
+]
+  .map(([rem, alpha]) => `rgba(0, 0, 0, ${alpha}) ${rem}rem`)
+  .join(", ")})`;
+
+/**
  * The headline: a five-letter code, a one-word sea creature and a colour group,
  * all read from the five scores, then the shape of the scores.
  */
@@ -44,19 +66,21 @@ export function ArchetypeHero({
         {/* The wash belongs to the page: it sits behind everything and runs past
           the end of this section, so the first trait cards sit on it too. It
           reaches up behind the masthead and fades to nothing at its top, so
-          there is no edge for the installed app's status bar to cut across. */}
+          there is no edge for the installed app's status bar to cut across. The
+          top of the page is exactly the plain background. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 -bottom-64 -top-48 -z-10"
+          className="pointer-events-none absolute inset-x-0 -bottom-64 -top-40 -z-10"
           style={{
             background: [
-              `radial-gradient(ellipse 85% 20rem at 50% 15rem, ${groupColor(type.group, 0.34)}, transparent 100%)`,
-              `radial-gradient(ellipse 80% 14rem at 50% 38rem, ${groupColor(type.group, 0.16)}, transparent 100%)`,
-              `linear-gradient(180deg, transparent 0%, ${groupColor(type.group, 0.1)} 25%, transparent 100%)`,
+              `radial-gradient(ellipse 90% 22rem at 50% 14rem, ${groupColor(type.group, 0.3)}, transparent 100%)`,
+              `radial-gradient(ellipse 65% 18rem at 8% 24rem, ${traitColor(tint[0], 0.24)}, transparent 100%)`,
+              `radial-gradient(ellipse 65% 18rem at 94% 32rem, ${traitColor(tint[1], 0.22)}, transparent 100%)`,
+              `radial-gradient(ellipse 80% 14rem at 50% 44rem, ${groupColor(type.group, 0.12)}, transparent 100%)`,
+              `linear-gradient(180deg, transparent 0%, ${groupColor(type.group, 0.08)} 30%, transparent 100%)`,
             ].join(", "),
-            maskImage: "linear-gradient(to bottom, transparent 0, black 8rem)",
-            WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0, black 8rem)",
+            maskImage: WASH_FADE,
+            WebkitMaskImage: WASH_FADE,
           }}
         />
 
