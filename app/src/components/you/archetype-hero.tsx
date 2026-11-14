@@ -1,7 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { RadarChart } from "@/components/you/radar-chart";
 import { TRAITS, type Trait, type TraitScores } from "@/lib/personality/items";
-import { groupColor, seaType } from "@/lib/personality/sea-type";
+import {
+  groupColor,
+  groupLetterColors,
+  seaType,
+} from "@/lib/personality/sea-type";
 import { traitColor } from "@/lib/personality/trait-colors";
 
 interface ArchetypeHeroProps {
@@ -56,6 +60,9 @@ export function ArchetypeHero({
   const tint = standoutPair(self);
   const from = groupColor(type.group);
   const to = traitColor(tint[0]);
+  // The two letters that pick the group (openness, extraversion) each give one
+  // of the wash's two colours.
+  const [reach, company] = groupLetterColors(type, 0.38);
 
   return (
     <>
@@ -73,11 +80,9 @@ export function ArchetypeHero({
           className="pointer-events-none absolute inset-x-0 -bottom-64 -top-40 -z-10"
           style={{
             background: [
-              `radial-gradient(ellipse 90% 22rem at 50% 14rem, ${groupColor(type.group, 0.3)}, transparent 100%)`,
-              `radial-gradient(ellipse 65% 18rem at 8% 24rem, ${traitColor(tint[0], 0.24)}, transparent 100%)`,
-              `radial-gradient(ellipse 65% 18rem at 94% 32rem, ${traitColor(tint[1], 0.22)}, transparent 100%)`,
-              `radial-gradient(ellipse 80% 14rem at 50% 44rem, ${groupColor(type.group, 0.12)}, transparent 100%)`,
-              `linear-gradient(180deg, transparent 0%, ${groupColor(type.group, 0.08)} 30%, transparent 100%)`,
+              `radial-gradient(circle 20rem at 18% 17rem, ${reach}, transparent 100%)`,
+              `radial-gradient(circle 20rem at 82% 17rem, ${company}, transparent 100%)`,
+              `radial-gradient(circle 16rem at 50% 38rem, ${groupColor(type.group, 0.14)}, transparent 100%)`,
             ].join(", "),
             maskImage: WASH_FADE,
             WebkitMaskImage: WASH_FADE,

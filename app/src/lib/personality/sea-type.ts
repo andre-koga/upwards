@@ -41,6 +41,40 @@ export function groupColor(group: SeaGroup, alpha?: number): string {
     : `hsl(var(${GROUP_TOKEN[group]}) / ${alpha})`;
 }
 
+/**
+ * The two letters that pick the group (openness and extraversion) each carry a
+ * colour, chosen so a group's own colour is always one of its two:
+ * reef = X + L (gold), deep = X + Q (lavender), shore = R + L (terracotta),
+ * lagoon = R + Q (green).
+ */
+const REACH_TOKEN: Record<Pole, string> = {
+  high: "--lavender", // X
+  low: "--terracotta", // R
+};
+const COMPANY_TOKEN: Record<Pole, string> = {
+  high: "--gold", // L
+  low: "--green", // Q
+};
+
+function tokenColor(token: string, alpha?: number): string {
+  return alpha === undefined
+    ? `hsl(var(${token}))`
+    : `hsl(var(${token}) / ${alpha})`;
+}
+
+/** The colours of the two letters that choose the group: [openness, extraversion]. */
+export function groupLetterColors(
+  type: SeaType,
+  alpha?: number
+): [string, string] {
+  const pole = (trait: Trait): Pole =>
+    type.letters.find((l) => l.trait === trait)?.pole ?? "low";
+  return [
+    tokenColor(REACH_TOKEN[pole("openness")], alpha),
+    tokenColor(COMPANY_TOKEN[pole("extraversion")], alpha),
+  ];
+}
+
 export const SEA_TYPE_IDS = [
   "dolphin",
   "clownfish",
