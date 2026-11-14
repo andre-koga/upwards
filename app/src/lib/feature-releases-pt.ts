@@ -12,6 +12,14 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-13-sea-types": {
+    title: "Seu bicho do mar em Você",
+    bullets: [
+      "Seu resultado agora tem um código de cinco letras, um bicho do mar de uma palavra, como Golfinho ou Farol, e um de quatro grupos de cor: Recife, Fundo, Costa e Lagoa.",
+      "Quem já fez o teste recebe um tipo na hora, sem precisar refazer.",
+      "Uma nota pequena no fim de Você diz que os tipos são só diversão.",
+    ],
+  },
   "2026-11-13-you-without-an-account": {
     title: "Experimente o Você sem conta",
     bullets: [

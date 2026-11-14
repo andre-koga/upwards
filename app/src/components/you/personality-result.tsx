@@ -264,10 +264,6 @@ export function PersonalityResult({
           {t("words.open", { count: quoteCount })}
         </Link>
       )}
-
-      <p className="px-2 text-center text-xs leading-relaxed text-muted-foreground">
-        {t("disclaimer")}
-      </p>
     </div>
   );
 }

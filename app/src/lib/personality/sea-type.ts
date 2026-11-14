@@ -1,0 +1,177 @@
+import { TRAITS, type Trait, type TraitScores } from "./items";
+
+/**
+ * The playful layer on top of the Big Five (OCEAN). Each trait is read as high
+ * or low, which gives five letters and 2^5 = 32 types. It is for fun, not a
+ * clinical category: the scores underneath are what the test measures.
+ */
+
+export type Pole = "low" | "high";
+
+/** One letter per trait pole, all ten distinct so a code reads unambiguously. */
+export const TRAIT_LETTERS: Record<Trait, Record<Pole, string>> = {
+  openness: { high: "X", low: "R" }, // eXploring / Rooted
+  conscientiousness: { high: "P", low: "F" }, // Planning / Flowing
+  extraversion: { high: "L", low: "Q" }, // Lively / Quiet
+  agreeableness: { high: "W", low: "D" }, // Warm / Direct
+  neuroticism: { high: "T", low: "C" }, // Tidal / Calm
+};
+
+export type SeaGroup = "reef" | "deep" | "shore" | "lagoon";
+
+export const SEA_GROUPS: readonly SeaGroup[] = [
+  "reef",
+  "deep",
+  "shore",
+  "lagoon",
+];
+
+/** The theme token for each group's colour. */
+const GROUP_TOKEN: Record<SeaGroup, string> = {
+  reef: "--gold",
+  deep: "--lavender",
+  shore: "--terracotta",
+  lagoon: "--green",
+};
+
+/** A CSS colour for a group, from theme tokens, with an optional alpha 0-1. */
+export function groupColor(group: SeaGroup, alpha?: number): string {
+  return alpha === undefined
+    ? `hsl(var(${GROUP_TOKEN[group]}))`
+    : `hsl(var(${GROUP_TOKEN[group]}) / ${alpha})`;
+}
+
+export const SEA_TYPE_IDS = [
+  "dolphin",
+  "clownfish",
+  "orca",
+  "barracuda",
+  "otter",
+  "angelfish",
+  "marlin",
+  "triggerfish",
+  "whale",
+  "seahorse",
+  "nautilus",
+  "moray",
+  "ray",
+  "jellyfish",
+  "octopus",
+  "anglerfish",
+  "lighthouse",
+  "sandpiper",
+  "anchor",
+  "pufferfish",
+  "seal",
+  "starfish",
+  "gull",
+  "crab",
+  "turtle",
+  "hermit",
+  "limpet",
+  "urchin",
+  "manatee",
+  "anemone",
+  "flounder",
+  "stonefish",
+] as const;
+
+export type SeaTypeId = (typeof SEA_TYPE_IDS)[number];
+
+/**
+ * The group comes from openness and extraversion (how far you reach, and how
+ * much of that is shared with others). Inside a group, the eight names follow
+ * conscientiousness, agreeableness and neuroticism in that order, high first.
+ */
+const NAMES: Record<SeaGroup, readonly SeaTypeId[]> = {
+  // C A N:  +++      ++-      +-+      +--      -++      -+-      --+      ---
+  reef: [
+    "clownfish",
+    "dolphin",
+    "barracuda",
+    "orca",
+    "angelfish",
+    "otter",
+    "triggerfish",
+    "marlin",
+  ],
+  deep: [
+    "seahorse",
+    "whale",
+    "moray",
+    "nautilus",
+    "jellyfish",
+    "ray",
+    "anglerfish",
+    "octopus",
+  ],
+  shore: [
+    "sandpiper",
+    "lighthouse",
+    "pufferfish",
+    "anchor",
+    "starfish",
+    "seal",
+    "crab",
+    "gull",
+  ],
+  lagoon: [
+    "hermit",
+    "turtle",
+    "urchin",
+    "limpet",
+    "anemone",
+    "manatee",
+    "stonefish",
+    "flounder",
+  ],
+};
+
+export interface SeaLetter {
+  trait: Trait;
+  pole: Pole;
+  letter: string;
+}
+
+export interface SeaType {
+  id: SeaTypeId;
+  group: SeaGroup;
+  /** The five letters in OCEAN order, such as "XPLWC". */
+  code: string;
+  letters: SeaLetter[];
+}
+
+/** 50 is the line: a score at or above it reads as high. */
+function poleOf(score: number): Pole {
+  return score >= 50 ? "high" : "low";
+}
+
+function groupOf(openness: Pole, extraversion: Pole): SeaGroup {
+  if (openness === "high") return extraversion === "high" ? "reef" : "deep";
+  return extraversion === "high" ? "shore" : "lagoon";
+}
+
+/** The type for a set of trait scores. Always one of the 32. */
+export function seaType(scores: TraitScores): SeaType {
+  const letters: SeaLetter[] = TRAITS.map((trait) => {
+    const pole = poleOf(scores[trait]);
+    return { trait, pole, letter: TRAIT_LETTERS[trait][pole] };
+  });
+  const poles = Object.fromEntries(
+    letters.map((l) => [l.trait, l.pole])
+  ) as Record<Trait, Pole>;
+
+  const group = groupOf(poles.openness, poles.extraversion);
+  // Index 0 is C+A+N+, then counting down in binary: low sets a bit.
+  const index =
+    (poles.conscientiousness === "low" ? 4 : 0) +
+    (poles.agreeableness === "low" ? 2 : 0) +
+    (poles.neuroticism === "low" ? 1 : 0);
+
+  return {
+    id: NAMES[group][index],
+    group,
+    code: letters.map((l) => l.letter).join(""),
+    letters,
+  };
+}
