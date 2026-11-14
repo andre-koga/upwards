@@ -3,8 +3,11 @@ import { band, type Band } from "@/lib/personality/bands";
 import { TRAITS, type Trait } from "@/lib/personality/items";
 import { getQuestion } from "./bank";
 
-/** Answers needed on a trait before its choices are compared with the test. */
-export const DRIFT_MIN_ANSWERS = 10;
+/**
+ * Answers needed on a trait before its choices are shown and compared with the
+ * test. One is enough: the page says that a few answers are a rough guide.
+ */
+export const DRIFT_MIN_ANSWERS = 1;
 
 /** A mean lean beyond this, either way, reads as leaning that way. */
 const LEAN_FROM = 0.25;

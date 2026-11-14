@@ -31,14 +31,12 @@
   "choices": {
     "heading": "Your choices",
     "intro": "Which way your daily answers lean, beside what the test said. This is kept apart from the test and never changes it.",
-    "progress_one": "{{count}} of {{needed}} answers",
-    "progress_other": "{{count}} of {{needed}} answers",
     "trackAria": "{{trait}}: your choices at {{choices}} out of 100, your test at {{test}} out of 100.",
     "drift": {
       "higher": "Your choices lean toward “{{word}}” more than your test said.",
       "lower": "Your choices lean toward “{{word}}” more than your test said."
     },
-    "note": "The line marks your test, the dot your choices. They appear after 10 answers on a trait.",
+    "note": "The line marks your test, the dot your choices. A few answers are less accurate than many, so treat early dots as a rough guide.",
     "answers_one": "{{count}} answer",
     "answers_other": "{{count}} answers"
   }

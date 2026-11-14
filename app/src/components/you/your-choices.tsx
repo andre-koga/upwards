@@ -34,22 +34,14 @@ function ChoicesTrack({
         choices: position(evidence.lean),
         test: testScore,
       })
-    : t("choices.progress", {
-        count: evidence.count,
-        needed: DRIFT_MIN_ANSWERS,
-      });
+    : t("choices.answers", { count: evidence.count });
 
   return (
     <li className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="text-[0.9375rem] font-medium text-foreground">{name}</h3>
         <p className="text-xs tabular-nums text-muted-foreground">
-          {enough
-            ? t("choices.answers", { count: evidence.count })
-            : t("choices.progress", {
-                count: evidence.count,
-                needed: DRIFT_MIN_ANSWERS,
-              })}
+          {t("choices.answers", { count: evidence.count })}
         </p>
       </div>
 
