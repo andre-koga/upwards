@@ -3,7 +3,7 @@ import { RadarChart } from "@/components/you/radar-chart";
 import { TRAITS, type Trait, type TraitScores } from "@/lib/personality/items";
 import {
   groupColor,
-  groupLetterColors,
+  groupPairColors,
   seaType,
 } from "@/lib/personality/sea-type";
 import { traitColor } from "@/lib/personality/trait-colors";
@@ -60,9 +60,8 @@ export function ArchetypeHero({
   const tint = standoutPair(self);
   const from = groupColor(type.group);
   const to = traitColor(tint[0]);
-  // The two letters that pick the group (openness, extraversion) each give one
-  // of the wash's two colours.
-  const [reach, company] = groupLetterColors(type, 0.62);
+  // Each group has its own pair of wash colours: one circle above the other.
+  const [upper, lower] = groupPairColors(type.group, 0.32);
 
   return (
     <>
@@ -80,9 +79,8 @@ export function ArchetypeHero({
           className="pointer-events-none absolute inset-x-0 -bottom-64 -top-40 -z-10"
           style={{
             background: [
-              `radial-gradient(circle 15rem at 22% 25rem, ${reach} 0%, ${reach} 40%, transparent 100%)`,
-              `radial-gradient(circle 15rem at 78% 29rem, ${company} 0%, ${company} 40%, transparent 100%)`,
-              `radial-gradient(circle 18rem at 50% 40rem, ${groupColor(type.group, 0.26)}, transparent 100%)`,
+              `radial-gradient(circle 24rem at 50% 20rem, ${upper} 0%, transparent 100%)`,
+              `radial-gradient(circle 26rem at 50% 38rem, ${lower} 0%, transparent 100%)`,
             ].join(", "),
             maskImage: WASH_FADE,
             WebkitMaskImage: WASH_FADE,

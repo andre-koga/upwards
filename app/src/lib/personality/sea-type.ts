@@ -46,18 +46,18 @@ export function groupColor(group: SeaGroup, alpha?: number): string {
 }
 
 /**
- * The two letters that pick the group (openness and extraversion) each carry a
- * colour, chosen so a group's own colour is always one of its two:
- * reef = O + E (gold), deep = O + I (lavender), shore = G + E (terracotta),
- * lagoon = G + I (green).
+ * Each group has its own pair of colours for the portrait wash, picked to
+ * match how the group feels: [upper, lower].
+ * - reef: sunlit coral, bright and lively
+ * - deep: twilight water, far out and quiet
+ * - shore: dusk on the sand, grounded and warm
+ * - lagoon: clear shallows, calm and still
  */
-const REACH_TOKEN: Record<Pole, string> = {
-  high: "--lavender", // O
-  low: "--terracotta", // G
-};
-const COMPANY_TOKEN: Record<Pole, string> = {
-  high: "--gold", // E
-  low: "--green", // I
+const GROUP_PAIR: Record<SeaGroup, readonly [string, string]> = {
+  reef: ["--gold", "--terracotta"],
+  deep: ["--lavender", "--sky"],
+  shore: ["--terracotta", "--lavender"],
+  lagoon: ["--green", "--sky"],
 };
 
 function tokenColor(token: string, alpha?: number): string {
@@ -66,17 +66,13 @@ function tokenColor(token: string, alpha?: number): string {
     : `hsl(var(${token}) / ${alpha})`;
 }
 
-/** The colours of the two letters that choose the group: [openness, extraversion]. */
-export function groupLetterColors(
-  type: SeaType,
+/** The two colours of a group's wash, [upper, lower], with an optional alpha. */
+export function groupPairColors(
+  group: SeaGroup,
   alpha?: number
 ): [string, string] {
-  const pole = (trait: Trait): Pole =>
-    type.letters.find((l) => l.trait === trait)?.pole ?? "low";
-  return [
-    tokenColor(REACH_TOKEN[pole("openness")], alpha),
-    tokenColor(COMPANY_TOKEN[pole("extraversion")], alpha),
-  ];
+  const [upper, lower] = GROUP_PAIR[group];
+  return [tokenColor(upper, alpha), tokenColor(lower, alpha)];
 }
 
 export const SEA_TYPE_IDS = [
