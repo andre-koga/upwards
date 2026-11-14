@@ -261,10 +261,6 @@ export default function YouPage() {
         </CenteredScreen>
       )}
 
-      {latest && daily && (
-        <DailyQuestion key={daily.date} data={daily} onChanged={reloadDaily} />
-      )}
-
       {latest && (
         <>
           <PersonalityResult
@@ -304,6 +300,12 @@ export default function YouPage() {
         <footer className="px-4 pt-2 text-center text-xs leading-relaxed text-muted-foreground">
           <p>{tp("funDisclaimer")}</p>
         </footer>
+      )}
+
+      {/* Fixed, so it stays last: an earlier sibling would still take a
+          space-y slot and open a gap under the masthead. */}
+      {latest && daily && (
+        <DailyQuestion key={daily.date} data={daily} onChanged={reloadDaily} />
       )}
 
       <AlertDialog open={confirmRetake} onOpenChange={setConfirmRetake}>

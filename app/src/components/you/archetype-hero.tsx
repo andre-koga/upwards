@@ -62,7 +62,7 @@ export function ArchetypeHero({
     <>
       <section
         aria-labelledby="your-type"
-        className="relative -mx-4 px-4 pb-8 pt-8 text-center"
+        className="relative -mx-4 px-4 pb-8 pt-3 text-center"
       >
         {/* The wash belongs to the page: it sits behind everything and runs past
           the end of this section, so the first trait cards sit on it too. It
@@ -83,7 +83,10 @@ export function ArchetypeHero({
         />
 
         <div className="relative">
-          <AnimalPicture id={type.id} className="mx-auto mt-4 size-36" />
+          <AnimalPicture
+            id={type.id}
+            className="mx-auto h-auto max-h-48 w-48"
+          />
 
           <h2
             id="your-type"
