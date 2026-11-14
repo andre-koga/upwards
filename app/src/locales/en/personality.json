@@ -393,6 +393,14 @@
     "fromDay": "From {{date}}",
     "dayChanged": "From a day you have since changed"
   },
+  "types": {
+    "title": "All the types",
+    "subtitle": "Every result the test can give",
+    "open": "See all 32 types",
+    "back": "Back to You",
+    "you": "You",
+    "codeLabel": "Code"
+  },
   "funDisclaimer": "Types, codes and animals are just for fun, not science.",
   "lookBack": {
     "label": "Look back over",

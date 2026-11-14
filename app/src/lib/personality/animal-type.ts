@@ -167,6 +167,28 @@ function groupOf(openness: Pole, extraversion: Pole): AnimalGroup {
   return extraversion === "high" ? "farm" : "woodland";
 }
 
+/**
+ * All 32 types, habitat by habitat, in the order of the names above. Each one
+ * is read back through `animalType`, so a listing can never disagree with what
+ * the test would give.
+ */
+export function allAnimalTypes(): AnimalType[] {
+  return ANIMAL_GROUPS.flatMap((group) =>
+    NAMES[group].map((_, index) => {
+      const open = group === "savanna" || group === "night";
+      const extravert = group === "savanna" || group === "farm";
+      // The same bits `animalType` reads: low sets a bit, high first.
+      return animalType({
+        openness: open ? 75 : 25,
+        conscientiousness: index & 4 ? 25 : 75,
+        extraversion: extravert ? 75 : 25,
+        agreeableness: index & 2 ? 25 : 75,
+        neuroticism: index & 1 ? 25 : 75,
+      });
+    })
+  );
+}
+
 /** The type for a set of trait scores. Always one of the 32. */
 export function animalType(scores: TraitScores): AnimalType {
   const letters: AnimalLetter[] = TRAITS.map((trait) => {

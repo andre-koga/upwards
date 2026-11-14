@@ -12,6 +12,14 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-14-all-types": {
+    title: "Todos os tipos, num só lugar",
+    bullets: [
+      "Um novo botão em Você abre uma página com os 32 animais, as cinco letras de cada um e como cada um é.",
+      "A página explica o que cada letra significa e marca o seu tipo.",
+      "O Vaga-lume agora tem sua própria imagem, a primeira do conjunto.",
+    ],
+  },
   "2026-11-14-type-header": {
     title: "Um começo mais limpo para o seu tipo",
     bullets: [

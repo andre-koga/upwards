@@ -6,6 +6,7 @@ import {
   ANIMAL_GROUPS,
   ANIMAL_TYPE_IDS,
   TRAIT_LETTERS,
+  allAnimalTypes,
   animalType,
   type AnimalGroup,
 } from "./animal-type";
@@ -93,6 +94,30 @@ describe("animalType", () => {
   it("is stable: the same scores always give the same type", () => {
     const scores = flat({ openness: 63, neuroticism: 12 });
     expect(animalType(scores)).toEqual(animalType({ ...scores }));
+  });
+});
+
+describe("allAnimalTypes", () => {
+  it("lists all 32, each with its own name and code, eight to a habitat", () => {
+    const types = allAnimalTypes();
+    expect(types).toHaveLength(32);
+    expect(new Set(types.map((t) => t.id))).toEqual(new Set(ANIMAL_TYPE_IDS));
+    expect(new Set(types.map((t) => t.code)).size).toBe(32);
+    for (const group of ANIMAL_GROUPS) {
+      expect(types.filter((t) => t.group === group)).toHaveLength(8);
+    }
+  });
+
+  it("matches what the test gives for every combination", () => {
+    const listed = new Map(allAnimalTypes().map((t) => [t.code, t.id]));
+    for (const scores of allCombinations()) {
+      const type = animalType(scores);
+      expect(listed.get(type.code)).toBe(type.id);
+    }
+  });
+
+  it("keeps the habitats in order, then the names in order", () => {
+    expect(allAnimalTypes().map((t) => t.id)).toEqual([...ANIMAL_TYPE_IDS]);
   });
 });
 

@@ -397,6 +397,14 @@
     "fromDay": "De {{date}}",
     "dayChanged": "De um dia que você mudou depois"
   },
+  "types": {
+    "title": "Todos os tipos",
+    "subtitle": "Todos os resultados que o teste pode dar",
+    "open": "Ver os 32 tipos",
+    "back": "Voltar para Você",
+    "you": "Você",
+    "codeLabel": "Código"
+  },
   "funDisclaimer": "Tipos, códigos e bichos são só diversão, não ciência.",
   "lookBack": {
     "label": "Olhar os últimos",

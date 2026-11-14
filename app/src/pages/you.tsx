@@ -1,5 +1,6 @@
 import { useCallback, useLayoutEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { DailyQuestion } from "@/components/you/daily-question";
 import { JournalReadingPanel } from "@/components/you/journal-reading-panel";
 import { PersonalityResult } from "@/components/you/personality-result";
@@ -273,8 +274,8 @@ export default function YouPage() {
             evidence={daily?.evidence ?? null}
             portraitOnly={isYouMode}
           />
-          {!current && (
-            <div className="flex justify-center">
+          <div className="flex flex-wrap justify-center gap-2">
+            {!current && (
               <Button
                 type="button"
                 variant="outline"
@@ -282,8 +283,11 @@ export default function YouPage() {
               >
                 {tp("test.retake")}
               </Button>
-            </div>
-          )}
+            )}
+            <Button asChild variant="outline">
+              <Link to="/you/types">{tp("types.open")}</Link>
+            </Button>
+          </div>
           {!isYouMode && (
             <JournalReadingPanel
               reading={data?.reading ?? null}
