@@ -9,9 +9,6 @@ interface ArchetypeHeroProps {
   journal: TraitScores | null;
   last: TraitScores | null;
   behaviour: Partial<Record<Trait, number>> | null;
-  takenOn: string | null;
-  /** Days the journal reading covered, when a reading exists. */
-  daysRead: number | null;
 }
 
 /** The two traits furthest from the middle; they tint the radar shape. */
@@ -31,8 +28,6 @@ export function ArchetypeHero({
   journal,
   last,
   behaviour,
-  takenOn,
-  daysRead,
 }: ArchetypeHeroProps) {
   const { t } = useTranslation("personality");
   const type = seaType(self);
@@ -42,24 +37,9 @@ export function ArchetypeHero({
 
   return (
     <>
-      {(takenOn || daysRead !== null) && (
-        <ul className="mb-4 flex flex-wrap justify-center gap-2">
-          {takenOn && (
-            <li className="rounded-full border border-foreground/15 bg-background/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
-              {t("result.takenOn", { date: takenOn })}
-            </li>
-          )}
-          {daysRead !== null && (
-            <li className="rounded-full border border-foreground/15 bg-background/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
-              {t("result.journalPill", { count: daysRead })}
-            </li>
-          )}
-        </ul>
-      )}
-
       <section
         aria-labelledby="your-type"
-        className="relative -mx-4 px-4 pb-8 pt-10 text-center"
+        className="relative -mx-4 -mt-2 px-4 pb-8 pt-10 text-center"
       >
         {/* The wash belongs to the page: it sits behind everything and runs past
           the end of this section, so the first trait cards sit on it too. Its
