@@ -41,165 +41,171 @@ export function ArchetypeHero({
   const to = traitColor(tint[0]);
 
   return (
-    <section
-      aria-labelledby="your-type"
-      className="relative -mx-4 -mt-8 px-4 pb-8 pt-14 text-center"
-    >
-      {/* The wash belongs to the page: it sits behind everything and runs past
-          the end of this section, so the first trait cards sit on it too. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 -bottom-64 top-0 -z-10"
-        style={{
-          background: [
-            `radial-gradient(ellipse 90% 40% at 50% 0%, ${groupColor(type.group, 0.34)}, transparent 100%)`,
-            `radial-gradient(ellipse 80% 30% at 50% 62%, ${groupColor(type.group, 0.18)}, transparent 100%)`,
-            `linear-gradient(180deg, ${groupColor(type.group, 0.2)} 0%, ${groupColor(type.group, 0.08)} 50%, transparent 100%)`,
-          ].join(", "),
-        }}
-      />
-
-      <div className="relative">
-        {(takenOn || daysRead !== null) && (
-          <ul className="mb-5 flex flex-wrap justify-center gap-2">
-            {takenOn && (
-              <li className="rounded-full border border-foreground/15 bg-background/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
-                {t("result.takenOn", { date: takenOn })}
-              </li>
-            )}
-            {daysRead !== null && (
-              <li className="rounded-full border border-foreground/15 bg-background/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
-                {t("result.journalPill", { count: daysRead })}
-              </li>
-            )}
-          </ul>
-        )}
-        <p className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {t("type.eyebrow")}
-        </p>
-
-        <p className="mt-3">
-          <span className="sr-only">
-            {t("type.codeLabel")}: {type.code}
-          </span>
-          <span aria-hidden="true" className="inline-flex gap-1.5">
-            {type.letters.map(({ trait, letter }) => (
-              <span
-                key={trait}
-                className="flex size-10 items-center justify-center rounded-xl border font-display text-[1.375rem] leading-none text-foreground"
-                style={{
-                  borderColor: traitColor(trait, 0.55),
-                  background: traitColor(trait, 0.2),
-                }}
-              >
-                {letter}
-              </span>
-            ))}
-          </span>
-        </p>
-
-        <h2
-          id="your-type"
-          className="mx-auto mt-4 max-w-[18rem] font-display text-[2.5rem] italic leading-[1.1] tracking-[-0.02em] text-foreground"
-        >
-          {t(`type.names.${type.id}.name`)}
-        </h2>
-
-        <p
-          className="mx-auto mt-3 flex w-fit items-center gap-2 rounded-full border bg-background/60 px-3 py-1 text-[0.8125rem] backdrop-blur-sm"
-          style={{ borderColor: groupColor(type.group, 0.55) }}
-        >
-          <span
-            aria-hidden="true"
-            className="size-2.5 rounded-full"
-            style={{ background: groupColor(type.group) }}
-          />
-          <span className="font-medium text-foreground">
-            {t(`type.groups.${type.group}.name`)}
-          </span>
-          <span className="text-muted-foreground">
-            {t(`type.groups.${type.group}.tagline`)}
-          </span>
-        </p>
-
-        <p className="mx-auto mt-4 max-w-[22rem] font-display text-[1.0625rem] leading-relaxed text-foreground/80">
-          {t(`type.names.${type.id}.blurb`)}
-        </p>
-
-        <div className="mt-4">
-          <p className="text-xs text-muted-foreground">{t("type.letters")}</p>
-          <ul className="mt-1.5 flex flex-wrap justify-center gap-2">
-            {type.letters.map(({ trait, pole, letter }) => (
-              <li
-                key={trait}
-                className="flex items-center gap-1.5 rounded-full border bg-background/60 px-3 py-1 text-[0.8125rem] backdrop-blur-sm"
-                style={{ borderColor: traitColor(trait, 0.5) }}
-              >
-                <span
-                  aria-hidden="true"
-                  className="size-2.5 rounded-full"
-                  style={{ background: traitColor(trait) }}
-                />
-                <span className="font-medium">{letter}</span>
-                {t(`traits.${trait}.${pole}`)}
-                <span className="tabular-nums text-muted-foreground">
-                  {self[trait]}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="mt-6">
-          <RadarChart
-            self={self}
-            journal={journal}
-            last={last}
-            behaviour={behaviour}
-            tint={tint}
-          />
-        </div>
-
-        <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
-          <li className="flex items-center gap-1.5">
-            <span
-              aria-hidden="true"
-              className="size-2.5 rounded-full"
-              style={{
-                background: `linear-gradient(135deg, ${from}, ${to})`,
-              }}
-            />
-            {t("result.you")}
-          </li>
-          {journal && (
-            <li className="flex items-center gap-1.5">
-              <span
-                aria-hidden="true"
-                className="h-0 w-4 border-t-2 border-dashed border-foreground"
-              />
-              {t("result.journal")}
+    <>
+      {(takenOn || daysRead !== null) && (
+        <ul className="mb-4 flex flex-wrap justify-center gap-2">
+          {takenOn && (
+            <li className="rounded-full border border-foreground/15 bg-background/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
+              {t("result.takenOn", { date: takenOn })}
             </li>
           )}
-          {behaviour && (
-            <li className="flex items-center gap-1.5">
-              <span
-                aria-hidden="true"
-                className="size-2 rotate-45 border-2 border-foreground"
-              />
-              {t("result.behaviour")}
-            </li>
-          )}
-          {last && (
-            <li className="flex items-center gap-1.5">
-              <span
-                aria-hidden="true"
-                className="h-0 w-4 border-t-2 border-dotted border-muted-foreground/70"
-              />
-              {t("result.lastTime")}
+          {daysRead !== null && (
+            <li className="rounded-full border border-foreground/15 bg-background/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
+              {t("result.journalPill", { count: daysRead })}
             </li>
           )}
         </ul>
-      </div>
-    </section>
+      )}
+
+      <section
+        aria-labelledby="your-type"
+        className="relative -mx-4 px-4 pb-8 pt-10 text-center"
+      >
+        {/* The wash belongs to the page: it sits behind everything and runs past
+          the end of this section, so the first trait cards sit on it too. Its
+          rounded top edge starts below the pills, on the plain background, so
+          the installed app's status bar never cuts it off. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -bottom-64 top-0 -z-10 rounded-t-[2rem] border-t"
+          style={{
+            borderColor: groupColor(type.group, 0.4),
+            background: [
+              `radial-gradient(ellipse 90% 40% at 50% 0%, ${groupColor(type.group, 0.34)}, transparent 100%)`,
+              `radial-gradient(ellipse 80% 30% at 50% 62%, ${groupColor(type.group, 0.18)}, transparent 100%)`,
+              `linear-gradient(180deg, ${groupColor(type.group, 0.2)} 0%, ${groupColor(type.group, 0.08)} 50%, transparent 100%)`,
+            ].join(", "),
+          }}
+        />
+
+        <div className="relative">
+          <p className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            {t("type.eyebrow")}
+          </p>
+
+          <p className="mt-3">
+            <span className="sr-only">
+              {t("type.codeLabel")}: {type.code}
+            </span>
+            <span aria-hidden="true" className="inline-flex gap-1.5">
+              {type.letters.map(({ trait, letter }) => (
+                <span
+                  key={trait}
+                  className="flex size-10 items-center justify-center rounded-xl border font-display text-[1.375rem] leading-none text-foreground"
+                  style={{
+                    borderColor: traitColor(trait, 0.55),
+                    background: traitColor(trait, 0.2),
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </span>
+          </p>
+
+          <h2
+            id="your-type"
+            className="mx-auto mt-4 max-w-[18rem] font-display text-[2.5rem] italic leading-[1.1] tracking-[-0.02em] text-foreground"
+          >
+            {t(`type.names.${type.id}.name`)}
+          </h2>
+
+          <p
+            className="mx-auto mt-3 flex w-fit items-center gap-2 rounded-full border bg-background/60 px-3 py-1 text-[0.8125rem] backdrop-blur-sm"
+            style={{ borderColor: groupColor(type.group, 0.55) }}
+          >
+            <span
+              aria-hidden="true"
+              className="size-2.5 rounded-full"
+              style={{ background: groupColor(type.group) }}
+            />
+            <span className="font-medium text-foreground">
+              {t(`type.groups.${type.group}.name`)}
+            </span>
+            <span className="text-muted-foreground">
+              {t(`type.groups.${type.group}.tagline`)}
+            </span>
+          </p>
+
+          <p className="mx-auto mt-4 max-w-[22rem] font-display text-[1.0625rem] leading-relaxed text-foreground/80">
+            {t(`type.names.${type.id}.blurb`)}
+          </p>
+
+          <div className="mt-4">
+            <p className="text-xs text-muted-foreground">{t("type.letters")}</p>
+            <ul className="mt-1.5 flex flex-wrap justify-center gap-2">
+              {type.letters.map(({ trait, pole, letter }) => (
+                <li
+                  key={trait}
+                  className="flex items-center gap-1.5 rounded-full border bg-background/60 px-3 py-1 text-[0.8125rem] backdrop-blur-sm"
+                  style={{ borderColor: traitColor(trait, 0.5) }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="size-2.5 rounded-full"
+                    style={{ background: traitColor(trait) }}
+                  />
+                  <span className="font-medium">{letter}</span>
+                  {t(`traits.${trait}.${pole}`)}
+                  <span className="tabular-nums text-muted-foreground">
+                    {self[trait]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-6">
+            <RadarChart
+              self={self}
+              journal={journal}
+              last={last}
+              behaviour={behaviour}
+              tint={tint}
+            />
+          </div>
+
+          <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
+            <li className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="size-2.5 rounded-full"
+                style={{
+                  background: `linear-gradient(135deg, ${from}, ${to})`,
+                }}
+              />
+              {t("result.you")}
+            </li>
+            {journal && (
+              <li className="flex items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className="h-0 w-4 border-t-2 border-dashed border-foreground"
+                />
+                {t("result.journal")}
+              </li>
+            )}
+            {behaviour && (
+              <li className="flex items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className="size-2 rotate-45 border-2 border-foreground"
+                />
+                {t("result.behaviour")}
+              </li>
+            )}
+            {last && (
+              <li className="flex items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className="h-0 w-4 border-t-2 border-dotted border-muted-foreground/70"
+                />
+                {t("result.lastTime")}
+              </li>
+            )}
+          </ul>
+        </div>
+      </section>
+    </>
   );
 }
