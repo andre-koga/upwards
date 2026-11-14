@@ -115,7 +115,7 @@ export function ArchetypeHero({
 
           <h2
             id="your-type"
-            className="mx-auto mt-3 max-w-[18rem] font-display text-[2.5rem] italic leading-[1.1] tracking-[-0.02em] text-foreground"
+            className="mx-auto mt-3 max-w-[20rem] font-display text-[3.5rem] italic leading-[1.05] tracking-[-0.02em] text-foreground"
           >
             {t(`type.names.${type.id}.name`)}
           </h2>
@@ -126,7 +126,7 @@ export function ArchetypeHero({
             </span>
             <span
               aria-hidden="true"
-              className="inline-flex gap-2.5 text-sm font-medium text-muted-foreground"
+              className="inline-flex gap-2 font-display text-[1.375rem] leading-none text-muted-foreground"
             >
               {type.letters.map(({ trait, letter }) => (
                 <span key={trait}>{letter}</span>
