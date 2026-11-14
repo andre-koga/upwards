@@ -48,16 +48,16 @@ export function groupColor(group: SeaGroup, alpha?: number): string {
 /**
  * The two letters that pick the group (openness and extraversion) each carry a
  * colour, chosen so a group's own colour is always one of its two:
- * reef = X + L (gold), deep = X + Q (lavender), shore = R + L (terracotta),
- * lagoon = R + Q (green).
+ * reef = O + E (gold), deep = O + I (lavender), shore = G + E (terracotta),
+ * lagoon = G + I (green).
  */
 const REACH_TOKEN: Record<Pole, string> = {
-  high: "--lavender", // X
-  low: "--terracotta", // R
+  high: "--lavender", // O
+  low: "--terracotta", // G
 };
 const COMPANY_TOKEN: Record<Pole, string> = {
-  high: "--gold", // L
-  low: "--green", // Q
+  high: "--gold", // E
+  low: "--green", // I
 };
 
 function tokenColor(token: string, alpha?: number): string {
