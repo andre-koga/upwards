@@ -19,20 +19,6 @@ export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
       "Quem não tem conta também conta nos resultados da pergunta do dia, e entrar depois traz seu retrato e suas respostas para a sua conta.",
     ],
   },
-  "2026-11-13-you-without-an-account": {
-    title: "Experimente o Você sem conta",
-    bullets: [
-      "Em you.upwards.live você pode fazer o teste e responder à pergunta do dia sem entrar. Seu retrato fica no seu celular.",
-      "Quem não tem conta também conta nos resultados da pergunta do dia, e entrar depois traz seu retrato e suas respostas para a sua conta.",
-    ],
-  },
-  "2026-11-13-you-without-an-account": {
-    title: "Experimente o Você sem conta",
-    bullets: [
-      "Em you.upwards.live você pode fazer o teste e responder à pergunta do dia sem entrar. Seu retrato fica no seu celular.",
-      "Quem não tem conta também conta nos resultados da pergunta do dia, e entrar depois traz seu retrato e suas respostas para a sua conta.",
-    ],
-  },
   "2026-11-13-daily-question": {
     title: "Uma pergunta por dia em Você",
     bullets: [

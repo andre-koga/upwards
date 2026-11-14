@@ -21,24 +21,6 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     ],
   },
   {
-    id: "2026-11-13-you-without-an-account",
-    date: "2026-11-13",
-    title: "Try You without an account",
-    bullets: [
-      "On you.upwards.live you can take the test and answer the daily question without signing in. Your portrait stays on your phone.",
-      "Guests count in the daily question's results too, and signing in later brings your portrait and answers into your account.",
-    ],
-  },
-  {
-    id: "2026-11-13-you-without-an-account",
-    date: "2026-11-13",
-    title: "Try You without an account",
-    bullets: [
-      "On you.upwards.live you can take the test and answer the daily question without signing in. Your portrait stays on your phone.",
-      "Guests count in the daily question's results too, and signing in later brings your portrait and answers into your account.",
-    ],
-  },
-  {
     id: "2026-11-13-daily-question",
     date: "2026-11-13",
     title: "A question a day on You",
