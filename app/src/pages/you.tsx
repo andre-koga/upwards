@@ -58,9 +58,9 @@ function YouLayout({
             <>
               <span
                 aria-hidden="true"
-                className="my-3 h-px w-10 bg-foreground/25"
+                className="my-4 h-px w-10 bg-foreground/25"
               />
-              <p className="font-display text-[1.0625rem] italic leading-relaxed text-muted-foreground">
+              <p className="max-w-[19rem] font-display text-[1.0625rem] italic leading-relaxed text-muted-foreground">
                 {subtitle}
               </p>
             </>
@@ -205,8 +205,8 @@ export default function YouPage() {
   const previous = data?.completed[1] ?? null;
   const current = data?.current ?? null;
 
-  // The quiet line under the title: when the test was taken, and how many days
-  // of journal the reading covered.
+  // The quiet line under the title: when the test was taken, what it is based
+  // on, and how many days of journal the reading covered.
   const subtitle = latest
     ? [
         latest.completed_at
@@ -214,6 +214,7 @@ export default function YouPage() {
               date: formatDateShort(new Date(latest.completed_at)),
             })
           : null,
+        tp("result.basedOn"),
         data?.reading
           ? tp("result.journalPill", { count: data.reading.days_read })
           : null,

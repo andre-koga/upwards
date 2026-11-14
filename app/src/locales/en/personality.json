@@ -91,7 +91,6 @@
     }
   },
   "type": {
-    "eyebrow": "Your type",
     "codeLabel": "Your code",
     "groupLabel": "Group",
     "letters": "What the letters mean",
@@ -350,7 +349,8 @@
     "journalPill_one": "Journal · {{count}} day",
     "journalPill_other": "Journal · {{count}} days",
     "choices": "Your choices",
-    "trackAriaChoices": "Your choices {{choices}}."
+    "trackAriaChoices": "Your choices {{choices}}.",
+    "basedOn": "Based on the OCEAN test"
   },
   "journal": {
     "heading": "What your journal reads as",

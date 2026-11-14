@@ -12,6 +12,15 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-14-type-header",
+    date: "2026-11-14",
+    title: "A cleaner start to your type",
+    bullets: [
+      "Your animal's name now comes first, with your five letters small beneath it, instead of five big boxes above it.",
+      "The habitat is plain text now, so it no longer looks like one of your trait pills.",
+    ],
+  },
+  {
     id: "2026-11-14-choices-on-cards",
     date: "2026-11-14",
     title: "Your daily answers, on your traits",
