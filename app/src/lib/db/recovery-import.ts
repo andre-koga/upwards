@@ -1,3 +1,4 @@
+import { isYouMode } from "@/lib/app-mode";
 import { getCachedUserId } from "@/lib/supabase";
 import { syncEngine } from "@/lib/sync";
 import { logError } from "@/lib/error-utils";
@@ -31,13 +32,24 @@ function notify() {
   for (const listener of listeners) listener();
 }
 
+function isOwnBundle(bundle: RecoveryBundle, userId: string): boolean {
+  if (bundle.source_user_id === userId) return true;
+  return (
+    isYouMode &&
+    bundle.source_user_id === null &&
+    bundle.reason === "unowned_data"
+  );
+}
+
 /**
  * Imports one recovery bundle into the signed-in account.
  *
  * Without `savedAt`, picks the oldest unimported bundle the signed-in account
  * owned: the automatic path. Data created signed out (or by another account)
  * only imports when the user picks it on Sync issues, because merging it
- * unasked could put one person's rows in another's account.
+ * unasked could put one person's rows in another's account. The portrait site
+ * is the exception for signed-out data: a guest who signs in there is the
+ * person who made it, so it imports on its own.
  */
 export async function importRecoveryBundle(
   savedAt?: string
@@ -53,7 +65,7 @@ export async function importRecoveryBundle(
       .sort((a, b) => a.saved_at.localeCompare(b.saved_at));
     bundle = savedAt
       ? pending.find((b) => b.saved_at === savedAt)
-      : pending.find((b) => b.source_user_id === userId && !b.last_error);
+      : pending.find((b) => isOwnBundle(b, userId) && !b.last_error);
     if (!bundle) {
       if (!savedAt) autoImportDone = true;
       return "skipped";

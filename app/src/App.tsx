@@ -19,6 +19,7 @@ import { useAuthGate } from "@/lib/use-auth-gate";
 import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
 import { UpdateRequiredDialog } from "@/components/pwa/update-required-dialog";
 import { isYouMode } from "@/lib/app-mode";
+import { useIsGuest } from "@/lib/guest";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -51,11 +52,18 @@ const PUBLIC_ROUTES = new Set([
   "/settings/reset-password",
 ]);
 
+// The portrait site works without an account. Its sign-in screen is a page of
+// its own that a guest chooses to open; everywhere else it is the gate.
+const GUEST_SIGN_IN_ROUTE = "/sign-in";
+
 function AppFrame() {
   const location = useLocation();
   const gate = useAuthGate();
+  const guest = useIsGuest();
   const showSignIn =
-    gate === "signed_out" && !PUBLIC_ROUTES.has(location.pathname);
+    gate === "signed_out" &&
+    !PUBLIC_ROUTES.has(location.pathname) &&
+    (!isYouMode || location.pathname === GUEST_SIGN_IN_ROUTE);
   const showLoading =
     gate === "loading" && !PUBLIC_ROUTES.has(location.pathname);
 
@@ -65,7 +73,7 @@ function AppFrame() {
   return (
     <AppShell
       navigation={showNavigation}
-      chrome={showSignIn || showLoading ? null : <SyncStatus />}
+      chrome={showSignIn || showLoading || guest ? null : <SyncStatus />}
     >
       {showSignIn ? (
         <SignInScreen />

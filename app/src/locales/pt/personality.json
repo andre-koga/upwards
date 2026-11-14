@@ -193,7 +193,8 @@
     "discardTitle": "Recomeçar esta tentativa?",
     "discardBody": "As respostas que você deu nesta tentativa serão apagadas.",
     "exit": "Sair do teste",
-    "savedHint": "Salvo neste aparelho e sincronizado com a sua conta."
+    "savedHint": "Salvo neste aparelho e sincronizado com a sua conta.",
+    "savedHintGuest": "Salvo neste aparelho."
   },
   "result": {
     "heading": "Seu retrato",
