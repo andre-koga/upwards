@@ -58,8 +58,6 @@ export function ArchetypeHero({
   const { t } = useTranslation("personality");
   const type = seaType(self);
   const tint = standoutPair(self);
-  const from = groupColor(type.group);
-  const to = traitColor(tint[0]);
   // Each group has its own pair of wash colours: one circle above the other.
   const [upper, lower] = groupPairColors(type.group, 0.32);
 
@@ -170,45 +168,37 @@ export function ArchetypeHero({
             />
           </div>
 
-          <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
-            <li className="flex items-center gap-1.5">
-              <span
-                aria-hidden="true"
-                className="size-2.5 rounded-full"
-                style={{
-                  background: `linear-gradient(135deg, ${from}, ${to})`,
-                }}
-              />
-              {t("result.you")}
-            </li>
-            {journal && (
-              <li className="flex items-center gap-1.5">
-                <span
-                  aria-hidden="true"
-                  className="h-0 w-4 border-t-2 border-dashed border-foreground"
-                />
-                {t("result.journal")}
-              </li>
-            )}
-            {behaviour && (
-              <li className="flex items-center gap-1.5">
-                <span
-                  aria-hidden="true"
-                  className="size-2 rotate-45 border-2 border-foreground"
-                />
-                {t("result.behaviour")}
-              </li>
-            )}
-            {last && (
-              <li className="flex items-center gap-1.5">
-                <span
-                  aria-hidden="true"
-                  className="h-0 w-4 border-t-2 border-dotted border-muted-foreground/70"
-                />
-                {t("result.lastTime")}
-              </li>
-            )}
-          </ul>
+          {(journal || behaviour || last) && (
+            <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
+              {journal && (
+                <li className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className="h-0 w-4 border-t-2 border-dashed border-foreground"
+                  />
+                  {t("result.journal")}
+                </li>
+              )}
+              {behaviour && (
+                <li className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className="size-2 rotate-45 border-2 border-foreground"
+                  />
+                  {t("result.behaviour")}
+                </li>
+              )}
+              {last && (
+                <li className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className="h-0 w-4 border-t-2 border-dotted border-muted-foreground/70"
+                  />
+                  {t("result.lastTime")}
+                </li>
+              )}
+            </ul>
+          )}
         </div>
       </section>
     </>
