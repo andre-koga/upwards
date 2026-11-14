@@ -80,8 +80,8 @@ export function ArchetypeHero({
           className="pointer-events-none absolute inset-x-0 -bottom-64 -top-40 -z-10"
           style={{
             background: [
-              `radial-gradient(circle 23rem at 14% 18rem, ${reach}, transparent 100%)`,
-              `radial-gradient(circle 23rem at 86% 22rem, ${company}, transparent 100%)`,
+              `radial-gradient(circle 15rem at 22% 25rem, ${reach} 0%, ${reach} 40%, transparent 100%)`,
+              `radial-gradient(circle 15rem at 78% 29rem, ${company} 0%, ${company} 40%, transparent 100%)`,
               `radial-gradient(circle 18rem at 50% 40rem, ${groupColor(type.group, 0.26)}, transparent 100%)`,
             ].join(", "),
             maskImage: WASH_FADE,
