@@ -16,7 +16,7 @@ export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
     title: "Todos os tipos, num só lugar",
     bullets: [
       "Um novo botão em Você abre uma página com os 32 animais, as cinco letras de cada um e como cada um é.",
-      "A página explica o que cada letra significa e marca o seu tipo.",
+      "A página explica o que cada letra significa, marca o seu tipo e mostra o seu oposto perfeito: o tipo com o outro lado das cinco letras.",
       "O Vaga-lume agora tem sua própria imagem, a primeira do conjunto.",
     ],
   },

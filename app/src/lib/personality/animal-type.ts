@@ -189,6 +189,18 @@ export function allAnimalTypes(): AnimalType[] {
   );
 }
 
+/**
+ * The perfect opposite: the type with the other pole on all five letters, so
+ * Open becomes Grounded, Planned becomes Flexible, and so on. Every type has
+ * exactly one, and the opposite of the opposite is the type itself.
+ */
+export function oppositeType(type: AnimalType): AnimalType {
+  const flipped = Object.fromEntries(
+    type.letters.map(({ trait, pole }) => [trait, pole === "high" ? 25 : 75])
+  ) as TraitScores;
+  return animalType(flipped);
+}
+
 /** The type for a set of trait scores. Always one of the 32. */
 export function animalType(scores: TraitScores): AnimalType {
   const letters: AnimalLetter[] = TRAITS.map((trait) => {

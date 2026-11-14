@@ -10,11 +10,13 @@ import {
   allAnimalTypes,
   animalType,
   groupColor,
+  oppositeType,
   type AnimalType,
 } from "@/lib/personality/animal-type";
 import { TRAITS } from "@/lib/personality/items";
 import { traitColor } from "@/lib/personality/trait-colors";
 import { scrollAppToTop } from "@/lib/scroll-app-to-top";
+import { cn } from "@/lib/utils";
 
 /**
  * Every result the test can give: the 32 animals in their four habitats, each
@@ -31,7 +33,9 @@ export default function YouTypesPage() {
   }, []);
 
   const scores = data?.completed[0]?.scores ?? null;
-  const ownId = scores ? animalType(scores).id : null;
+  const own = scores ? animalType(scores) : null;
+  const ownId = own?.id ?? null;
+  const oppositeId = own ? oppositeType(own).id : null;
 
   return (
     <AppPageShell
@@ -100,7 +104,13 @@ export default function YouTypesPage() {
                   <TypeRow
                     key={type.id}
                     type={type}
-                    isYou={type.id === ownId}
+                    mark={
+                      type.id === ownId
+                        ? "you"
+                        : type.id === oppositeId
+                          ? "opposite"
+                          : null
+                    }
                   />
                 ))}
             </ul>
@@ -113,14 +123,23 @@ export default function YouTypesPage() {
   );
 }
 
-function TypeRow({ type, isYou }: { type: AnimalType; isYou: boolean }) {
+/** "you" is your own type; "opposite" has the other pole on every letter. */
+type Mark = "you" | "opposite";
+
+function TypeRow({ type, mark }: { type: AnimalType; mark: Mark | null }) {
   const { t } = useTranslation("personality");
   return (
     <li
-      className="flex items-center gap-3 rounded-3xl border px-3.5 py-3.5"
+      className={cn(
+        "flex items-center gap-3 rounded-3xl border px-3.5 py-3.5",
+        mark === "opposite" && "border-dashed"
+      )}
       style={{
-        borderColor: groupColor(type.group, isYou ? 0.8 : 0.35),
-        background: `linear-gradient(135deg, ${groupColor(type.group, 0.16)}, transparent 75%)`,
+        borderColor: groupColor(type.group, mark ? 0.95 : 0.35),
+        background: `linear-gradient(135deg, ${groupColor(type.group, mark ? 0.3 : 0.16)}, transparent 75%)`,
+        boxShadow: mark
+          ? `0 0 0 1px ${groupColor(type.group, 0.95)}, 0 8px 24px -12px ${groupColor(type.group, 0.7)}`
+          : undefined,
       }}
     >
       <div className="flex h-16 w-20 shrink-0 items-center justify-center">
@@ -137,11 +156,11 @@ function TypeRow({ type, isYou }: { type: AnimalType; isYou: boolean }) {
         />
       </div>
       <div className="min-w-0">
-        <h3 className="flex flex-wrap items-center gap-x-2 font-display text-[1.5rem] italic leading-tight tracking-[-0.01em] text-foreground">
+        <h3 className="flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-[1.5rem] italic leading-tight tracking-[-0.01em] text-foreground">
           {t(`type.names.${type.id}.name`)}
-          {isYou && (
+          {mark && (
             <span className="rounded-full border border-foreground/25 bg-foreground/10 px-2 py-0.5 font-sans text-[0.6875rem] not-italic leading-none tracking-normal">
-              {t("types.you")}
+              {t(mark === "you" ? "types.you" : "types.opposite")}
             </span>
           )}
         </h3>

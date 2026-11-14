@@ -8,6 +8,7 @@ import {
   TRAIT_LETTERS,
   allAnimalTypes,
   animalType,
+  oppositeType,
   type AnimalGroup,
 } from "./animal-type";
 
@@ -118,6 +119,42 @@ describe("allAnimalTypes", () => {
 
   it("keeps the habitats in order, then the names in order", () => {
     expect(allAnimalTypes().map((t) => t.id)).toEqual([...ANIMAL_TYPE_IDS]);
+  });
+});
+
+describe("oppositeType", () => {
+  it("flips all five letters", () => {
+    const type = animalType(
+      flat({
+        openness: 90,
+        conscientiousness: 10,
+        extraversion: 10,
+        agreeableness: 90,
+        neuroticism: 10,
+      })
+    );
+    expect(type.code).toBe("OFIWC");
+    expect(oppositeType(type).code).toBe("GPEDS");
+  });
+
+  it("pairs every type with one other, and back again", () => {
+    for (const type of allAnimalTypes()) {
+      const opposite = oppositeType(type);
+      expect(opposite.id).not.toBe(type.id);
+      expect(
+        opposite.letters.every((l, i) => l.pole !== type.letters[i].pole)
+      ).toBe(true);
+      expect(oppositeType(opposite).id).toBe(type.id);
+    }
+  });
+
+  it("puts the opposite across both openness and extraversion", () => {
+    expect(
+      oppositeType(animalType(flat({ openness: 80, extraversion: 80 }))).group
+    ).toBe("woodland");
+    expect(
+      oppositeType(animalType(flat({ openness: 80, extraversion: 20 }))).group
+    ).toBe("farm");
   });
 });
 

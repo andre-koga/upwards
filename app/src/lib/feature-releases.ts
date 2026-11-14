@@ -17,7 +17,7 @@ export const FEATURE_RELEASES: FeatureRelease[] = [
     title: "Every type, in one place",
     bullets: [
       "A new button on You opens a page with all 32 animals, their five letters and what each one is like.",
-      "The page explains what each letter means and marks your own type.",
+      "The page explains what each letter means, marks your own type, and shows your perfect opposite: the type with the other side of all five letters.",
       "The Firefly now has its own picture, the first of the set.",
     ],
   },
