@@ -192,7 +192,8 @@
     "discardTitle": "Start this sitting over?",
     "discardBody": "The answers you have given in this sitting will be cleared.",
     "exit": "Leave the test",
-    "savedHint": "Saved on this device and synced with your account."
+    "savedHint": "Saved on this device and synced with your account.",
+    "savedHintGuest": "Saved on this device."
   },
   "result": {
     "heading": "Your portrait",

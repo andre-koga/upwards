@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { useCrowdResult, type CrowdState } from "@/hooks/use-crowd-result";
 import type { DailyQuestionData } from "@/hooks/use-daily-question";
 import { logError } from "@/lib/error-utils";
+import { getQueueAccountId } from "@/lib/supabase";
 import type { Question } from "@/lib/questions/bank";
 import { sharePercent } from "@/lib/questions/crowd";
 import { answerToday, setCrowdPreference } from "@/lib/questions/store";
@@ -157,12 +158,7 @@ function DailyQuestionBody({
   const { question, today } = data;
   const [saving, setSaving] = useState(false);
 
-  const crowd = useCrowdResult(
-    question.id,
-    today
-      ? { id: today.id, choiceId: today.choice_id, inCrowd: today.in_crowd }
-      : null
-  );
+  const crowd = useCrowdResult(question.id, today);
 
   const save = async (choiceId: string) => {
     setSaving(true);
@@ -230,16 +226,19 @@ function DailyQuestionBody({
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
-            <Label htmlFor="daily-crowd" className="leading-snug">
-              {t("daily.crowd.label")}
-            </Label>
-            <Switch
-              id="daily-crowd"
-              checked={data.inCrowd}
-              onCheckedChange={(checked) => void toggleCrowd(checked)}
-            />
-          </div>
+          {/* A guest has no account to hold a preference; their answer counts. */}
+          {getQueueAccountId() && (
+            <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
+              <Label htmlFor="daily-crowd" className="leading-snug">
+                {t("daily.crowd.label")}
+              </Label>
+              <Switch
+                id="daily-crowd"
+                checked={data.inCrowd}
+                onCheckedChange={(checked) => void toggleCrowd(checked)}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <p className="mt-4 text-xs text-muted-foreground">

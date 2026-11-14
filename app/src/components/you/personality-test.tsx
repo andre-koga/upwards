@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { PersonalitySitting } from "@/lib/db/types";
 import { logError } from "@/lib/error-utils";
+import { useIsGuest } from "@/lib/guest";
 import { ITEMS, ITEM_COUNT } from "@/lib/personality/items";
 import { nextUnansweredIndex } from "@/lib/personality/scoring";
 import { answerQuestion, discardSitting } from "@/lib/personality/store";
@@ -38,6 +39,7 @@ export function PersonalityTest({
   onDiscarded,
 }: PersonalityTestProps) {
   const { t } = useTranslation("personality");
+  const guest = useIsGuest();
   const [index, setIndex] = useState(
     () => nextUnansweredIndex(sitting.answers) ?? 0
   );
@@ -178,7 +180,7 @@ export function PersonalityTest({
       </div>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        {t("test.savedHint")}
+        {t(guest ? "test.savedHintGuest" : "test.savedHint")}
       </p>
 
       <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>

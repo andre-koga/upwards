@@ -79,7 +79,10 @@
       "offline": "Você está offline. Entrar exige conexão na primeira vez; depois disso o Upwards funciona offline.",
       "newHere": "Primeira vez aqui?",
       "createAccount": "Criar uma conta",
-      "note": "Seus dias ficam neste dispositivo e sincronizam com a sua conta."
+      "note": "Seus dias ficam neste dispositivo e sincronizam com a sua conta.",
+      "continueAsGuest": "Continuar sem conta",
+      "subtitleYou": "Mantenha seu retrato e suas respostas em todos os aparelhos.",
+      "noteYou": "Sem conta, seu retrato fica só neste celular."
     },
     "accountSwitch": {
       "title": "Alterações não salvas de outra conta",
@@ -116,7 +119,11 @@
         "post": "Servidor alcançado, mas as solicitações de login estão falhando: {{detail}}"
       }
     },
-    "backToSignIn": "Voltar para entrar"
+    "backToSignIn": "Voltar para entrar",
+    "guest": {
+      "note": "Você está usando o Upwards sem conta. Seu retrato fica só neste celular.",
+      "action": "Entrar ou criar uma conta"
+    }
   },
   "sync": {
     "title": "Sincronização e atualizações",

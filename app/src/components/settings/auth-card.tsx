@@ -10,6 +10,7 @@ import {
   SettingsValueRow,
 } from "@/components/settings/settings-list";
 import { SignOutConfirmDialog } from "@/components/settings/sign-out-confirm-dialog";
+import { useIsGuest } from "@/lib/guest";
 import { isSignOutBlockedError, useAuth } from "@/lib/use-auth";
 import { syncEngine } from "@/lib/sync";
 import {
@@ -39,6 +40,7 @@ function describeCheck(
 
 export function AuthCard() {
   const { t } = useTranslation("settings");
+  const guest = useIsGuest();
   const { isSupabaseConfigured, isAuthed, currentUserEmail, signOut } =
     useAuth();
   const [signOutBlockedOpen, setSignOutBlockedOpen] = useState(false);
@@ -106,6 +108,23 @@ export function AuthCard() {
       setSignOutBusy(false);
     }
   };
+
+  if (guest) {
+    return (
+      <SettingsGroup title={t("auth.title")}>
+        <SettingsBlock>
+          <p className="text-sm text-muted-foreground">
+            {t("auth.guest.note")}
+          </p>
+        </SettingsBlock>
+        <SettingsActionRow
+          icon={LogIn}
+          label={t("auth.guest.action")}
+          to="/sign-in"
+        />
+      </SettingsGroup>
+    );
+  }
 
   return (
     <SettingsGroup title={t("auth.title")}>
