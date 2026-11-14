@@ -12,6 +12,14 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-14-animal-types": {
+    title: "Animais que você conhece, em habitats que combinam",
+    bullets: [
+      "Seu tipo agora é um animal bem conhecido, como Leão, Coruja ou Cachorro, em vez de um bicho do mar.",
+      "Os quatro grupos de cor agora são habitats que combinam com o jeito de cada um: Savana, Noite, Fazenda e Floresta.",
+      "O fundo atrás do seu tipo usa as duas cores do seu grupo.",
+    ],
+  },
   "2026-11-13-choices-sooner": {
     title: "Suas escolhas aparecem mais cedo",
     bullets: [

@@ -4,8 +4,8 @@ import { TRAITS, type Trait, type TraitScores } from "@/lib/personality/items";
 import {
   groupColor,
   groupPairColors,
-  seaType,
-} from "@/lib/personality/sea-type";
+  animalType,
+} from "@/lib/personality/animal-type";
 import { traitColor } from "@/lib/personality/trait-colors";
 
 interface ArchetypeHeroProps {
@@ -46,7 +46,7 @@ const WASH_FADE = `linear-gradient(to bottom, ${[
   .join(", ")})`;
 
 /**
- * The headline: a five-letter code, a one-word sea creature and a colour group,
+ * The headline: a five-letter code, a one-word animal and a colour group,
  * all read from the five scores, then the shape of the scores.
  */
 export function ArchetypeHero({
@@ -56,7 +56,7 @@ export function ArchetypeHero({
   behaviour,
 }: ArchetypeHeroProps) {
   const { t } = useTranslation("personality");
-  const type = seaType(self);
+  const type = animalType(self);
   const tint = standoutPair(self);
   // Each group has its own pair of wash colours: one circle above the other.
   const [upper, lower] = groupPairColors(type.group, 0.32);

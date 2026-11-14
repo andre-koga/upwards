@@ -12,6 +12,16 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-14-animal-types",
+    date: "2026-11-14",
+    title: "Animals you know, in habitats that fit",
+    bullets: [
+      "Your type is now a well-known animal, like Lion, Owl or Dog, instead of a sea creature.",
+      "The four colour groups are now habitats that match how they feel: Savanna, Night, Farm and Woodland.",
+      "The background behind your type takes the two colours of your group.",
+    ],
+  },
+  {
     id: "2026-11-13-choices-sooner",
     date: "2026-11-13",
     title: "Your choices show up sooner",

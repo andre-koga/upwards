@@ -3,12 +3,12 @@ import en from "@/locales/en/personality.json";
 import pt from "@/locales/pt/personality.json";
 import { TRAITS, type TraitScores } from "./items";
 import {
-  SEA_GROUPS,
-  SEA_TYPE_IDS,
+  ANIMAL_GROUPS,
+  ANIMAL_TYPE_IDS,
   TRAIT_LETTERS,
-  seaType,
-  type SeaGroup,
-} from "./sea-type";
+  animalType,
+  type AnimalGroup,
+} from "./animal-type";
 
 const flat = (over: Partial<TraitScores> = {}): TraitScores => ({
   openness: 50,
@@ -30,14 +30,14 @@ function allCombinations(): TraitScores[] {
   });
 }
 
-describe("seaType", () => {
+describe("animalType", () => {
   it("reads 50 and above as high, below as low", () => {
-    expect(seaType(flat()).code).toBe("OPEWS");
-    expect(seaType(flat({ openness: 49 })).code).toBe("GPEWS");
+    expect(animalType(flat()).code).toBe("OPEWS");
+    expect(animalType(flat({ openness: 49 })).code).toBe("GPEWS");
   });
 
   it("writes the code in OCEAN order", () => {
-    const type = seaType(
+    const type = animalType(
       flat({
         openness: 90,
         conscientiousness: 10,
@@ -60,46 +60,46 @@ describe("seaType", () => {
   });
 
   it("gives all 32 combinations their own code and their own name", () => {
-    const types = allCombinations().map(seaType);
+    const types = allCombinations().map(animalType);
     expect(new Set(types.map((t) => t.code)).size).toBe(32);
     expect(new Set(types.map((t) => t.id)).size).toBe(32);
-    expect(new Set(types.map((t) => t.id))).toEqual(new Set(SEA_TYPE_IDS));
+    expect(new Set(types.map((t) => t.id))).toEqual(new Set(ANIMAL_TYPE_IDS));
   });
 
   it("splits the 32 into four groups of eight", () => {
-    const counts = new Map<SeaGroup, number>();
-    for (const type of allCombinations().map(seaType)) {
+    const counts = new Map<AnimalGroup, number>();
+    for (const type of allCombinations().map(animalType)) {
       counts.set(type.group, (counts.get(type.group) ?? 0) + 1);
     }
-    expect([...counts.keys()].sort()).toEqual([...SEA_GROUPS].sort());
+    expect([...counts.keys()].sort()).toEqual([...ANIMAL_GROUPS].sort());
     expect([...counts.values()]).toEqual([8, 8, 8, 8]);
   });
 
   it("groups by openness and extraversion", () => {
-    expect(seaType(flat({ openness: 80, extraversion: 80 })).group).toBe(
-      "reef"
+    expect(animalType(flat({ openness: 80, extraversion: 80 })).group).toBe(
+      "savanna"
     );
-    expect(seaType(flat({ openness: 80, extraversion: 20 })).group).toBe(
-      "deep"
+    expect(animalType(flat({ openness: 80, extraversion: 20 })).group).toBe(
+      "night"
     );
-    expect(seaType(flat({ openness: 20, extraversion: 80 })).group).toBe(
-      "shore"
+    expect(animalType(flat({ openness: 20, extraversion: 80 })).group).toBe(
+      "farm"
     );
-    expect(seaType(flat({ openness: 20, extraversion: 20 })).group).toBe(
-      "lagoon"
+    expect(animalType(flat({ openness: 20, extraversion: 20 })).group).toBe(
+      "woodland"
     );
   });
 
   it("is stable: the same scores always give the same type", () => {
     const scores = flat({ openness: 63, neuroticism: 12 });
-    expect(seaType(scores)).toEqual(seaType({ ...scores }));
+    expect(animalType(scores)).toEqual(animalType({ ...scores }));
   });
 });
 
-describe("sea type copy", () => {
+describe("animal type copy", () => {
   it("names and describes every type and group in both languages", () => {
     for (const copy of [en, pt]) {
-      for (const id of SEA_TYPE_IDS) {
+      for (const id of ANIMAL_TYPE_IDS) {
         const entry = (
           copy.type.names as Record<string, { name: string; blurb: string }>
         )[id];
@@ -108,9 +108,9 @@ describe("sea type copy", () => {
         expect(entry?.name).not.toMatch(/\s/);
       }
       expect(Object.keys(copy.type.names).sort()).toEqual(
-        [...SEA_TYPE_IDS].sort()
+        [...ANIMAL_TYPE_IDS].sort()
       );
-      for (const group of SEA_GROUPS) {
+      for (const group of ANIMAL_GROUPS) {
         expect(copy.type.groups[group].name.length).toBeGreaterThan(0);
         expect(copy.type.groups[group].tagline.length).toBeGreaterThan(0);
       }

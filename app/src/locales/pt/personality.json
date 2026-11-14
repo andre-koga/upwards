@@ -97,151 +97,151 @@
     "groupLabel": "Grupo",
     "letters": "O que as letras significam",
     "groups": {
-      "reef": {
-        "name": "Recife",
+      "savanna": {
+        "name": "Savana",
         "tagline": "Brilhante, curioso e sempre em companhia."
       },
-      "deep": {
-        "name": "Fundo",
+      "night": {
+        "name": "Noite",
         "tagline": "Mentes curiosas que vão longe, sozinhas."
       },
-      "shore": {
-        "name": "Costa",
-        "tagline": "Sociável e com os pés no chão, onde a água encontra a terra."
+      "farm": {
+        "name": "Fazenda",
+        "tagline": "Sociável e com os pés no chão, em casa entre os seus."
       },
-      "lagoon": {
-        "name": "Lagoa",
+      "woodland": {
+        "name": "Floresta",
         "tagline": "Calmo e abrigado, feliz com o que conhece."
       }
     },
     "names": {
-      "clownfish": {
-        "name": "Peixe-palhaço",
-        "blurb": "Brilhante, determinado e terno. Você planeja, se aproxima e sente tudo com intensidade."
+      "elephant": {
+        "name": "Elefante",
+        "blurb": "Terno, organizado e que nunca esquece. Você cuida da manada inteira e sente tudo fundo."
       },
-      "dolphin": {
-        "name": "Golfinho",
-        "blurb": "Brincalhão e organizado, e gentil com isso. Você leva as pessoas junto e mantém a calma."
+      "lion": {
+        "name": "Leão",
+        "blurb": "Caloroso, calmo e no comando sem alarde. Você planeja e as pessoas se sentem seguras perto de você."
       },
-      "barracuda": {
-        "name": "Barracuda",
-        "blurb": "Rápida, focada e direta. Você vai atrás do que quer e esquenta quando algo atrapalha."
+      "cheetah": {
+        "name": "Guepardo",
+        "blurb": "Rápido, focado e franco. Você vai direto ao que quer, e esquenta quando te atrasam."
       },
-      "orca": {
-        "name": "Orca",
-        "blurb": "Calma e determinada. Você fala sem rodeios e mantém o grupo todo em movimento."
+      "leopard": {
+        "name": "Leopardo",
+        "blurb": "Elegante, seguro e direto. Você escolhe o momento, fala claro e mantém a cabeça fria."
       },
-      "angelfish": {
-        "name": "Peixe-anjo",
-        "blurb": "Colorido e caloroso, e um pouco disperso. Seus sentimentos aparecem, e as pessoas gostam disso."
+      "flamingo": {
+        "name": "Flamingo",
+        "blurb": "Colorido, caloroso e um pouco dramático. Seus sentimentos aparecem, e as pessoas adoram isso."
       },
-      "otter": {
-        "name": "Lontra",
-        "blurb": "Tranquila, simpática e pronta para brincar. Você vai com a correnteza e deixa tudo mais divertido."
+      "monkey": {
+        "name": "Macaco",
+        "blurb": "Tranquilo, simpático e rápido na brincadeira. Você vai na onda do dia e deixa tudo mais divertido."
       },
-      "triggerfish": {
-        "name": "Peixe-gatilho",
-        "blurb": "Espontâneo, direto e animado. Você reage rápido e diz o que pensa."
+      "hyena": {
+        "name": "Hiena",
+        "blurb": "Barulhenta, espontânea e animada. Você reage rápido, ri mais alto e diz o que pensa."
       },
-      "marlin": {
-        "name": "Marlim",
-        "blurb": "Livre, ousado e seguro do seu próprio rumo. Leve nisso, e difícil de prender."
+      "zebra": {
+        "name": "Zebra",
+        "blurb": "Livre, ousada e única. Tranquila com isso, e difícil de enquadrar."
       },
-      "seahorse": {
-        "name": "Cavalo-marinho",
-        "blurb": "Cuidadoso, gentil e pensativo. Você se prepara, percebe muito e sente antes dos outros."
+      "owl": {
+        "name": "Coruja",
+        "blurb": "Cuidadosa, gentil e pensativa. Você se prepara, nota muita coisa e sente antes dos outros."
       },
-      "whale": {
-        "name": "Baleia",
-        "blurb": "Um gigante gentil. Calma, atenciosa e organizada, você pensa grande e leva os outros junto em silêncio."
+      "wolf": {
+        "name": "Lobo",
+        "blurb": "Leal, calmo e organizado. Você mantém um círculo pequeno por perto e cuida dele em silêncio."
       },
-      "moray": {
-        "name": "Moreia",
-        "blurb": "Atenta e precisa. Você guarda seu espaço e nota tudo o que se mexe por perto."
+      "bat": {
+        "name": "Morcego",
+        "blurb": "Alerta e preciso. Você tem seus próprios horários e percebe tudo que se mexe por perto."
       },
-      "nautilus": {
-        "name": "Náutilo",
-        "blurb": "Metódico e reservado. Você constrói seu mundo uma câmara cuidadosa de cada vez."
+      "spider": {
+        "name": "Aranha",
+        "blurb": "Paciente e reservada. Você constrói seu mundo um fio cuidadoso de cada vez."
       },
-      "jellyfish": {
-        "name": "Água-viva",
-        "blurb": "Sonhadora e suave. Você flutua, brilha e capta cada corrente ao redor."
+      "firefly": {
+        "name": "Vaga-lume",
+        "blurb": "Sonhador e suave. Você flutua, brilha e capta cada corrente ao redor."
       },
-      "ray": {
-        "name": "Raia",
-        "blurb": "Uma sonhadora gentil que desliza. Você se move devagar e com calma e deixa a mente vagar."
+      "sloth": {
+        "name": "Preguiça",
+        "blurb": "Uma sonhadora lenta e gentil. Você se move com calma e deixa a mente passear."
       },
-      "anglerfish": {
-        "name": "Peixe-pescador",
-        "blurb": "Uma luz solitária no escuro. Original, reservado e desconfiado, você brilha do seu jeito."
+      "fox": {
+        "name": "Raposa",
+        "blurb": "Original, reservada e desconfiada. Você brilha do seu jeito e confia na sua leitura."
       },
-      "octopus": {
-        "name": "Polvo",
-        "blurb": "Esperto, independente e cheio de improviso. Você resolve de lado e não precisa do mapa de ninguém."
+      "raccoon": {
+        "name": "Guaxinim",
+        "blurb": "Esperto, independente e de improviso. Você resolve de lado e não precisa do mapa de ninguém."
       },
-      "sandpiper": {
-        "name": "Maçarico",
-        "blurb": "Rápido, ocupado e cuidadoso. Você gosta de rotina e boa companhia, e uma onda pequena ainda assusta."
+      "hen": {
+        "name": "Galinha",
+        "blurb": "Ocupada, cuidadosa e atenta. Você gosta de rotina e de quintal cheio, e um barulho repentino ainda te assusta."
       },
-      "lighthouse": {
-        "name": "Farol",
-        "blurb": "Firme e caloroso. É quem as pessoas procuram, e você fica de pé quando o tempo vira."
+      "dog": {
+        "name": "Cachorro",
+        "blurb": "Firme e caloroso. É por você que as pessoas procuram, e você fica quando o tempo vira."
       },
-      "pufferfish": {
-        "name": "Baiacu",
-        "blurb": "Arrumado, sociável e rápido em se inflar. Padrões importam para você, e ser ouvido também."
+      "rooster": {
+        "name": "Galo",
+        "blurb": "Orgulhoso, arrumado e de pé ao amanhecer. Padrão importa para você, e ser ouvido também."
       },
-      "anchor": {
-        "name": "Âncora",
-        "blurb": "Confiável e firme. Você mantém a linha, diz o que pensa, e quase nada te move."
+      "ox": {
+        "name": "Boi",
+        "blurb": "Confiável e firme. Você puxa a sua parte, diz o que quer dizer, e nada te move fácil."
       },
-      "starfish": {
-        "name": "Estrela-do-mar",
-        "blurb": "De coração aberto e solto. Você se aproxima de todos e sente quando se aproximam menos."
+      "lamb": {
+        "name": "Cordeiro",
+        "blurb": "De coração aberto e solto. Você fica perto de todo mundo, e sente quando se afastam."
       },
-      "seal": {
-        "name": "Foca",
-        "blurb": "Simpática e brincalhona. Você adora uma multidão, um cochilo e um bom momento, em qualquer ordem."
+      "pig": {
+        "name": "Porco",
+        "blurb": "Simpático e brincalhão. Você ama companhia, uma soneca e um bom momento, nessa ordem qualquer."
       },
-      "crab": {
-        "name": "Caranguejo",
-        "blurb": "Animado, de lado e um pouco beliscador. Você gosta de gente e defende o casco rápido."
+      "goose": {
+        "name": "Ganso",
+        "blurb": "Animado, barulhento e um pouco afiado. Você curte o seu bando e o defende rápido."
       },
-      "gull": {
-        "name": "Gaivota",
-        "blurb": "Barulhenta, livre e tranquila. Você vive o momento e aproveita o que o dia deixar por perto."
+      "goat": {
+        "name": "Cabra",
+        "blurb": "Livre, tranquila e pronta para tudo. Você vive o momento e come o que o dia deixar por perto."
       },
-      "turtle": {
-        "name": "Tartaruga",
-        "blurb": "Paciente, gentil e firme. Você vai devagar, chega lá e leva a casa com você."
+      "squirrel": {
+        "name": "Esquilo",
+        "blurb": "Cuidadoso e um pouco ansioso. Você gosta das suas coisas guardadas, de poucas pessoas e de um plano para o inverno."
       },
-      "hermit": {
-        "name": "Ermitão",
-        "blurb": "Cuidadoso e caseiro. Você gosta do casco arrumado e de poucas pessoas, e se preocupa um pouco."
+      "tortoise": {
+        "name": "Jabuti",
+        "blurb": "Paciente, gentil e constante. Você vai devagar, chega lá e leva a casa com você."
       },
-      "limpet": {
-        "name": "Lapa",
-        "blurb": "Você se agarra ao que conhece. Ordenada, direta e indiferente às ondas."
-      },
-      "urchin": {
+      "hedgehog": {
         "name": "Ouriço",
-        "blurb": "Arrumado, espinhoso e na defensiva. Você mantém tudo em ordem e mantém distância."
+        "blurb": "Arrumado, espinhoso e reservado. Você mantém tudo em ordem, e mantém a distância."
       },
-      "manatee": {
-        "name": "Peixe-boi",
-        "blurb": "Lento, gentil e bondoso. Você aceita a vida que passa e a deixa mais suave para os outros."
+      "badger": {
+        "name": "Texugo",
+        "blurb": "Ordeiro e teimoso. Você se agarra ao que conhece, fala na lata e finca o pé."
       },
-      "anemone": {
-        "name": "Anêmona",
-        "blurb": "Suave, terna e sensível. Você se agarra a quem ama e sente cada maré."
+      "rabbit": {
+        "name": "Coelho",
+        "blurb": "Macio, terno e fácil de assustar. Você fica perto de quem ama e sente cada ruído."
       },
-      "flounder": {
-        "name": "Linguado",
-        "blurb": "Discreto e tranquilo. Você se mistura, guarda suas opiniões e deixa as ondas passarem."
+      "bear": {
+        "name": "Urso",
+        "blurb": "Lento, gentil e bondoso. Você leva a vida como ela vem e a deixa mais macia para os outros."
       },
-      "stonefish": {
-        "name": "Peixe-pedra",
-        "blurb": "Quieto e atento. Você fica parado, reservado, e não gosta de ser pisado."
+      "deer": {
+        "name": "Cervo",
+        "blurb": "Quieto, atento e rápido para fugir. Você mantém a distância, e não gosta de ser surpreendido."
+      },
+      "koala": {
+        "name": "Coala",
+        "blurb": "Discreto e despreocupado. Você guarda suas ideias, descansa bem e deixa o mundo passar."
       }
     },
     "poles": {
@@ -407,5 +407,5 @@
     "option_other": "{{count}} dias",
     "empty": "Poucos dias registrados neste período para mostrar seus hábitos. Tente um período maior ou continue registrando."
   },
-  "funDisclaimer": "Tipos, códigos e bichos do mar são só diversão. É um jeito brincalhão de agrupar cinco pontuações, não é científico e não é um rótulo."
+  "funDisclaimer": "Tipos, códigos e bichos são só diversão. É um jeito brincalhão de agrupar cinco pontuações, não é científico e não é um rótulo."
 }

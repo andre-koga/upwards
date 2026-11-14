@@ -21,25 +21,25 @@ export const TRAIT_LETTERS: Record<Trait, Record<Pole, string>> = {
   neuroticism: { high: "S", low: "C" },
 };
 
-export type SeaGroup = "reef" | "deep" | "shore" | "lagoon";
+export type AnimalGroup = "savanna" | "night" | "farm" | "woodland";
 
-export const SEA_GROUPS: readonly SeaGroup[] = [
-  "reef",
-  "deep",
-  "shore",
-  "lagoon",
+export const ANIMAL_GROUPS: readonly AnimalGroup[] = [
+  "savanna",
+  "night",
+  "farm",
+  "woodland",
 ];
 
 /** The theme token for each group's colour. */
-const GROUP_TOKEN: Record<SeaGroup, string> = {
-  reef: "--gold",
-  deep: "--lavender",
-  shore: "--terracotta",
-  lagoon: "--green",
+const GROUP_TOKEN: Record<AnimalGroup, string> = {
+  savanna: "--gold",
+  night: "--lavender",
+  farm: "--terracotta",
+  woodland: "--green",
 };
 
 /** A CSS colour for a group, from theme tokens, with an optional alpha 0-1. */
-export function groupColor(group: SeaGroup, alpha?: number): string {
+export function groupColor(group: AnimalGroup, alpha?: number): string {
   return alpha === undefined
     ? `hsl(var(${GROUP_TOKEN[group]}))`
     : `hsl(var(${GROUP_TOKEN[group]}) / ${alpha})`;
@@ -48,16 +48,16 @@ export function groupColor(group: SeaGroup, alpha?: number): string {
 /**
  * Each group has its own pair of colours for the portrait wash, picked to
  * match how the group feels: [upper, lower].
- * - reef: sunlit coral, bright and lively
- * - deep: twilight water, far out and quiet
- * - shore: dusk on the sand, grounded and warm
- * - lagoon: clear shallows, calm and still
+ * - savanna: warm sun and big herds, bright and lively
+ * - night: twilight and open sky, far out and quiet
+ * - farm: dusk over the yard, grounded and warm
+ * - woodland: green shade, calm and sheltered
  */
-const GROUP_PAIR: Record<SeaGroup, readonly [string, string]> = {
-  reef: ["--gold", "--terracotta"],
-  deep: ["--lavender", "--sky"],
-  shore: ["--terracotta", "--lavender"],
-  lagoon: ["--green", "--sky"],
+const GROUP_PAIR: Record<AnimalGroup, readonly [string, string]> = {
+  savanna: ["--gold", "--terracotta"],
+  night: ["--lavender", "--sky"],
+  farm: ["--terracotta", "--lavender"],
+  woodland: ["--green", "--sky"],
 };
 
 function tokenColor(token: string, alpha?: number): string {
@@ -68,111 +68,93 @@ function tokenColor(token: string, alpha?: number): string {
 
 /** The two colours of a group's wash, [upper, lower], with an optional alpha. */
 export function groupPairColors(
-  group: SeaGroup,
+  group: AnimalGroup,
   alpha?: number
 ): [string, string] {
   const [upper, lower] = GROUP_PAIR[group];
   return [tokenColor(upper, alpha), tokenColor(lower, alpha)];
 }
 
-export const SEA_TYPE_IDS = [
-  "dolphin",
-  "clownfish",
-  "orca",
-  "barracuda",
-  "otter",
-  "angelfish",
-  "marlin",
-  "triggerfish",
-  "whale",
-  "seahorse",
-  "nautilus",
-  "moray",
-  "ray",
-  "jellyfish",
-  "octopus",
-  "anglerfish",
-  "lighthouse",
-  "sandpiper",
-  "anchor",
-  "pufferfish",
-  "seal",
-  "starfish",
-  "gull",
-  "crab",
-  "turtle",
-  "hermit",
-  "limpet",
-  "urchin",
-  "manatee",
-  "anemone",
-  "flounder",
-  "stonefish",
+export const ANIMAL_TYPE_IDS = [
+  "elephant",
+  "lion",
+  "cheetah",
+  "leopard",
+  "flamingo",
+  "monkey",
+  "hyena",
+  "zebra",
+  "owl",
+  "wolf",
+  "bat",
+  "spider",
+  "firefly",
+  "sloth",
+  "fox",
+  "raccoon",
+  "hen",
+  "dog",
+  "rooster",
+  "ox",
+  "lamb",
+  "pig",
+  "goose",
+  "goat",
+  "squirrel",
+  "tortoise",
+  "hedgehog",
+  "badger",
+  "rabbit",
+  "bear",
+  "deer",
+  "koala",
 ] as const;
 
-export type SeaTypeId = (typeof SEA_TYPE_IDS)[number];
+export type AnimalTypeId = (typeof ANIMAL_TYPE_IDS)[number];
 
 /**
  * The group comes from openness and extraversion (how far you reach, and how
  * much of that is shared with others). Inside a group, the eight names follow
  * conscientiousness, agreeableness and neuroticism in that order, high first.
  */
-const NAMES: Record<SeaGroup, readonly SeaTypeId[]> = {
+const NAMES: Record<AnimalGroup, readonly AnimalTypeId[]> = {
   // C A N:  +++      ++-      +-+      +--      -++      -+-      --+      ---
-  reef: [
-    "clownfish",
-    "dolphin",
-    "barracuda",
-    "orca",
-    "angelfish",
-    "otter",
-    "triggerfish",
-    "marlin",
+  savanna: [
+    "elephant",
+    "lion",
+    "cheetah",
+    "leopard",
+    "flamingo",
+    "monkey",
+    "hyena",
+    "zebra",
   ],
-  deep: [
-    "seahorse",
-    "whale",
-    "moray",
-    "nautilus",
-    "jellyfish",
-    "ray",
-    "anglerfish",
-    "octopus",
-  ],
-  shore: [
-    "sandpiper",
-    "lighthouse",
-    "pufferfish",
-    "anchor",
-    "starfish",
-    "seal",
-    "crab",
-    "gull",
-  ],
-  lagoon: [
-    "hermit",
-    "turtle",
-    "urchin",
-    "limpet",
-    "anemone",
-    "manatee",
-    "stonefish",
-    "flounder",
+  night: ["owl", "wolf", "bat", "spider", "firefly", "sloth", "fox", "raccoon"],
+  farm: ["hen", "dog", "rooster", "ox", "lamb", "pig", "goose", "goat"],
+  woodland: [
+    "squirrel",
+    "tortoise",
+    "hedgehog",
+    "badger",
+    "rabbit",
+    "bear",
+    "deer",
+    "koala",
   ],
 };
 
-export interface SeaLetter {
+export interface AnimalLetter {
   trait: Trait;
   pole: Pole;
   letter: string;
 }
 
-export interface SeaType {
-  id: SeaTypeId;
-  group: SeaGroup;
+export interface AnimalType {
+  id: AnimalTypeId;
+  group: AnimalGroup;
   /** The five letters in OCEAN order, such as "OPEWC". */
   code: string;
-  letters: SeaLetter[];
+  letters: AnimalLetter[];
 }
 
 /** 50 is the line: a score at or above it reads as high. */
@@ -180,14 +162,14 @@ function poleOf(score: number): Pole {
   return score >= 50 ? "high" : "low";
 }
 
-function groupOf(openness: Pole, extraversion: Pole): SeaGroup {
-  if (openness === "high") return extraversion === "high" ? "reef" : "deep";
-  return extraversion === "high" ? "shore" : "lagoon";
+function groupOf(openness: Pole, extraversion: Pole): AnimalGroup {
+  if (openness === "high") return extraversion === "high" ? "savanna" : "night";
+  return extraversion === "high" ? "farm" : "woodland";
 }
 
 /** The type for a set of trait scores. Always one of the 32. */
-export function seaType(scores: TraitScores): SeaType {
-  const letters: SeaLetter[] = TRAITS.map((trait) => {
+export function animalType(scores: TraitScores): AnimalType {
+  const letters: AnimalLetter[] = TRAITS.map((trait) => {
     const pole = poleOf(scores[trait]);
     return { trait, pole, letter: TRAIT_LETTERS[trait][pole] };
   });
