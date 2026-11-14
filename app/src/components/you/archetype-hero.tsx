@@ -62,7 +62,7 @@ export function ArchetypeHero({
   const to = traitColor(tint[0]);
   // The two letters that pick the group (openness, extraversion) each give one
   // of the wash's two colours.
-  const [reach, company] = groupLetterColors(type, 0.38);
+  const [reach, company] = groupLetterColors(type, 0.62);
 
   return (
     <>
@@ -80,9 +80,9 @@ export function ArchetypeHero({
           className="pointer-events-none absolute inset-x-0 -bottom-64 -top-40 -z-10"
           style={{
             background: [
-              `radial-gradient(circle 20rem at 18% 17rem, ${reach}, transparent 100%)`,
-              `radial-gradient(circle 20rem at 82% 17rem, ${company}, transparent 100%)`,
-              `radial-gradient(circle 16rem at 50% 38rem, ${groupColor(type.group, 0.14)}, transparent 100%)`,
+              `radial-gradient(circle 23rem at 14% 18rem, ${reach}, transparent 100%)`,
+              `radial-gradient(circle 23rem at 86% 22rem, ${company}, transparent 100%)`,
+              `radial-gradient(circle 18rem at 50% 40rem, ${groupColor(type.group, 0.26)}, transparent 100%)`,
             ].join(", "),
             maskImage: WASH_FADE,
             WebkitMaskImage: WASH_FADE,
