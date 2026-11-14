@@ -13,11 +13,10 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { useCrowdResult, type CrowdState } from "@/hooks/use-crowd-result";
 import type { DailyQuestionData } from "@/hooks/use-daily-question";
 import { logError } from "@/lib/error-utils";
-import { MAX_WHY_LENGTH, type Question } from "@/lib/questions/bank";
+import type { Question } from "@/lib/questions/bank";
 import { sharePercent } from "@/lib/questions/crowd";
 import { answerToday, setCrowdPreference } from "@/lib/questions/store";
 import type { Streaks } from "@/lib/questions/streak";
@@ -127,13 +126,6 @@ function CrowdView({
       </p>
     );
   }
-  if (state.status === "waiting") {
-    return (
-      <p className="text-[0.9375rem] text-muted-foreground" role="status">
-        {t("daily.results.waiting")}
-      </p>
-    );
-  }
   return (
     <div className="space-y-2" role="status">
       <p className="text-[0.9375rem] text-muted-foreground">
@@ -149,9 +141,9 @@ function CrowdView({
 }
 
 /**
- * The question itself: pick an answer, optionally say why in a line only you
- * can read, then see how everyone answered. Changing your mind is allowed until
- * the day ends and rewrites the same answer.
+ * The question itself: pick an answer, then see how everyone answered once
+ * enough people have. Changing your mind is allowed until the day ends and
+ * rewrites the same answer.
  */
 function DailyQuestionBody({
   data,
@@ -163,7 +155,6 @@ function DailyQuestionBody({
   const { t } = useTranslation("you");
   const { t: tq } = useTranslation("questions");
   const { question, today } = data;
-  const [note, setNote] = useState(today?.why ?? "");
   const [saving, setSaving] = useState(false);
 
   const crowd = useCrowdResult(
@@ -173,12 +164,10 @@ function DailyQuestionBody({
       : null
   );
 
-  const noteChanged = note.trim() !== (today?.why ?? "");
-
-  const save = async (choiceId: string, why: string) => {
+  const save = async (choiceId: string) => {
     setSaving(true);
     try {
-      await answerToday({ choiceId, why });
+      await answerToday({ choiceId });
       onChanged();
     } catch (err) {
       logError("Saving today's answer", err);
@@ -213,7 +202,7 @@ function DailyQuestionBody({
       <ChoiceGroup
         aria-label={tq(`q.${question.id}.prompt`)}
         value={today?.choice_id ?? ""}
-        onValueChange={(choiceId) => void save(choiceId, note)}
+        onValueChange={(choiceId) => void save(choiceId)}
         disabled={saving}
         className="mt-4"
       >
@@ -226,54 +215,25 @@ function DailyQuestionBody({
 
       {today ? (
         <div className="mt-5 space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="daily-why">{t("daily.whyLabel")}</Label>
-            <Textarea
-              id="daily-why"
-              value={note}
-              maxLength={MAX_WHY_LENGTH}
-              rows={2}
-              placeholder={t("daily.whyPlaceholder")}
-              onChange={(event) => setNote(event.target.value)}
-            />
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground">
-                {t("daily.changeNote")}
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!noteChanged || saving}
-                onClick={() => void save(today.choice_id, note)}
-              >
-                {t("daily.saveNote")}
-              </Button>
+          {crowd.state.status !== "waiting" && (
+            <div className="border-t border-border pt-5">
+              <h3 className="mb-3 text-[0.8125rem] font-medium text-muted-foreground">
+                {t("daily.results.heading")}
+              </h3>
+              <CrowdView
+                question={question}
+                state={crowd.state}
+                loading={crowd.loading}
+                mine={today.choice_id}
+                onRetry={crowd.retry}
+              />
             </div>
-          </div>
+          )}
 
-          <div className="border-t border-border pt-5">
-            <h3 className="mb-3 text-[0.8125rem] font-medium text-muted-foreground">
-              {t("daily.results.heading")}
-            </h3>
-            <CrowdView
-              question={question}
-              state={crowd.state}
-              loading={crowd.loading}
-              mine={today.choice_id}
-              onRetry={crowd.retry}
-            />
-          </div>
-
-          <div className="flex items-start justify-between gap-4 border-t border-border pt-5">
-            <div className="min-w-0">
-              <Label htmlFor="daily-crowd" className="leading-snug">
-                {t("daily.crowd.label")}
-              </Label>
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                {t("daily.crowd.hint")}
-              </p>
-            </div>
+          <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
+            <Label htmlFor="daily-crowd" className="leading-snug">
+              {t("daily.crowd.label")}
+            </Label>
             <Switch
               id="daily-crowd"
               checked={data.inCrowd}

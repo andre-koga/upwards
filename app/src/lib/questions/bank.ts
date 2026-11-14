@@ -26,7 +26,6 @@ export interface Question {
 }
 
 export const QUESTIONS_PER_TRAIT = 6;
-export const MAX_WHY_LENGTH = 280;
 
 const CHOICE_IDS = ["a", "b", "c", "d"] as const;
 

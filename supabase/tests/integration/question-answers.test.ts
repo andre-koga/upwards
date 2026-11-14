@@ -218,10 +218,10 @@ describe("question_results", () => {
     expect((await results(user, "o3")).error).not.toBeNull();
   });
 
-  it("says nothing, not even a number, under ten people", async () => {
+  it("says nothing, not even a number, under five people", async () => {
     const crowded = freshQuestion();
     const users = await Promise.all(
-      Array.from({ length: 3 }, () => createIsolatedUser()),
+      Array.from({ length: 4 }, () => createIsolatedUser()),
     );
     for (const u of users) await answer(u, { question_id: crowded });
 
@@ -231,15 +231,15 @@ describe("question_results", () => {
   });
 
   it(
-    "returns counts per choice once ten people are counted, and nothing else",
+    "returns counts per choice once five people are counted, and nothing else",
     { timeout: SLOW },
     async () => {
       const question = freshQuestion();
       const users = await Promise.all(
-        Array.from({ length: 12 }, () => createIsolatedUser()),
+        Array.from({ length: 7 }, () => createIsolatedUser()),
       );
-      // 5 a, 3 b, 2 c counted; one opted out; one deleted.
-      const picks = ["a", "a", "a", "a", "a", "b", "b", "b", "c", "c"];
+      // 2 a, 2 b, 1 c counted; one opted out; one deleted.
+      const picks = ["a", "a", "b", "b", "c"];
       for (let i = 0; i < picks.length; i += 1) {
         await answer(users[i], {
           question_id: question,
@@ -247,16 +247,16 @@ describe("question_results", () => {
           why: "private words",
         });
       }
-      await answer(users[10], {
+      await answer(users[5], {
         question_id: question,
         choice_id: "d",
         in_crowd: false,
       });
-      const gone = await answer(users[11], {
+      const gone = await answer(users[6], {
         question_id: question,
         choice_id: "d",
       });
-      await submitOps(users[11].deviceA, [
+      await submitOps(users[6].deviceA, [
         answerOp(
           "a",
           gone,
@@ -274,8 +274,8 @@ describe("question_results", () => {
       expect(asked.error).toBeNull();
       expect(asked.data).toEqual({
         ready: true,
-        total: 10,
-        counts: { a: 5, b: 3, c: 2 },
+        total: 5,
+        counts: { a: 2, b: 2, c: 1 },
       });
       expect(JSON.stringify(asked.data)).not.toContain("private words");
       for (const u of users) {
@@ -283,8 +283,8 @@ describe("question_results", () => {
       }
 
       // Someone who opted out can still see the crowd they are not part of.
-      const optedOut = await results(users[10], question);
-      expect(optedOut.data).toMatchObject({ ready: true, total: 10 });
+      const optedOut = await results(users[5], question);
+      expect(optedOut.data).toMatchObject({ ready: true, total: 5 });
     },
   );
 
@@ -294,7 +294,7 @@ describe("question_results", () => {
     async () => {
       const question = freshQuestion();
       const users = await Promise.all(
-        Array.from({ length: 10 }, () => createIsolatedUser()),
+        Array.from({ length: 5 }, () => createIsolatedUser()),
       );
       for (const u of users) {
         await answer(u, {
@@ -313,8 +313,8 @@ describe("question_results", () => {
       const asked = await results(users[0], question);
       expect(asked.data).toEqual({
         ready: true,
-        total: 10,
-        counts: { a: 9, b: 1 },
+        total: 5,
+        counts: { a: 4, b: 1 },
       });
     },
   );
