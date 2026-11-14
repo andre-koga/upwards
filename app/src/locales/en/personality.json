@@ -243,6 +243,28 @@
         "name": "Stonefish",
         "blurb": "Quiet and watchful. You stay still, you stay private, and you do not like being stepped on."
       }
+    },
+    "poles": {
+      "openness": {
+        "high": "Open",
+        "low": "Grounded"
+      },
+      "conscientiousness": {
+        "high": "Planned",
+        "low": "Flexible"
+      },
+      "extraversion": {
+        "high": "Extravert",
+        "low": "Introvert"
+      },
+      "agreeableness": {
+        "high": "Warm",
+        "low": "Direct"
+      },
+      "neuroticism": {
+        "high": "Sensitive",
+        "low": "Calm"
+      }
     }
   },
   "test": {
