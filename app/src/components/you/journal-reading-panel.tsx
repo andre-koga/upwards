@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useJournalReading } from "@/hooks/use-journal-reading";
 import type { JournalReading } from "@/lib/db/types";
-import type { BehaviourRange } from "@/lib/personality/behaviour";
+import type { LookBackRange } from "@/lib/personality/look-back";
 import { fromDateString, formatDateShort } from "@/lib/time-utils";
 
 interface JournalReadingPanelProps {
@@ -21,7 +21,7 @@ interface JournalReadingPanelProps {
   /** The self-test has a finished sitting to compare against. */
   hasTest: boolean;
   /** How many days back the reading looks, set on the You page. */
-  range: BehaviourRange;
+  range: LookBackRange;
   onSaved: () => void;
 }
 

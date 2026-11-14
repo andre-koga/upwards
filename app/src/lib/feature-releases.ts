@@ -12,6 +12,18 @@ export interface FeatureRelease {
 /** Newest first. Edit this list when you ship user-visible changes. */
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
+    id: "2026-11-14-choices-on-cards",
+    date: "2026-11-14",
+    title: "Your daily answers, on your traits",
+    bullets: [
+      "A diamond on each trait now shows where your daily answers lean, right beside your test result, instead of in a separate section.",
+      "The diamonds also appear on your radar, and each card says whether your answers agree with your test.",
+    ],
+    fixes: [
+      "The habit marks for Openness and Conscientiousness are gone. Counting activities and logged days said little about you.",
+    ],
+  },
+  {
     id: "2026-11-14-animal-types",
     date: "2026-11-14",
     title: "Animals you know, in habitats that fit",

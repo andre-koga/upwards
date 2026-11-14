@@ -29,15 +29,13 @@
     }
   },
   "choices": {
-    "heading": "Your choices",
-    "intro": "Which way your daily answers lean, beside what the test said. This is kept apart from the test and never changes it.",
-    "trackAria": "{{trait}}: your choices at {{choices}} out of 100, your test at {{test}} out of 100.",
     "drift": {
       "higher": "Your choices lean toward “{{word}}” more than your test said.",
       "lower": "Your choices lean toward “{{word}}” more than your test said."
     },
-    "note": "The line marks your test, the dot your choices. A few answers are less accurate than many, so treat early dots as a rough guide.",
-    "answers_one": "{{count}} answer",
-    "answers_other": "{{count}} answers"
+    "note": "The diamond marks your daily answers. A few answers are less accurate than many, so treat an early diamond as a rough guide.",
+    "same": "Your daily answers agree with your test.",
+    "answers_one": "Based on {{count}} answer.",
+    "answers_other": "Based on {{count}} answers."
   }
 }

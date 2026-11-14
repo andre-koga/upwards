@@ -4,7 +4,6 @@ import { DailyQuestion } from "@/components/you/daily-question";
 import { JournalReadingPanel } from "@/components/you/journal-reading-panel";
 import { PersonalityResult } from "@/components/you/personality-result";
 import { PersonalityTest } from "@/components/you/personality-test";
-import { YourChoices } from "@/components/you/your-choices";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -152,7 +151,7 @@ export default function YouPage() {
   const { t } = useTranslation("you");
   const { t: tp } = useTranslation("personality");
   const range = useLookBackRange();
-  const { data, reload } = usePersonality(range);
+  const { data, reload } = usePersonality();
   const { data: daily, reload: reloadDaily } = useDailyQuestion();
   const [testing, setTesting] = useState<PersonalitySitting | null>(null);
   const [confirmRetake, setConfirmRetake] = useState(false);
@@ -270,14 +269,11 @@ export default function YouPage() {
             latest={latest}
             previous={previous}
             reading={data?.reading ?? null}
-            behaviour={data?.behaviour ?? null}
+            evidence={daily?.evidence ?? null}
             range={range}
             onRangeChange={setLookBackRange}
             portraitOnly={isYouMode}
           />
-          {daily && latest.scores && (
-            <YourChoices evidence={daily.evidence} scores={latest.scores} />
-          )}
           {!current && (
             <div className="flex justify-center pt-6">
               <Button

@@ -12,6 +12,16 @@ export interface ReleaseText {
 }
 
 export const FEATURE_RELEASES_PT: Record<string, ReleaseText> = {
+  "2026-11-14-choices-on-cards": {
+    title: "Suas respostas diárias, nos seus traços",
+    bullets: [
+      "Um losango em cada traço agora mostra para onde suas respostas diárias pendem, ao lado do resultado do teste, em vez de uma seção separada.",
+      "Os losangos também aparecem no seu radar, e cada cartão diz se suas respostas combinam com o teste.",
+    ],
+    fixes: [
+      "As marcas de hábitos para Abertura e Conscienciosidade saíram. Contar atividades e dias registrados dizia pouco sobre você.",
+    ],
+  },
   "2026-11-14-animal-types": {
     title: "Animais que você conhece, em habitats que combinam",
     bullets: [

@@ -342,19 +342,8 @@
     "journalPill_one": "Diário · {{count}} dia",
     "journalPill_many": "Diário · {{count}} dias",
     "journalPill_other": "Diário · {{count}} dias",
-    "behaviour": "Seus hábitos",
-    "trackAriaBehaviour": "Seus hábitos {{behaviour}}.",
-    "habits": {
-      "conscientiousness": "Você registrou algo em {{active}} de {{total}} dias recentes.",
-      "openness": "Recentemente você fez {{activities}} e esteve em {{places}}.",
-      "activities_one": "{{count}} atividade",
-      "activities_many": "{{count}} atividades diferentes",
-      "activities_other": "{{count}} atividades diferentes",
-      "places_one": "{{count}} lugar",
-      "places_many": "{{count}} lugares diferentes",
-      "places_other": "{{count}} lugares diferentes"
-    },
-    "habitsNote": "Os losangos mostram seus hábitos nos últimos {{days}} dias, contados neste aparelho. Eles só falam de Abertura e Conscienciosidade; hábitos dizem pouco sobre os outros três."
+    "choices": "Suas escolhas",
+    "trackAriaChoices": "Suas escolhas {{choices}}."
   },
   "journal": {
     "heading": "O que o seu diário mostra",
@@ -400,12 +389,11 @@
     "fromDay": "De {{date}}",
     "dayChanged": "De um dia que você mudou depois"
   },
-  "habitsRange": {
-    "label": "Hábitos e leitura do diário olham os últimos",
+  "funDisclaimer": "Tipos, códigos e bichos são só diversão. É um jeito brincalhão de agrupar cinco pontuações, não é científico e não é um rótulo.",
+  "lookBack": {
+    "label": "A leitura do diário olha os últimos",
     "option_one": "{{count}} dia",
     "option_many": "{{count}} dias",
-    "option_other": "{{count}} dias",
-    "empty": "Poucos dias registrados neste período para mostrar seus hábitos. Tente um período maior ou continue registrando."
-  },
-  "funDisclaimer": "Tipos, códigos e bichos são só diversão. É um jeito brincalhão de agrupar cinco pontuações, não é científico e não é um rótulo."
+    "option_other": "{{count}} dias"
+  }
 }

@@ -10,7 +10,7 @@ import {
   collectReadingDays,
   readJournal,
 } from "@/lib/personality/journal-reading";
-import type { BehaviourRange } from "@/lib/personality/behaviour";
+import type { LookBackRange } from "@/lib/personality/look-back";
 import type { SentDay } from "@/lib/personality/quotes";
 
 /** Whether an AI is set up in Settings. `unknown` until asked, or when offline. */
@@ -26,7 +26,7 @@ export type ReadingStatus = "idle" | "reading" | "error";
  * that would be sent and holds them as `pending`; the person confirms, and
  * `send` sends exactly those days, so what they agreed to is what leaves.
  */
-export function useJournalReading(onSaved: () => void, range: BehaviourRange) {
+export function useJournalReading(onSaved: () => void, range: LookBackRange) {
   const { i18n } = useTranslation();
   const [ai, setAi] = useState<AiConnection>({ state: "unknown" });
   const [pending, setPending] = useState<SentDay[] | null>(null);

@@ -340,17 +340,8 @@
     "balancedWord": "Balanced",
     "journalPill_one": "Journal · {{count}} day",
     "journalPill_other": "Journal · {{count}} days",
-    "behaviour": "Your habits",
-    "trackAriaBehaviour": "Your habits {{behaviour}}.",
-    "habits": {
-      "conscientiousness": "You logged something on {{active}} of {{total}} days lately.",
-      "openness": "Lately you did {{activities}} and were in {{places}}.",
-      "activities_one": "{{count}} activity",
-      "activities_other": "{{count}} different activities",
-      "places_one": "{{count}} place",
-      "places_other": "{{count}} different places"
-    },
-    "habitsNote": "The diamonds show your habits over the last {{days}} days, counted on this device. They can only speak to Openness and Conscientiousness; habits say little about the other three."
+    "choices": "Your choices",
+    "trackAriaChoices": "Your choices {{choices}}."
   },
   "journal": {
     "heading": "What your journal reads as",
@@ -394,11 +385,10 @@
     "fromDay": "From {{date}}",
     "dayChanged": "From a day you have since changed"
   },
-  "habitsRange": {
-    "label": "Habits and journal reading look back over",
+  "funDisclaimer": "Types, codes and animals are just for fun. They are a playful way to group five scores, they are not scientific, and they are not a label.",
+  "lookBack": {
+    "label": "Journal reading looks back over",
     "option_one": "{{count}} day",
-    "option_other": "{{count}} days",
-    "empty": "Not enough logged days in this range for your habits to show. Try a longer one, or keep logging."
-  },
-  "funDisclaimer": "Types, codes and animals are just for fun. They are a playful way to group five scores, they are not scientific, and they are not a label."
+    "option_other": "{{count}} days"
+  }
 }

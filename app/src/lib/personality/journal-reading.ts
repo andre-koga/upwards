@@ -6,7 +6,7 @@ import {
 } from "@/lib/ai/journal-reading-client";
 import { fromDateString, toDateString } from "@/lib/time-utils";
 import { saveJournalReading } from "@/lib/sync/mutate-synced";
-import { DEFAULT_BEHAVIOUR_RANGE, type BehaviourRange } from "./behaviour";
+import { DEFAULT_LOOK_BACK_RANGE, type LookBackRange } from "./look-back";
 import { TRAITS } from "./items";
 import { verifiedQuotes, type SentDay } from "./quotes";
 
@@ -21,7 +21,7 @@ export const READING_MAX_TITLE_CHARS = 80;
  * places and emoji are never sent.
  */
 export async function collectReadingDays(
-  range: BehaviourRange = DEFAULT_BEHAVIOUR_RANGE,
+  range: LookBackRange = DEFAULT_LOOK_BACK_RANGE,
   today = toDateString(new Date())
 ): Promise<SentDay[]> {
   const start = fromDateString(today);

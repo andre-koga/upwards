@@ -12,7 +12,7 @@ interface ArchetypeHeroProps {
   self: TraitScores;
   journal: TraitScores | null;
   last: TraitScores | null;
-  behaviour: Partial<Record<Trait, number>> | null;
+  choices: Partial<Record<Trait, number>> | null;
 }
 
 /** The two traits furthest from the middle; they tint the radar shape. */
@@ -53,7 +53,7 @@ export function ArchetypeHero({
   self,
   journal,
   last,
-  behaviour,
+  choices,
 }: ArchetypeHeroProps) {
   const { t } = useTranslation("personality");
   const type = animalType(self);
@@ -163,12 +163,12 @@ export function ArchetypeHero({
               self={self}
               journal={journal}
               last={last}
-              behaviour={behaviour}
+              choices={choices}
               tint={tint}
             />
           </div>
 
-          {(journal || behaviour || last) && (
+          {(journal || choices || last) && (
             <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
               {journal && (
                 <li className="flex items-center gap-1.5">
@@ -179,13 +179,13 @@ export function ArchetypeHero({
                   {t("result.journal")}
                 </li>
               )}
-              {behaviour && (
+              {choices && (
                 <li className="flex items-center gap-1.5">
                   <span
                     aria-hidden="true"
                     className="size-2 rotate-45 border-2 border-foreground"
                   />
-                  {t("result.behaviour")}
+                  {t("result.choices")}
                 </li>
               )}
               {last && (
