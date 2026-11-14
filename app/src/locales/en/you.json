@@ -33,7 +33,6 @@
       "higher": "Your choices lean toward “{{word}}” more than your test said.",
       "lower": "Your choices lean toward “{{word}}” more than your test said."
     },
-    "note": "The diamond marks your daily answers. A few answers are less accurate than many, so treat an early diamond as a rough guide.",
     "same": "Your daily answers agree with your test.",
     "answers_one": "Based on {{count}} answer.",
     "answers_other": "Based on {{count}} answers."

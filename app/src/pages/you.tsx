@@ -297,9 +297,7 @@ export default function YouPage() {
 
       {latest && (
         <footer className="px-4 pt-2 text-center text-xs leading-relaxed text-muted-foreground">
-          <p>
-            {tp("funDisclaimer")} {tp("disclaimer")}
-          </p>
+          <p>{tp("funDisclaimer")}</p>
         </footer>
       )}
 
