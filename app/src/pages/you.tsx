@@ -48,9 +48,9 @@ function YouLayout({
 }) {
   const masthead = subtitle != null;
   return (
-    <div className="relative isolate space-y-6 px-2 pb-24 pt-6 md:p-4 md:pb-24 [&>h1+*]:!mt-0 [&>header+*]:!mt-0">
+    <div className="relative isolate space-y-6 px-2 pb-24 pt-4 md:p-4 md:pb-24 [&>h1+*]:!mt-0 [&>header+*]:!mt-0">
       {masthead ? (
-        <header className="flex flex-col items-center px-4 pb-0 pt-2 text-center">
+        <header className="flex flex-col items-center px-4 pb-0 pt-6 text-center">
           <h1 className="font-display text-[2.5rem] font-medium leading-[1.1] tracking-[-0.02em]">
             {title}
           </h1>
